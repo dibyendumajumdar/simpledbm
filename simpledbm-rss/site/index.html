@@ -1,0 +1,127 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>SimpleDBM - A Java Relational Database Manager</title>
+<link rev="made" href="mailto:dibyendu@mazumdar.demon.co.uk" />
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+<meta name="author" content="Dibyendu Majumdar" />
+<meta name="description" content="Java Relational Database Manager" />
+<meta name="keywords" content="Java Database Manager Relational" />
+</head>
+<body>
+<h1>SimpleDBM - A Database Manager</h1>
+<h2>Introduction</h2>
+<p>The goal of SimpleDBM project is to build a Relational Database
+Manager in Java. The planned features include support for:</p>
+<ol>
+	<li>Transactions</li>
+	<li>Write Ahead Log</li>
+	<li>Multiple Isolation Levels</li>
+	<li>BTree Indexes</li>
+	<li>Entry Level SQL-92</li>
+	<li>System Catalogs</li>
+</ol>
+<p>A distinguishing feature of the project is that the DBMS is being
+built in a modular fashion. The aim is ensure that each module is usable
+on its own ; for example, the Lock Manager or the Log Manager modules
+can be used on their own even if the rest of the system is not of
+interest.</p>
+<p>There will be two major sub-systems in the dbms backend. The Data
+Manager subsystem is named RSS, and is responsible for implementing
+transactions, locking, tuple management, and index management. This
+sub-system is currently under development.</p>
+<p>The second major sub-system will be called SQL Manager. Its job will
+be to parse SQL statements, produce optimum execution plans, and execute
+the SQL statements. Development of this sub-system is expected to start
+sometime in 2006.</p>
+<p>SimpleDBM is being built in Java 5.0 and will use new features such
+as java.util.concurrent package and Generics available in this version
+of Java. SimpleDBM will not be compatible with previous versions of
+Java.</p>
+<h2>History</h2>
+<p>SimpleDBM is descended from a previous project in C++ called <a
+	href="http://www.mazumdar.demon.co.uk/dm1.html">DM1</a>. The existing
+DM1 C++ codebase has been ported to SimpleDBM.</p>
+<h2>News</h2>
+<ul>
+      <li>2 Jun 2006 - SimpleDBM project's hosting is moving to ObjectWeb.</li>
+      <li>6 Apr 2006 - Build number 0.58 contains initial implementation
+      the RSS Server component.</li>
+	<li>20 Feb 2006 - Build number 0.55 is now available. This contains
+	an implementation of Tuple Scans which makes the Tuple Manager 
+	feature complete.</li>
+	<li>27 Jan 2006 - Latest build contains fixes for a few bugs, implementation of 
+	missing features in the Transaction Manager and Log Manager modules 
+	that were on the TODO list for a while, and some refactoring of code.</li>
+	<li>14 Jan 2006 - First draft of a paper on Multi-Version Concurrency 
+	implementations is available <a href="http://forge.objectweb.org/docman/view.php/237/132/mvcc-survey.pdf">
+	here</a>.</li>
+	<li>29 Dec 2005 - Completed first cut implementation of Tuple
+	Manager. See <strong><a	href="http://simpledbm.blogspot.com/">WEBLOG</a></strong> for
+	a discussion of this module.</li> 
+	<li>4 Dec 2005 - Added a Demo program for BTree module that allows
+	an interactive session involving two threads. Here is a
+	<a href="https://simpledbm.dev.java.net/files/documents/3623/25041/btreedemo.jpg">
+	screen shot</a>.</li>
+	<li>25 Nov 2005 - Bug fixes, test cases, refactoring and documentation
+	updates are the theme for this month.</li>
+	<li>09 Nov 2005 - <a href="documentation.html">Documentation</a> page
+	added.</li>
+	<li>04 Nov 2005 - BTree scans implemented. The basic functionality of
+	BTree indexes is now available.</li>
+	<li>28 Oct 2005 - BTree Insert Key operation implemented.</li>
+	<li>6 Oct 2005 - Short paper on some of the <a
+		href="http://forge.objectweb.org/docman/view.php/237/131/spcbtree.pdf">space
+	management issues</a> in B-link trees.</li>
+	<li>18 Sep 2005 - Work on BTree module is starting today. The
+	implementation will be based upon the algorithm for B-link tree
+	published in <a
+		href="http://www.springerlink.com/openurl.asp?genre=article&amp;issn=1066-8888&amp;volume=14&amp;issue=2&amp;spage=257">
+	Concurrency control and recovery for balanced B-link trees, by Ibrahim
+	Jaluta, Seppo Sippu and Eljas Soisalon-Soininen</a>.</li>
+	<li>17 Sep 2005 - In preparation for the BTree module, the Buffer
+	Manager module has been enhanced to support additional (update) latch
+	mode. A new Latch implementation added to support this requirement.
+	Also, SlottedPage Manager module implemented to handle the common
+	requirements of manipulating slots and items within a page.</li>
+	<li>16 Sep 2005 - Port from DM1 code completed. A lot of refactoring
+	and bug fixes have been done in the process. The DM1 code is now truly
+	defunct.</li>
+	<li>7 Sep 2005 - Most of the Space Manager module is done. Testing
+	should be completed by this week.</li>
+	<li>28 Aug 2005 - Transaction Manager implementation is now available.
+	New milestone release available <a
+		href="https://simpledbm.dev.java.net/servlets/ProjectDocumentList">here</a>.</li>
+	<li>23 Aug 2005 - Added a Latch implementation and started work on
+	Transaction Manager</li>
+	<li>19 Aug 2005 - Source Code checked into UNSTABLE_V100 branch.</li>
+	<li>19 Aug 2005 - Initial port of Buffer Manager.</li>
+	<li>14 Aug 2005 - There is now a <strong><a
+		href="http://simpledbm.blogspot.com/">WEBLOG</a></strong> for the
+	project.</li>
+	<li>28 July 2005 - Code for Lock Manager ported.</li>
+	<li>09 July 2005 - Code for Log Manager ported.</li>
+	<li>10 June 2005 - Project started.</li>
+</ul>
+<h2>Topics</h2>
+<ul>
+	<li><a href="http://simpledbm.blogspot.com/">Weblog</a></li>
+	<li><a href="status.html">Current Status</a></li>
+	<li><a href="documentation.html">Documentation</a></li>
+	<li><a href="building.html">Downloading and Building SimpleDBM</a></li>
+	<li><a href="guidelines.html">Coding and design principles</a></li>
+	<li><a href="bibliography.html">Bibliography</a></li>
+	<li><a
+		href="https://simpledbm.dev.java.net/source/browse/simpledbm/">Browse
+	Source Code</a></li>
+</ul>
+<hr />
+<p>Copyright &#169; 2005, 2006 by <a
+	href="mailto:dibyendu@mazumdar.demon.co.uk">Dibyendu Majumdar</a></p>
+<p><a href="http://www.cenqua.com/clover"><img
+	src="http://www.cenqua.com/images/clovered1.gif" width="89" height="33"
+	border="0" alt="Code Coverage by Clover" /></a></p>
+
+</body>
+</html>

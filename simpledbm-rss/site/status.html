@@ -1,0 +1,112 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>SimpleDBM Status</title>
+<meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
+</head>
+<body>
+<h1>Project Timescales</h1>
+<p>I work on SimpleDBM in my spare time. I also have to do some amount
+of research for each module. These two factors, combined with periods of
+"inactivity" mean that I cannot provide a well-defined schedule for
+completing the project. However, the design of SimpleDBM ensures that
+that individual modules are usable immediately. Therefore, I believe
+that the interim snapshots are useful as well, and I encourage you to
+download SimpleDBM and experiment with the various modules.</p>
+<p>I am keen for other developers to participate in this project and
+will gladly provide assistance and answer queries. I think the project
+is of particular interest to database technology students and
+researchers.</p>
+<h1>SimpleDBM Development Status</h1>
+<p>The SimpleDBM development status is summarised by Module. <em>Available</em>
+status means that this module has been implemented and its code is
+available in the download area.</p>
+<table border="1" cellspacing="0" cellpadding="0" width="100%">
+	<tr>
+		<td width="14%">Module</td>
+		<td width="52%">Function</td>
+		<td width="34%">Status</td>
+	</tr>
+	<tr>
+		<td>Storage Manager</td>
+		<td>Provides a low-level interface to the Operating System IO system.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Latch Manager</td>
+		<td>Implements the latching sub-system.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Lock Manager</td>
+		<td>Implements locking sub-system.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Log Manager</td>
+		<td>Implements the Write Ahead Log mechanism.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Object Registry</td>
+		<td>A facility to construct objects of various types dynamically using
+		a numeric type code.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Page Factory</td>
+		<td>Handles the mapping of pages to storage containers and responsible
+		for instantiating different types of pages.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Buffer Manager</td>
+		<td>Implements the Buffer Management sub-system</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Transaction Manager</td>
+		<td>Implements ARIES style Transaction Manager.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Space Manager</td>
+		<td>Implements basic functions related to Page allocation.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>Slotted Page Manager</td>
+		<td>Implements common functions related to manipulating slots and
+		items within pages.</td>
+		<td>Available.</td>
+	</tr>
+	<tr>
+		<td>BTree Manager</td>
+		<td>Sub-system that handles BTree indexes.</td>
+		<td>Available (New!).</td>
+	</tr>
+	<tr>
+		<td>Tuple Manager</td>
+		<td>Transactional module that implements low-level facilities for 
+		maintaining tuples, or records that span multiple pages. This module
+		provides the basis for implementing higher level tables.</td>
+		<td>Available (New!).</td>
+	</tr>
+	<tr>
+		<td>Data Type Manager</td>
+		<td>This module will handle implementation of different data type such
+		as number, date, etc.</td>
+		<td>Planned.</td>
+	</tr>
+	<tr>
+		<td>Scan Manager</td>
+		<td>Sub-system that implements ordered/unordered scans. Will work on
+		top of Tuple Manager and B-Tree Manager.</td>
+		<td>Planned</td>
+	</tr>
+</table>
+<hr />
+<p>Copyright &#169; 2002-2005 by <a
+	href="mailto:dibyendu@mazumdar.demon.co.uk">Dibyendu Majumdar</a></p>
+</body>
+</html>
