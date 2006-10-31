@@ -1,0 +1,41 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+<title>Object Registry</title>
+</head>
+<body>
+<p>This package defines the interface for the Object Registry subsystem,
+which is responsible for instantiating objects based upon
+type information.</p>
+<h2>Overview</h2>
+<p>In any object oriented system, when objects are persisted to storage
+devices, there needs to be a mechanism by which the object can be
+reconstructed when it is read back. Java has the serialisation mechanism
+to meet this requirement. SimpleDBM does not use Java serialisation;
+instead it uses a simple Object Registry database. Classes that require
+the ability to be restored from persistent storage are assigned unique
+"type codes". The type code and the associated class name is registered
+in the SimpleDBM Object Registry. When such an object is persisted, its
+type code should also be saved. When reading back the object, the type code
+enables the correct object type to be constructed.</p>
+<p>For an example of how this objects can be persisted with their type
+code, and how they can be read back and reconstructed, see the implementation
+of <code>org.simpledbm.rss.pm.impl.PageFactoryImpl</code>. An extract from
+one of the methods is shown below:
+</p>
+<p>
+<pre>
+public Page getInstance(ByteBuffer bb) {
+	bb.mark();
+	short pagetype = bb.getShort();
+	bb.reset();
+	Page page = (Page) objectFactory.getInstance(pagetype);
+	page.setPageFactory(this);
+	page.retrieve(bb);
+	return page;
+}
+</pre>
+</p>
+</body>
+</html>

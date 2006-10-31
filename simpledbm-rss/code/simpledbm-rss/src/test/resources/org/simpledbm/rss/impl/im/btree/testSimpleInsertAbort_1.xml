@@ -1,0 +1,25 @@
+<tree>
+<page containerId="1" pageNumber="2">
+	<header>
+		<locationfactory>25001</locationfactory>
+		<keyfactory>25000</keyfactory>
+		<unique>false</unique>
+		<leaf>yes</leaf>
+		<leftsibling>-1</leftsibling>
+		<rightsibling>-1</rightsibling>
+		<smppagenumber>1</smppagenumber>
+	</header>
+	<items>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>1</location>
+			<key>a</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>99</location>
+			<key>&lt;INFINITY&gt;</key>
+		</item>
+	</items>
+</page>
+</tree>

@@ -1,0 +1,58 @@
+/***
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *    Project: www.simpledbm.org
+ *    Author : Dibyendu Majumdar
+ *    Email  : dibyendu@mazumdar.demon.co.uk
+ */
+package org.simpledbm.rss.api.im;
+
+import org.simpledbm.rss.api.tx.Transaction;
+
+/**
+ * Index Manager interface. Supports creating new Indexes and obtaining instances of existing
+ * Indexes.
+ * 
+ * @author Dibyendu Majumdar
+ */
+public interface IndexManager {
+
+	/**
+	 * Creates a new index with specified container name and ID. Prior to calling this
+	 * method, an exclusive lock should be obtained on the container ID to ensure that no other
+	 * transaction is simultaneously attempting to access the same container. If successful, by the
+	 * end of this call, the container would have been created and registered with the StorageManager,
+	 * and an empty instance of the index created within the container.
+	 * 
+	 * @param trx Transaction managing the creation of the index
+	 * @param name Name of the container
+	 * @param containerId ID of the new container, must be unused
+	 * @param extentSize Number of pages in each extent of the container
+	 * @param keyFactoryType Identifies the factory for creating IndexKey objects
+	 * @param locationFactoryType Identifies the factory for creating Location objects
+	 * @param unique Whether the new index will allow duplicates keys or not
+	 */
+	void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) throws IndexException;
+	
+	/**
+	 * Obtains an existing index with specified container ID. Prior to calling this
+	 * method, a Shared lock should be obtained on the container ID to ensure that no other
+	 * transaction is simultaneously attempting to create/delete the same container. 
+	 * 
+	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
+	 */
+	Index getIndex(int containerId) throws IndexException;	
+
+}
