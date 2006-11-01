@@ -31,45 +31,49 @@ interest.</p>
 Manager subsystem is named RSS, and is responsible for implementing
 transactions, locking, tuple management, and index management. This
 sub-system is currently under development.</p>
-<p>The second major sub-system will be called SQL Manager. Its job will
-be to parse SQL statements, produce optimum execution plans, and execute
-the SQL statements. Development of this sub-system is expected to start
-sometime in 2006.</p>
-<p>SimpleDBM is being built in Java 5.0 and will use new features such
-as java.util.concurrent package and Generics available in this version
-of Java. SimpleDBM will not be compatible with previous versions of
-Java.</p>
-<h2>History</h2>
-<p>SimpleDBM is descended from a previous project in C++ called <a
-	href="http://www.mazumdar.demon.co.uk/dm1.html">DM1</a>. The existing
-DM1 C++ codebase has been ported to SimpleDBM.</p>
+<p>The second major sub-system will be called SQL Manager. Its job
+will be to parse SQL statements, produce optimum execution plans, and
+execute the SQL statements. Development of this sub-system is expected
+to start sometime in 2006.</p>
+<p>SimpleDBM is being built in Java 5.0 and will use new features
+such as java.util.concurrent package and Generics available in this
+version of Java. SimpleDBM will not be compatible with previous versions
+of Java.</p>
 <h2>News</h2>
 <ul>
-      <li>2 Jun 2006 - SimpleDBM project's hosting is moving to ObjectWeb.</li>
-      <li>6 Apr 2006 - Build number 0.58 contains initial implementation
-      the RSS Server component.</li>
-	<li>20 Feb 2006 - Build number 0.55 is now available. This contains
-	an implementation of Tuple Scans which makes the Tuple Manager 
+	<li>31 Oct 2006 - SimpleDBM source code repository has a new <a
+		href="http://code.google.com/p/simpledbm/source">home</a>.</li>
+	<li>31 Oct 2006 - Current builds of SimpleDBM use Maven 2 instead
+	of ant. More details avaiable
+	<a href="building.html">here</a>.</li>
+	<li>2 Jun 2006 - SimpleDBM project's hosting is moving to
+	ObjectWeb.</li>
+	<li>6 Apr 2006 - Build number 0.58 contains initial implementation
+	the RSS Server component.</li>
+	<li>20 Feb 2006 - Build number 0.55 is now available. This
+	contains an implementation of Tuple Scans which makes the Tuple Manager
 	feature complete.</li>
-	<li>27 Jan 2006 - Latest build contains fixes for a few bugs, implementation of 
-	missing features in the Transaction Manager and Log Manager modules 
-	that were on the TODO list for a while, and some refactoring of code.</li>
-	<li>14 Jan 2006 - First draft of a paper on Multi-Version Concurrency 
-	implementations is available <a href="http://forge.objectweb.org/docman/view.php/237/132/mvcc-survey.pdf">
+	<li>27 Jan 2006 - Latest build contains fixes for a few bugs,
+	implementation of missing features in the Transaction Manager and Log
+	Manager modules that were on the TODO list for a while, and some
+	refactoring of code.</li>
+	<li>14 Jan 2006 - First draft of a paper on Multi-Version
+	Concurrency implementations is available <a
+		href="http://forge.objectweb.org/docman/view.php/237/132/mvcc-survey.pdf">
 	here</a>.</li>
 	<li>29 Dec 2005 - Completed first cut implementation of Tuple
-	Manager. See <strong><a	href="http://simpledbm.blogspot.com/">WEBLOG</a></strong> for
-	a discussion of this module.</li> 
+	Manager. See <strong><a href="http://simpledbm.blogspot.com/">WEBLOG</a></strong>
+	for a discussion of this module.</li>
 	<li>4 Dec 2005 - Added a Demo program for BTree module that allows
-	an interactive session involving two threads. Here is a
-	<a href="https://simpledbm.dev.java.net/files/documents/3623/25041/btreedemo.jpg">
+	an interactive session involving two threads. Here is a <a
+		href="https://simpledbm.dev.java.net/files/documents/3623/25041/btreedemo.jpg">
 	screen shot</a>.</li>
-	<li>25 Nov 2005 - Bug fixes, test cases, refactoring and documentation
-	updates are the theme for this month.</li>
-	<li>09 Nov 2005 - <a href="documentation.html">Documentation</a> page
-	added.</li>
-	<li>04 Nov 2005 - BTree scans implemented. The basic functionality of
-	BTree indexes is now available.</li>
+	<li>25 Nov 2005 - Bug fixes, test cases, refactoring and
+	documentation updates are the theme for this month.</li>
+	<li>09 Nov 2005 - <a href="documentation.html">Documentation</a>
+	page added.</li>
+	<li>04 Nov 2005 - BTree scans implemented. The basic functionality
+	of BTree indexes is now available.</li>
 	<li>28 Oct 2005 - BTree Insert Key operation implemented.</li>
 	<li>6 Oct 2005 - Short paper on some of the <a
 		href="http://forge.objectweb.org/docman/view.php/237/131/spcbtree.pdf">space
@@ -85,21 +89,20 @@ DM1 C++ codebase has been ported to SimpleDBM.</p>
 	mode. A new Latch implementation added to support this requirement.
 	Also, SlottedPage Manager module implemented to handle the common
 	requirements of manipulating slots and items within a page.</li>
-	<li>16 Sep 2005 - Port from DM1 code completed. A lot of refactoring
-	and bug fixes have been done in the process. The DM1 code is now truly
-	defunct.</li>
+	<li>16 Sep 2005 - Port from DM1 code completed. A lot of
+	refactoring and bug fixes have been done in the process. The DM1 code
+	is now truly defunct.</li>
 	<li>7 Sep 2005 - Most of the Space Manager module is done. Testing
 	should be completed by this week.</li>
-	<li>28 Aug 2005 - Transaction Manager implementation is now available.
-	New milestone release available <a
+	<li>28 Aug 2005 - Transaction Manager implementation is now
+	available. New milestone release available <a
 		href="https://simpledbm.dev.java.net/servlets/ProjectDocumentList">here</a>.</li>
 	<li>23 Aug 2005 - Added a Latch implementation and started work on
 	Transaction Manager</li>
 	<li>19 Aug 2005 - Source Code checked into UNSTABLE_V100 branch.</li>
 	<li>19 Aug 2005 - Initial port of Buffer Manager.</li>
 	<li>14 Aug 2005 - There is now a <strong><a
-		href="http://simpledbm.blogspot.com/">WEBLOG</a></strong> for the
-	project.</li>
+		href="http://simpledbm.blogspot.com/">WEBLOG</a></strong> for the project.</li>
 	<li>28 July 2005 - Code for Lock Manager ported.</li>
 	<li>09 July 2005 - Code for Log Manager ported.</li>
 	<li>10 June 2005 - Project started.</li>
@@ -113,9 +116,13 @@ DM1 C++ codebase has been ported to SimpleDBM.</p>
 	<li><a href="guidelines.html">Coding and design principles</a></li>
 	<li><a href="bibliography.html">Bibliography</a></li>
 	<li><a
-		href="https://simpledbm.dev.java.net/source/browse/simpledbm/">Browse
+		href="http://code.google.com/p/simpledbm/source">Browse
 	Source Code</a></li>
 </ul>
+<h2>History</h2>
+<p>SimpleDBM is descended from a previous project in C++ called <a
+	href="http://www.mazumdar.demon.co.uk/dm1.html">DM1</a>. The existing
+DM1 C++ codebase has been ported to SimpleDBM.</p>
 <hr />
 <p>Copyright &#169; 2005, 2006 by <a
 	href="mailto:dibyendu@mazumdar.demon.co.uk">Dibyendu Majumdar</a></p>
