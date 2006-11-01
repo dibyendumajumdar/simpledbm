@@ -6,40 +6,45 @@
 </head>
 <body>
 <h1>How to build SimpleDBM</h1>
-<h2>Download source code</h2>
-<p>Download the source code for SimpleDBM from the <a
-	href="https://simpledbm.dev.java.net/servlets/ProjectDocumentList">SimpleDBM
-website</a>. Extract the source into a directory. This directory will be
-referred to as the ${simpledbm.home} directory in the rest of this
-document.</p>
 <h2>Download required software</h2>
-<p>Following software is required to build SimpleDBM.</p>
 <h3>J2SE 5.0 SDK or above</h3>
 <p>SimpleDBM requires J2SE 5.0 or above. <a
 	href="http://java.sun.com/j2se">Download</a> and install JDK as per
-instructions provided with the release. We will refer to the
-installation directory as ${java.home} in the rest of this document.</p>
-<h3>Eclipse 3.1</h3>
-<p><a href="http://www.eclipse.org">Download</a> a binary distribution
-of Eclipse 3.1. I am using Eclipse to build SimpleDBM, but you can also
-use the <a href="http://www.netbeans.org/">Netbeans</a> IDE. I will
-eventually provide ant build files.</p>
+instructions provided with the release.</p>
+<h3>Maven 2</h3>
+<p>Download and install <a href="http://maven.apache.org/">Maven
+2</a>.</p>
+<h3>Eclipse 3.2</h3>
+<p><a href="http://www.eclipse.org">Download</a> a binary
+distribution of Eclipse 3.2.</p>
 <p>Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
 SimpleDBM code will not compile. You can find instructions on how to do
 so <a
 	href="http://www.eclipse.org/org/june05release/screencasts/4-generics/generics.html">here</a>.</p>
-<h3>Swing-Layout</h3>
-<p>The BTreeDemo program uses the <a
-	href="https://swing-layout.dev.java.net/">Swing-Layout</a> library. You
-can download the jar file <a
-	href="https://swing-layout.dev.java.net/files/documents/2752/25312/swing-layout-1.0.jar">here</a>.
-</p>
-<h3>Create a Project in Eclipse</h3>
-<p>Create a Java project in Eclipse, and set the project directory to
-${simpledbm.home}. Eclipse should do the rest. You may need to modify
-the path to the Swing-layout jar file.</p>
+<h2>Configure Eclipse</h2>
+<p>Create a new classpath variable named <tt>M2_REPO</tt> inside
+Eclipse. From the menu bar, select Window > Preferences. Select the Java
+> Build Path > Classpath Variables page. </p>
+<p>This variable should contain
+the path to your local Maven 2 repository. Usually this is under
+&lt;Your Home Directory&gt;/.m2/repository.</p>
+<h3>Checkout SimpleDBM code</h3>
+<ol>
+<li>Create a new SVN repository location in Eclipse<br />
+http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code<br />
+If you are a committer, use https instead of http.</li>
+<li>Checkout the folder simpledbm-rss as a project in the workspace.</li>
+<li>Start a command shell. Cd to the project directory.</li>
+<li>Run <tt>mvn eclipse:clean</tt>, followed by <tt>mvn eclipse:eclipse</tt>.</li>
+<li>Switch back to Eclipse and refresh the project. It should now
+have a J against the project showing that it is a Java project. Eclipse
+is now setup to automatically rebuild SimpleDBM whenever you change any
+code.</li>
+<li>You can also build the SimpleDBM package using the Maven 2
+command line. From the project home directory, execute <tt>mvn package</tt>.</li>
+</ol>
 <hr />
-<p>Copyright &#169; 2005 by <a
+<p>Copyright &#169; 2005-2006 by <a
 	href="mailto:dibyendu@mazumdar.demon.co.uk">Dibyendu Majumdar</a>.</p>
 </body>
 </html>
