@@ -1491,18 +1491,21 @@ public class TestBTreeManager extends TestCase {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data7nul.xml");
 		doSingleInsert(false, true, "b4", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertNextKeyInNextPage.xml");		
 	}
 
 	public void testInsertUnderflowFig17() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data8nul.xml");
 		doSingleInsert(false, true, "c0", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig17.xml");		
 	}
 
 	public void testDelete1() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doSingleDelete(false, true, "a1", "10");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testDelete1.xml");		
 	}
 	
 	public void testDeleteInsert1() throws Exception {
