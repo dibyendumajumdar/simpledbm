@@ -1455,30 +1455,35 @@ public class TestBTreeManager extends TestCase {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doSingleInsert(false, true, "a0", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig13.xml");
 	}
 	
 	public void testInsertUnderflowFig14() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doSingleInsert(false, true, "c19", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig14.xml");
 	}
 
 	public void testInsertUnderflowFig5() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data7nul.xml");
 		doSingleInsert(false, true, "k3", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig5.xml");
 	}
 	
 	public void testInsertUnderflowFig19() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doSingleInsert(false, true, "k3", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig19.xml");
 	}
 	
 	public void testInsertUnderflowFig15() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doSingleInsert(false, true, "g19", "1");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testInsertUnderflowFig15.xml");		
 	}
 
 	// TODO test next key loc across a page

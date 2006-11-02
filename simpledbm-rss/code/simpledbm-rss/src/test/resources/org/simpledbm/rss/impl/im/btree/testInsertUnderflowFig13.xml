@@ -1,0 +1,73 @@
+<tree>
+<page containerId="1" pageNumber="4">
+	<header>
+		<locationfactory>25001</locationfactory>
+		<keyfactory>25000</keyfactory>
+		<unique>false</unique>
+		<leaf>yes</leaf>
+		<leftsibling>3</leftsibling>
+		<rightsibling>5</rightsibling>
+		<smppagenumber>1</smppagenumber>
+	</header>
+	<items>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>22</location>
+			<key>b2</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>23</location>
+			<key>b3</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>24</location>
+			<key>b4</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>24</location>
+			<key>b4</key>
+		</item>
+	</items>
+</page>
+<page containerId="1" pageNumber="3">
+	<header>
+		<locationfactory>25001</locationfactory>
+		<keyfactory>25000</keyfactory>
+		<unique>false</unique>
+		<leaf>yes</leaf>
+		<leftsibling>-1</leftsibling>
+		<rightsibling>4</rightsibling>
+		<smppagenumber>1</smppagenumber>
+	</header>
+	<items>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>1</location>
+			<key>a0</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>10</location>
+			<key>a1</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>11</location>
+			<key>a2</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>21</location>
+			<key>b1</key>
+		</item>
+		<item>
+			<childpagenumber>-1</childpagenumber>
+			<location>21</location>
+			<key>b1</key>
+		</item>
+	</items>
+</page>
+</tree>
