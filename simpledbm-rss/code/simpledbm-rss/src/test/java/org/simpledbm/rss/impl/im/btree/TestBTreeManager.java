@@ -22,6 +22,9 @@ package org.simpledbm.rss.impl.im.btree;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -38,6 +41,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
@@ -65,6 +69,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
+import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -1203,6 +1208,18 @@ public class TestBTreeManager extends TestCase {
     void doDeleteAndScanThreads(final boolean testUnique, final boolean commit, final String k, final String loc, final ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
+        final Lock lock = new ReentrantLock();
+        final Condition deleted = lock.newCondition();
+        final Condition lockWaitStarted = lock.newCondition();
+        final LockEventListener listener = new LockEventListener() {
+			public void beforeLockWait() {
+				// TODO Auto-generated method stub
+				System.out.println("LOCK WAIT STARTED");
+				lock.lock();
+				lockWaitStarted.signal();
+				lock.unlock();
+			}
+        };
         try {
             Thread t1 = new Thread(new Runnable() {
                 public void run() {
@@ -1219,7 +1236,13 @@ public class TestBTreeManager extends TestCase {
                         try {
                             System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
                             btree.delete(trx, key, location);
-                            Thread.sleep(2000);
+                            lock.lock();
+                            deleted.signal();
+                            System.out.println("Awaiting lockWaitStarted");
+                            lockWaitStarted.await();
+                            System.out.println("Received lockWaitStarted signal");
+                            lock.unlock();
+                            //Thread.sleep(5000);
                             okay = true;
                         } finally {
                             if (okay && commit) {
@@ -1251,6 +1274,7 @@ public class TestBTreeManager extends TestCase {
                         Transaction trx = db.trxmgr.begin();
                         boolean okay = false;
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
+                        db.lockmgr.addLockEventListener(listener);
                         try {
                             System.out.println("--> SCANNING TREE");
                             int i = 0;
@@ -1266,6 +1290,7 @@ public class TestBTreeManager extends TestCase {
                                 }
                             }
                         } finally {
+                        	db.lockmgr.clearLockEventListeners();
                             scan.close();
                             if (okay && commit)
                                 trx.commit();
@@ -1283,7 +1308,11 @@ public class TestBTreeManager extends TestCase {
             t1Failed = false;
             t2Failed = false;
             t1.start();
-            Thread.sleep(100);
+            lock.lock();
+            deleted.await();
+            lock.unlock();
+            // System.out.println("PROCEEDING");
+            // Thread.sleep(1000);
             t2.start();
             t1.join();
             t2.join();
@@ -1779,7 +1808,7 @@ public class TestBTreeManager extends TestCase {
         final PageFactory pageFactory;
         final SlottedPageManager spmgr;
         final LockMgrFactory lockmgrFactory;
-        final LockManager lockmgr;
+        final LockManagerImpl lockmgr;
         final LogManager logmgr;
         final BufferManager bufmgr;
         final LoggableFactory loggableFactory;
@@ -1813,7 +1842,7 @@ public class TestBTreeManager extends TestCase {
 			pageFactory = new PageFactoryImpl(objectFactory, storageManager, latchFactory);
 			spmgr = new SlottedPageManagerImpl(objectFactory);
 			lockmgrFactory = new LockManagerFactoryImpl();
-			lockmgr = lockmgrFactory.create(null);
+			lockmgr = (LockManagerImpl) lockmgrFactory.create(null);
 			logmgr = logFactory.getLog(properties);
 			bufmgr = new BufferManagerImpl(logmgr, pageFactory, 5, 11);
 			loggableFactory = new LoggableFactoryImpl(objectFactory);
