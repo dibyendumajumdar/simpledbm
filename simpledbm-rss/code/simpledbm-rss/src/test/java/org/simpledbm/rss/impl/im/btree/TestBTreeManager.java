@@ -33,6 +33,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
+import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
@@ -989,12 +990,19 @@ public class TestBTreeManager extends TestCase {
 
 	boolean t1Failed = false;
 	boolean t2Failed = false;
-	
-	void doDeleteInsertThreads(final boolean testUnique, final boolean commit, final String k, final String loc) throws Exception {
+
+	/**
+	 * In this test, a delete is started on one thread, and on aother thread, a concurrent
+	 * insert is started. The test should have following behaviour.
+	 * The insert should wait for the outcome of the delete.
+	 * If the delete commits, the insert should successfully proceed.
+	 * If the delete aborts, the insert should fail with unique constraint violation error.
+	 */
+	void doDeleteInsertThreads(final boolean testUnique, final boolean commitDelete, final String k, final String loc, final String deleteResult, final String insertResult) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
     	final boolean testingUniqueIndex = testUnique;
 		try {
-			Thread t1 = new Thread(new Runnable() {
+			final Thread t1 = new Thread(new Runnable() {
 				public void run() {
 					try {
 						final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
@@ -1009,23 +1017,25 @@ public class TestBTreeManager extends TestCase {
 						try {
 							System.out.println("--> DELETING KEY");
 							btree.delete(trx, key, location);
-							Thread.sleep(15000);
+							if (deleteResult != null)
+								doValidateTree(db, deleteResult);
+							Thread.sleep(2000);
 							okay = true;
 						} finally {
-							if (okay && commit)
+							if (okay && commitDelete)
 								trx.commit();
 							else {
 								trx.abort();
 							}
+							t1Failed = false;
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
-						t1Failed = true;
 					}
 				}
 			}, "T1");
 
-			Thread t2 = new Thread(new Runnable() {
+			final Thread t2 = new Thread(new Runnable() {
 				public void run() {
 					try {
 						final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
@@ -1040,23 +1050,32 @@ public class TestBTreeManager extends TestCase {
 						try {
 							System.out.println("--> INSERTING KEY");
 							btree.insert(trx, key, location);
+							if (insertResult != null)
+								doValidateTree(db, insertResult);
 							okay = true;
+							if (commitDelete) {
+								System.out.println("Setting t2Failed to false");
+								t2Failed = false;
+							}
 						} finally {
-							if (okay && commit)
+							if (okay /*&& commit */) {
 								trx.commit();
+							}
 							else {
 								trx.abort();
 							}
 						}
 					} catch (Exception e) {
+						if (!commitDelete && e instanceof UniqueConstraintViolationException) {
+							t2Failed = false;
+						}
 						e.printStackTrace();
-						t2Failed = true;
 					}
 				}
 			}, "T2");
 			
-			t1Failed = false;
-			t2Failed = false;
+			t1Failed = true;
+			t2Failed = true;
 			t1.start();
 			Thread.sleep(1000);
 			t2.start();
@@ -1064,7 +1083,7 @@ public class TestBTreeManager extends TestCase {
 			t2.join();
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
-			
+			assertTrue(!t2Failed);
 		} finally {
 			db.shutdown();
 		}		
@@ -1087,7 +1106,8 @@ public class TestBTreeManager extends TestCase {
             try {
                 System.out.println("--> SCANNING TREE");
                 while (scan.fetchNext(trx)) {
-                	System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+                	// System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	trx.acquireLock(scan.getCurrentLocation(), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
                 	if (scan.isEof()) {
                 		break;
@@ -1110,8 +1130,29 @@ public class TestBTreeManager extends TestCase {
         }
     }
 	
-	
-    void doScanTree(boolean testUnique, boolean commit, String k, String loc) throws Exception {
+
+    class ScanResult {
+    	String key;
+    	String location;
+    	public ScanResult(String key, String location) {
+    		this.key = key;
+    		this.location = location;
+    	}
+		public String getKey() {
+			return key;
+		}
+		public void setKey(String key) {
+			this.key = key;
+		}
+		public String getLocation() {
+			return location;
+		}
+		public void setLocation(String location) {
+			this.location = location;
+		}
+    }
+    
+    void doScanTree(boolean testUnique, boolean commit, String k, String loc, ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1126,9 +1167,15 @@ public class TestBTreeManager extends TestCase {
             boolean okay = false;
             IndexScan scan = btree.openScan(key, location, LockMode.SHARED);
             try {
-                System.out.println("--> SCANNING TREE");
+                System.out.println("--> SCANNING TREE {");
+                int i = 0;
                 while (scan.fetchNext(trx)) {
-                	System.out.println("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                	if (result != null) {
+                		assertEquals(result[i].getKey(), scan.getCurrentKey().toString());
+                		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
+                		i++;
+                	}
+                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 }
             } finally {
                 scan.close();
@@ -1143,7 +1190,7 @@ public class TestBTreeManager extends TestCase {
         }
     }
 
-    void doDeleteAndScanThreads(final boolean testUnique, final boolean commit, final String k, final String loc) throws Exception {
+    void doDeleteAndScanThreads(final boolean testUnique, final boolean commit, final String k, final String loc, final ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
         try {
@@ -1162,7 +1209,7 @@ public class TestBTreeManager extends TestCase {
                         try {
                             System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
                             btree.delete(trx, key, location);
-                            Thread.sleep(15000);
+                            Thread.sleep(2000);
                             okay = true;
                         } finally {
                             if (okay && commit) {
@@ -1196,8 +1243,14 @@ public class TestBTreeManager extends TestCase {
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
                         try {
                             System.out.println("--> SCANNING TREE");
+                            int i = 0;
                             while (scan.fetchNext(trx)) {
                                 System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                            	if (result != null) {
+                            		assertEquals(result[i].getKey(), scan.getCurrentKey().toString());
+                            		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
+                            		i++;
+                            	}
                                 if (scan.isEof()) {
                                     break;
                                 }
@@ -1226,6 +1279,8 @@ public class TestBTreeManager extends TestCase {
             t2.join();
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
+            assertFalse(t1Failed);
+            assertFalse(t2Failed);
         } finally {
 			db.shutdown();
         }       
@@ -1511,33 +1566,143 @@ public class TestBTreeManager extends TestCase {
 	public void testDeleteInsert1() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-		doDeleteInsertThreads(false, true, "a1", "10");
+		doDeleteInsertThreads(false, true, "a1", "10", "org/simpledbm/rss/impl/im/btree/testDeleteInsert1_1.xml", "org/simpledbm/rss/impl/im/btree/testDeleteInsert1_2.xml");
 	}
 	
     public void testDeleteInsert2() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-		doDeleteInsertThreads(false, false, "a1", "10");
+		doDeleteInsertThreads(false, false, "a1", "10", "org/simpledbm/rss/impl/im/btree/testDeleteInsert1_1.xml", null);
 	}
 	
     public void testScan1() throws Exception {
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-        doScanTree(false, false, "a1", "10");
+        ScanResult[] scanResults = new ScanResult[] {
+        		new ScanResult("a1", "10"),
+        		new ScanResult("a2", "11"),
+        		new ScanResult("b1", "21"),
+        		new ScanResult("b2", "22"),
+        		new ScanResult("b3", "23"),
+        		new ScanResult("b4", "24"),
+        		new ScanResult("c1", "31"),
+        		new ScanResult("c2", "32"),
+        		new ScanResult("d1", "41"),
+        		new ScanResult("d2", "42"),
+        		new ScanResult("d3", "43"),
+        		new ScanResult("d4", "44"),
+        		new ScanResult("e1", "51"),
+        		new ScanResult("e2", "52"),
+        		new ScanResult("e3", "53"),
+        		new ScanResult("e4", "54"),
+        		new ScanResult("f1", "61"),
+        		new ScanResult("f2", "62"),
+        		new ScanResult("f3", "63"),
+        		new ScanResult("f4", "64"),
+        		new ScanResult("g1", "71"),
+        		new ScanResult("g2", "72"),
+        		new ScanResult("h1", "81"),
+        		new ScanResult("h2", "82"),
+        		new ScanResult("h3", "83"),
+        		new ScanResult("h4", "84"),
+        		new ScanResult("i1", "91"),
+        		new ScanResult("i2", "92"),
+        		new ScanResult("j1", "101"),
+        		new ScanResult("j2", "102"),
+        		new ScanResult("j3", "103"),
+        		new ScanResult("j4", "104"),
+        		new ScanResult("k1", "111"),
+        		new ScanResult("k2", "112"),
+        		new ScanResult("<INFINITY>", "999")
+        };
+        doScanTree(false, false, "a1", "10", scanResults);
     }
 
 	public void testScan2() throws Exception {
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
+        ScanResult[] scanResults = new ScanResult[] {
+        		new ScanResult("a1", "10"),
+        		new ScanResult("a2", "11"),
+        		new ScanResult("b1", "21"),
+        		new ScanResult("b2", "22"),
+        		new ScanResult("b3", "23"),
+        		new ScanResult("b4", "24"),
+        		new ScanResult("c1", "31"),
+        		new ScanResult("c2", "32"),
+        		new ScanResult("d1", "41"),
+        		new ScanResult("d2", "42"),
+        		new ScanResult("d3", "43"),
+        		new ScanResult("d4", "44"),
+        		new ScanResult("e1", "51"),
+        		new ScanResult("e2", "52"),
+        		new ScanResult("e3", "53"),
+        		new ScanResult("e4", "54"),
+        		new ScanResult("f1", "61"),
+        		new ScanResult("f2", "62"),
+        		new ScanResult("f3", "63"),
+        		new ScanResult("f4", "64"),
+        		new ScanResult("g1", "71"),
+        		new ScanResult("g2", "72"),
+        		new ScanResult("h1", "81"),
+        		new ScanResult("h2", "82"),
+        		new ScanResult("h3", "83"),
+        		new ScanResult("h4", "84"),
+        		new ScanResult("i1", "91"),
+        		new ScanResult("i2", "92"),
+        		new ScanResult("j1", "101"),
+        		new ScanResult("j2", "102"),
+        		new ScanResult("j3", "103"),
+        		new ScanResult("j4", "104"),
+        		new ScanResult("k1", "111"),
+        		new ScanResult("k2", "112"),
+        		new ScanResult("<INFINITY>", "999")
+        };
+        ScanResult[] scanResults2 = new ScanResult[] {
+        		new ScanResult("a1", "10"),
+        		new ScanResult("a2", "11"),
+        		new ScanResult("b1", "21"),
+        		new ScanResult("b2", "22"),
+        		new ScanResult("b3", "23"),
+        		new ScanResult("b4", "24"),
+        		new ScanResult("c1", "31"),
+        		new ScanResult("c2", "32"),
+        		new ScanResult("d1", "41"),
+        		new ScanResult("d2", "42"),
+        		new ScanResult("d3", "43"),
+        		new ScanResult("d4", "44"),
+        		new ScanResult("e1", "51"),
+        		new ScanResult("e2", "52"),
+        		new ScanResult("e3", "53"),
+        		new ScanResult("e4", "54"),
+        		new ScanResult("f1", "61"),
+        		new ScanResult("f2", "62"),
+        		new ScanResult("f4", "64"),
+        		new ScanResult("g1", "71"),
+        		new ScanResult("g2", "72"),
+        		new ScanResult("h1", "81"),
+        		new ScanResult("h2", "82"),
+        		new ScanResult("h3", "83"),
+        		new ScanResult("h4", "84"),
+        		new ScanResult("i1", "91"),
+        		new ScanResult("i2", "92"),
+        		new ScanResult("j1", "101"),
+        		new ScanResult("j2", "102"),
+        		new ScanResult("j3", "103"),
+        		new ScanResult("j4", "104"),
+        		new ScanResult("k1", "111"),
+        		new ScanResult("k2", "112"),
+        		new ScanResult("<INFINITY>", "999")
+        };
         doScanAndDelete(false, false, "a1", "10");
-        doScanTree(false, false, "a1", "10");
-        doDeleteAndScanThreads(false, true, "f3", "63");
+        doScanTree(false, false, "a1", "10", scanResults);
+        doDeleteAndScanThreads(false, true, "f3", "63", scanResults2);
     }
 
     public void testScan3() throws Exception {
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-        doDeleteAndScanThreads(false, false, "f3", "63");
+        doDeleteAndScanThreads(false, false, "f3", "63", null);
     }
 	
     public void testScan4() throws Exception {
@@ -1553,7 +1718,7 @@ public class TestBTreeManager extends TestCase {
     }
 
 	public void testScanAfterCrash() throws Exception {
-        doScanTree(false, false, "a1", "10");
+        doScanTree(false, false, "a1", "10", null);
     }
 	
     public static Test suite() {
