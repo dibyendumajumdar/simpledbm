@@ -1152,6 +1152,9 @@ public class TestBTreeManager extends TestCase {
 		}
     }
     
+    /**
+     * Scans the tree from a starting key to the eof.
+     */
     void doScanTree(boolean testUnique, boolean commit, String k, String loc, ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         try {
@@ -1190,6 +1193,13 @@ public class TestBTreeManager extends TestCase {
         }
     }
 
+    /**
+     * Starts two threads.
+     * First thread starts a delete on a key and then goes to sleep.
+     * Second thread scans the tree, and blocks when it reaches the deleted key.
+     * The delete thread resumes and commits the delete.
+     * This lets the scan thread continue and finish the scan.
+     */
     void doDeleteAndScanThreads(final boolean testUnique, final boolean commit, final String k, final String loc, final ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
