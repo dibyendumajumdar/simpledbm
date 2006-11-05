@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.impl.locking;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
@@ -27,6 +28,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
@@ -63,6 +65,11 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	private final int hashTableSize;
 
+	/**
+	 * List of lock event listeners
+	 */
+	private final ArrayList<LockEventListener> lockEventListeners = new ArrayList<LockEventListener>();
+	
 	/**
 	 * Defines the various lock release methods.
 	 * 
@@ -394,6 +401,7 @@ public final class LockManagerImpl implements LockManager {
 			r.thread = Thread.currentThread();
 		}
 		lockitem.unlock();
+		notifyLockEventListeners();
 		if (handle.timeout == -1) {
 			LockSupport.park();
 		} else {
@@ -701,6 +709,26 @@ public final class LockManagerImpl implements LockManager {
         return released;
 	}
 
+	public synchronized void addLockEventListener(LockEventListener listener) {
+		lockEventListeners.add(listener);
+	}
+	
+	public synchronized void clearLockEventListeners() {
+		lockEventListeners.clear();
+	}
+	
+	public void notifyLockEventListeners() {
+		for (LockEventListener listener: lockEventListeners) {
+			try {
+				listener.beforeLockWait();
+			}
+			catch (Exception e) {
+				// FIXME
+				e.printStackTrace();
+			}
+		}
+	}
+	
 	/**
 	 * Search for the specified lockable object.
 	 * Garbage collect any items that are no longer needed.
@@ -867,7 +895,7 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	static final class LockRequest {
 
-		LockRequestStatus status = LockRequestStatus.GRANTED;
+		volatile LockRequestStatus status = LockRequestStatus.GRANTED;
 
 		LockMode mode;
 
