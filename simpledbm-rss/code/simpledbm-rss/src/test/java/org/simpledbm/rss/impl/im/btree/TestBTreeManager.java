@@ -262,7 +262,7 @@ public class TestBTreeManager extends TestCase {
 		
 		try {
 	    	Transaction trx = db.trxmgr.begin();
-			db.spacemgr.createContainer(trx, "testctr.dat", 1, 1, 64, db.spmgr.getPageType());
+			db.spacemgr.createContainer(trx, "testctr.dat", 1, 1, 20, db.spmgr.getPageType());
 			trx.commit();
 		}
 		finally {
@@ -353,9 +353,9 @@ public class TestBTreeManager extends TestCase {
 				SlottedPage r = (SlottedPage) bab.getPage();
 				BTreeNode node = new BTreeNode(loadPageOp);
 				node.wrap(r);
-				System.out.println("Validating page ->");
+				//System.out.println("Validating page ->");
 				// node.dumpAsXml();
-				System.out.println("------------------");
+				//System.out.println("------------------");
 				assertEquals(node.header.keyCount, loadPageOp.items.size());
 				assertEquals(node.header.leftSibling, loadPageOp.leftSibling);
 				assertEquals(node.header.rightSibling, loadPageOp.rightSibling);
@@ -400,7 +400,7 @@ public class TestBTreeManager extends TestCase {
 		    	trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> SPLITTING PAGE");
+			    	//System.out.println("--> SPLITTING PAGE");
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
 		    		btree.doSplit(trx, bcursor);
 		    	}
@@ -430,7 +430,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-	    	System.out.println("--> BEFORE MERGE");
+	    	//System.out.println("--> BEFORE MERGE");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, l), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -457,7 +457,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> MERGING PAGE");
+			    	//System.out.println("--> MERGING PAGE");
 		    		btree.doMerge(trx, bcursor);
 		    	}
 		    	finally {
@@ -496,7 +496,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			System.out.println("--> BEFORE LINKING CHILD TO PARENT");
+			//System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -526,7 +526,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> LINKING CHILD TO PARENT");
+			    	//System.out.println("--> LINKING CHILD TO PARENT");
 		    		btree.doLink(trx, bcursor);
 		    	}
 		    	finally {
@@ -550,7 +550,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> DE-LINKING CHILD FROM PARENT");
+			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
 		    		btree.doUnlink(trx, bcursor);
 		    	}
 		    	finally {
@@ -577,7 +577,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			System.out.println("--> BEFORE LINKING CHILD TO PARENT");
+			//System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -607,7 +607,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> LINKING CHILD TO PARENT");
+			    	//System.out.println("--> LINKING CHILD TO PARENT");
 		    		btree.doLink(trx, bcursor);
 		    	}
 		    	finally {
@@ -642,7 +642,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> DE-LINKING CHILD FROM PARENT");
+			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
 		    		btree.doUnlink(trx, bcursor);
 		    	}
 		    	finally {
@@ -678,7 +678,7 @@ public class TestBTreeManager extends TestCase {
 		    	Transaction trx = db.trxmgr.begin();
 		    	boolean okay = false;
 		    	try {
-			    	System.out.println("--> DE-LINKING CHILD FROM PARENT");
+			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
 		    		btree.doUnlink(trx, bcursor);
 		    	}
 		    	finally {
@@ -705,7 +705,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-	    	System.out.println("--> BEFORE REDISTRIBUTING KEYS");
+	    	//System.out.println("--> BEFORE REDISTRIBUTING KEYS");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -733,7 +733,7 @@ public class TestBTreeManager extends TestCase {
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
-			    	System.out.println("--> REDISTRIBUTING KEYS");
+			    	//System.out.println("--> REDISTRIBUTING KEYS");
 		    		btree.doRedistribute(trx, bcursor);
 		    	}
 		    	finally {
@@ -758,7 +758,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-	    	System.out.println("--> BEFORE INCREASING TREE HEIGHT");
+	    	//System.out.println("--> BEFORE INCREASING TREE HEIGHT");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -786,7 +786,7 @@ public class TestBTreeManager extends TestCase {
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
-			    	System.out.println("--> INCREASING TREE HEIGHT");
+			    	//System.out.println("--> INCREASING TREE HEIGHT");
 		    		btree.doIncreaseTreeHeight(trx, bcursor);
 		    	}
 		    	finally {
@@ -811,7 +811,7 @@ public class TestBTreeManager extends TestCase {
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-	    	System.out.println("--> BEFORE DECREASING TREE HEIGHT");
+	    	//System.out.println("--> BEFORE DECREASING TREE HEIGHT");
 	    	BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, p), 0);
 	    	try {
 	    		BTreeNode node = btree.getBTreeNode();
@@ -839,7 +839,7 @@ public class TestBTreeManager extends TestCase {
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
-			    	System.out.println("--> DECREASING TREE HEIGHT");
+			    	//System.out.println("--> DECREASING TREE HEIGHT");
 		    		btree.doDecreaseTreeHeight(trx, bcursor);
 		    	}
 		    	finally {
@@ -876,7 +876,7 @@ public class TestBTreeManager extends TestCase {
 			Transaction trx = db.trxmgr.begin();
 			boolean okay = false;
 			try {
-				System.out.println("--> INSERTING KEY");
+				//System.out.println("--> INSERTING KEY");
 				btree.insert(trx, key, location);
 				if (commitresult != null) {
 					doValidateTree(db, commitresult);
@@ -884,14 +884,14 @@ public class TestBTreeManager extends TestCase {
 				okay = true;
 			} finally {
 				if (okay && commit) {
-					System.out.println("--> COMMITTING INSERT");
+					//System.out.println("--> COMMITTING INSERT");
 					trx.commit();
 					if (commitresult != null) {
 						doValidateTree(db, commitresult);
 					}
 				}
 				else {
-					System.out.println("--> ABORTING INSERT");
+					//System.out.println("--> ABORTING INSERT");
 					trx.abort();
 					if (abortresult != null) {
 						doValidateTree(db, abortresult);
@@ -919,7 +919,7 @@ public class TestBTreeManager extends TestCase {
 			Transaction trx1 = db.trxmgr.begin();
 			boolean okay1 = false;
 			try {
-				System.out.println("--> INSERTING KEY 1");
+				//System.out.println("--> INSERTING KEY 1");
 				btree.insert(trx1, key1, location1);
 				doValidateTree(db, result1);
 				okay1 = true;
@@ -932,28 +932,28 @@ public class TestBTreeManager extends TestCase {
 				boolean okay2 = false;
 
 				try {
-					System.out.println("--> INSERTING KEY 2");
+					//System.out.println("--> INSERTING KEY 2");
 					btree.insert(trx2, key2, location2);
 					doValidateTree(db, result2);
 					okay2 = true;
 				}
 				finally {
 					if (okay2 && commit2) {
-						System.out.println("--> COMMITTING KEY 2");
+						//System.out.println("--> COMMITTING KEY 2");
 						trx2.commit();
 					}
 					else {
-						System.out.println("--> ABORTING KEY 2");
+						//System.out.println("--> ABORTING KEY 2");
 						trx2.abort();
 					}
 				}
 			} finally {
 				if (okay1 && commit1) {
-					System.out.println("--> COMMITTING KEY 1");
+					//System.out.println("--> COMMITTING KEY 1");
 					trx1.commit();
 				}
 				else {
-					System.out.println("--> ABORTING KEY 1");
+					//System.out.println("--> ABORTING KEY 1");
 					trx1.abort();
 					doValidateTree(db, result3);
 				}
@@ -977,7 +977,7 @@ public class TestBTreeManager extends TestCase {
 			Transaction trx = db.trxmgr.begin();
 			boolean okay = false;
 			try {
-				System.out.println("--> DELETING KEY");
+				//System.out.println("--> DELETING KEY");
 				btree.delete(trx, key, location);
 				okay = true;
 			} finally {
@@ -1019,7 +1019,7 @@ public class TestBTreeManager extends TestCase {
 						Transaction trx = db.trxmgr.begin();
 						boolean okay = false;
 						try {
-							System.out.println("--> DELETING KEY");
+							//System.out.println("--> DELETING KEY");
 							btree.delete(trx, key, location);
 							if (deleteResult != null)
 								doValidateTree(db, deleteResult);
@@ -1052,13 +1052,13 @@ public class TestBTreeManager extends TestCase {
 						Transaction trx = db.trxmgr.begin();
 						boolean okay = false;
 						try {
-							System.out.println("--> INSERTING KEY");
+							//System.out.println("--> INSERTING KEY");
 							btree.insert(trx, key, location);
 							if (insertResult != null)
 								doValidateTree(db, insertResult);
 							okay = true;
 							if (commitDelete) {
-								System.out.println("Setting t2Failed to false");
+								//System.out.println("Setting t2Failed to false");
 								t2Failed = false;
 							}
 						} finally {
@@ -1108,15 +1108,15 @@ public class TestBTreeManager extends TestCase {
             boolean okay = false;
             IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
             try {
-                System.out.println("--> SCANNING TREE");
+                //System.out.println("--> SCANNING TREE");
                 while (scan.fetchNext(trx)) {
-                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+                	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 	// System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	trx.acquireLock(scan.getCurrentLocation(), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
                 	if (scan.isEof()) {
                 		break;
                 	}
-                	System.out.println("DELETING=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                	//System.out.println("DELETING=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	btree.delete(trx, scan.getCurrentKey(), scan.getCurrentLocation());
                 }
             } finally {
@@ -1174,7 +1174,7 @@ public class TestBTreeManager extends TestCase {
             boolean okay = false;
             IndexScan scan = btree.openScan(key, location, LockMode.SHARED);
             try {
-                System.out.println("--> SCANNING TREE {");
+                //System.out.println("--> SCANNING TREE {");
                 int i = 0;
                 while (scan.fetchNext(trx)) {
                 	if (result != null) {
@@ -1182,7 +1182,7 @@ public class TestBTreeManager extends TestCase {
                 		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
                 		i++;
                 	}
-                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+                	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 }
             } finally {
                 scan.close();
@@ -1213,7 +1213,7 @@ public class TestBTreeManager extends TestCase {
         final LockEventListener listener = new LockEventListener() {
 			public void beforeLockWait() {
 				// TODO Auto-generated method stub
-				System.out.println("LOCK WAIT STARTED");
+				//System.out.println("LOCK WAIT STARTED");
 				lock.lock();
 				lockWaitStarted.signal();
 				lock.unlock();
@@ -1233,23 +1233,23 @@ public class TestBTreeManager extends TestCase {
                         Transaction trx = db.trxmgr.begin();
                         boolean okay = false;
                         try {
-                            System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
+                            //System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
                             btree.delete(trx, key, location);
                             lock.lock();
                             deleted.signal();
-                            System.out.println("Awaiting lockWaitStarted");
+                            //System.out.println("Awaiting lockWaitStarted");
                             lockWaitStarted.await();
-                            System.out.println("Received lockWaitStarted signal");
+                            //System.out.println("Received lockWaitStarted signal");
                             lock.unlock();
                             //Thread.sleep(5000);
                             okay = true;
                         } finally {
                             if (okay && commit) {
-                                System.out.println("--> COMMITTING DELETE OF KEY [" + k + "," + loc + "]");
+                                //System.out.println("--> COMMITTING DELETE OF KEY [" + k + "," + loc + "]");
                                 trx.commit();
                             }
                             else {
-                                System.out.println("--> ABORTING DELETE OF KEY [" + k + "," + loc + "]");
+                                //System.out.println("--> ABORTING DELETE OF KEY [" + k + "," + loc + "]");
                                 trx.abort();
                             }
                         }
@@ -1275,10 +1275,11 @@ public class TestBTreeManager extends TestCase {
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
                         db.lockmgr.addLockEventListener(listener);
                         try {
-                            System.out.println("--> SCANNING TREE");
+                            //System.out.println("--> SCANNING TREE");
                             int i = 0;
                             while (scan.fetchNext(trx)) {
-                                System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                                //System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+                            	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                             	if (result != null) {
                             		assertEquals(result[i].getKey(), scan.getCurrentKey().toString());
                             		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
@@ -1324,16 +1325,15 @@ public class TestBTreeManager extends TestCase {
         }       
     }
 
-    void doScanAndDeleteThreads(final boolean testUnique, final boolean commit, final String k, final String loc) throws Exception {
+    void doScanAndDeleteThreads(final boolean testUnique, final boolean commit, final String k, final String loc, final ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
         final Lock lock = new ReentrantLock();
-        final Condition scanLockedRow = lock.newCondition();
         final Condition lockWaitStarted = lock.newCondition();
         final LockEventListener listener = new LockEventListener() {
 			public void beforeLockWait() {
 				// TODO Auto-generated method stub
-				System.out.println("LOCK WAIT STARTED");
+				//System.out.println("LOCK WAIT STARTED");
 				lock.lock();
 				lockWaitStarted.signal();
 				lock.unlock();
@@ -1353,7 +1353,7 @@ public class TestBTreeManager extends TestCase {
                         Transaction trx = db.trxmgr.begin();
                         boolean okay = false;
                         try {
-                            System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
+                            //System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
                             db.lockmgr.addLockEventListener(listener);
                             trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
                             btree.delete(trx, key, location);
@@ -1361,11 +1361,11 @@ public class TestBTreeManager extends TestCase {
                         } finally {
                         	db.lockmgr.clearLockEventListeners();
                             if (okay && commit) {
-                                System.out.println("--> COMMITTING DELETE OF KEY [" + k + "," + loc + "]");
+                                //System.out.println("--> COMMITTING DELETE OF KEY [" + k + "," + loc + "]");
                                 trx.commit();
                             }
                             else {
-                                System.out.println("--> ABORTING DELETE OF KEY [" + k + "," + loc + "]");
+                                //System.out.println("--> ABORTING DELETE OF KEY [" + k + "," + loc + "]");
                                 trx.abort();
                             }
                         }
@@ -1392,10 +1392,17 @@ public class TestBTreeManager extends TestCase {
                         boolean okay = false;
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
                         try {
-                            System.out.println("--> SCANNING TREE");
+                            //System.out.println("--> SCANNING TREE");
+                            int i = 0;
                             while (scan.fetchNext(trx)) {
-                                System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
-                                System.out.println("Comparing " + scan.getCurrentKey() + " with " + delkey);
+                            	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+//                                System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+//                                System.out.println("Comparing " + scan.getCurrentKey() + " with " + delkey);
+                            	if (result != null) {
+                            		assertEquals(result[i].getKey(), scan.getCurrentKey().toString());
+                            		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
+                            		i++;
+                            	}
                                 if (scan.getCurrentKey().equals(delkey)) {
                                 	lock.lock();
                                 	lockWaitStarted.await();
@@ -1489,7 +1496,7 @@ public class TestBTreeManager extends TestCase {
 	}
 	
 	public void testRestartAndLinkAgain() throws Exception {
-    	System.out.println("--> PREPARING PARENT");
+    	//System.out.println("--> PREPARING PARENT");
     	doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
 		doRestartAndLink(false, true);
 	}
@@ -1755,25 +1762,94 @@ public class TestBTreeManager extends TestCase {
     }
 
     public void testScan3() throws Exception {
+        ScanResult[] scanResults = new ScanResult[] {
+				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
+				new ScanResult("<INFINITY>", "999") };  	
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-        doDeleteAndScanThreads(false, false, "f3", "63", null);
+        doDeleteAndScanThreads(false, false, "f3", "63", scanResults);
     }
 	
     public void testScan4() throws Exception {
+        ScanResult[] scanResults = new ScanResult[] {
+				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
+				new ScanResult("<INFINITY>", "999") };  	
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
-        doScanAndDeleteThreads(false, false, "f3", "63");
+        doScanAndDeleteThreads(false, false, "f3", "63", scanResults);
     }
 
+    /**
+     * This test scans and deletes all keys from the BTree as a single transaction.
+     * It completes without committing or aborting the transaction.
+     * At next restart, the expected behaviour is that the tree will
+     * be restored because the delete transaction will be rolled back.
+     * <p>This test must be followed by {@link #testScanAfterCrash()}.
+     * @throws Exception
+     */
 	public void testScanDeleteCrash() throws Exception {
         doInitContainer();
         doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
         doScanAndDelete(false, false, "a1", "10");
     }
 
+	/**
+	 * This test must be run after {@link #testScanDeleteCrash()}.
+	 * It verifies that the BTree has been restored after system restart.
+	 */
 	public void testScanAfterCrash() throws Exception {
-        doScanTree(false, false, "a1", "10", null);
+        ScanResult[] scanResults = new ScanResult[] {
+				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
+				new ScanResult("<INFINITY>", "999") };
+        doScanTree(false, false, "a1", "10", scanResults);
     }
 	
     public static Test suite() {
