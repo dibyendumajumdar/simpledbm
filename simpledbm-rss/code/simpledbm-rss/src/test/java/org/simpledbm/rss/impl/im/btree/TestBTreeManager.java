@@ -42,7 +42,6 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockEventListener;
-import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
@@ -1328,8 +1327,20 @@ public class TestBTreeManager extends TestCase {
     void doScanAndDeleteThreads(final boolean testUnique, final boolean commit, final String k, final String loc) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
+        final Lock lock = new ReentrantLock();
+        final Condition scanLockedRow = lock.newCondition();
+        final Condition lockWaitStarted = lock.newCondition();
+        final LockEventListener listener = new LockEventListener() {
+			public void beforeLockWait() {
+				// TODO Auto-generated method stub
+				System.out.println("LOCK WAIT STARTED");
+				lock.lock();
+				lockWaitStarted.signal();
+				lock.unlock();
+			}
+        };
         try {
-            Thread t1 = new Thread(new Runnable() {
+            final Thread t1 = new Thread(new Runnable() {
                 public void run() {
                     try {
                         final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
@@ -1343,10 +1354,12 @@ public class TestBTreeManager extends TestCase {
                         boolean okay = false;
                         try {
                             System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
+                            db.lockmgr.addLockEventListener(listener);
                             trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
                             btree.delete(trx, key, location);
                             okay = true;
                         } finally {
+                        	db.lockmgr.clearLockEventListeners();
                             if (okay && commit) {
                                 System.out.println("--> COMMITTING DELETE OF KEY [" + k + "," + loc + "]");
                                 trx.commit();
@@ -1384,9 +1397,12 @@ public class TestBTreeManager extends TestCase {
                                 System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                                 System.out.println("Comparing " + scan.getCurrentKey() + " with " + delkey);
                                 if (scan.getCurrentKey().equals(delkey)) {
-                                    System.out.println("--> SCAN Sleeping for 15 seconds");
-                                    Thread.sleep(15000);
-                                    System.out.println("--> SCAN Sleep completed");
+                                	lock.lock();
+                                	lockWaitStarted.await();
+                                	lock.unlock();
+//                                    System.out.println("--> SCAN Sleeping for 15 seconds");
+//                                    Thread.sleep(15000);
+//                                    System.out.println("--> SCAN Sleep completed");
                                 }
                                 if (scan.isEof()) {
                                     break;
