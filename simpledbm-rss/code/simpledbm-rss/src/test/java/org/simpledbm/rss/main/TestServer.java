@@ -2,8 +2,6 @@ package org.simpledbm.rss.main;
 
 import java.util.Properties;
 
-import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
-
 import junit.framework.TestCase;
 
 public class TestServer extends TestCase {
@@ -23,7 +21,7 @@ public class TestServer extends TestCase {
 		properties.setProperty("log.buffer.size", "65536");
 		properties.setProperty("log.buffer.limit", "4");
 		properties.setProperty("log.flush.interval", "30");
-		properties.setProperty(FileStorageContainerFactory.BASE_PATH, "/temp/test");
+		properties.setProperty("storage.basePath", "testdata/TestServer");
 
 		Server.create(properties);
 	}
