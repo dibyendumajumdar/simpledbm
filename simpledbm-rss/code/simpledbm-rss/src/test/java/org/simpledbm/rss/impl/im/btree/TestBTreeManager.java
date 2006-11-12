@@ -19,9 +19,14 @@
  */
 package org.simpledbm.rss.impl.im.btree;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Properties;
+import java.util.StringTokenizer;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -33,6 +38,7 @@ import junit.framework.TestSuite;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
+import org.simpledbm.rss.api.im.Index;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
@@ -79,6 +85,7 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
+import org.simpledbm.rss.util.ClassUtils;
 
 public class TestBTreeManager extends TestCase {
 
@@ -269,6 +276,82 @@ public class TestBTreeManager extends TestCase {
 			db.shutdown();
 		}		
 	}
+	
+	void doInitContainer2() throws Exception {
+		final BTreeDB db = new BTreeDB(true);
+		
+		try {
+	    	Transaction trx = db.trxmgr.begin();
+	    	db.btreeMgr.createIndex(trx, "testctr.dat", 1, 20, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, true);
+			trx.commit();
+		}
+		finally {
+			db.shutdown();
+		}		
+		
+	}
+	
+	void doLoadData(ScanResult[] results) throws Exception {
+
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			for (int i = 0; i < results.length; i++) {
+				IndexKey key = keyFactory.newIndexKey(1);
+				key.parseString(results[i].getKey());
+				Location location = locationFactory.newLocation();
+				location.parseString(results[i].getLocation());
+
+				Transaction trx = db.trxmgr.begin();
+				index.insert(trx, key, location);
+				trx.commit();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+
+	void doLoadData(String filename) throws Exception {
+
+		BufferedReader reader = new BufferedReader(new InputStreamReader(ClassUtils.getResourceAsStream(filename)));
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			String line = reader.readLine();
+			while (line != null) {
+				StringTokenizer st = new StringTokenizer(line, " ");
+				
+				IndexKey key = keyFactory.newIndexKey(1);
+				Location location = locationFactory.newLocation();
+				String k = st.nextToken();
+				key.parseString(k);
+				String l = st.nextToken();
+				location.parseString(l);
+
+				Transaction trx = db.trxmgr.begin();
+				System.out.println("Inserting (" + key + ", " + location + ")");
+				index.insert(trx, key, location);
+				trx.commit();
+				line = reader.readLine();
+			}
+		} finally {
+			reader.close();
+			db.shutdown();
+		}
+	}
+	
 	
 	/**
 	 * Initialize data pages by loading data from specified XML resource.
@@ -1198,12 +1281,117 @@ public class TestBTreeManager extends TestCase {
     }
 
     /**
-     * Starts two threads.
-     * First thread starts a delete on a key and then goes to sleep.
-     * Second thread scans the tree, and blocks when it reaches the deleted key.
-     * The delete thread resumes and commits the delete.
-     * This lets the scan thread continue and finish the scan.
+     * Scans the tree from a starting key to the eof.
      */
+    void doScanTree(String filename) throws Exception {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				ClassUtils.getResourceAsStream(filename)));
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			String line = reader.readLine();
+			IndexScan scan = null;
+			Transaction trx = db.trxmgr.begin();
+			try {
+				while (line != null) {
+					StringTokenizer st = new StringTokenizer(line, " ");
+
+					IndexKey key = keyFactory.newIndexKey(1);
+					Location location = locationFactory.newLocation();
+					String k = st.nextToken();
+					key.parseString(k);
+					String l = st.nextToken();
+					location.parseString(l);
+
+					if (scan == null) {
+						scan = index.openScan(key, location, LockMode.SHARED);
+					}
+					if (scan.fetchNext(trx)) {
+	                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+						assertEquals(key.toString(), scan.getCurrentKey().toString());
+						assertEquals(location.toString(), scan.getCurrentLocation()
+								.toString());
+					} 
+					else {
+						fail("Scan for next key failed at (" + key + ", " + location + ")");
+					}
+					line = reader.readLine();
+				}
+			} finally {
+				if (scan != null) {
+					scan.close();
+				}
+				trx.abort();
+			}
+		} finally {
+			reader.close();
+			db.shutdown();
+		}
+	}
+
+    /**
+     * Scans the tree from a starting key to the eof.
+     */
+    void doFindInTree(String filename) throws Exception {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				ClassUtils.getResourceAsStream(filename)));
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			String line = reader.readLine();
+			Transaction trx = db.trxmgr.begin();
+			try {
+				while (line != null) {
+					StringTokenizer st = new StringTokenizer(line, " ");
+
+					IndexKey key = keyFactory.newIndexKey(1);
+					Location location = locationFactory.newLocation();
+					String k = st.nextToken();
+					key.parseString(k);
+					String l = st.nextToken();
+					location.parseString(l);
+
+					IndexScan scan = index.openScan(key, location, LockMode.SHARED);
+					if (scan.fetchNext(trx)) {
+	                	System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+						assertEquals(key.toString(), scan.getCurrentKey().toString());
+						assertEquals(location.toString(), scan.getCurrentLocation()
+								.toString());
+					} 
+					else {
+						fail("Find failed for (" + key + ", " + location + ")");
+					}
+					scan.close();
+					line = reader.readLine();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			reader.close();
+			db.shutdown();
+		}
+	}
+
+    
+    /**
+	 * Starts two threads. First thread starts a delete on a key and then goes
+	 * to sleep. Second thread scans the tree, and blocks when it reaches the
+	 * deleted key. The delete thread resumes and commits the delete. This lets
+	 * the scan thread continue and finish the scan.
+	 */
     void doDeleteAndScanThreads(final boolean testUnique, final boolean commit, final String k, final String loc, final ScanResult[] result) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
         final boolean testingUniqueIndex = testUnique;
@@ -1851,6 +2039,66 @@ public class TestBTreeManager extends TestCase {
 				new ScanResult("<INFINITY>", "999") };
         doScanTree(false, false, "a1", "10", scanResults);
     }
+
+	/**
+	 * This test loads a set of sorted data, and then scans the tree to verify
+	 * that the tree contains the data in the same sort order.
+	 */
+	public void testInsertInOrder() throws Exception {
+        ScanResult[] inserts = new ScanResult[] {
+				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+				new ScanResult("k1", "111"), new ScanResult("k2", "112") };
+        ScanResult[] scanResults = new ScanResult[] {
+				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
+				new ScanResult("<INFINITY>", "0") };
+        doInitContainer2();
+        doLoadData(inserts);
+        doScanTree(true, false, "a1", "10", scanResults);
+    }
+
+	/**
+	 * This test loads a set of sorted data from a file.
+	 * Scans the tree and verifies that the scan order matches the sort order in the file.
+	 * It then does a find for each key and verifies that all finds succeed.
+	 * The data set is large enough to cause the container to be extended.
+	 */
+	public void testInsertInOrderFromFile() throws Exception {
+        doInitContainer2();
+        doLoadData("org/simpledbm/rss/impl/im/btree/data1.txt");
+        doScanTree("org/simpledbm/rss/impl/im/btree/data1.txt");
+        doFindInTree("org/simpledbm/rss/impl/im/btree/data1.txt");
+    }
 	
     public static Test suite() {
         TestSuite suite = new TestSuite();
@@ -1888,6 +2136,8 @@ public class TestBTreeManager extends TestCase {
         suite.addTest(new TestBTreeManager("testScan4"));
         suite.addTest(new TestBTreeManager("testScanDeleteCrash", true));
         suite.addTest(new TestBTreeManager("testScanAfterCrash", true));
+        suite.addTest(new TestBTreeManager("testInsertInOrder"));
+        suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
         return suite;
     }
 
