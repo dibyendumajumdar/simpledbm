@@ -2,7 +2,7 @@
 \title{SimpleDBM Developer's Reference Manual}
 \author{Dibyendu Majumdar\\
 dibyendu@mazumdar.demon.co.uk\\
-Copyright \copyright 2005}
+Copyright \copyright 2005, 2006}
 \date{Revised \today}
 \begin{document}
 \maketitle
@@ -49,23 +49,80 @@ SimpleDBM is being built in Java 5.0 and will use new features such
 as \verb|java.util.concurrent| package and Generics. SimpleDBM will
 not be compatible with previous versions of Java.
 
-\section{Obtaining SimpleDBM}
-\subsection{Download source code}
-Download the source code for SimpleDBM from
-http://www.simpledbm.org. Extract the source into a directory. This
-directory will be referred to as the \verb|${simpledbm.home}|
-directory in the rest of this document.
+\section{Building SimpleDBM}
 
-\subsection{Eclipse 3.1}
-Download a binary distribution of Eclipse 3.1 from
-http://www.eclipse.org. At present Eclipse is used to build
-SimpleDBM, but you can also use the Netbeans IDE. Make sure that
-Eclipse is setup to use J2SE 5.0 JRE, otherwise, SimpleDBM code will
-not compile.
+\subsection{Download required software}
+\subsubsection{J2SE 5.0 SDK or above}
+SimpleDBM requires J2SE 5.0 or above. Download JDK from
+	\verb|http://java.sun.com/j2se| and install it on your machine.
+	
+\subsubsection{Maven}
+Download Maven 2 from \verb|http://maven.apache.org/| and install it.
 
-\subsection{Create project in Eclipse}
-Create a Java project in Eclipse, and set the project directory to
-\verb|${simpledbm.home}|. Eclipse should do the rest.
+\subsubsection{Eclipse}
+Download a binary distribution of Eclipse 3.2 from \verb|http://www.eclipse.org|.
+
+Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
+SimpleDBM code will not compile. 
+
+\subsection{Configure Eclipse}
+Create a new classpath variable named \verb|M2_REPO| inside
+Eclipse. From the menu bar, select Window \verb|>| Preferences. Select the Java
+\verb|>| Build Path \verb|>| Classpath Variables page.
+
+This variable should contain the path to your local Maven 2
+repository. Usually this is under \verb|<Your Home Directory>/.m2/repository|.
+
+\subsection{Checkout SimpleDBM code}
+\begin{enumerate}
+\item Create a new SVN repository location in Eclipse \linebreak
+ \verb|http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code|.
+ If you are a committer, use https instead of http.
+\item Checkout the folder simpledbm-rss as a project in the
+	workspace.
+\item Start a command shell. Cd to the project directory.
+\item Run \verb|mvn eclipse:clean|, followed by \verb|mvn	eclipse:eclipse|.
+\item Switch back to Eclipse and refresh the project. It should now
+	have a J against the project showing that it is a Java project. Eclipse
+	is now setup to automatically rebuild SimpleDBM whenever you change any
+	code.
+\item You can also build the SimpleDBM package using the Maven
+	command line. From the project home directory, execute \verb|mvn package|.
+\end{enumerate}
+
+\subsection{Test Code Coverage}
+I use Clover Code Coverage tool to analyse the coverage of unit test cases.
+
+\subsubsection{Installing Clover plug-in in Eclipse}
+The Clover plugin for Eclipse can be downloaded from the Clover
+	website \verb|http://www.cenqua.com/clover/|. After
+downloading, extract the zip file and place contents in your Eclipse
+plugins folder. You will need to separately download and install a
+license file in the top-level Clover plugin directory. Restart Eclipse
+to enable Clover.
+
+Open the Project Properties window, and navigate to the Clover
+tab. Click Enable Clover plugin in this project. Click on the
+Compilation tab. Enable Fork compiler into separate JVM. Enter the Java
+5.0 JDK installation directory in the \verb|JDK_HOME| field, and set the Heap
+size of the compiler JVM to 64 MB.
+
+In the Clover View, select SimpleDBM project, and click on the
+button Toggle Compiling with Clover. Now when you build SimpleDBM or run
+any of the unit tests, Clover will automatically produce coverage data.
+
+\subsubsection{Clover support in Maven builds}
+The SimpleDBM Maven build script is already configured for
+Clover. You must save the Clover license file to
+\verb|src/test/clover/clover.license| prior to executing mvn.
+
+To build SimpleDBM with Clover enabled, and to produce a coverage
+report, run:
+\begin{verbatim}
+mvn clover:instrument clover:clover
+\end{verbatim}
+
+The report will be produced in the folder \verb|target/site/clover|.
 
 \chapter{Coding and Design Principles}
 \section{Modular design}
@@ -153,15 +210,15 @@ components listed in the table given below.
 \begin{tabular}{|l|p{6cm}|}
 \hline \textbf{Package}&
 \textbf{Description} \\
-\hline \verb|org.simpledbm.common.registry|&
+\hline \verb|org.simpledbm.rss.api.registry|&
 The Object Registry subsystem is responsible for constructing objects based upon type information.  \\
-\hline \verb|org.simpledbm.rss.io|&
+\hline \verb|org.simpledbm.rss.api.st|&
 The Storage Manager subsystem provides an abstraction layer for disk input/output.  \\
-\hline \verb|org.simpledbm.common.latch|&
+\hline \verb|org.simpledbm.rss.api.latch|&
 Latches are efficient locks used to manage mutual exclusion between threads.  \\
-\hline \verb|org.simpledbm.rss.log|&
+\hline \verb|org.simpledbm.rss.api.wal|&
 The Write Ahead Log is used to record changes being made to the database for recovery purposes. \\
-\hline \verb|org.simpledbm.rss.locking|&
+\hline \verb|org.simpledbm.rss.api.locking|&
 The Lock Manager subsystem provides facilities for managing table and row level locks. \\
 \hline \verb|org.simpledbm.rss.pm|&
 The Page Manager subsystem defines the Page size and manages mapping of pages to the storage subsystem. \\
@@ -187,7 +244,7 @@ Tuple Manager module is responsible for handling tuples, which are like table ro
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.common.registry| & \verb|org.simpledbm.common.registry.impl| \\
+ \verb|org.simpledbm.rss.api.registry| & \verb|org.simpledbm.common.registry.impl| \\
 \hline
 \end{tabular}
 
@@ -259,7 +316,7 @@ class MyObject implements ObjectFactoryAware {
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.io| & \verb|org.simpledbm.rss.io.impl| \\
+ \verb|org.simpledbm.rss.api.st| & \verb|org.simpledbm.rss.io.impl| \\
 \hline
 \end{tabular}
 
@@ -294,7 +351,7 @@ system. Integer identifiers are better, especially when other
 objects need to refer to specific containers. Integers take less
 amount of storage, and also remove the dependency between the
 container's name and the rest of the system. To support this
-requirement, the \verb|org.simpledbm.rss.io.StorageManager|
+requirement, the \verb|org.simpledbm.rss.api.st.StorageManager|
 interface is provided, which maintains a mapping of
 StorageContainers to integer identifiers. Note that the Storage
 sub-system does not decide how to map the containers to ids; it
@@ -329,7 +386,7 @@ manner, it cannot be optimised for space. In contrast, SimpleDBM can
 use the 2-byte short integer type code used in the Object Registry
 module to efficiently store type information.
 
-SimpleDBM provides the \verb|org.simpledbm.rss.io.Storable|
+SimpleDBM provides the \verb|org.simpledbm.rss.api.st.Storable|
 interface as a substitute for \verb|java.io.Serializable| interface.
 \verb|Storable| interface requires the object to be able to predict
 its stored size in bytes via the \verb|getStoredLength()| method. It
@@ -342,7 +399,7 @@ also requires the object to be able to stream itself to a
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.common.latch| & \verb|org.simpledbm.common.latch.impl| \\
+ \verb|org.simpledbm.rss.api.latch| & \verb|org.simpledbm.common.latch.impl| \\
 \hline
 \end{tabular}
 
@@ -739,7 +796,7 @@ then the checkpointLsn should be set to the first checkpoint record.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.locking| & \verb|org.simpledbm.rss.locking.impl| \\
+ \verb|org.simpledbm.rss.api.locking| & \verb|org.simpledbm.rss.locking.impl| \\
 \hline
 \end{tabular}
 
