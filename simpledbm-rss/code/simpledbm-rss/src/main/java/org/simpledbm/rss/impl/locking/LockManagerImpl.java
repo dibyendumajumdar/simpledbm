@@ -20,13 +20,17 @@
 package org.simpledbm.rss.impl.locking;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockException;
@@ -34,6 +38,7 @@ import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
+import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -69,6 +74,11 @@ public final class LockManagerImpl implements LockManager {
 	 * List of lock event listeners
 	 */
 	private final ArrayList<LockEventListener> lockEventListeners = new ArrayList<LockEventListener>();
+	
+	private final Map<Object, LockWaiter> waiters = Collections.synchronizedMap(new HashMap<Object, LockWaiter>());
+	
+	//FIXME
+	private final Latch globalLock = new ReadWriteUpdateLatch(); 
 	
 	/**
 	 * Defines the various lock release methods.
@@ -135,13 +145,20 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout) throws LockException {
 
-		LockHandleImpl handle = doAcquire(owner, target, mode, duration, timeout);
-		if (duration == LockDuration.INSTANT_DURATION && handle.getStatus() == LockStatus.GRANTED) {
-			/*
-			 * Handle the case where the lock was granted after a wait.
-			 */
-            // System.err.println("Releasing instant lock " + handle);
-			handle.release(false);
+		globalLock.sharedLock();
+		LockHandleImpl handle = null;
+		try {
+			handle = doAcquire(owner, target, mode, duration, timeout);
+			if (duration == LockDuration.INSTANT_DURATION
+					&& handle.getStatus() == LockStatus.GRANTED) {
+				/*
+				 * Handle the case where the lock was granted after a wait.
+				 */
+				// System.err.println("Releasing instant lock " + handle);
+				handle.release(false);
+			}
+		} finally {
+			globalLock.unlockShared();
 		}
 		return handle;
 	}
@@ -215,7 +232,7 @@ public final class LockManagerImpl implements LockManager {
 				r = null;
 				if (duration != LockDuration.INSTANT_DURATION) {
 					lockitem = new LockItem(target, mode);
-					r = new LockRequest(owner, mode, duration);
+					r = new LockRequest(lockitem, owner, mode, duration);
 					lockitem.queueAppend(r);
 					chainAppend(h, lockitem);
                     return handle.setStatus(r, LockStatus.GRANTED);
@@ -265,7 +282,7 @@ public final class LockManagerImpl implements LockManager {
 				}
 
 				/* Allocate new lock request */
-				r = new LockRequest(owner, mode, duration);
+				r = new LockRequest(lockitem, owner, mode, duration);
 				lockitem.queueAppend(r);
 
 				if (can_grant) {
@@ -402,11 +419,17 @@ public final class LockManagerImpl implements LockManager {
 		}
 		lockitem.unlock();
 		notifyLockEventListeners();
+		LockWaiter waiter = new LockWaiter(r, Thread.currentThread());
+		System.out.println("Adding " + r + " to list of waiters");
+		waiters.put(r.owner, waiter);
+		globalLock.unlockShared();
 		if (handle.timeout == -1) {
 			LockSupport.park();
 		} else {
 			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(handle.timeout, TimeUnit.SECONDS));
 		}
+		globalLock.sharedLock();
+		waiters.remove(r.owner);
 		chainLock(h);
 		lockitem.lock();
 		chainUnlock(h);
@@ -506,6 +529,15 @@ public final class LockManagerImpl implements LockManager {
 	 * </p>
 	 */
 	boolean doRelease(LockHandle handle, ReleaseAction action, LockMode downgradeMode) throws LockException {
+		globalLock.sharedLock();
+		try {
+			return doReleaseInternal(handle, action, downgradeMode);
+		}
+		finally {
+			globalLock.unlockShared();
+		}
+	}
+	boolean doReleaseInternal(LockHandle handle, ReleaseAction action, LockMode downgradeMode) throws LockException {
 		LockRequest r = null;
 		boolean converting = false;
 		LockHandleImpl handleImpl = (LockHandleImpl) handle;
@@ -729,6 +761,55 @@ public final class LockManagerImpl implements LockManager {
 		}
 	}
 	
+	private void visit(LockWaiter me) {
+		if (me.visited) {
+			return;
+		}
+		else {
+			me.visited = true;
+		}
+		LockWaiter him;
+		for (LockRequest them : me.waitingFor.lockItem.queue) {
+			if (them.owner != me.waitingFor.owner) {
+				if (!them.mode.isCompatible(me.waitingFor.mode) || them.status != LockRequestStatus.GRANTED) {
+					System.out.println("Them = " + them);
+					him = waiters.get(them.owner);
+					me.cycle = him;
+					if (him.cycle != null) {
+						System.out.println("DEADLOCK DETECTED: " + him.waitingFor + " waiting for " + me.waitingFor);
+						System.out.println("HIM : " + him.waitingFor.lockItem);
+						System.out.println("ME : " + me.waitingFor.lockItem);
+						LockSupport.unpark(me.thread);
+					}
+					else {
+						visit(him);
+					}
+					me.cycle = null;
+				}
+			}
+			else {
+				break;
+			}
+		}
+	}
+	
+	public void detectDeadlocks() {
+		globalLock.exclusiveLock();
+		try {
+			LockWaiter[] waiterArray = waiters.values().toArray(new LockWaiter[0]);
+			for (LockWaiter waiter: waiterArray) {
+				waiter.cycle = null;
+				waiter.visited = false;
+			}
+			for (LockWaiter waiter: waiterArray) {
+				visit(waiter);
+			}
+		}
+		finally {
+			globalLock.unlockExclusive();
+		}
+	}
+	
 	/**
 	 * Search for the specified lockable object.
 	 * Garbage collect any items that are no longer needed.
@@ -910,10 +991,13 @@ public final class LockManagerImpl implements LockManager {
 		final int lockPos = 0;
 
 		final Object owner;
+		
+		final LockItem lockItem;
 
 		Thread thread;
 
-		LockRequest(Object owner, LockMode mode, LockDuration duration) {
+		LockRequest(LockItem lockItem, Object owner, LockMode mode, LockDuration duration) {
+			this.lockItem = lockItem;
 			this.mode = mode;
 			this.convertMode = mode;
 			this.duration = duration;
@@ -1024,6 +1108,18 @@ public final class LockManagerImpl implements LockManager {
      */
     public enum LockStatus {
         GRANTED, GRANTABLE, TIMEOUT, DEADLOCK
+    }
+    
+    static final class LockWaiter {
+    	final LockRequest waitingFor;
+    	LockWaiter cycle;
+    	boolean visited = false;
+    	final Thread thread;
+    	
+    	LockWaiter(LockRequest r, Thread t) {
+    		waitingFor = r;
+    		thread = t;
+    	}
     }
 }
 

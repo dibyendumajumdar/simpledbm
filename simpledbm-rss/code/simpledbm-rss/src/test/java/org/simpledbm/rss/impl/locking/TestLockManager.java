@@ -552,4 +552,62 @@ public class TestLockManager extends TestCase {
         }
     }
     
+	public void testDeadlockDetection() throws Exception {
+		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final Object tran1 = new Integer(1);
+		final Object tran2 = new Integer(2);
+		final Object lockname1 = new Integer(10);
+		final Object lockname2 = new Integer(11);
+
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+					try {
+						Thread.sleep(2000);
+						LockHandle handle2 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+						handle2.release(false);
+					}
+					finally {
+						handle1.release(false);
+					}
+				} catch (Exception e) {
+					System.err.println("T1");
+					e.printStackTrace();
+				}
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+					try {
+						Thread.sleep(2000);	
+						LockHandle handle1 = lockmgr.acquire(tran1, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+						handle1.release(false);
+					}
+					finally {
+						handle2.release(false);
+					}
+				} catch (Exception e) {
+					System.err.println("T2");
+					e.printStackTrace();
+				}
+			}
+		});
+
+		try {
+			t1.start();
+			t2.start();
+			Thread.sleep(3000);
+			lockmgr.detectDeadlocks();
+            t1.join(1000);
+            t2.join(1000);
+            assertTrue(!t1.isAlive());
+            assertTrue(!t2.isAlive());
+		} catch (Exception e) {
+			fail("");
+		}
+	}    
+    
 }
