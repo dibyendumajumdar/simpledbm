@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
 
+import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
@@ -423,7 +424,7 @@ public class TestLockManager extends TestCase {
             fail();
         }
         catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
             assertTrue(true);
         }
         assertTrue(handle.release(false));
@@ -486,7 +487,7 @@ public class TestLockManager extends TestCase {
             fail();
         }
         catch (Exception e) {
-            e.printStackTrace();
+            e.printStackTrace(System.out);
         }
         assertTrue(handle.release(false));
     }
@@ -552,6 +553,8 @@ public class TestLockManager extends TestCase {
         }
     }
     
+    volatile int countDeadlocks = 0;
+    
 	public void testDeadlockDetection() throws Exception {
 		final LockManagerImpl lockmgr = new LockManagerImpl(71);
 		final Object tran1 = new Integer(1);
@@ -562,17 +565,90 @@ public class TestLockManager extends TestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5);
 					try {
-						Thread.sleep(2000);
-						LockHandle handle2 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+						Thread.sleep(1000);
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
 						handle2.release(false);
 					}
 					finally {
 						handle1.release(false);
 					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T1 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("T1");
+					System.err.println("Unexpected error: " + e);
+					e.printStackTrace();
+				}
+				
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5);
+					try {
+						Thread.sleep(1000);	
+						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						handle1.release(false);
+					}
+					finally {
+						handle2.release(false);
+					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T1 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
+				} catch (Exception e) {
+					System.err.println("Unexpected error: " + e);
+					e.printStackTrace();
+				}
+			}
+		});
+
+		try {
+			countDeadlocks = 0;
+			t1.start();
+			t2.start();
+			Thread.sleep(2000);
+			lockmgr.detectDeadlocks();
+            t1.join(10000);
+            t2.join(10000);
+            assertTrue(!t1.isAlive());
+            assertTrue(!t2.isAlive());
+            assertEquals(countDeadlocks, 1);
+		} catch (Exception e) {
+			fail("");
+		}
+	}    
+    
+	
+	public void testConversionDeadlockDetection() throws Exception {
+		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final Object tran1 = new Integer(1);
+		final Object tran2 = new Integer(2);
+		final Object lockname1 = new Integer(10);
+
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5);
+					try {
+						Thread.sleep(1000);
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						handle2.release(false);
+					}
+					finally {
+						handle1.release(false);
+					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T1 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
+				} catch (Exception e) {
+					System.err.println("Unexpected error: " + e);
 					e.printStackTrace();
 				}
 			}
@@ -580,34 +656,145 @@ public class TestLockManager extends TestCase {
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+					LockHandle handle2 = lockmgr.acquire(tran2, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5);
 					try {
-						Thread.sleep(2000);	
-						LockHandle handle1 = lockmgr.acquire(tran1, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 600);
+						Thread.sleep(1000);	
+						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
 						handle1.release(false);
 					}
 					finally {
 						handle2.release(false);
 					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T1 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("T2");
+					System.err.println("Unexpected error: " + e);
 					e.printStackTrace();
 				}
 			}
 		});
 
 		try {
+			countDeadlocks = 0;
 			t1.start();
 			t2.start();
-			Thread.sleep(3000);
+			Thread.sleep(2000);
 			lockmgr.detectDeadlocks();
-            t1.join(1000);
-            t2.join(1000);
+            t1.join(10000);
+            t2.join(10000);
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
+            assertEquals(countDeadlocks, 1);
+		} catch (Exception e) {
+			fail("");
+		}
+	}    	
+
+	public void testMultipleDeadlockDetection() throws Exception {
+		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final Object tran1 = new Integer(1);
+		final Object tran2 = new Integer(2);
+		final Object tran3 = new Integer(3);
+		final Object tran4 = new Integer(4);
+		final Object lockname1 = new Integer(10);
+		final Object lockname2 = new Integer(11);
+		final Object lockname3 = new Integer(12);
+		final Object lockname4 = new Integer(13);
+
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					try {
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+						try {
+							Thread.sleep(1000);
+							LockHandle handle3 = lockmgr.acquire(tran1, lockname3, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+							handle3.release(false);
+						}
+						finally {
+							handle2.release(false);
+						}
+					}
+					finally {
+						handle1.release(false);
+					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T1 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
+				} catch (Exception e) {
+					System.err.println("Unexpected error: " + e);
+					e.printStackTrace();
+				}
+				
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					LockHandle handle1 = lockmgr.acquire(tran2, lockname3, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					try {
+						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+						try {
+							Thread.sleep(500);
+							LockHandle handle3 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+							handle3.release(false);
+						}
+						finally {
+							handle2.release(false);
+						}
+					}
+					finally {
+						handle1.release(false);
+					}
+				} catch (LockDeadlockException e) {
+					System.err.println("T2 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
+				} catch (Exception e) {
+					System.err.println("Unexpected error: " + e);
+					e.printStackTrace();
+				}
+			}
+		});
+		Thread t3 = new Thread(new Runnable() {
+			public void run() {
+				try {
+					Thread.sleep(1000);
+					LockHandle handle1 = lockmgr.acquire(tran3, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					handle1.release(false);
+				} catch (LockDeadlockException e) {
+					System.err.println("T3 failed with " + e);
+					e.printStackTrace(System.out);
+					countDeadlocks++;
+				} catch (Exception e) {
+					System.err.println("Unexpected error: " + e);
+					e.printStackTrace();
+				}
+			}
+		});
+
+		try {
+			countDeadlocks = 0;
+			t1.start();
+			t2.start();
+			t3.start();
+			Thread.sleep(2000);
+			lockmgr.detectDeadlocks();
+            t1.join(10000);
+            t2.join(10000);
+            t3.join(10000);
+            assertTrue(!t1.isAlive());
+            assertTrue(!t2.isAlive());
+            assertTrue(!t3.isAlive());
+            assertEquals(countDeadlocks, 2);
 		} catch (Exception e) {
 			fail("");
 		}
 	}    
-    
+
+
 }

@@ -31,6 +31,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.rss.api.latch.Latch;
+import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockException;
@@ -75,9 +76,18 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	private final ArrayList<LockEventListener> lockEventListeners = new ArrayList<LockEventListener>();
 	
+	/**
+	 * Map of waiting lock requesters, to aid deadlock detection.
+	 * Keyed by lock object.
+	 */
 	private final Map<Object, LockWaiter> waiters = Collections.synchronizedMap(new HashMap<Object, LockWaiter>());
 	
-	//FIXME
+	//FIXME Need to create the latch using the factory
+	/**
+	 * To keep the algorithm simple, the deadlock detector uses a global exclusive lock
+	 * on the lock manager. The lock manager itself acquires shared locks during normal operations,
+	 * thus avoiding conflict with the deadlock detector.
+	 */
 	private final Latch globalLock = new ReadWriteUpdateLatch(); 
 	
 	/**
@@ -420,7 +430,6 @@ public final class LockManagerImpl implements LockManager {
 		lockitem.unlock();
 		notifyLockEventListeners();
 		LockWaiter waiter = new LockWaiter(r, Thread.currentThread());
-		System.out.println("Adding " + r + " to list of waiters");
 		waiters.put(r.owner, waiter);
 		globalLock.unlockShared();
 		if (handle.timeout == -1) {
@@ -436,8 +445,11 @@ public final class LockManagerImpl implements LockManager {
 		// if (converting)
 		// chainUnlock(h);
 		LockStatus status;
-		if (r.status == LockRequestStatus.GRANTED) {
+		LockRequestStatus requestStatus = r.status;
+		if (requestStatus == LockRequestStatus.GRANTED) {
 			status = LockStatus.GRANTED;
+		} else if (requestStatus == LockRequestStatus.DENIED) {
+			status = LockStatus.DEADLOCK;
 		} else {
 			status = LockStatus.TIMEOUT;
 		}
@@ -484,8 +496,13 @@ public final class LockManagerImpl implements LockManager {
 			r.convertMode = r.mode;
 			r.thread = prevThread;
 		}
+		if (status == LockStatus.DEADLOCK) {
+			grantWaiters(ReleaseAction.RELEASE, r, handle, lockitem);
+		}
 		if (status == LockStatus.TIMEOUT)
 			throw new LockTimeoutException();
+		else if (status == LockStatus.DEADLOCK) 
+			throw new LockDeadlockException();
 		else
 			throw new LockException("SIMPLEDBM-ELOCK-002: Unable to acquire lock.");
 		// return new LockHandleImpl(this, null, lockInfo, status);
@@ -539,7 +556,6 @@ public final class LockManagerImpl implements LockManager {
 	}
 	boolean doReleaseInternal(LockHandle handle, ReleaseAction action, LockMode downgradeMode) throws LockException {
 		LockRequest r = null;
-		boolean converting = false;
 		LockHandleImpl handleImpl = (LockHandleImpl) handle;
 		Object target = handleImpl.lockable;
 		Object owner = handleImpl.owner;
@@ -665,80 +681,98 @@ public final class LockManagerImpl implements LockManager {
 			 * conversion request is pending, waiting requests cannot be
 			 * granted.
 			 */
-            LockRequest myReq = r;
-			lockitem.grantedMode = LockMode.NONE;
-			lockitem.waiting = false;
-			converting = false;
-			for (LockRequest req : lockitem.getQueue()) {
-
-				r = req;
-				if (r.status == LockRequestStatus.GRANTED) {
-					lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
-                    if (r != myReq && action == ReleaseAction.DOWNGRADE) {
-                        handleImpl.setHeldByOthers(true);
-                    }
-				}
-
-				else if (r.status == LockRequestStatus.CONVERTING) {
-					boolean can_grant;
-
-					assert (!converting || lockitem.waiting);
-
-					can_grant = checkCompatible(lockitem, r, r.convertMode, null);
-					if (can_grant) {
-						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "release", "Granting conversion request " + r + " because request is compatible with " + lockitem);
-						}
-                        if (r.convertDuration == LockDuration.INSTANT_DURATION) {
-                            /*
-                             * If the request is for an instant duration lock then
-                             * don't perform the conversion.
-                             */
-                            r.convertMode = r.mode; 
-                        }
-                        else {
-                            r.mode = r.convertMode.maximumOf(r.mode);
-                            r.convertMode = r.mode;
-                            lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
-                        }
-                        // TODO - TT1 
-                        // System.err.println("Executed r.count++");
-                        /*
-                         * Treat conversions as lock recursion.
-                         */
-                        r.count++;
-						r.status = LockRequestStatus.GRANTED;
-						LockSupport.unpark(r.thread);
-					} else {
-						lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
-						converting = true;
-						lockitem.waiting = true;
-					}
-				}
-
-				else if (r.status == LockRequestStatus.WAITING) {
-					if (!converting && r.mode.isCompatible(lockitem.grantedMode)) {
-						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "release", "Granting waiting request " + r + " because not converting and request is compatible with " + lockitem);
-						}
-						r.status = LockRequestStatus.GRANTED;
-                        lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
-						LockSupport.unpark(r.thread);
-					} else {
-						if (log.isDebugEnabled() && converting) {
-							log.debug(LOG_CLASS_NAME, "release", "Cannot grant waiting request " + r + " because conversion request pending");
-						}
-						lockitem.waiting = true;
-						break;
-					}
-				}
-			}
+            grantWaiters(action, r, handleImpl, lockitem);
 
 		} finally {
 			lockitem.unlock();
 			// chainUnlock(h);
 		}
         return released;
+	}
+
+	private void grantWaiters(ReleaseAction action, LockRequest r, LockHandleImpl handleImpl, LockItem lockitem) {
+		/*
+		 * 9. Recalculate granted mode by calculating max mode amongst all
+		 * granted (including conversion) requests. If a conversion request
+		 * is compatible with all other granted requests, then grant the
+		 * conversion, recalculating granted mode. If a waiting request is
+		 * compatible with granted mode, and there are no pending conversion
+		 * requests, then grant the request, and recalculate granted mode.
+		 * Otherwise, we are done. Note that this means that FIFO is
+		 * respected for waiting requests, but conversion requests are
+		 * granted as soon as they become compatible. Also, note that if a
+		 * conversion request is pending, waiting requests cannot be
+		 * granted.
+		 */
+		boolean converting;
+		LockRequest myReq = r;
+		lockitem.grantedMode = LockMode.NONE;
+		lockitem.waiting = false;
+		converting = false;
+		for (LockRequest req : lockitem.getQueue()) {
+
+			r = req;
+			if (r.status == LockRequestStatus.GRANTED) {
+				lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
+		        if (r != myReq && action == ReleaseAction.DOWNGRADE) {
+		            handleImpl.setHeldByOthers(true);
+		        }
+			}
+
+			else if (r.status == LockRequestStatus.CONVERTING) {
+				boolean can_grant;
+
+				assert (!converting || lockitem.waiting);
+
+				can_grant = checkCompatible(lockitem, r, r.convertMode, null);
+				if (can_grant) {
+					if (log.isDebugEnabled()) {
+						log.debug(LOG_CLASS_NAME, "release", "Granting conversion request " + r + " because request is compatible with " + lockitem);
+					}
+		            if (r.convertDuration == LockDuration.INSTANT_DURATION) {
+		                /*
+		                 * If the request is for an instant duration lock then
+		                 * don't perform the conversion.
+		                 */
+		                r.convertMode = r.mode; 
+		            }
+		            else {
+		                r.mode = r.convertMode.maximumOf(r.mode);
+		                r.convertMode = r.mode;
+		                lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
+		            }
+		            // TODO - TT1 
+		            // System.err.println("Executed r.count++");
+		            /*
+		             * Treat conversions as lock recursion.
+		             */
+		            r.count++;
+					r.status = LockRequestStatus.GRANTED;
+					LockSupport.unpark(r.thread);
+				} else {
+					lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
+					converting = true;
+					lockitem.waiting = true;
+				}
+			}
+
+			else if (r.status == LockRequestStatus.WAITING) {
+				if (!converting && r.mode.isCompatible(lockitem.grantedMode)) {
+					if (log.isDebugEnabled()) {
+						log.debug(LOG_CLASS_NAME, "release", "Granting waiting request " + r + " because not converting and request is compatible with " + lockitem);
+					}
+					r.status = LockRequestStatus.GRANTED;
+		            lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
+					LockSupport.unpark(r.thread);
+				} else {
+					if (log.isDebugEnabled() && converting) {
+						log.debug(LOG_CLASS_NAME, "release", "Cannot grant waiting request " + r + " because conversion request pending");
+					}
+					lockitem.waiting = true;
+					break;
+				}
+			}
+		}
 	}
 
 	public synchronized void addLockEventListener(LockEventListener listener) {
@@ -761,39 +795,79 @@ public final class LockManagerImpl implements LockManager {
 		}
 	}
 	
-	private void visit(LockWaiter me) {
+	private boolean findDeadlockCycle(LockWaiter me) {
 		if (me.visited) {
-			return;
+			return false;
 		}
 		else {
 			me.visited = true;
 		}
 		LockWaiter him;
-		for (LockRequest them : me.waitingFor.lockItem.queue) {
-			if (them.owner != me.waitingFor.owner) {
-				if (!them.mode.isCompatible(me.waitingFor.mode) || them.status != LockRequestStatus.GRANTED) {
-					System.out.println("Them = " + them);
-					him = waiters.get(them.owner);
-					me.cycle = him;
-					if (him.cycle != null) {
-						System.out.println("DEADLOCK DETECTED: " + him.waitingFor + " waiting for " + me.waitingFor);
-						System.out.println("HIM : " + him.waitingFor.lockItem);
-						System.out.println("ME : " + me.waitingFor.lockItem);
-						LockSupport.unpark(me.thread);
-					}
-					else {
-						visit(him);
-					}
-					me.cycle = null;
+		
+		LockMode mode = me.myLockRequest.mode;
+		if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
+			mode = me.myLockRequest.convertMode;
+		}
+		for (LockRequest them : me.myLockRequest.lockItem.queue) {
+			if (them.status == LockRequestStatus.WAITING) {
+				break;
+			}
+			if (them.status == LockRequestStatus.DENIED) {
+				continue;
+			}
+			if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
+				/*
+				 * Need to check all holders of lock
+				 */
+				if (them.owner == me.myLockRequest.owner) {
+					continue;
 				}
 			}
 			else {
-				break;
+				/*
+				 * No need to check locks after me
+				 */
+				if (them.owner == me.myLockRequest.owner) {
+					break;
+				}
+			}
+			boolean incompatible;
+			if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
+				incompatible = !them.mode.isCompatible(mode);
+			} else {
+				incompatible = !them.mode.isCompatible(me.myLockRequest.mode)
+						|| them.status == LockRequestStatus.GRANTED
+						|| them.status == LockRequestStatus.CONVERTING;
+			}
+			if (incompatible) {
+				him = waiters.get(them.owner);
+				me.cycle = him;
+				if (him.cycle != null) {
+					log.info(LOG_CLASS_NAME, "findDeadlockCycle", "DEADLOCK DETECTED: "
+							+ me.myLockRequest + " waiting for "
+							+ him.myLockRequest);
+					log.info(LOG_CLASS_NAME, "findDeadlockCycle", " Other=> "
+							+ him.myLockRequest.lockItem);
+					log.info(LOG_CLASS_NAME, "findDeadlockCycle", " Victim=> " 
+							+ me.myLockRequest.lockItem);
+					me.myLockRequest.status = LockRequestStatus.DENIED;
+					LockSupport.unpark(me.thread);
+					return true;
+				} else {
+					return findDeadlockCycle(him);
+				}
 			}
 		}
+		return false;
 	}
 	
 	public void detectDeadlocks() {
+		/*
+		 * The deadlock detector is a very simple implementation
+		 * based upon example shown in the Transaction Processing,
+		 * by Jim Gray and Andreas Reuter.
+		 * See sections 7.11.3 and section 8.5.
+		 */
 		globalLock.exclusiveLock();
 		try {
 			LockWaiter[] waiterArray = waiters.values().toArray(new LockWaiter[0]);
@@ -802,7 +876,7 @@ public final class LockManagerImpl implements LockManager {
 				waiter.visited = false;
 			}
 			for (LockWaiter waiter: waiterArray) {
-				visit(waiter);
+				findDeadlockCycle(waiter);
 			}
 		}
 		finally {
@@ -965,7 +1039,7 @@ public final class LockManagerImpl implements LockManager {
 	}
 
 	static enum LockRequestStatus {
-		GRANTED, CONVERTING, WAITING;
+		GRANTED, CONVERTING, WAITING, DENIED, CONVERSION_DENIED;
 	}
 
 	/**
@@ -1110,14 +1184,20 @@ public final class LockManagerImpl implements LockManager {
         GRANTED, GRANTABLE, TIMEOUT, DEADLOCK
     }
     
+    /**
+     * Holds information regarding a lock wait.
+     * Purpose is to enable deadlock detection.
+     * 
+     * @since 15 Nov 2006
+     */
     static final class LockWaiter {
-    	final LockRequest waitingFor;
+    	final LockRequest myLockRequest;
     	LockWaiter cycle;
     	boolean visited = false;
     	final Thread thread;
     	
     	LockWaiter(LockRequest r, Thread t) {
-    		waitingFor = r;
+    		myLockRequest = r;
     		thread = t;
     	}
     }
