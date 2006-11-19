@@ -40,6 +40,8 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
 import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
+import org.simpledbm.rss.impl.locking.NewLockManagerImpl.LockBucket;
+import org.simpledbm.rss.impl.locking.NewLockManagerImpl.LockItem;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -61,15 +63,38 @@ public final class LockManagerImpl implements LockManager {
 
     private static final Logger log = Logger.getLogger(LockManagerImpl.class.getPackage().getName());
 
+	static final int hashPrimes[] = {
+		53, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
+		98317, 196613, 393241, 786433
+	};
+	
+	private int htsz = 0;
+	
+	/**
+	 * Tracks the number of items in the hash table
+	 */
+	private volatile int count = 0;
+	
+	/**
+	 * Upper limit of number of items that can be inserted into the
+	 * hash table. Exceeding this causes the hash table to be resized.
+	 */
+	private volatile int threshold = 0;
+	
+	/**
+	 * Used to calculate the threshold. Expressed as a percentage of hash table size
+	 */
+	private float loadFactor = 0.75f;
+	
 	/**
 	 * Hash table of locks.
 	 */
-	private final LockBucket[] LockHashTable;
+	private volatile LockBucket[] LockHashTable;
 
 	/**
 	 * Size of the hash table.
 	 */
-	private final int hashTableSize;
+	private volatile int hashTableSize;
 
 	/**
 	 * List of lock event listeners
@@ -106,10 +131,55 @@ public final class LockManagerImpl implements LockManager {
 	 *            The size of the lock hash table.
 	 */
 	public LockManagerImpl(int hashTableSize) {
-		this.hashTableSize = hashTableSize;
+		// this.hashTableSize = hashTableSize;
+		this.hashTableSize = hashPrimes[htsz];
 		LockHashTable = new LockBucket[hashTableSize];
 		for (int i = 0; i < hashTableSize; i++) {
 			LockHashTable[i] = new LockBucket();
+		}
+		threshold = (int)(hashTableSize * loadFactor);
+	}
+
+	/**
+	 * Grow the hash table to the next size
+	 */
+	private void rehash() {
+
+		globalLock.exclusiveLock();
+		try {
+			if (htsz == hashPrimes.length-1) {
+				return;
+			}
+			int newHashTableSize = hashPrimes[++htsz];
+			System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
+			LockBucket[] newLockHashTable = new LockBucket[newHashTableSize];
+			for (int i = 0; i < newHashTableSize; i++) {
+				newLockHashTable[i] = new LockBucket();
+			}
+			for (int i = 0; i < hashTableSize; i++) {
+				LockBucket bucket = LockHashTable[i];
+				for (Iterator<LockItem> iter = bucket.chain.iterator(); iter.hasNext();) {
+					LockItem item = iter.next();
+					if (item.target == null) {
+						continue;
+					}
+					int h = item.target.hashCode() % newHashTableSize;
+					// System.out.println("Moving lock item " + item + " from old bucket " + i + " to new bucket " + h);
+					LockBucket newBucket = newLockHashTable[h];
+					newBucket.chainAppend(item);
+				}
+				bucket.chain.clear();
+				LockHashTable[i] = null;
+			}
+			LockHashTable = newLockHashTable;
+			hashTableSize = newHashTableSize;
+			threshold = (int)(hashTableSize * loadFactor);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+		finally {
+			globalLock.unlockExclusive();
 		}
 	}
 
@@ -154,6 +224,10 @@ public final class LockManagerImpl implements LockManager {
 	 *      org.simpledbm.locking.LockDuration, int)
 	 */
 	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout) throws LockException {
+
+		if (count > threshold) {
+			rehash();
+		}
 
 		globalLock.sharedLock();
 		LockHandleImpl handle = null;
@@ -228,9 +302,11 @@ public final class LockManagerImpl implements LockManager {
 		/* 1. Search for the lock. */
 		int h = target.hashCode() % hashTableSize;
 		LockItem lockitem = null;
-		chainLock(h);
+		LockBucket bucket = LockHashTable[h];
+		bucket.lock();
+		//chainLock(h);
 		try {
-			lockitem = findLock(target, h);
+			lockitem = findLock(target, bucket);
 			if (lockitem == null) {
 				/*
 				 * 2. If not found, this is a new lock and therefore grant the
@@ -244,8 +320,9 @@ public final class LockManagerImpl implements LockManager {
 					lockitem = new LockItem(target, mode);
 					r = new LockRequest(lockitem, owner, mode, duration);
 					lockitem.queueAppend(r);
-					chainAppend(h, lockitem);
-                    return handle.setStatus(r, LockStatus.GRANTED);
+					bucket.chainAppend(lockitem);
+					count++;
+					return handle.setStatus(r, LockStatus.GRANTED);
 				}
                 else {
                     return handle.setStatus(r, LockStatus.GRANTABLE);
@@ -253,7 +330,8 @@ public final class LockManagerImpl implements LockManager {
 			}
 			lockitem.lock();
 		} finally {
-			chainUnlock(h);
+			bucket.unlock();
+			// chainUnlock(h);
 		}
 
 		try {
@@ -304,7 +382,7 @@ public final class LockManagerImpl implements LockManager {
 					return handle.setStatus(r, LockStatus.GRANTED);
 				} else {
 					converting = false;
-					return handleWait(handle, r, converting, duration, h, lockitem);
+					return handleWait(handle, r, converting, duration, lockitem);
 				}
 			} else {
 				/*
@@ -379,7 +457,7 @@ public final class LockManagerImpl implements LockManager {
 
 						else {
 							converting = true;
-							return handleWait(handle, r, converting, duration, h, lockitem);
+							return handleWait(handle, r, converting, duration, lockitem);
 						}
 					}
 				}
@@ -406,7 +484,7 @@ public final class LockManagerImpl implements LockManager {
 	 * @return
 	 * @throws LockException
 	 */
-	private LockHandleImpl handleWait(LockHandleImpl handle, LockRequest r, boolean converting, LockDuration duration, int h, LockItem lockitem) throws LockException {
+	private LockHandleImpl handleWait(LockHandleImpl handle, LockRequest r, boolean converting, LockDuration duration, LockItem lockitem) throws LockException {
 
 		Thread prevThread = Thread.currentThread();
 
@@ -439,9 +517,13 @@ public final class LockManagerImpl implements LockManager {
 		}
 		globalLock.sharedLock();
 		waiters.remove(r.owner);
-		chainLock(h);
+		int h = lockitem.target.hashCode() % hashTableSize;
+		LockBucket bucket = LockHashTable[h];
+		bucket.lock();
+		// chainLock(h);
 		lockitem.lock();
-		chainUnlock(h);
+		// chainUnlock(h);
+		bucket.unlock();
 		// if (converting)
 		// chainUnlock(h);
 		LockStatus status;
@@ -488,6 +570,7 @@ public final class LockManagerImpl implements LockManager {
 			if (lockitem.queueIsEmpty()) {
 				// chainRemove(h, lock);
 				lockitem.reset(); // Setup lock for garbage collection
+				count--;
 			}
 			// chainUnlock(h);
 		} else {
@@ -565,11 +648,13 @@ public final class LockManagerImpl implements LockManager {
 			log.debug(LOG_CLASS_NAME, "release", "Request by " + owner + " to release lock for " + target);
 		}
 		int h = target.hashCode() % hashTableSize;
-		chainLock(h);
+		LockBucket bucket = LockHashTable[h];
+		bucket.lock();
+		// chainLock(h);
 		LockItem lockitem = null;
 		try {
 			/* 1. Search for the lock. */
-			lockitem = findLock(target, h);
+			lockitem = findLock(target, bucket);
 
 			if (lockitem == null) {
 				/* 2. If not found, return success. */
@@ -580,7 +665,8 @@ public final class LockManagerImpl implements LockManager {
 			}
 			lockitem.lock();
 		} finally {
-			chainUnlock(h);
+			bucket.unlock();
+			// chainUnlock(h);
 		}
 		try {
 			/* 3. If lock found, look for the transaction's lock request. */
@@ -635,6 +721,7 @@ public final class LockManagerImpl implements LockManager {
 				}
 				lockitem.queueRemove(r);
 				lockitem.reset();
+				count--;
 				return true;
 			}
 
@@ -888,8 +975,8 @@ public final class LockManagerImpl implements LockManager {
 	 * Search for the specified lockable object.
 	 * Garbage collect any items that are no longer needed.
 	 */
-	private LockItem findLock(Object target, int h) {
-		for (Iterator<LockItem> iter = getChain(h).iterator(); iter.hasNext();) {
+	private LockItem findLock(Object target, LockBucket bucket) {
+		for (Iterator<LockItem> iter = bucket.chain.iterator(); iter.hasNext();) {
 			LockItem item = iter.next();
 			if (item.target == null) {
 				iter.remove();
@@ -901,22 +988,22 @@ public final class LockManagerImpl implements LockManager {
 		}
 		return null;
 	}
-
-	private void chainLock(int h) {
-		LockHashTable[h].lock();
-	}
-
-	private void chainUnlock(int h) {
-		LockHashTable[h].unlock();
-	}
-
-	private void chainAppend(int h, LockItem item) {
-		LockHashTable[h].chainAppend(item);
-	}
-
-	private LinkedList<LockItem> getChain(int h) {
-		return LockHashTable[h].chain;
-	}
+	
+//	private void chainLock(int h) {
+//		LockHashTable[h].lock();
+//	}
+//
+//	private void chainUnlock(int h) {
+//		LockHashTable[h].unlock();
+//	}
+//
+//	private void chainAppend(int h, LockItem item) {
+//		LockHashTable[h].chainAppend(item);
+//	}
+//
+//	private LinkedList<LockItem> getChain(int h) {
+//		return LockHashTable[h].chain;
+//	}
 
 	static final class LockBucket {
 
