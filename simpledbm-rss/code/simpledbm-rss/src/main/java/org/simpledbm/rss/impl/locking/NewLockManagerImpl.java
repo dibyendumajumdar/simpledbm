@@ -153,24 +153,47 @@ public final class NewLockManagerImpl extends BaseLockManagerImpl {
 		LockWaiter waiter = new LockWaiter(lockState.r, Thread.currentThread());
 		waiters.put(lockState.r.owner, waiter);
 		globalLock.unlockShared();
-		
-		if (lockState.parms.timeout == -1) {
-			LockSupport.park();
-		} else {
-			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(lockState.parms.timeout,
-					TimeUnit.SECONDS));
+		long then = System.nanoTime();
+		long timeToWait = lockState.parms.timeout;
+		if (timeToWait != -1) {
+			timeToWait = TimeUnit.NANOSECONDS.convert(
+					lockState.parms.timeout, TimeUnit.SECONDS);
 		}
-		globalLock.sharedLock();
-		waiters.remove(lockState.r.owner);
-		/*
-		 * As the hash table may have been resized while we were waiting,
-		 * we need to recalculate the bucket.
-		 */
-		h = lockState.parms.target.hashCode() % hashTableSize;
-		lockState.bucket = LockHashTable[h];		
-		synchronized (lockState.bucket) {
-			handleWaitResult(lockState);
-			return lockState.handle;
+		for (;;) {
+			try {
+				if (lockState.parms.timeout == -1) {
+					LockSupport.park();
+				} else {
+					LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
+							lockState.parms.timeout, TimeUnit.SECONDS));
+				}
+			} finally {
+				globalLock.sharedLock();
+			}
+			long now = System.nanoTime();
+			if (timeToWait > 0) {
+				timeToWait -= (now - then);
+				then = now;
+			}
+			/*
+			 * As the hash table may have been resized while we were waiting, we
+			 * need to recalculate the bucket.
+			 */
+			h = lockState.parms.target.hashCode() % hashTableSize;
+			lockState.bucket = LockHashTable[h];
+			synchronized (lockState.bucket) {
+				if (lockState.r.status == LockRequestStatus.WAITING
+						|| lockState.r.status == LockRequestStatus.CONVERTING) {
+					if (timeToWait > 0 || lockState.parms.timeout == -1) {
+						System.err
+								.println("Need to retry as this was a spurious wakeup");
+						continue;
+					}
+				}
+				waiters.remove(lockState.r.owner);
+				handleWaitResult(lockState);
+				return lockState.handle;
+			}
 		}
 	}
 

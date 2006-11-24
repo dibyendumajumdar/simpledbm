@@ -123,12 +123,6 @@ public final class LockManagerImpl extends BaseLockManagerImpl {
 				handleNewLock(lockState);
 				return lockState.handle;
 			}
-			((ExtendedLockItem)lockState.lockitem).lock();
-		} finally {
-			((ExtendedLockBucket)lockState.bucket).unlock();
-		}
-
-		try {
 			/*
 			 * 3. Else check if requesting transaction already has a lock
 			 * request.
@@ -147,38 +141,58 @@ public final class LockManagerImpl extends BaseLockManagerImpl {
 
 			/* 8. Wait for the lock to be available/compatible. */
 			prepareToWait(lockState);
-		}
-		finally {
-			((ExtendedLockItem)lockState.lockitem).unlock();
+		} finally {
+			((ExtendedLockBucket)lockState.bucket).unlock();
 		}
 		notifyLockEventListeners();
 		LockWaiter waiter = new LockWaiter(lockState.r, Thread.currentThread());
 		waiters.put(lockState.r.owner, waiter);
 		globalLock.unlockShared();
-		
-		if (lockState.parms.timeout == -1) {
-			LockSupport.park();
-		} else {
-			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(lockState.parms.timeout,
-					TimeUnit.SECONDS));
+		long then = System.nanoTime();
+		long timeToWait = lockState.parms.timeout;
+		if (timeToWait != -1) {
+			timeToWait = TimeUnit.NANOSECONDS.convert(
+					lockState.parms.timeout, TimeUnit.SECONDS);
 		}
-		globalLock.sharedLock();
-		waiters.remove(lockState.r.owner);
-		/*
-		 * As the hash table may have been resized while we were waiting,
-		 * we need to recalculate the bucket.
-		 */
-		h = lockState.parms.target.hashCode() % hashTableSize;
-		lockState.bucket = LockHashTable[h];		
-		((ExtendedLockBucket)lockState.bucket).lock();
-		((ExtendedLockItem)lockState.lockitem).lock();
-		((ExtendedLockBucket)lockState.bucket).unlock();
+		for (;;) {
+			try {
+				if (lockState.parms.timeout == -1) {
+					LockSupport.park();
+				} else {
+					LockSupport.parkNanos(timeToWait);
+				}
+			} finally {
+				globalLock.sharedLock();
+			}
+			long now = System.nanoTime();
+			if (timeToWait > 0) {
+				timeToWait -= (now-then);
+				then = now;
+			}
+			/*
+			 * As the hash table may have been resized while we were waiting,
+			 * we need to recalculate the bucket.
+			 */
+			h = lockState.parms.target.hashCode() % hashTableSize;
+			lockState.bucket = LockHashTable[h];		
+			((ExtendedLockBucket)lockState.bucket).lock();
+			if (lockState.r.status == LockRequestStatus.WAITING || lockState.r.status == LockRequestStatus.CONVERTING) {
+				if (timeToWait > 0 || lockState.parms.timeout == -1) {
+					System.err.println("Need to retry as this was a spurious wakeup");
+					((ExtendedLockBucket)lockState.bucket).unlock();
+					globalLock.unlockShared();
+					continue;
+				}
+			}
+			break;
+		} 
 		try {
+			waiters.remove(lockState.r.owner);
 			handleWaitResult(lockState);
 			return lockState.handle;
 		}
 		finally {
-			((ExtendedLockItem)lockState.lockitem).unlock();
+			((ExtendedLockBucket)lockState.bucket).unlock();
 		}
 	}
 
@@ -207,16 +221,9 @@ public final class LockManagerImpl extends BaseLockManagerImpl {
 								+ lockState.parms.target
 								+ " as it is is not locked at present; seems like invalid call to release lock");
 			}
-			((ExtendedLockItem)lockState.lockitem).lock();
-		} finally {
-			((ExtendedLockBucket)lockState.bucket).unlock();
-		}
-		
-		try {
 			return releaseLock(lockState);
-		}
-		finally {
-			((ExtendedLockItem)lockState.lockitem).unlock();
+		} finally {
+			((ExtendedLockBucket) lockState.bucket).unlock();
 		}
 	}
 
@@ -237,26 +244,8 @@ public final class LockManagerImpl extends BaseLockManagerImpl {
 		return new ExtendedLockBucket();
 	}
 	
-	static final class ExtendedLockItem extends LockItem {
-
-		final Lock lock = new ReentrantLock();
-
-		void lock() {
-			lock.lock();
-		}
-
-		void unlock() {
-			lock.unlock();
-		}
-
-		ExtendedLockItem(Object target, LockMode mode) {
-			super(target, mode);
-		}
-
-	}
-
 	LockItem getNewLockItem(Object target, LockMode mode) {
-		return new ExtendedLockItem(target, mode);
+		return new LockItem(target, mode);
 	}
 
 

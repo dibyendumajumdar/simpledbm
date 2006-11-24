@@ -273,6 +273,7 @@ public abstract class BaseLockManagerImpl implements LockManager {
 		} else if (lockRequestStatus == LockRequestStatus.DENIED) {
 			lockState.status = LockStatus.DEADLOCK;
 		} else {
+			System.out.println("Lock State = " + lockRequestStatus);
 			lockState.status = LockStatus.TIMEOUT;
 		}
 
@@ -722,6 +723,9 @@ public abstract class BaseLockManagerImpl implements LockManager {
 		return released;
 	}
 
+	public static boolean monitoring = false;
+	public static ArrayList<String> messages = new ArrayList<String>(10);
+	
 	protected void grantWaiters(ReleaseAction action, LockRequest r, LockHandleImpl handleImpl, LockItem lockitem) {
 		/*
 		 * 9. Recalculate granted mode by calculating max mode amongst all
@@ -781,6 +785,9 @@ public abstract class BaseLockManagerImpl implements LockManager {
 		            r.count++;
 					r.status = LockRequestStatus.GRANTED;
 					LockSupport.unpark(r.thread);
+					if (monitoring) {
+						messages.add("Unparked thread " + r.thread);
+					}
 				} else {
 					lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 					converting = true;
@@ -796,6 +803,9 @@ public abstract class BaseLockManagerImpl implements LockManager {
 					r.status = LockRequestStatus.GRANTED;
 		            lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 					LockSupport.unpark(r.thread);
+					if (monitoring) {
+						messages.add("Unparked thread " + r.thread);
+					}
 				} else {
 					if (log.isDebugEnabled() && converting) {
 						log.debug(LOG_CLASS_NAME, "release", "Cannot grant waiting request " + r + " because conversion request pending");

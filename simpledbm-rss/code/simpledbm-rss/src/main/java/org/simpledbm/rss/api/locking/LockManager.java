@@ -93,5 +93,7 @@ public interface LockManager {
 	void addLockEventListener(LockEventListener listener);
 	
 	void clearLockEventListeners();
+
+	void detectDeadlocks();
 	
 }
