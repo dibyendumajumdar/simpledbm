@@ -89,11 +89,7 @@ public interface LockManager {
 			Object lockable, LockMode mode, LockDuration duration,
 			int timeout) throws LockException;
 
-	
 	void addLockEventListener(LockEventListener listener);
 	
 	void clearLockEventListeners();
-
-	void detectDeadlocks();
-	
 }
