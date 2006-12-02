@@ -154,7 +154,7 @@ public abstract class BaseLockManagerImpl implements LockManager {
 				return;
 			}
 			int newHashTableSize = hashPrimes[++htsz];
-			System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
+			// System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
 			LockBucket[] newLockHashTable = new LockBucket[newHashTableSize];
 			for (int i = 0; i < newHashTableSize; i++) {
 				newLockHashTable[i] = getNewLockBucket();
