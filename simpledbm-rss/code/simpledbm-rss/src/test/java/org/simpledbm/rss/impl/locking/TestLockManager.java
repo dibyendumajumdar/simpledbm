@@ -23,15 +23,13 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
-import org.simpledbm.rss.impl.locking.LockManagerImpl;
 
 /**
  * Test cases for Lock Manager module.
@@ -39,7 +37,7 @@ import org.simpledbm.rss.impl.locking.LockManagerImpl;
  * @author Dibyendu Majumdar
  * @since 21-Aug-2005
  */
-public class TestLockManager extends TestCase {
+public class TestLockManager extends BaseTestCase {
 
 	public TestLockManager(String arg0) {
 		super(arg0);
@@ -49,7 +47,7 @@ public class TestLockManager extends TestCase {
 
 		ThreadFactory factory = Executors.defaultThreadFactory();
 
-		LockManager lockmgr = new LockManagerImpl(71);
+		LockManager lockmgr = createLockManager();
 
 		Object tran1 = new Integer(1);
 		Object tran2 = new Integer(2);
@@ -82,7 +80,7 @@ public class TestLockManager extends TestCase {
 	 * Readlocks succeed after a writing thread unlocks
 	 */
 	public void testReadAfterWriteLock() throws Exception {
-		final LockManager lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object tran3 = new Integer(3);
@@ -133,7 +131,7 @@ public class TestLockManager extends TestCase {
 	 * Readlocks succeed after a writing thread unlocks
 	 */
 	public void testConcurrentReadWrites() throws Exception {
-		final LockManager lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object lockname1 = new ConstantHashingObject(10);
@@ -174,14 +172,15 @@ public class TestLockManager extends TestCase {
 			t2.join(10000);
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
+			System.err.println("Counter = " + counter.get());
 			assertTrue(counter.get() == 2000);
 		} catch (Exception e) {
-			fail("");
+			fail();
 		}
 	}
 
 	public void testLocks() throws Exception {
-		final LockManager lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object lockname = new Integer(10);
 
@@ -361,13 +360,15 @@ public class TestLockManager extends TestCase {
      * Readlocks succeed after a writing thread unlocks
      */
     public void testLockDowngrade() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object tran2 = new Integer(2);
         final Object tran3 = new Integer(3);
         final Object lockname = new Integer(10);
         final AtomicInteger counter = new AtomicInteger(0);
 
+        LockManagerImpl.monitoring = true;
+        
         LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
 
         Thread t1 = new Thread(new Runnable() {
@@ -394,27 +395,33 @@ public class TestLockManager extends TestCase {
         });
 
         try {
-            t1.start();
-            t2.start();
-            Thread.sleep(1000);
-            handle.downgrade(LockMode.SHARED);
-            t1.join(1000);
-            t2.join(1000);
-            assertTrue(!t1.isAlive());
-            assertTrue(!t2.isAlive());
-            assertTrue(counter.get() == 2);
-            boolean result = handle.release(false);
-            assertTrue(result);
-        } catch (Exception e) {
-            fail();
-        }
+			t1.start();
+			t2.start();
+			Thread.sleep(1000);
+			handle.downgrade(LockMode.SHARED);
+			t1.join(1000);
+			t2.join(1000);
+			assertTrue(!t1.isAlive());
+			assertTrue(!t2.isAlive());
+			assertTrue(counter.get() == 2);
+			boolean result = handle.release(false);
+			assertTrue(result);
+		} catch (Exception e) {
+			e.printStackTrace();
+			for (String s : LockManagerImpl.messages) {
+				System.err.println(s);
+			}
+			LockManagerImpl.monitoring = false;
+			fail();
+		}
+        
     }
 
     /**
-     * This test verifies that invalid downgrade attempts are rejected.
-     */
+	 * This test verifies that invalid downgrade attempts are rejected.
+	 */
     public void testInvalidDowngrade() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object lockname = new Integer(10);
 
@@ -436,7 +443,7 @@ public class TestLockManager extends TestCase {
      * to eleigible waiting requests being granted locks.
      */
     public void testInstantLockWait() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object tran2 = new Integer(2);
         final Object lockname = new Integer(10);
@@ -447,9 +454,7 @@ public class TestLockManager extends TestCase {
         Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
-                    /* LockHandle handle1 = */ lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, -1);
-                    // FIXME incorrect 
-       //             assert handle1.getCurrentMode() == LockMode.NONE;
+                    lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, -1);
                     assertTrue(counter.get() == 1);
                 } catch (LockException e) {
                     counter.incrementAndGet();
@@ -476,7 +481,7 @@ public class TestLockManager extends TestCase {
      * This test verifies that an incompatible lock request of INSTANT_DURATION fails if nowait is true.
      */
     public void testInstantLockNowait() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object tran2 = new Integer(2);
         final Object lockname = new Integer(10);
@@ -497,7 +502,7 @@ public class TestLockManager extends TestCase {
      * succeeds even when the lock is requested conditionally.
      */
     public void testInstantLockSelf() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object lockname = new Integer(10);
 
@@ -518,7 +523,7 @@ public class TestLockManager extends TestCase {
      * the lock becomes available, but the lock remains in the previous mode.
      */
     public void testInstantLockConversionWait() throws Exception {
-        final LockManager lockmgr = new LockManagerImpl(71);
+        final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object tran2 = new Integer(2);
         final Object lockname = new Integer(10);
@@ -556,7 +561,7 @@ public class TestLockManager extends TestCase {
     volatile int countDeadlocks = 0;
     
 	public void testDeadlockDetection() throws Exception {
-		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object lockname1 = new Integer(10);
@@ -613,7 +618,7 @@ public class TestLockManager extends TestCase {
 			t1.start();
 			t2.start();
 			Thread.sleep(2000);
-			lockmgr.detectDeadlocks();
+			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             assertTrue(!t1.isAlive());
@@ -626,7 +631,7 @@ public class TestLockManager extends TestCase {
     
 	
 	public void testConversionDeadlockDetection() throws Exception {
-		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object lockname1 = new Integer(10);
@@ -681,7 +686,7 @@ public class TestLockManager extends TestCase {
 			t1.start();
 			t2.start();
 			Thread.sleep(2000);
-			lockmgr.detectDeadlocks();
+			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             assertTrue(!t1.isAlive());
@@ -693,7 +698,7 @@ public class TestLockManager extends TestCase {
 	}    	
 
 	public void testMultipleDeadlockDetection() throws Exception {
-		final LockManagerImpl lockmgr = new LockManagerImpl(71);
+		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object tran3 = new Integer(3);
@@ -783,7 +788,7 @@ public class TestLockManager extends TestCase {
 			t2.start();
 			t3.start();
 			Thread.sleep(2000);
-			lockmgr.detectDeadlocks();
+			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             t3.join(10000);
@@ -796,5 +801,9 @@ public class TestLockManager extends TestCase {
 		}
 	}    
 
+	
+	private static LockManager createLockManager() {
+		return new NewLockManagerImpl(71);
+	}
 
 }
