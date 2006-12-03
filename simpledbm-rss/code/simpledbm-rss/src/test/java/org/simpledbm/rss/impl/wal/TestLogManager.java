@@ -48,8 +48,10 @@ public class TestLogManager extends TestCase {
 	}
 
 	public void testCreate() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		factory.createLog(new Properties());
+		factory.createLog(properties);
 	}
 
 	public void testCreate2() throws Exception {
@@ -64,20 +66,25 @@ public class TestLogManager extends TestCase {
 		properties.setProperty("log.buffer.size", "16384");
 		properties.setProperty("log.buffer.limit", "4");
 		properties.setProperty("log.flush.interval", "30");
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		factory.createLog(properties);
 	}
 	
 	
 	public void testOpen() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		log.shutdown();
 	}
 
 	public void testInsertOne() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		try {
 			String s = "hello world!";
@@ -91,8 +98,10 @@ public class TestLogManager extends TestCase {
 	}
 
 	public void testReadOne() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		try {
 			LogReader reader = log.getForwardScanningReader(null);
@@ -109,8 +118,10 @@ public class TestLogManager extends TestCase {
 	}
 
 	public void testLogSwitch() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		int n = ((2048 / 50) * 2) + 2; // just enough to go beyond two log
 		// files
@@ -130,8 +141,10 @@ public class TestLogManager extends TestCase {
 	}
 
 	public void testReadAfterLogSwitch() throws Exception {
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		try {
 			LogReader reader = log.getForwardScanningReader(null);
@@ -233,8 +246,10 @@ public class TestLogManager extends TestCase {
 	public void testMultipleThreads() throws Exception {
 		testCreate(); // create a fresh log.
 
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestLogManager");
 		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(new Properties());
+		LogManager log = factory.getLog(properties);
 		log.start();
 		try {
 			LastRecordReader reader1 = new LastRecordReader(log, this);

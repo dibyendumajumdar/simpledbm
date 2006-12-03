@@ -21,6 +21,7 @@ package org.simpledbm.rss.impl.bm;
 
 import java.io.File;
 import java.nio.ByteBuffer;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import junit.framework.TestCase;
@@ -101,7 +102,9 @@ public class TestBufferManager extends TestCase {
     }
 
     public void testCase1() throws Exception {
-        StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
@@ -155,7 +158,9 @@ public class TestBufferManager extends TestCase {
 
 
     public void testCase2() throws Exception {
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
@@ -252,7 +257,9 @@ public class TestBufferManager extends TestCase {
      */
     public void runtests(int scenario) throws Exception {
 
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
@@ -363,7 +370,9 @@ public class TestBufferManager extends TestCase {
      * Test that update mode latch blocks readers.
      */
     public void testCase6() throws Exception {
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
@@ -434,7 +443,10 @@ public class TestBufferManager extends TestCase {
      * update mode.
      */
     public void testCase7() throws Exception {
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+    	    	
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();

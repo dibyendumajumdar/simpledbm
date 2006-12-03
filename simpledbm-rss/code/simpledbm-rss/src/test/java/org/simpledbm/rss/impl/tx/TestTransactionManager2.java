@@ -95,19 +95,21 @@ public class TestTransactionManager2 extends TestCase {
 	public void testTrxMgrStart() throws Exception {
 		
 		/* Create the write ahead log */
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestTransactionManager2");
 		final LogFactoryImpl logFactory = new LogFactoryImpl();
-		logFactory.createLog(new Properties());
+		logFactory.createLog(properties);
 		
 		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 		setupObjectFactory(objectFactory);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
         final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
                 storageManager, latchFactory);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
         final LockManager lockmgr = lockmgrFactory.create(null);
-        final LogManager logmgr = logFactory.getLog(new Properties());
+        final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
         bufmgr.start();
@@ -131,17 +133,19 @@ public class TestTransactionManager2 extends TestCase {
 
 	public void testBitMgrCreateContainer() throws Exception {
 		
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestTransactionManager2");
 		final LogFactoryImpl logFactory = new LogFactoryImpl();
 		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 		setupObjectFactory(objectFactory);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
         final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
                 storageManager, latchFactory);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
         final LockManager lockmgr = lockmgrFactory.create(null);
-        final LogManager logmgr = logFactory.getLog(new Properties());
+        final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
         bufmgr.start();
@@ -187,17 +191,19 @@ public class TestTransactionManager2 extends TestCase {
 	
 	public void testBitMgrSingleThread() throws Exception {
 		
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestTransactionManager2");
 		final LogFactoryImpl logFactory = new LogFactoryImpl();
 		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 		setupObjectFactory(objectFactory);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
         final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
                 storageManager, latchFactory);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
         final LockManager lockmgr = lockmgrFactory.create(null);
-        final LogManager logmgr = logFactory.getLog(new Properties());
+        final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
         bufmgr.start();
@@ -302,17 +308,19 @@ public class TestTransactionManager2 extends TestCase {
 
 	public void testBitMgrSingleThreadRestart() throws Exception {
 		
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestTransactionManager2");
 		final LogFactoryImpl logFactory = new LogFactoryImpl();
 		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 		setupObjectFactory(objectFactory);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
         final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
                 storageManager, latchFactory);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
         final LockManager lockmgr = lockmgrFactory.create(null);
-        final LogManager logmgr = logFactory.getLog(new Properties());
+        final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
         bufmgr.start();

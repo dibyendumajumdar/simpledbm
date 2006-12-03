@@ -338,7 +338,7 @@ public class TestFreeSpaceManager extends TestCase {
     		properties.setProperty("log.buffer.size", "16384");
     		properties.setProperty("log.buffer.limit", "4");
     		properties.setProperty("log.flush.interval", "5");
-    		properties.setProperty("storage.basePath", "testdata/TestSpaceManager");
+    		properties.setProperty("storage.basePath", "testdata/TestFreeSpaceManager");
     		
     		/* Create the write ahead log */
     		logFactory = new LogFactoryImpl();

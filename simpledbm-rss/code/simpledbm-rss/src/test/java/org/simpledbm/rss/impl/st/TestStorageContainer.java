@@ -45,10 +45,12 @@ public class TestStorageContainer extends TestCase {
 
     public void testCreate() throws Exception {
         String name = "testfile";
-        File file = new File(name);
+        File file = new File("testdata/TestStorageContainer/" + name);
         file.delete();
         assertTrue(!file.exists());
-        StorageContainerFactory factory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
         StorageContainer sc = factory.create(name);
         sc.write(0, new byte[10], 0, 10);
         sc.flush();
@@ -79,10 +81,12 @@ public class TestStorageContainer extends TestCase {
     }
 
     public void testCase2() throws Exception {
-        StorageContainerFactory factory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
         StorageManager storageManager = new StorageManagerImpl();
         String name = "testfile";
-        File file = new File(name);
+        File file = new File("testdata/TestStorageContainer/" + name);
         file.delete();
         assertTrue(!file.exists());
         StorageContainerInfo[] activeContainers = storageManager.getActiveContainers();
@@ -102,9 +106,9 @@ public class TestStorageContainer extends TestCase {
     }
 
     public void testCase3() throws Exception {
-    	Properties props = new Properties();
-    	props.setProperty(FileStorageContainerFactory.BASE_PATH, "/temp/db");
-        StorageContainerFactory factory = new FileStorageContainerFactory(props);
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
         factory.create("testfile1").close();
         factory.create("./testfile2").close();
         factory.create("./mypath/testfile2").close();

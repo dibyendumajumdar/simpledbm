@@ -76,7 +76,7 @@ public class TestTupleManager extends TestCase {
 		properties.setProperty("log.buffer.size", "65536");
 		properties.setProperty("log.buffer.limit", "4");
 		properties.setProperty("log.flush.interval", "30");
-		properties.setProperty(FileStorageContainerFactory.BASE_PATH, "/temp/test");
+		properties.setProperty("storage.basePath", "testdata/TestTupleManager");
 		return properties;
 	}    
 

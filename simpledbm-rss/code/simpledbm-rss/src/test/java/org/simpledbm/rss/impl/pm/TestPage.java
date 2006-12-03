@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.pm;
 
 import java.nio.ByteBuffer;
+import java.util.Properties;
 
 import junit.framework.TestCase;
 
@@ -53,7 +54,9 @@ public class TestPage extends TestCase {
     }
 
     public void testCase1() throws Exception {
-        StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestPage");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
@@ -112,7 +115,9 @@ public class TestPage extends TestCase {
     }
 
     public void testCase2() throws Exception {
-        StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+		Properties properties = new Properties();
+		properties.setProperty("storage.basePath", "testdata/TestPage");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
