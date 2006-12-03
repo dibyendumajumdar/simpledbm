@@ -31,7 +31,6 @@ import java.util.concurrent.locks.LockSupport;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
-import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
@@ -64,7 +63,7 @@ public final class LockManagerImpl implements LockManager {
 		98317, 196613, 393241, 786433
 	};
 	
-	private int htsz = 0;
+	private volatile int htsz = 0;
 	
 	/**
 	 * Tracks the number of items in the hash table
@@ -141,6 +140,9 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	private void rehash() {
 
+		if (htsz == hashPrimes.length-1) {
+			return;
+		}
 		globalLock.exclusiveLock();
 		try {
 			if (htsz == hashPrimes.length-1) {
@@ -164,16 +166,19 @@ public final class LockManagerImpl implements LockManager {
 					LockBucket newBucket = newLockHashTable[h];
 					newBucket.chainAppend(item);
 				}
-				bucket.chain.clear();
-				LockHashTable[i] = null;
 			}
 			LockHashTable = newLockHashTable;
 			hashTableSize = newHashTableSize;
 			threshold = (int)(hashTableSize * loadFactor);
+			for (int i = 0; i < hashTableSize; i++) {
+				LockBucket bucket = LockHashTable[i];
+				bucket.chain.clear();
+				LockHashTable[i] = null;
+			}
 		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
+//		catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		finally {
 			globalLock.unlockExclusive();
 		}
@@ -210,9 +215,12 @@ public final class LockManagerImpl implements LockManager {
 		return iscompatible;
 	}
 	
+	/**
+	 * Holds parameters supplied to aquire, release or find APIs. 
+	 */
 	static final class LockParams {
 		Object owner;
-		Object target;
+		Object lockable;
 		LockMode mode;
 		LockDuration duration;
 		int timeout;
@@ -245,7 +253,7 @@ public final class LockManagerImpl implements LockManager {
 					"Lock not found, therefore granting immediately");
 		}
 		if (lockState.parms.duration != LockDuration.INSTANT_DURATION) {
-			LockItem lockitem = getNewLockItem(lockState.parms.target, lockState.parms.mode);
+			LockItem lockitem = getNewLockItem(lockState.parms.lockable, lockState.parms.mode);
 			LockRequest r = new LockRequest(lockitem, lockState.parms.owner, lockState.parms.mode, lockState.parms.duration);
 			lockitem.queueAppend(r);
 			lockState.bucket.chainAppend(lockitem);
@@ -266,7 +274,6 @@ public final class LockManagerImpl implements LockManager {
 		} else if (lockRequestStatus == LockRequestStatus.DENIED) {
 			lockState.status = LockStatus.DEADLOCK;
 		} else {
-			System.out.println("Lock State = " + lockRequestStatus);
 			lockState.status = LockStatus.TIMEOUT;
 		}
 
@@ -356,7 +363,7 @@ public final class LockManagerImpl implements LockManager {
 		if (log.isTraceEnabled()) {
 			log.trace(LOG_CLASS_NAME, "handleConversionRequest",
 					"Lock conversion request by transaction " + lockState.parms.owner
-							+ " for target " + lockState.parms.target);
+							+ " for target " + lockState.parms.lockable);
 		}
 
 		/*
@@ -458,7 +465,7 @@ public final class LockManagerImpl implements LockManager {
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "handleNewRequest",
 					"New request by transaction " + lockState.parms.owner
-							+ " for target " + lockState.parms.target);
+							+ " for target " + lockState.parms.lockable);
 		}
 
 		lockState.handle.setHeldByOthers(true);
@@ -525,7 +532,7 @@ public final class LockManagerImpl implements LockManager {
 
 		LockParams parms = new LockParams();
 		parms.owner = owner;
-		parms.target = target;
+		parms.lockable = target;
 		parms.mode = mode;
 		parms.duration = duration;
 		parms.timeout = timeout;
@@ -558,14 +565,14 @@ public final class LockManagerImpl implements LockManager {
 
 		LockParams parms = new LockParams();
 		parms.owner = owner;
-		parms.target = target;
+		parms.lockable = target;
 		
 		LockState lockState = new LockState(parms);
 		
 		globalLock.sharedLock();
 		try {
 			/* 1. Search for the lock. */
-			int h = lockState.parms.target.hashCode() % hashTableSize;
+			int h = lockState.parms.lockable.hashCode() % hashTableSize;
 			lockState.lockitem = null;
 			lockState.bucket = LockHashTable[h];
 			lockState.lockRequest = null;
@@ -636,7 +643,7 @@ public final class LockManagerImpl implements LockManager {
 			}
 			throw new LockException(
 					"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-							+ lockState.parms.target
+							+ lockState.parms.lockable
 							+ " as it is is not locked at present; seems like invalid call to release lock");
 		}
 
@@ -717,8 +724,8 @@ public final class LockManagerImpl implements LockManager {
 							+ " to " + lockState.parms.downgradeMode
 							+ " and re-adjusting granted mode");
 				}
-				lockState.handle.setPreviousMode(lockState.lockRequest.mode);
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
+				lockState.handle.setPreviousMode(lockState.lockRequest.mode);
 				lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
 				lockState.handle.setHeldByOthers(false);
 			} else {
@@ -871,13 +878,50 @@ public final class LockManagerImpl implements LockManager {
 		
 		LockParams parms = new LockParams();
 		LockHandleImpl handleImpl = (LockHandleImpl) handle;
-		parms.target = handleImpl.lockable;
+		parms.lockable = handleImpl.lockable;
 		parms.owner = handleImpl.owner;
 		parms.action = action;
 		parms.downgradeMode = downgradeMode;
 		
 		LockState lockState = new LockState(parms);
 		lockState.handle = handleImpl;
+		
+		globalLock.sharedLock();
+		try {
+			return doReleaseInternal(lockState);
+		}
+		finally {
+			globalLock.unlockShared();
+		}
+	}
+	
+	public boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException {
+		LockParams parms = new LockParams();
+		parms.lockable = lockable;
+		parms.owner = owner;
+		parms.action = ReleaseAction.DOWNGRADE;
+		parms.downgradeMode = downgradeTo;
+		
+		LockState lockState = new LockState(parms);
+		lockState.handle = new LockHandleImpl(this, lockState.parms);
+		
+		globalLock.sharedLock();
+		try {
+			return doReleaseInternal(lockState);
+		}
+		finally {
+			globalLock.unlockShared();
+		}
+	}
+
+	public boolean release(Object owner, Object lockable, boolean force) throws LockException {
+		LockParams parms = new LockParams();
+		parms.lockable = lockable;
+		parms.owner = owner;
+		parms.action = force ? ReleaseAction.FORCE_RELEASE : ReleaseAction.RELEASE;
+		
+		LockState lockState = new LockState(parms);
+		lockState.handle = new LockHandleImpl(this, lockState.parms);
 		
 		globalLock.sharedLock();
 		try {
@@ -934,7 +978,7 @@ public final class LockManagerImpl implements LockManager {
 
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "acquire", "Lock requested by " + lockState.parms.owner
-					+ " for " + lockState.parms.target + ", mode=" + lockState.parms.mode + ", duration="
+					+ " for " + lockState.parms.lockable + ", mode=" + lockState.parms.mode + ", duration="
 					+ lockState.parms.duration);
 		}
 
@@ -943,7 +987,7 @@ public final class LockManagerImpl implements LockManager {
 		lockState.prevThread = Thread.currentThread();
 
 		/* 1. Search for the lock. */
-		int h = lockState.parms.target.hashCode() % hashTableSize;
+		int h = lockState.parms.lockable.hashCode() % hashTableSize;
 		lockState.lockitem = null;
 		lockState.bucket = LockHashTable[h];
 		lockState.lockRequest = null;
@@ -978,7 +1022,7 @@ public final class LockManagerImpl implements LockManager {
 			/* 8. Wait for the lock to be available/compatible. */
 			prepareToWait(lockState);
 		}
-		notifyLockEventListeners();
+		notifyLockEventListeners(lockState);
 		LockWaiter waiter = new LockWaiter(lockState.lockRequest, Thread.currentThread());
 		waiters.put(lockState.lockRequest.owner, waiter);
 		globalLock.unlockShared();
@@ -1008,7 +1052,7 @@ public final class LockManagerImpl implements LockManager {
 			 * As the hash table may have been resized while we were waiting, we
 			 * need to recalculate the bucket.
 			 */
-			h = lockState.parms.target.hashCode() % hashTableSize;
+			h = lockState.parms.lockable.hashCode() % hashTableSize;
 			lockState.bucket = LockHashTable[h];
 			synchronized (lockState.bucket) {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
@@ -1032,9 +1076,9 @@ public final class LockManagerImpl implements LockManager {
 
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "doReleaseInternal", "Request by " + lockState.parms.owner
-					+ " to release lock for " + lockState.parms.target);
+					+ " to release lock for " + lockState.parms.lockable);
 		}
-		int h = lockState.parms.target.hashCode() % hashTableSize;
+		int h = lockState.parms.lockable.hashCode() % hashTableSize;
 		lockState.bucket = LockHashTable[h];
 		synchronized (lockState.bucket) {
 			/* 1. Search for the lock. */
@@ -1042,13 +1086,9 @@ public final class LockManagerImpl implements LockManager {
 
 			if (lockState.lockitem == null) {
 				/* 2. If not found, return success. */
-				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "doReleaseInternal",
-							"lock not found, returning success");
-				}
 				throw new LockException(
 						"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-								+ lockState.parms.target
+								+ lockState.parms.lockable
 								+ " as it is is not locked at present; seems like invalid call to release lock");
 			}
 			released = releaseLock(lockState);
@@ -1072,14 +1112,13 @@ public final class LockManagerImpl implements LockManager {
 		lockEventListeners.clear();
 	}
 	
-	private void notifyLockEventListeners() {
+	private void notifyLockEventListeners(LockState state) {
 		for (LockEventListener listener: lockEventListeners) {
 			try {
-				listener.beforeLockWait();
+				listener.beforeLockWait(state.parms.owner, state.parms.lockable, state.parms.mode);
 			}
 			catch (Exception e) {
-				// FIXME
-				e.printStackTrace();
+				log.error(LOG_CLASS_NAME, "notifyLockEventListeners", "Lister [" + listener + "] failed unexpectedly", e);
 			}
 		}
 	}
@@ -1184,7 +1223,7 @@ public final class LockManagerImpl implements LockManager {
 				iter.remove();
 				continue;
 			}
-			if (lockState.parms.target.equals(item.target)) {
+			if (lockState.parms.lockable.equals(item.target)) {
 				return item;
 			}
 		}
@@ -1371,7 +1410,7 @@ public final class LockManagerImpl implements LockManager {
 		LockHandleImpl(LockManagerImpl lockMgr, LockParams parms) {
 			this.lockMgr = lockMgr;
 			this.owner = parms.owner;
-			this.lockable = parms.target;
+			this.lockable = parms.lockable;
 			this.mode = parms.mode;
 			this.timeout = parms.timeout;
 		}
@@ -1385,11 +1424,13 @@ public final class LockManagerImpl implements LockManager {
 		}
 
 		public final boolean release(boolean force) throws LockException {
-			return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
+			// return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
+			return lockMgr.release(owner, lockable, force);
 		}
 
 		public final void downgrade(LockMode mode) throws LockException {
-			lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
+			// lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
+			lockMgr.downgrade(owner, lockable, mode);
 		}
 
         public final LockMode getPreviousMode() {
