@@ -5,23 +5,34 @@
 	<groupId>org.simpledbm.rss</groupId>
 	<artifactId>simpledbm-rss</artifactId>
 	<packaging>jar</packaging>
-	<version>0.61</version>
+	<version>0.62</version>
 	<name>SimpleDBM</name>
 	<url>http://www.simpledbm.org</url>
+	<scm>
+		<connection>
+			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code/simpledbm-rss
+		</connection>
+		<developerConnection>
+			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code/simpledbm-rss
+		</developerConnection>
+		<url>http://simpledbm.googlecode.com/svn/</url>
+	</scm>
+	<inceptionYear>2005</inceptionYear>
 	<developers>
 		<developer>
-			<id>dmajumdar</id>
+			<id>d.majumdar</id>
 			<name>Dibyendu Majumdar</name>
 			<email>dibyendu at mazumdar dot demon dot co dot uk</email>
-			<url></url>
+			<url />
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
-			<roles />
-			<timezone></timezone>
+			<roles>
+				<role>Project Owner</role>
+			</roles>
+			<timezone />
 			<properties />
 		</developer>
 	</developers>
-
 	<licenses>
 		<license>
 			<name>
@@ -39,6 +50,7 @@
 		</dependency>
 	</dependencies>
 	<build>
+		<defaultGoal>package</defaultGoal>
 		<plugins>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -51,10 +63,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clover-plugin</artifactId>
 				<configuration>
-					<licenseLocation>${basedir}/src/test/clover/clover.license</licenseLocation>
+					<licenseLocation>
+						${basedir}/src/test/clover/clover.license
+					</licenseLocation>
 					<jdk>1.5</jdk>
 					<excludes>
-				        <exclude>**/test/java</exclude>
+						<exclude>**/test/java</exclude>
 					</excludes>
 				</configuration>
 				<executions>
@@ -65,6 +79,31 @@
 					</execution>
 				</executions>
 			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-scm-plugin</artifactId>
+				<configuration>
+					<username>username</username>
+					<password>xxxxx</password>
+				</configuration>
+			</plugin>
 		</plugins>
 	</build>
+	<reporting>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-pmd-plugin</artifactId>
+				<configuration>
+					<sourceEncoding>utf-8</sourceEncoding>
+					<minimumTokens>100</minimumTokens>
+					<targetJdk>1.5</targetJdk>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+			</plugin>
+		</plugins>
+	</reporting>
 </project>
