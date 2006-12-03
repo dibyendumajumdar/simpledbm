@@ -23,7 +23,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-public class BaseTestCase extends TestCase {
+public abstract class BaseTestCase extends TestCase {
 
 	Vector<ThreadFailure> threadFailureExceptions;
 	
