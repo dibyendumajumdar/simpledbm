@@ -26,7 +26,6 @@ package org.simpledbm.rss.api.locking;
  * <pre>
  * LockMgrFactory factory = new LockMgrFactoryImpl(); 
  * Properties props = new Properties();
- * props.setProperty("lock.hash.size", "193");
  * LockMgr lockmgr = factory.create(props);
  * LockHandle handle = lockmgr.acquire(transaction, row, 
  *  LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
@@ -88,6 +87,14 @@ public interface LockManager {
 	LockHandle acquire(Object owner,
 			Object lockable, LockMode mode, LockDuration duration,
 			int timeout) throws LockException;
+
+	/**
+	 * Searches for a specified lock, held by a specified owner.
+	 * @param owner Owner of the lock, must implement equals() method.
+	 * @param lockable The object that is tested, must implement equals() and hashcode() methods.
+	 * @return {@link LockMode} The mode in which lock is held, or {@link LockMode#NONE} if lock is not held.
+	 */
+	LockMode findLock(Object owner, Object lockable);	
 
 	void addLockEventListener(LockEventListener listener);
 	
