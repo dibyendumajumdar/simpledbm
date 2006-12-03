@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.api.locking;
 
+
 /**
  * LockMgr is the primary interface of acquiring locks. Typical usage is
  * shown below:
@@ -88,6 +89,10 @@ public interface LockManager {
 			Object lockable, LockMode mode, LockDuration duration,
 			int timeout) throws LockException;
 
+	boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException;
+	
+	boolean release(Object owner, Object lockable, boolean force) throws LockException;
+	
 	/**
 	 * Searches for a specified lock, held by a specified owner.
 	 * @param owner Owner of the lock, must implement equals() method.
@@ -95,8 +100,4 @@ public interface LockManager {
 	 * @return {@link LockMode} The mode in which lock is held, or {@link LockMode#NONE} if lock is not held.
 	 */
 	LockMode findLock(Object owner, Object lockable);	
-
-	void addLockEventListener(LockEventListener listener);
-	
-	void clearLockEventListeners();
 }
