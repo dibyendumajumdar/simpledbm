@@ -1313,7 +1313,7 @@ public class TestBTreeManager extends TestCase {
 						scan = index.openScan(key, location, LockMode.SHARED);
 					}
 					if (scan.fetchNext(trx)) {
-	                	System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+	                	// System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
@@ -1365,7 +1365,7 @@ public class TestBTreeManager extends TestCase {
 
 					IndexScan scan = index.openScan(key, location, LockMode.SHARED);
 					if (scan.fetchNext(trx)) {
-	                	System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+	                	// System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
