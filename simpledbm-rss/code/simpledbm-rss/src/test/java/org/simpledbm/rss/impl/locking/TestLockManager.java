@@ -43,41 +43,9 @@ public class TestLockManager extends BaseTestCase {
 		super(arg0);
 	}
 
-	public void testLocking() throws Exception {
-
-		ThreadFactory factory = Executors.defaultThreadFactory();
-
-		LockManager lockmgr = createLockManager();
-
-		Object tran1 = new Integer(1);
-		Object tran2 = new Integer(2);
-		Object tran3 = new Integer(3);
-		Object lockname = new Integer(10);
-		AtomicInteger sync = new AtomicInteger(0);
-
-		Thread locker1 = factory.newThread(new Lock1(sync, tran1, lockname, lockmgr));
-		Thread locker2 = factory.newThread(new Lock2(sync, tran2, lockname, lockmgr));
-		Thread locker3 = factory.newThread(new Lock3(sync, tran3, lockname, lockmgr));
-		locker1.start();
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		locker2.start();
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		locker3.start();
-		locker1.join();
-		locker2.join();
-		locker3.join();
-	}
-
 	/**
-	 * Readlocks succeed after a writing thread unlocks
+	 * Tests that SHARED lock requests block if EXCLUSIVE lock is held, and are granted
+	 * once the EXCLUSIVE lock is released.
 	 */
 	public void testReadAfterWriteLock() throws Exception {
 		final LockManager lockmgr = createLockManager();
@@ -87,27 +55,36 @@ public class TestLockManager extends BaseTestCase {
 		final Object lockname = new Integer(10);
 		final AtomicInteger counter = new AtomicInteger(0);
 
+		// Obtain an exclusive lock
 		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
-
+		
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
+					// We expect this lock to be granted after the exclusive lock is released
+					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 					LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+					assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
+					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 					handle1.release(false);
 					counter.incrementAndGet();
 				} catch (LockException e) {
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
+					// We expect this lock to be granted after the exclusive lock is released
+					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 					LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+					assertEquals(LockMode.SHARED, lockmgr.findLock(tran3, lockname));
+					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 					handle2.release(false);
 					counter.incrementAndGet();
 				} catch (LockException e) {
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
@@ -115,22 +92,27 @@ public class TestLockManager extends BaseTestCase {
 		try {
 			t1.start();
 			t2.start();
-			Thread.sleep(1000);
+			// Allow the threads to do some work
+			Thread.sleep(500);
+			// We still hold the exclusive lock
+			assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 			handle.release(false);
 			t1.join(1000);
 			t2.join(1000);
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
 			assertTrue(counter.get() == 2);
-		} catch (Exception e) {
-			fail("");
+			checkThreadFailures();
+		} catch (InterruptedException e) {
+			fail();
 		}
 	}
 
 	/**
-	 * Readlocks succeed after a writing thread unlocks
+	 * Stresses the concurrent access to same hash bucket. Two threads are started,
+	 * both of which attempt a large number of locks, all using the same hash bucket.
 	 */
-	public void testConcurrentReadWrites() throws Exception {
+	public void testConcurrentHashBucket() throws Exception {
 		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
@@ -141,26 +123,30 @@ public class TestLockManager extends BaseTestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					for (int i = 0; i < 1000; i++) {
+					for (int i = 0; i < 5000; i++) {
 						LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+						assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname1));
 						handle1.release(false);
+						assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname1));
 						counter.incrementAndGet();
 					}
 				} catch (LockException e) {
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					for (int i = 0; i < 1000; i++) {
+					for (int i = 0; i < 5000; i++) {
 						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+						assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran2, lockname2));
 						handle2.release(false);
+						assertEquals(LockMode.NONE, lockmgr.findLock(tran2, lockname2));
 						counter.incrementAndGet();
 					}
 				} catch (LockException e) {
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
@@ -172,30 +158,45 @@ public class TestLockManager extends BaseTestCase {
 			t2.join(10000);
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
-			System.err.println("Counter = " + counter.get());
-			assertTrue(counter.get() == 2000);
-		} catch (Exception e) {
+			assertTrue(counter.get() == 10000);
+			checkThreadFailures();
+		} catch (InterruptedException e) {
 			fail();
 		}
 	}
 
+	/**
+	 * Simple lock acquire and release tests
+	 */
 	public void testLocks() throws Exception {
 		final LockManager lockmgr = createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object lockname = new Integer(10);
 
 		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.SHARED, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.INTENTION_EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_SHARED, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.INTENTION_SHARED, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED_INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.SHARED_INTENTION_EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 		handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
+		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 	}
 
 	static final class Lock1 implements Runnable {
@@ -223,29 +224,24 @@ public class TestLockManager extends BaseTestCase {
 				System.err.println("T1(2) acquired lock " + handle1);
 				assertTrue(sync.compareAndSet(0, 2));
 				try {
-					System.err.println("T1 sleeping for 5 seconds");
-					Thread.sleep(5 * 1000);
+					// System.err.println("T1 sleeping for 5 seconds");
+					// Wait until threads 2 and 3 start
+					Thread.sleep(1500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				System.err.println("T1(6) locking " + lockname + " in exclusive mode (should trigger conversion request) ...");
+				System.err.println("T1(6) locking " + lockname + " in exclusive mode (should trigger conversion request and block) ...");
 				LockHandle handle2 = lockMgr.acquire(tran, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 60);
 				System.err.println("T1(8) lock acquired " + handle2);
 				assertTrue(sync.compareAndSet(4, 8));
 				try {
-					System.err.println("T1 sleeping for 5 seconds");
-					Thread.sleep(5 * 1000);
+					//System.err.println("T1 sleeping for 5 seconds");
+					Thread.sleep(1000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				System.err.println("T1(10) downgrading to shared mode");
 				handle2.downgrade(LockMode.SHARED);
-				try {
-					System.err.println("T1 sleeping for 5 seconds");
-					Thread.sleep(5 * 1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
 				System.err.println("T1(11) releasing lock");
 				handle2.release(false);
 				System.err.println("T1(12) releasing lock (should grant exclusive to T3)");
@@ -281,20 +277,22 @@ public class TestLockManager extends BaseTestCase {
 				System.err.println("T2(4) acquired lock " + handle1);
 				assertTrue(sync.compareAndSet(2, 4));
 				try {
-					System.err.println("T2 sleeping for 25 seconds");
-					Thread.sleep(25 * 1000);
+					// System.err.println("T2 sleeping for 25 seconds");
+					// Wait for thread 3 to start and thread 1 to block
+					Thread.sleep(2000);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
 				System.err.println("T2(7) releasing lock (should grant conversion request T1)");
 				handle1.release(false);
 				try {
-					System.err.println("T2 sleeping for 1 second");
-					Thread.sleep(1 * 1000);
+					// System.err.println("T2 sleeping for 1 second");
+					// wait for thread 1 to get conversion request
+					Thread.sleep(500);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				System.err.println("T2(9) locking " + lockname + " in shared mode (should wait) ...");
+				System.err.println("T2(9) locking " + lockname + " in shared mode (should block) ...");
 				handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
 				System.err.println("T2(15) acquired lock" + handle1);
 				assertTrue(sync.compareAndSet(13, 16));
@@ -338,6 +336,39 @@ public class TestLockManager extends BaseTestCase {
 		}
 	}
 
+	public void testLocking() throws Exception {
+
+		ThreadFactory factory = Executors.defaultThreadFactory();
+
+		LockManager lockmgr = createLockManager();
+
+		Object tran1 = new Integer(1);
+		Object tran2 = new Integer(2);
+		Object tran3 = new Integer(3);
+		Object lockname = new Integer(10);
+		AtomicInteger sync = new AtomicInteger(0);
+
+		Thread locker1 = factory.newThread(new Lock1(sync, tran1, lockname, lockmgr));
+		Thread locker2 = factory.newThread(new Lock2(sync, tran2, lockname, lockmgr));
+		Thread locker3 = factory.newThread(new Lock3(sync, tran3, lockname, lockmgr));
+		locker1.start();
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		locker2.start();
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		locker3.start();
+		locker1.join();
+		locker2.join();
+		locker3.join();
+	}
+
 	static final class ConstantHashingObject {
 		final int i;
 
@@ -367,8 +398,6 @@ public class TestLockManager extends BaseTestCase {
         final Object lockname = new Integer(10);
         final AtomicInteger counter = new AtomicInteger(0);
 
-        LockManagerImpl.monitoring = true;
-        
         LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
 
         Thread t1 = new Thread(new Runnable() {
@@ -407,11 +436,6 @@ public class TestLockManager extends BaseTestCase {
 			boolean result = handle.release(false);
 			assertTrue(result);
 		} catch (Exception e) {
-			e.printStackTrace();
-			for (String s : LockManagerImpl.messages) {
-				System.err.println(s);
-			}
-			LockManagerImpl.monitoring = false;
 			fail();
 		}
         
@@ -618,7 +642,7 @@ public class TestLockManager extends BaseTestCase {
 			t1.start();
 			t2.start();
 			Thread.sleep(2000);
-			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
+			((LockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             assertTrue(!t1.isAlive());
@@ -686,7 +710,7 @@ public class TestLockManager extends BaseTestCase {
 			t1.start();
 			t2.start();
 			Thread.sleep(2000);
-			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
+			((LockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             assertTrue(!t1.isAlive());
@@ -788,7 +812,7 @@ public class TestLockManager extends BaseTestCase {
 			t2.start();
 			t3.start();
 			Thread.sleep(2000);
-			((BaseLockManagerImpl)lockmgr).detectDeadlocks();
+			((LockManagerImpl)lockmgr).detectDeadlocks();
             t1.join(10000);
             t2.join(10000);
             t3.join(10000);
@@ -803,7 +827,7 @@ public class TestLockManager extends BaseTestCase {
 
 	
 	private static LockManager createLockManager() {
-		return new NewLockManagerImpl(71);
+		return new LockManagerImpl(71);
 	}
 
 }
