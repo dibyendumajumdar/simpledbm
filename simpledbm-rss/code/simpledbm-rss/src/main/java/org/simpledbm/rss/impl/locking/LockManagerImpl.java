@@ -1424,13 +1424,13 @@ public final class LockManagerImpl implements LockManager {
 		}
 
 		public final boolean release(boolean force) throws LockException {
-			// return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
-			return lockMgr.release(owner, lockable, force);
+			return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
+			// return lockMgr.release(owner, lockable, force);
 		}
 
 		public final void downgrade(LockMode mode) throws LockException {
-			// lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
-			lockMgr.downgrade(owner, lockable, mode);
+			lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
+			// lockMgr.downgrade(owner, lockable, mode);
 		}
 
         public final LockMode getPreviousMode() {
