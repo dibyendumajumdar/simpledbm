@@ -47,7 +47,6 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
-import org.simpledbm.rss.api.locking.LockEventListener;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
@@ -73,6 +72,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
@@ -1399,7 +1399,7 @@ public class TestBTreeManager extends TestCase {
         final Condition deleted = lock.newCondition();
         final Condition lockWaitStarted = lock.newCondition();
         final LockEventListener listener = new LockEventListener() {
-			public void beforeLockWait() {
+			public void beforeLockWait(Object owner, Object lockable, LockMode mode) {
 				// TODO Auto-generated method stub
 				//System.out.println("LOCK WAIT STARTED");
 				lock.lock();
@@ -1519,7 +1519,7 @@ public class TestBTreeManager extends TestCase {
         final Lock lock = new ReentrantLock();
         final Condition lockWaitStarted = lock.newCondition();
         final LockEventListener listener = new LockEventListener() {
-			public void beforeLockWait() {
+			public void beforeLockWait(Object owner, Object lockable, LockMode mode) {
 				// TODO Auto-generated method stub
 				//System.out.println("LOCK WAIT STARTED");
 				lock.lock();

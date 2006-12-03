@@ -61,8 +61,8 @@ public class TestLockManager extends BaseTestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					// We expect this lock to be granted after the exclusive lock is released
 					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+					// We expect this lock to be granted after the exclusive lock is released
 					LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
 					assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
 					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
@@ -76,8 +76,8 @@ public class TestLockManager extends BaseTestCase {
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					// We expect this lock to be granted after the exclusive lock is released
 					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+					// We expect this lock to be granted after the exclusive lock is released
 					LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
 					assertEquals(LockMode.SHARED, lockmgr.findLock(tran3, lockname));
 					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
@@ -96,6 +96,7 @@ public class TestLockManager extends BaseTestCase {
 			Thread.sleep(500);
 			// We still hold the exclusive lock
 			assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+			// Release the exclusive lock which should grant the shared lock requests
 			handle.release(false);
 			t1.join(1000);
 			t2.join(1000);
@@ -108,6 +109,29 @@ public class TestLockManager extends BaseTestCase {
 		}
 	}
 
+	/**
+	 * A type of lockable object that has a constant hash code value.
+	 * @author Dibyendu Majumdar
+	 */
+	static final class ConstantHashingObject {
+		final int i;
+
+		public ConstantHashingObject(int i) {
+			this.i = i;
+		}
+
+		@Override
+		public int hashCode() {
+			// Always return the same hash value
+			return 10;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			return i == ((ConstantHashingObject) o).i;
+		}
+	}
+	
 	/**
 	 * Stresses the concurrent access to same hash bucket. Two threads are started,
 	 * both of which attempt a large number of locks, all using the same hash bucket.
@@ -151,18 +175,14 @@ public class TestLockManager extends BaseTestCase {
 			}
 		});
 
-		try {
-			t1.start();
-			t2.start();
-			t1.join(10000);
-			t2.join(10000);
-			assertTrue(!t1.isAlive());
-			assertTrue(!t2.isAlive());
-			assertTrue(counter.get() == 10000);
-			checkThreadFailures();
-		} catch (InterruptedException e) {
-			fail();
-		}
+		t1.start();
+		t2.start();
+		t1.join(10000);
+		t2.join(10000);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+		assertTrue(counter.get() == 10000);
+		checkThreadFailures();
 	}
 
 	/**
@@ -199,15 +219,18 @@ public class TestLockManager extends BaseTestCase {
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 	}
 
-	static final class Lock1 implements Runnable {
+	/**
+	 * @see TestLockManager#testLocking()
+	 */
+	final class Lock1 implements Runnable {
 
-		AtomicInteger sync;
+		private final AtomicInteger sync;
 
-		Object tran;
+		private final Object tran;
 
-		Object lockname;
+		private final Object lockname;
 
-		LockManager lockMgr;
+		private final LockManager lockMgr;
 
 		public Lock1(AtomicInteger sync, Object tran, Object lockname, LockManager lockMgr) {
 			this.tran = tran;
@@ -247,20 +270,23 @@ public class TestLockManager extends BaseTestCase {
 				System.err.println("T1(12) releasing lock (should grant exclusive to T3)");
 				handle1.release(false);
 			} catch (LockException e) {
-				e.printStackTrace();
+				TestLockManager.this.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
 	}
 
-	static final class Lock2 implements Runnable {
+	/**
+	 * @see TestLockManager#testLocking()
+	 */
+	final class Lock2 implements Runnable {
 
-		AtomicInteger sync;
+		private final AtomicInteger sync;
 
-		Object tran;
+		private final Object tran;
 
-		Object lockname;
+		private final Object lockname;
 
-		LockManager lockMgr;
+		private final LockManager lockMgr;
 
 		public Lock2(AtomicInteger sync, Object tran1, Object lockname, LockManager lockMgr) {
 			this.tran = tran1;
@@ -299,20 +325,23 @@ public class TestLockManager extends BaseTestCase {
 				System.err.println("T2(16) releasing lock");
 				handle1.release(false);
 			} catch (LockException e) {
-				e.printStackTrace();
+				TestLockManager.this.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
 	}
 
-	static final class Lock3 implements Runnable {
+	/**
+	 * @see TestLockManager#testLocking()
+	 */
+	final class Lock3 implements Runnable {
 
-		AtomicInteger sync;
+		private final AtomicInteger sync;
 
-		Object tran;
+		private final Object tran;
 
-		Object lockname;
+		private final Object lockname;
 
-		LockManager lockMgr;
+		private final LockManager lockMgr;
 
 		public Lock3(AtomicInteger sync, Object tran, Object lockname, LockManager lockMgr) {
 			this.tran = tran;
@@ -331,11 +360,19 @@ public class TestLockManager extends BaseTestCase {
 				System.err.println("T3(14) releasing lock (should grant shared lock to T2)");
 				handle.release(false);
 			} catch (LockException e) {
-				e.printStackTrace();
+				TestLockManager.this.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
 	}
 
+	/**
+	 * A complex test case where various interactions between three threads are tested.
+	 * The thread interactions are defined in terms of a state machine which is
+	 * validated.
+	 * @see TestLockManager.Lock1
+	 * @see TestLockManager.Lock2
+	 * @see TestLockManager.Lock3
+	 */
 	public void testLocking() throws Exception {
 
 		ThreadFactory factory = Executors.defaultThreadFactory();
@@ -352,43 +389,22 @@ public class TestLockManager extends BaseTestCase {
 		Thread locker2 = factory.newThread(new Lock2(sync, tran2, lockname, lockmgr));
 		Thread locker3 = factory.newThread(new Lock3(sync, tran3, lockname, lockmgr));
 		locker1.start();
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		Thread.sleep(500);
 		locker2.start();
-		try {
-			Thread.sleep(500);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+		Thread.sleep(500);
 		locker3.start();
-		locker1.join();
-		locker2.join();
-		locker3.join();
-	}
-
-	static final class ConstantHashingObject {
-		final int i;
-
-		public ConstantHashingObject(int i) {
-			this.i = i;
-		}
-
-		@Override
-		public int hashCode() {
-			return 10;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			return i == ((ConstantHashingObject) o).i;
-		}
+		locker1.join(10000);
+		locker2.join(10000);
+		locker3.join(10000);
+		assertEquals(16, sync.get());
+		checkThreadFailures();
 	}
 
     /**
-     * Readlocks succeed after a writing thread unlocks
+     * Tests lock downgrade. A thread acquires an UPDATE lock.
+     * Two other threads get blocked on SHARED lock request.
+     * The first thread downgrades the UPDATE lock to SHARED lock, at which
+     * point the two blocked threads obtain the lock and get unblocked.
      */
     public void testLockDowngrade() throws Exception {
         final LockManager lockmgr = createLockManager();
@@ -426,7 +442,7 @@ public class TestLockManager extends BaseTestCase {
         try {
 			t1.start();
 			t2.start();
-			Thread.sleep(1000);
+			Thread.sleep(500);
 			handle.downgrade(LockMode.SHARED);
 			t1.join(1000);
 			t2.join(1000);
@@ -464,7 +480,7 @@ public class TestLockManager extends BaseTestCase {
     /**
      * This test verifies that an INSTANT_DURATION lock works correctly when it is necessary 
      * to wait for the lock to become available. Also, it tests that a lock downgrade leads 
-     * to eleigible waiting requests being granted locks.
+     * to eligible waiting requests being granted locks.
      */
     public void testInstantLockWait() throws Exception {
         final LockManager lockmgr = createLockManager();
@@ -479,6 +495,7 @@ public class TestLockManager extends BaseTestCase {
             public void run() {
                 try {
                     lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, -1);
+                    assertEquals(LockMode.NONE, lockmgr.findLock(tran2, lockname));
                     assertTrue(counter.get() == 1);
                 } catch (LockException e) {
                     counter.incrementAndGet();
@@ -489,14 +506,14 @@ public class TestLockManager extends BaseTestCase {
 
         try {
             t1.start();
-            Thread.sleep(1000);
+            Thread.sleep(500);
             counter.incrementAndGet();
             handle.downgrade(LockMode.SHARED);
             t1.join(1000);
             assertTrue(!t1.isAlive());
             assertTrue(counter.get() == 1);
             assertTrue(handle.release(false));
-        } catch (Exception e) {
+        } catch (InterruptedException e) {
             fail();
         }
     }
