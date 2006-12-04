@@ -333,9 +333,9 @@ public class TestBufferManager extends TestCase {
             threads[i].start();
         }
         for (int i = 0; i < threads.length; i++) {
-            threads[i].join();
+            threads[i].join(5000);
         }
-
+        assertEquals(0, errCount.get());
         /* Verify that the test was successful */
         for (int z = 1; z <= page_count[testing]; z++) {
             PageId pageId = new PageId(1, z);
