@@ -268,7 +268,6 @@ public final class LockManagerImpl implements LockManager {
 			count++;
 			lockState.handle.lockRequest = r;
 			lockState.setStatus(LockStatus.GRANTED);
-			// TODO lockState.setRequest();
 		} else {
 			lockState.setStatus(LockStatus.GRANTABLE);
 		}
@@ -354,7 +353,7 @@ public final class LockManagerImpl implements LockManager {
 						.debug(LOG_CLASS_NAME, "prepareToWait",
 								"Conversion NOT compatible with granted group, therefore waiting ...");
 			}
-			lockState.lockRequest.convertMode = lockState.handle.mode;
+			lockState.lockRequest.convertMode = lockState.parms.mode;
 			lockState.lockRequest.convertDuration = lockState.parms.duration;
 			lockState.lockRequest.status = LockRequestStatus.CONVERTING;
 			lockState.prevThread = lockState.lockRequest.thread;
@@ -1415,9 +1414,9 @@ public final class LockManagerImpl implements LockManager {
 
         LockRequest lockRequest;
         
-        final LockMode mode;
+        // final LockMode mode;
 
-        final int timeout;
+        // final int timeout;
 
         private LockMode previousMode = LockMode.NONE;
 
@@ -1431,8 +1430,8 @@ public final class LockManagerImpl implements LockManager {
 			this.lockMgr = lockMgr;
 			this.owner = parms.owner;
 			this.lockable = parms.lockable;
-			this.mode = parms.mode;
-			this.timeout = parms.timeout;
+			// this.mode = parms.mode;
+			// this.timeout = parms.timeout;
 		}
 
 //		final LockHandleImpl setStatus(LockRequest request, LockStatus status) {
