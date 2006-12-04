@@ -435,6 +435,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * <li>Obtain a frame (slot) for the page by calling {@link #getFrame()}.</li>
 	 * <li>If the page is new, instantiate a new page, else, read it from the disk.</li>
 	 * </ol>
+	 * @return The newly allocated BufferControlBlock or null to indicate that the caller must retry.
 	 */
 	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype) throws BufferManagerException, PageException {
 
@@ -457,7 +458,18 @@ public final class BufferManagerImpl implements BufferManager {
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
 					}
-					return bcb;
+					if (bcb.frameIndex == -1) {
+						// System.err.println(Thread.currentThread().getName() + ": Page " + bcb.pageId + " is being read, so we need to retry");
+						// Bug discovered when testing on Intel CoreDuo (3 Dec 2006) - if the page is being read
+						// we need to wait for the read to be over. Since we need to give up latches
+						// easiest option is to retry. 
+						// For now, we return null to the caller indicate that this must be retried
+						// FIXME - need to do this in a better way
+						return null;
+					}
+					else {
+						return bcb;
+					}
 				}
 			}
 
@@ -612,7 +624,11 @@ public final class BufferManagerImpl implements BufferManager {
 				/*
 				 * Page not found - must read it in
 				 */
-				nextBcb = locatePage(pageid, h, isNew, pagetype);
+				nextBcb = null;
+				while (nextBcb == null) {
+					Thread.yield();
+					nextBcb = locatePage(pageid, h, isNew, pagetype);
+				}
 				bucket.latch.readLock().lock();
 				if (!nextBcb.pageId.equals(pageid)) {
 					bucket.latch.readLock().unlock();
