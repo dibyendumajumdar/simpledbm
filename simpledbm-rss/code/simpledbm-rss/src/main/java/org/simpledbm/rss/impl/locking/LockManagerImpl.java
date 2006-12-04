@@ -237,10 +237,18 @@ public final class LockManagerImpl implements LockManager {
 		boolean converting;
 		Thread prevThread;
 		LockItem lockitem;
-		LockStatus status;
+		private LockStatus status;
 	
 		public LockState(LockParams parms) {
 			this.parms = parms;
+		}
+
+		void setStatus(LockStatus status) {
+			this.status = status;
+		}
+
+		LockStatus getStatus() {
+			return status;
 		}
 	}
 
@@ -258,9 +266,11 @@ public final class LockManagerImpl implements LockManager {
 			lockitem.queueAppend(r);
 			lockState.bucket.chainAppend(lockitem);
 			count++;
-			lockState.handle.setStatus(r, LockStatus.GRANTED);
+			lockState.handle.lockRequest = r;
+			lockState.setStatus(LockStatus.GRANTED);
+			// TODO lockState.setRequest();
 		} else {
-			lockState.handle.setStatus(null, LockStatus.GRANTABLE);
+			lockState.setStatus(LockStatus.GRANTABLE);
 		}
 	}
 	
@@ -270,14 +280,14 @@ public final class LockManagerImpl implements LockManager {
 	private void handleWaitResult(LockState lockState) throws LockTimeoutException, LockDeadlockException, LockException {
 		LockRequestStatus lockRequestStatus = lockState.lockRequest.status;
 		if (lockRequestStatus == LockRequestStatus.GRANTED) {
-			lockState.status = LockStatus.GRANTED;
+			lockState.setStatus(LockStatus.GRANTED);
 		} else if (lockRequestStatus == LockRequestStatus.DENIED) {
-			lockState.status = LockStatus.DEADLOCK;
+			lockState.setStatus(LockStatus.DEADLOCK);
 		} else {
-			lockState.status = LockStatus.TIMEOUT;
+			lockState.setStatus(LockStatus.TIMEOUT);
 		}
 
-		if (lockState.status == LockStatus.GRANTED) {
+		if (lockState.getStatus() == LockStatus.GRANTED) {
 			/*
 			 * 9. If after the wait, the lock has been granted, then return
 			 * success.
@@ -287,7 +297,8 @@ public final class LockManagerImpl implements LockManager {
 						"Woken up, and lock granted");
 			}
 			checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.handle);
-			lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+			// TODO lockState.setRequest()
 			return;
 		}
 
@@ -310,16 +321,16 @@ public final class LockManagerImpl implements LockManager {
 			lockState.lockRequest.convertMode = lockState.lockRequest.mode;
 			lockState.lockRequest.thread = lockState.prevThread;
 		}
-		if (lockState.status == LockStatus.DEADLOCK) {
+		if (lockState.getStatus() == LockStatus.DEADLOCK) {
 			/* 
 			 * If we have been chosen as a deadlock victim, then we need to grant the
 			 * lock to the waiter who has won the deadlock.
 			 */
 			grantWaiters(ReleaseAction.RELEASE, lockState.lockRequest, lockState.handle, lockState.lockitem);
 		}
-		if (lockState.status == LockStatus.TIMEOUT)
+		if (lockState.getStatus() == LockStatus.TIMEOUT)
 			throw new LockTimeoutException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
-		else if (lockState.status == LockStatus.DEADLOCK)
+		else if (lockState.getStatus() == LockStatus.DEADLOCK)
 			throw new LockDeadlockException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " failed due to a deadlock");
 		else
 			throw new LockException(
@@ -394,9 +405,11 @@ public final class LockManagerImpl implements LockManager {
 				}
 				checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.handle);
 				if (lockState.parms.duration == LockDuration.INSTANT_DURATION) {
-					lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+					lockState.setStatus(LockStatus.GRANTABLE);
 				} else {
-					lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+					lockState.setStatus(LockStatus.GRANTED);
 				}
 				return true;
 			}
@@ -422,10 +435,12 @@ public final class LockManagerImpl implements LockManager {
 						lockState.lockRequest.count++;
 						lockState.lockitem.grantedMode = lockState.lockRequest.mode
 								.maximumOf(lockState.lockitem.grantedMode);
-						lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+						//lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+						lockState.setStatus(LockStatus.GRANTED);
 					} else {
-						lockState.handle
-								.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+						//lockState.handle
+						//		.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+						lockState.setStatus(LockStatus.GRANTABLE);
 					}
 					return true;
 				}
@@ -479,7 +494,8 @@ public final class LockManagerImpl implements LockManager {
 
 		if (lockState.parms.duration == LockDuration.INSTANT_DURATION && can_grant) {
 			/* 6. If yes, grant the lock and return success. */
-			lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
+			lockState.setStatus(LockStatus.GRANTABLE);
 			return true;
 		}
 
@@ -503,7 +519,7 @@ public final class LockManagerImpl implements LockManager {
 		/* Allocate new lock request */
 		lockState.lockRequest = new LockRequest(lockState.lockitem, lockState.parms.owner, lockState.parms.mode, lockState.parms.duration);
 		lockState.lockitem.queueAppend(lockState.lockRequest);
-
+		lockState.handle.lockRequest = lockState.lockRequest;
 		if (can_grant) {
 			/* 6. If yes, grant the lock and return success. */
 			if (log.isDebugEnabled()) {
@@ -513,7 +529,8 @@ public final class LockManagerImpl implements LockManager {
 								+ ", therefore granting lock");
 			}
 			lockState.lockitem.grantedMode = lockState.parms.mode.maximumOf(lockState.lockitem.grantedMode);
-			lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
+			lockState.setStatus(LockStatus.GRANTED);
 			return true;
 		} else {
 			lockState.converting = false;
@@ -548,7 +565,7 @@ public final class LockManagerImpl implements LockManager {
 		try {
 			handle = doAcquire(lockState);
 			if (duration == LockDuration.INSTANT_DURATION
-					&& handle.getStatus() == LockStatus.GRANTED) {
+					&& lockState.getStatus() == LockStatus.GRANTED) {
 				/*
 				 * Handle the case where the lock was granted after a wait.
 				 */
@@ -726,7 +743,7 @@ public final class LockManagerImpl implements LockManager {
 				}
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
 				lockState.handle.setPreviousMode(lockState.lockRequest.mode);
-				lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
+				// lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
 				lockState.handle.setHeldByOthers(false);
 			} else {
 				throw new LockException(
@@ -1014,6 +1031,7 @@ public final class LockManagerImpl implements LockManager {
 					return lockState.handle;
 				}
 			} else {
+				lockState.handle.lockRequest = lockState.lockRequest;
 				if (handleConversionRequest(lockState)) {
 					return lockState.handle;
 				}
@@ -1395,6 +1413,8 @@ public final class LockManagerImpl implements LockManager {
 
         final Object owner;
 
+        LockRequest lockRequest;
+        
         final LockMode mode;
 
         final int timeout;
@@ -1403,9 +1423,9 @@ public final class LockManagerImpl implements LockManager {
 
         private boolean heldByOthers = false;
 
-        private LockMode currentMode = LockMode.NONE;
+        // private LockMode currentMode = LockMode.NONE;
 
-        private LockStatus status;
+        //private LockStatus status;
 
 		LockHandleImpl(LockManagerImpl lockMgr, LockParams parms) {
 			this.lockMgr = lockMgr;
@@ -1415,13 +1435,13 @@ public final class LockManagerImpl implements LockManager {
 			this.timeout = parms.timeout;
 		}
 
-		final LockHandleImpl setStatus(LockRequest request, LockStatus status) {
-			if (request != null) {
-				currentMode = request.mode;
-			}
-			this.status = status;
-			return this;
-		}
+//		final LockHandleImpl setStatus(LockRequest request, LockStatus status) {
+//			if (request != null) {
+//				currentMode = request.mode;
+//			}
+//			this.status = status;
+//			return this;
+//		}
 
 		public final boolean release(boolean force) throws LockException {
 			return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
@@ -1442,16 +1462,19 @@ public final class LockManagerImpl implements LockManager {
         }
 
         public final LockMode getCurrentMode() {
-            return currentMode;
+        	if (lockRequest == null) {
+        		throw new IllegalStateException("Invalid call: no lock request associated with this handle");
+        	}
+            return lockRequest.mode;
         }
 
-        final LockStatus getStatus() {
-            return status;
-        }
+//        final LockStatus getStatus() {
+//            return status;
+//        }
 
-        final void setCurrentMode(LockMode currentMode) {
-            this.currentMode = currentMode;
-        }
+//        final void setCurrentMode(LockMode currentMode) {
+//            this.currentMode = currentMode;
+//        }
 
         final void setHeldByOthers(boolean heldByOthers) {
             this.heldByOthers = heldByOthers;
@@ -1464,7 +1487,7 @@ public final class LockManagerImpl implements LockManager {
         @Override
         public String toString() {
             return "LockHandleImpl(owner=" + owner + ", target=" + lockable + ", currentMode=" + getCurrentMode() + ", prevMode=" + getPreviousMode() + 
-                ", otherHolders=" + isHeldByOthers() + ", status=" + getStatus() + ")";
+                ", otherHolders=" + isHeldByOthers() + ")";
         }
 	}
 
@@ -1494,7 +1517,4 @@ public final class LockManagerImpl implements LockManager {
     		thread = t;
     	}
     }
-
-
-	
 }
