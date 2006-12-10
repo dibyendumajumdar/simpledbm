@@ -33,6 +33,7 @@ import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
+import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
@@ -188,7 +189,7 @@ public final class LockManagerImpl implements LockManager {
      * Checks whether the specified lock request is compatible with the granted group.
      * Also sets the otherHolders flag if the granted group contains other requests.
      */
-	private boolean checkCompatible(LockItem lock, LockRequest request, LockMode mode, LockHandleImpl lockInfo) {
+	private boolean checkCompatible(LockItem lock, LockRequest request, LockMode mode, LockInfo lockInfo) {
 
         if (lockInfo != null) {
             lockInfo.setHeldByOthers(false);
@@ -224,6 +225,7 @@ public final class LockManagerImpl implements LockManager {
 		LockMode mode;
 		LockDuration duration;
 		int timeout;
+		LockInfo lockInfo;
 		
 		LockMode downgradeMode;
 		ReleaseAction action;
@@ -295,7 +297,7 @@ public final class LockManagerImpl implements LockManager {
 				log.debug(LOG_CLASS_NAME, "handleWaitResult",
 						"Woken up, and lock granted");
 			}
-			checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.handle);
+			checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.parms.lockInfo);
 			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
 			// TODO lockState.setRequest()
 			return;
@@ -325,7 +327,7 @@ public final class LockManagerImpl implements LockManager {
 			 * If we have been chosen as a deadlock victim, then we need to grant the
 			 * lock to the waiter who has won the deadlock.
 			 */
-			grantWaiters(ReleaseAction.RELEASE, lockState.lockRequest, lockState.handle, lockState.lockitem);
+			grantWaiters(ReleaseAction.RELEASE, lockState.lockRequest, lockState.handle, lockState.lockitem, lockState.parms.lockInfo);
 		}
 		if (lockState.getStatus() == LockStatus.TIMEOUT)
 			throw new LockTimeoutException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
@@ -391,7 +393,9 @@ public final class LockManagerImpl implements LockManager {
 			 * 12. Check whether the new request lock is same mode as
 			 * previously held lock.
 			 */
-			lockState.handle.setPreviousMode(lockState.lockRequest.mode);
+			if (lockState.parms.lockInfo != null) {
+				lockState.parms.lockInfo.setPreviousMode(lockState.lockRequest.mode);
+			}
 			if (lockState.parms.mode == lockState.lockRequest.mode) {
 				/* 13. If so, grant lock and return. */
 				if (log.isDebugEnabled()) {
@@ -402,7 +406,7 @@ public final class LockManagerImpl implements LockManager {
 				if (lockState.parms.duration != LockDuration.INSTANT_DURATION) {
 					lockState.lockRequest.count++;
 				}
-				checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.handle);
+				checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.parms.lockInfo);
 				if (lockState.parms.duration == LockDuration.INSTANT_DURATION) {
 					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
 					lockState.setStatus(LockStatus.GRANTABLE);
@@ -419,7 +423,7 @@ public final class LockManagerImpl implements LockManager {
 				 * with granted group
 				 */
 				boolean can_grant = checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode,
-						lockState.handle);
+						lockState.parms.lockInfo);
 
 				if (can_grant) {
 					/* 13. If so, grant lock and return. */
@@ -482,7 +486,9 @@ public final class LockManagerImpl implements LockManager {
 							+ " for target " + lockState.parms.lockable);
 		}
 
-		lockState.handle.setHeldByOthers(true);
+		if (lockState.parms.lockInfo != null) {
+			lockState.parms.lockInfo.setHeldByOthers(true);
+		}
 		/*
 		 * 5. Check if lock can be granted. This is true if there are no
 		 * waiting requests and the new request is compatible with
@@ -544,7 +550,7 @@ public final class LockManagerImpl implements LockManager {
 	 *      java.lang.Object, org.simpledbm.locking.LockMode,
 	 *      org.simpledbm.locking.LockDuration, int)
 	 */
-	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout) throws LockException {
+	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout, LockInfo lockInfo) throws LockException {
 
 		LockParams parms = new LockParams();
 		parms.owner = owner;
@@ -552,6 +558,7 @@ public final class LockManagerImpl implements LockManager {
 		parms.mode = mode;
 		parms.duration = duration;
 		parms.timeout = timeout;
+		parms.lockInfo = lockInfo;
 		
 		LockState lockState = new LockState(parms);
 		
@@ -741,9 +748,11 @@ public final class LockManagerImpl implements LockManager {
 							+ " and re-adjusting granted mode");
 				}
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
-				lockState.handle.setPreviousMode(lockState.lockRequest.mode);
-				// lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
-				lockState.handle.setHeldByOthers(false);
+				if (lockState.parms.lockInfo != null) {
+					lockState.parms.lockInfo.setPreviousMode(lockState.lockRequest.mode);
+					// lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
+					lockState.parms.lockInfo.setHeldByOthers(false);
+				}
 			} else {
 				throw new LockException(
 						"SIMPLEDBM-ELOCK-005: Invalid downgrade request from "
@@ -764,11 +773,11 @@ public final class LockManagerImpl implements LockManager {
 		 * conversion request is pending, waiting requests cannot be
 		 * granted.
 		 */
-		grantWaiters(lockState.parms.action, lockState.lockRequest, lockState.handle, lockState.lockitem);
+		grantWaiters(lockState.parms.action, lockState.lockRequest, lockState.handle, lockState.lockitem, lockState.parms.lockInfo);
 		return released;
 	}
 
-	private void grantWaiters(ReleaseAction action, LockRequest r, LockHandleImpl handleImpl, LockItem lockitem) {
+	private void grantWaiters(ReleaseAction action, LockRequest r, LockHandleImpl handleImpl, LockItem lockitem, LockInfo lockInfo) {
 		/*
 		 * 9. Recalculate granted mode by calculating max mode amongst all
 		 * granted (including conversion) requests. If a conversion request
@@ -793,7 +802,9 @@ public final class LockManagerImpl implements LockManager {
 			if (r.status == LockRequestStatus.GRANTED) {
 				lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 		        if (r != myReq && action == ReleaseAction.DOWNGRADE) {
-		            handleImpl.setHeldByOthers(true);
+		        	if (lockInfo != null) {
+		        		lockInfo.setHeldByOthers(true);
+		        	}
 		        }
 			}
 
@@ -1418,9 +1429,9 @@ public final class LockManagerImpl implements LockManager {
 
         // final int timeout;
 
-        private LockMode previousMode = LockMode.NONE;
+        // private LockMode previousMode = LockMode.NONE;
 
-        private boolean heldByOthers = false;
+        // private boolean heldByOthers = false;
 
         // private LockMode currentMode = LockMode.NONE;
 
@@ -1452,13 +1463,13 @@ public final class LockManagerImpl implements LockManager {
 			// lockMgr.downgrade(owner, lockable, mode);
 		}
 
-        public final LockMode getPreviousMode() {
-            return previousMode;
-        }
-
-        public final boolean isHeldByOthers() {
-            return heldByOthers;
-        }
+//        public final LockMode getPreviousMode() {
+//            return previousMode;
+//        }
+//
+//        public final boolean isHeldByOthers() {
+//            return heldByOthers;
+//        }
 
         public final LockMode getCurrentMode() {
         	if (lockRequest == null) {
@@ -1475,18 +1486,17 @@ public final class LockManagerImpl implements LockManager {
 //            this.currentMode = currentMode;
 //        }
 
-        final void setHeldByOthers(boolean heldByOthers) {
-            this.heldByOthers = heldByOthers;
-        }
-
-        final void setPreviousMode(LockMode previousMode) {
-            this.previousMode = previousMode;
-        }
-
+//        final void setHeldByOthers(boolean heldByOthers) {
+//            this.heldByOthers = heldByOthers;
+//        }
+//
+//        final void setPreviousMode(LockMode previousMode) {
+//            this.previousMode = previousMode;
+//        }
+//
         @Override
         public String toString() {
-            return "LockHandleImpl(owner=" + getOwner() + ", target=" + getLockable() + ", currentMode=" + getCurrentMode() + ", prevMode=" + getPreviousMode() + 
-                ", otherHolders=" + isHeldByOthers() + ")";
+            return "LockHandleImpl(owner=" + getOwner() + ", target=" + getLockable() + ", currentMode=" + getCurrentMode() + ")";
         }
 
 		Object getLockable() {

@@ -87,7 +87,7 @@ public interface LockManager {
 	 */
 	LockHandle acquire(Object owner,
 			Object lockable, LockMode mode, LockDuration duration,
-			int timeout) throws LockException;
+			int timeout, LockInfo lockInfo) throws LockException;
 
 	boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException;
 	

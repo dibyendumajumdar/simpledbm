@@ -64,14 +64,14 @@ public class TestLockManager extends BaseTestCase {
 		final AtomicInteger counter = new AtomicInteger(0);
 
 		// Obtain an exclusive lock
-		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 		
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
 					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 					// We expect this lock to be granted after the exclusive lock is released
-					LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+					LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
 					assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
 					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 					handle1.release(false);
@@ -86,7 +86,7 @@ public class TestLockManager extends BaseTestCase {
 				try {
 					assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 					// We expect this lock to be granted after the exclusive lock is released
-					LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+					LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
 					assertEquals(LockMode.SHARED, lockmgr.findLock(tran3, lockname));
 					assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
 					handle2.release(false);
@@ -156,7 +156,7 @@ public class TestLockManager extends BaseTestCase {
 			public void run() {
 				try {
 					for (int i = 0; i < 5000; i++) {
-						LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+						LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 						assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname1));
 						handle1.release(false);
 						assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname1));
@@ -171,7 +171,7 @@ public class TestLockManager extends BaseTestCase {
 			public void run() {
 				try {
 					for (int i = 0; i < 5000; i++) {
-						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 						assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran2, lockname2));
 						handle2.release(false);
 						assertEquals(LockMode.NONE, lockmgr.findLock(tran2, lockname2));
@@ -201,27 +201,27 @@ public class TestLockManager extends BaseTestCase {
 		final Object tran1 = new Integer(1);
 		final Object lockname = new Integer(10);
 
-		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
-		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.SHARED, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
-		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.INTENTION_EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
-		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_SHARED, LockDuration.MANUAL_DURATION, -1);
+		handle = lockmgr.acquire(tran1, lockname, LockMode.INTENTION_SHARED, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.INTENTION_SHARED, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
-		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED_INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+		handle = lockmgr.acquire(tran1, lockname, LockMode.SHARED_INTENTION_EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.SHARED_INTENTION_EXCLUSIVE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
-		handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
+		handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1, null);
 		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
@@ -251,7 +251,7 @@ public class TestLockManager extends BaseTestCase {
 
 			try {
 				System.err.println("T1(1) locking " + lockname + " in shared mode");
-				LockHandle handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
+				LockHandle handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60, null);
 				System.err.println("T1(2) acquired lock " + handle1);
 				assertTrue(sync.compareAndSet(0, 2));
 				try {
@@ -262,7 +262,7 @@ public class TestLockManager extends BaseTestCase {
 					e.printStackTrace();
 				}
 				System.err.println("T1(6) locking " + lockname + " in exclusive mode (should trigger conversion request and block) ...");
-				LockHandle handle2 = lockMgr.acquire(tran, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 60);
+				LockHandle handle2 = lockMgr.acquire(tran, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 60, null);
 				System.err.println("T1(8) lock acquired " + handle2);
 				assertTrue(sync.compareAndSet(4, 8));
 				try {
@@ -307,7 +307,7 @@ public class TestLockManager extends BaseTestCase {
 
 			try {
 				System.err.println("T2(3) locking " + lockname + " in shared mode");
-				LockHandle handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
+				LockHandle handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60, null);
 				System.err.println("T2(4) acquired lock " + handle1);
 				assertTrue(sync.compareAndSet(2, 4));
 				try {
@@ -327,7 +327,7 @@ public class TestLockManager extends BaseTestCase {
 					e.printStackTrace();
 				}
 				System.err.println("T2(9) locking " + lockname + " in shared mode (should block) ...");
-				handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
+				handle1 = lockMgr.acquire(tran, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, 60, null);
 				System.err.println("T2(15) acquired lock" + handle1);
 				assertTrue(sync.compareAndSet(13, 16));
 				System.err.println("T2(16) releasing lock");
@@ -362,7 +362,7 @@ public class TestLockManager extends BaseTestCase {
 
 			try {
 				System.err.println("T3(5) locking " + lockname + " in exclusive mode (should wait) ...");
-				LockHandle handle = lockMgr.acquire(tran, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 60);
+				LockHandle handle = lockMgr.acquire(tran, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 60, null);
 				System.err.println("T3(13) acquired lock " + handle);
 				assertTrue(sync.compareAndSet(8, 13));
 				System.err.println("T3(14) releasing lock (should grant shared lock to T2)");
@@ -422,12 +422,12 @@ public class TestLockManager extends BaseTestCase {
         final Object lockname = new Integer(10);
         final AtomicInteger counter = new AtomicInteger(0);
 
-        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
+        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1, null);
 
         Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
-                    LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+                    LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
                     handle1.release(false);
                     counter.incrementAndGet();
                 } catch (LockException e) {
@@ -438,7 +438,7 @@ public class TestLockManager extends BaseTestCase {
         Thread t2 = new Thread(new Runnable() {
             public void run() {
                 try {
-                    LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+                    LockHandle handle2 = lockmgr.acquire(tran3, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
                     handle2.release(false);
                     counter.incrementAndGet();
                 } catch (LockException e) {
@@ -473,7 +473,7 @@ public class TestLockManager extends BaseTestCase {
         final Object tran1 = new Integer(1);
         final Object lockname = new Integer(10);
 
-        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
+        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1, null);
         try {
             handle.downgrade(LockMode.EXCLUSIVE);
             fail();
@@ -496,12 +496,12 @@ public class TestLockManager extends BaseTestCase {
         final Object lockname = new Integer(10);
         final AtomicInteger counter = new AtomicInteger(0);
 
-        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
+        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1, null);
 
         Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
-                    lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, -1);
+                    lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, -1, null);
                     assertEquals(LockMode.NONE, lockmgr.findLock(tran2, lockname));
                     assertTrue(counter.get() == 1);
                 } catch (LockException e) {
@@ -531,9 +531,9 @@ public class TestLockManager extends BaseTestCase {
         final Object tran2 = new Integer(2);
         final Object lockname = new Integer(10);
 
-        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
         try {
-            lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0);
+            lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0, null);
             fail();
         }
         catch (LockException e) {
@@ -552,9 +552,9 @@ public class TestLockManager extends BaseTestCase {
         final Object tran1 = new Integer(1);
         final Object lockname = new Integer(10);
 
-        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1);
+        LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
         try {
-            lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0);
+            lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0, null);
         }
         catch (LockException e) {
             fail(e.getMessage());
@@ -577,9 +577,9 @@ public class TestLockManager extends BaseTestCase {
         Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
-                    LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1);
+                    LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
                     Thread.sleep(500);
-                    LockHandle handle2 = lockmgr.acquire(tran2, lockname, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION, -1);
+                    LockHandle handle2 = lockmgr.acquire(tran2, lockname, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION, -1, null);
                     assertTrue(handle2.getCurrentMode() == LockMode.SHARED);
                     assertTrue(handle1.release(false));
                 } catch (Exception e) {
@@ -592,7 +592,7 @@ public class TestLockManager extends BaseTestCase {
         t1.start();
 		Thread.sleep(200);
 		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE,
-				LockDuration.MANUAL_DURATION, -1);
+				LockDuration.MANUAL_DURATION, -1, null);
 		Thread.sleep(1000);
 		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
 		assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
@@ -617,10 +617,10 @@ public class TestLockManager extends BaseTestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5);
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5, null);
 					try {
 						Thread.sleep(1000);
-						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 						handle2.release(false);
 					}
 					finally {
@@ -639,10 +639,10 @@ public class TestLockManager extends BaseTestCase {
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5);
+					LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 5, null);
 					try {
 						Thread.sleep(1000);	
-						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 						handle1.release(false);
 					}
 					finally {
@@ -683,10 +683,10 @@ public class TestLockManager extends BaseTestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5);
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5, null);
 					try {
 						Thread.sleep(1000);
-						LockHandle handle2 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 						handle2.release(false);
 					}
 					finally {
@@ -704,10 +704,10 @@ public class TestLockManager extends BaseTestCase {
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle2 = lockmgr.acquire(tran2, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5);
+					LockHandle handle2 = lockmgr.acquire(tran2, lockname1, LockMode.SHARED, LockDuration.MANUAL_DURATION, 5, null);
 					try {
 						Thread.sleep(1000);	
-						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle1 = lockmgr.acquire(tran2, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 						handle1.release(false);
 					}
 					finally {
@@ -750,12 +750,12 @@ public class TestLockManager extends BaseTestCase {
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					LockHandle handle1 = lockmgr.acquire(tran1, lockname1, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 					try {
-						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10, null);
 						try {
 							Thread.sleep(1000);
-							LockHandle handle3 = lockmgr.acquire(tran1, lockname3, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+							LockHandle handle3 = lockmgr.acquire(tran1, lockname3, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10, null);
 							handle3.release(false);
 						}
 						finally {
@@ -778,12 +778,12 @@ public class TestLockManager extends BaseTestCase {
 		Thread t2 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					LockHandle handle1 = lockmgr.acquire(tran2, lockname3, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					LockHandle handle1 = lockmgr.acquire(tran2, lockname3, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 					try {
-						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10);
+						LockHandle handle2 = lockmgr.acquire(tran2, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10, null);
 						try {
 							Thread.sleep(500);
-							LockHandle handle3 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+							LockHandle handle3 = lockmgr.acquire(tran2, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 							handle3.release(false);
 						}
 						finally {
@@ -806,7 +806,7 @@ public class TestLockManager extends BaseTestCase {
 			public void run() {
 				try {
 					Thread.sleep(1000);
-					LockHandle handle1 = lockmgr.acquire(tran3, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
+					LockHandle handle1 = lockmgr.acquire(tran3, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 					handle1.release(false);
 				} catch (LockDeadlockException e) {
 //					System.err.println("T3 failed with " + e);

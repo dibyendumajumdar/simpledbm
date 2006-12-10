@@ -55,13 +55,13 @@ public interface LockHandle {
      * this method returns the previous LockMode.
      * @return The previously held LockMode.
      */
-    LockMode getPreviousMode();
+    //LockMode getPreviousMode();
     
     /**
      * Determines if this lock is also held by other transactions.
      * @return True if the lock is also held by others, otherwise false.
      */
-    boolean isHeldByOthers();
+    //boolean isHeldByOthers();
     
     /**
      * Returns the currently held LockMode.

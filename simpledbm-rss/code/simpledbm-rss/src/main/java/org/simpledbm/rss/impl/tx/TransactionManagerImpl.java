@@ -1537,7 +1537,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         private void doAcquireLock(Object lockable, LockMode mode, LockDuration duration, int timeout) throws LockException {
             LockHandle handle = null;
             try {
-                handle = trxmgr.lockmgr.acquire(this, lockable, mode, duration, timeout);
+                handle = trxmgr.lockmgr.acquire(this, lockable, mode, duration, timeout, null);
             }
             catch (LockTimeoutException e) {
             	/*
