@@ -42,6 +42,14 @@ public class TestLockManager extends BaseTestCase {
 	public TestLockManager(String arg0) {
 		super(arg0);
 	}
+	
+    volatile int countDeadlocks = 0;
+    
+	@Override
+	protected void setUp() throws Exception {
+		super.setUp();
+		countDeadlocks = 0;
+	}
 
 	/**
 	 * Tests that SHARED lock requests block if EXCLUSIVE lock is held, and are granted
@@ -92,7 +100,7 @@ public class TestLockManager extends BaseTestCase {
 		try {
 			t1.start();
 			t2.start();
-			// Allow the threads to do some work
+			// Let the threads attempt to acquire shared locks
 			Thread.sleep(500);
 			// We still hold the exclusive lock
 			assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
@@ -133,7 +141,7 @@ public class TestLockManager extends BaseTestCase {
 	}
 	
 	/**
-	 * Stresses the concurrent access to same hash bucket. Two threads are started,
+	 * Stresses concurrent access to same hash bucket. Two threads are started,
 	 * both of which attempt a large number of locks, all using the same hash bucket.
 	 */
 	public void testConcurrentHashBucket() throws Exception {
@@ -470,8 +478,7 @@ public class TestLockManager extends BaseTestCase {
             handle.downgrade(LockMode.EXCLUSIVE);
             fail();
         }
-        catch (Exception e) {
-            e.printStackTrace(System.out);
+        catch (LockException e) {
             assertTrue(true);
         }
         assertTrue(handle.release(false));
@@ -504,23 +511,20 @@ public class TestLockManager extends BaseTestCase {
             }
         });
 
-        try {
-            t1.start();
-            Thread.sleep(500);
-            counter.incrementAndGet();
-            handle.downgrade(LockMode.SHARED);
-            t1.join(1000);
-            assertTrue(!t1.isAlive());
-            assertTrue(counter.get() == 1);
-            assertTrue(handle.release(false));
-        } catch (InterruptedException e) {
-            fail();
-        }
+        t1.start();
+		Thread.sleep(500);
+		counter.incrementAndGet();
+		handle.downgrade(LockMode.SHARED);
+		t1.join(1000);
+		assertTrue(!t1.isAlive());
+		assertTrue(counter.get() == 1);
+		assertTrue(handle.release(false));
     }
 
     /**
-     * This test verifies that an incompatible lock request of INSTANT_DURATION fails if nowait is true.
-     */
+	 * This test verifies that an incompatible lock request of INSTANT_DURATION
+	 * fails if nowait is true.
+	 */
     public void testInstantLockNowait() throws Exception {
         final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
@@ -532,8 +536,9 @@ public class TestLockManager extends BaseTestCase {
             lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0);
             fail();
         }
-        catch (Exception e) {
-            e.printStackTrace(System.out);
+        catch (LockException e) {
+            assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+            assertEquals(LockMode.NONE, lockmgr.findLock(tran2, lockname));
         }
         assertTrue(handle.release(false));
     }
@@ -551,9 +556,8 @@ public class TestLockManager extends BaseTestCase {
         try {
             lockmgr.acquire(tran1, lockname, LockMode.SHARED, LockDuration.INSTANT_DURATION, 0);
         }
-        catch (Exception e) {
-            fail();
-            e.printStackTrace();
+        catch (LockException e) {
+            fail(e.getMessage());
         }
         assertTrue(handle.release(false));
     }
@@ -585,24 +589,26 @@ public class TestLockManager extends BaseTestCase {
             }
         });
 
-        try {
-            t1.start();
-            Thread.sleep(200);
-            LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1);
-            Thread.sleep(1000);
-            assertTrue(handle.release(false));
-            t1.join();
-            assertTrue(!t1.isAlive());
-            assertTrue(counter.get() == 0);
-        } catch (Exception e) {
-            fail();
-        }
+        t1.start();
+		Thread.sleep(200);
+		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE,
+				LockDuration.MANUAL_DURATION, -1);
+		Thread.sleep(1000);
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
+		assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
+		assertTrue(handle.release(false));
+		t1.join(5000);
+		assertTrue(!t1.isAlive());
+		assertTrue(counter.get() == 0);
     }
     
-    volatile int countDeadlocks = 0;
-    
+    /**
+	 * In this test, a deadlock is produced by two threads acquiring exclusive
+	 * locks A and B repectively, and then each thread attempting to acquire an
+	 * exclusive lock on B and A respectively.
+	 */
 	public void testDeadlockDetection() throws Exception {
-		final LockManager lockmgr = createLockManager();
+		final LockManagerImpl lockmgr = (LockManagerImpl)createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object lockname1 = new Integer(10);
@@ -621,12 +627,11 @@ public class TestLockManager extends BaseTestCase {
 						handle1.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T1 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T1 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 				
 			}
@@ -644,35 +649,33 @@ public class TestLockManager extends BaseTestCase {
 						handle2.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T1 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T1 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
 
-		try {
-			countDeadlocks = 0;
-			t1.start();
-			t2.start();
-			Thread.sleep(2000);
-			((LockManagerImpl)lockmgr).detectDeadlocks();
-            t1.join(10000);
-            t2.join(10000);
-            assertTrue(!t1.isAlive());
-            assertTrue(!t2.isAlive());
-            assertEquals(countDeadlocks, 1);
-		} catch (Exception e) {
-			fail("");
-		}
+		t1.start();
+		t2.start();
+		Thread.sleep(2000);
+		lockmgr.detectDeadlocks();
+		t1.join(10000);
+		t2.join(10000);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+		assertEquals(countDeadlocks, 1);
+		checkThreadFailures();
 	}    
     
-	
+	/**
+	 * This test produces a deadlock situation where one of the requests is a
+	 * conversion request.
+	 */
 	public void testConversionDeadlockDetection() throws Exception {
-		final LockManager lockmgr = createLockManager();
+		final LockManagerImpl lockmgr = (LockManagerImpl) createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object lockname1 = new Integer(10);
@@ -690,12 +693,11 @@ public class TestLockManager extends BaseTestCase {
 						handle1.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T1 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T1 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
@@ -712,42 +714,38 @@ public class TestLockManager extends BaseTestCase {
 						handle2.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T1 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T1 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
 
-		try {
-			countDeadlocks = 0;
-			t1.start();
-			t2.start();
-			Thread.sleep(2000);
-			((LockManagerImpl)lockmgr).detectDeadlocks();
-            t1.join(10000);
-            t2.join(10000);
-            assertTrue(!t1.isAlive());
-            assertTrue(!t2.isAlive());
-            assertEquals(countDeadlocks, 1);
-		} catch (Exception e) {
-			fail("");
-		}
+		t1.start();
+		t2.start();
+		Thread.sleep(2000);
+		lockmgr.detectDeadlocks();
+		t1.join(10000);
+		t2.join(10000);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+		assertEquals(countDeadlocks, 1);
+		checkThreadFailures();
 	}    	
 
+	/**
+	 * This test case produces a multiple deadlock situation.
+	 */
 	public void testMultipleDeadlockDetection() throws Exception {
-		final LockManager lockmgr = createLockManager();
+		final LockManagerImpl lockmgr = (LockManagerImpl) createLockManager();
 		final Object tran1 = new Integer(1);
 		final Object tran2 = new Integer(2);
 		final Object tran3 = new Integer(3);
-		final Object tran4 = new Integer(4);
 		final Object lockname1 = new Integer(10);
 		final Object lockname2 = new Integer(11);
 		final Object lockname3 = new Integer(12);
-		final Object lockname4 = new Integer(13);
 
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
@@ -768,12 +766,11 @@ public class TestLockManager extends BaseTestCase {
 						handle1.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T1 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T1 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 				
 			}
@@ -797,12 +794,11 @@ public class TestLockManager extends BaseTestCase {
 						handle1.release(false);
 					}
 				} catch (LockDeadlockException e) {
-					System.err.println("T2 failed with " + e);
-					e.printStackTrace(System.out);
+					// System.err.println("T2 failed with " + e);
+					// e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
@@ -813,33 +809,28 @@ public class TestLockManager extends BaseTestCase {
 					LockHandle handle1 = lockmgr.acquire(tran3, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10);
 					handle1.release(false);
 				} catch (LockDeadlockException e) {
-					System.err.println("T3 failed with " + e);
-					e.printStackTrace(System.out);
+//					System.err.println("T3 failed with " + e);
+//					e.printStackTrace(System.out);
 					countDeadlocks++;
 				} catch (Exception e) {
-					System.err.println("Unexpected error: " + e);
-					e.printStackTrace();
+					setThreadFailed(Thread.currentThread(), e);
 				}
 			}
 		});
 
-		try {
-			countDeadlocks = 0;
-			t1.start();
-			t2.start();
-			t3.start();
-			Thread.sleep(2000);
-			((LockManagerImpl)lockmgr).detectDeadlocks();
-            t1.join(10000);
-            t2.join(10000);
-            t3.join(10000);
-            assertTrue(!t1.isAlive());
-            assertTrue(!t2.isAlive());
-            assertTrue(!t3.isAlive());
-            assertEquals(countDeadlocks, 2);
-		} catch (Exception e) {
-			fail("");
-		}
+		t1.start();
+		t2.start();
+		t3.start();
+		Thread.sleep(2000);
+		lockmgr.detectDeadlocks();
+		t1.join(10000);
+		t2.join(10000);
+		t3.join(10000);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+		assertTrue(!t3.isAlive());
+		assertEquals(countDeadlocks, 2);
+		checkThreadFailures();
 	}    
 
 	
