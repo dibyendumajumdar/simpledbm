@@ -894,8 +894,8 @@ public final class LockManagerImpl implements LockManager {
 		
 		LockParams parms = new LockParams();
 		LockHandleImpl handleImpl = (LockHandleImpl) handle;
-		parms.lockable = handleImpl.lockable;
-		parms.owner = handleImpl.owner;
+		parms.lockable = handleImpl.getLockable();
+		parms.owner = handleImpl.getOwner();
 		parms.action = action;
 		parms.downgradeMode = downgradeMode;
 		
@@ -1408,9 +1408,9 @@ public final class LockManagerImpl implements LockManager {
 
         private final LockManagerImpl lockMgr;
 
-		final Object lockable;
-
-        final Object owner;
+//		private final Object lockable;
+//
+//        private final Object owner;
 
         LockRequest lockRequest;
         
@@ -1428,8 +1428,8 @@ public final class LockManagerImpl implements LockManager {
 
 		LockHandleImpl(LockManagerImpl lockMgr, LockParams parms) {
 			this.lockMgr = lockMgr;
-			this.owner = parms.owner;
-			this.lockable = parms.lockable;
+//			this.owner = parms.owner;
+//			this.lockable = parms.lockable;
 			// this.mode = parms.mode;
 			// this.timeout = parms.timeout;
 		}
@@ -1485,9 +1485,19 @@ public final class LockManagerImpl implements LockManager {
 
         @Override
         public String toString() {
-            return "LockHandleImpl(owner=" + owner + ", target=" + lockable + ", currentMode=" + getCurrentMode() + ", prevMode=" + getPreviousMode() + 
+            return "LockHandleImpl(owner=" + getOwner() + ", target=" + getLockable() + ", currentMode=" + getCurrentMode() + ", prevMode=" + getPreviousMode() + 
                 ", otherHolders=" + isHeldByOthers() + ")";
         }
+
+		Object getLockable() {
+			// return lockable;
+			return lockRequest.lockItem.target;
+		}
+
+		Object getOwner() {
+			// return owner;
+			return lockRequest.owner;
+		}
 	}
 
     /**
