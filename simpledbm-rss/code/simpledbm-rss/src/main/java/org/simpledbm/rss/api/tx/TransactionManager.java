@@ -32,7 +32,7 @@ public interface TransactionManager {
 	/** 
 	 * Begins a new transaction.
 	 */		
-	Transaction begin();
+	Transaction begin(IsolationMode isolationMode);
 	
 	/**
 	 * Logs an operation that is not part of any specific transaction, but needs to be

@@ -84,7 +84,7 @@ public interface Transaction {
     
     /**
      * Checks if the specified object is locked by this transaction.
-     * @return Current Lockmode or null if lock is not held by this transaction.
+     * @return Current Lockmode or {@link LockMode#NONE} if lock is not held by this transaction.
      */
     public LockMode hasLock(Object lockable);
 	
@@ -149,4 +149,9 @@ public interface Transaction {
 	 * Abandons a nested top action.
 	 */
 	public void resetNestedTopAction();
+	
+	/**
+	 * Returns the isolation mode set for the transaction.
+	 */
+	public IsolationMode getIsolationMode();
 }
