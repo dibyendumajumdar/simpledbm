@@ -20,7 +20,7 @@
 package org.simpledbm.rss.api.im;
 
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.api.locking.LockMode;
 
 /**
  * An IndexScan is an implementation of a forward scan on the
@@ -43,7 +43,7 @@ public interface IndexScan {
 	 * @return True if fetch okay, false if EOF is reached
 	 * @throws IndexException Thrown in case there was a problem such as Deadlock 
 	 */
-	public boolean fetchNext(Transaction trx) throws IndexException;
+	public boolean fetchNext() throws IndexException;
 	
 	/**
 	 * Returns the IndexKey on which the scan is currently positioned.

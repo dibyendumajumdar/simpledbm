@@ -20,7 +20,6 @@
 package org.simpledbm.rss.api.im;
 
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
@@ -71,6 +70,6 @@ public interface Index {
 	 * @param location The location to be searched for.
 	 * @param mode The mode in which Location object should be locked prior to returning the key
 	 */
-	public IndexScan openScan(IndexKey key, Location location, LockMode mode);	
+	public IndexScan openScan(Transaction trx, IndexKey key, Location location, boolean forUpdate);	
 	
 }
