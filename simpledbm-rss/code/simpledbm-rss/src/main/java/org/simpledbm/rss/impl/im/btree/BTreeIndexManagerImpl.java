@@ -41,6 +41,7 @@ import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
+import org.simpledbm.rss.api.isolation.LockAdaptor;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
@@ -65,6 +66,7 @@ import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.impl.isolation.DefaultLockAdaptor;
 import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
@@ -162,6 +164,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
     final SlottedPageManager spMgr;
     
+    final LockAdaptor lockAdaptor;
+    
     public static int testingFlag = 0;
     
 	public BTreeIndexManagerImpl(ObjectRegistry objectFactory, LoggableFactory loggableFactory, FreeSpaceManager spaceMgr, BufferManager bufMgr, SlottedPageManager spMgr, TransactionalModuleRegistry moduleRegistry) {
@@ -170,6 +174,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		this.spaceMgr = spaceMgr;
 		this.bufmgr = bufMgr;
         this.spMgr = spMgr;
+        this.lockAdaptor = new DefaultLockAdaptor();
 
 		moduleRegistry.registerModule(MODULE_ID, this);
 		
@@ -842,6 +847,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		Savepoint sp = trx.createSavepoint();
 		boolean success = false;
 		try {
+			
+			trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
 			/*
 			 * Create the specified container
 			 */
@@ -2501,13 +2508,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 		}
 		
-		public final IndexScan openScan(IndexKey key, Location location, LockMode mode) {
-			IndexCursorImpl icursor = new IndexCursorImpl();
-			icursor.searchKey = new IndexItem(key, location, -1, true, isUnique());
-			icursor.currentKey = icursor.searchKey;
-			icursor.fetchCount = 0;
-			icursor.lockMode = mode;
-			icursor.btree = this;
+		public final IndexScan openScan(Transaction trx, IndexKey key, Location location, boolean forUpdate) {
+			IndexCursorImpl icursor = new IndexCursorImpl(trx, this, new IndexItem(key, location, -1, true, isUnique()), forUpdate ? LockMode.UPDATE : LockMode.SHARED);
 			return icursor;
 		}
 	}
@@ -2521,20 +2523,35 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		IndexItem currentKey;
 		
+		IndexItem previousKey;
+		
 		int fetchCount = 0;
 		
 		final BTreeCursor bcursor = new BTreeCursor();
 		
 		LockMode lockMode;
 		
-		BTreeImpl btree;
+		final BTreeImpl btree;
 		
 		boolean eof = false;
+		
+		final Transaction trx;
 
-		public final boolean fetchNext(Transaction trx) throws IndexException {
+		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem searchKey, LockMode lockMode) {
+			this.btree = btree;
+			this.trx = trx;
+			this.searchKey = searchKey;
+			this.currentKey = searchKey;
+			this.fetchCount = 0;
+			this.lockMode = lockMode;
+		}
+		
+		public final boolean fetchNext() throws IndexException {
 			if (!eof) { 
 				try {
+					// TODO Save previous key
 					btree.fetch(trx, this);
+					// Unlock previous key if isolationMode == READ_COMMITTED
 				} catch (BufferManagerException e) {
 					throw new IndexException.BufMgrException(e);
 				} catch (TransactionException e) {

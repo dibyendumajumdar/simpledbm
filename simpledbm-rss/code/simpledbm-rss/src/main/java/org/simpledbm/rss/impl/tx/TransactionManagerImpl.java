@@ -30,8 +30,6 @@ import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
-import org.simpledbm.rss.api.isolation.IsolationPolicy;
-import org.simpledbm.rss.api.isolation.LockAdaptor;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -55,6 +53,7 @@ import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.Compensation;
 import org.simpledbm.rss.api.tx.ContainerDeleteOperation;
 import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Lockable;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LoggableFactoryAware;
@@ -1596,7 +1595,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLock(Object lockable, LockMode mode, LockDuration duration) throws TransactionException {
+		public final void acquireLock(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException {
             /*
              * Currently the LockMgr does not detect deadlocks so we use timeouts as
              * a simple way of detecting a deadlock. If the attempt to acquire lock times out
@@ -1614,7 +1613,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * not avaiabl, an excepton will be thrown.
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLockNowait(Object lockable, LockMode mode, LockDuration duration) throws TransactionException {
+		public final void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException {
             try {
                 doAcquireLock(lockable, mode, duration, 0);
             } catch (LockException e) {
@@ -1628,7 +1627,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * a lock must be released prior to the commit, for example, in cursor stability
 		 * or read committed isolation modes.
 		 */
-        public final boolean releaseLock(Object lockable) throws TransactionException {
+        public final boolean releaseLock(Lockable lockable) throws TransactionException {
             try {
                 return doReleaseLock(lockable);
             } catch (LockException e) {
@@ -1680,7 +1679,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#downgradeLock(java.lang.Object, org.simpledbm.rss.locking.LockMode)
          */
-        public final void downgradeLock(Object lockable, LockMode downgradeTo) throws TransactionException {
+        public final void downgradeLock(Lockable lockable, LockMode downgradeTo) throws TransactionException {
             try {
                 doDowngradeLock(lockable, downgradeTo);
             } catch (LockException e) {
@@ -1708,7 +1707,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.tm.Transaction#hasLock(java.lang.Object)
 		 */
-		public LockMode hasLock(Object lockable) {
+		public LockMode hasLock(Lockable lockable) {
             for (LockRequest req: locks) {
                 if (req.lockable.equals(lockable)) {
                     return req.handle.getCurrentMode();

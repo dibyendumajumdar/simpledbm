@@ -17,13 +17,40 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.rss.impl.isolation;
+package org.simpledbm.rss.api.tx;
 
-import org.simpledbm.rss.api.loc.Location;
+public abstract class BaseLockable implements Lockable {
 
-public class TupleLocation extends BaseLockable {
-
-	public TupleLocation(Location location) {
-		super((byte)'R', location);
+	final byte namespace;
+	
+	protected BaseLockable(byte namespace) {
+		this.namespace = namespace;
 	}
+	
+	protected byte getNameSpace() {
+		return namespace;
+	}
+
+	@Override
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = 1;
+		result = PRIME * result + namespace;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final BaseLockable other = (BaseLockable) obj;
+		if (namespace != other.namespace)
+			return false;
+		return true;
+	}
+	
 }

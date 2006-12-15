@@ -21,23 +21,16 @@ package org.simpledbm.rss.impl.isolation;
 
 import org.simpledbm.rss.api.isolation.LockAdaptor;
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.impl.tuple.TupleId;
+import org.simpledbm.rss.api.tx.Lockable;
 
 public class DefaultLockAdaptor implements LockAdaptor {
 
-	public Object getLockableContainerId(int containerId) {
+	public Lockable getLockableContainerId(int containerId) {
 		return new ContainerId(containerId);
 	}
 
-	public Object getLockableContainerId(Location location) {
-		if (location instanceof TupleId) {
-			return new ContainerId(((TupleId)location).getPageId().getContainerId());
-		}
-		throw new IllegalArgumentException("Parameter " + location + " must be of type " + TupleId.class.getName());
-	}
-
-	public Object getLockableLocation(Location location) {
-		return new TupleLocation(location);
+	public Lockable getLockableContainerId(Location location) {
+		return new ContainerId(location.getContainerId());
 	}
 
 }

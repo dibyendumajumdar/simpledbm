@@ -20,6 +20,7 @@
 package org.simpledbm.rss.api.loc;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.tx.Lockable;
 
 /**
  * Location represents a pointer value that will be stored with
@@ -29,7 +30,7 @@ import org.simpledbm.rss.api.st.Storable;
  * @author Dibyendu Majumdar
  * @since Oct-2005
  */
-public interface Location extends Storable, Comparable<Location> {
+public interface Location extends Lockable, Storable, Comparable<Location> {
 
 	/**
 	 * Used mainly for building test cases; this method should

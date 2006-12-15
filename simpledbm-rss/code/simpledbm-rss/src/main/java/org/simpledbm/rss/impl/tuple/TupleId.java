@@ -129,4 +129,11 @@ public class TupleId implements Location {
 	public final int getSlotNumber() {
 		return slotNumber;
 	}
+
+	public int getContainerId() {
+		if (pageId == null) {
+			throw new IllegalStateException("TupleId has not been initialized");
+		}
+		return pageId.getContainerId();
+	}
 }

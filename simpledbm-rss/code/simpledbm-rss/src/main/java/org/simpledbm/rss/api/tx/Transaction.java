@@ -60,14 +60,14 @@ public interface Transaction {
 	 * @see TransactionManager#setLockWaitTimeout(int)
 	 * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
 	 */		
-	public void acquireLock(Object lockable, LockMode mode, LockDuration duration) throws TransactionException;	
+	public void acquireLock(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException;	
 
 	/**
 	 * Same as {@link #acquireLock(Object, LockMode, LockDuration) acquireLock} but does not wait
 	 * for lock to be available.
 	 * @see #acquireLock(Object, LockMode, LockDuration) 
 	 */		
-	public void acquireLockNowait(Object lockable, LockMode mode, LockDuration duration) throws TransactionException;	
+	public void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException;	
 	
 	/**
 	 * Attempts to release a lock, and if this succeeds, the lock is removed from
@@ -80,13 +80,13 @@ public interface Transaction {
 	 * to try to release lock held in any other mode.
 	 * @see org.simpledbm.rss.api.locking.LockHandle#release(boolean)
 	 */
-	public boolean releaseLock(Object lockable) throws TransactionException;
+	public boolean releaseLock(Lockable lockable) throws TransactionException;
     
     /**
      * Checks if the specified object is locked by this transaction.
      * @return Current Lockmode or {@link LockMode#NONE} if lock is not held by this transaction.
      */
-    public LockMode hasLock(Object lockable);
+    public LockMode hasLock(Lockable lockable);
 	
     /**
      * Downgrades a currently held lock to specified mode. If the downgrade
@@ -95,7 +95,7 @@ public interface Transaction {
      * @param lockable Object to be locked
      * @param downgradeTo The target lock mode
      */
-    public void downgradeLock(Object lockable, LockMode downgradeTo) throws TransactionException;
+    public void downgradeLock(Lockable lockable, LockMode downgradeTo) throws TransactionException;
     
 	/**
 	 * Schedules a post commit action. Post commit actions are used to deal with
