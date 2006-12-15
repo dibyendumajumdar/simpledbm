@@ -34,32 +34,37 @@ public abstract class BaseIsolationPolicy {
 		this.lockAdaptor = lockAdaptor;
 	}
 	
-	void _lockLocation(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException {
+	public void lockLocation(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException {
 		Object tl = lockAdaptor.getLockableLocation(location);
 		trx.acquireLock(tl, mode, duration);
 	}
 	
-	void _lockLocationNoWait(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException {
+	public void lockLocationNoWait(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException {
 		Object tl = lockAdaptor.getLockableLocation(location);
 		trx.acquireLockNowait(tl, mode, duration);
 	}
 
-	void _lockContainer(Transaction trx, int containerId, LockMode mode, LockDuration duration) throws TransactionException {
+	public void lockContainer(Transaction trx, int containerId, LockMode mode, LockDuration duration) throws TransactionException {
 		Object ci = lockAdaptor.getLockableContainerId(containerId);
 		trx.acquireLock(ci, mode, duration);
 	}
 	
-	void _unlockLocation(Transaction trx, Location location) throws TransactionException {
+	public void unlockLocationAfterCursorMoved(Transaction trx, Location location) throws TransactionException {
 		Object tl = lockAdaptor.getLockableLocation(location);
 		trx.releaseLock(tl);
 	}
 
-	LockMode _findLocationLock(Transaction trx, Location location) {
+	public void unlockLocationAfterRead(Transaction trx, Location location) throws TransactionException {
+		Object tl = lockAdaptor.getLockableLocation(location);
+		trx.releaseLock(tl);
+	}
+
+	public LockMode findLocationLock(Transaction trx, Location location) {
 		Object tl = lockAdaptor.getLockableLocation(location);
 		return trx.hasLock(tl);
 	}
 
-	LockMode _findContainerLock(Transaction trx, int containerId) {
+	public LockMode findContainerLock(Transaction trx, int containerId) {
 		Object ci = lockAdaptor.getLockableContainerId(containerId);
 		return trx.hasLock(ci);
 	}
