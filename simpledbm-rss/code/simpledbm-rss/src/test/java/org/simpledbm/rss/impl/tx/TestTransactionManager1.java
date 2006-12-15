@@ -44,6 +44,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LogicalUndo;
@@ -220,7 +221,7 @@ public class TestTransactionManager1 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin();
+        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {0, 0, 0, 0, 0, 0, 0});
@@ -241,7 +242,7 @@ public class TestTransactionManager1 extends TestCase {
         	}
         	trxmgr.checkpoint();
 
-        	trx = trxmgr.begin();
+        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After commit 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -261,7 +262,7 @@ public class TestTransactionManager1 extends TestCase {
         			trx.abort();
         	}
 
-        	trx = trxmgr.begin();
+        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After rollback 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -276,7 +277,7 @@ public class TestTransactionManager1 extends TestCase {
         			trx.abort();
         	}
         	
-           	trx = trxmgr.begin();
+           	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After commit 3-4");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -340,7 +341,7 @@ public class TestTransactionManager1 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin();
+        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -395,7 +396,7 @@ public class TestTransactionManager1 extends TestCase {
 
         Thread t1 = new Thread(new Runnable() {
             public void run() {
-                Transaction trx = trxmgr.begin();
+                Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
                 try {
                 	ObjectLock ol = new ObjectLock(1, 15);
                     trx.acquireLock(ol, LockMode.SHARED, LockDuration.MANUAL_DURATION);
@@ -415,7 +416,7 @@ public class TestTransactionManager1 extends TestCase {
         /* Now we are ready to start */
         try {
             trxmgr.start();
-            Transaction trx = trxmgr.begin();
+            Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
             try {
                 testfailed = false;
             	ObjectLock ol = new ObjectLock(1, 15);
@@ -833,7 +834,7 @@ public class TestTransactionManager1 extends TestCase {
 		
 		public void create(String name, int containerId, int pageNumber) throws StorageException, BufferManagerException, TransactionException, PageException {
 			
-			Transaction trx = trxmgr.begin();
+			Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			boolean success = false;
 			try {
 				BitMgrLogCreateContainer logcreate = (BitMgrLogCreateContainer) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager1.TYPE_BITMGRLOGCREATECONTAINER);

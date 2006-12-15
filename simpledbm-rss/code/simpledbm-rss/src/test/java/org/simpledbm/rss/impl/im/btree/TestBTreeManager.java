@@ -20,9 +20,7 @@
 package org.simpledbm.rss.impl.im.btree;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Properties;
@@ -58,6 +56,7 @@ import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionManager;
@@ -268,7 +267,7 @@ public class TestBTreeManager extends TestCase {
 		final BTreeDB db = new BTreeDB(true);
 		
 		try {
-	    	Transaction trx = db.trxmgr.begin();
+	    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			db.spacemgr.createContainer(trx, "testctr.dat", 1, 1, 20, db.spmgr.getPageType());
 			trx.commit();
 		}
@@ -281,7 +280,7 @@ public class TestBTreeManager extends TestCase {
 		final BTreeDB db = new BTreeDB(true);
 		
 		try {
-	    	Transaction trx = db.trxmgr.begin();
+	    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 	    	db.btreeMgr.createIndex(trx, "testctr.dat", 1, 20, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, true);
 			trx.commit();
 		}
@@ -308,7 +307,7 @@ public class TestBTreeManager extends TestCase {
 				Location location = locationFactory.newLocation();
 				location.parseString(results[i].getLocation());
 
-				Transaction trx = db.trxmgr.begin();
+				Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 				index.insert(trx, key, location);
 				trx.commit();
 			}
@@ -340,7 +339,7 @@ public class TestBTreeManager extends TestCase {
 				String l = st.nextToken();
 				location.parseString(l);
 
-				Transaction trx = db.trxmgr.begin();
+				Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 				System.out.println("Inserting (" + key + ", " + location + ")");
 				index.insert(trx, key, location);
 				trx.commit();
@@ -362,7 +361,7 @@ public class TestBTreeManager extends TestCase {
 		
 		try {
 			BTreeIndexManagerImpl.XMLLoader loader = new BTreeIndexManagerImpl.XMLLoader(db.btreeMgr);
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			try {
 				loader.parseResource(dataFile);
 				for (LoadPageOperation loadPageOp : loader.getPageOperations()) {
@@ -480,7 +479,7 @@ public class TestBTreeManager extends TestCase {
 			BTreeCursor bcursor = new BTreeCursor();
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, pageNumber), 0));
 			try {
-		    	trx = db.trxmgr.begin();
+		    	trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> SPLITTING PAGE");
@@ -537,7 +536,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, l), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> MERGING PAGE");
@@ -606,7 +605,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> LINKING CHILD TO PARENT");
@@ -630,7 +629,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
@@ -687,7 +686,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> LINKING CHILD TO PARENT");
@@ -722,7 +721,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
@@ -758,7 +757,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 			    	//System.out.println("--> DE-LINKING CHILD FROM PARENT");
@@ -812,7 +811,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
@@ -865,7 +864,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
@@ -918,7 +917,7 @@ public class TestBTreeManager extends TestCase {
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, q), 0));
 			try {
-		    	Transaction trx = db.trxmgr.begin();
+		    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 		    	boolean okay = false;
 		    	try {
 					bcursor.searchKey = generateKey(btree, "da", 5, -1, testLeaf);
@@ -956,7 +955,7 @@ public class TestBTreeManager extends TestCase {
 			key.parseString(k);
 			Location location = locationFactory.newLocation();
 			location.parseString(loc);
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			boolean okay = false;
 			try {
 				//System.out.println("--> INSERTING KEY");
@@ -999,7 +998,7 @@ public class TestBTreeManager extends TestCase {
 			key1.parseString(k1);
 			Location location1 = locationFactory.newLocation();
 			location1.parseString(loc1);
-			Transaction trx1 = db.trxmgr.begin();
+			Transaction trx1 = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			boolean okay1 = false;
 			try {
 				//System.out.println("--> INSERTING KEY 1");
@@ -1011,7 +1010,7 @@ public class TestBTreeManager extends TestCase {
 				key2.parseString(k2);
 				Location location2 = locationFactory.newLocation();
 				location2.parseString(loc2);
-				Transaction trx2 = db.trxmgr.begin();
+				Transaction trx2 = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 				boolean okay2 = false;
 
 				try {
@@ -1057,7 +1056,7 @@ public class TestBTreeManager extends TestCase {
 			key.parseString(k);
 			Location location = locationFactory.newLocation();
 			location.parseString(loc);
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			boolean okay = false;
 			try {
 				//System.out.println("--> DELETING KEY");
@@ -1099,7 +1098,7 @@ public class TestBTreeManager extends TestCase {
 						key.parseString(k);
 						Location location = locationFactory.newLocation();
 						location.parseString(loc);
-						Transaction trx = db.trxmgr.begin();
+						Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 						boolean okay = false;
 						try {
 							//System.out.println("--> DELETING KEY");
@@ -1132,7 +1131,7 @@ public class TestBTreeManager extends TestCase {
 						key.parseString(k);
 						Location location = locationFactory.newLocation();
 						location.parseString(loc);
-						Transaction trx = db.trxmgr.begin();
+						Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 						boolean okay = false;
 						try {
 							//System.out.println("--> INSERTING KEY");
@@ -1187,7 +1186,7 @@ public class TestBTreeManager extends TestCase {
             key.parseString(k);
             Location location = locationFactory.newLocation();
             location.parseString(loc);
-            Transaction trx = db.trxmgr.begin();
+            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             boolean okay = false;
             IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
             try {
@@ -1253,7 +1252,7 @@ public class TestBTreeManager extends TestCase {
             key.parseString(k);
             Location location = locationFactory.newLocation();
             location.parseString(loc);
-            Transaction trx = db.trxmgr.begin();
+            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             boolean okay = false;
             IndexScan scan = btree.openScan(key, location, LockMode.SHARED);
             try {
@@ -1297,7 +1296,7 @@ public class TestBTreeManager extends TestCase {
 
 			String line = reader.readLine();
 			IndexScan scan = null;
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			try {
 				while (line != null) {
 					StringTokenizer st = new StringTokenizer(line, " ");
@@ -1351,7 +1350,7 @@ public class TestBTreeManager extends TestCase {
 					.getInstance(TYPE_ROWLOCATIONFACTORY);
 
 			String line = reader.readLine();
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			try {
 				while (line != null) {
 					StringTokenizer st = new StringTokenizer(line, " ");
@@ -1418,7 +1417,7 @@ public class TestBTreeManager extends TestCase {
                         key.parseString(k);
                         Location location = locationFactory.newLocation();
                         location.parseString(loc);
-                        Transaction trx = db.trxmgr.begin();
+                        Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
                         try {
                             //System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
@@ -1458,7 +1457,7 @@ public class TestBTreeManager extends TestCase {
                         key.parseString("a1");
                         Location location = locationFactory.newLocation();
                         location.parseString("10");
-                        Transaction trx = db.trxmgr.begin();
+                        Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
                         db.lockmgr.addLockEventListener(listener);
@@ -1538,7 +1537,7 @@ public class TestBTreeManager extends TestCase {
                         key.parseString(k);
                         Location location = locationFactory.newLocation();
                         location.parseString(loc);
-                        Transaction trx = db.trxmgr.begin();
+                        Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
                         try {
                             //System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
@@ -1576,7 +1575,7 @@ public class TestBTreeManager extends TestCase {
                         location.parseString("10");
                         IndexKey delkey = keyFactory.newIndexKey(1);
                         delkey.parseString(k);
-                        Transaction trx = db.trxmgr.begin();
+                        Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
                         IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
                         try {

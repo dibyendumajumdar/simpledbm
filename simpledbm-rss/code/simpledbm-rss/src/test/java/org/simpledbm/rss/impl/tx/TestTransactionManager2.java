@@ -24,9 +24,9 @@ import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
-import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockManager;
@@ -44,6 +44,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.NonTransactionRelatedOperation;
@@ -51,9 +52,9 @@ import org.simpledbm.rss.api.tx.PageFormatOperation;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
@@ -64,9 +65,6 @@ import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
-import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
-import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
-import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
 
@@ -219,7 +217,7 @@ public class TestTransactionManager2 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin();
+        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {0, 0, 0, 0, 0, 0, 0});
@@ -240,7 +238,7 @@ public class TestTransactionManager2 extends TestCase {
         	}
         	trxmgr.checkpoint();
 
-        	trx = trxmgr.begin();
+        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After commit 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -260,7 +258,7 @@ public class TestTransactionManager2 extends TestCase {
         			trx.abort();
         	}
 
-        	trx = trxmgr.begin();
+        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After rollback 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -275,7 +273,7 @@ public class TestTransactionManager2 extends TestCase {
         			trx.abort();
         	}
         	
-           	trx = trxmgr.begin();
+           	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After commit 3-4");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -339,7 +337,7 @@ public class TestTransactionManager2 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin();
+        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -731,7 +729,7 @@ public class TestTransactionManager2 extends TestCase {
 		
 		public void create(String name, int containerId, int pageNumber) throws StorageException, BufferManagerException, TransactionException, PageException {
 			
-			Transaction trx = trxmgr.begin();
+			Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			boolean success = false;
 			try {
 				BitMgrLogCreateContainer logcreate = (BitMgrLogCreateContainer) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
