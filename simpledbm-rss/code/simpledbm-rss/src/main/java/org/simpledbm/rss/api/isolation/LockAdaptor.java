@@ -20,6 +20,7 @@
 package org.simpledbm.rss.api.isolation;
 
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.tx.Lockable;
 
 /**
  * A LockAdaptor encapsulates knowledge about different types of lockable
@@ -35,7 +36,7 @@ public interface LockAdaptor {
 	 * Creates a lockable object for the specified container id.
 	 * All container ids should belong to a distinct namespace.
 	 */
-	Object getLockableContainerId(int containerId);
+	Lockable getLockableContainerId(int containerId);
 
 	/**
 	 * Creates a lockable object for the container id associated with the
@@ -45,12 +46,6 @@ public interface LockAdaptor {
 	 * @throws IllegalArgumentException Thrown if the location argument cannot be converted to
 	 * 	a container id
 	 */
-	Object getLockableContainerId(Location location);
+	Lockable getLockableContainerId(Location location);
 
-	/**
-	 * Creates a lockable object for the specified location.
-	 * All locations belong to a distinct namespace. 
-	 */
-	Object getLockableLocation(Location location);
-	
 }
