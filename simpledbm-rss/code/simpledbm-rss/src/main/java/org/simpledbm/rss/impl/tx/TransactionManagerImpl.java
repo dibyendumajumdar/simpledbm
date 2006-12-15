@@ -26,10 +26,12 @@ import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
-import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
+import org.simpledbm.rss.api.isolation.IsolationPolicy;
+import org.simpledbm.rss.api.isolation.LockAdaptor;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -52,6 +54,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.Compensation;
 import org.simpledbm.rss.api.tx.ContainerDeleteOperation;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LoggableFactoryAware;
@@ -64,11 +67,11 @@ import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.SinglePageLogicalUndo;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionalModule;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionId;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalModule;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogManager;
@@ -207,7 +210,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	private final StorageManager storageManager;
 	
 	private final StorageContainerFactory storageFactory;
-	
+
 	/**
 	 * The default checkpoint interval in milliseconds.
 	 */
@@ -395,10 +398,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * Latching issues:<br>
 	 * We acquire an exclusive latch because we are about to modify the transaction table.
 	 */	
-	public final Transaction begin() {
+	public final Transaction begin(IsolationMode isolationMode) {
 		latch.exclusiveLock();
 		try {
-			return newTransaction(null);
+			TransactionImpl trx = newTransaction(null);
+			trx.isolationMode = isolationMode;
+			return trx;
 		}
 		finally {
 			latch.unlockExclusive();
@@ -1349,7 +1354,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 		TransactionManagerImpl trxmgr;
 		
-		public static final int SIZE = Lsn.SIZE * 3 + TransactionId.SIZE + TypeSize.BYTE;
+		public static final int SIZE = Lsn.SIZE * 3 + TransactionId.SIZE + TypeSize.BYTE * 2;
 	 	
 		/**
 		 * transaction id
@@ -1402,6 +1407,16 @@ public final class TransactionManagerImpl implements TransactionManager {
 		int actionId = 1;
 
 		DummyCLR dummyCLR;
+		
+		/**
+		 * Our isolation mode; for information only. It is client's responsibility
+		 * to handle differences in locking strategy based upon isolation mode.
+		 */
+		IsolationMode isolationMode = IsolationMode.READ_COMMITTED;
+		
+		public IsolationMode getIsolationMode() {
+			return isolationMode;
+		}
 		
 		/**
 		 * Record the most recent LSN for the transaction, and return the
@@ -1699,7 +1714,7 @@ public final class TransactionManagerImpl implements TransactionManager {
                     return req.handle.getCurrentMode();
                 }
             }
-            return null;
+            return LockMode.NONE;
         }
 
         /**
@@ -2144,6 +2159,16 @@ public final class TransactionManagerImpl implements TransactionManager {
 			else {
 				state = TrxState.TRX_DEAD;
 			}
+			ordinal = bb.get();
+			if (IsolationMode.CURSOR_STABILITY.ordinal() == ordinal) {
+				isolationMode = IsolationMode.CURSOR_STABILITY;
+			}
+			else if (IsolationMode.READ_COMMITTED.ordinal() == ordinal) {
+				isolationMode = IsolationMode.READ_COMMITTED;
+			}
+			else {
+				isolationMode = IsolationMode.REPEATABLE_READ;
+			}
 		}
  
 		/* (non-Javadoc)
@@ -2155,6 +2180,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			lastLsn.store(bb);
 			undoNextLsn.store(bb);
 			bb.put((byte) state.ordinal());
+			bb.put((byte) isolationMode.ordinal());
 		}
 
 		/* (non-Javadoc)
@@ -2765,5 +2791,5 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}
 		}
     }
-	
+
 }
