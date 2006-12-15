@@ -238,6 +238,10 @@ public class TestBTreeManager extends TestCase {
 		public String toString() {
 			return Integer.toString(loc);
 		}
+		
+		public int getContainerId() {
+			return loc;
+		}
 	}
 	
 	public static class RowLocationFactory implements LocationFactory {
@@ -1188,10 +1192,10 @@ public class TestBTreeManager extends TestCase {
             location.parseString(loc);
             Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             boolean okay = false;
-            IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
+            IndexScan scan = btree.openScan(trx, key, location, true);
             try {
                 //System.out.println("--> SCANNING TREE");
-                while (scan.fetchNext(trx)) {
+                while (scan.fetchNext()) {
                 	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 	// System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	trx.acquireLock(scan.getCurrentLocation(), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
@@ -1254,11 +1258,11 @@ public class TestBTreeManager extends TestCase {
             location.parseString(loc);
             Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             boolean okay = false;
-            IndexScan scan = btree.openScan(key, location, LockMode.SHARED);
+            IndexScan scan = btree.openScan(trx, key, location, false);
             try {
                 //System.out.println("--> SCANNING TREE {");
                 int i = 0;
-                while (scan.fetchNext(trx)) {
+                while (scan.fetchNext()) {
                 	if (result != null) {
                 		assertEquals(result[i].getKey(), scan.getCurrentKey().toString());
                 		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
@@ -1309,9 +1313,9 @@ public class TestBTreeManager extends TestCase {
 					location.parseString(l);
 
 					if (scan == null) {
-						scan = index.openScan(key, location, LockMode.SHARED);
+						scan = index.openScan(trx, key, location, false);
 					}
-					if (scan.fetchNext(trx)) {
+					if (scan.fetchNext()) {
 	                	// System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
@@ -1362,8 +1366,8 @@ public class TestBTreeManager extends TestCase {
 					String l = st.nextToken();
 					location.parseString(l);
 
-					IndexScan scan = index.openScan(key, location, LockMode.SHARED);
-					if (scan.fetchNext(trx)) {
+					IndexScan scan = index.openScan(trx, key, location, false);
+					if (scan.fetchNext()) {
 	                	// System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
@@ -1459,12 +1463,12 @@ public class TestBTreeManager extends TestCase {
                         location.parseString("10");
                         Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
-                        IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
+                        IndexScan scan = btree.openScan(trx, key, location, false);
                         db.lockmgr.addLockEventListener(listener);
                         try {
                             //System.out.println("--> SCANNING TREE");
                             int i = 0;
-                            while (scan.fetchNext(trx)) {
+                            while (scan.fetchNext()) {
                                 //System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                             	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                             	if (result != null) {
@@ -1577,11 +1581,11 @@ public class TestBTreeManager extends TestCase {
                         delkey.parseString(k);
                         Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
                         boolean okay = false;
-                        IndexScan scan = btree.openScan(key, location, LockMode.UPDATE);
+                        IndexScan scan = btree.openScan(trx, key, location, false);
                         try {
                             //System.out.println("--> SCANNING TREE");
                             int i = 0;
-                            while (scan.fetchNext(trx)) {
+                            while (scan.fetchNext()) {
                             	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
 //                                System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
 //                                System.out.println("Comparing " + scan.getCurrentKey() + " with " + delkey);

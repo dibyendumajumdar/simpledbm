@@ -24,9 +24,9 @@ import java.util.Properties;
 
 import junit.framework.TestCase;
 
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
-import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockManager;
@@ -41,6 +41,7 @@ import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
@@ -53,9 +54,9 @@ import org.simpledbm.rss.api.tx.PageFormatOperation;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
@@ -66,9 +67,6 @@ import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
-import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
-import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
-import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
 
@@ -449,36 +447,52 @@ public class TestTransactionManager1 extends TestCase {
         }
     }   
     
-	public static class ObjectLock {
+	public static class ObjectLock extends BaseLockable {
 		
 		static final int CONTAINER = 1;
 		static final int BIT = 2;
 		
-		final int type;
 		final int value;
 		
 		public ObjectLock(int type, int value) {
-			this.type = type;
+			super((byte)type);
 			this.value = value;
 		}
 
-		@Override
-		public boolean equals(Object obj) {
-			if (obj instanceof ObjectLock) {
-				ObjectLock lock = (ObjectLock) obj;
-				return lock.type == type && lock.value == value;
-			}
-			return false;
-		}
 
 		@Override
 		public int hashCode() {
-			return type ^ value;
+			final int PRIME = 31;
+			int result = super.hashCode();
+			result = PRIME * result + value;
+			return result;
 		}
 
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final ObjectLock other = (ObjectLock) obj;
+			if (value != other.value)
+				return false;
+			return true;
+		}
+		
 		@Override
 		public String toString() {
-			return "ObjectLock(type=" + type + ", value = " + value + ")";
+			return "ObjectLock(" + super.toString() + ", value = " + value + ")";
+		}
+		
+		public int getContainerId() {
+			if (getNameSpace() == CONTAINER) {
+				return value;
+			}
+			return 0;
 		}
 	}
 
