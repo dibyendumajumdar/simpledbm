@@ -36,6 +36,7 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
@@ -119,7 +120,7 @@ public class TestFreeSpaceManager extends TestCase {
             db.spacemgr.setTesting(1);
         }
         try {
-            Transaction trx = db.trxmgr.begin();
+            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             boolean okay = false;
             try {
                 db.spacemgr.createContainer(trx, "testctr.dat", 1, 1, 8, db.pageFactory.getRawPageType());
@@ -164,7 +165,7 @@ public class TestFreeSpaceManager extends TestCase {
             assertTrue(db.storageManager.getInstance(0) != null);
             assertTrue(db.storageManager.getInstance(1) != null);
             
-            Transaction trx = db.trxmgr.begin();
+            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             db.spacemgr.dropContainer(trx, 1);
             if (commit) {
                 trx.commit();
@@ -190,7 +191,7 @@ public class TestFreeSpaceManager extends TestCase {
             assertTrue(db.storageManager.getInstance(0) != null);
             assertTrue(db.storageManager.getInstance(1) != null);
             
-            Transaction trx = db.trxmgr.begin();
+            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
             Savepoint sp = trx.createSavepoint();
             db.spacemgr.dropContainer(trx, 1);
             trx.rollback(sp);
@@ -229,7 +230,7 @@ public class TestFreeSpaceManager extends TestCase {
 			assertTrue(db.storageManager.getInstance(0) != null);
 			assertTrue(db.storageManager.getInstance(1) != null);
 			
-	    	Transaction trx = db.trxmgr.begin();
+	    	Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 	    	db.spacemgr.extendContainer(trx, 1);
 	    	trx.abort();
 		}
@@ -262,7 +263,7 @@ public class TestFreeSpaceManager extends TestCase {
 	    		if (pageNumber == -1) {
 	    			break;
 	    		}
-	    		Transaction trx = db.trxmgr.begin();
+	    		Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 	    		spaceCursor.updateAndLogRedoOnly(trx, pageNumber, 1);
 	    		spaceCursor.unfixCurrentSpaceMapPage();
 	    		trx.commit();
@@ -284,7 +285,7 @@ public class TestFreeSpaceManager extends TestCase {
 				spaceScan.close();
 			}
 	    	
-			Transaction trx = db.trxmgr.begin();
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			db.spacemgr.dropContainer(trx, 1);
 			trx.commit();
 			assertTrue(db.storageManager.getInstance(1) == null);
