@@ -219,7 +219,7 @@ public class TestTransactionManager2 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+        	Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {0, 0, 0, 0, 0, 0, 0});
@@ -240,7 +240,7 @@ public class TestTransactionManager2 extends TestCase {
         	}
         	trxmgr.checkpoint();
 
-        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+        	trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
         	try {
         		System.out.println("After commit 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -260,7 +260,7 @@ public class TestTransactionManager2 extends TestCase {
         			trx.abort();
         	}
 
-        	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+        	trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
         	try {
         		System.out.println("After rollback 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 25, 30, 35, 40});
@@ -275,7 +275,7 @@ public class TestTransactionManager2 extends TestCase {
         			trx.abort();
         	}
         	
-           	trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+           	trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
         	try {
         		System.out.println("After commit 3-4");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -339,7 +339,7 @@ public class TestTransactionManager2 extends TestCase {
         try {
         	boolean success = false;
         	trxmgr.start();
-        	Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+        	Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
         	try {
         		System.out.println("After restart 0-7");
         		printBits(trx, bitmgr, 0, 7, new int[] {10, 15, 20, 90, 99, 35, 40});
@@ -747,7 +747,7 @@ public class TestTransactionManager2 extends TestCase {
 		
 		public void create(String name, int containerId, int pageNumber) throws StorageException, BufferManagerException, TransactionException, PageException {
 			
-			Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+			Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean success = false;
 			try {
 				BitMgrLogCreateContainer logcreate = (BitMgrLogCreateContainer) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);

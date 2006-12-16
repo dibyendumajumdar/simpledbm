@@ -72,7 +72,7 @@ public class TestIsolationPolicy extends TestCase {
 		try {
 			TransactionManager trxmgr = server.getTransactionManager();
 			IsolationPolicy isolationPolicy = new RepeatableReadIsolationPolicy(); 
-			Transaction trx = trxmgr.begin(IsolationMode.REPEATABLE_READ);
+			Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
 			try {
 				TupleIdFactory locationFactory = new TupleIdFactory();
 				TupleId tid = locationFactory.newTupleId(new PageId(1, 1), 1);

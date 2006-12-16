@@ -97,7 +97,7 @@ public class TestTupleManager extends TestCase {
             db.pageFactory.store(page);
 
             db.trxmgr.start();
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             db.spacemgr.createContainer(trx, "testctr.dat", 1, 2, 20, db.spmgr
                     .getPageType());
             trx.commit();
@@ -113,7 +113,7 @@ public class TestTupleManager extends TestCase {
 
         try {
             db.trxmgr.start();
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
             StringTuple t = new StringTuple();
             t.parseString("hello", 16524);
@@ -121,7 +121,7 @@ public class TestTupleManager extends TestCase {
             Location location = inserter.getLocation();
             inserter.completeInsert();
             trx.commit();
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             byte[] data = tcont.read(location);
             assertEquals(data.length, 16526);
             assertTrue(t.toString().equals("hello"));
@@ -129,7 +129,7 @@ public class TestTupleManager extends TestCase {
             trx.abort();
             t = new StringTuple();
             t.parseString("updated hello", 18000);
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             data = tcont.read(location);
             assertEquals(data.length, 16526);
             tcont.update(trx, location, t);
@@ -160,7 +160,7 @@ public class TestTupleManager extends TestCase {
              */
             int[] tlens = new int[] { 18000, 15, 95, 138, 516, 1700, 4500, 13000 };
             for (int i = 1; i < tlens.length; i++) {
-                Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+                Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
                 StringTuple t = new StringTuple();
                 t.parseString("rec" + i, tlens[i]);
                 TupleInserter inserter = tcont.insert(trx, t);
@@ -169,7 +169,7 @@ public class TestTupleManager extends TestCase {
                 trx.commit();
             }
             
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleScan scan = tcont.openScan(trx, LockMode.SHARED);
             int i = 0;
             while (scan.fetchNext()) {
@@ -207,7 +207,7 @@ public class TestTupleManager extends TestCase {
             Thread thr = new Thread(new Runnable() {
 				public void run() {
 					TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
-					Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+					Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 					boolean ok = false;
 					try {
 						StringTuple t = new StringTuple();
@@ -250,7 +250,7 @@ public class TestTupleManager extends TestCase {
             else {
             	tlens = new int[] { 18000, 15, 95, 138, 516, 1700, 4500, 13000 };
             }
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleScan scan = tcont.openScan(trx, LockMode.SHARED);
             
             thr.start();
@@ -295,7 +295,7 @@ public class TestTupleManager extends TestCase {
 
         try {
             db.trxmgr.start();
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
             TupleScan scan = tcont.openScan(trx, LockMode.UPDATE);
             int i = 0;
@@ -329,7 +329,7 @@ public class TestTupleManager extends TestCase {
             scan.close();
             trx.abort();
 
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             scan = tcont.openScan(trx, LockMode.SHARED);
             i = 0;
             while (scan.fetchNext()) {
@@ -363,7 +363,7 @@ public class TestTupleManager extends TestCase {
 
         try {
             db.trxmgr.start();
-            Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
             TupleScan scan = tcont.openScan(trx, LockMode.UPDATE);
             int n_total = 0;
@@ -401,7 +401,7 @@ public class TestTupleManager extends TestCase {
             trx.commit();
             assertEquals(j, n_total-n_deleted);
             
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             scan = tcont.openScan(trx, LockMode.SHARED);
             int i = 0;
             while (scan.fetchNext()) {
@@ -418,7 +418,7 @@ public class TestTupleManager extends TestCase {
             
             n_total -= n_deleted;
             
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             int len = 100;
             for (i = 0; i < 20; i++) {
                 StringTuple t = new StringTuple();
@@ -433,7 +433,7 @@ public class TestTupleManager extends TestCase {
             }
             trx.commit();
             
-            trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+            trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             scan = tcont.openScan(trx, LockMode.SHARED);
             i = 0;
             while (scan.fetchNext()) {
