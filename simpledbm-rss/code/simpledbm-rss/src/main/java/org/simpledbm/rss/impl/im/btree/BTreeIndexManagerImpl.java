@@ -143,7 +143,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/**
 	 * Space map value for an unused BTree page.
 	 */
-	private static final int PAGE_SPACE_FREE = 0;
+	// private static final int PAGE_SPACE_FREE = 0;
 	/**
 	 * Space map value for a used BTree page.
 	 */
@@ -2067,6 +2067,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 			}
 			try {
+				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
 				/*
 				 * Instant duration lock succeeded. We can proceed with the insert.
@@ -2088,6 +2089,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * Wait unconditionally for the other transaction to finish
 				 */
+				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
 				/*
 				 * Now we have obtained the lock.
@@ -2098,7 +2100,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(containerId, nextPageNumber), 0));
 				}
 				if (currentPageLsn.compareTo(bcursor.getP().getPage().getPageLsn()) == 0) {
-					if (nextPageNumber != -1 && nextPageLsn.compareTo(bcursor.getR().getPage().getPageLsn()) == 0) {
+					if (nextPageNumber == -1 || nextPageLsn.compareTo(bcursor.getR().getPage().getPageLsn()) == 0) {
 						/*
 						 * Nothing has changed, so we can carry on as before.
 						 */
@@ -2117,6 +2119,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			/*
 			 * Restart insert
 			 */
+			System.err.println("Restarting insert");
 			return false;
 		}
 		
@@ -2160,6 +2163,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						 */
 						try {
 							try {
+								System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
 								trx.acquireLockNowait(sr.item.getLocation(), LockMode.SHARED, LockDuration.MANUAL_DURATION);
 							} catch (TransactionException.LockException e) {
 								// FIXME Test case
@@ -2172,6 +2176,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								 */
 								bcursor.unfixP();
 								try {
+									System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
 									trx.acquireLock(sr.item.getLocation(), LockMode.SHARED, LockDuration.MANUAL_DURATION);
 								} catch (TransactionException.LockException e1) {
 									/*
@@ -2450,6 +2455,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 				Savepoint sp = trx.createSavepoint();
 				try {
+					System.out.println(Thread.currentThread().getName() + ":doFetch: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
 					trx.acquireLockNowait(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					icursor.currentKey = sr.item;
 					icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
@@ -2468,6 +2474,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					 */
 					icursor.bcursor.unfixP();
 					try {
+						System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
 						trx.acquireLock(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					} catch (TransactionException.LockException e1) {
 						/*
