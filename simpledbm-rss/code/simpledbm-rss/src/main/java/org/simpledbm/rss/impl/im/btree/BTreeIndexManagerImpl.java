@@ -2046,7 +2046,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// Make a note of current page and page Lsn
 			int currentPageNumber = bcursor.getP().getPage().getPageId().getPageNumber();
 			Lsn currentPageLsn = bcursor.getP().getPage().getPageLsn();
-			
+			bcursor.setNextKeyLocation(null);
 			if (nextPageNumber != -1) {
 				// next key is in the right sibling page
 				bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(containerId, nextPageNumber), 0));
@@ -2069,6 +2069,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			try {
 				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
+				bcursor.setNextKeyLocation(nextItem.getLocation());
 				/*
 				 * Instant duration lock succeeded. We can proceed with the insert.
 				 */
@@ -2090,7 +2091,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * Wait unconditionally for the other transaction to finish
 				 */
 				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
-				trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
+				// trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
+				// Above looks like an error as lock duration is hard coded???
+				trx.acquireLock(nextItem.getLocation(), mode, duration);
 				/*
 				 * Now we have obtained the lock.
 				 * We can continue from where we were if nothing has changed in the meantime
@@ -2104,9 +2107,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						/*
 						 * Nothing has changed, so we can carry on as before.
 						 */
+						bcursor.setNextKeyLocation(nextItem.getLocation());
 						return true;
 					}
 				} else {
+					
+					// FIXME: Unlock the next key lock
 					/*
 					 * We could avoid a rescan of the tree by checking that the next key
 					 * previously identified hasn't changed. For now, we just give up and restart
@@ -2606,6 +2612,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public IndexItem searchKey = null;
 		
+		/**
+		 * Used to save the next key location during inserts
+		 * so that the lock can be released subsequent to the
+		 * insert.
+		 */
+		private Location nextKeyLocation = null;
+		
 		public BTreeCursor() {
 		}
 
@@ -2706,6 +2719,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			if (e != null) {
 				throw e;
 			}
+		}
+
+		public Location getNextKeyLocation() {
+			return nextKeyLocation;
+		}
+
+		public void setNextKeyLocation(Location nextKeyLocation) {
+			this.nextKeyLocation = nextKeyLocation;
 		}
 	}
 	

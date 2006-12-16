@@ -2166,7 +2166,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 				isolationMode = IsolationMode.READ_COMMITTED;
 			}
 			else {
-				isolationMode = IsolationMode.REPEATABLE_READ;
+				isolationMode = IsolationMode.SERIALIZABLE;
 			}
 		}
  
