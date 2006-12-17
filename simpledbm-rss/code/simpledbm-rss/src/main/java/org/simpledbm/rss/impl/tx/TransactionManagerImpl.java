@@ -1654,10 +1654,13 @@ public final class TransactionManagerImpl implements TransactionManager {
 			while (iter.hasNext()) {
 				req = iter.next();
 				if (req.lockable.equals(lockable)) {
-                    if (req.handle.getCurrentMode() != LockMode.SHARED &&
-                    		req.handle.getCurrentMode() != LockMode.UPDATE) {
-                        throw new TransactionException("SIMPLEDBM-TRXMGR-ERROR: Only a SHARED or UPDATE mode lock can be released early - lock release denied for " + req.handle);
-                    }
+					// FIXME We cannot do following because there is a legitimate case
+					// where an EXCLUSIVE lock is released early - ie. nextKeyLocking in btrees
+					// for inserts.
+//                    if (req.handle.getCurrentMode() != LockMode.SHARED &&
+//                    		req.handle.getCurrentMode() != LockMode.UPDATE) {
+//                        throw new TransactionException("SIMPLEDBM-TRXMGR-ERROR: Only a SHARED or UPDATE mode lock can be released early - lock release denied for " + req.handle);
+//                    }
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "releaseLock", "Releasing lock " + req);
 					}		

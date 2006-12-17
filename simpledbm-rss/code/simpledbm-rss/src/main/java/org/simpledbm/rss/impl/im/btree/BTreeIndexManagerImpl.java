@@ -2093,7 +2093,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				// trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
 				// Above looks like an error as lock duration is hard coded???
+				// FIXME What if this lock attempt fails due to deadlock - must ensure proper cleanup.
 				trx.acquireLock(nextItem.getLocation(), mode, duration);
+				bcursor.setNextKeyLocation(nextItem.getLocation());
 				/*
 				 * Now we have obtained the lock.
 				 * We can continue from where we were if nothing has changed in the meantime
@@ -2107,12 +2109,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						/*
 						 * Nothing has changed, so we can carry on as before.
 						 */
-						bcursor.setNextKeyLocation(nextItem.getLocation());
 						return true;
 					}
 				} else {
 					
-					// FIXME: Unlock the next key lock
 					/*
 					 * We could avoid a rescan of the tree by checking that the next key
 					 * previously identified hasn't changed. For now, we just give up and restart
@@ -2125,7 +2125,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			/*
 			 * Restart insert
 			 */
-			System.err.println("Restarting insert");
+			System.out.println(Thread.currentThread().getName() + ":Restarting insert");
+			boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
+			System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
+			bcursor.setNextKeyLocation(null);
 			return false;
 		}
 		
@@ -2228,7 +2231,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * Try to obtain instant lock on next key.
 				 */
-				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION)) {
+				// if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION)) {
+				/* 
+				 * It seems erroneous to obtain an instant_duration lock on next key,
+				 * as until the key has been inserted, it does not safeguard the key range.
+				 * We need to obtain the lock and then release it after the key has been inserted into the
+				 * page. 
+				 */
+				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION)) {
 					return false;
 				}
 				/*
@@ -2247,7 +2257,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				} finally {
 					bcursor.unfixP();
 				}
+			
+				/*
+				 * We can now release the lock on the next key.
+				 */
+				boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
+				System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
 			} finally {
+				bcursor.setNextKeyLocation(null);
 				bcursor.unfixAll();
 			}
 			
