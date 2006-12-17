@@ -37,7 +37,7 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
-import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
+import org.simpledbm.rss.impl.latch.ReadWriteLatch;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -63,7 +63,10 @@ public final class LockManagerImpl implements LockManager {
 		53, 97, 193, 389, 769, 1543, 3079, 6151, 12289, 24593, 49157,
 		98317, 196613, 393241, 786433
 	};
-	
+
+	/**
+	 * Offset into {@link #hashPrimes}
+	 */
 	private volatile int htsz = 0;
 	
 	/**
@@ -78,7 +81,7 @@ public final class LockManagerImpl implements LockManager {
 	private volatile int threshold = 0;
 	
 	/**
-	 * Used to calculate the threshold. Expressed as a percentage of hash table size
+	 * Used to calculate the hash table size threshold. Expressed as a percentage of hash table size.
 	 */
 	private float loadFactor = 0.75f;
 	
@@ -88,12 +91,12 @@ public final class LockManagerImpl implements LockManager {
 	private LockBucket[] LockHashTable;
 
 	/**
-	 * Size of the hash table.
+	 * Size of the hash table. This is always equal to hashPrimes[htsz].
 	 */
 	private int hashTableSize;
 
 	/**
-	 * List of lock event listeners
+	 * List of lock event listeners. 
 	 */
 	private final ArrayList<LockEventListener> lockEventListeners = new ArrayList<LockEventListener>();
 	
@@ -109,7 +112,7 @@ public final class LockManagerImpl implements LockManager {
 	 * on the lock manager. The lock manager itself acquires shared locks during normal operations,
 	 * thus avoiding conflict with the deadlock detector.
 	 */
-	private final Latch globalLock = new ReadWriteUpdateLatch(); 
+	private final Latch globalLock = new ReadWriteLatch(); 
 	
 	/**
 	 * Defines the various lock release methods.
@@ -126,9 +129,10 @@ public final class LockManagerImpl implements LockManager {
 	 * @param hashTableSize
 	 *            The size of the lock hash table.
 	 */
-	public LockManagerImpl(int hashTableSize) {
-		// this.hashTableSize = hashTableSize;
-		this.hashTableSize = hashPrimes[htsz];
+	public LockManagerImpl() {
+		htsz = 0;
+		count = 0;
+		hashTableSize = hashPrimes[htsz];
 		LockHashTable = new LockBucket[hashTableSize];
 		for (int i = 0; i < hashTableSize; i++) {
 			LockHashTable[i] = getNewLockBucket();

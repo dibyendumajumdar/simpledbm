@@ -30,23 +30,11 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
  */
 public final class LockManagerFactoryImpl implements LockMgrFactory {
 
-	private static final String PROP_HASH_SIZE = "lock.hash.size";
-        
-    private static final String DEFAULT_HASH_TABLE_SIZE = "193";
-
 	/**
-	 * Creates a new LockMgr object. The only property accepted by this
-	 * method is lock.hash.size which is used to specify the size of the
-	 * hash table used for maintaining locking data.
+	 * Creates a new LockMgr object. 
 	 */
 	public final LockManager create(Properties props) {
-
-		int hashTableSize = 193;
-		if (props != null) {
-			String value = props.getProperty(PROP_HASH_SIZE, DEFAULT_HASH_TABLE_SIZE);
-			hashTableSize = Integer.parseInt(value);
-		}
-		return new LockManagerImpl(hashTableSize);
+		return new LockManagerImpl();
 	}
 
 }

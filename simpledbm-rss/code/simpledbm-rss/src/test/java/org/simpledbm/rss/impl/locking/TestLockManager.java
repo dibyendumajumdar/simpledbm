@@ -889,7 +889,7 @@ public class TestLockManager extends BaseTestCase {
 
 	
 	private static LockManager createLockManager() {
-		return new LockManagerImpl(71);
+		return new LockManagerImpl();
 	}
 
 }

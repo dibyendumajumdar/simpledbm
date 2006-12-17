@@ -32,9 +32,9 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -88,7 +88,7 @@ import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.ClassUtils;
 
-public class TestBTreeManager extends TestCase {
+public class TestBTreeManager extends BaseTestCase {
 
 	static final short TYPE_STRINGKEYFACTORY = 25000;
 	static final short TYPE_ROWLOCATIONFACTORY = 25001;
@@ -1688,8 +1688,7 @@ public class TestBTreeManager extends TestCase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    t1Failed = true;
+                	setThreadFailed(Thread.currentThread(), e);
                 }
             }
         }, "T1");
@@ -1724,14 +1723,11 @@ public class TestBTreeManager extends TestCase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    t1Failed = true;
+                	setThreadFailed(Thread.currentThread(), e);
                 }
             }
         }, "T2");
         try {
-            t1Failed = false;
-            t2Failed = false;
             t1.start();
             Thread.sleep(1000);
             t2.start();
@@ -1740,15 +1736,17 @@ public class TestBTreeManager extends TestCase {
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
             assertEquals(1, status.get());
+            checkThreadFailures();
         } finally {
 			db.shutdown();
         }       
 	}
 
     /**
-     * Tests that when serialization mode is enabled, even if read unique 
-     * for X fails, another transaction must wait for the reader to finish
-     * before it can insert X.
+     * Tests the situation where a transaction needs to wait for the next key lock
+     * during insert, and between the gap when it releases the latches and attempts 
+     * an unconditional lock, another transaction inserts a key that changes the key range,
+     * and forces the first transaction, after it obtains the lock, to restart.
      */
 	void doReadUniqueX2() throws Exception {
         final boolean testingUniqueIndex = true;
@@ -1798,8 +1796,7 @@ public class TestBTreeManager extends TestCase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    t1Failed = true;
+                	setThreadFailed(Thread.currentThread(), e);
                 }
             }
         }, "T1");
@@ -1833,8 +1830,7 @@ public class TestBTreeManager extends TestCase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    t1Failed = true;
+                	setThreadFailed(Thread.currentThread(), e);
                 }
             }
         }, "TestingInsertRestartDueToKeyRangeModification");
@@ -1870,14 +1866,11 @@ public class TestBTreeManager extends TestCase {
                         }
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
-                    t1Failed = true;
+                	setThreadFailed(Thread.currentThread(), e);
                 }
             }
         }, "T3");
         try {
-            t1Failed = false;
-            t2Failed = false;
             t1.start();
             Thread.sleep(1000);
             t2.start();
@@ -1890,6 +1883,7 @@ public class TestBTreeManager extends TestCase {
             assertTrue(!t2.isAlive());
             assertTrue(!t3.isAlive());
             assertEquals(1, status.get());
+            checkThreadFailures();
         } finally {
 			db.shutdown();
         }       
@@ -2450,6 +2444,7 @@ public class TestBTreeManager extends TestCase {
         suite.addTest(new TestBTreeManager("testInsertInOrder"));
         suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
+        suite.addTest(new TestBTreeManager("testPhantomRecords2"));
         return suite;
     }
 
