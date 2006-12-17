@@ -27,12 +27,15 @@ package org.simpledbm.rss.api.locking;
  */
 public interface LockHandle {
 	/**
-	 * Releases a lock; if force is true the lock is released unconditionally. Since locks are
-	 * reentrant, the system keeps track of the number of times a lock is acquired.
-	 * A call to release causes the lock count to be decremented until it is zero, when the
-	 * lock is actually deleted. If force option is true, the lock is released even if the
-	 * count is greater than zero. When a transaction commits, it should set the force
-	 * option to true when releasing locks.
+	 * Releases a lock; if force is true the lock is released unconditionally, regardless of
+	 * the duration of the lock. MANUAL_DURATION locks are
+	 * reentrant, therefore the Lock Manager must keep track of the number of times such a lock 
+	 * is acquired. A call to release causes the lock reference count to be decremented until it 
+	 * is zero, when the lock can be actually deleted. 
+	 * <p>
+	 * If force option is set to true, the lock is released unconditionally, regardless of the
+	 * lock duration or reference count. The force option is meant to be used only when a transaction
+	 * commits, or rolls back (including to a savepoint). 
 	 * 
 	 * @param force Forcibly release the lock regardless of lock count.
 	 * @throws LockException Thrown if the lock doesn't exist
@@ -49,19 +52,6 @@ public interface LockHandle {
 	 * @throws LockException
 	 */
     void downgrade(LockMode mode) throws LockException;
-    
-    /**
-     * If the current holder of the lock already held the lock, then
-     * this method returns the previous LockMode.
-     * @return The previously held LockMode.
-     */
-    //LockMode getPreviousMode();
-    
-    /**
-     * Determines if this lock is also held by other transactions.
-     * @return True if the lock is also held by others, otherwise false.
-     */
-    //boolean isHeldByOthers();
     
     /**
      * Returns the currently held LockMode.

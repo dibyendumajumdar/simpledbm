@@ -56,18 +56,21 @@ public interface LockManager {
 	 * becomes grantable, but the lock is not actually granted. {@link LockDuration#MANUAL_DURATION} locks are
 	 * released either when the lock has been released as many times as it was acquired,
 	 * or when the transaction commits. {@link LockDuration#COMMIT_DURATION} locks are 
-	 * held until the transaction commits.
+	 * held until the transaction commits. Note that once a lock request is made with
+	 * COMMIT_DURATION, the lock is not released until the transaction commits, regardless
+	 * of whether it was originally or subsequently requested for other durations.
 	 * <p>The transaction that requested a lock
 	 * is said to be the owner of the lock. The owner parameter is intentionally an opaque type, to reduce
-	 * dependency between the Locking module and the Transaction module. 
+	 * dependency between the Locking module and the Transaction module. Lock owner objects
+	 * must implement the {@link Object#equals(Object)} method. 
 	 * <p>The object being locked is also opaque to the Locking sub-system.
-	 * Lockable objects must implement the {@link Object#equals} and {@link Object#hashCode()} methods, and transaction owner objects
-	 * must implement the {@link Object#equals(Object)} method.
+	 * Lockable objects must implement the {@link Object#equals} and {@link Object#hashCode()} methods.
 	 * <p>The locking system supports lock conversions,
 	 * whereby if the owner already holds a lock on the object in a particular mode,
 	 * and subsequently requests another lock on the object in a different mode, the existing lock is 
 	 * upgraded to the more restrictive of the two, as defined by the lock 
-	 * conversion matrix in {@link LockMode}.  
+	 * conversion matrix in {@link LockMode}. A lock conversion request may also
+	 * impact the lock duration, if COMMIT_DURATION was specified.   
 	 * <p>A timeout can be specified. If the value of timeout is -1, the Locking system
 	 * will wait indefinitely for the lock. This is also known as an unconditional request.
 	 * If timeout is 0, the Locking system will not
@@ -90,8 +93,27 @@ public interface LockManager {
 			Object lockable, LockMode mode, LockDuration duration,
 			int timeout, LockInfo lockInfo) throws LockException;
 
+	/**
+	 * Downgrades a lock to the desired mode. Downgrading a lock may result in other
+	 * compatible locks being granted. For example, if an {@link LockMode#UPDATE}
+	 * lock is downgraded to {@link LockMode#SHARED}, it may result in pending shared
+	 * lock requests being granted.
+	 * @see LockHandle#downgrade(LockMode)
+	 */
 	boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException;
-	
+
+	/**
+	 * Releases a lock; if force is true the lock is released unconditionally, regardless of
+	 * the duration of the lock. MANUAL_DURATION locks are
+	 * reentrant, therefore the Lock Manager must keep track of the number of times such a lock 
+	 * is acquired. A call to release causes the lock reference count to be decremented until it 
+	 * is zero, when the lock can be actually deleted. 
+	 * <p>
+	 * If force option is set to true, the lock is released unconditionally, regardless of the
+	 * lock duration or reference count. The force option is meant to be used only when a transaction
+	 * commits, or rolls back (including to a savepoint). 
+	 * @see LockHandle#release(boolean)
+	 */
 	boolean release(Object owner, Object lockable, boolean force) throws LockException;
 	
 	/**
