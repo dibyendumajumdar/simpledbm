@@ -225,6 +225,19 @@ public class TestLockManager extends BaseTestCase {
 		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
 		handle.release(false);
 		assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
+		handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.MANUAL_DURATION, -1, null);
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
+		handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE, LockDuration.COMMIT_DURATION, -1, null);
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
+		assertFalse(handle.release(false));
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
+		handle = lockmgr.acquire(tran1, lockname, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, -1, null);
+		assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+		assertFalse(handle.release(false));
+		assertFalse(handle.release(false));
+		assertFalse(handle.release(false));
+		assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+		assertTrue(handle.release(true));
 	}
 
 	/**
@@ -601,6 +614,47 @@ public class TestLockManager extends BaseTestCase {
 		assertTrue(!t1.isAlive());
 		assertTrue(counter.get() == 0);
     }
+
+    /**
+     * This test verifies that if an conversion lock request is asked for 
+     * COMMIT_DURATION, then the lock request gets updated to commit duration.
+     */
+    public void testCommitLockConversionWait() throws Exception {
+        final LockManager lockmgr = createLockManager();
+        final Object tran1 = new Integer(1);
+        final Object tran2 = new Integer(2);
+        final Object lockname = new Integer(10);
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        Thread t1 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    LockHandle handle1 = lockmgr.acquire(tran2, lockname, LockMode.SHARED, LockDuration.MANUAL_DURATION, -1, null);
+                    Thread.sleep(500);
+                    LockHandle handle2 = lockmgr.acquire(tran2, lockname, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION, -1, null);
+                    assertTrue(handle2.getCurrentMode() == LockMode.EXCLUSIVE);
+                    assertFalse(handle1.release(false));
+                    assertTrue(handle1.release(true));
+                } catch (Exception e) {
+                    counter.incrementAndGet();
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        t1.start();
+		Thread.sleep(200);
+		LockHandle handle = lockmgr.acquire(tran1, lockname, LockMode.UPDATE,
+				LockDuration.MANUAL_DURATION, -1, null);
+		Thread.sleep(1000);
+		assertEquals(LockMode.UPDATE, lockmgr.findLock(tran1, lockname));
+		assertEquals(LockMode.SHARED, lockmgr.findLock(tran2, lockname));
+		assertTrue(handle.release(false));
+		t1.join(5000);
+		assertTrue(!t1.isAlive());
+		assertTrue(counter.get() == 0);
+    }
+
     
     /**
 	 * In this test, a deadlock is produced by two threads acquiring exclusive

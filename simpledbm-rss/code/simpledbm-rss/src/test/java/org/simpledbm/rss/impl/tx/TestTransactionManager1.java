@@ -795,7 +795,7 @@ public class TestTransactionManager1 extends TestCase {
 		
 		public void changeBit(Transaction trx, int index, int newValue) throws BufferManagerException, TransactionException {
 			trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, pageId.getContainerId()), LockMode.SHARED, LockDuration.MANUAL_DURATION);
-			trx.acquireLock(new ObjectLock(ObjectLock.BIT, index), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+			trx.acquireLock(new ObjectLock(ObjectLock.BIT, index), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 			BitMgrLogRedoUndo logrec = (BitMgrLogRedoUndo) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager1.TYPE_BITMGRLOGREDOUNDO);
 			BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false, TestTransactionManager1.TYPE_BITMGRPAGE, 0);
 			try {
@@ -855,7 +855,7 @@ public class TestTransactionManager1 extends TestCase {
 				BitMgrLogOpenContainer logopen = (BitMgrLogOpenContainer) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager1.TYPE_BITMGRLOGOPENCONTAINER);
 				BitMgrLogFormatPage formatpage = (BitMgrLogFormatPage) loggableFactory.getInstance(OneBitMgr.moduleId, TestTransactionManager1.TYPE_BITMGRLOGFORMATPAGE);
 				
-				trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, containerId), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+				trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, containerId), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 				/* check if the container already exists */
 				StorageContainer sc = storageManager.getInstance(containerId);
 				if (sc != null) {

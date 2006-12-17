@@ -1200,7 +1200,7 @@ public class TestBTreeManager extends TestCase {
                 while (scan.fetchNext()) {
                 	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 	// System.out.println("SCAN=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
-                	trx.acquireLock(scan.getCurrentLocation(), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+                	trx.acquireLock(scan.getCurrentLocation(), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
                 	if (scan.isEof()) {
                 		break;
                 	}
@@ -1546,7 +1546,7 @@ public class TestBTreeManager extends TestCase {
                         try {
                             //System.out.println("--> DELETING KEY [" + k + "," + loc + "]");
                             db.lockmgr.addLockEventListener(listener);
-                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
                             btree.delete(trx, key, location);
                             okay = true;
                         } finally {
@@ -1708,7 +1708,7 @@ public class TestBTreeManager extends TestCase {
                     try {                       
                         try {
                             db.lockmgr.addLockEventListener(listener);
-                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
                             btree.insert(trx, key, location);
                         }
                         finally {
@@ -1744,6 +1744,157 @@ public class TestBTreeManager extends TestCase {
 			db.shutdown();
         }       
 	}
+
+    /**
+     * Tests that when serialization mode is enabled, even if read unique 
+     * for X fails, another transaction must wait for the reader to finish
+     * before it can insert X.
+     */
+	void doReadUniqueX2() throws Exception {
+        final boolean testingUniqueIndex = true;
+        final Lock lock = new ReentrantLock();
+        final Condition lockWaitStarted = lock.newCondition();
+        final AtomicInteger status = new AtomicInteger(0);
+        final LockEventListener listener = new LockEventListener() {
+			public void beforeLockWait(Object owner, Object lockable, LockMode mode) {
+				//System.out.println("LOCK WAIT STARTED");
+				lock.lock();
+				lockWaitStarted.signal();
+				status.incrementAndGet();
+				lock.unlock();
+			}
+        };
+		final BTreeDB db = new BTreeDB(false);
+        final Thread t1 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
+                    IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory.getInstance(TYPE_STRINGKEYFACTORY);
+                    LocationFactory locationFactory = (LocationFactory) db.objectFactory.getInstance(TYPE_ROWLOCATIONFACTORY);
+                    IndexKey key = keyFactory.newIndexKey(1);
+                    key.parseString("x");
+                    Location location = locationFactory.newLocation();
+                    location.parseString("2");
+                    Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+                    boolean okay = false;
+                    try {
+                        IndexScan scan = btree.openScan(trx, key, location, false);
+                        try {
+                        	scan.fetchNext();
+                        	lock.lock();
+                        	lockWaitStarted.await(3, TimeUnit.SECONDS);
+                        	lock.unlock();
+                        }
+                        finally {
+                        	scan.close();
+                        }
+                        okay = true;
+                    } finally {
+                        if (okay) {
+                            trx.commit();
+                        }
+                        else {
+                            trx.abort();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    t1Failed = true;
+                }
+            }
+        }, "T1");
+        final Thread t2 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
+                    IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory.getInstance(TYPE_STRINGKEYFACTORY);
+                    LocationFactory locationFactory = (LocationFactory) db.objectFactory.getInstance(TYPE_ROWLOCATIONFACTORY);
+                    IndexKey key = keyFactory.newIndexKey(1);
+                    key.parseString("x");
+                    Location location = locationFactory.newLocation();
+                    location.parseString("2");
+                    Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+                    boolean okay = false;
+                    try {                       
+                        try {
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+                            btree.insert(trx, key, location);
+                            System.out.println("Insertex x,2");
+                        }
+                        finally {
+                        }
+                        okay = true;
+                    } finally {
+                        if (okay) {
+                            trx.commit();
+                        }
+                        else {
+                            trx.abort();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    t1Failed = true;
+                }
+            }
+        }, "TestingInsertRestartDueToKeyRangeModification");
+        final Thread t3 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testingUniqueIndex);
+                    IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory.getInstance(TYPE_STRINGKEYFACTORY);
+                    LocationFactory locationFactory = (LocationFactory) db.objectFactory.getInstance(TYPE_ROWLOCATIONFACTORY);
+                    IndexKey key = keyFactory.newIndexKey(1);
+                    key.parseString("x1");
+                    Location location = locationFactory.newLocation();
+                    location.parseString("21");
+                    Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+                    boolean okay = false;
+                    try {                       
+                        try {
+                            db.lockmgr.addLockEventListener(listener);
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+                            btree.insert(trx, key, location);
+                            System.out.println("Insertex x1,21");
+                        }
+                        finally {
+                        	db.lockmgr.clearLockEventListeners();
+                        }
+                        okay = true;
+                    } finally {
+                        if (okay) {
+                            trx.commit();
+                        }
+                        else {
+                            trx.abort();
+                        }
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    t1Failed = true;
+                }
+            }
+        }, "T3");
+        try {
+            t1Failed = false;
+            t2Failed = false;
+            t1.start();
+            Thread.sleep(1000);
+            t2.start();
+            Thread.sleep(1000);
+            t3.start();
+            t1.join(5000);
+            t2.join(5000);
+            t3.join(5000);
+            assertTrue(!t1.isAlive());
+            assertTrue(!t2.isAlive());
+            assertTrue(!t3.isAlive());
+            assertEquals(1, status.get());
+        } finally {
+			db.shutdown();
+        }       
+	}
+	
 	
 	public void testPageSplitLeafUnique() throws Exception {
 		doInitContainer();
@@ -2247,6 +2398,18 @@ public class TestBTreeManager extends TestCase {
 				new ScanResult("<INFINITY>", "0") };
         doScanTree(true, false, "w", "1", scanResults);
 	}
+
+	public void testPhantomRecords2() throws Exception {
+        doInitContainer2();
+        doLoadData("org/simpledbm/rss/impl/im/btree/data2.txt");
+		doReadUniqueX2();
+        ScanResult[] scanResults = new ScanResult[] {
+				new ScanResult("w", "1"), new ScanResult("x", "2"), new ScanResult("x1", "21"),
+				new ScanResult("y", "3"), new ScanResult("z", "4"),
+				new ScanResult("<INFINITY>", "0") };
+        doScanTree(true, false, "w", "1", scanResults);
+	}
+	
 	
     public static Test suite() {
         TestSuite suite = new TestSuite();
