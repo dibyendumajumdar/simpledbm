@@ -411,6 +411,9 @@ public final class LockManagerImpl implements LockManager {
 					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
 					lockState.setStatus(LockStatus.GRANTABLE);
 				} else {
+					if (lockState.lockRequest.duration == LockDuration.MANUAL_DURATION && lockState.parms.duration == LockDuration.COMMIT_DURATION) {
+						lockState.lockRequest.duration = LockDuration.COMMIT_DURATION;
+					}
 					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
 					lockState.setStatus(LockStatus.GRANTED);
 				}
@@ -436,6 +439,9 @@ public final class LockManagerImpl implements LockManager {
 					if (lockState.parms.duration != LockDuration.INSTANT_DURATION) {
 						lockState.lockRequest.mode = lockState.parms.mode.maximumOf(lockState.lockRequest.mode);
 						lockState.lockRequest.count++;
+						if (lockState.lockRequest.duration == LockDuration.MANUAL_DURATION && lockState.parms.duration == LockDuration.COMMIT_DURATION) {
+							lockState.lockRequest.duration = LockDuration.COMMIT_DURATION;
+						}
 						lockState.lockitem.grantedMode = lockState.lockRequest.mode
 								.maximumOf(lockState.lockitem.grantedMode);
 						//lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
@@ -690,6 +696,18 @@ public final class LockManagerImpl implements LockManager {
 			return false;
 		}
 
+		if (lockState.parms.action == ReleaseAction.RELEASE && lockState.lockRequest.duration == LockDuration.COMMIT_DURATION) {
+			/*
+			 * 6(1). If noforce, and lock is held for commit duration, then do
+			 * not release the lock request. 
+			 */
+			if (log.isDebugEnabled()) {
+				log.debug(LOG_CLASS_NAME, "release",
+						"lock not released as it is held for commit duration");
+			}
+			return false;
+		}
+
 		if (lockState.parms.action == ReleaseAction.RELEASE && lockState.lockRequest.count > 1) {
 			/*
 			 * 6. If noforce, and reference count greater than 0, then do
@@ -828,6 +846,9 @@ public final class LockManagerImpl implements LockManager {
 		            else {
 		                r.mode = r.convertMode.maximumOf(r.mode);
 		                r.convertMode = r.mode;
+		                if (r.convertDuration == LockDuration.COMMIT_DURATION && r.duration == LockDuration.MANUAL_DURATION) {
+		                	r.duration = LockDuration.COMMIT_DURATION;
+		                }
 		                lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 		            }
 		            // TODO - TT1 
@@ -1381,7 +1402,7 @@ public final class LockManagerImpl implements LockManager {
 
 		short count = 1;
 
-		final LockDuration duration;
+		LockDuration duration;
 
 		final Object owner;
 		

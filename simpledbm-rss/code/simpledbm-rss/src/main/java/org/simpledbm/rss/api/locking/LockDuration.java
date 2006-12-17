@@ -23,10 +23,11 @@ package org.simpledbm.rss.api.locking;
  * LockDuration defines how long a lock is to be held. An {@link #INSTANT_DURATION} lock
  * is held only for an instant; its purpose being to delay the caller until the desired lock
  * is grantable. A {@link #MANUAL_DURATION} lock is held until the transaction 
- * completes.
+ * completes, but may be released early. A {@link #COMMIT_DURATION} lock is held until
+ * the transaction completes and generally cannot be released early.
  * @author Dibyendu Majumdar
  * @since 26-July-2005
  */
 public enum LockDuration {
-	INSTANT_DURATION, MANUAL_DURATION
+	INSTANT_DURATION, MANUAL_DURATION, COMMIT_DURATION
 }

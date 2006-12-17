@@ -55,7 +55,8 @@ public interface LockManager {
 	 * {@link LockDuration#INSTANT_DURATION}, then the caller is delayed until the lock 
 	 * becomes grantable, but the lock is not actually granted. {@link LockDuration#MANUAL_DURATION} locks are
 	 * released either when the lock has been released as many times as it was acquired,
-	 * or when the transaction commits. 
+	 * or when the transaction commits. {@link LockDuration#COMMIT_DURATION} locks are 
+	 * held until the transaction commits.
 	 * <p>The transaction that requested a lock
 	 * is said to be the owner of the lock. The owner parameter is intentionally an opaque type, to reduce
 	 * dependency between the Locking module and the Transaction module. 

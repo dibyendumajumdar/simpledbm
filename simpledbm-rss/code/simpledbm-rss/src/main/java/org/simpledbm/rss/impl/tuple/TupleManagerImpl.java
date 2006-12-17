@@ -633,7 +633,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					 */
 					boolean locked = false;
 					try {
-						trx.acquireLockNowait(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+						trx.acquireLockNowait(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 						locked = true;
 					} catch (TransactionException.LockException e) {
 						if (log.isDebugEnabled()) {
@@ -655,7 +655,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						bab.unfix();
 						bab = null;
 
-						trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+						trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 
 						PageId pageId = new PageId(containerId, pageNumber);
 						bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
@@ -1045,7 +1045,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			FreeSpaceManager spacemgr = tuplemgr.spaceMgr;
 			FreeSpaceCursor spcursor = spacemgr.getSpaceCursor(containerId);
 
-			trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+			trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 
 			PageId pageid = tupleid.getPageId();
 			int slotNumber = tupleid.getSlotNumber();
@@ -1207,7 +1207,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			BufferManager bufmgr = tuplemgr.bufmgr;
 			TupleId tupleid = (TupleId) location;
 
-			trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+			trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 
 			PageId pageid = tupleid.getPageId();
 			int slotNumber = tupleid.getSlotNumber();

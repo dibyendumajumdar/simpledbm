@@ -848,7 +848,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		boolean success = false;
 		try {
 			
-			trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
+			trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 			/*
 			 * Create the specified container
 			 */
@@ -2087,6 +2087,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 */
 				bcursor.unfixP();
 				bcursor.unfixR();
+				
+				// Delay for testing
+				// FIXME At present we use a crude mechanism to decide whether to introduce an artificial delay
+				if (Thread.currentThread().getName().equals("TestingInsertRestartDueToKeyRangeModification")) {
+					try {
+						Thread.sleep(2 * 1000);
+					} catch (InterruptedException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
+				}
+				
 				/*
 				 * Wait unconditionally for the other transaction to finish
 				 */
@@ -2173,7 +2185,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						try {
 							try {
 								System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-								trx.acquireLockNowait(sr.item.getLocation(), LockMode.SHARED, LockDuration.MANUAL_DURATION);
+								trx.acquireLockNowait(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
 							} catch (TransactionException.LockException e) {
 								// FIXME Test case
 								if (log.isDebugEnabled()) {
@@ -2186,7 +2198,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								bcursor.unfixP();
 								try {
 									System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-									trx.acquireLock(sr.item.getLocation(), LockMode.SHARED, LockDuration.MANUAL_DURATION);
+									trx.acquireLock(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
 								} catch (TransactionException.LockException e1) {
 									/*
 									 * Deadlock
@@ -2236,7 +2248,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * It seems erroneous to obtain an instant_duration lock on next key,
 				 * as until the key has been inserted, it does not safeguard the key range.
 				 * We need to obtain the lock and then release it after the key has been inserted into the
-				 * page. 
+				 * page.
+				 * A potential optimisation would be to request conditional instant duration lock while the
+				 * pages are latched, but manual duration lock if the pages are unlatched due to
+				 * conditional lock not being available. Assumption is that while the page is latched,
+				 * another transaction cannot obtain a lock on next key. I think however that this
+				 * won't work because of data locking - therefore for now we take a conservative approach.
 				 */
 				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION)) {
 					return false;
@@ -2339,7 +2356,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * Try to obtain commit duration lock on next key.
 				 */
-				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION)) {
+				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION)) {
 					return false;
 				}
 				/*
