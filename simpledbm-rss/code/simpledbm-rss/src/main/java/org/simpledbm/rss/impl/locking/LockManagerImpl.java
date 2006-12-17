@@ -177,9 +177,6 @@ public final class LockManagerImpl implements LockManager {
 				LockHashTable[i] = null;
 			}
 		}
-//		catch (Exception e) {
-//			e.printStackTrace();
-//		}
 		finally {
 			globalLock.unlockExclusive();
 		}
@@ -298,8 +295,6 @@ public final class LockManagerImpl implements LockManager {
 						"Woken up, and lock granted");
 			}
 			checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.parms.lockInfo);
-			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
-			// TODO lockState.setRequest()
 			return;
 		}
 
@@ -414,7 +409,6 @@ public final class LockManagerImpl implements LockManager {
 					if (lockState.lockRequest.duration == LockDuration.MANUAL_DURATION && lockState.parms.duration == LockDuration.COMMIT_DURATION) {
 						lockState.lockRequest.duration = LockDuration.COMMIT_DURATION;
 					}
-					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
 					lockState.setStatus(LockStatus.GRANTED);
 				}
 				return true;
@@ -444,11 +438,8 @@ public final class LockManagerImpl implements LockManager {
 						}
 						lockState.lockitem.grantedMode = lockState.lockRequest.mode
 								.maximumOf(lockState.lockitem.grantedMode);
-						//lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
 						lockState.setStatus(LockStatus.GRANTED);
 					} else {
-						//lockState.handle
-						//		.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
 						lockState.setStatus(LockStatus.GRANTABLE);
 					}
 					return true;
@@ -505,7 +496,6 @@ public final class LockManagerImpl implements LockManager {
 
 		if (lockState.parms.duration == LockDuration.INSTANT_DURATION && can_grant) {
 			/* 6. If yes, grant the lock and return success. */
-			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
 			lockState.setStatus(LockStatus.GRANTABLE);
 			return true;
 		}
@@ -540,7 +530,6 @@ public final class LockManagerImpl implements LockManager {
 								+ ", therefore granting lock");
 			}
 			lockState.lockitem.grantedMode = lockState.parms.mode.maximumOf(lockState.lockitem.grantedMode);
-			// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTED);
 			lockState.setStatus(LockStatus.GRANTED);
 			return true;
 		} else {
@@ -581,7 +570,6 @@ public final class LockManagerImpl implements LockManager {
 				/*
 				 * Handle the case where the lock was granted after a wait.
 				 */
-				// System.err.println("Releasing instant lock " + handle);
 				handle.release(false);
 			}
 		} finally {
@@ -768,7 +756,6 @@ public final class LockManagerImpl implements LockManager {
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
 				if (lockState.parms.lockInfo != null) {
 					lockState.parms.lockInfo.setPreviousMode(lockState.lockRequest.mode);
-					// lockState.handle.setCurrentMode(lockState.parms.downgradeMode);
 					lockState.parms.lockInfo.setHeldByOthers(false);
 				}
 			} else {
@@ -851,8 +838,6 @@ public final class LockManagerImpl implements LockManager {
 		                }
 		                lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 		            }
-		            // TODO - TT1 
-		            // System.err.println("Executed r.count++");
 		            /*
 		             * Treat conversions as lock recursion.
 		             */
@@ -1440,57 +1425,19 @@ public final class LockManagerImpl implements LockManager {
 
         private final LockManagerImpl lockMgr;
 
-//		private final Object lockable;
-//
-//        private final Object owner;
-
         LockRequest lockRequest;
         
-        // final LockMode mode;
-
-        // final int timeout;
-
-        // private LockMode previousMode = LockMode.NONE;
-
-        // private boolean heldByOthers = false;
-
-        // private LockMode currentMode = LockMode.NONE;
-
-        //private LockStatus status;
-
 		LockHandleImpl(LockManagerImpl lockMgr, LockParams parms) {
 			this.lockMgr = lockMgr;
-//			this.owner = parms.owner;
-//			this.lockable = parms.lockable;
-			// this.mode = parms.mode;
-			// this.timeout = parms.timeout;
 		}
-
-//		final LockHandleImpl setStatus(LockRequest request, LockStatus status) {
-//			if (request != null) {
-//				currentMode = request.mode;
-//			}
-//			this.status = status;
-//			return this;
-//		}
 
 		public final boolean release(boolean force) throws LockException {
 			return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
-			// return lockMgr.release(owner, lockable, force);
 		}
 
 		public final void downgrade(LockMode mode) throws LockException {
 			lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
-			// lockMgr.downgrade(owner, lockable, mode);
 		}
-
-//        public final LockMode getPreviousMode() {
-//            return previousMode;
-//        }
-//
-//        public final boolean isHeldByOthers() {
-//            return heldByOthers;
-//        }
 
         public final LockMode getCurrentMode() {
         	if (lockRequest == null) {
@@ -1499,34 +1446,16 @@ public final class LockManagerImpl implements LockManager {
             return lockRequest.mode;
         }
 
-//        final LockStatus getStatus() {
-//            return status;
-//        }
-
-//        final void setCurrentMode(LockMode currentMode) {
-//            this.currentMode = currentMode;
-//        }
-
-//        final void setHeldByOthers(boolean heldByOthers) {
-//            this.heldByOthers = heldByOthers;
-//        }
-//
-//        final void setPreviousMode(LockMode previousMode) {
-//            this.previousMode = previousMode;
-//        }
-//
         @Override
         public String toString() {
             return "LockHandleImpl(owner=" + getOwner() + ", target=" + getLockable() + ", currentMode=" + getCurrentMode() + ")";
         }
 
 		Object getLockable() {
-			// return lockable;
 			return lockRequest.lockItem.target;
 		}
 
 		Object getOwner() {
-			// return owner;
 			return lockRequest.owner;
 		}
 	}
