@@ -130,7 +130,7 @@ public class TestBufferManager extends TestCase {
         bufmgr.signalBufferWriter();
         bab = bufmgr.fixShared(new PageId(1, 0), 0);
         page = (MyPage) bab.getPage();
-        System.out.println("Retrieved page contents = " + page);
+        // System.out.println("Retrieved page contents = " + page);
         assertEquals(page.i, 534);
         assertEquals(page.getPageLsn(), new Lsn(97, 45));
         assertEquals(page.getPageId(), new PageId(1, 0));
@@ -145,7 +145,7 @@ public class TestBufferManager extends TestCase {
         bufmgr.start();
         bab = bufmgr.fixShared(new PageId(1, 0), 0);
         page = (MyPage) bab.getPage();
-        System.out.println("Retrieved page contents = " + page);
+        // System.out.println("Retrieved page contents = " + page);
         assertEquals(page.i, 534);
         assertEquals(page.getPageLsn(), new Lsn(97, 45));
         assertEquals(page.getPageId(), new PageId(1, 0));
@@ -181,12 +181,12 @@ public class TestBufferManager extends TestCase {
                 BufferAccessBlock bab = null;
                 try {
                     bab = bufmgr.fixExclusive(pageId, false, TYPE_MYPAGE, 0);
-                    System.err.println(Thread.currentThread().getName()
-                            + ": Fixed page " + pageId);
+                    // System.err.println(Thread.currentThread().getName()
+                    //        + ": Fixed page " + pageId);
                     Thread.sleep(300);
                     bab.setDirty(new Lsn());
-                    System.err.println(Thread.currentThread().getName()
-                            + ": Unfixing page " + pageId);
+                    // System.err.println(Thread.currentThread().getName()
+                    //        + ": Unfixing page " + pageId);
                     bab.unfix();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -201,11 +201,11 @@ public class TestBufferManager extends TestCase {
                 BufferAccessBlock bab = null;
                 try {
                     bab = bufmgr.fixExclusive(pageId, false, TYPE_MYPAGE, 0);
-                    System.err.println(Thread.currentThread().getName()
-                            + ": Fixed page " + pageId);
+                    // System.err.println(Thread.currentThread().getName()
+                    //        + ": Fixed page " + pageId);
                     bab.setDirty(new Lsn());
-                    System.err.println(Thread.currentThread().getName()
-                            + ": Unfixing page " + pageId);
+                    //System.err.println(Thread.currentThread().getName()
+                    //        + ": Unfixing page " + pageId);
                     bab.unfix();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -268,8 +268,8 @@ public class TestBufferManager extends TestCase {
         final BufferManager bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
         final AtomicInteger errCount = new AtomicInteger(0);
         final int testing = scenario;
-        final int ITERATIONS = 6;
-        final int UPDATES_PER_ITERATION = 5;
+        final int ITERATIONS = 10;
+        final int UPDATES_PER_ITERATION = 100;
         final int UPDATES_PER_THREAD = ITERATIONS * UPDATES_PER_ITERATION;
         final int NUM_THREADS = 3;
         final int TOTAL_UPDATES = UPDATES_PER_THREAD * NUM_THREADS;
@@ -278,6 +278,12 @@ public class TestBufferManager extends TestCase {
                 TOTAL_UPDATES / page_count[1], TOTAL_UPDATES / page_count[2],
                 TOTAL_UPDATES / page_count[3] };
 
+        final AtomicInteger calculated_values[] = new AtomicInteger[6];
+        
+        for (int i = 0; i < calculated_values.length; i++) {
+        	calculated_values[i] = new AtomicInteger(0);
+        }
+        
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
@@ -298,11 +304,12 @@ public class TestBufferManager extends TestCase {
                             int i = page.i;
                             i = i + 1;
                             page.i = i;
-                            System.err.println(Thread.currentThread().getName()
-                                    + ": Value of i in page " + pageId
-                                    + " has been set to " + i);
+//                            System.err.println(Thread.currentThread().getName()
+//                                    + ": Value of i in page " + pageId
+//                                    + " has been set to " + i);
                             bab.setDirty(new Lsn());
                             bab.unfix();
+                            calculated_values[pageno].incrementAndGet();
                             pageno++;
                             if (pageno > page_count[testing]) {
                                 pageno = 1;
@@ -333,7 +340,7 @@ public class TestBufferManager extends TestCase {
             threads[i].start();
         }
         for (int i = 0; i < threads.length; i++) {
-            threads[i].join(5000);
+            threads[i].join();
         }
         assertEquals(0, errCount.get());
         /* Verify that the test was successful */
@@ -343,7 +350,9 @@ public class TestBufferManager extends TestCase {
             MyPage page = (MyPage) bab.getPage();
             int i = page.i;
             bab.unfix();
-            assertEquals(i, expected_values[testing]);
+//            System.err.println("Expected value = " + expected_values[testing]);
+//            System.err.println("Calculated value = " + calculated_values[z]);
+            assertEquals(expected_values[testing], i);
             System.err.println(Thread.currentThread().getName()
                     + ": Validated that value of i in page " + pageId
                     + " is " + expected_values[testing]);
