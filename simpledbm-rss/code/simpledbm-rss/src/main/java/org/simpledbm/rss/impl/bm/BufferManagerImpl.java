@@ -437,7 +437,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * </ol>
 	 * @return The newly allocated BufferControlBlock or null to indicate that the caller must retry.
 	 */
-	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype) throws BufferManagerException, PageException {
+	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype, int latchMode) throws BufferManagerException, PageException {
 
 		BufferControlBlock nextBcb = new BufferControlBlock();
 		BufferHashBucket bucket = bufferHash[hashCode];
@@ -451,6 +451,8 @@ public final class BufferManagerImpl implements BufferManager {
 			 * while testing - just goes to show that no amount of testing
 			 * is ever enough !). To work around this situation, we check the
 			 * the hash chain again.
+			 * Dec-2006: We need to additionally check whether the page is
+			 * currently beig read or written, in which case, we need to retry.
 			 */
 
 			for (BufferControlBlock bcb : bucket.chain) {
@@ -458,13 +460,16 @@ public final class BufferManagerImpl implements BufferManager {
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
 					}
-					if (bcb.frameIndex == -1) {
+					// Bug discovered when testing on Intel CoreDuo (3 Dec 2006) - if the page is being read
+					// we need to wait for the read to be over. Since we need to give up latches
+					// easiest option is to retry. 
+					// For now, we return null to the caller indicate that this must be retried
+					// FIXME - need to do this in a better way
+					// Another bug: 16 Dec 2006
+					// We need to check for writeInProgress as well.
+					// we allow SHARED access if writeInProgress is true.
+					if (bcb.frameIndex == -1 || (bcb.writeInProgress && latchMode != LATCH_SHARED)) {
 						// System.err.println(Thread.currentThread().getName() + ": Page " + bcb.pageId + " is being read, so we need to retry");
-						// Bug discovered when testing on Intel CoreDuo (3 Dec 2006) - if the page is being read
-						// we need to wait for the read to be over. Since we need to give up latches
-						// easiest option is to retry. 
-						// For now, we return null to the caller indicate that this must be retried
-						// FIXME - need to do this in a better way
 						return null;
 					}
 					else {
@@ -627,7 +632,7 @@ public final class BufferManagerImpl implements BufferManager {
 				nextBcb = null;
 				while (nextBcb == null) {
 					Thread.yield();
-					nextBcb = locatePage(pageid, h, isNew, pagetype);
+					nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
 				}
 				bucket.latch.readLock().lock();
 				if (!nextBcb.pageId.equals(pageid)) {
@@ -957,8 +962,8 @@ public final class BufferManagerImpl implements BufferManager {
 				if (!bcb.invalid && bcb.frameIndex != -1 && bcb.dirty && bcb.fixcount == 0) {
 					/*
 					 * Set a flag to indicate that the page is being written
-					 * out. Pages can be accessed for reading when this is true,
-					 * but not for writing.
+					 * out. Pages can be accessed for reading (shared mode) when this is true,
+					 * but not for writing (exclusive mode).
 					 */
 					bcb.writeInProgress = true;
                     if (log.isTraceEnabled()) {
