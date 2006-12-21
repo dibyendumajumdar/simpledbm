@@ -114,6 +114,12 @@ public final class LockManagerImpl implements LockManager {
 	 */
 	private final Latch globalLock = new ReadWriteLatch(); 
 	
+	volatile boolean stop = false;
+	
+	Thread deadlockDetectorThread;
+	
+	int waitInterval = 10;
+	
 	/**
 	 * Defines the various lock release methods.
 	 * 
@@ -138,8 +144,25 @@ public final class LockManagerImpl implements LockManager {
 			LockHashTable[i] = getNewLockBucket();
 		}
 		threshold = (int)(hashTableSize * loadFactor);
+		deadlockDetectorThread = new Thread(new DeadlockDetector(this), "DeadlockDetector");
 	}
 
+	public void start() {
+		deadlockDetectorThread.start();
+	}
+	
+	public void shutdown() {
+		stop = true;
+		if (deadlockDetectorThread.isAlive()) {
+			LockSupport.unpark(deadlockDetectorThread);
+			try {
+				deadlockDetectorThread.join(waitInterval*2*1000);
+			} catch (InterruptedException e) {
+				// ignored
+			}
+		}
+	}
+	
 	/**
 	 * Grow the hash table to the next size
 	 */
@@ -154,7 +177,7 @@ public final class LockManagerImpl implements LockManager {
 				return;
 			}
 			int newHashTableSize = hashPrimes[++htsz];
-			// System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
+			System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
 			LockBucket[] newLockHashTable = new LockBucket[newHashTableSize];
 			for (int i = 0; i < newHashTableSize; i++) {
 				newLockHashTable[i] = getNewLockBucket();
@@ -172,13 +195,15 @@ public final class LockManagerImpl implements LockManager {
 					newBucket.chainAppend(item);
 				}
 			}
+			LockBucket[] oldLockHashTable = LockHashTable;
+			int oldHashTableSize = hashTableSize;
 			LockHashTable = newLockHashTable;
 			hashTableSize = newHashTableSize;
 			threshold = (int)(hashTableSize * loadFactor);
-			for (int i = 0; i < hashTableSize; i++) {
-				LockBucket bucket = LockHashTable[i];
+			for (int i = 0; i < oldHashTableSize; i++) {
+				LockBucket bucket = oldLockHashTable[i];
 				bucket.chain.clear();
-				LockHashTable[i] = null;
+				oldLockHashTable[i] = null;
 			}
 		}
 		finally {
@@ -1207,6 +1232,9 @@ public final class LockManagerImpl implements LockManager {
 			}
 			if (incompatible) {
 				him = waiters.get(them.owner);
+				if (him == null) {
+					return false;
+				}
 				me.cycle = him;
 				if (him.cycle != null) {
 					log.info(LOG_CLASS_NAME, "findDeadlockCycle", "DEADLOCK DETECTED: "
@@ -1240,6 +1268,7 @@ public final class LockManagerImpl implements LockManager {
 			for (LockWaiter waiter: waiterArray) {
 				waiter.cycle = null;
 				waiter.visited = false;
+				System.out.println("Waiter = " + waiter.myLockRequest);
 			}
 			for (LockWaiter waiter: waiterArray) {
 				findDeadlockCycle(waiter);
@@ -1490,4 +1519,25 @@ public final class LockManagerImpl implements LockManager {
     		thread = t;
     	}
     }
+    
+    static final class DeadlockDetector implements Runnable {
+    	
+    	final LockManagerImpl lockManager;
+    	
+    	public DeadlockDetector(LockManagerImpl lockManager) {
+    		this.lockManager = lockManager;
+    	}
+    	
+    	public void run() {
+    		while (!lockManager.stop) {
+    			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
+    					lockManager.waitInterval, TimeUnit.SECONDS));
+    			if (lockManager.stop) {
+    				break;
+    			}
+    			lockManager.detectDeadlocks();
+    		}
+    	}
+    }
+    
 }
