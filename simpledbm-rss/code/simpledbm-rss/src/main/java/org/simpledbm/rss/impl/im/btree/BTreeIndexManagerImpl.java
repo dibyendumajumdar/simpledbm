@@ -85,19 +85,12 @@ import org.xml.sax.SAXException;
  * from the published algorithms - these are noted at appropriate places within the
  * code. 
  * <p>
- * Quick Notes:
- * 1. If we want to maintain left sibling pointers in pages, then during merge operations, we 
- * need to access the page further to the right of right sibling, and update this page
- * as well. 
- * 2. When copying keys from one page to another it is not necessary to instantiate keys. A more efficient way
- * would be to copy raw data. Current method is inefficient.
- * <p>
  * <h2>Structure of the B-link Tree</h2>
  * <ol>
  * <li>The tree is contained in a container of fixed size pages. The
- * first page of the container is a header page. The second page is the
+ * first page (pagenumber = 0) of the container is a header page. The second page (pagenumber = 1) is the
  * first space map page. The third page (pagenumber = 2) is always allocated as 
- * the root page of the tree.
+ * the root page of the tree. The root page never changes.
  * </li>
  * <li>Pages at all levels are linked to their right siblings.</li>
  * <li>In leaf pages, an extra item called the high key is present. In index pages,
@@ -121,6 +114,17 @@ import org.xml.sax.SAXException;
  */
 public final class BTreeIndexManagerImpl extends BaseTransactionalModule implements IndexManager {
 
+	/*
+	 * Notes: 
+	 * 1. If we want to maintain left sibling pointers in pages,
+	 * then during merge operations, we need to access the page further to the
+	 * right of right sibling, and update this page as well. 
+	 * 2. When copying
+	 * keys from one page to another it is not necessary to instantiate keys. A
+	 * more efficient way would be to copy raw data. Current method is
+	 * inefficient.
+	 */
+	
 	static final String LOG_CLASS_NAME = BTreeIndexManagerImpl.class.getName();
 	static final Logger log = Logger.getLogger(BTreeIndexManagerImpl.class.getPackage().getName());
 
@@ -1984,6 +1988,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			bcursor.setP(btreeMgr.bufmgr.fixShared(new PageId(containerId, BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
 			BTreeNode p = getBTreeNode();
 			p.wrap((SlottedPage) bcursor.getP().getPage());
+			// p.dump();
 			
 			do {
 				IndexItem v = p.getHighKey();
@@ -1994,6 +1999,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					bcursor.unfixP(); 
 					bcursor.setP(bcursor.removeQ());
 					p.wrap((SlottedPage) bcursor.getP().getPage());
+					// p.dump();
 				}
 				if (!p.isLeaf()) {
 					// find the child page and move down
@@ -2002,6 +2008,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					bcursor.unfixP();
 					bcursor.setP(bcursor.removeQ());
 					p.wrap((SlottedPage) bcursor.getP().getPage());
+					// p.dump();
 				}
 			} while (!p.isLeaf());
 		}
@@ -2067,7 +2074,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 			}
 			try {
-				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
+				// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
 				bcursor.setNextKeyLocation(nextItem.getLocation());
 				/*
@@ -2102,7 +2109,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * Wait unconditionally for the other transaction to finish
 				 */
-				System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
+				// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
 				// trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
 				// Above looks like an error as lock duration is hard coded???
 				// FIXME What if this lock attempt fails due to deadlock - must ensure proper cleanup.
@@ -2137,9 +2144,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			/*
 			 * Restart insert
 			 */
-			System.out.println(Thread.currentThread().getName() + ":Restarting insert");
+			// System.out.println(Thread.currentThread().getName() + ":Restarting insert");
 			boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
-			System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
+			// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
 			bcursor.setNextKeyLocation(null);
 			return false;
 		}
@@ -2184,7 +2191,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						 */
 						try {
 							try {
-								System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+								// System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
 								trx.acquireLockNowait(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
 							} catch (TransactionException.LockException e) {
 								// FIXME Test case
@@ -2197,7 +2204,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								 */
 								bcursor.unfixP();
 								try {
-									System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+									// System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
 									trx.acquireLock(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
 								} catch (TransactionException.LockException e1) {
 									/*
@@ -2279,7 +2286,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * We can now release the lock on the next key.
 				 */
 				boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
-				System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
+				// System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
 			} finally {
 				bcursor.setNextKeyLocation(null);
 				bcursor.unfixAll();
@@ -2409,31 +2416,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		final SearchResult doSearch(IndexCursorImpl icursor) throws BufferManagerException {
 			BTreeNode node = getBTreeNode();
 			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
+			// node.dump();
 			icursor.eof = false;
 			SearchResult sr = node.search(icursor.currentKey);
 			if (sr.exactMatch && icursor.fetchCount > 0) {
 				if (sr.k == node.getKeyCount()) {
-					// Key to be fetched is in the next page
-					int nextPage = node.header.rightSibling;
-					if (nextPage == -1) {
-						icursor.eof = true;
-						sr.k = sr.k + 1;
-						sr.exactMatch = false;
-						sr.item = node.getItem(sr.k);
-						return sr;
-					}
-					PageId nextPageId = new PageId(containerId, nextPage);
-					icursor.bcursor.setQ(icursor.bcursor.removeP());
-					icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(nextPageId, 0));
-					node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
-					icursor.bcursor.unfixQ();
-					sr = node.search(icursor.currentKey);
+					return moveToNextNode(icursor, node, sr);
 				} else {
 					// move to the next key
 					sr.k = sr.k + 1;
 					sr.exactMatch = false;
 					sr.item = node.getItem(sr.k);
 				}
+			}
+			else if (sr.k == -1) {
+				return moveToNextNode(icursor, node, sr);
 			}
 			else if (node.header.keyCount == 1) {
 				// only one key
@@ -2445,6 +2442,28 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 			return sr;
 			
+		}
+
+		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) throws BufferManagerException {
+			// Key to be fetched is in the next page
+			int nextPage = node.header.rightSibling;
+			if (nextPage == -1) {
+				icursor.eof = true;
+				sr.k = sr.k + 1;
+				sr.exactMatch = false;
+				sr.item = node.getItem(sr.k);
+			} else {
+				PageId nextPageId = new PageId(containerId, nextPage);
+				icursor.bcursor.setQ(icursor.bcursor.removeP());
+				icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(
+						nextPageId, 0));
+				node.wrap((SlottedPage) icursor.bcursor.getP()
+						.getPage());
+				// node.dump();
+				icursor.bcursor.unfixQ();
+				sr = node.search(icursor.currentKey);
+			}
+			return sr;
 		}
 		
 		/**
@@ -2495,7 +2514,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 				Savepoint sp = trx.createSavepoint();
 				try {
-					System.out.println(Thread.currentThread().getName() + ":doFetch: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
+					// System.out.println(Thread.currentThread().getName() + ":doFetch: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
+					if (sr.item == null) {
+						throw new IndexException(icursor.currentKey.toString());
+					}
 					trx.acquireLockNowait(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					icursor.currentKey = sr.item;
 					icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
@@ -2514,7 +2536,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					 */
 					icursor.bcursor.unfixP();
 					try {
-						System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
+						// System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
 						trx.acquireLock(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					} catch (TransactionException.LockException e1) {
 						/*
