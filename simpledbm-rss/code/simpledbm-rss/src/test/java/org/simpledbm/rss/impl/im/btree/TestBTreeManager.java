@@ -20,6 +20,8 @@
 package org.simpledbm.rss.impl.im.btree;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -39,10 +41,12 @@ import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
+import org.simpledbm.rss.api.im.IndexException.TrxException;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
@@ -108,6 +112,8 @@ public class TestBTreeManager extends BaseTestCase {
         doCrashTesting = crashTesting;
     }    
     
+    static boolean compressKeys = false;
+    
 	/**
 	 * A simple string key.
 	 */
@@ -138,10 +144,16 @@ public class TestBTreeManager extends BaseTestCase {
 				this.string = new ByteString(new byte[1]);
 			}
 			else {
-				byte data[] = new byte[1024];
-				Arrays.fill(data, (byte)' ');
-				byte[] srcdata = string.getBytes();
-				System.arraycopy(srcdata, 0, data, 0, srcdata.length);
+				byte data[];
+				if (!compressKeys) {
+					data = new byte[1024];
+					Arrays.fill(data, (byte)' ');
+					byte[] srcdata = string.getBytes();
+					System.arraycopy(srcdata, 0, data, 0, srcdata.length);
+				}
+				else {
+					data = string.getBytes();
+				}
 				this.string = new ByteString(data);
 			}
 		}
@@ -2403,7 +2415,264 @@ public class TestBTreeManager extends BaseTestCase {
 				new ScanResult("<INFINITY>", "0") };
         doScanTree(true, false, "w", "1", scanResults);
 	}
+
+	class DataLoaderThread implements Runnable {
+		
+		final String filename;
+		
+		final BTreeDB db;
+		
+		int count = 0;
+
+		public DataLoaderThread(final BTreeDB db, String filename) {
+			this.db = db;
+			this.filename = filename;
+		}
+		
+		void doLoadData() throws Exception {
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					ClassUtils.getResourceAsStream(filename)));
+			try {
+				Index index = db.btreeMgr.getIndex(1);
+
+				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+						.getInstance(TYPE_STRINGKEYFACTORY);
+				LocationFactory locationFactory = (LocationFactory) db.objectFactory
+						.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+				String line = reader.readLine();
+				int i = 1;
+				while (line != null) {
+					String k = line.trim();
+					IndexKey key = keyFactory.newIndexKey(1);
+					key.parseString(k);
+					RowLocation location = (RowLocation) locationFactory.newLocation();
+					location.loc = i++;
+					while (true) {
+						Transaction trx = db.trxmgr
+							.begin(IsolationMode.SERIALIZABLE);
+						boolean okay = false;
+						try {
+							// System.out.println("Inserting (" + key + ", " + location
+							// + ")");
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+							index.insert(trx, key, location);
+							// System.out.println(Thread.currentThread() + ": inserted " + k);
+							okay = true;
+						}
+						catch (IndexException.LockException e) {
+							// assume deadlock
+							e.printStackTrace();
+						}
+						catch (UniqueConstraintViolationException e) {
+							break;
+						}
+						finally {
+							if (okay)
+								trx.commit();
+							else
+								trx.abort();
+						}
+						if (okay) {
+							break;
+						}
+					}
+					line = reader.readLine();
+				}
+				count = i-1;
+			} finally {
+				reader.close();
+			}
+		}
+
+		public void run() {
+			try {
+				doLoadData();
+			} catch (Exception e) {
+				TestBTreeManager.this.setThreadFailed(Thread.currentThread(), e);
+			}
+		}
+	}
+
+	int doConcurrentInserts() throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			DataLoaderThread d1 = new DataLoaderThread(db, "org/simpledbm/rss/impl/im/btree/english.0");
+			DataLoaderThread d2 = new DataLoaderThread(db, "org/simpledbm/rss/impl/im/btree/english.1");
+			Thread t1 = new Thread(d1, "T1");
+			Thread t2 = new Thread(d2, "T2");
+			
+			t1.start();
+			t2.start();
+			
+			t1.join();
+			t2.join();
+			checkThreadFailures();
+			System.out.println("Inserted " + (d1.count + d2.count) + " keys" );
+			return d1.count + d2.count;
+		}
+		finally {
+			db.shutdown();
+		}
+	}
 	
+    /**
+     * Scans the tree from a starting key to the eof.
+     */
+    void doFindInTree2(String filename) throws Exception {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				ClassUtils.getResourceAsStream(filename)));
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			String line = reader.readLine();
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			try {
+				int i = 1;
+				while (line != null) {
+					String k = line.trim();
+					IndexKey key = keyFactory.newIndexKey(1);
+					key.parseString(k);
+					RowLocation location = (RowLocation) locationFactory.newLocation();
+					location.loc = i++;
+					IndexScan scan = index.openScan(trx, key, location, false);
+					if (scan.fetchNext()) {
+	                	// System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
+						assertEquals(key.toString(), scan.getCurrentKey().toString());
+						assertEquals(location.toString(), scan.getCurrentLocation()
+								.toString());
+					} 
+					else {
+						fail("Find failed for (" + key + ", " + location + ")");
+					}
+					scan.close();
+					line = reader.readLine();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			reader.close();
+			db.shutdown();
+		}
+	}
+
+    /**
+     * Scans the tree from a starting key to the eof.
+     */
+    int doDumpTree(String filename) throws Exception {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(
+				filename));
+		final BTreeDB db = new BTreeDB(false);
+		int count = 0;
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			try {
+				IndexKey key = keyFactory.newIndexKey(1);
+				key.parseString(" ");
+				RowLocation location = (RowLocation) locationFactory
+						.newLocation();
+				location.loc = 1;
+				IndexScan scan = index.openScan(trx, key, location, false);
+				String prevKey = null;
+				try {
+					while (scan.fetchNext()) {
+						if (scan.isEof()) {
+							break;
+						}
+						count++;
+						writer.write(scan.getCurrentKey() + ","
+								+ scan.getCurrentLocation() + "\n");
+						if (prevKey != null
+								&& !scan.getCurrentKey().toString().equals(
+										StringKey.MAX_KEY)) {
+							assertTrue(scan.getCurrentKey().toString()
+									.compareTo(prevKey) > 0);
+						}
+						prevKey = scan.getCurrentKey().toString();
+					}
+				} finally {
+					scan.close();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			writer.close();
+			db.shutdown();
+		}
+		System.out.println("Number of keys found = " + count);
+		return count;
+	}
+
+    /**
+     * Temporary - reproduce bug in search.
+     */
+    void doFindRubens() throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			Index index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			try {
+				String k = "acceptive";
+				IndexKey key = keyFactory.newIndexKey(1);
+				key.parseString(k);
+				RowLocation location = (RowLocation) locationFactory
+						.newLocation();
+				location.loc = 1133;
+				IndexScan scan = index.openScan(trx, key, location, false);
+				if (scan.fetchNext()) {
+					// System.out.println("new FindResult(\"" +
+					// scan.getCurrentKey() + "\", \"" +
+					// scan.getCurrentLocation() + "\"),");
+					assertEquals(key.toString(), scan.getCurrentKey()
+							.toString());
+					assertEquals(location.toString(), scan.getCurrentLocation()
+							.toString());
+				} else {
+					fail("Find failed for (" + key + ", " + location + ")");
+				}
+				scan.close();
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+    
+    
+    
+    public void testMultiThreadedInserts() throws Exception {
+    	compressKeys = true;
+		doInitContainer2();
+		doConcurrentInserts();
+		doDumpTree("testdata/TestBTreeManager/dump.txt");
+		//doFindRubens();
+		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.0");
+		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.1");
+		compressKeys = false;
+	}
 	
     public static Test suite() {
         TestSuite suite = new TestSuite();
@@ -2493,7 +2762,7 @@ public class TestBTreeManager extends BaseTestCase {
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(null);
 			logmgr = logFactory.getLog(properties);
-			bufmgr = new BufferManagerImpl(logmgr, pageFactory, 5, 11);
+			bufmgr = new BufferManagerImpl(logmgr, pageFactory, 20, 11);
 			loggableFactory = new LoggableFactoryImpl(objectFactory);
 			moduleRegistry = new TransactionalModuleRegistryImpl();
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory, storageManager, bufmgr, lockmgr, loggableFactory, latchFactory, objectFactory, moduleRegistry);
@@ -2503,6 +2772,7 @@ public class TestBTreeManager extends BaseTestCase {
 	    	objectFactory.register(TYPE_STRINGKEYFACTORY, StringKeyFactory.class.getName());
 			objectFactory.register(TYPE_ROWLOCATIONFACTORY, RowLocationFactory.class.getName());
 
+			lockmgr.start();
 			logmgr.start();
 			bufmgr.start();
 
@@ -2521,6 +2791,7 @@ public class TestBTreeManager extends BaseTestCase {
         	bufmgr.shutdown();
 			logmgr.shutdown();
 			storageManager.shutdown();
+			lockmgr.shutdown();
         }
     }
     
