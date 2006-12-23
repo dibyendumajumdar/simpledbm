@@ -56,19 +56,23 @@ public final class ReadWriteLatch implements Latch {
 	}
 
 	public boolean tryUpdateLock() {
-		throw new UnsupportedOperationException();
+		return wlock.tryLock();
+		// throw new UnsupportedOperationException();
 	}
 
 	public void updateLock() {
-		throw new UnsupportedOperationException();
+		wlock.lock();
+		// throw new UnsupportedOperationException();
 	}
 
-	public void updateLockInterruptibly() {
-		throw new UnsupportedOperationException();
+	public void updateLockInterruptibly() throws InterruptedException {
+		wlock.lockInterruptibly();
+		// throw new UnsupportedOperationException();
 	}
 
 	public void unlockUpdate() {
-		throw new UnsupportedOperationException();
+		wlock.unlock();
+		// throw new UnsupportedOperationException();
 	}
 
 	public boolean trySharedLock() {
@@ -88,24 +92,35 @@ public final class ReadWriteLatch implements Latch {
 	}
 
 	public boolean tryUpgradeUpdateLock() {
-		throw new UnsupportedOperationException();
+		assert lock.isWriteLocked();
+		return true;
+		// throw new UnsupportedOperationException();
 	}
 
 	public void upgradeUpdateLock() {
-		throw new UnsupportedOperationException();
+		assert lock.isWriteLocked();
+		// throw new UnsupportedOperationException();
 	}
 
 	public void upgradeUpdateLockInterruptibly() {
-		throw new UnsupportedOperationException();
+		assert lock.isWriteLocked();
+		// throw new UnsupportedOperationException();
 	}
 
 	public void downgradeExclusiveLock() {
-		rlock.lock();
-		wlock.unlock();
+		assert lock.isWriteLocked();
+		// rlock.lock();
+		// wlock.unlock();
 	}
 
 	public void downgradeUpdateLock() {
-		throw new UnsupportedOperationException();
+		rlock.lock();
+		wlock.unlock();
+		// throw new UnsupportedOperationException();
 	}
 
+	public boolean isLatchedExclusively() {
+		return lock.isWriteLocked();
+	}
+	
 }

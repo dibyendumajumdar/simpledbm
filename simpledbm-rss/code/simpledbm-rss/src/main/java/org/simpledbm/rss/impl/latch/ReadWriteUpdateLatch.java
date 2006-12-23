@@ -545,19 +545,23 @@ public final class ReadWriteUpdateLatch implements Latch {
 		}
 	}
 	
-	public final int getMode() {
+	public synchronized final int getMode() {
 		return grantedMode;
 	}
 
-	public final int getSharedCount() {
+	public synchronized final int getSharedCount() {
 		return sharedCount;
 	}
 
-	public final int getExclusiveCount() {
+	public synchronized final int getExclusiveCount() {
 		return exclusiveCount;
 	}
 	
-	public final Thread getOwner() {
+	public synchronized final Thread getOwner() {
 		return owner;
+	}
+	
+	public synchronized boolean isLatchedExclusively() {
+		return grantedMode == EXCLUSIVE;
 	}
 }

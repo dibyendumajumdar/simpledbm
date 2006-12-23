@@ -143,5 +143,7 @@ public interface Latch {
 	 * Downgrade Update latch to Shared latch.
 	 */
 	public void downgradeUpdateLock();
+
 	
+	public boolean isLatchedExclusively();
 }
