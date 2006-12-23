@@ -64,7 +64,7 @@ public abstract class Page implements Storable {
     /**
      * A read/write latch to protect access to the page.
      */
-    private Latch lock;
+    protected Latch lock;
 	
 	protected Page() {
 	}
