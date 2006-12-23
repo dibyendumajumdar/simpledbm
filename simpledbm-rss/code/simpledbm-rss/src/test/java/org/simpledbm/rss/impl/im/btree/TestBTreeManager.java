@@ -2495,6 +2495,87 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
 
+	class DataDeleterThread implements Runnable {
+		
+		final String filename;
+		
+		final BTreeDB db;
+		
+		int count = 0;
+		
+		boolean doCommit;
+
+		public DataDeleterThread(final BTreeDB db, String filename, boolean doCommit) {
+			this.db = db;
+			this.filename = filename;
+			this.doCommit = doCommit;
+		}
+		
+		void doLoadData() throws Exception {
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					ClassUtils.getResourceAsStream(filename)));
+			try {
+				Index index = db.btreeMgr.getIndex(1);
+
+				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+						.getInstance(TYPE_STRINGKEYFACTORY);
+				LocationFactory locationFactory = (LocationFactory) db.objectFactory
+						.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+				String line = reader.readLine();
+				int i = 1;
+				while (line != null) {
+					String k = line.trim();
+					IndexKey key = keyFactory.newIndexKey(1);
+					key.parseString(k);
+					RowLocation location = (RowLocation) locationFactory.newLocation();
+					location.loc = i++;
+					while (true) {
+						Transaction trx = db.trxmgr
+							.begin(IsolationMode.SERIALIZABLE);
+						boolean okay = false;
+						try {
+							// System.out.println("Inserting (" + key + ", " + location
+							// + ")");
+                            trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+							index.delete(trx, key, location);
+							// System.out.println(Thread.currentThread() + ": inserted " + k);
+							okay = true;
+						}
+						catch (IndexException.LockException e) {
+							// assume deadlock
+							e.printStackTrace();
+						}
+						finally {
+							if (okay && doCommit) {
+								trx.commit();
+								count++;
+							}
+							else
+								trx.abort();
+						}
+						if (okay) {
+							break;
+						}
+					}
+					line = reader.readLine();
+				}
+			} finally {
+				reader.close();
+			}
+		}
+
+		public void run() {
+			try {
+				doLoadData();
+			} catch (Exception e) {
+				TestBTreeManager.this.setThreadFailed(Thread.currentThread(), e);
+			}
+		}
+	}
+	
+	
 	int doConcurrentInserts() throws Exception {
 		final BTreeDB db = new BTreeDB(false);
 		try {
@@ -2516,6 +2597,29 @@ public class TestBTreeManager extends BaseTestCase {
 			db.shutdown();
 		}
 	}
+
+	int doConcurrentDeletes() throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			DataDeleterThread d1 = new DataDeleterThread(db, "org/simpledbm/rss/impl/im/btree/english.0", true);
+			DataDeleterThread d2 = new DataDeleterThread(db, "org/simpledbm/rss/impl/im/btree/english.1", false);
+			Thread t1 = new Thread(d1, "T1");
+			Thread t2 = new Thread(d2, "T2");
+			
+			t1.start();
+			t2.start();
+			
+			t1.join();
+			t2.join();
+			checkThreadFailures();
+			System.out.println("Deleted " + (d1.count + d2.count) + " keys" );
+			return d1.count + d2.count;
+		}
+		finally {
+			db.shutdown();
+		}
+	}
+	
 	
     /**
      * Scans the tree from a starting key to the eof.
@@ -2662,14 +2766,27 @@ public class TestBTreeManager extends BaseTestCase {
 	}
     
     
-    
+    /**
+     * Tests various concurrent activities. 
+     * @throws Exception
+     */
     public void testMultiThreadedInserts() throws Exception {
     	compressKeys = true;
 		doInitContainer2();
+		System.out.println("Starting inserts");
 		doConcurrentInserts();
+		System.out.println("Dumping tree");
 		doDumpTree("testdata/TestBTreeManager/dump.txt");
 		//doFindRubens();
+		System.out.println("Doing first set of finds");
 		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.0");
+		System.out.println("Doing second set of finds");
+		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.1");
+		System.out.println("Starting deletes");
+		doConcurrentDeletes();
+		System.out.println("Dumping tree again");
+		doDumpTree("testdata/TestBTreeManager/dump2.txt");
+		System.out.println("Validating second set of finds");
 		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.1");
 		compressKeys = false;
 	}
@@ -2714,6 +2831,7 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
+        suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
         return suite;
     }
 
