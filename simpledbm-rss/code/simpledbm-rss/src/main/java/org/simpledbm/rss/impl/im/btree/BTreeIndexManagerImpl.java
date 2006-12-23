@@ -2484,9 +2484,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * There isn't a node to our right, so we are at EOF.
 				 */
 				icursor.eof = true;
-				sr.k = sr.k + 1;
+				// sr.k = sr.k + 1;
 				// FIXME perhaps we should set sr.k to node.header.keyCount
-				assert sr.k == node.header.keyCount;
+				sr.k = node.header.keyCount;
 				sr.exactMatch = false;
 				sr.item = node.getItem(sr.k);
 			} else {
