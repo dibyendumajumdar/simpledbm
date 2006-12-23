@@ -307,16 +307,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			BTreeNode leftSibling = new BTreeNode(splitOperation);
 			leftSibling.wrap(q);
 			leftSibling.header.rightSibling = splitOperation.newSiblingPageNumber;
-			if (splitOperation.isLeaf()) {
-				// update the high key
-				leftSibling.replace(splitOperation.newKeyCount, splitOperation.highKey);
-			}
 			leftSibling.header.keyCount = splitOperation.newKeyCount;
-			leftSibling.updateHeader();
-			// get rid of the remaining keys
+			// get rid of the keys that will move to the
+			// sibling page prior to updating the high key
 			while (q.getNumberOfSlots() > leftSibling.header.keyCount+1) {
 				q.purge(q.getNumberOfSlots()-1);
 			}
+			if (splitOperation.isLeaf()) {
+				// update the high key
+				leftSibling.replace(splitOperation.newKeyCount, splitOperation.highKey);
+				assert leftSibling.getItem(splitOperation.newKeyCount).compareTo(splitOperation.highKey) == 0;
+			}
+			leftSibling.updateHeader();
 			
 			leftSibling.dump();
 		}
@@ -776,10 +778,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			SearchResult sr = node.search(deleteOp.getItem());
 			assert !sr.exactMatch;
 			if (sr.k == -1) {
-				// tree is empty
+				// this is the rightmost key in this node
 				assert node.getHighKey().compareTo(deleteOp.getItem()) >= 0;
-				assert node.header.keyCount == 1;
-				assert node.isRoot();
 				sr.k = node.header.keyCount;
 			}
 			assert sr.k != -1;
@@ -1036,8 +1036,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 
 			BTreeNode leftSiblingNode = btree.getBTreeNode();
-			leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 			bcursor.getQ().upgradeUpdateLatch();
+			assert bcursor.getQ().isLatchedExclusively();
+			leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 			
 			PageId newSiblingPageId = new PageId(btree.containerId, newSiblingPageNumber);
 			SplitOperation splitOperation = (SplitOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_SPLIT_OPERATION);
@@ -1070,7 +1071,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				bcursor.getR().setDirty(lsn);
 				btree.btreeMgr.redo(leftSiblingNode.page, splitOperation);
 				bcursor.getQ().setDirty(lsn);
-				
+
+				/* Check if Q covers the current search key value */
 				int comp = splitOperation.highKey.compareTo(bcursor.searchKey);
 				if (comp >= 0) {
 					// new key will stay in current page
@@ -1346,6 +1348,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				bcursor.getR().setDirty(lsn);
 				
 				leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+				/* Check if Q covers the current search key value */
 				int comp = leftSiblingNode.getHighKey().compareTo(bcursor.searchKey);
 				if (comp >= 0) {
 					// new key will stay in current page
@@ -1428,8 +1431,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 			bcursor.setP(bcursor.removeQ());
 			BTreeNode rootNode = btree.getBTreeNode();
-			rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 			bcursor.getP().upgradeUpdateLatch();
+			rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 			
 			IncreaseTreeHeightOperation ithOperation = (IncreaseTreeHeightOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_INCREASETREEHEIGHT_OPERATION);
 			ithOperation.setUndoNextLsn(undoNextLsn);
@@ -1465,7 +1468,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				bcursor.getQ().setDirty(lsn);
 
 				bcursor.unfixP();
-				
+			
+				/*
+				 * Check that Q covers the current search key.
+				 */
 				int comp = leftChildHighKey.compareTo(bcursor.searchKey);
 				if (comp >= 0) {
 					// new key will stay in left child page
@@ -2343,7 +2349,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				SearchResult sr = node.search(bcursor.searchKey);
 				if (!sr.exactMatch) {
 					// key not found?? something is wrong
-					throw new IndexException(); 
+					throw new IndexException("Search key " + bcursor.searchKey.toString() + " not found"); 
 				}
 
 				int nextKeyPage = -1;
@@ -2413,6 +2419,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
             }
         }
 
+		/**
+		 * Searches for {@link IndexCursorImpl#currentKey} in the leaf node,
+		 * and positions the cursor on the current key or the next higher key.
+		 * Handles both fetch() and fetchNext() calls.
+		 */
 		final SearchResult doSearch(IndexCursorImpl icursor) throws BufferManagerException {
 			BTreeNode node = getBTreeNode();
 			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
@@ -2420,20 +2431,38 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			icursor.eof = false;
 			SearchResult sr = node.search(icursor.currentKey);
 			if (sr.exactMatch && icursor.fetchCount > 0) {
+				/*
+				 * If we have an exact match, there are two possibilities.
+				 * If this is the first call to fetch (fetchCount == 0), then
+				 * we are done. Else, we need to move to the next key.
+				 */
 				if (sr.k == node.getKeyCount()) {
+					/*
+					 * Current key is the last key on this node. Therefore,
+					 * move to the node to the right.
+					 */
 					return moveToNextNode(icursor, node, sr);
 				} else {
-					// move to the next key
+					/*
+					 * Move to the next key in the same node
+					 */
 					sr.k = sr.k + 1;
 					sr.exactMatch = false;
 					sr.item = node.getItem(sr.k);
 				}
 			}
 			else if (sr.k == -1) {
+				/*
+				 * The current key is greater than all keys in this node,
+				 * therefore we need to move to the node to our right.
+				 */
 				return moveToNextNode(icursor, node, sr);
 			}
 			else if (node.header.keyCount == 1) {
-				// only one key
+				/*
+				 * Only one key, which by definition is the high key,
+				 * so we are at EOF.
+				 */
 				icursor.eof = true;
 				sr.k = 1;
 				sr.exactMatch = false;
@@ -2444,12 +2473,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			
 		}
 
+		/**
+		 * Moves to the node to the right if possible or sets EOF status.
+		 */
 		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) throws BufferManagerException {
 			// Key to be fetched is in the next page
 			int nextPage = node.header.rightSibling;
 			if (nextPage == -1) {
+				/*
+				 * There isn't a node to our right, so we are at EOF.
+				 */
 				icursor.eof = true;
 				sr.k = sr.k + 1;
+				// FIXME perhaps we should set sr.k to node.header.keyCount
+				assert sr.k == node.header.keyCount;
 				sr.exactMatch = false;
 				sr.item = node.getItem(sr.k);
 			} else {
@@ -2853,6 +2890,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			System.out.println("		<leftsibling>" + header.leftSibling + "</leftsibling>");
 			System.out.println("		<rightsibling>" + header.rightSibling + "</rightsibling>");
 			System.out.println("		<smppagenumber>" + page.getSpaceMapPageNumber() + "</smppagenumber>");
+			System.out.println("		<keycount>" + header.keyCount + "</keycount>");
 			System.out.println("	</header>");
 			System.out.println("	<items>");
 			for (int k = 1; k < page.getNumberOfSlots(); k++) {
@@ -2860,7 +2898,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					continue;
 				}
 				IndexItem item = getItem(k);
-				System.out.println("		<item>");
+				System.out.println("		<item pos=\"" + k + "\">");
 				System.out.println("			<childpagenumber>" + item.childPageNumber + "</childpagenumber>");
 				System.out.println("			<location>" + item.getLocation() + "</location>");
 				System.out.println("			<key>" + item.getKey().toString() + "</key>");
