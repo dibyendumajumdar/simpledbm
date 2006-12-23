@@ -1351,7 +1351,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		
 		private static final String LOG_CLASS_NAME = TransactionImpl.class.getName();
 
-		TransactionManagerImpl trxmgr;
+		private TransactionManagerImpl trxmgr;
 		
 		public static final int SIZE = Lsn.SIZE * 3 + TransactionId.SIZE + TypeSize.BYTE * 2;
 	 	
@@ -1412,6 +1412,10 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * to handle differences in locking strategy based upon isolation mode.
 		 */
 		IsolationMode isolationMode = IsolationMode.READ_COMMITTED;
+		
+		int lockTimeOut = 60;
+		
+		LatchHelper latchHelper;
 		
 		public IsolationMode getIsolationMode() {
 			return isolationMode;
@@ -1504,14 +1508,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 			if (!(logrec instanceof DummyCLR)) {
 				logrec.setPageId(page.getType(), page.getPageId());
 			}
-			trxmgr.latch.sharedLock();
+			latchHelper.sharedLock();
 			Lsn lsn = null;
 			try {
-				lsn = trxmgr.doLogInsert(logrec);
+				lsn = getTrxmgr().doLogInsert(logrec);
 				registerLsn(logrec, lsn);
 			}
 			finally {
-				trxmgr.latch.unlockShared();
+				latchHelper.unlockShared();
 			}
 			return lsn;
 		}
@@ -1521,6 +1525,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		TransactionImpl(TransactionManagerImpl trxmgr, TransactionId trxId) {
 			this.trxmgr = trxmgr;
+			this.latchHelper = new LatchHelper(trxmgr.latch);
 			this.trxId = trxId;
 		}
 		
@@ -1551,7 +1556,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         private void doAcquireLock(Object lockable, LockMode mode, LockDuration duration, int timeout) throws LockException {
             LockHandle handle = null;
             try {
-                handle = trxmgr.lockmgr.acquire(this, lockable, mode, duration, timeout, null);
+                handle = getTrxmgr().lockmgr.acquire(this, lockable, mode, duration, timeout, null);
             }
             catch (LockTimeoutException e) {
             	/*
@@ -1602,7 +1607,7 @@ public final class TransactionManagerImpl implements TransactionManager {
              * within specified timeout period, we assume the system is deadlocked.
              */
             try {
-                doAcquireLock(lockable, mode, duration, trxmgr.getLockWaitTimeout());
+                doAcquireLock(lockable, mode, duration, getTrxmgr().getLockWaitTimeout());
             } catch (LockException e) {
                 throw new TransactionException.LockException(e);
             }
@@ -1799,14 +1804,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}				
 			assert state == TrxState.TRX_UNPREPARED;
 			
-			TrxPrepare prepareLogRec = (TrxPrepare) trxmgr.loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
-			prepareLogRec.setLoggableFactory(trxmgr.loggableFactory);
+			TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
+			prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
 			prepareLogRec.setTrxId(trxId);
 			prepareLogRec.setPrevTrxLsn(lastLsn);
 			prepareLogRec.setPostCommitActions(postCommitActions);
-			Lsn myLsn = trxmgr.doLogInsert(prepareLogRec);
+			Lsn myLsn = getTrxmgr().doLogInsert(prepareLogRec);
 			registerLsn(prepareLogRec, myLsn);
-			trxmgr.logmgr.flush(myLsn);
+			getTrxmgr().logmgr.flush(myLsn);
 			state = TrxState.TRX_PREPARED;
 		}
 		
@@ -1814,12 +1819,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Log the end of a transaction.
 		 */
 		final void endTransaction() throws LogException, TransactionException {
-			TrxEnd commitLogRec = (TrxEnd) trxmgr.loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
+			TrxEnd commitLogRec = (TrxEnd) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
 			commitLogRec.setTrxId(trxId);
 			commitLogRec.setPrevTrxLsn(lastLsn);
-			Lsn myLsn = trxmgr.doLogInsert(commitLogRec);
+			Lsn myLsn = getTrxmgr().doLogInsert(commitLogRec);
 			registerLsn(commitLogRec, myLsn);
-			trxmgr.logmgr.flush(myLsn);
+			getTrxmgr().logmgr.flush(myLsn);
 		}
 
         /* (non-Javadoc)
@@ -1852,14 +1857,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "prepare", "Committing transaction " + this);
 			}
-			trxmgr.latch.sharedLock();
+			latchHelper.sharedLock();
 			try {
 				prepare();
 				endTransaction();
-				trxmgr.doPostCommitActions(postCommitActions, trxId);
-				trxmgr.deleteTransaction(this);
+				getTrxmgr().doPostCommitActions(postCommitActions, trxId);
+				getTrxmgr().deleteTransaction(this);
 			} finally {
-				trxmgr.latch.unlockShared();
+				latchHelper.unlockShared();
 			}
 			if (thrown != null) {
 				throw new TransactionException(thrown);
@@ -1892,12 +1897,12 @@ public final class TransactionManagerImpl implements TransactionManager {
          */
 		final void doRollback(Savepoint savepoint) throws LogException, BufferManagerException, TransactionException, LockException {
 			assert savepoint != null;
-			trxmgr.latch.sharedLock();
+			latchHelper.sharedLock();
 			try {
 				doRollbackInternal(savepoint);
 			}
 			finally {
-				trxmgr.latch.unlockShared();
+				latchHelper.unlockShared();
 			}
 		}
 
@@ -1908,7 +1913,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			if (dummyCLR != null) {
 				throw new TransactionException();
 			}
-			dummyCLR = (DummyCLR) trxmgr.loggableFactory.getInstance(TransactionManagerImpl.MODULE_ID, TransactionManagerImpl.TYPE_DUMMYCLR);
+			dummyCLR = (DummyCLR) getTrxmgr().loggableFactory.getInstance(TransactionManagerImpl.MODULE_ID, TransactionManagerImpl.TYPE_DUMMYCLR);
 			dummyCLR.setUndoNextLsn(getLastLsn());
 		}
 		
@@ -1936,7 +1941,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		final void performPhysicalUndo(TransactionalModule module, Undoable undoable) throws BufferManagerException, TransactionException {
 			PageId pageId = undoable.getPageId();
-			BufferAccessBlock bab = trxmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
+			BufferAccessBlock bab = getTrxmgr().bufmgr.fixExclusive(pageId, false, -1, 0);
 			try {
 				Page page = bab.getPage();
 				Compensation clr = moduleGenerateCompensation(module, undoable);
@@ -2017,8 +2022,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 			Lsn undoNext = undoNextLsn;
 			while (undoNext.compareTo(rollbackUpto) > 0) {
 
-				LogRecord logrec = trxmgr.logmgr.read(undoNext);
-				Loggable loggable = trxmgr.loggableFactory.getInstance(logrec);
+				LogRecord logrec = getTrxmgr().logmgr.read(undoNext);
+				Loggable loggable = getTrxmgr().loggableFactory.getInstance(logrec);
 
 				if (loggable instanceof Undoable) {
 
@@ -2031,7 +2036,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 					 * ask it to undo the changes. The Module must generate appropriate Compensation
 					 * Log records.
 					 */
-					TransactionalModule module = trxmgr.moduleRegistry.getModule(loggable.getModuleId());
+					TransactionalModule module = getTrxmgr().moduleRegistry.getModule(loggable.getModuleId());
 					if (loggable instanceof LogicalUndo) {
 						performLogicalUndo(module, (Undoable) loggable);
 					} else {
@@ -2056,7 +2061,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			undoNextLsn = undoNext;
 
 			if (!delete) {
-				trxmgr.logmgr.flush(lastLsn);
+				getTrxmgr().logmgr.flush(lastLsn);
 				if (rollbackUpto.isNull()) {
 					/* 
 					 * If we have completely rolled back then release all locks 
@@ -2106,7 +2111,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * because, normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
 		 */
 		public final void doAbort() throws LogException, BufferManagerException, TransactionException, LockException {
-			trxmgr.latch.sharedLock();
+			latchHelper.sharedLock();
 			try {
 				if (log.isDebugEnabled()) {
 					log.debug(LOG_CLASS_NAME, "abort", "Aborting transaction " + this);
@@ -2114,12 +2119,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 				/*
 				 * First write the Abort log record.
 				 */
-				TrxAbort abortLogRec = (TrxAbort) trxmgr.loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
+				TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
 				abortLogRec.setTrxId(trxId);
 				abortLogRec.setPrevTrxLsn(lastLsn);
-				Lsn myLsn = trxmgr.doLogInsert(abortLogRec);
+				Lsn myLsn = getTrxmgr().doLogInsert(abortLogRec);
 				registerLsn(abortLogRec, myLsn);
-				trxmgr.logmgr.flush(myLsn);
+				getTrxmgr().logmgr.flush(myLsn);
 				state = TrxState.TRX_UNPREPARED;
 				/*
 				 * Undo changes.
@@ -2132,10 +2137,10 @@ public final class TransactionManagerImpl implements TransactionManager {
 				/*
 				 * Release locks and mark the transaction dead.
 				 */
-				trxmgr.deleteTransaction(this);
+				getTrxmgr().deleteTransaction(this);
 			}
 			finally {
-				trxmgr.latch.unlockShared();
+				latchHelper.unlockShared();
 			}
 		}
 		
@@ -2207,6 +2212,15 @@ public final class TransactionManagerImpl implements TransactionManager {
 			return "Transaction(trxId=" + trxId + ", firstLsn" + firstLsn +
 				", lastLsn=" + lastLsn + ", undoNextLsn=" + undoNextLsn +
 				", state=" + state + ")";
+		}
+
+		void setTrxmgr(TransactionManagerImpl trxmgr) {
+			this.trxmgr = trxmgr;
+			this.latchHelper = new LatchHelper(trxmgr.latch);
+		}
+
+		TransactionManagerImpl getTrxmgr() {
+			return trxmgr;
 		}
 		
 	}
@@ -2399,7 +2413,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 		final void updateTrxMgr(TransactionManagerImpl trxmgr) {
 			for (TransactionImpl trx: trxTable) {
-				trx.trxmgr = trxmgr;
+				trx.setTrxmgr(trxmgr);
 	 		}
 		}
 		
@@ -2439,7 +2453,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			for (int i = 0; i < n_trx; i++) {
 				TransactionImpl trx = new TransactionImpl();
 				trx.retrieve(bb);
-				trx.trxmgr = trxmgr;
+				// trx.setTrxmgr(trxmgr);
 				trxTable.add(trx);
 			}
 			int n_dp = bb.getInt();
