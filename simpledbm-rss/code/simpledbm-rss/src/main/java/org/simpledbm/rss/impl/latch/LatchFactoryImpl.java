@@ -38,8 +38,7 @@ public final class LatchFactoryImpl implements LatchFactory {
 	 * @see org.simpledbm.common.latch.LatchFactory#newReadWriteUpdateLatch()
 	 */
 	public Latch newReadWriteUpdateLatch() {
-		// return new ReadWriteUpdateLatch();
-		return new ReadWriteLatch();
+		return new ReadWriteUpdateLatch();
 	}
 
 	/* (non-Javadoc)
