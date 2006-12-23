@@ -462,10 +462,12 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insert(Storable item)
 	{
+		assert lock.isLatchedExclusively();
 		int len = item.getStoredLength();
 		int slotNumber = findInsertionPoint();
 		if (!hasSpace(slotNumber, len)) {
-			return false;
+			throw new RuntimeException("Unexpected error - unable to insert data due to lack of space");
+			// return false;
 		}
 		/* find contiguous space */
 		Slot slot = findSpace(slotNumber, len);
@@ -493,6 +495,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insertAt(int slotNumber, Storable item, boolean replaceMode)
 	{
+		assert lock.isLatchedExclusively();
 		int len = item.getStoredLength();
 		// Calculate required space.
 		// If the tuple being inserted is beyond the last tuple, then
@@ -516,7 +519,8 @@ public final class SlottedPageImpl extends SlottedPage {
 		// Do we have enough space in the page?
 		// TODO: Maybe we should also reserve some free space
 		if (freeSpace < requiredSpace) {
-			return false;
+			throw new RuntimeException("Unexpected error - unable to insert data due to lack of space");
+			// return false;
 		}
 		
 		int savedFlags = 0;
@@ -558,6 +562,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final void delete(int slotNumber) {
+		assert lock.isLatchedExclusively();
 		if (isSlotDeleted(slotNumber)) {
 			return;
 		}
@@ -580,6 +585,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final void purge(int slotNumber)
 	{
+		assert lock.isLatchedExclusively();
 		if (isSlotDeleted(slotNumber)) {
 			deletedSlots--;
 		}
@@ -612,6 +618,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final void setFlags(int slotNumber, short flags) {
+		assert lock.isLatchedExclusively();
 		Slot slot = slotTable.get(slotNumber);
 		slot.setFlags(flags);
 	}
@@ -637,6 +644,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setFlags(short flags) {
+		assert lock.isLatchedExclusively();
 		this.flags = flags;
 	}
 	
@@ -661,6 +669,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setSpaceMapPageNumber(int spaceMapPageNumber) {
+		assert lock.isLatchedExclusively();
 		this.spaceMapPageNumber = spaceMapPageNumber;
 	}
 	
