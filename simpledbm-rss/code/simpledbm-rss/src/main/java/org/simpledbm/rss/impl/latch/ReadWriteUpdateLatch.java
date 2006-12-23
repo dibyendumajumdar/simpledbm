@@ -33,6 +33,13 @@ import org.simpledbm.rss.api.latch.LatchException;
  */
 public final class ReadWriteUpdateLatch implements Latch {
 
+	/*
+	 * Implementation issue:
+	 * At present, a recursive request for shared or update
+	 * lock will deadlock if there are pending wait or upgrade
+	 * requests. 
+	 */
+	
 	static final int SHARED = 0;
 
 	static final int EXCLUSIVE = 1;
