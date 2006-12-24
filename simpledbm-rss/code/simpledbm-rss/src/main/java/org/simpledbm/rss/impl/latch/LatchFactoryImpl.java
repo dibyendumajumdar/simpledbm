@@ -31,21 +31,21 @@ public final class LatchFactoryImpl implements LatchFactory {
 	 * @see org.simpledbm.common.latch.LatchFactory#newReadWriteLatch()
 	 */
 	public Latch newReadWriteLatch() {
-		return new ReadWriteLatch();
+		return new NewReadWriteUpdateLatch();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.simpledbm.common.latch.LatchFactory#newReadWriteUpdateLatch()
 	 */
 	public Latch newReadWriteUpdateLatch() {
-		return new ReadWriteUpdateLatch();
+		return new NewReadWriteUpdateLatch();
 	}
 
 	/* (non-Javadoc)
 	 * @see org.simpledbm.common.latch.LatchFactory#newLatch()
 	 */
 	public Latch newLatch() {
-		return new ReadWriteLatch();
+		return new NewReadWriteUpdateLatch();
 	}
 
 }
