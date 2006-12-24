@@ -29,28 +29,55 @@ import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
- * The default implementation of the LockMgr interface is a memory based lock
- * management system modeled very closely on the description of a locking system
- * in <em>Transaction Processing: Concepts and Techniques, by Jim Gray and
- * Andreas Reuter</em>.
- * <p>
- * For each lock in the system, a queue of lock requests is maintained. The
- * queue has granted requests followed by waiting requests. To allow locks to be
- * quickly found, a hash table of all locks is maintained.
- * </p>
- * 
  * @author Dibyendu Majumdar
+ * @since 23 Dec 2006
  */
 public final class NewReadWriteUpdateLatch implements Latch {
 
+	/*
+	 * This implementation of latch is based upon the lock manager implementation.
+	 * The differences are:
+	 * Firstly, there is no hash table of locks because each instance of this
+	 * class _is_ the lock. Clients have a reference to the latch itself so there
+	 * is no need for dynamic lookup.
+	 * There is no support for various lock durations as these do not make
+	 * sense here.
+	 * Apart from lock conversions and downgrades, we also support lock upgrades.
+	 * An upgrade is like a conversion except that it is explicitly requested and does
+	 * not cause the reference count to go up. Hence the difference is primarily in the way
+	 * clients use locks. For normal lock conversions, clients are expected to treat
+	 * each request as a separate request, and therefore release the lock as many
+	 * times as requested. Upgrade (and downgrade) requests do not modify the reference
+	 * count.
+	 * Unlike Lock Manager, the owner for latches is predefined - it is always the
+	 * requesting thread. Hence there is no need to supply an owner.
+	 * Latches do not support deadlock detection, unlike locks.
+	 * 
+	 * The reason for creating this new implementation was the realisation that
+	 * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
+	 * properly. This is because in both implementation details of shared requests
+	 * are not kept. This implementation naturally is less efficient compared to the
+	 * other two, but does support recursion of shared lock requests.
+	 */
+	
 	private static final String LOG_CLASS_NAME = NewReadWriteUpdateLatch.class.getName();
 
     private static final Logger log = Logger.getLogger(NewReadWriteUpdateLatch.class.getPackage().getName());
 
+    /**
+     * Queue of latch requests, contains granted or conversion requests followed
+     * by waiting requests.
+     */
 	final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
 
+	/**
+	 * Current mode of the latch.
+	 */
 	LockMode grantedMode = LockMode.NONE;
 
+	/**
+	 * Flags that there are threads waiting to be granted latch requests.
+	 */
 	boolean waiting = false;
 
 	/**
@@ -63,12 +90,12 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	}
 
     /**
-     * Describe the status of a lock acquistion request.
+     * Describe the status of a latch acquistion request.
      * 
      * @author Dibyendu Majumdar
      */
     public enum LockStatus {
-        GRANTED, GRANTABLE, TIMEOUT, DEADLOCK
+        GRANTED, TIMEOUT, DEADLOCK
     }
 
 	static enum LockRequestStatus {
@@ -92,18 +119,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		LockRequest lockRequest;
 		boolean converting;
 		Thread prevThread;
-		private LockStatus status;
 	
 		public LockState(LockParams parms) {
 			this.parms = parms;
-		}
-
-		void setStatus(LockStatus status) {
-			this.status = status;
-		}
-
-		LockStatus getStatus() {
-			return status;
 		}
 	}
 
@@ -124,7 +142,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	 *      java.lang.Object, org.simpledbm.locking.LockMode,
 	 *      org.simpledbm.locking.LockDuration, int)
 	 */
-	public final void acquire(LockMode mode, int timeout, boolean upgrade) {
+	private final void acquire(LockMode mode, int timeout, boolean upgrade) {
 
 		LockParams parms = new LockParams();
 		parms.owner = Thread.currentThread();
@@ -244,7 +262,10 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		}
 	}
 
-	LockRequest find(Object owner) {
+	/**
+	 * Finds the lock request belonging to the specified owner
+	 */
+	private LockRequest find(Object owner) {
 		for (LockRequest req : queue) {
 			if (req.owner == owner || req.owner.equals(owner)) {
 				return req;
@@ -254,7 +275,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	}
 
 	/**
-	 * Handles a new lock request when the lock is already held by some other.
+	 * Handles a new lock request by a thread.
 	 * @return true if the lock request was processed, else false to indicate that the requester must 
 	 * 		wait
 	 */
@@ -266,6 +287,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		}
 
 		if (lockState.parms.upgrade) {
+			/*
+			 * An upgrade request without a prior lock request is an error.
+			 */
 			throw new LatchException("Invalid request for upgrade");
 		}
 		
@@ -302,7 +326,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 								+ ", therefore granting lock");
 			}
 			grantedMode = lockState.parms.mode.maximumOf(grantedMode);
-			lockState.setStatus(LockStatus.GRANTED);
 			return true;
 		} else {
 			lockState.converting = false;
@@ -348,7 +371,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 				if (!lockState.parms.upgrade) {
 					lockState.lockRequest.count++;
 				}
-				lockState.setStatus(LockStatus.GRANTED);
 				return true;
 			}
 
@@ -372,7 +394,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 					}
 					grantedMode = lockState.lockRequest.mode
 								.maximumOf(grantedMode);
-					lockState.setStatus(LockStatus.GRANTED);
 					return true;
 				}
 
@@ -446,9 +467,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			}
 			lockState.lockRequest.convertMode = lockState.parms.mode;
 			lockState.lockRequest.status = LockRequestStatus.CONVERTING;
-			lockState.lockRequest.upgrade = lockState.parms.upgrade;
-			lockState.prevThread = lockState.lockRequest.thread;
-			lockState.lockRequest.thread = Thread.currentThread();
+			lockState.lockRequest.upgrading = lockState.parms.upgrade;
+			lockState.prevThread = lockState.lockRequest.waitingThread;
+			lockState.lockRequest.waitingThread = Thread.currentThread();
 		}
 	}
 
@@ -458,14 +479,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	private void handleWaitResult(LockState lockState) {
 		LockRequestStatus lockRequestStatus = lockState.lockRequest.status;
 		if (lockRequestStatus == LockRequestStatus.GRANTED) {
-			lockState.setStatus(LockStatus.GRANTED);
-		} else if (lockRequestStatus == LockRequestStatus.DENIED) {
-			lockState.setStatus(LockStatus.DEADLOCK);
-		} else {
-			lockState.setStatus(LockStatus.TIMEOUT);
-		}
-
-		if (lockState.getStatus() == LockStatus.GRANTED) {
 			/*
 			 * 9. If after the wait, the lock has been granted, then return
 			 * success.
@@ -487,28 +500,15 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			/* If not converting the delete the newly created request. */
 			queueRemove(lockState.lockRequest);
 			if (queueIsEmpty()) {
-				grantedMode = LockMode.NONE; // Setup lock for garbage collection
+				grantedMode = LockMode.NONE;
 			}
 		} else {
 			/* If converting, then restore old status */
 			lockState.lockRequest.status = LockRequestStatus.GRANTED;
 			lockState.lockRequest.convertMode = lockState.lockRequest.mode;
-			lockState.lockRequest.thread = lockState.prevThread;
+			lockState.lockRequest.waitingThread = lockState.prevThread;
 		}
-		if (lockState.getStatus() == LockStatus.DEADLOCK) {
-			/* 
-			 * If we have been chosen as a deadlock victim, then we need to grant the
-			 * lock to the waiter who has won the deadlock.
-			 */
-			grantWaiters(ReleaseAction.RELEASE, lockState.lockRequest);
-		}
-		if (lockState.getStatus() == LockStatus.TIMEOUT)
-			throw new LatchException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
-		else if (lockState.getStatus() == LockStatus.DEADLOCK)
-			throw new LatchException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " failed due to a deadlock");
-		else
-			throw new LatchException(
-					"SIMPLEDBM-ELOCK-002: Unexpected error occurred while attempting to acqure lock " + lockState.parms.toString());
+		throw new LatchException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
 	}
 
 	private void grantWaiters(ReleaseAction action, LockRequest r) {
@@ -550,13 +550,13 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	                r.convertMode = r.mode;
 	                grantedMode = r.mode.maximumOf(grantedMode);
 		            /*
-		             * Treat conversions as lock recursion.
+		             * Treat conversions as lock recursion unless upgrading.
 		             */
-	                if (!r.upgrade) {
+	                if (!r.upgrading) {
 	                	r.count++;
 	                }
 					r.status = LockRequestStatus.GRANTED;
-					LockSupport.unpark(r.thread);
+					LockSupport.unpark(r.waitingThread);
 				} else {
 					grantedMode = r.mode.maximumOf(grantedMode);
 					converting = true;
@@ -571,7 +571,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 					}
 					r.status = LockRequestStatus.GRANTED;
 		            grantedMode = r.mode.maximumOf(grantedMode);
-					LockSupport.unpark(r.thread);
+					LockSupport.unpark(r.waitingThread);
 				} else {
 					if (log.isDebugEnabled() && converting) {
 						log.debug(LOG_CLASS_NAME, "release", "Cannot grant waiting request " + r + " because conversion request pending");
@@ -856,17 +856,17 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 		final Object owner;
 		
-		Thread thread;
+		Thread waitingThread;
 		
 		NewReadWriteUpdateLatch lockItem;
 		
-		boolean upgrade;
+		boolean upgrading;
 
 		LockRequest(NewReadWriteUpdateLatch lockItem, Object owner, LockMode mode) {
 			this.lockItem = lockItem;
 			this.mode = mode;
 			this.convertMode = mode;
-			this.thread = Thread.currentThread();
+			this.waitingThread = Thread.currentThread();
 			this.owner = owner;
 		}
 
@@ -876,7 +876,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 		@Override
 		public String toString() {
-			return "LockRequest(mode=" + mode + ", convertMode=" + convertMode + ", status=" + status + ", count=" + count + ", owner=" + owner + ", thread=" + thread + ")";
+			return "LockRequest(mode=" + mode + ", convertMode=" + convertMode + ", status=" + status + ", count=" + count + ", owner=" + owner + ", thread=" + waitingThread + ")";
 		}
 	}
 
@@ -979,5 +979,4 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	public void upgradeUpdateLockInterruptibly() throws InterruptedException {
 		upgradeUpdateLock();
 	}
-
 }
