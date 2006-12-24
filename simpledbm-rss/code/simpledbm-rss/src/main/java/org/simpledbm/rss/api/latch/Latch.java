@@ -146,4 +146,6 @@ public interface Latch {
 
 	
 	public boolean isLatchedExclusively();
+	
+	public boolean isLatchedForUpdate();
 }
