@@ -106,6 +106,7 @@ public class TestSlottedPage extends TestCase {
                 storageManager, latchFactory);
         final SlottedPageManager spmgr = new SlottedPageManagerImpl(objectFactory);
 		SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr.getPageType(), new PageId());
+		page.latchExclusive();
 		StringItem item = new StringItem();
 		item.setString("Dibyendu Majumdar, This is pretty cool");
 		assertEquals(page.getFreeSpace(), page.getSpace());
