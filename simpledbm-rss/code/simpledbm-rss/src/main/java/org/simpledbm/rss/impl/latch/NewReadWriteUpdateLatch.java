@@ -52,6 +52,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	 * Unlike Lock Manager, the owner for latches is predefined - it is always the
 	 * requesting thread. Hence there is no need to supply an owner.
 	 * Latches do not support deadlock detection, unlike locks.
+	 * A benefit of this implementation is that lock attempts timeout in 10 seconds
+	 * which is a simple way of detecting latch deadlocks.
 	 * 
 	 * The reason for creating this new implementation was the realisation that
 	 * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
