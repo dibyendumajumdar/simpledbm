@@ -123,4 +123,7 @@ public final class ReadWriteLatch implements Latch {
 		return lock.isWriteLocked();
 	}
 	
+	public boolean isLatchedForUpdate() {
+		return lock.isWriteLocked();
+	}
 }
