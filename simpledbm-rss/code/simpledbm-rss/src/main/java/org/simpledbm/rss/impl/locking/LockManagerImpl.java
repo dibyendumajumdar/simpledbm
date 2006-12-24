@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.rss.api.latch.Latch;
+import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
@@ -37,7 +38,8 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
-import org.simpledbm.rss.impl.latch.ReadWriteLatch;
+import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -107,12 +109,14 @@ public final class LockManagerImpl implements LockManager {
 	private final Map<Object, LockWaiter> waiters = Collections.synchronizedMap(new HashMap<Object, LockWaiter>());
 	
 	//FIXME Need to create the latch using the factory
+	private LatchFactory latchFactory = new LatchFactoryImpl();
+	
 	/**
 	 * To keep the algorithm simple, the deadlock detector uses a global exclusive lock
 	 * on the lock manager. The lock manager itself acquires shared locks during normal operations,
 	 * thus avoiding conflict with the deadlock detector.
 	 */
-	private final Latch globalLock = new ReadWriteLatch(); 
+	private final Latch globalLock = latchFactory.newReadWriteLatch(); 
 	
 	volatile boolean stop = false;
 	
@@ -171,7 +175,9 @@ public final class LockManagerImpl implements LockManager {
 		if (htsz == hashPrimes.length-1) {
 			return;
 		}
-		globalLock.exclusiveLock();
+		if (!globalLock.tryExclusiveLock()) {
+			return;
+		}
 		try {
 			if (htsz == hashPrimes.length-1) {
 				return;
@@ -1262,7 +1268,9 @@ public final class LockManagerImpl implements LockManager {
 		 * by Jim Gray and Andreas Reuter.
 		 * See sections 7.11.3 and section 8.5.
 		 */
-		globalLock.exclusiveLock();
+		if (!globalLock.tryExclusiveLock()) {
+			return;
+		}
 		try {
 			LockWaiter[] waiterArray = waiters.values().toArray(new LockWaiter[0]);
 			for (LockWaiter waiter: waiterArray) {
