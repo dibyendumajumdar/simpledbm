@@ -571,4 +571,8 @@ public final class ReadWriteUpdateLatch implements Latch {
 	public synchronized boolean isLatchedExclusively() {
 		return grantedMode == EXCLUSIVE;
 	}
+
+	public synchronized boolean isLatchedForUpdate() {
+		return grantedMode == UPDATE;
+	}
 }
