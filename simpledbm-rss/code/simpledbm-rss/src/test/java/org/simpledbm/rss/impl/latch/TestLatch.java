@@ -21,6 +21,7 @@ package org.simpledbm.rss.impl.latch;
 
 import junit.framework.TestCase;
 
+import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
@@ -39,128 +40,96 @@ public class TestLatch extends TestCase {
 	}
 
 	public void testCase1() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.exclusiveLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
+		assertTrue(latch.isLatchedExclusively());
+		latch.unlockExclusive();
+		assertFalse(latch.isLatchedExclusively());
+
 		latch.updateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.UPDATE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 0);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
+		assertFalse(latch.isLatchedExclusively());
+		assertTrue(latch.isLatchedForUpdate());
 		latch.sharedLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-		assertTrue(latch.getOwner() == null);
-		assertTrue(latch.getSharedCount() == 1);
+		assertTrue(latch.isLatchedForUpdate());
 		latch.sharedLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-		assertTrue(latch.getOwner() == null);
-		assertTrue(latch.getSharedCount() == 2);
+		assertTrue(latch.isLatchedForUpdate());
+		latch.unlockShared();
+		latch.unlockShared();
+		latch.unlockShared();
+		
+		assertFalse(latch.isLatchedExclusively());
+		assertFalse(latch.isLatchedForUpdate());
 		latch.updateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.UPDATE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 2);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-		assertTrue(latch.getOwner() == null);
-		assertTrue(latch.getSharedCount() == 2);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-		assertTrue(latch.getOwner() == null);
-		assertTrue(latch.getSharedCount() == 1);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
-		latch.updateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.UPDATE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 0);
 		latch.upgradeUpdateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 0);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
+		latch.unlockExclusive();
+		assertFalse(latch.isLatchedExclusively());
 	}
 
 	public void testWriteBlocksWrite() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				assertFalse(latch.tryExclusiveLock());
 				latch.exclusiveLock();
-				assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-				assertTrue(latch.getOwner() == Thread.currentThread());
-				assertTrue(latch.getSharedCount() == 0);
-				latch.unlock();
+				assertTrue(latch.isLatchedExclusively());
+				latch.unlockExclusive();
+				assertFalse(latch.isLatchedExclusively());
 			}
 		});
 		latch.exclusiveLock();
+		assertTrue(latch.isLatchedExclusively());
 		t1.start();
 		Thread.sleep(100);
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 0);
-		latch.unlock();
+		assertTrue(latch.isLatchedExclusively());
+		latch.unlockExclusive();
+		assertFalse(latch.isLatchedExclusively());
 		t1.join(200);
 		assertTrue(!t1.isAlive());
 	}
 
 	public void testReadBlocksWrite() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				assertFalse(latch.tryExclusiveLock());
 				latch.exclusiveLock();
-				assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-				assertTrue(latch.getOwner() == Thread.currentThread());
-				assertTrue(latch.getSharedCount() == 0);
-				latch.unlock();
+				assertTrue(latch.isLatchedExclusively());
+				latch.unlockExclusive();
+				assertFalse(latch.isLatchedExclusively());
 			}
 		});
 		latch.sharedLock();
 		t1.start();
 		Thread.sleep(100);
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-		assertTrue(latch.getOwner() == null);
-		assertTrue(latch.getSharedCount() == 1);
-		latch.unlock();
+		assertFalse(latch.isLatchedExclusively());
+		latch.unlockShared();
 		t1.join(200);
 		assertTrue(!t1.isAlive());
 	}
 
 	public void testReadBlocksUpgrade() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				assertTrue(latch.trySharedLock());
-				assertTrue(latch.getMode() == ReadWriteUpdateLatch.SHARED);
-				assertTrue(latch.getOwner() == null);
-				assertTrue(latch.getSharedCount() == 1);
 				try {
 					Thread.sleep(300);
 				} catch (InterruptedException e) {
 					e.printStackTrace();
 				}
-				latch.unlock();
+				latch.unlockShared();
 			}
 		});
 		t1.start();
 		Thread.sleep(100);
         latch.updateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.UPDATE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 1);
+		assertTrue(latch.isLatchedForUpdate());
 		assertFalse(latch.tryUpgradeUpdateLock());
 		latch.upgradeUpdateLock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.EXCLUSIVE);
-		assertTrue(latch.getOwner() == Thread.currentThread());
-		assertTrue(latch.getSharedCount() == 0);
-		latch.unlock();
-		assertTrue(latch.getMode() == ReadWriteUpdateLatch.FREE);
+		assertTrue(latch.isLatchedExclusively());
+		latch.unlockExclusive();
+		assertFalse(latch.isLatchedExclusively());
+		assertFalse(latch.isLatchedForUpdate());
 		t1.join(300);
 		assertTrue(!t1.isAlive());
 	}
@@ -168,7 +137,7 @@ public class TestLatch extends TestCase {
 	boolean testfailed = false;
 
 	public void testReadLockFailsIfUpgradePending() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.sharedLock();
 		testfailed = false;
 		Thread t1 = new Thread(new Runnable() {
@@ -178,7 +147,8 @@ public class TestLatch extends TestCase {
 					return;
 				}
 				latch.upgradeUpdateLock();
-				latch.unlock();
+				latch.unlockExclusive();
+				assertFalse(latch.isLatchedExclusively());
 			}
 		});
 		Thread t2 = new Thread(new Runnable() {
@@ -192,20 +162,20 @@ public class TestLatch extends TestCase {
 		Thread.sleep(100);
 		t2.start();
 		Thread.sleep(100);
-		latch.unlock();
+		latch.unlockShared();
 		t1.join();
 		t2.join();
 		assertFalse(testfailed);
 	}
 
 	public void testReadLockFailsIfWriteLockPending() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.sharedLock();
 		testfailed = false;
 		Thread t1 = new Thread(new Runnable() {
 			public void run() {
 				latch.exclusiveLock();
-				latch.unlock();
+				latch.unlockExclusive();
 			}
 		});
 		Thread t2 = new Thread(new Runnable() {
@@ -219,7 +189,7 @@ public class TestLatch extends TestCase {
 		Thread.sleep(100);
 		t2.start();
 		Thread.sleep(100);
-		latch.unlock();
+		latch.unlockShared();
 		t1.join();
 		t2.join();
 		assertFalse(testfailed);
@@ -229,13 +199,13 @@ public class TestLatch extends TestCase {
 	 * read tryLock succeeds when readlocked
 	 */
 	public void testTryReadLockWhenReadLocked() throws Exception {
-		final ReadWriteUpdateLatch latch = new ReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.sharedLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
 			public void run() {
 				if (latch.trySharedLock()) {
-					latch.unlock();
+					latch.unlockShared();
 				} else {
 					testfailed = true;
 				}
@@ -243,7 +213,7 @@ public class TestLatch extends TestCase {
 		});
 		t.start();
 		t.join();
-		latch.unlock();
+		latch.unlockShared();
 
 		assertFalse(testfailed);
 	}
@@ -252,13 +222,13 @@ public class TestLatch extends TestCase {
 	 * update tryLock succeeds when readlocked
 	 */
 	public void testTryUpdateLockWhenReadLocked() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.sharedLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
 			public void run() {
 				if (latch.tryUpdateLock()) {
-					latch.unlock();
+					latch.unlockUpdate();
 				} else {
 					testfailed = true;
 				}
@@ -266,7 +236,7 @@ public class TestLatch extends TestCase {
 		});
 		t.start();
 		t.join();
-		latch.unlock();
+		latch.unlockShared();
 
 		assertFalse(testfailed);
 	}
@@ -275,20 +245,20 @@ public class TestLatch extends TestCase {
      * Try read lock fails when update locked.
      */
     public void testTryReadLockFailsWhenUpdateLocked() throws Exception {
-        final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+        final Latch latch = latchFactory.newReadWriteUpdateLatch();
         latch.updateLock();
         testfailed = false;
         Thread t = new Thread(new Runnable() {
             public void run() {
                 if (latch.trySharedLock()) {
                     testfailed = true;
-                    latch.unlock();
+                    latch.unlockShared();
                 }
             }
         });
         t.start();
         t.join();
-        latch.unlock();
+        latch.unlockUpdate();
 
         assertFalse(testfailed);
     }
@@ -297,20 +267,18 @@ public class TestLatch extends TestCase {
      * Read lock delayed when update locked.
      */
     public void testReadLockDelayedWhenUpdateLocked() throws Exception {
-        final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+        final Latch latch = latchFactory.newReadWriteUpdateLatch();
         latch.updateLock();
         Thread t = new Thread(new Runnable() {
             public void run() {
                 latch.sharedLock();
-                latch.unlock();
+                latch.unlockShared();
             }
         });
         t.start();
         Thread.sleep(100);
-        assertTrue(latch.getMode() == ReadWriteUpdateLatch.UPDATE);
-        assertTrue(latch.getOwner() == Thread.currentThread());
-        assertTrue(latch.getSharedCount() == 0);
-        latch.unlock();
+        assertTrue(latch.isLatchedForUpdate());
+        latch.unlockUpdate();
         t.join(300);
         assertTrue(!t.isAlive());
     }
@@ -319,7 +287,7 @@ public class TestLatch extends TestCase {
 	 * write tryLock fails when readlocked
 	 */
 	public void testUpdateTryLockWhenWriteLocked() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.exclusiveLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
@@ -331,7 +299,7 @@ public class TestLatch extends TestCase {
 		});
 		t.start();
 		t.join();
-		latch.unlock();
+		latch.unlockExclusive();
 
 		assertFalse(testfailed);
 	}
@@ -340,7 +308,7 @@ public class TestLatch extends TestCase {
 	 * write tryLock fails when readlocked
 	 */
 	public void testWriteTryLockWhenReadLocked() throws Exception {
-		final ReadWriteUpdateLatch latch = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.sharedLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
@@ -352,16 +320,129 @@ public class TestLatch extends TestCase {
 		});
 		t.start();
 		t.join();
-		latch.unlock();
+		latch.unlockShared();
 
 		assertFalse(testfailed);
 	}
+
+	public void testReentrantWriteLock() throws Exception {
+		final Latch lock = latchFactory.newReadWriteUpdateLatch();
+		lock.exclusiveLock();
+		assertTrue(lock.tryExclusiveLock());
+		lock.unlockExclusive();
+		assertTrue(lock.isLatchedExclusively());
+		lock.unlockExclusive();
+		assertFalse(lock.isLatchedExclusively());
+	}
+
+    /**
+     * Read lock succeeds if write locked by current thread even if
+     * other threads are waiting for readlock
+     */
+    public void testReadHoldingWriteLock2()  throws Exception { 
+		final Latch lock = latchFactory.newReadWriteUpdateLatch();
+		lock.exclusiveLock();
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				lock.sharedLock();
+				lock.unlockShared();
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				lock.sharedLock();
+				lock.unlockShared();
+			}
+		});
+		
+		t1.start();
+		t2.start();
+		lock.sharedLock();
+		lock.unlockShared();
+		Thread.sleep(100);
+		lock.sharedLock();
+		lock.unlockShared();
+		lock.unlockExclusive();
+		t1.join(200);
+		t2.join(200);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+	}  	
+	
+    /**
+     *  Read lock succeeds if write locked by current thread even if
+     * other threads are waiting for writelock
+     */
+    public void testReadHoldingWriteLock3() throws Exception { 
+		final Latch lock = latchFactory.newReadWriteUpdateLatch();
+		lock.exclusiveLock();
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				lock.updateLock();
+				lock.unlockUpdate();
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				lock.exclusiveLock();
+				lock.unlockUpdate();
+			}
+		});
+		
+		t1.start();
+		t2.start();
+		lock.sharedLock();
+		lock.unlockShared();
+		Thread.sleep(100);
+		lock.sharedLock();
+		lock.unlockShared();
+		lock.unlockExclusive();
+		t1.join(200);
+		t2.join(200);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+	} 
+ 	
+	
+    /**
+     *  Write lock succeeds if write locked by current thread even if
+     * other threads are waiting for writelock
+     */
+	public void testWriteHoldingWriteLock4() throws Exception { 
+		final Latch lock = latchFactory.newReadWriteUpdateLatch();
+		lock.exclusiveLock();
+		Thread t1 = new Thread(new Runnable() {
+			public void run() {
+				lock.exclusiveLock();
+				lock.unlockExclusive();
+			}
+		});
+		Thread t2 = new Thread(new Runnable() {
+			public void run() {
+				lock.exclusiveLock();
+				lock.unlockExclusive();
+			}
+		});
+		
+		t1.start();
+		t2.start();
+		lock.exclusiveLock();
+		lock.unlockExclusive();
+		Thread.sleep(100);
+		lock.exclusiveLock();
+		lock.unlockExclusive();
+		lock.unlockExclusive();
+		t1.join(200);
+		t2.join(200);
+		assertTrue(!t1.isAlive());
+		assertTrue(!t2.isAlive());
+	} 
 
 	/**
 	 *  write lockInterruptibly succeeds if lock free else is interruptible
 	 */
 	public void testWriteLockInterruptibly() throws Exception {
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final ReadWriteUpdateLatch lock = new ReadWriteUpdateLatch();
 		lock.exclusiveLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
@@ -386,7 +467,7 @@ public class TestLatch extends TestCase {
 	 *  read lockInterruptibly succeeds if lock free else is interruptible
 	 */
 	public void testReadLockInterruptibly() throws Exception {
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
+		final ReadWriteUpdateLatch lock = new ReadWriteUpdateLatch();
 		lock.exclusiveLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
@@ -405,118 +486,5 @@ public class TestLatch extends TestCase {
 		
 		assertFalse(testfailed);
 	}
-
-	public void testReentrantWriteLock() throws Exception {
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
-		lock.exclusiveLock();
-		assertTrue(lock.tryExclusiveLock());
-		assertEquals(lock.getExclusiveCount(), 2);
-		lock.unlock();
-		lock.unlock();
-		assertEquals(lock.getExclusiveCount(), 0);
-	}
-
-    /**
-     * Read lock succeeds if write locked by current thread even if
-     * other threads are waiting for readlock
-     */
-    public void testReadHoldingWriteLock2()  throws Exception { 
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
-		lock.exclusiveLock();
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
-				lock.sharedLock();
-				lock.unlock();
-			}
-		});
-		Thread t2 = new Thread(new Runnable() {
-			public void run() {
-				lock.sharedLock();
-				lock.unlock();
-			}
-		});
-		
-		t1.start();
-		t2.start();
-		lock.sharedLock();
-		lock.unlock();
-		Thread.sleep(100);
-		lock.sharedLock();
-		lock.unlock();
-		lock.unlock();
-		t1.join(200);
-		t2.join(200);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-	}  	
-	
-    /**
-     *  Read lock succeeds if write locked by current thread even if
-     * other threads are waiting for writelock
-     */
-    public void testReadHoldingWriteLock3() throws Exception { 
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
-		lock.exclusiveLock();
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
-				lock.updateLock();
-				lock.unlock();
-			}
-		});
-		Thread t2 = new Thread(new Runnable() {
-			public void run() {
-				lock.exclusiveLock();
-				lock.unlock();
-			}
-		});
-		
-		t1.start();
-		t2.start();
-		lock.sharedLock();
-		lock.unlock();
-		Thread.sleep(100);
-		lock.sharedLock();
-		lock.unlock();
-		lock.unlock();
-		t1.join(200);
-		t2.join(200);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-	} 
- 	
-	
-    /**
-     *  Write lock succeeds if write locked by current thread even if
-     * other threads are waiting for writelock
-     */
-	public void testWriteHoldingWriteLock4() throws Exception { 
-		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatch();
-		lock.exclusiveLock();
-		Thread t1 = new Thread(new Runnable() {
-			public void run() {
-				lock.exclusiveLock();
-				lock.unlock();
-			}
-		});
-		Thread t2 = new Thread(new Runnable() {
-			public void run() {
-				lock.exclusiveLock();
-				lock.unlock();
-			}
-		});
-		
-		t1.start();
-		t2.start();
-		lock.exclusiveLock();
-		lock.unlock();
-		Thread.sleep(100);
-		lock.exclusiveLock();
-		lock.unlock();
-		lock.unlock();
-		t1.join(200);
-		t2.join(200);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-	} 
 	
 }
