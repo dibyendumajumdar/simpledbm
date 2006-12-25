@@ -20,22 +20,15 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * A savepoint marks a point within the transaction to which subsequently
- * a rollback operation can be invoked.
+ * TransactionalCursor interface should be implemented by Index and Tuple
+ * cursors if they want to participate in partial rollbacks. 
  * 
  * @author Dibyendu Majumdar
- * @since 25-Aug-2005
+ * @since 25 Dec 2006
  */
-public interface Savepoint {
+public interface TransactionalCursor {
 
-	/**
-	 * Saves a specified keyed value in the savepoint object. 
-	 */
-	void saveValue(Object key, Object value);
-	
-	/**
-	 * Retrieves a previously saved keyed value.
-	 */
-	Object getValue(Object key);
+	void saveState(Savepoint sp);
+	void restoreState(Transaction txn, Savepoint sp);
 	
 }

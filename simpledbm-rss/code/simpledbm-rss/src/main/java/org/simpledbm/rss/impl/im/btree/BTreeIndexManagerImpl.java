@@ -63,9 +63,11 @@ import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionException;
+import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexCursorImpl.CursorState;
 import org.simpledbm.rss.impl.isolation.DefaultLockAdaptor;
 import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.TypeSize;
@@ -2620,7 +2622,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 	}
 	
-	public static final class IndexCursorImpl implements IndexScan {
+	public static final class IndexCursorImpl implements IndexScan, TransactionalCursor {
 		PageId pageId;
 		
 		Lsn pageLsn;
@@ -2650,6 +2652,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			this.currentKey = searchKey;
 			this.fetchCount = 0;
 			this.lockMode = lockMode;
+			trx.registerTransactionalCursor(this);
 		}
 		
 		public final boolean fetchNext() throws IndexException {
@@ -2669,6 +2672,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 		
 		public final void close() throws IndexException {
+			trx.unregisterTransactionalCursor(this);
 			try {
 				bcursor.unfixAll();
 			} catch (BufferManagerException e) {
@@ -2692,6 +2696,31 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public final boolean isEof() {
 			return eof;
+		}
+		
+		public void restoreState(Transaction txn, Savepoint sp) {
+			CursorState cs = (CursorState) sp.getValue(this);
+			System.out.println("Current position is set to " + currentKey);
+			System.out.println("Rollback to savepoint would have restored position to " + cs);
+		}
+
+		public void saveState(Savepoint sp) {
+			CursorState cs = new CursorState(this);
+			sp.saveValue(this, cs);
+		}
+
+		static final class CursorState {
+			IndexCursorImpl scan;
+			IndexItem currentKey;
+			
+			CursorState(IndexCursorImpl scan) {
+				this.scan = scan;
+				this.currentKey = scan.currentKey;
+			}
+			
+			public String toString() {
+				return "CursorState(savedCurrentKey = " + currentKey + ")";
+			}
 		}
 	}
 	

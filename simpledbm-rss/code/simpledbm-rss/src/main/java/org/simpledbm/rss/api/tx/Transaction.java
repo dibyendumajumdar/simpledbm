@@ -154,4 +154,20 @@ public interface Transaction {
 	 * Returns the isolation mode set for the transaction.
 	 */
 	public IsolationMode getIsolationMode();
+	
+	/**
+	 * Sets the lock timeout value.
+	 */
+	public void setLockTimeout(int seconds);
+	
+	/**
+	 * Informs the transaction about a transactional cursor that needs to participate
+	 * in rollbacks.
+	 */
+	public void registerTransactionalCursor(TransactionalCursor cursor);
+	
+	/**
+	 * Removes a transactional cursor from this transactions set.
+	 */
+	public void unregisterTransactionalCursor(TransactionalCursor cursor);
 }
