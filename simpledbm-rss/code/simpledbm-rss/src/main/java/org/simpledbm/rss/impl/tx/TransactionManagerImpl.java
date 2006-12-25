@@ -21,6 +21,8 @@ package org.simpledbm.rss.impl.tx;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicLong;
@@ -69,6 +71,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionId;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModule;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
@@ -1413,9 +1416,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		IsolationMode isolationMode = IsolationMode.READ_COMMITTED;
 		
-		int lockTimeOut = 60;
+		/**
+		 * Lock wait timeout in seconds
+		 */
+		int lockTimeout = 60;
 		
 		LatchHelper latchHelper;
+		
+		HashSet<TransactionalCursor> cursorSet = new HashSet<TransactionalCursor>(); 
 		
 		public IsolationMode getIsolationMode() {
 			return isolationMode;
@@ -1527,6 +1535,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			this.trxmgr = trxmgr;
 			this.latchHelper = new LatchHelper(trxmgr.latch);
 			this.trxId = trxId;
+			this.lockTimeout = trxmgr.getLockWaitTimeout();
 		}
 		
 		/**
@@ -1536,7 +1545,27 @@ public final class TransactionManagerImpl implements TransactionManager {
 		TransactionImpl() {
 		}
 
-        /**
+        public int getLockTimeout() {
+			return lockTimeout;
+		}
+
+		public void setLockTimeout(int lockTimeOut) {
+			this.lockTimeout = lockTimeOut;
+		}
+
+		public void registerTransactionalCursor(TransactionalCursor cursor) {
+			synchronized(cursorSet) {
+				cursorSet.add(cursor);
+			}
+		}
+
+		public void unregisterTransactionalCursor(TransactionalCursor cursor) {
+			synchronized(cursorSet) {
+				cursorSet.remove(cursor);
+			}
+		}
+
+		/**
          * Acquires a lock in requested mode on behalf of the transaction, 
          * and adds it to the transaction's list of locks. Note that the lock is added
          * only if it does not already exist within the list. This is because a second request
@@ -1607,7 +1636,7 @@ public final class TransactionManagerImpl implements TransactionManager {
              * within specified timeout period, we assume the system is deadlocked.
              */
             try {
-                doAcquireLock(lockable, mode, duration, getTrxmgr().getLockWaitTimeout());
+                doAcquireLock(lockable, mode, duration, lockTimeout);
             } catch (LockException e) {
                 throw new TransactionException.LockException(e);
             }
@@ -1777,6 +1806,22 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}
 		}
 		
+		private void saveCursorStates(Savepoint sp) {
+			synchronized (cursorSet) {
+				for (TransactionalCursor cursor: cursorSet) {
+					cursor.saveState(sp);
+				}
+			}
+		}
+		
+		private void restoreCursorStates(Savepoint sp) {
+			synchronized (cursorSet) {
+				for (TransactionalCursor cursor: cursorSet) {
+					cursor.restoreState(this, sp);
+				}
+			}
+		}
+
 		/**
 		 * Create a transaction savepoint.
 		 * <p>Latching issues:<br>
@@ -1784,6 +1829,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		public final SavepointImpl createSavepoint() {
 			SavepointImpl sp = new SavepointImpl(lastLsn, lockPos, actionId);
+			saveCursorStates(sp);
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "createSavepoint", "Created savepoint " + sp);
 			}				
@@ -2081,6 +2127,11 @@ public final class TransactionManagerImpl implements TransactionManager {
 				 * Savepoint.
 				 */
 				discardCommitActions(sp);
+				
+				/*
+				 * Restore cursors to their position at the time of savepoint
+				 */
+				restoreCursorStates(sp);
 			}
 		}
 
@@ -2272,12 +2323,22 @@ public final class TransactionManagerImpl implements TransactionManager {
 		final int lockPos;
 		final int actionId;
 		
+		final Hashtable<Object, Object> savedValues = new Hashtable<Object, Object>();
+		
 		SavepointImpl(Lsn lsn, int lockPos, int actionId) {
 			this.lsn = lsn;
 			this.lockPos = lockPos;
 			this.actionId = actionId;
 		}
 		
+		public Object getValue(Object key) {
+			return savedValues.get(key);
+		}
+
+		public void saveValue(Object key, Object value) {
+			savedValues.put(key, value);
+		}
+
 		@Override
 		public final String toString() {
 			return "Savepoint(" + lsn + ", lockPos=" + lockPos + ", actionId=" + actionId + ")";
