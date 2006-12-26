@@ -1814,7 +1814,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}
 		}
 		
-		private void restoreCursorStates(Savepoint sp) {
+		private void restoreCursorStates(Savepoint sp) throws TransactionException {
 			synchronized (cursorSet) {
 				for (TransactionalCursor cursor: cursorSet) {
 					cursor.restoreState(this, sp);
@@ -1827,9 +1827,11 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * <p>Latching issues:<br>
 		 * No latches required because only current thread may modify last_lsn.
 		 */
-		public final SavepointImpl createSavepoint() {
-			SavepointImpl sp = new SavepointImpl(lastLsn, lockPos, actionId);
-			saveCursorStates(sp);
+		public final SavepointImpl createSavepoint(boolean saveCursors) {
+			SavepointImpl sp = new SavepointImpl(lastLsn, lockPos, actionId, saveCursors);
+			if (saveCursors) {
+				saveCursorStates(sp);
+			}
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "createSavepoint", "Created savepoint " + sp);
 			}				
@@ -2131,7 +2133,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 				/*
 				 * Restore cursors to their position at the time of savepoint
 				 */
-				restoreCursorStates(sp);
+				if (sp.cursorsSaved()) {
+					restoreCursorStates(sp);
+				}
 			}
 		}
 
@@ -2322,13 +2326,15 @@ public final class TransactionManagerImpl implements TransactionManager {
 		final Lsn lsn;
 		final int lockPos;
 		final int actionId;
+		final boolean saveCursors;
 		
 		final Hashtable<Object, Object> savedValues = new Hashtable<Object, Object>();
 		
-		SavepointImpl(Lsn lsn, int lockPos, int actionId) {
+		SavepointImpl(Lsn lsn, int lockPos, int actionId, boolean saveCursors) {
 			this.lsn = lsn;
 			this.lockPos = lockPos;
 			this.actionId = actionId;
+			this.saveCursors = saveCursors;
 		}
 		
 		public Object getValue(Object key) {
@@ -2336,9 +2342,16 @@ public final class TransactionManagerImpl implements TransactionManager {
 		}
 
 		public void saveValue(Object key, Object value) {
+			if (!saveCursors) {
+				return;
+			}
 			savedValues.put(key, value);
 		}
 
+		public boolean cursorsSaved() {
+			return saveCursors;
+		}
+		
 		@Override
 		public final String toString() {
 			return "Savepoint(" + lsn + ", lockPos=" + lockPos + ", actionId=" + actionId + ")";

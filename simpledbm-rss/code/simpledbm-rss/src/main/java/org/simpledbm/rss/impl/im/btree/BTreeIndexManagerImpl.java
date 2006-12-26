@@ -56,6 +56,7 @@ import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LogicalUndo;
 import org.simpledbm.rss.api.tx.MultiPageRedo;
@@ -561,6 +562,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// This is not executed if the space map is updated
 			// as a separate action. But we leave this code here in case we 
 			// wish to update the space map as part of the same action.
+			// FIXME TEST case
 			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
 			// deallocate
 			smp.setSpaceBits(dthOperation.childPageNumber, 0);
@@ -850,7 +852,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 */
 	final void doCreateBTree(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
 		
-		Savepoint sp = trx.createSavepoint();
+		Savepoint sp = trx.createSavepoint(false);
 		boolean success = false;
 		try {
 			
@@ -897,6 +899,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			success = true;
 		} finally {
 			if (!success) {
+				// FIXME TEST case
 				trx.rollback(sp);
 			}
 		}
@@ -1020,7 +1023,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			int spaceMapPageNumber = -1;
 			try {
 				if (newSiblingPageNumber == -1) {
-					// FIXME Test case
+					
 					btree.btreeMgr.spaceMgr.extendContainer(trx, btree.containerId);
 					undoNextLsn = trx.getLastLsn();
 					newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
@@ -1354,6 +1357,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				int comp = leftSiblingNode.getHighKey().compareTo(bcursor.searchKey);
 				if (comp >= 0) {
 					// new key will stay in current page
+					// FIXME TEST case
 					bcursor.getQ().downgradeExclusiveLatch();
 					bcursor.unfixR();
 				}
@@ -1662,6 +1666,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					if (q.canMergeWith(r)) {
 						doMerge(trx, bcursor);
 					} else {
+						// FIXME TEST case
 						doRedistribute(trx, bcursor);
 					}
 				} else {
@@ -1699,6 +1704,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								/* R is not a child of P anymore.
 								 * We need to restart the algorithm
 								 */
+								// FIXME TEST case
 								bcursor.unfixR();
 								return true;
 							}
@@ -1731,6 +1737,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					if (q.canMergeWith(r)) {
 						doMerge(trx, bcursor);
 					} else {
+						// FIXME TEST case
 						doRedistribute(trx, bcursor);
 					}
 				}
@@ -1796,7 +1803,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						 * Remember that bcursor.q is positioned on L.
 						 */
 						/* unlink Q from P */
-						// FIXME Test case
 						doUnlink(trx, bcursor);
 						q.wrap((SlottedPage) bcursor.getQ().getPage());
 						r.wrap((SlottedPage) bcursor.getR().getPage());
@@ -1804,6 +1810,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 							doMerge(trx, bcursor);
 						}
 						else {
+							// FIXME Test case
 							doRedistribute(trx, bcursor);
 						}
 					}
@@ -1928,7 +1935,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * have a right sibling. Decrease the height of the tree by
 				 * merging the child page into the root.
 				 */
-				// FIXME Test case
+				
 				doDecreaseTreeHeight(trx, bcursor);
 				childPageLatched = false;
 			}
@@ -1939,7 +1946,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					 * BUG in published algorithm - need to avoid latching
 					 * Q if already latched.
 					 */
-					// FIXME Test case
+					
 					childPageNumber = p.findChildPage(bcursor.searchKey);
 					bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, childPageNumber), 0));
 					q.wrap((SlottedPage) bcursor.getQ().getPage());
@@ -1972,7 +1979,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					q.wrap((SlottedPage) bcursor.getQ().getPage());
 					if (q.getHighKey().compareTo(bcursor.searchKey) >= 0) {
 						/* Q covers search key */
-						// FIXME Test case
+						
 						bcursor.unfixP();
 						bcursor.setP(bcursor.removeQ());
 					}
@@ -2002,6 +2009,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				IndexItem v = p.getHighKey();
 				if (v.compareTo(bcursor.getSearchKey()) < 0) {
 					// Move right as the search key is greater than the highkey
+					// FIXME TEST case
 					int rightsibling = p.header.rightSibling;
 					bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(containerId, rightsibling), 0));
 					bcursor.unfixP(); 
@@ -2090,7 +2098,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 */
 				return true;
 			} catch (TransactionException.LockException e) {
-				// FIXME Test case
+				
 				if (log.isDebugEnabled()) {
 					log.debug(LOG_CLASS_NAME, "doNextKeyLock", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + mode + " lock on " + nextItem.getLocation());
 				}
@@ -2192,7 +2200,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					 * searchkey or greater.
 					 */
 					if (sr.exactMatch) {
-						Savepoint sp = trx.createSavepoint();
+						Savepoint sp = trx.createSavepoint(false);
 						boolean needRollback = false;
 						/*
 						 * Oops - possibly a unique constraint violation
@@ -2432,7 +2440,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// node.dump();
 			icursor.eof = false;
 			SearchResult sr = node.search(icursor.currentKey);
-			if (sr.exactMatch && icursor.fetchCount > 0) {
+			// if (sr.exactMatch && icursor.fetchCount > 0) {
+			if (sr.exactMatch && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_NEXT) {
 				/*
 				 * If we have an exact match, there are two possibilities.
 				 * If this is the first call to fetch (fetchCount == 0), then
@@ -2516,12 +2525,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * @throws IndexException
 		 * @throws TransactionException
 		 */
-		public final boolean doFetch(Transaction trx, IndexScan cursor) throws BufferManagerException, IndexException, TransactionException {
+		private final boolean doFetch(Transaction trx, IndexScan cursor) throws BufferManagerException, IndexException, TransactionException {
 			IndexCursorImpl icursor = (IndexCursorImpl) cursor;
 			try {
 				boolean doSearch = false;
 				BTreeNode node = getBTreeNode();
-				if (icursor.fetchCount > 0) {
+				// if (icursor.fetchCount > 0) {
+				if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_NEXT) {
 					// This is not the first call to fetch
 					// Check to see if the BTree should be scanned to locate the key
 					icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(icursor.pageId, 0));
@@ -2551,7 +2561,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 				SearchResult sr = doSearch(icursor);
 
-				Savepoint sp = trx.createSavepoint();
+				Savepoint sp = trx.createSavepoint(false);
 				try {
 					// System.out.println(Thread.currentThread().getName() + ":doFetch: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
 					if (sr.item == null) {
@@ -2563,9 +2573,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
 					icursor.bcursor.unfixP();
 					icursor.fetchCount++;
+					icursor.scanMode = IndexCursorImpl.SCAN_FETCH_NEXT;
 					return true;
 				} catch (TransactionException.LockException e) {
-					// FIXME Test case
+					
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-LOG: failed to acquire NOWAIT " + icursor.lockMode + " lock on " + sr.item.getLocation());
 					}
@@ -2599,6 +2610,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
 						icursor.bcursor.unfixP();
 						icursor.fetchCount++;
+						icursor.scanMode = IndexCursorImpl.SCAN_FETCH_NEXT;
 						return true;
 					}
 					trx.rollback(sp);
@@ -2644,6 +2656,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		boolean eof = false;
 		
 		final Transaction trx;
+		
+		int scanMode = 0;
+		
+		static final int SCAN_FETCH_EXACT = 1;
+		
+		static final int SCAN_FETCH_NEXT = 2;
 
 		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem searchKey, LockMode lockMode) {
 			this.btree = btree;
@@ -2652,15 +2670,50 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			this.currentKey = searchKey;
 			this.fetchCount = 0;
 			this.lockMode = lockMode;
+			this.scanMode = SCAN_FETCH_EXACT;
 			trx.registerTransactionalCursor(this);
 		}
 		
 		public final boolean fetchNext() throws IndexException {
 			if (!eof) { 
 				try {
-					// TODO Save previous key
+					if (previousKey != null) {
+						if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+							LockMode lockMode = trx.hasLock(previousKey.getLocation());
+							if (lockMode == LockMode.SHARED || lockMode == LockMode.UPDATE) {
+								System.out.println("Releasing lock on previous row " + previousKey.getLocation());
+								trx.releaseLock(previousKey.getLocation());
+							}
+						}
+						else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || 
+								trx.getIsolationMode() == IsolationMode.SERIALIZABLE) &&
+								lockMode == LockMode.UPDATE) {
+							LockMode lockMode = trx.hasLock(previousKey.getLocation());
+							if (lockMode == LockMode.UPDATE) {
+								System.out.println("Downgrading lock on previous row " + previousKey.getLocation());
+								trx.downgradeLock(previousKey.getLocation(), LockMode.SHARED);
+							}
+						}
+					}
+					previousKey = currentKey;
 					btree.fetch(trx, this);
-					// Unlock previous key if isolationMode == READ_COMMITTED
+					if (currentKey != null) {
+						boolean releaseLock = false;
+						if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ) {
+							if (eof) {
+								releaseLock = true;
+							}
+						}
+						else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+							releaseLock = true;
+						}
+						if (releaseLock) {
+							LockMode lockMode = trx.hasLock(currentKey.getLocation());
+							if (lockMode == LockMode.SHARED) {
+								trx.releaseLock(currentKey.getLocation());
+							}
+						}
+					}
 				} catch (BufferManagerException e) {
 					throw new IndexException.BufMgrException(e);
 				} catch (TransactionException e) {
@@ -2673,10 +2726,34 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public final void close() throws IndexException {
 			trx.unregisterTransactionalCursor(this);
+			IndexException ex = null;
+			try {
+				if (currentKey != null) {
+					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
+							|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+						LockMode lockMode = trx.hasLock(currentKey
+								.getLocation());
+						if (lockMode == LockMode.SHARED
+								|| lockMode == LockMode.UPDATE) {
+							System.out.println("Releasing lock on current row "
+									+ currentKey.getLocation());
+							trx.releaseLock(currentKey.getLocation());
+						}
+					}
+				}
+			} catch (TransactionException e) {
+				ex = new IndexException.TrxException(e);
+			}
+			
 			try {
 				bcursor.unfixAll();
 			} catch (BufferManagerException e) {
-				throw new IndexException.BufMgrException(e);
+				if (ex == null) {
+					ex = new IndexException.BufMgrException(e);
+				}
+			}
+			if (ex != null) {
+				throw ex;
 			}
 		}
 		
@@ -2698,10 +2775,23 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return eof;
 		}
 		
-		public void restoreState(Transaction txn, Savepoint sp) {
+		public void restoreState(Transaction txn, Savepoint sp) throws TransactionException {
 			CursorState cs = (CursorState) sp.getValue(this);
 			System.out.println("Current position is set to " + currentKey);
-			System.out.println("Rollback to savepoint would have restored position to " + cs);
+			System.out.println("Rollback to savepoint is restoring state to " + cs);
+			currentKey = cs.currentKey;
+			previousKey = cs.previousKey;
+			searchKey = cs.searchKey;
+			pageId = cs.pageId;
+			pageLsn = cs.pageLsn;
+			fetchCount = cs.fetchCount-1;
+			eof = cs.eof;
+			scanMode = SCAN_FETCH_EXACT;
+			try {
+				fetchNext();
+			} catch (IndexException e) {
+				throw new TransactionException(e);
+			}
 		}
 
 		public void saveState(Savepoint sp) {
@@ -2712,10 +2802,24 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		static final class CursorState {
 			IndexCursorImpl scan;
 			IndexItem currentKey;
+			IndexItem previousKey;
+			IndexItem searchKey;
+			PageId pageId;
+			Lsn pageLsn;
+			boolean eof;
+			int fetchCount;
+			int scanMode;
 			
 			CursorState(IndexCursorImpl scan) {
 				this.scan = scan;
 				this.currentKey = scan.currentKey;
+				this.previousKey = scan.previousKey;
+				this.searchKey = scan.searchKey;
+				this.pageId = scan.pageId;
+				this.pageLsn = scan.pageLsn;
+				this.eof = scan.eof;
+				this.fetchCount = scan.fetchCount;
+				this.scanMode = scan.scanMode;
 			}
 			
 			public String toString() {

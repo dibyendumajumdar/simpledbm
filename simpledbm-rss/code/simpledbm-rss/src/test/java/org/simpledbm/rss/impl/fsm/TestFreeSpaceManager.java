@@ -192,7 +192,7 @@ public class TestFreeSpaceManager extends TestCase {
             assertTrue(db.storageManager.getInstance(1) != null);
             
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            Savepoint sp = trx.createSavepoint();
+            Savepoint sp = trx.createSavepoint(false);
             db.spacemgr.dropContainer(trx, 1);
             trx.rollback(sp);
             trx.commit();

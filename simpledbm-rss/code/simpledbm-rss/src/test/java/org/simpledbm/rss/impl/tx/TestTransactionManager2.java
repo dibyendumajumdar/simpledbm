@@ -174,7 +174,7 @@ public class TestTransactionManager2 extends TestCase {
 	}
 	
 	void printBits(Transaction trx, OneBitMgr bitmgr, int start, int n, int[] values) throws Exception {
-		Savepoint sp = trx.createSavepoint();
+		Savepoint sp = trx.createSavepoint(false);
 		try {
 			for (int i = start; i < start+n; i++) {
 				int bit = bitmgr.getBit(trx, i);
@@ -282,7 +282,7 @@ public class TestTransactionManager2 extends TestCase {
            		bitmgr.changeBit(trx, 0, 11);
         		bitmgr.changeBit(trx, 1, 16);
         		bitmgr.changeBit(trx, 2, 21);
-        		Savepoint sp = trx.createSavepoint();
+        		Savepoint sp = trx.createSavepoint(false);
         		bitmgr.changeBit(trx, 3, 26);
         		bitmgr.changeBit(trx, 4, 31);
         		trx.rollback(sp);

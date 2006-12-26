@@ -115,7 +115,7 @@ public interface Transaction {
 	/**
 	 * Creates a transaction savepoint.
 	 */
-	public Savepoint createSavepoint();
+	public Savepoint createSavepoint(boolean saveCursors);
 
 	/**
 	 * Commits the transaction. All locks held by the

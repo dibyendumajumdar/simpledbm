@@ -649,7 +649,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						 * lock, but before that we need to release latches.
 						 */
 						// FIXME Test case needed
-						Savepoint sp = trx.createSavepoint();
+						Savepoint sp = trx.createSavepoint(false);
 						Lsn lsn = page.getPageLsn();
 
 						bab.unfix();
@@ -1495,7 +1495,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					/*
 					 * We have found a potential slot; this must be locked.
 					 */
-					Savepoint sp = trx.createSavepoint();
+					Savepoint sp = trx.createSavepoint(false);
 					//System.err.println("Found slot " + nextLocation + " is locked, so waiting");
 					trx.acquireLock(nextLocation, lockMode, LockDuration.MANUAL_DURATION);
 					state = LOCK_GRANTED;
