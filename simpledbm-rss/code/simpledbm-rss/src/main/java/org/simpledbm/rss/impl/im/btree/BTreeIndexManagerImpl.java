@@ -2332,6 +2332,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
                 throw new IndexException.BufMgrException(e);
             } catch (FreeSpaceManagerException e) {
                 throw new IndexException.SpaceMgrException(e);
+            } catch (TransactionException.LockException e) {
+                throw new IndexException.LockException(e);
             } catch (TransactionException e) {
                 throw new IndexException.TrxException(e);
             }
@@ -2432,6 +2434,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
                 throw new IndexException.BufMgrException(e);
             } catch (FreeSpaceManagerException e) {
                 throw new IndexException.SpaceMgrException(e);
+            } catch (TransactionException.LockException e) {
+                throw new IndexException.LockException(e);
             } catch (TransactionException e) {
                 throw new IndexException.TrxException(e);
             }
@@ -2724,7 +2728,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					}
 				} catch (BufferManagerException e) {
 					throw new IndexException.BufMgrException(e);
-				} catch (TransactionException e) {
+				} catch (TransactionException.LockException e) {
+	                throw new IndexException.LockException(e);
+	            } catch (TransactionException e) {
 					throw new IndexException.TrxException(e);
 				}
 				return true;
