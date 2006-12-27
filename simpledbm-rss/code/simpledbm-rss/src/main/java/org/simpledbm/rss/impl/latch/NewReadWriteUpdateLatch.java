@@ -237,8 +237,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			if (lockState.parms.timeout == -1) {
 				LockSupport.park();
 			} else {
-				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-						lockState.parms.timeout, TimeUnit.SECONDS));
+				LockSupport.parkNanos(timeToWait);
 			}
 			long now = System.nanoTime();
 			if (timeToWait > 0) {
@@ -254,7 +253,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
 						System.err
-								.println("Need to retry as this was a spurious wakeup");
+								.println("Latch: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}

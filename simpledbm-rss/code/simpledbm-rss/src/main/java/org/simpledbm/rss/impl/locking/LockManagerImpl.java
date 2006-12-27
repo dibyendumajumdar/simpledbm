@@ -1106,8 +1106,7 @@ public final class LockManagerImpl implements LockManager {
 				if (lockState.parms.timeout == -1) {
 					LockSupport.park();
 				} else {
-					LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-							lockState.parms.timeout, TimeUnit.SECONDS));
+					LockSupport.parkNanos(timeToWait);
 				}
 			} finally {
 				globalLock.sharedLock();
@@ -1128,7 +1127,7 @@ public final class LockManagerImpl implements LockManager {
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
 						System.err
-								.println("Need to retry as this was a spurious wakeup");
+								.println("Lock: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}
