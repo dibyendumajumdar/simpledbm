@@ -68,7 +68,6 @@ import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexCursorImpl.CursorState;
 import org.simpledbm.rss.impl.isolation.DefaultLockAdaptor;
 import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.TypeSize;
@@ -2161,7 +2160,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			 * Restart insert
 			 */
 			// System.out.println(Thread.currentThread().getName() + ":Restarting insert");
-			boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
+			//boolean result = 
+			trx.releaseLock(bcursor.getNextKeyLocation());
 			// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
 			bcursor.setNextKeyLocation(null);
 			return false;
@@ -2202,17 +2202,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					if (sr.exactMatch) {
 						Savepoint sp = trx.createSavepoint(false);
 						boolean needRollback = false;
+						Location loc = sr.item.getLocation();
+						LockDuration duration = (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ||
+								trx.getIsolationMode() == IsolationMode.READ_COMMITTED) ? LockDuration.MANUAL_DURATION :
+									LockDuration.COMMIT_DURATION;
 						/*
 						 * Oops - possibly a unique constraint violation
 						 */
 						try {
 							try {
 								// System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-								trx.acquireLockNowait(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
+								trx.acquireLockNowait(loc, LockMode.SHARED, duration);
 							} catch (TransactionException.LockException e) {
 								// FIXME Test case
 								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + sr.item.getLocation());
+									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + loc);
 								}
 								/*
 								 * Failed to acquire conditional lock. 
@@ -2221,12 +2225,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								bcursor.unfixP();
 								try {
 									// System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-									trx.acquireLock(sr.item.getLocation(), LockMode.SHARED, LockDuration.COMMIT_DURATION);
+									trx.acquireLock(loc, LockMode.SHARED, duration);
 								} catch (TransactionException.LockException e1) {
 									/*
-									 * Deadlock
+									 * Deadlock ??
 									 */
-									throw new IndexException.LockException("SIMPLEDBM-ERROR: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + sr.item.getLocation(), e1);
+									throw new IndexException.LockException("SIMPLEDBM-ERROR: Failed to acquire " + LockMode.SHARED + " lock on " + loc, e1);
 								}
 								/*
 								 * We have obtained the lock. We need to double check that the key
@@ -2235,12 +2239,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
 								sr = doInsertTraverse(trx, bcursor);
 							}
-							if (sr.exactMatch) {
+							if (sr.exactMatch && sr.item.getLocation().equals(loc)) {
 								/*
-								 * FIXME
 								 * Mohan says that for RR we need a commit duration lock, but
 								 * for CS, maybe we should release the lock here??
 								 */
+								if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ||
+										trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+									trx.releaseLock(loc);
+								}
 								throw new UniqueConstraintViolationException("SIMPLEDBM-ERROR: Unique contraint would be violated by inserting key [" + key + "] and location [" + location + "]");
 							}
 							/*
@@ -2301,7 +2308,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * We can now release the lock on the next key.
 				 */
-				boolean result = trx.releaseLock(bcursor.getNextKeyLocation());
+				//boolean result = 
+				trx.releaseLock(bcursor.getNextKeyLocation());
 				// System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
 			} finally {
 				bcursor.setNextKeyLocation(null);
