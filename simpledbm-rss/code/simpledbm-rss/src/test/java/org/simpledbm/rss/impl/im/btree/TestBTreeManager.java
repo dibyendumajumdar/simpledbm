@@ -113,6 +113,7 @@ public class TestBTreeManager extends BaseTestCase {
     }    
     
     static boolean compressKeys = false;
+    static boolean largeBM = false;
     
 	/**
 	 * A simple string key.
@@ -2576,11 +2577,11 @@ public class TestBTreeManager extends BaseTestCase {
 	}
 	
 	
-	int doConcurrentInserts() throws Exception {
+	int doConcurrentInserts(String file1, String file2) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			DataLoaderThread d1 = new DataLoaderThread(db, "org/simpledbm/rss/impl/im/btree/english.0");
-			DataLoaderThread d2 = new DataLoaderThread(db, "org/simpledbm/rss/impl/im/btree/english.1");
+			DataLoaderThread d1 = new DataLoaderThread(db, file1);
+			DataLoaderThread d2 = new DataLoaderThread(db, file2);
 			Thread t1 = new Thread(d1, "T1");
 			Thread t2 = new Thread(d2, "T2");
 			
@@ -2598,11 +2599,11 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
 
-	int doConcurrentDeletes() throws Exception {
+	int doConcurrentDeletes(String file1, String file2) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			DataDeleterThread d1 = new DataDeleterThread(db, "org/simpledbm/rss/impl/im/btree/english.0", true);
-			DataDeleterThread d2 = new DataDeleterThread(db, "org/simpledbm/rss/impl/im/btree/english.1", false);
+			DataDeleterThread d1 = new DataDeleterThread(db, file1, true);
+			DataDeleterThread d2 = new DataDeleterThread(db, file2, false);
 			Thread t1 = new Thread(d1, "T1");
 			Thread t2 = new Thread(d2, "T2");
 			
@@ -2766,31 +2767,48 @@ public class TestBTreeManager extends BaseTestCase {
 	}
     
     
+    void doTestMultiThreadedInserts(String file1, String file2) throws Exception {
+    	compressKeys = true;
+    	largeBM = true;
+		doInitContainer2();
+		System.out.println("Starting inserts");
+		doConcurrentInserts(file1, file2);
+		System.out.println("Dumping tree");
+		doDumpTree("testdata/TestBTreeManager/dump.txt");
+		//doFindRubens();
+		System.out.println("Doing first set of finds");
+		doFindInTree2(file1);
+		System.out.println("Doing second set of finds");
+		doFindInTree2(file2);
+		System.out.println("Starting deletes");
+		doConcurrentDeletes(file1, file2);
+		System.out.println("Dumping tree again");
+		doDumpTree("testdata/TestBTreeManager/dump2.txt");
+		System.out.println("Validating second set of finds");
+		doFindInTree2(file2);
+		compressKeys = false;
+		largeBM = false;
+    }
+    
     /**
      * Tests various concurrent activities. 
      * @throws Exception
      */
     public void testMultiThreadedInserts() throws Exception {
-    	compressKeys = true;
-		doInitContainer2();
-		System.out.println("Starting inserts");
-		doConcurrentInserts();
-		System.out.println("Dumping tree");
-		doDumpTree("testdata/TestBTreeManager/dump.txt");
-		//doFindRubens();
-		System.out.println("Doing first set of finds");
-		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.0");
-		System.out.println("Doing second set of finds");
-		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.1");
-		System.out.println("Starting deletes");
-		doConcurrentDeletes();
-		System.out.println("Dumping tree again");
-		doDumpTree("testdata/TestBTreeManager/dump2.txt");
-		System.out.println("Validating second set of finds");
-		doFindInTree2("org/simpledbm/rss/impl/im/btree/english.1");
-		compressKeys = false;
+    	doTestMultiThreadedInserts("org/simpledbm/rss/impl/im/btree/english.0", 
+    			"org/simpledbm/rss/impl/im/btree/english.1");
 	}
-	
+
+    public void testMultiThreadedInsertsRandom() throws Exception {
+    	doTestMultiThreadedInserts("org/simpledbm/rss/impl/im/btree/random.0", 
+    			"org/simpledbm/rss/impl/im/btree/random.1");
+	}
+    
+    public void testMultiThreadedInsertsDescending() throws Exception {
+    	doTestMultiThreadedInserts("org/simpledbm/rss/impl/im/btree/reverse.0", 
+    			"org/simpledbm/rss/impl/im/btree/reverse.1");
+	}
+    
     public static Test suite() {
         TestSuite suite = new TestSuite();
         suite.addTest(new TestBTreeManager("testPageSplitLeafUnique"));
@@ -2880,7 +2898,7 @@ public class TestBTreeManager extends BaseTestCase {
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(null);
 			logmgr = logFactory.getLog(properties);
-			bufmgr = new BufferManagerImpl(logmgr, pageFactory, 20, 11);
+			bufmgr = new BufferManagerImpl(logmgr, pageFactory, largeBM ? 350 :20, largeBM ? 389 : 11);
 			loggableFactory = new LoggableFactoryImpl(objectFactory);
 			moduleRegistry = new TransactionalModuleRegistryImpl();
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory, storageManager, bufmgr, lockmgr, loggableFactory, latchFactory, objectFactory, moduleRegistry);
@@ -2914,3 +2932,34 @@ public class TestBTreeManager extends BaseTestCase {
     }
     
 }
+
+/*
+ Write following tests:
+ 
+ 1) Thread 1 inserts a row.
+    Thread 2 locks the row exclusively.
+    Thread 3 inserts the same key as thread 1 and blocks.
+    Thread 2 deletes the row and commits.
+    Verify that thread 3 proceeds with the insert and completes successfully.
+    
+ 2) Thread 1 inserts a row.
+    Thread 2 locks row exclusively.
+    Thread 3 inserts same key as thread 1 and blocks.
+    Thread 2 deletes key with old row, and inserts same key with new row and commits.
+    Verify that thread 3 releases lock on old row and restarts insert. It should fail if index in unique.
+    
+ 3) Insert an exsting key and verify that shared lock is held in case of RR or CZ, but released in
+    case of CS or RC.
+ 
+ 4) Start an index scan and position to a row. 
+ 	Create a savepoint.
+ 	Scan a few more rows.
+ 	Rollback to savepoint.
+ 	Test that the cursor is back on the same row before the savepoint.
+ 	Test that the cursor has reacquired lock in case of CS.
+    Test the situation where row has been deleted in the meantime. Cursor should be positioned on
+    next higher key which should be locked in case of CS.
+    
+ 5) Run multithreaded test with random inserts/deletes.
+ 6) Run multithreaded test with reverse order inserts/deletes.
+*/
