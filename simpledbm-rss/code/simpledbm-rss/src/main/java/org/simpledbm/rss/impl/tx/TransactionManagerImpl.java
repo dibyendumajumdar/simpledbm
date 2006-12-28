@@ -271,10 +271,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 	/**
 	 * When lock requests are made, we specify a timeout value of 
-	 * 600 seconds. Since the Lock Manager does not detect dead locks yet,
-	 * the timeout is used to detect potential deadlock conditions.
+	 * 60 seconds. 
 	 */
-	static final int DEFAULT_LOCK_TIMEOUT = 600;
+	static final int DEFAULT_LOCK_TIMEOUT = 60;
 	
 	/**
 	 * The lock timeout value can be configured to a different value.
@@ -1535,8 +1534,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 			return lockTimeout;
 		}
 
-		public void setLockTimeout(int lockTimeOut) {
-			this.lockTimeout = lockTimeOut;
+		public void setLockTimeout(int seconds) {
+			this.lockTimeout = seconds;
 		}
 
 		public void registerTransactionalCursor(TransactionalCursor cursor) {

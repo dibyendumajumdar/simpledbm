@@ -48,9 +48,17 @@ public interface TransactionManager {
 	 */
 	Lsn logNonTransactionRelatedOperation(Loggable operation);
 	
-	void setCheckpointInterval(int checkpointInterval);
+	/**
+	 * Sets the interval at which checkpoints will be taken.
+	 * @param millisecs Time interval in milliseconds.
+	 */
+	void setCheckpointInterval(int millisecs);
 	
-	void setLockWaitTimeout(int lockWaitTimeout);
+	/**
+	 * Sets the default lock timeopu value.
+	 * @param seconds Timeout in seconds.
+	 */
+	void setLockWaitTimeout(int seconds);
 	
 	/**
 	 * Orchestrates the Transaction Manager restart processing. Also starts any
