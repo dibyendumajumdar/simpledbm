@@ -109,7 +109,7 @@ public final class PageFactoryImpl implements PageFactory {
 		return page;
 	}
 
-	public final Page retrieve(PageId pageId) throws PageException {
+	public final Page retrieve(PageId pageId) {
 		StorageContainer container = storageManager.getInstance(pageId
 				.getContainerId());
 		long offset = pageId.getPageNumber() * pageSize;
@@ -122,7 +122,7 @@ public final class PageFactoryImpl implements PageFactory {
 		return getInstance(bb);
 	}
 	
-	public final void store(Page page) throws PageException {
+	public final void store(Page page) {
 		StorageContainer container = storageManager.getInstance(page
 				.getPageId().getContainerId());
 		if (container == null) {

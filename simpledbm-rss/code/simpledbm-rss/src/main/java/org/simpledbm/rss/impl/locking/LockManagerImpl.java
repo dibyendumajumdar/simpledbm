@@ -39,7 +39,6 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
-import org.simpledbm.rss.impl.latch.ReadWriteUpdateLatch;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -310,7 +309,7 @@ public final class LockManagerImpl implements LockManager {
 	/**
 	 * Handles the result of a lock wait. 
 	 */
-	private void handleWaitResult(LockState lockState) throws LockTimeoutException, LockDeadlockException, LockException {
+	private void handleWaitResult(LockState lockState) {
 		LockRequestStatus lockRequestStatus = lockState.lockRequest.status;
 		if (lockRequestStatus == LockRequestStatus.GRANTED) {
 			lockState.setStatus(LockStatus.GRANTED);
@@ -397,7 +396,7 @@ public final class LockManagerImpl implements LockManager {
 	 * Handles a conversion request in the nowait situation. 
 	 * @return true if conversion request was handled else false to indicate that requester must enter wait.
 	 */
-	private boolean handleConversionRequest(LockState lockState) throws LockException, LockTimeoutException {
+	private boolean handleConversionRequest(LockState lockState) {
 		/*
 		 * 11. If calling transaction already has a granted lock request
 		 * then this must be a conversion request.
@@ -510,7 +509,7 @@ public final class LockManagerImpl implements LockManager {
 	 * @return true if the lock request was processed, else false to indicate that the requester must 
 	 * 		wait
 	 */
-	private boolean handleNewRequest(LockState lockState) throws LockTimeoutException {
+	private boolean handleNewRequest(LockState lockState) {
 		/* 4. If not, this is the first request by the transaction. */
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "handleNewRequest",
@@ -580,7 +579,7 @@ public final class LockManagerImpl implements LockManager {
 	 *      java.lang.Object, org.simpledbm.locking.LockMode,
 	 *      org.simpledbm.locking.LockDuration, int)
 	 */
-	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout, LockInfo lockInfo) throws LockException {
+	public final LockHandle acquire(Object owner, Object target, LockMode mode, LockDuration duration, int timeout, LockInfo lockInfo) {
 
 		LockParams parms = new LockParams();
 		parms.owner = owner;
@@ -682,7 +681,7 @@ public final class LockManagerImpl implements LockManager {
 	 * </p>
 	 * </p>
 	 */	
-	private boolean releaseLock(LockState lockState) throws LockException {
+	private boolean releaseLock(LockState lockState) {
 		boolean released;
 		/* 3. If lock found, look for the transaction's lock request. */
 		lockState.lockRequest = lockState.lockitem.find(lockState.parms.owner);
@@ -942,7 +941,7 @@ public final class LockManagerImpl implements LockManager {
 	 * </p>
 	 * </p>
 	 */
-	private boolean doRelease(LockHandle handle, ReleaseAction action, LockMode downgradeMode) throws LockException {
+	private boolean doRelease(LockHandle handle, ReleaseAction action, LockMode downgradeMode) {
 		
 		LockParams parms = new LockParams();
 		LockHandleImpl handleImpl = (LockHandleImpl) handle;
@@ -963,7 +962,7 @@ public final class LockManagerImpl implements LockManager {
 		}
 	}
 	
-	public boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException {
+	public boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) {
 		LockParams parms = new LockParams();
 		parms.lockable = lockable;
 		parms.owner = owner;
@@ -982,7 +981,7 @@ public final class LockManagerImpl implements LockManager {
 		}
 	}
 
-	public boolean release(Object owner, Object lockable, boolean force) throws LockException {
+	public boolean release(Object owner, Object lockable, boolean force) {
 		LockParams parms = new LockParams();
 		parms.lockable = lockable;
 		parms.owner = owner;
@@ -1042,7 +1041,7 @@ public final class LockManagerImpl implements LockManager {
 	 * </p>
 	 */
 	private LockHandleImpl doAcquire(LockState lockState)
-			throws LockException {
+			{
 
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "acquire", "Lock requested by " + lockState.parms.owner
@@ -1138,7 +1137,7 @@ public final class LockManagerImpl implements LockManager {
 		}
 	}
 
-	private boolean doReleaseInternal(LockState lockState) throws LockException {
+	private boolean doReleaseInternal(LockState lockState) {
 		lockState.lockRequest = null;
 		boolean released = false;
 
@@ -1471,11 +1470,11 @@ public final class LockManagerImpl implements LockManager {
 			this.lockMgr = lockMgr;
 		}
 
-		public final boolean release(boolean force) throws LockException {
+		public final boolean release(boolean force) {
 			return lockMgr.doRelease(this, force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE : LockManagerImpl.ReleaseAction.RELEASE, null);
 		}
 
-		public final void downgrade(LockMode mode) throws LockException {
+		public final void downgrade(LockMode mode) {
 			lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE, mode);
 		}
 

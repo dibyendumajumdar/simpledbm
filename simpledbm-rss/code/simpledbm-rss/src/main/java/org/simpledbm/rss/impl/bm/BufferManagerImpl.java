@@ -23,13 +23,14 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
-import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
@@ -437,7 +438,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * </ol>
 	 * @return The newly allocated BufferControlBlock or null to indicate that the caller must retry.
 	 */
-	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype, int latchMode) throws BufferManagerException, PageException {
+	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype, int latchMode) {
 
 		BufferControlBlock nextBcb = new BufferControlBlock();
 		BufferHashBucket bucket = bufferHash[hashCode];
@@ -546,7 +547,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * 
 	 * @throws BufferManagerException
 	 */
-	private void checkStatus() throws BufferManagerException {
+	private void checkStatus() {
 		if (stop) {
 			throw new BufferManagerException();
 		}
@@ -563,7 +564,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * </ol>
 	 * @throws StorageException 
 	 */
-	private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype, int latchMode, int hint) throws BufferManagerException, PageException, StorageException {
+	private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype, int latchMode, int hint) {
 
 		checkStatus();
         
@@ -745,8 +746,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * 
 	 * @see org.simpledbm.bm.BufMgr#fixForUpdate(org.simpledbm.pm.PageId, int)
 	 */
-	public BufferAccessBlock fixForUpdate(PageId pageid, int hint)
-			throws BufferManagerException {
+	public BufferAccessBlock fixForUpdate(PageId pageid, int hint) {
 		return fix(pageid, false, -1, LATCH_UPDATE, hint);
 	}
 	
@@ -761,7 +761,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * 
 	 * @throws BufferManagerException
 	 */
-	void unfix(BufferAccessBlockImpl bab) throws BufferManagerException {
+	void unfix(BufferAccessBlockImpl bab) {
 
 		bab.unlatch();
 
@@ -905,7 +905,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * @throws LogException
 	 * @throws StorageException
 	 */
-	void writeBuffers() throws LogException, PageException {
+	void writeBuffers() {
 
 		/*
 		 * First make a list of all the dirty pages. By making a copy we avoid
@@ -1200,7 +1200,7 @@ public final class BufferManagerImpl implements BufferManager {
 		/* (non-Javadoc)
 		 * @see org.simpledbm.bm.BufferAccessBlock#unfix()
 		 */
-		public void unfix() throws BufferManagerException {
+		public void unfix() {
 			bufMgr.unfix(this);
 		}
 
@@ -1259,7 +1259,7 @@ public final class BufferManagerImpl implements BufferManager {
 //						// ignore
 //					}
 //				}
-				LockSupport.parkNanos(bufmgr.bufferWriterSleepInterval * 1000000);
+				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(bufmgr.bufferWriterSleepInterval, TimeUnit.MILLISECONDS));
 				try {
 					if (log.isTraceEnabled()) {
 						log.trace(LOG_CLASS_NAME, "run", "BEFORE Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);

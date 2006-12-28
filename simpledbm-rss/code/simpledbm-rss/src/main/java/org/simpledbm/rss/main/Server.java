@@ -79,7 +79,7 @@ public class Server {
 	 * @see LogFactory#createLog(Properties)
 	 * @see LogFactory
 	 */
-	public static void create(Properties props) throws Exception {
+	public static void create(Properties props) {
 		Server server = new Server(props);
 		final LogFactory logFactory = new LogFactoryImpl();
 		logFactory.createLog(server.getStorageFactory(), props);
@@ -104,9 +104,8 @@ public class Server {
 	 * @see #start()
 	 * @see #shutdown()
 	 * @param props Properties that define various parameters for the system
-	 * @throws Exception Thrown if there was a problem during initialization.
 	 */
-	public Server(Properties props) throws Exception {
+	public Server(Properties props) {
 
 		String logProperties = props.getProperty("logging.properties.file", "logging.properties");
 		Logger.configure(logProperties);
@@ -145,9 +144,8 @@ public class Server {
 	 * @see LogManager#start()
 	 * @see BufferManager#start()
 	 * @see TransactionManager#start()
-	 * @throws Exception Thrown if there was a problem starting the Server instance.
 	 */
-	public void start() throws Exception {
+	public void start() {
 		getLogManager().start();
 		getBufferManager().start();
 		getTransactionManager().start();

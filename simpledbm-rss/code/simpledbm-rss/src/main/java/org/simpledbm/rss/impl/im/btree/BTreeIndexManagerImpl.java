@@ -204,7 +204,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see org.simpledbm.rss.tm.TransactionalModule#redo(org.simpledbm.rss.pm.Page, org.simpledbm.rss.tm.Redoable)
 	 */
 	@Override
-	public final void redo(Page page, Redoable loggable) throws TransactionException, FreeSpaceManagerException {
+	public final void redo(Page page, Redoable loggable){
 		if (loggable instanceof SplitOperation) {
 			redoSplitOperation(page, (SplitOperation) loggable);
 		}
@@ -247,7 +247,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see org.simpledbm.rss.tm.TransactionalModule#undo(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.tm.Undoable)
 	 */
 	@Override
-	public final void undo(Transaction trx, Undoable undoable) throws TransactionException, BufferManagerException, FreeSpaceManagerException {
+	public final void undo(Transaction trx, Undoable undoable) {
 		if (undoable instanceof InsertOperation) {
 			undoInsertOperation(trx, (InsertOperation) undoable);
 		}
@@ -264,7 +264,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see #createIndex(Transaction, String, int, int, int, int, boolean)
 	 * @see XMLLoader 
 	 */
-	private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) throws FreeSpaceManagerException {
+	private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
 		/*
 		 * A LoadPageOperation is applied to couple of pages: the BTree page being initialised
 		 * and the Space Map page that contains the used/unused status for the BTree page.
@@ -349,11 +349,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 	/**
 	 * Redo a merge operation.
-	 * @throws FreeSpaceManagerException 
 	 * @see BTreeImpl#doMerge(Transaction, BTreeCursor) 
 	 * @see MergeOperation
 	 */
-	private void redoMergeOperation(Page page, MergeOperation mergeOperation) throws FreeSpaceManagerException {
+	private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
 		if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
 			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
 			// deallocate
@@ -395,7 +394,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see BTreeImpl#doLink(Transaction, BTreeCursor)
 	 * @see LinkOperation
 	 */
-	private void redoLinkOperation(Page page, LinkOperation linkOperation) throws TransactionException {
+	private void redoLinkOperation(Page page, LinkOperation linkOperation) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode parent = new BTreeNode(linkOperation);
 		parent.wrap(p);
@@ -426,7 +425,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
 	 * @see UnlinkOperation 
 	 */
-	private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) throws TransactionException {
+	private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode parent = new BTreeNode(unlinkOperation);
 		parent.wrap(p);
@@ -554,11 +553,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/**
 	 * Decrease tree height when root page has only one child and that child does not
 	 * have a sibling.
-	 * @throws FreeSpaceManagerException 
 	 * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
 	 * @see DecreaseTreeHeightOperation
 	 */
-	private void redoDecreaseTreeHeightOperation(Page page, DecreaseTreeHeightOperation dthOperation) throws FreeSpaceManagerException {
+	private void redoDecreaseTreeHeightOperation(Page page, DecreaseTreeHeightOperation dthOperation) {
 		if (page.getPageId().getPageNumber() == dthOperation.childPageSpaceMap) {
 			// This is not executed if the space map is updated
 			// as a separate action. But we leave this code here in case we 
@@ -627,7 +625,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		node.dump();
 	}
 	
-	private void undoInsertOperation(Transaction trx, InsertOperation insertOp) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+	private void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
 //		Undo-insert(T,P,k,m) { X-latch(P);
 //		if (P still contains r and will not underflow if r is deleted) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
@@ -726,7 +724,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		node.dump();
 	}
 
-	private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+	private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
 //		X-latch(P);
 //		if (P still covers r and there is a room for r in P) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
@@ -809,14 +807,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/**
 	 * Returns a BTree implementation. 
 	 */
-	final BTreeImpl getBTreeImpl(int containerId, int keyFactoryType, int locationFactoryType, boolean unique) throws FreeSpaceManagerException {
+	final BTreeImpl getBTreeImpl(int containerId, int keyFactoryType, int locationFactoryType, boolean unique) {
 		return new BTreeImpl(this, containerId, keyFactoryType, locationFactoryType, unique);
 	}
 	
 	/* (non-Javadoc)
 	 * @see org.simpledbm.rss.bt.BTreeMgr#getBTree(int)
 	 */
-	public final Index getIndex(int containerId) throws IndexException {
+	public final Index getIndex(int containerId) {
 		int keyFactoryType = -1;
 		int locationFactoryType = -1;
 		boolean unique = false;
@@ -846,7 +844,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/**
 	 * @see #createIndex(Transaction, String, int, int, int, int, boolean)
 	 */
-	final void doCreateBTree(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+	final void doCreateBTree(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) {
 		
 		Savepoint sp = trx.createSavepoint(false);
 		boolean success = false;
@@ -906,7 +904,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 */
 	public final void createIndex(Transaction trx, String name,
 			int containerId, int extentSize, int keyFactoryType,
-			int locationFactoryType, boolean unique) throws IndexException {
+			int locationFactoryType, boolean unique) {
 		doCreateBTree(trx, name, containerId, extentSize, keyFactoryType,
 				locationFactoryType, unique);
 	}
@@ -954,7 +952,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		boolean unique;
 		
-		BTreeImpl(BTreeIndexManagerImpl btreeMgr, int containerId, int keyFactoryType, int locationFactoryType, boolean unique) throws FreeSpaceManagerException {
+		BTreeImpl(BTreeIndexManagerImpl btreeMgr, int containerId, int keyFactoryType, int locationFactoryType, boolean unique) {
 			this.btreeMgr = btreeMgr;
 			this.containerId = containerId;
 			this.keyFactoryType = keyFactoryType;
@@ -1004,7 +1002,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * @param trx Transaction managing the page split operation
 		 * @param bcursor bcursor.q must be the page that is to be split.
 		 */
-		public final void doSplit(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		public final void doSplit(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 			
@@ -1096,7 +1094,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * update. In the interests of high concurrency, the space map page update is
 		 * handled as a separate redo only action. 
 		 */
-		public final void doMerge(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+		public final void doMerge(Transaction trx, BTreeCursor bcursor) {
 			
 			final BTreeImpl btree = this;
 
@@ -1186,9 +1184,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * 	downgrade-latch(P);
 		 * }
 		 * </pre>
-		 * @throws FreeSpaceManagerException 
 		 */
-		public final void doLink(Transaction trx, BTreeCursor bcursor) throws TransactionException, FreeSpaceManagerException {
+		public final void doLink(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 
@@ -1246,9 +1243,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * 	unfix(P);
 		 * }
 		 * </pre>
-		 * @throws FreeSpaceManagerException 
 		 */
-		public final void doUnlink(Transaction trx, BTreeCursor bcursor) throws TransactionException, BufferManagerException, FreeSpaceManagerException {
+		public final void doUnlink(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 
@@ -1292,9 +1288,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Unlike the published algorithm we simply transfer one key from the more 
 		 * densely populated page to the less populated page.
 		 * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
-		 * @throws FreeSpaceManagerException 
 		 */
-		public final void doRedistribute(Transaction trx, BTreeCursor bcursor) throws TransactionException, BufferManagerException, FreeSpaceManagerException {
+		public final void doRedistribute(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 
@@ -1387,7 +1382,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * </ol>
 		 * @param bcursor bcursor.q must point to root page, and bcursor.r to its right sibling
 		 */
-		public final void doIncreaseTreeHeight(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		public final void doIncreaseTreeHeight(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 			
@@ -1504,7 +1499,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * bit BTreeNode.
 		 * @param bcursor bcursor.p must point to root page, and bcursor.q to only child
 		 */
-		public final void doDecreaseTreeHeight(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		public final void doDecreaseTreeHeight(Transaction trx, BTreeCursor bcursor) {
 
 			final BTreeImpl btree = this;
 			
@@ -1572,9 +1567,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * parent node or its new sibling node, whichever covers the search key,
 		 * will be left latched as bcursor.p. Latches on child nodes will remain
 		 * unchanged.  
-		 * @throws TransactionException 
 		 */
-		final void doSplitParent(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		final void doSplitParent(Transaction trx, BTreeCursor bcursor) {
 			/*
 			 * doSplit requires Q to point to page that is to be
 			 * split, so we need to point Q to P temporarily.
@@ -1601,7 +1595,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * For this algorithm to work, an index page needs to have at least two children who
 		 * are linked the index page.
 		 */
-		public final boolean doRepairPageUnderflow(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+		public final boolean doRepairPageUnderflow(Transaction trx, BTreeCursor bcursor) {
 			
 			assert bcursor.getP() != null;
 			assert bcursor.getP().isLatchedForUpdate();
@@ -1880,7 +1874,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * For this algorithm to work, an index page needs to have at least two children who
 		 * are linked the index page.
 		 */
-		public final void repairPageUnderflow(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, TransactionException, FreeSpaceManagerException {
+		public final void repairPageUnderflow(Transaction trx, BTreeCursor bcursor) {
 			boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
 			while (tryAgain) {
 				// FIXME Test case
@@ -1892,7 +1886,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Walks down the tree using UPDATE mode latching. On the way down, pages may be
 		 * split or merged to ensure that the tree maintains its balance. 
 		 */
-		public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) {
 			/*
 			 * Fix root page
 			 */
@@ -1987,7 +1981,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 		}
 
-		public final void readModeTraverse(BTreeCursor bcursor) throws BufferManagerException {
+		public final void readModeTraverse(BTreeCursor bcursor) {
 			/*
 			 * Fix root page
 			 */
@@ -2027,7 +2021,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * bcursor.p will point to the page where the insert should take place.
 		 * @return SearchResult containing information about where to insert the new key
 		 */
-		public final SearchResult doInsertTraverse(Transaction trx, BTreeCursor bcursor) throws BufferManagerException, FreeSpaceManagerException, TransactionException {
+		public final SearchResult doInsertTraverse(Transaction trx, BTreeCursor bcursor) {
 			updateModeTravese(trx, bcursor);
 			/* At this point p points to the leaf page where the key is to be inserted */
 			assert bcursor.getP() != null;
@@ -2053,7 +2047,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * @return True if insert can proceed, false if lock could not be obtained on next key.
 		 */
 		public final boolean doNextKeyLock(Transaction trx, BTreeCursor bcursor, int nextPageNumber, int nextk, LockMode mode,
-				LockDuration duration) throws BufferManagerException, TransactionException {
+				LockDuration duration) {
 			SlottedPage nextPage = null;
 			IndexItem nextItem = null;
 			Lsn nextPageLsn = null;
@@ -2162,7 +2156,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		/**
 		 * @see #insert(Transaction, IndexKey, Location) 
 		 */
-		public final boolean doInsert(Transaction trx, IndexKey key, Location location) throws BufferManagerException, FreeSpaceManagerException, TransactionException, IndexException {
+		public final boolean doInsert(Transaction trx, IndexKey key, Location location) {
 
 			BTreeCursor bcursor = new BTreeCursor();
 			bcursor.searchKey = new IndexItem(key, location, -1, true, isUnique());
@@ -2308,7 +2302,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * @see org.simpledbm.rss.bt.BTree#insert(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.bt.IndexKey, org.simpledbm.rss.bt.Location)
 		 */
 		public final void insert(Transaction trx, IndexKey key,
-				Location location) throws IndexException {
+				Location location) {
 			boolean success = doInsert(trx, key, location);
 			while (!success) {
 				success = doInsert(trx, key, location);
@@ -2316,10 +2310,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 
 		/**
-		 * @throws FreeSpaceManagerException
 		 * @see #delete(Transaction, IndexKey, Location)
 		 */
-		public final boolean doDelete(Transaction trx, IndexKey key, Location location) throws BufferManagerException, TransactionException, IndexException, FreeSpaceManagerException {
+		public final boolean doDelete(Transaction trx, IndexKey key, Location location) {
 
 			BTreeCursor bcursor = new BTreeCursor();
 			bcursor.searchKey = new IndexItem(key, location, -1, true, isUnique());
@@ -2400,7 +2393,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * released.
 		 */
 		public final void delete(Transaction trx, IndexKey key,
-				Location location) throws IndexException {
+				Location location) {
 			boolean success = doDelete(trx, key, location);
 			while (!success) {
 				success = doDelete(trx, key, location);
@@ -2412,7 +2405,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * positions the cursor on the current key or the next higher key.
 		 * Handles both fetch() and fetchNext() calls.
 		 */
-		final SearchResult doSearch(IndexCursorImpl icursor) throws BufferManagerException {
+		final SearchResult doSearch(IndexCursorImpl icursor) {
 			BTreeNode node = getBTreeNode();
 			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
 			// node.dump();
@@ -2465,7 +2458,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		/**
 		 * Moves to the node to the right if possible or sets EOF status.
 		 */
-		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) throws BufferManagerException {
+		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) {
 			// Key to be fetched is in the next page
 			int nextPage = node.header.rightSibling;
 			if (nextPage == -1) {
@@ -2499,11 +2492,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * @param trx Transaction that is managing this fetch
 		 * @param cursor The BTreeScan cursor
 		 * @return True if successful, fals if operation needs to be tried again 
-		 * @throws BufferManagerException
-		 * @throws IndexException
-		 * @throws TransactionException
 		 */
-		private final boolean doFetch(Transaction trx, IndexScan cursor) throws BufferManagerException, IndexException, TransactionException {
+		private final boolean doFetch(Transaction trx, IndexScan cursor) {
 			IndexCursorImpl icursor = (IndexCursorImpl) cursor;
 			try {
 				boolean doSearch = false;
@@ -2592,7 +2582,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return false;
 		}
 
-		public final void fetch(Transaction trx, IndexScan cursor) throws BufferManagerException, IndexException, TransactionException {
+		public final void fetch(Transaction trx, IndexScan cursor) {
 			boolean success = doFetch(trx, cursor);
 			while (!success) {
 				success = doFetch(trx, cursor);
@@ -2645,7 +2635,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			trx.registerTransactionalCursor(this);
 		}
 		
-		public final boolean fetchNext() throws IndexException {
+		public final boolean fetchNext() {
 			if (!eof) {
 				if (previousKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
@@ -2696,7 +2686,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return false;
 		}
 		
-		public final void close() throws IndexException {
+		public final void close() {
 			trx.unregisterTransactionalCursor(this);
 			RSSException ex = null;
 			try {
@@ -2747,7 +2737,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return eof;
 		}
 		
-		public void restoreState(Transaction txn, Savepoint sp) throws TransactionException {
+		public void restoreState(Transaction txn, Savepoint sp) {
 			CursorState cs = (CursorState) sp.getValue(this);
 			System.out.println("Current position is set to " + currentKey);
 			System.out.println("Rollback to savepoint is restoring state to " + cs);
@@ -2873,28 +2863,28 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			this.searchKey = searchKey;
 		}
 	
-		public final void unfixP() throws BufferManagerException {
+		public final void unfixP() {
 			if (p != null) {
 				p.unfix();
 				p = null;
 			}
 		}
 
-		public final void unfixQ() throws BufferManagerException {
+		public final void unfixQ() {
 			if (q != null) {
 				q.unfix();
 				q = null;
 			}
 		}
 
-		public final void unfixR() throws BufferManagerException {
+		public final void unfixR() {
 			if (r != null) {
 				r.unfix();
 				r = null;
 			}
 		}
 		
-		public final void unfixAll() throws BufferManagerException {
+		public final void unfixAll() {
 			BufferManagerException e = null;
 			try {
 				unfixP();

@@ -438,7 +438,7 @@ public final class LogManagerImpl implements LogManager {
 	/*
 	 * @see org.simpledbm.rss.log.Log#insert(byte[], int)
 	 */
-	public final Lsn insert(byte[] data, int length) throws LogException {
+	public final Lsn insert(byte[] data, int length) {
 		assertIsOpen();
 		int reclen = calculateLogRecordSize(length);
 		if (reclen > getMaxLogRecSize()) {
@@ -479,19 +479,15 @@ public final class LogManagerImpl implements LogManager {
 	/*
 	 * @see org.simpledbm.rss.log.Log#flush(Lsn)
 	 */
-	public final void flush(Lsn upto) throws LogException {
+	public final void flush(Lsn upto) {
 		assertIsOpen();
-		try {
-			handleFlushRequest(new FlushRequest(upto));
-		} catch (StorageException e) {
-			throw new LogException("SIMPLEDBM-ELOG-001: Error ocurred while attempting to flush the Log", e);
-		}
+		handleFlushRequest(new FlushRequest(upto));
 	}
 
 	/*
 	 * @see org.simpledbm.rss.log.Log#flush()
 	 */
-	public final void flush() throws LogException {
+	public final void flush() {
 		assertIsOpen();
 		flush(null);
 	}
@@ -499,7 +495,7 @@ public final class LogManagerImpl implements LogManager {
 	/*
 	 * @see org.simpledbm.rss.log.Log#getLogReader(Lsn startLsn)
 	 */
-	public final LogReader getForwardScanningReader(Lsn startLsn) throws LogException {
+	public final LogReader getForwardScanningReader(Lsn startLsn) {
 		assertIsOpen();
 		return new LogForwardReaderImpl(this, startLsn == null ? LogManagerImpl.FIRST_LSN : startLsn);
 	}
@@ -508,7 +504,7 @@ public final class LogManagerImpl implements LogManager {
 	 * (non-Javadoc)
 	 * @see org.simpledbm.rss.log.LogMgr#getBackwardScanningReader(org.simpledbm.rss.log.Lsn)
 	 */
-	public final LogReader getBackwardScanningReader(Lsn startLsn) throws LogException {
+	public final LogReader getBackwardScanningReader(Lsn startLsn) {
 		assertIsOpen();
 		return new LogBackwardReaderImpl(this, startLsn == null ? getMaxLsn() : startLsn); 
 	}
@@ -518,10 +514,8 @@ public final class LogManagerImpl implements LogManager {
 	 * log is scanned in order to locate the End of Log. See {@link #scanToEof}
 	 * for details of why this is necessary.
 	 * 
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	final synchronized public void start() throws LogException {
+	final synchronized public void start() {
 		if (started || errored) {
 			throw new LogException(
 					"SIMPLEDBM-ELOG-002: Log is already open or has encountered an error.");
@@ -632,12 +626,11 @@ public final class LogManagerImpl implements LogManager {
 	 * Initializes background threads and sets up any synchronisation primitives
 	 * that will be used to coordinate actions between the background threads.
 	 * 
-	 * @throws LogException
 	 * @see #logFilesSemaphore
 	 * @see #flushService
 	 * @see #archiveService
 	 */
-	private void setupBackgroundThreads() throws LogException {
+	private void setupBackgroundThreads() {
 		logFilesSemaphore = new Semaphore(anchor.n_LogFiles - 1);
 		for (int i = 0; i < anchor.n_LogFiles; i++) {
 			if (anchor.fileStatus[i] == LOG_FILE_FULL) {
@@ -724,9 +717,8 @@ public final class LogManagerImpl implements LogManager {
 	 * that can be used is defined in {@link #MAX_CTL_FILES}.
 	 * 
 	 * @param files
-	 * @throws LogException
 	 */
-	final void setCtlFiles(String files[]) throws LogException {
+	final void setCtlFiles(String files[]) {
 		if (files.length > MAX_CTL_FILES) {
 			throw new LogException("SIMPLEDBM-ELOG-003: Number of Control Files exceeds limit of " + MAX_CTL_FILES);
 		}
@@ -742,9 +734,8 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @param groupPaths
 	 * @param n_LogFiles
-	 * @throws LogException
 	 */
-	final void setLogFiles(String groupPaths[], short n_LogFiles) throws LogException {
+	final void setLogFiles(String groupPaths[], short n_LogFiles) {
 		int n_LogGroups = groupPaths.length;
 		if (n_LogGroups > MAX_LOG_GROUPS) {
 			throw new LogException("SIMPLEDBM-ELOG-004: Number of Log Groups exceeds limt of " + MAX_LOG_GROUPS);
@@ -866,10 +857,8 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @param container
 	 * @return
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private LogAnchor readLogAnchor(StorageContainer container) throws StorageException, LogException {
+	private LogAnchor readLogAnchor(StorageContainer container) {
 		int n;
 		long checksum;
 		byte bufh[] = new byte[(Integer.SIZE / Byte.SIZE) + (Long.SIZE / Byte.SIZE)];
@@ -899,9 +888,8 @@ public final class LogManagerImpl implements LogManager {
 	 * Creates a new Log Control file.
 	 * 
 	 * @param filename
-	 * @throws StorageException
 	 */
-	private void createLogAnchor(String filename) throws StorageException {
+	private void createLogAnchor(String filename) {
 		logger.debug(LOG_CLASS_NAME, "createLogAnchor", "SIMPLEDBM: Creating log control file " + filename);
 
 		StorageContainer file = null;
@@ -921,10 +909,8 @@ public final class LogManagerImpl implements LogManager {
 
 	/**
 	 * Create all the Log Control files.
-	 * 
-	 * @throws StorageException
 	 */
-	private void createLogAnchors() throws StorageException {
+	private void createLogAnchors() {
 		int i;
 		for (i = 0; i < anchor.n_CtlFiles; i++) {
 			createLogAnchor(anchor.ctlFiles[i].toString());
@@ -938,10 +924,9 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @param container
 	 * @param bb
-	 * @throws StorageException
 	 * @see #readLogAnchor(StorageContainer)
 	 */
-	private void updateLogAnchor(StorageContainer container, ByteBuffer bb) throws StorageException {
+	private void updateLogAnchor(StorageContainer container, ByteBuffer bb) {
 		long checksum = ChecksumCalculator.compute(bb.array(), 0, bb.limit());
 		ByteBuffer bh = ByteBuffer.allocate((Integer.SIZE / Byte.SIZE) + (Long.SIZE / Byte.SIZE));
 		bh.putInt(bb.limit());
@@ -957,9 +942,8 @@ public final class LogManagerImpl implements LogManager {
 	 * Update all copies of the LogAnchor.
 	 * 
 	 * @param bb
-	 * @throws StorageException
 	 */
-	private void updateLogAnchors(ByteBuffer bb) throws StorageException {
+	private void updateLogAnchors(ByteBuffer bb) {
 		int i;
 		for (i = 0; i < anchor.n_CtlFiles; i++) {
 			updateLogAnchor(ctlFiles[i], bb);
@@ -974,9 +958,8 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @param filename
 	 * @param header
-	 * @throws StorageException
 	 */
-	private void createLogFile(String filename, LogFileHeader header) throws StorageException {
+	private void createLogFile(String filename, LogFileHeader header) {
 
 		logger.debug(LOG_CLASS_NAME, "createLogFile", "SIMPLEDBM: Creating log file " + filename);
 
@@ -1026,9 +1009,8 @@ public final class LogManagerImpl implements LogManager {
 	 * Creates all the log files.
 	 * 
 	 * @see #createLogFile(String, LogFileHeader)
-	 * @throws StorageException
 	 */
-	private void createLogFiles() throws StorageException {
+	private void createLogFiles() {
 		int i, j;
 		for (i = 0; i < anchor.n_LogGroups; i++) {
 			for (j = 0; j < anchor.n_LogFiles; j++) {
@@ -1042,9 +1024,8 @@ public final class LogManagerImpl implements LogManager {
 	 * Resets a log file by initializing the header record.
 	 * 
 	 * @param logfile
-	 * @throws StorageException
 	 */
-	private void resetLogFiles(int logfile) throws StorageException {
+	private void resetLogFiles(int logfile) {
 		LogFileHeader header = new LogFileHeader();
 		ByteBuffer bb = ByteBuffer.allocate(LogFileHeader.SIZE);
 
@@ -1060,10 +1041,8 @@ public final class LogManagerImpl implements LogManager {
 
 	/**
 	 * Creates and initializes a Log. Existing Log Files will be over-written.
-	 * 
-	 * @throws StorageException
 	 */
-	final synchronized void create() throws StorageException {
+	final synchronized void create() {
 		createLogFiles();
 		createLogAnchors();
 	}
@@ -1073,10 +1052,8 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @param groupno
 	 * @param fileno
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private void openLogFile(int groupno, int fileno) throws StorageException, LogException {
+	private void openLogFile(int groupno, int fileno) {
 		LogFileHeader fh = new LogFileHeader();
 		byte[] bufh = new byte[fh.getStoredLength()];
 		files[groupno][fileno] = storageFactory.open(anchor.groups[groupno].files[fileno].toString());
@@ -1094,11 +1071,8 @@ public final class LogManagerImpl implements LogManager {
 
 	/**
 	 * Opens all the log files.
-	 * 
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private void openLogFiles() throws StorageException, LogException {
+	private void openLogFiles() {
 		int i, j;
 		for (i = 0; i < anchor.n_LogGroups; i++) {
 			for (j = 0; j < anchor.n_LogFiles; j++) {
@@ -1131,11 +1105,8 @@ public final class LogManagerImpl implements LogManager {
 	 * Opens all the Control files.
 	 * <p>
 	 * TODO: validate the contents of each control file.
-	 * 
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private void openCtlFiles() throws StorageException, LogException {
+	private void openCtlFiles() {
 		for (int i = 0; i < anchor.n_CtlFiles; i++) {
 			ctlFiles[i] = storageFactory.open(anchor.ctlFiles[i].toString());
 		}
@@ -1198,7 +1169,7 @@ public final class LogManagerImpl implements LogManager {
 		return anchor.durableLsn;
 	}
 
-	private void assertIsOpen() throws LogException {
+	private void assertIsOpen() {
 		if (!started || errored) {
 			throw new LogException("SIMPLEDBM-ELOG-011: Log file is not open or has encountered errors.");
 		}
@@ -1242,11 +1213,8 @@ public final class LogManagerImpl implements LogManager {
 	 * {@link #LOG_FILE_FULL} and the next available log file is marked as
 	 * current. If there isn't an available log file, then the caller must wait
 	 * until the archive thread has freed up a log file.
-	 * 
-	 * @throws LogException
-	 * @throws StorageException
 	 */
-	private void logSwitch() throws LogException, StorageException {
+	private void logSwitch() {
 		short next_log_file;
 		int i;
 
@@ -1337,10 +1305,8 @@ public final class LogManagerImpl implements LogManager {
 
 	/**
 	 * Update the Log Control files.
-	 * 
-	 * @throws StorageException
 	 */
-	private void writeLogAnchor() throws StorageException {
+	private void writeLogAnchor() {
 		int n = anchor.getStoredLength();
 		ByteBuffer bb = ByteBuffer.allocate(n);
 		anchor.store(bb);
@@ -1354,10 +1320,8 @@ public final class LogManagerImpl implements LogManager {
 	 * then a log switch is performed.
 	 * 
 	 * @param req
-	 * @throws LogException
-	 * @throws StorageException
 	 */
-	private void doLogWrite(LogWriteRequest req) throws LogException, StorageException {
+	private void doLogWrite(LogWriteRequest req) {
 
 		if (req.logIndex != anchor.currentLogIndex) {
 			logSwitch();
@@ -1377,11 +1341,9 @@ public final class LogManagerImpl implements LogManager {
 	 * {@link #handleFlushRequest_(FlushRequest)}.
 	 * 
 	 * @param req
-	 * @throws LogException
-	 * @throws StorageException
 	 * @see #handleFlushRequest_(FlushRequest)
 	 */
-	private void handleFlushRequest(FlushRequest req) throws LogException, StorageException {
+	private void handleFlushRequest(FlushRequest req) {
 		flushLock.lock();
 		try {
 			handleFlushRequest_(req);
@@ -1411,13 +1373,11 @@ public final class LogManagerImpl implements LogManager {
 	 * it removes the need to update the control files at every flush.
 	 * 
 	 * @param req
-	 * @throws LogException
-	 * @throws StorageException
 	 * @see #doLogWrite(LogWriteRequest)
 	 * @see #handleFlushRequest(FlushRequest)
 	 * @see #scanToEof()
 	 */
-	private void handleFlushRequest_(FlushRequest req) throws LogException, StorageException {
+	private void handleFlushRequest_(FlushRequest req) {
 
 		LinkedList<LogWriteRequest> iorequests = new LinkedList<LogWriteRequest>();
 		boolean done = false;
@@ -1586,10 +1546,8 @@ public final class LogManagerImpl implements LogManager {
 	 * the logIndex. The archive file is created in the archive path.
 	 * 
 	 * @param f
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private void archiveLogFile(int f) throws StorageException, LogException {
+	private void archiveLogFile(int f) {
 		String name = null;
 		anchorLock.lock();
 		try {
@@ -1627,11 +1585,9 @@ public final class LogManagerImpl implements LogManager {
 	 * can run at any time. All of the real work is done in
 	 * {@link #handleNextArchiveRequest}.
 	 * 
-	 * @throws StorageException
-	 * @throws LogException
 	 * @see #handleNextArchiveRequest_(ArchiveRequest)
 	 */
-	void handleNextArchiveRequest(ArchiveRequest request) throws StorageException, LogException {
+	void handleNextArchiveRequest(ArchiveRequest request) {
 		archiveLock.lock();
 		try {
 			if (lastArchivedFile == -1) {
@@ -1660,10 +1616,8 @@ public final class LogManagerImpl implements LogManager {
 	 * After archiving the log file, the control file is updated.
 	 * 
 	 * @param request
-	 * @throws StorageException
-	 * @throws LogException
 	 */
-	private void handleNextArchiveRequest_(ArchiveRequest request) throws StorageException, LogException {
+	private void handleNextArchiveRequest_(ArchiveRequest request) {
 
 		// System.err.println(Thread.currentThread().getName() + ": handleNextArchiveRequest_: Archiving log index " + request.logIndex + " file " + request.fileno);
 		archiveLogFile(request.fileno);
@@ -1725,10 +1679,9 @@ public final class LogManagerImpl implements LogManager {
 	 * @param bb
 	 *            Data stream
 	 * @return
-	 * @throws LogException
 	 * @see #LOGREC_HEADER_SIZE
 	 */
-	private LogRecordImpl doRead(Lsn readLsn, ByteBuffer bb) throws LogException {
+	private LogRecordImpl doRead(Lsn readLsn, ByteBuffer bb) {
 		int offset = bb.position();
 		int length = bb.getInt();
 		int dataLength = length - LOGREC_HEADER_SIZE;
@@ -1754,7 +1707,7 @@ public final class LogManagerImpl implements LogManager {
 		return logrec;
 	}
 
-    public final LogRecordImpl read(Lsn lsn) throws LogException {
+    public final LogRecordImpl read(Lsn lsn) {
 		return doRead(lsn);
 	}
     
@@ -1772,11 +1725,8 @@ public final class LogManagerImpl implements LogManager {
 	 * @param lsn
 	 *            Lsn of the LogRecord to be read
 	 * @return
-	 * @throws StorageException
-	 * @throws LogException
-	 * @throws StorageException
 	 */
-	final LogRecordImpl doRead(Lsn lsn) throws LogException, StorageException {
+	final LogRecordImpl doRead(Lsn lsn) {
 
 		/*
 		 * First check the log buffers.
@@ -1892,7 +1842,7 @@ public final class LogManagerImpl implements LogManager {
 		}
 	}
 
-	final void validateLogFile(int logIndex, String name) throws StorageException, LogException {
+	final void validateLogFile(int logIndex, String name) {
 		StorageContainer container = null;
 		container = storageFactory.open(name);
 		Lsn lsn = new Lsn(logIndex, FIRST_LSN.getOffset());
@@ -1943,9 +1893,8 @@ public final class LogManagerImpl implements LogManager {
 	 * scanned from the recorded durableLsn until the real end of the log is
 	 * located. The control block is then updated.
 	 * 
-	 * @throws StorageException
 	 */
-	private void scanToEof() throws StorageException {
+	private void scanToEof() {
 		Lsn scanLsn, durableLsn, currentLsn;
 
 		durableLsn = anchor.durableLsn;
@@ -2018,7 +1967,7 @@ public final class LogManagerImpl implements LogManager {
 			this.nextLsn = startLsn;
 		}
 
-		public LogRecord getNext() throws LogException {
+		public LogRecord getNext() {
 			LogRecordImpl rec;
 			for (;;) {
 				Lsn maxLsn = log.getMaxLsn();
@@ -2066,7 +2015,7 @@ public final class LogManagerImpl implements LogManager {
 			this.nextLsn = startLsn;
 		}
 
-		public LogRecord getNext() throws LogException {
+		public LogRecord getNext() {
 			LogRecordImpl rec;
 			for (;;) {
 				Lsn maxLsn = log.getMaxLsn();
@@ -2913,7 +2862,7 @@ public final class LogManagerImpl implements LogManager {
 		 * 
 		 * @see java.util.concurrent.Callable#call()
 		 */
-		public Boolean call() throws Exception {
+		public Boolean call() {
 			try {
 				log.handleNextArchiveRequest(request);
 			} catch (StorageException e) {

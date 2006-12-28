@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
 
@@ -1574,8 +1575,8 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
             catch (LockTimeoutException e) {
             	/*
-            	 * Currently there is no support for deadlock detection, therefore
-            	 * we use timeouts to detect deadlocks.
+            	 * Although there is support for deadlock detection, 
+            	 * we also treat timeouts as deadlocks.
             	 */
                 throw new LockDeadlockException(e);
             }
@@ -2718,7 +2719,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 //					} catch (InterruptedException e) {
 //					}
 //				}
-				LockSupport.parkNanos(trxmgr.checkpointInterval * 1000000);
+				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(trxmgr.checkpointInterval, TimeUnit.MILLISECONDS));
 				try {
 					// System.err.println("WRITING CHECKPOINT");
 					trxmgr.checkpoint();
