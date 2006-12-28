@@ -41,15 +41,14 @@ import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.Index;
-import org.simpledbm.rss.api.im.IndexException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
-import org.simpledbm.rss.api.im.IndexException.TrxException;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
+import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
@@ -2462,7 +2461,7 @@ public class TestBTreeManager extends BaseTestCase {
 							// System.out.println(Thread.currentThread() + ": inserted " + k);
 							okay = true;
 						}
-						catch (IndexException.LockException e) {
+						catch (LockDeadlockException e) {
 							// assume deadlock
 							e.printStackTrace();
 						}
@@ -2544,7 +2543,7 @@ public class TestBTreeManager extends BaseTestCase {
 							// System.out.println(Thread.currentThread() + ": inserted " + k);
 							okay = true;
 						}
-						catch (IndexException.LockException e) {
+						catch (LockDeadlockException e) {
 							// assume deadlock
 							e.printStackTrace();
 						}
@@ -2850,6 +2849,8 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
         suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+        suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+        suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
         return suite;
     }
 
