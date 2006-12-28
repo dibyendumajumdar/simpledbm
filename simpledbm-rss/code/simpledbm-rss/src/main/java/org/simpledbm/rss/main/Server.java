@@ -146,6 +146,7 @@ public class Server {
 	 * @see TransactionManager#start()
 	 */
 	public void start() {
+		getLockManager().start();
 		getLogManager().start();
 		getBufferManager().start();
 		getTransactionManager().start();
@@ -171,6 +172,7 @@ public class Server {
 		getBufferManager().shutdown();
 		getLogManager().shutdown();
 		getStorageManager().shutdown();
+		getLockManager().shutdown();
 		log.info(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: RSS Server shutdown completed.");
 	}
 
