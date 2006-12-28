@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.bm;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Exceptions thrown by the Buffer Manager module are all
  * derived from this class.
@@ -26,9 +28,9 @@ package org.simpledbm.rss.api.bm;
  * @author Dibyendu Majumdar
  * @since 20-Aug-2005
  */
-public class BufferManagerException extends Exception {
+public class BufferManagerException extends RSSException {
 
-	private static final long serialVersionUID = 7479796029913331256L;
+	private static final long serialVersionUID = 1L;
 
 	public BufferManagerException() {
 		super();
@@ -42,40 +44,4 @@ public class BufferManagerException extends Exception {
 	public BufferManagerException(Throwable cause) {
 		super(cause);
 	}
-
-    public static final class StorageException extends BufferManagerException {
-
-        private static final long serialVersionUID = 6508962282665664480L;
-
-        public StorageException() {
-            super();
-        }
-        public StorageException(String message, Throwable cause) {
-            super(message, cause);
-        }
-        public StorageException(String message) {
-            super(message);
-        }
-        public StorageException(Throwable cause) {
-            super(cause);
-        }
-    }
-
-    public static final class PageException extends BufferManagerException {
-
-        private static final long serialVersionUID = -4058556154710644294L;
-
-        public PageException() {
-            super();
-        }
-        public PageException(String message, Throwable cause) {
-            super(message, cause);
-        }
-        public PageException(String message) {
-            super(message);
-        }
-        public PageException(Throwable cause) {
-            super(cause);
-        }
-    }
 }

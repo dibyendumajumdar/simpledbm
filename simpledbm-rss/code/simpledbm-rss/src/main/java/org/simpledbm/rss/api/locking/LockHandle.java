@@ -41,7 +41,7 @@ public interface LockHandle {
 	 * @throws LockException Thrown if the lock doesn't exist
      * @return True if lock was released, false if lock is still held.
 	 */
-	boolean release(boolean force) throws LockException;
+	boolean release(boolean force);
 	
 	/**
 	 * Downgrades a lock to the desired mode. Downgrading a lock may result in other
@@ -51,7 +51,7 @@ public interface LockHandle {
 	 * @param mode
 	 * @throws LockException
 	 */
-    void downgrade(LockMode mode) throws LockException;
+    void downgrade(LockMode mode);
     
     /**
      * Returns the currently held LockMode.

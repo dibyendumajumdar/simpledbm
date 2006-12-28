@@ -48,7 +48,7 @@ public interface Transaction {
 	 * <p>
 	 * Transaction related log records must always be associated with specific disk pages.
 	 */
-	public Lsn logInsert(Page page, Loggable logrec) throws TransactionException;
+	public Lsn logInsert(Page page, Loggable logrec);
 
 	/**
 	 * Acquires a lock in specified mode, and adds it to the transaction's list of locks.
@@ -60,14 +60,14 @@ public interface Transaction {
 	 * @see TransactionManager#setLockWaitTimeout(int)
 	 * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
 	 */		
-	public void acquireLock(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException;	
+	public void acquireLock(Lockable lockable, LockMode mode, LockDuration duration);	
 
 	/**
 	 * Same as {@link #acquireLock(Object, LockMode, LockDuration) acquireLock} but does not wait
 	 * for lock to be available.
 	 * @see #acquireLock(Object, LockMode, LockDuration) 
 	 */		
-	public void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException;	
+	public void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration);	
 	
 	/**
 	 * Attempts to release a lock, and if this succeeds, the lock is removed from
@@ -80,7 +80,7 @@ public interface Transaction {
 	 * to try to release lock held in any other mode.
 	 * @see org.simpledbm.rss.api.locking.LockHandle#release(boolean)
 	 */
-	public boolean releaseLock(Lockable lockable) throws TransactionException;
+	public boolean releaseLock(Lockable lockable);
     
     /**
      * Checks if the specified object is locked by this transaction.
@@ -95,7 +95,7 @@ public interface Transaction {
      * @param lockable Object to be locked
      * @param downgradeTo The target lock mode
      */
-    public void downgradeLock(Lockable lockable, LockMode downgradeTo) throws TransactionException;
+    public void downgradeLock(Lockable lockable, LockMode downgradeTo);
     
 	/**
 	 * Schedules a post commit action. Post commit actions are used to deal with
@@ -121,29 +121,29 @@ public interface Transaction {
 	 * Commits the transaction. All locks held by the
 	 * transaction are released.
 	 */
-	public void commit() throws TransactionException;	
+	public void commit();	
 
 	/**
 	 * Rolls back a transaction upto a savepoint. Locks acquired
 	 * since the Savepoint are released. PostCommitActions queued
 	 * after the Savepoint was created are discarded.
 	 */
-	public void rollback(Savepoint sp) throws TransactionException;	
+	public void rollback(Savepoint sp);	
 
 	/**
 	 * Aborts the transaction, undoing all changes and releasing locks.
 	 */
-	public void abort() throws TransactionException;	
+	public void abort();	
 
 	/**
 	 * Starts a Nested Top Action. Will throw an exception if a nested top action is already in scope.
 	 */
-	public void startNestedTopAction() throws TransactionException;
+	public void startNestedTopAction();
 
 	/**
 	 * Completes a nested top action. Will throw an exception if there isn't a nested top action in scope.
 	 */
-	public void completeNestedTopAction() throws TransactionException;
+	public void completeNestedTopAction();
 
 	/**
 	 * Abandons a nested top action.

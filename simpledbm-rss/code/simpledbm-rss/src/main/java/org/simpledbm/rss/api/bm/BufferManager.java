@@ -40,7 +40,7 @@ public interface BufferManager {
 	 * Starts the Buffer Manager instance. This may cause background threads to
 	 * be started.
 	 */
-	public void start() throws BufferManagerException;
+	public void start();
 	
     /**
 	 * Shuts down the Buffer Manager instance. Any background threads will be
@@ -66,7 +66,7 @@ public interface BufferManager {
 	 * @throws BufferManagerException
 	 * @see BufferAccessBlock#unfix()
 	 */
-    public BufferAccessBlock fixShared(PageId pageid, int hint) throws BufferManagerException;
+    public BufferAccessBlock fixShared(PageId pageid, int hint);
     
     /**
 	 * Fixes a page in memory, reading it from disk if necessary, and latches it
@@ -103,7 +103,7 @@ public interface BufferManager {
 	 * @see BufferAccessBlock#setDirty(Lsn)
 	 */
     public BufferAccessBlock fixExclusive(PageId pageid, boolean isNew, int pagetype,
-            int hint) throws BufferManagerException;
+            int hint);
 
     /**
 	 * Fixes a page in memory, reading it from disk if necessary, and latches
@@ -122,7 +122,7 @@ public interface BufferManager {
 	 * @see BufferAccessBlock#unfix()
 	 * @see BufferAccessBlock#upgradeUpdateLatch()
 	 */
-    public BufferAccessBlock fixForUpdate(PageId pageid, int hint) throws BufferManagerException;
+    public BufferAccessBlock fixForUpdate(PageId pageid, int hint);
     
     /**
 	 * Returns information about dirty pages in the Buffer Pool. This method is

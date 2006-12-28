@@ -849,19 +849,19 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 		volatile LockRequestStatus status = LockRequestStatus.GRANTED;
 
-		LockMode mode;
+		volatile LockMode mode;
 
-		LockMode convertMode;
+		volatile LockMode convertMode;
         
-		short count = 1;
+		volatile short count = 1;
 
 		final Object owner;
 		
-		Thread waitingThread;
+		volatile Thread waitingThread;
 		
 		NewReadWriteUpdateLatch lockItem;
 		
-		boolean upgrading;
+		volatile boolean upgrading;
 
 		LockRequest(NewReadWriteUpdateLatch lockItem, Object owner, LockMode mode) {
 			this.lockItem = lockItem;

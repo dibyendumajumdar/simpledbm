@@ -43,7 +43,7 @@ public interface Index {
 	 * @param key Key to be inserted
 	 * @param location Location associated with the key
 	 */
-	public void insert(Transaction trx, IndexKey key, Location location) throws IndexException;
+	public void insert(Transaction trx, IndexKey key, Location location);
 	
 	/**
 	 * Deletes specified key and location. 
@@ -56,7 +56,7 @@ public interface Index {
 	 * @param key Key to be deleted
 	 * @param location Location associated with the key
 	 */
-	public void delete(Transaction trx, IndexKey key, Location location) throws IndexException;
+	public void delete(Transaction trx, IndexKey key, Location location);
 	
 	/**
 	 * Opens a new index scan. The Scan will fetch keys >= the specified key and location.

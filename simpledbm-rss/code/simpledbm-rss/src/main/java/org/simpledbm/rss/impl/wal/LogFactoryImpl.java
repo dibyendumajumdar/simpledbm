@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.st.StorageContainerFactory;
-import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
@@ -85,7 +84,8 @@ import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
  */
 public final class LogFactoryImpl implements LogFactory {
 
-	public final void createLog(StorageContainerFactory storageFactory, Properties props) throws LogException {
+	public final void createLog(StorageContainerFactory storageFactory,
+			Properties props) throws LogException {
 		LogMgrParms parms = new LogMgrParms(props);
 		LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
 		logmgr.setCtlFiles(parms.ctlFiles);
@@ -96,11 +96,7 @@ public final class LogFactoryImpl implements LogFactory {
 		logmgr.setLogFiles(parms.groupPaths, parms.n_LogFiles);
 		logmgr.setMaxBuffers(parms.maxLogBuffers);
 		logmgr.setLogFlushInterval(parms.logFlushInterval);
-		try {
-            logmgr.create();
-        } catch (StorageException e) {
-            throw new LogException.StorageException("Error occurred while attempting to create Log using " + props, e);
-        }
+		logmgr.create();
 	}
 	
 	/*

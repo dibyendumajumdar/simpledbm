@@ -31,7 +31,7 @@ package org.simpledbm.rss.api.locking;
  */
 public final class LockTimeoutException extends LockException {
 
-    private static final long serialVersionUID = -3093544325179940424L;
+    private static final long serialVersionUID = 1L;
 
     public LockTimeoutException() {
         super();

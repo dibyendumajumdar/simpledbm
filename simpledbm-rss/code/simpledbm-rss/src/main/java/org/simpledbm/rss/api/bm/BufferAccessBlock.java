@@ -94,7 +94,7 @@ public interface BufferAccessBlock {
 	 * @throws BufferManagerException
 	 *             Thrown if there was an unexpected error
 	 */
-    public void unfix() throws BufferManagerException;
+    public void unfix();
 
     /**
 	 * Tests whether the page is currently latched in EXCLUSIVE mode.

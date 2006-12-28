@@ -29,6 +29,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -45,6 +46,7 @@ import org.simpledbm.rss.api.isolation.LockAdaptor;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
@@ -815,34 +817,29 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see org.simpledbm.rss.bt.BTreeMgr#getBTree(int)
 	 */
 	public final Index getIndex(int containerId) throws IndexException {
+		int keyFactoryType = -1;
+		int locationFactoryType = -1;
+		boolean unique = false;
+
+		PageId rootPageId = new PageId(containerId, ROOT_PAGE_NUMBER);
+		BufferAccessBlock bab = bufmgr.fixShared(rootPageId, 0);
 		try {
-			int keyFactoryType = -1;
-			int locationFactoryType = -1;
-			boolean unique = false;
-			
-			PageId rootPageId = new PageId(containerId, ROOT_PAGE_NUMBER);
-			BufferAccessBlock bab = bufmgr.fixShared(rootPageId, 0);
-			try {
-				/*
-				 * FIXME: This method has knowledge of the BTreeNode and BTreeNodeHeader structures.
-				 * Ideally this ought to be encapsulated in BTreeNode
-				 */
-				SlottedPage page = (SlottedPage) bab.getPage();
-				unique = (page.getFlags() & BTreeNode.NODE_TREE_UNIQUE) != 0;
-				BTreeNodeHeader header = new BTreeNodeHeader();
-				page.get(0, header);
-				keyFactoryType = header.getKeyFactoryType();
-				locationFactoryType = header.getLocationFactoryType();
-			}
-			finally {
-				bab.unfix();
-			}
-            return getBTreeImpl(containerId, keyFactoryType, locationFactoryType, unique);
-        } catch (FreeSpaceManagerException e) {
-            throw new IndexException.SpaceMgrException(e);
-        } catch (BufferManagerException e) {
-            throw new IndexException.BufMgrException(e);
+			/*
+			 * FIXME: This method has knowledge of the BTreeNode and
+			 * BTreeNodeHeader structures. Ideally this ought to be encapsulated
+			 * in BTreeNode
+			 */
+			SlottedPage page = (SlottedPage) bab.getPage();
+			unique = (page.getFlags() & BTreeNode.NODE_TREE_UNIQUE) != 0;
+			BTreeNodeHeader header = new BTreeNodeHeader();
+			page.get(0, header);
+			keyFactoryType = header.getKeyFactoryType();
+			locationFactoryType = header.getLocationFactoryType();
+		} finally {
+			bab.unfix();
 		}
+		return getBTreeImpl(containerId, keyFactoryType, locationFactoryType,
+				unique);
 	}
 	
 
@@ -907,16 +904,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/* (non-Javadoc)
 	 * @see org.simpledbm.rss.bt.BTreeMgr#createBTree(org.simpledbm.rss.tm.Transaction, java.lang.String, int, int, int, int, boolean)
 	 */
-	public final void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) throws IndexException {
-		try {
-			doCreateBTree(trx, name, containerId, extentSize, keyFactoryType, locationFactoryType, unique);
-		} catch (BufferManagerException e) {
-			throw new IndexException.BufMgrException(e);
-		} catch (TransactionException e) {
-			throw new IndexException.TrxException(e);
-		} catch (FreeSpaceManagerException e) {
-			throw new IndexException.SpaceMgrException(e);
-		}
+	public final void createIndex(Transaction trx, String name,
+			int containerId, int extentSize, int keyFactoryType,
+			int locationFactoryType, boolean unique) throws IndexException {
+		doCreateBTree(trx, name, containerId, extentSize, keyFactoryType,
+				locationFactoryType, unique);
 	}
 
 	/**
@@ -2096,7 +2088,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * Instant duration lock succeeded. We can proceed with the insert.
 				 */
 				return true;
-			} catch (TransactionException.LockException e) {
+			} catch (LockException e) {
 				
 				if (log.isDebugEnabled()) {
 					log.debug(LOG_CLASS_NAME, "doNextKeyLock", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + mode + " lock on " + nextItem.getLocation());
@@ -2213,7 +2205,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 							try {
 								// System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
 								trx.acquireLockNowait(loc, LockMode.SHARED, duration);
-							} catch (TransactionException.LockException e) {
+							} catch (LockException e) {
 								// FIXME Test case
 								if (log.isDebugEnabled()) {
 									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + loc);
@@ -2223,15 +2215,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								 * Need to unlatch page and retry unconditionally. 
 								 */
 								bcursor.unfixP();
-								try {
-									// System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-									trx.acquireLock(loc, LockMode.SHARED, duration);
-								} catch (TransactionException.LockException e1) {
-									/*
-									 * Deadlock ??
-									 */
-									throw new IndexException.LockException("SIMPLEDBM-ERROR: Failed to acquire " + LockMode.SHARED + " lock on " + loc, e1);
-								}
+								// System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+								trx.acquireLock(loc, LockMode.SHARED, duration);
 								/*
 								 * We have obtained the lock. We need to double check that the key
 								 * still exists.
@@ -2322,25 +2307,16 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.bt.BTree#insert(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.bt.IndexKey, org.simpledbm.rss.bt.Location)
 		 */
-		public final void insert(Transaction trx, IndexKey key, Location location) throws IndexException {
-			try {
-                boolean success = doInsert(trx, key, location);
-                while (!success) {
-                	success = doInsert(trx, key, location);
-                }
-            } catch (BufferManagerException e) {
-                throw new IndexException.BufMgrException(e);
-            } catch (FreeSpaceManagerException e) {
-                throw new IndexException.SpaceMgrException(e);
-            } catch (TransactionException.LockException e) {
-                throw new IndexException.LockException(e);
-            } catch (TransactionException e) {
-                throw new IndexException.TrxException(e);
-            }
+		public final void insert(Transaction trx, IndexKey key,
+				Location location) throws IndexException {
+			boolean success = doInsert(trx, key, location);
+			while (!success) {
+				success = doInsert(trx, key, location);
+			}
 		}
 
 		/**
-		 * @throws FreeSpaceManagerException 
+		 * @throws FreeSpaceManagerException
 		 * @see #delete(Transaction, IndexKey, Location)
 		 */
 		public final boolean doDelete(Transaction trx, IndexKey key, Location location) throws BufferManagerException, TransactionException, IndexException, FreeSpaceManagerException {
@@ -2424,26 +2400,16 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * released.
 		 */
 		public final void delete(Transaction trx, IndexKey key,
-                Location location) throws IndexException {
-            try {
-                boolean success = doDelete(trx, key, location);
-                while (!success) {
-                    success = doDelete(trx, key, location);
-                }
-            } catch (BufferManagerException e) {
-                throw new IndexException.BufMgrException(e);
-            } catch (FreeSpaceManagerException e) {
-                throw new IndexException.SpaceMgrException(e);
-            } catch (TransactionException.LockException e) {
-                throw new IndexException.LockException(e);
-            } catch (TransactionException e) {
-                throw new IndexException.TrxException(e);
-            }
-        }
+				Location location) throws IndexException {
+			boolean success = doDelete(trx, key, location);
+			while (!success) {
+				success = doDelete(trx, key, location);
+			}
+		}
 
 		/**
-		 * Searches for {@link IndexCursorImpl#currentKey} in the leaf node,
-		 * and positions the cursor on the current key or the next higher key.
+		 * Searches for {@link IndexCursorImpl#currentKey} in the leaf node, and
+		 * positions the cursor on the current key or the next higher key.
 		 * Handles both fetch() and fetchNext() calls.
 		 */
 		final SearchResult doSearch(IndexCursorImpl icursor) throws BufferManagerException {
@@ -2587,7 +2553,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					icursor.fetchCount++;
 					icursor.scanMode = IndexCursorImpl.SCAN_FETCH_NEXT;
 					return true;
-				} catch (TransactionException.LockException e) {
+				} catch (LockException e) {
 					
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-LOG: failed to acquire NOWAIT " + icursor.lockMode + " lock on " + sr.item.getLocation());
@@ -2597,15 +2563,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					 * Need to unlatch page and retry unconditionally. 
 					 */
 					icursor.bcursor.unfixP();
-					try {
-						// System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
-						trx.acquireLock(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
-					} catch (TransactionException.LockException e1) {
-						/*
-						 * Deadlock
-						 */
-						throw new IndexException.LockException("SIMPLEDBM-ERROR: Failed to acquire " + icursor.lockMode + " lock on " + sr.item.getLocation(), e1);
-					}
+					// System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
+					trx.acquireLock(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					/*
 					 * We have obtained the lock. We need to double check that the searched key
 					 * still exists.
@@ -2687,51 +2646,50 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 		
 		public final boolean fetchNext() throws IndexException {
-			if (!eof) { 
-				try {
-					if (previousKey != null) {
-						if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
-							LockMode lockMode = trx.hasLock(previousKey.getLocation());
-							if (lockMode == LockMode.SHARED || lockMode == LockMode.UPDATE) {
-								System.out.println("Releasing lock on previous row " + previousKey.getLocation());
-								trx.releaseLock(previousKey.getLocation());
-							}
+			if (!eof) {
+				if (previousKey != null) {
+					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+						LockMode lockMode = trx.hasLock(previousKey
+								.getLocation());
+						if (lockMode == LockMode.SHARED
+								|| lockMode == LockMode.UPDATE) {
+							System.out
+									.println("Releasing lock on previous row "
+											+ previousKey.getLocation());
+							trx.releaseLock(previousKey.getLocation());
 						}
-						else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || 
-								trx.getIsolationMode() == IsolationMode.SERIALIZABLE) &&
-								lockMode == LockMode.UPDATE) {
-							LockMode lockMode = trx.hasLock(previousKey.getLocation());
-							if (lockMode == LockMode.UPDATE) {
-								System.out.println("Downgrading lock on previous row " + previousKey.getLocation());
-								trx.downgradeLock(previousKey.getLocation(), LockMode.SHARED);
-							}
+					} else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
+							.getIsolationMode() == IsolationMode.SERIALIZABLE)
+							&& lockMode == LockMode.UPDATE) {
+						LockMode lockMode = trx.hasLock(previousKey
+								.getLocation());
+						if (lockMode == LockMode.UPDATE) {
+							System.out
+									.println("Downgrading lock on previous row "
+											+ previousKey.getLocation());
+							trx.downgradeLock(previousKey.getLocation(),
+									LockMode.SHARED);
 						}
 					}
-					previousKey = currentKey;
-					btree.fetch(trx, this);
-					if (currentKey != null) {
-						boolean releaseLock = false;
-						if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ) {
-							if (eof) {
-								releaseLock = true;
-							}
-						}
-						else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+				}
+				previousKey = currentKey;
+				btree.fetch(trx, this);
+				if (currentKey != null) {
+					boolean releaseLock = false;
+					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+						if (eof) {
 							releaseLock = true;
 						}
-						if (releaseLock) {
-							LockMode lockMode = trx.hasLock(currentKey.getLocation());
-							if (lockMode == LockMode.SHARED) {
-								trx.releaseLock(currentKey.getLocation());
-							}
+					} else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+						releaseLock = true;
+					}
+					if (releaseLock) {
+						LockMode lockMode = trx.hasLock(currentKey
+								.getLocation());
+						if (lockMode == LockMode.SHARED) {
+							trx.releaseLock(currentKey.getLocation());
 						}
 					}
-				} catch (BufferManagerException e) {
-					throw new IndexException.BufMgrException(e);
-				} catch (TransactionException.LockException e) {
-	                throw new IndexException.LockException(e);
-	            } catch (TransactionException e) {
-					throw new IndexException.TrxException(e);
 				}
 				return true;
 			}
@@ -2740,7 +2698,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public final void close() throws IndexException {
 			trx.unregisterTransactionalCursor(this);
-			IndexException ex = null;
+			RSSException ex = null;
 			try {
 				if (currentKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
@@ -2755,15 +2713,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						}
 					}
 				}
-			} catch (TransactionException e) {
-				ex = new IndexException.TrxException(e);
+			} catch (RSSException e) {
+				ex = e;
 			}
 			
 			try {
 				bcursor.unfixAll();
-			} catch (BufferManagerException e) {
+			} catch (RSSException e) {
 				if (ex == null) {
-					ex = new IndexException.BufMgrException(e);
+					ex = e;
 				}
 			}
 			if (ex != null) {

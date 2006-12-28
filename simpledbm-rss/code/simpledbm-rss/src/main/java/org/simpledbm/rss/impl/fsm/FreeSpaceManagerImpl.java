@@ -287,34 +287,12 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		}
 	}
 
-    static void throwWrappedException(String message, Exception e) throws FreeSpaceManagerException {
-        if (e instanceof org.simpledbm.rss.api.st.StorageException) {
-            throw new FreeSpaceManagerException.StorageException(message, e);
-        }
-        else if (e instanceof org.simpledbm.rss.api.bm.BufferManagerException) {
-            throw new FreeSpaceManagerException.BufMgrException(message, e);
-        }
-        else if (e instanceof org.simpledbm.rss.api.wal.LogException) {
-            throw new FreeSpaceManagerException.LogException(message, e);
-        }
-        else if (e instanceof org.simpledbm.rss.api.tx.TransactionException) {
-            throw new FreeSpaceManagerException.TrxException(message, e);
-        }
-        else if (e instanceof FreeSpaceManagerException) {
-        	throw (FreeSpaceManagerException) e;
-        }
-        else {
-            throw new FreeSpaceManagerException(message, e);
-        }
-    }
-    
-    public final void createContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType) throws FreeSpaceManagerException {
-        try {
-            doCreateContainer(trx, containerName, containerid, spaceBits, extentSize, dataPageType);
-        } catch (Exception e) {
-            throwWrappedException("Error occured when trying to create container " + containerName + " with id " + containerid, e);
-        }
-    }
+    public final void createContainer(Transaction trx, String containerName,
+			int containerid, int spaceBits, int extentSize, int dataPageType)
+			throws FreeSpaceManagerException {
+		doCreateContainer(trx, containerName, containerid, spaceBits,
+				extentSize, dataPageType);
+	}
 	/**
 	 * Pre-condition 1 - caller must have acquired exclusive lock on the container id.
      * Pre-condition 2 - There must be an open container with ID = 0. This container must contain at
@@ -461,22 +439,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 	}	
 	
     public final void extendContainer(Transaction trx, int containerId)
-            throws FreeSpaceManagerException {
-        try {
-            doExtendContainer(trx, containerId);
-        } catch (Exception e) {
-            throwWrappedException(
-                    "Error occured when trying to extend container "
-                        + containerId, e);
-        }
-    }
+			throws FreeSpaceManagerException {
+		doExtendContainer(trx, containerId);
+	}
 	/**
-	 * Assumed that caller has an SHARED lock on the container. 
-	 * @throws StorageException 
-	 * @throws BufferManagerException 
-	 * @throws TransactionException 
-	 * @throws FreeSpaceManagerException 
-	 * @throws PageException 
+	 * Assumed that caller has an SHARED lock on the container.
+	 * 
+	 * @throws StorageException
+	 * @throws BufferManagerException
+	 * @throws TransactionException
+	 * @throws FreeSpaceManagerException
+	 * @throws PageException
 	 */
 	public final void doExtendContainer(Transaction trx, int containerId) throws BufferManagerException, StorageException, TransactionException, PageException, FreeSpaceManagerException {
 		
@@ -1655,8 +1628,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 						return value >= 0;
 					}
 				}, false);
-			} catch (BufferManagerException e) {
-				throw new FreeSpaceManagerException.BufMgrException(e);
 			}
 			finally {
 				cursor.unfixCurrentSpaceMapPage();
@@ -1753,14 +1724,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
         /* (non-Javadoc)
          * @see org.simpledbm.rss.sm.SpaceCursor#findAndFixSpaceMapPageExclusively(org.simpledbm.rss.sm.SpaceChecker)
          */
-        public final int findAndFixSpaceMapPageExclusively(FreeSpaceChecker checker) throws FreeSpaceManagerException {
-            try {
-                return doFindAndFixSMP(checker, true);
-            } catch (Exception e) {
-                throwWrappedException("Error occurred while atrttempting to search and find a free page in container " + containerId, e);
-            }
-            return -1;
-        }
+        public final int findAndFixSpaceMapPageExclusively(
+				FreeSpaceChecker checker) throws FreeSpaceManagerException {
+			return doFindAndFixSMP(checker, true);
+		}
         
 		final int doFindAndFixSMP(FreeSpaceChecker checker, boolean exclusive) throws FreeSpaceManagerException, BufferManagerException {
 
@@ -1902,21 +1869,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.sm.SpaceCursor#fixSpaceMapPageExclusively(int, int)
 		 */
-		public final void fixSpaceMapPageExclusively(int spaceMapPageNumber, int pageNumber) throws FreeSpaceManagerException {
+		public final void fixSpaceMapPageExclusively(int spaceMapPageNumber,
+				int pageNumber) throws FreeSpaceManagerException {
 			if (bab != null) {
 				throw new FreeSpaceManagerException();
 			}
 			PageId smpPageId = new PageId(containerId, spaceMapPageNumber);
-			try {
-				bab = spacemgr.bufmgr.fixExclusive(smpPageId, false, -1, 0);
-				SpaceMapPageImpl smpPage = (SpaceMapPageImpl) bab.getPage();
-				if (!smpPage.contains(pageNumber)) {
-					bab.unfix();
-					bab = null;
-					throw new FreeSpaceManagerException();
-				}
-			} catch (BufferManagerException e) {
-				throw new FreeSpaceManagerException.BufMgrException(e);
+			bab = spacemgr.bufmgr.fixExclusive(smpPageId, false, -1, 0);
+			SpaceMapPageImpl smpPage = (SpaceMapPageImpl) bab.getPage();
+			if (!smpPage.contains(pageNumber)) {
+				bab.unfix();
+				bab = null;
+				throw new FreeSpaceManagerException();
 			}
 			currentSMP = spaceMapPageNumber;
 			currentPageNumber = pageNumber;
@@ -1925,19 +1889,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.sm.SpaceCursor#unfixCurrentSpaceMapPage()
 		 */
-		public final void unfixCurrentSpaceMapPage() throws FreeSpaceManagerException {
+		public final void unfixCurrentSpaceMapPage()
+				throws FreeSpaceManagerException {
 			if (bab == null) {
-                return;
+				return;
 			}
-			try {
-				bab.unfix();
-			} catch (BufferManagerException e) {
-				throw new FreeSpaceManagerException.BufMgrException(e);
-			}
+			bab.unfix();
 			bab = null;
 		}
 
-		/* (non-Javadoc)
+		/*
+		 * (non-Javadoc)
+		 * 
 		 * @see org.simpledbm.rss.sm.SpaceCursor#getCurrentSpaceMapPage()
 		 */
 		public final FreeSpaceMapPage getCurrentSpaceMapPage() throws FreeSpaceManagerException {
@@ -1950,14 +1913,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
         /* (non-Javadoc)
          * @see org.simpledbm.rss.sm.SpaceCursor#updateAndLogRedoOnly(org.simpledbm.rss.tm.Transaction, int, int)
          */
-        public final void updateAndLogRedoOnly(Transaction trx, int pageNumber, int value) throws FreeSpaceManagerException {
-            try {
-                doUpdateAndLogRedoOnly(trx, pageNumber, value);
-            }
-            catch (Exception e) {
-                throwWrappedException("", e);
-            }
-        }
+        public final void updateAndLogRedoOnly(Transaction trx, int pageNumber,
+				int value) throws FreeSpaceManagerException {
+			doUpdateAndLogRedoOnly(trx, pageNumber, value);
+		}
 		
         final void doUpdateAndLogRedoOnly(Transaction trx, int pageNumber, int value) throws StorageException, TransactionException, FreeSpaceManagerException, PageException {
 			if (bab == null) {
@@ -1975,14 +1934,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
         /* (non-Javadoc)
          * @see org.simpledbm.rss.sm.SpaceCursor#updateAndLogUndoably(org.simpledbm.rss.tm.Transaction, int, int)
          */
-        public final void updateAndLogUndoably(Transaction trx, int pageNumber, int value) throws FreeSpaceManagerException {
-            try {
-                doUpdateAndLogUndoably(trx, pageNumber, value);
-            }
-            catch (Exception e) {
-                throwWrappedException("", e);
-            }
-        }
+        public final void updateAndLogUndoably(Transaction trx, int pageNumber,
+				int value) throws FreeSpaceManagerException {
+			doUpdateAndLogUndoably(trx, pageNumber, value);
+		}
         
 		final void doUpdateAndLogUndoably(Transaction trx, int pageNumber, int value) throws StorageException, TransactionException, FreeSpaceManagerException, PageException {
 			if (bab == null) {

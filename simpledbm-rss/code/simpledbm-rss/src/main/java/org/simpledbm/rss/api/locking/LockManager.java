@@ -91,7 +91,7 @@ public interface LockManager {
 	 */
 	LockHandle acquire(Object owner,
 			Object lockable, LockMode mode, LockDuration duration,
-			int timeout, LockInfo lockInfo) throws LockException;
+			int timeout, LockInfo lockInfo);
 
 	/**
 	 * Downgrades a lock to the desired mode. Downgrading a lock may result in other
@@ -100,7 +100,7 @@ public interface LockManager {
 	 * lock requests being granted.
 	 * @see LockHandle#downgrade(LockMode)
 	 */
-	boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) throws LockException;
+	boolean downgrade(Object owner, Object lockable, LockMode downgradeTo);
 
 	/**
 	 * Releases a lock; if force is true the lock is released unconditionally, regardless of
@@ -114,7 +114,7 @@ public interface LockManager {
 	 * commits, or rolls back (including to a savepoint). 
 	 * @see LockHandle#release(boolean)
 	 */
-	boolean release(Object owner, Object lockable, boolean force) throws LockException;
+	boolean release(Object owner, Object lockable, boolean force);
 	
 	/**
 	 * Searches for a specified lock, held by a specified owner.

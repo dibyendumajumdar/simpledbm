@@ -37,13 +37,13 @@ public interface TupleScan {
 	 * Tuple will be locked in the mode specified when the scan was opened.
 	 * If there are no more tuples to be retrieved, this method will return false.
 	 */
-	boolean fetchNext() throws TupleException;
+	boolean fetchNext();
 	
 	/**
 	 * Retrieves the contents of the current tuple. Valid only after a 
 	 * call to {@link #fetchNext()}.
 	 */
-	byte[] getCurrentTuple() throws TupleException;
+	byte[] getCurrentTuple();
 
 	/**
 	 * Returns the current tuple location. Valid only after a call to 
@@ -60,5 +60,5 @@ public interface TupleScan {
 	 * Closes the scan and releases resources acquired for the scan.
 	 * Note that locks obtained during the scan are not released here.
 	 */
-	void close() throws TupleException;
+	void close();
 }

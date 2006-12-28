@@ -4,9 +4,11 @@
  */
 package org.simpledbm.rss.api.pm;
 
-public class PageException extends Exception {
+import org.simpledbm.rss.api.exception.RSSException;
 
-    private static final long serialVersionUID = -5924553754446182755L;
+public class PageException extends RSSException {
+
+    private static final long serialVersionUID = 1L;
 
     public PageException() {
         super();
@@ -24,32 +26,4 @@ public class PageException extends Exception {
         super(arg0);
     }
 
-    public static final class StorageException extends PageException {
-
-        private static final long serialVersionUID = 2678438490352669470L;
-
-        public StorageException() {
-            super();
-            // TODO Auto-generated constructor stub
-        }
-
-        public StorageException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-            // TODO Auto-generated constructor stub
-        }
-
-        public StorageException(String arg0) {
-            super(arg0);
-            // TODO Auto-generated constructor stub
-        }
-
-        public StorageException(Throwable arg0) {
-            super(arg0);
-            // TODO Auto-generated constructor stub
-        }
-        
-        
-        
-    }
-    
 }

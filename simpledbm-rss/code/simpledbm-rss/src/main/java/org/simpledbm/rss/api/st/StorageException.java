@@ -19,14 +19,16 @@
  */
 package org.simpledbm.rss.api.st;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Exception thrown by the Storage subsystem.
  * @author Dibyendu Majumdar
  * @since 18-Jun-05
  */
-public class StorageException extends Exception {
+public class StorageException extends RSSException {
 
-    private static final long serialVersionUID = 8521116811803535445L;
+    private static final long serialVersionUID = 1L;
 
     public StorageException() {
         super();

@@ -22,7 +22,7 @@ package org.simpledbm.rss.api.pm;
 
 public final class PageReadException extends PageException {
 
-	private static final long serialVersionUID = 7985368723230904172L;
+	private static final long serialVersionUID = 1L;
 
 	public PageReadException() {
 		super();

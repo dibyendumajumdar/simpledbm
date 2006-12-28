@@ -31,21 +31,21 @@ import org.simpledbm.rss.api.pm.Page;
  */
 public abstract class BaseTransactionalModule implements TransactionalModule {
 
-	public void undo(Transaction trx, Undoable undoable)  throws Exception {
+	public void undo(Transaction trx, Undoable undoable) {
 		throw new TransactionException();
 	}
 
-	public final BufferAccessBlock findAndFixPageForUndo(Undoable undoable) throws Exception {
+	public final BufferAccessBlock findAndFixPageForUndo(Undoable undoable) {
 		throw new TransactionException();
 	}
 
-	public Compensation generateCompensation(Undoable undoable) throws Exception {
+	public Compensation generateCompensation(Undoable undoable) {
 		throw new TransactionException();
 	}
 
-	public abstract void redo(Page page, Redoable loggable) throws Exception;
+	public abstract void redo(Page page, Redoable loggable) ;
 
-	public void redo(Loggable loggable) throws Exception {
+	public void redo(Loggable loggable) {
 		throw new TransactionException();
 	}
 

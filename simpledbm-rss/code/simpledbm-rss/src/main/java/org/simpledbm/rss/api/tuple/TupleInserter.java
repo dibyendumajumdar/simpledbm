@@ -47,5 +47,5 @@ public interface TupleInserter {
      * one or more pages. The insert process is not complete until
      * this method is called. 
      */
-    void completeInsert() throws TupleException;
+    void completeInsert();
 }

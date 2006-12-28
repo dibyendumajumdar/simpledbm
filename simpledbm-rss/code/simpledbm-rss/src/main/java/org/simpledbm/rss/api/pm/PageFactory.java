@@ -64,7 +64,7 @@ public interface PageFactory {
 	 * @param pageId ID of the Page to be retrieved
 	 * @throws StorageException Thrown if there is an error while retrieving the Page
 	 */
-	Page retrieve(PageId pageId) throws PageException;
+	Page retrieve(PageId pageId);
 	
 	/**
 	 * Saves the specified Page to the appropriate Storage Container. The appropriate
@@ -73,7 +73,7 @@ public interface PageFactory {
 	 * @param page Page to be saved
 	 * @throws StorageException Thrown if there is an error while writing the page.
 	 */
-	void store(Page page) throws PageException;
+	void store(Page page);
 
     int getRawPageType();
     

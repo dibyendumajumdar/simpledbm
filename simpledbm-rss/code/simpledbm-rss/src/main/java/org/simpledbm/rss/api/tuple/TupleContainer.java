@@ -54,19 +54,19 @@ public interface TupleContainer {
      * <p>The last (third) step is to complete the data insert. This
      * is achieved by invoking {@link TupleInserter#completeInsert()}.</p>
      */
-    TupleInserter insert(Transaction trx, Storable tuple) throws TupleException;
+    TupleInserter insert(Transaction trx, Storable tuple);
     
     /**
      * Updates the tuple at specified location replacing old contents with the
      * new tuple. Location is locked in exclusive mode.
      */
-    void update(Transaction trx, Location location, Storable newTuple) throws TupleException;    
+    void update(Transaction trx, Location location, Storable newTuple);    
     
     /**
      * Deletes the tuple at specified location.
      * Locks the location in exclusive mode.
      */
-	void delete(Transaction trx, Location location) throws TupleException;
+	void delete(Transaction trx, Location location);
 
     /**
      * Reads a tuple and returns the contents of the tuple as a byte array.
@@ -76,12 +76,12 @@ public interface TupleContainer {
      * No locking is performed in this method; it is assumed that the client
      * has already locked the Location in either Shared or Update mode.
      */
-    byte[] read(Location location) throws TupleException;
+    byte[] read(Location location);
     
     /**
      * Opens a tuple scan that reads all used pages within the container
      * and returns tuples sequentially. Each tuple is locked in specified mode before
      * it is returned. 
      */
-    TupleScan openScan(Transaction trx, LockMode lockMode) throws TupleException;
+    TupleScan openScan(Transaction trx, LockMode lockMode);
 }

@@ -38,8 +38,8 @@ public interface LogFactory {
 	 * @throws LogException Thrown if there is an error while creating the Log
 	 * @throws LogException.StorageException Thrown if there is an IO error
 	 */
-	void createLog(Properties props) throws LogException;
-	void createLog(StorageContainerFactory storageFactory, Properties props) throws LogException;
+	void createLog(Properties props);
+	void createLog(StorageContainerFactory storageFactory, Properties props);
 	
 	/**
 	 * Obtains an instance of an existing Log based upon parameters supplied.
@@ -48,7 +48,7 @@ public interface LogFactory {
 	 * @throws LogException Thrown if there is an error while opening the Log
 	 * @throws LogException.StorageException Thrown if there is an IO error
 	 */
-	LogManager getLog(Properties props) throws LogException;
-	LogManager getLog(StorageContainerFactory storageFactory, Properties props) throws LogException;
+	LogManager getLog(Properties props);
+	LogManager getLog(StorageContainerFactory storageFactory, Properties props);
 	
 }

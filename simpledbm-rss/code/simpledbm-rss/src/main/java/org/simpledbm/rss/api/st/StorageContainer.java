@@ -45,7 +45,7 @@ public interface StorageContainer {
      * @param length The number of bytes that need to be written.
      * @throws StorageException Thrown if there was an error when writing the data.
      */
-    void write(long position, byte[] buffer, int bufferOffset, int length) throws StorageException;
+    void write(long position, byte[] buffer, int bufferOffset, int length);
     
     /**
      * Reads upto length bytes from the container into the byte array beginning at offset,
@@ -58,20 +58,20 @@ public interface StorageContainer {
      * @throws StorageException Thrown if there was an error when reading the data.
      * @return Number of bytes read, or <=0 if no more data available.
      */
-    int  read(long position, byte[] buffer, int bufferOffset, int length) throws StorageException;
+    int  read(long position, byte[] buffer, int bufferOffset, int length);
     
     /**
      * Ensures that all data written to the container is flushed to secondary
      * storage.
      * @throws StorageException Thrown if there is an error while flushing the data.
      */
-    void flush() throws StorageException;
+    void flush();
     
     /**
      * Closes the container. A container cannot be used after it has been closed.
      *
      * @throws StorageException Thrown if there is an error while closing the container.
      */
-    void close() throws StorageException;
+    void close();
     
 }

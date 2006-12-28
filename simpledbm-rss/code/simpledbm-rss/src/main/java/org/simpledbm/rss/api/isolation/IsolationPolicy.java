@@ -23,15 +23,14 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionException;
 
 public interface IsolationPolicy {
 
-	void lockLocation(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException;
-	void lockLocationNoWait(Transaction trx, Location location, LockMode mode, LockDuration duration) throws TransactionException;
-	void lockContainer(Transaction trx, int containerId, LockMode mode, LockDuration duration) throws TransactionException;
-	void unlockLocationAfterCursorMoved(Transaction trx, Location location) throws TransactionException;
-	void unlockLocationAfterRead(Transaction trx, Location location) throws TransactionException;
+	void lockLocation(Transaction trx, Location location, LockMode mode, LockDuration duration);
+	void lockLocationNoWait(Transaction trx, Location location, LockMode mode, LockDuration duration);
+	void lockContainer(Transaction trx, int containerId, LockMode mode, LockDuration duration);
+	void unlockLocationAfterCursorMoved(Transaction trx, Location location);
+	void unlockLocationAfterRead(Transaction trx, Location location);
 	LockMode findLocationLock(Transaction trx, Location location);
 	LockMode findContainerLock(Transaction trx, int containerId);
 	

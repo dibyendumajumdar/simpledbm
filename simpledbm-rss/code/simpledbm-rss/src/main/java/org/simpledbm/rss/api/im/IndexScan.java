@@ -43,7 +43,7 @@ public interface IndexScan {
 	 * @return True if fetch okay, false if EOF is reached
 	 * @throws IndexException Thrown in case there was a problem such as Deadlock 
 	 */
-	public boolean fetchNext() throws IndexException;
+	public boolean fetchNext();
 	
 	/**
 	 * Returns the IndexKey on which the scan is currently positioned.
@@ -61,7 +61,7 @@ public interface IndexScan {
 	 * After the scan is completed, the close method should be called to
 	 * release all resources acquired by the scan.
 	 */
-	public void close() throws IndexException;
+	public void close();
 	
 	/**
 	 * Returns the End of File status of the scan. Once the scan has gone past

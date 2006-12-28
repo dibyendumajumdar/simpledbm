@@ -43,36 +43,36 @@ public interface FreeSpaceCursor {
 	 * @param checker SpaceChecker instance
 	 * @return -1 if page was not found, else page number.
 	 */
-	public int findAndFixSpaceMapPageExclusively(FreeSpaceChecker checker) throws FreeSpaceManagerException;
+	public int findAndFixSpaceMapPageExclusively(FreeSpaceChecker checker);
 
 	/**
 	 * Fixes specified Space Map Page exclusively. Note that the space map
 	 * page must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}. 
 	 * The fixed page becomes the current space map page.
 	 */
-	public void fixSpaceMapPageExclusively(int spaceMapPageNumber, int pageNumber) throws FreeSpaceManagerException;
+	public void fixSpaceMapPageExclusively(int spaceMapPageNumber, int pageNumber);
 
 	/**
 	 * Returns the currently fixed space map page.
 	 */
-	public FreeSpaceMapPage getCurrentSpaceMapPage() throws FreeSpaceManagerException;
+	public FreeSpaceMapPage getCurrentSpaceMapPage();
 	
 	/**
 	 * Updates space allocation data for specfified page within the 
 	 * current space map page, and generates a Redo-only log record for the
 	 * change.
 	 */
-	public void updateAndLogRedoOnly(Transaction trx, int pageNumber, int value) throws FreeSpaceManagerException;
+	public void updateAndLogRedoOnly(Transaction trx, int pageNumber, int value);
 	
 	/**
 	 * Updates space allocation data for specfified page within the 
 	 * current space map page, and generates a Redo-Undo log record for the
 	 * change.
 	 */
-	public void updateAndLogUndoably(Transaction trx, int pageNumber, int value) throws FreeSpaceManagerException;
+	public void updateAndLogUndoably(Transaction trx, int pageNumber, int value);
 	
 	/**
 	 * Unfixes the current space map page.
 	 */
-	public void unfixCurrentSpaceMapPage() throws FreeSpaceManagerException;
+	public void unfixCurrentSpaceMapPage();
 }

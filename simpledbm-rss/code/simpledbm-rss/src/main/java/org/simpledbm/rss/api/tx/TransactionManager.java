@@ -46,7 +46,7 @@ public interface TransactionManager {
 	 * can be logged separately. At system restart, containers recorded in the checkpoint 
 	 * will be re-opened, and then any containers encountered in the log will be reopened. 
 	 */
-	Lsn logNonTransactionRelatedOperation(Loggable operation) throws TransactionException;
+	Lsn logNonTransactionRelatedOperation(Loggable operation);
 	
 	void setCheckpointInterval(int checkpointInterval);
 	
@@ -56,7 +56,7 @@ public interface TransactionManager {
 	 * Orchestrates the Transaction Manager restart processing. Also starts any
 	 * background threads.
 	 */
-	void start() throws TransactionException;
+	void start();
 	
 	/**
 	 * Shutdown the Transaction Manager.

@@ -35,7 +35,7 @@ public interface FreeSpaceScan {
 	 * search criteria. Note that the returned page may not be a data page; 
 	 * the caller must check that the page is of the appropriate type.
 	 */
-	boolean fetchNext() throws FreeSpaceManagerException;
+	boolean fetchNext();
 
 	/**
 	 * If fetchNext() was successful, return the page number.
@@ -50,5 +50,5 @@ public interface FreeSpaceScan {
 	/**
 	 * Closes the scan and releases any resources occupied by the scan.
 	 */
-	void close() throws FreeSpaceManagerException;
+	void close();
 }

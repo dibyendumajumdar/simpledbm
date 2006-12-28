@@ -29,7 +29,6 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
-import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
 
 /**
@@ -111,41 +110,30 @@ public final class PageFactoryImpl implements PageFactory {
 	}
 
 	public final Page retrieve(PageId pageId) throws PageException {
-        try {
-            StorageContainer container = storageManager.getInstance(pageId
-                    .getContainerId());
-            long offset = pageId.getPageNumber() * pageSize;
-            byte[] data = new byte[pageSize];
-            int n = container.read(offset, data, 0, pageSize);
-            if (n != pageSize) {
-                throw new PageReadException();
-            }
-            ByteBuffer bb = ByteBuffer.wrap(data);
-            return getInstance(bb);
-        } catch (StorageException e) {
-            throw new PageException.StorageException(
-                    "SIMPLEDBM-Error occurred while attempting to read page " + pageId, e);
-        }
-    }
+		StorageContainer container = storageManager.getInstance(pageId
+				.getContainerId());
+		long offset = pageId.getPageNumber() * pageSize;
+		byte[] data = new byte[pageSize];
+		int n = container.read(offset, data, 0, pageSize);
+		if (n != pageSize) {
+			throw new PageReadException();
+		}
+		ByteBuffer bb = ByteBuffer.wrap(data);
+		return getInstance(bb);
+	}
 	
 	public final void store(Page page) throws PageException {
-        try {
-            StorageContainer container = storageManager.getInstance(page
-                    .getPageId().getContainerId());
-            if (container == null) {
-                throw new PageException("Error writing page " + page
-                        + " as container is not available");
-            }
-            long offset = page.getPageId().getPageNumber() * pageSize;
-            byte[] data = new byte[pageSize];
-            ByteBuffer bb = ByteBuffer.wrap(data);
-            page.store(bb);
-            container.write(offset, data, 0, pageSize);
-        } catch (StorageException e) {
-            throw new PageException.StorageException(
-                    "SIMPLEDBM-Error occurred while attempting to write page "
-                            + page, e);
-        }
+		StorageContainer container = storageManager.getInstance(page
+				.getPageId().getContainerId());
+		if (container == null) {
+			throw new PageException("Error writing page " + page
+					+ " as container is not available");
+		}
+		long offset = page.getPageId().getPageNumber() * pageSize;
+		byte[] data = new byte[pageSize];
+		ByteBuffer bb = ByteBuffer.wrap(data);
+		page.store(bb);
+		container.write(offset, data, 0, pageSize);
 	}
 
     public int getRawPageType() {

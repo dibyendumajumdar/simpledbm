@@ -29,6 +29,6 @@ package org.simpledbm.rss.api.tx;
 public interface TransactionalCursor {
 
 	void saveState(Savepoint sp);
-	void restoreState(Transaction txn, Savepoint sp) throws TransactionException;
+	void restoreState(Transaction txn, Savepoint sp);
 	
 }

@@ -44,7 +44,7 @@ public interface IndexManager {
 	 * @param locationFactoryType Identifies the factory for creating Location objects
 	 * @param unique Whether the new index will allow duplicates keys or not
 	 */
-	void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) throws IndexException;
+	void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique);
 	
 	/**
 	 * Obtains an existing index with specified container ID. Prior to calling this
@@ -53,6 +53,6 @@ public interface IndexManager {
 	 * 
 	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
 	 */
-	Index getIndex(int containerId) throws IndexException;	
+	Index getIndex(int containerId);	
 
 }

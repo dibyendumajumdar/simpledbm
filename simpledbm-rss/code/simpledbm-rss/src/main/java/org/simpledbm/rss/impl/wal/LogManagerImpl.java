@@ -523,15 +523,12 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	final synchronized public void start() throws LogException {
 		if (started || errored) {
-			throw new LogException("SIMPLEDBM-ELOG-002: Log is already open or has encountered an error.");
+			throw new LogException(
+					"SIMPLEDBM-ELOG-002: Log is already open or has encountered an error.");
 		}
-		try {
-			openCtlFiles();
-			openLogFiles();
-			scanToEof();
-		} catch (StorageException e) {
-			throw new LogException.StorageException(e);
-		}
+		openCtlFiles();
+		openLogFiles();
+		scanToEof();
 		setupBackgroundThreads();
 		errored = false;
 		started = true;
@@ -1758,12 +1755,8 @@ public final class LogManagerImpl implements LogManager {
 	}
 
     public final LogRecordImpl read(Lsn lsn) throws LogException {
-        try {
-            return doRead(lsn);
-        } catch (StorageException e) {
-            throw new LogException.StorageException("An IO error occurred while attempting to read log record at " + lsn, e);
-        }
-    }
+		return doRead(lsn);
+	}
     
 	/**
 	 * Reads the specified LogRecord, from log buffers if possible, otherwise
@@ -1781,7 +1774,7 @@ public final class LogManagerImpl implements LogManager {
 	 * @return
 	 * @throws StorageException
 	 * @throws LogException
-	 * @throws StorageException 
+	 * @throws StorageException
 	 */
 	final LogRecordImpl doRead(Lsn lsn) throws LogException, StorageException {
 

@@ -42,7 +42,6 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.Storable;
@@ -462,14 +461,13 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 */
 	public final Lsn logNonTransactionRelatedOperation(Loggable operation) throws TransactionException {
 		if (operation instanceof NonTransactionRelatedOperation) {
-			try {
-                return doLogInsert(operation);
-            } catch (LogException e) {
-                throw new TransactionException.LogException("SIMPLEDBM-TRXMGR-ERROR: Error occurred while attempting to insert log record " + operation, e);
-            }
-		}
-		else {
-			throw new TransactionException("SIMPLEDBM-TRXMGR-ERROR: Log operation " + operation.getClass().getName() + " is not an instance of " + NonTransactionRelatedOperation.class.getName());
+			return doLogInsert(operation);
+		} else {
+			throw new TransactionException(
+					"SIMPLEDBM-TRXMGR-ERROR: Log operation "
+							+ operation.getClass().getName()
+							+ " is not an instance of "
+							+ NonTransactionRelatedOperation.class.getName());
 		}
 	}
 	
@@ -483,8 +481,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 		latch.exclusiveLock();
 		try {
 			writeCheckpoint();
-		} catch (LogException e) {
-            throw new TransactionException.LogException("SIMPLEDBM-TRXMGR-ERROR: Error occurred when generating checkpoint", e);
         }
 		finally {
 			latch.unlockExclusive();
@@ -1261,23 +1257,15 @@ public final class TransactionManagerImpl implements TransactionManager {
      * @see org.simpledbm.rss.tm.TrxMgr#start()
      */
     public final void start() throws TransactionException {
-        try {
-            doRestart();
-        } catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        } catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        } catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        } catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        checkpointWriter.start();
-    }
+		doRestart();
+		checkpointWriter.start();
+	}
     
-    /* (non-Javadoc)
-     * @see org.simpledbm.rss.tm.TrxMgr#shutdown()
-     */
+    /*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.simpledbm.rss.tm.TrxMgr#shutdown()
+	 */
     public final void shutdown() {
     	stop = true;
     	while (checkpointWriter.isAlive()) {
@@ -1490,22 +1478,19 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * Insert a log record, and wrap any exceptions in TrxException.
 		 */
-        public final Lsn logInsert(Page page, Loggable logrec) throws TransactionException {
-            try {
-                return doLogInsert(page, logrec);
-            } catch (LogException e) {
-                throw new TransactionException.LogException(e);
-            }
-        }
+        public final Lsn logInsert(Page page, Loggable logrec)
+				throws TransactionException {
+			return doLogInsert(page, logrec);
+		}
         
 		/**
-		 * Generate a transaction related log record. This function is meant to be used by resource
-		 * managers who need to generate logs. It takes care of linking the new log record to the
-		 * transaction. 
+		 * Generate a transaction related log record. This function is meant to
+		 * be used by resource managers who need to generate logs. It takes care
+		 * of linking the new log record to the transaction.
 		 * <p>
-		 * Latching issues:</br>
-		 * Since this function modifies the transaction's persistent state, we need to latch the trxmgr
-		 * so that we can avoid conflicts with checkpoints.
+		 * Latching issues:</br> Since this function modifies the transaction's
+		 * persistent state, we need to latch the trxmgr so that we can avoid
+		 * conflicts with checkpoints.
 		 */
 		final Lsn doLogInsert(Page page, Loggable logrec) throws LogException, TransactionException {
 			if (logrec instanceof Redoable) {
@@ -1629,58 +1614,53 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLock(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException {
-            /*
-             * Currently the LockMgr does not detect deadlocks so we use timeouts as
-             * a simple way of detecting a deadlock. If the attempt to acquire lock times out
-             * within specified timeout period, we assume the system is deadlocked.
-             */
-            try {
-                doAcquireLock(lockable, mode, duration, lockTimeout);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
+		public final void acquireLock(Lockable lockable, LockMode mode,
+				LockDuration duration) throws TransactionException {
+			/*
+			 * Currently the LockMgr does not detect deadlocks so we use
+			 * timeouts as a simple way of detecting a deadlock. If the attempt
+			 * to acquire lock times out within specified timeout period, we
+			 * assume the system is deadlocked.
+			 */
+			doAcquireLock(lockable, mode, duration, lockTimeout);
 		}
 
 		/**
-		 * Attempts to acquire a lock without waiting; if the lock is
-		 * not avaiabl, an excepton will be thrown.
+		 * Attempts to acquire a lock without waiting; if the lock is not
+		 * avaiabl, an excepton will be thrown.
+		 * 
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration) throws TransactionException {
-            try {
-                doAcquireLock(lockable, mode, duration, 0);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
+		public final void acquireLockNowait(Lockable lockable, LockMode mode,
+				LockDuration duration) throws TransactionException {
+			doAcquireLock(lockable, mode, duration, 0);
 		}
 
 		/**
-		 * Decrements a lock's reference count and if the reference count drops to
-		 * 0, the lock is released. This is meant to be used for situations where
-		 * a lock must be released prior to the commit, for example, in cursor stability
-		 * or read committed isolation modes.
+		 * Decrements a lock's reference count and if the reference count drops
+		 * to 0, the lock is released. This is meant to be used for situations
+		 * where a lock must be released prior to the commit, for example, in
+		 * cursor stability or read committed isolation modes.
 		 */
-        public final boolean releaseLock(Lockable lockable) throws TransactionException {
-            try {
-                return doReleaseLock(lockable);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
-        }
+        public final boolean releaseLock(Lockable lockable)
+				throws TransactionException {
+			return doReleaseLock(lockable);
+		}
         
 		/**
-		 * Decrements a lock's reference count and if the reference count drops to
-		 * 0, the lock is released. This is meant to be used for situations where
-		 * a lock must be released prior to the commit, for example, in cursor stability
-		 * or read committed isolation modes.
-		 * <p>If the lock is released it is removed from the transaction's
-		 * list of locks.
+		 * Decrements a lock's reference count and if the reference count drops
+		 * to 0, the lock is released. This is meant to be used for situations
+		 * where a lock must be released prior to the commit, for example, in
+		 * cursor stability or read committed isolation modes.
+		 * <p>
+		 * If the lock is released it is removed from the transaction's list of
+		 * locks.
 		 * <p>
 		 * Latching issues:<br>
-		 * No latches acquired because there is no change to the persistent state of the 
-		 * transaction.
-		 * @throws TransactionException 
+		 * No latches acquired because there is no change to the persistent
+		 * state of the transaction.
+		 * 
+		 * @throws TransactionException
 		 */
 		final boolean doReleaseLock(Object lockable) throws LockException, TransactionException {
 			Iterator<LockRequest> iter = locks.iterator();
@@ -1716,18 +1696,15 @@ public final class TransactionManagerImpl implements TransactionManager {
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#downgradeLock(java.lang.Object, org.simpledbm.rss.locking.LockMode)
          */
-        public final void downgradeLock(Lockable lockable, LockMode downgradeTo) throws TransactionException {
-            try {
-                doDowngradeLock(lockable, downgradeTo);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
-        }
+        public final void downgradeLock(Lockable lockable, LockMode downgradeTo)
+				throws TransactionException {
+			doDowngradeLock(lockable, downgradeTo);
+		}
         
 		/**
-		 * Downgrades a lock to specified mode. The typical use case for this
-		 * is when a cursor has placed an UPDATE lock on a record, and this
-		 * needs to be downgraded to SHARED lock.
+		 * Downgrades a lock to specified mode. The typical use case for this is
+		 * when a cursor has placed an UPDATE lock on a record, and this needs
+		 * to be downgraded to SHARED lock.
 		 */
         public final void doDowngradeLock(Object lockable, LockMode downgradeTo) throws LockException {
             for (LockRequest req: locks) {
@@ -1879,25 +1856,22 @@ public final class TransactionManagerImpl implements TransactionManager {
          * @see org.simpledbm.rss.tm.Transaction#commit()
          */
         public final void commit() throws TransactionException {
-            try {
-                doCommit();
-            } catch (LogException e) {
-                throw new TransactionException.LogException(e);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
-        }
+			doCommit();
+		}
         
 		/**
 		 * Commits a transaction. Commit processing involves following steps:
 		 * <ol>
-		 * <li>Prepare the transaction; log any PostCommitActions in the prepare log record.</li>
+		 * <li>Prepare the transaction; log any PostCommitActions in the
+		 * prepare log record.</li>
 		 * <li>Write an end transaction record.</li>
 		 * <li>Perform PostCommitActions.</li>
-		 * <li>Release locks acquired by the transaction and mark transaction as dead.</li>
+		 * <li>Release locks acquired by the transaction and mark transaction
+		 * as dead.</li>
 		 * </ol>
-		 * <p> 
-		 * Latching issues: we S latch trxmgr so as to avoid conflicts with checkpointing.
+		 * <p>
+		 * Latching issues: we S latch trxmgr so as to avoid conflicts with
+		 * checkpointing.
 		 */
 		public final void doCommit() throws LogException, LockException, TransactionException {
 		
@@ -1922,27 +1896,20 @@ public final class TransactionManagerImpl implements TransactionManager {
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#rollback(org.simpledbm.rss.tm.Savepoint)
          */
-        public final void rollback(Savepoint savepoint) throws TransactionException {
-            try {
-                doRollback(savepoint);
-            } catch (LogException e) {
-                throw new TransactionException.LogException(e);
-            } catch (BufferManagerException e) {
-                throw new TransactionException.BufMgrException(e);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
-        }
+        public final void rollback(Savepoint savepoint)
+				throws TransactionException {
+			doRollback(savepoint);
+		}
         
 		/**
-         * Rollback a transaction upto a savepoint.
-         * <p>
-         * Latching issues:<br>
-         * We acquire a shared latch on trxmgr to avoid conflicts with
-         * checkpoints. Note that we cannot acquire exclusive latch here because
-         * it would lead to a deadlock with the Buffer Manager. This is because,
-         * normal WAL protocol requires FIX-DO-LOG-UNFIX sequence. 
-         */
+		 * Rollback a transaction upto a savepoint.
+		 * <p>
+		 * Latching issues:<br>
+		 * We acquire a shared latch on trxmgr to avoid conflicts with
+		 * checkpoints. Note that we cannot acquire exclusive latch here because
+		 * it would lead to a deadlock with the Buffer Manager. This is because,
+		 * normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
+		 */
 		final void doRollback(Savepoint savepoint) throws LogException, BufferManagerException, TransactionException, LockException {
 			assert savepoint != null;
 			latchHelper.sharedLock();
@@ -2143,27 +2110,21 @@ public final class TransactionManagerImpl implements TransactionManager {
          * @see org.simpledbm.rss.tm.Transaction#abort()
          */
         public final void abort() throws TransactionException {
-            try {
-                doAbort();
-            } catch (LogException e) {
-                throw new TransactionException.LogException(e);
-            } catch (BufferManagerException e) {
-                throw new TransactionException.BufMgrException(e);
-            } catch (LockException e) {
-                throw new TransactionException.LockException(e);
-            }
-        }
+			doAbort();
+		}
 
         /**
-		 * Aborts the transaction. The intention to abort is recorded first via the
-		 * TrxAbort log record, changes are then rolled back, the transaction end
-		 * record written, the locks released, and finally the transaction is 
-		 * marked dead. All the undo work is done in {@link #doRollback(Savepoint)}.
+		 * Aborts the transaction. The intention to abort is recorded first via
+		 * the TrxAbort log record, changes are then rolled back, the
+		 * transaction end record written, the locks released, and finally the
+		 * transaction is marked dead. All the undo work is done in
+		 * {@link #doRollback(Savepoint)}.
 		 * <p>
 		 * Latching issues:<br>
-		 * We acquire a shared latch on trxmgr to avoid conflicts with checkpoints. Note that we cannot
-		 * acquire exclusive latch here because it would lead to a deadlock with the Buffer Manager. This is
-		 * because, normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
+		 * We acquire a shared latch on trxmgr to avoid conflicts with
+		 * checkpoints. Note that we cannot acquire exclusive latch here because
+		 * it would lead to a deadlock with the Buffer Manager. This is because,
+		 * normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
 		 */
 		public final void doAbort() throws LogException, BufferManagerException, TransactionException, LockException {
 			latchHelper.sharedLock();
@@ -2696,140 +2657,31 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 	}
 	
-    static void moduleRedo(TransactionalModule module, Loggable loggable) throws TransactionException {
-        try {
-            module.redo(loggable);
-        }
-        catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        }
-        catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        }
-        catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        }
-        catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        catch (PageException e) {
-            throw new TransactionException.PageException(e);
-        }
-        catch (TransactionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new TransactionException(e);
-        }
-    }
+    static void moduleRedo(TransactionalModule module, Loggable loggable)
+			throws TransactionException {
+		module.redo(loggable);
+	}
 
-    static void moduleUndo(TransactionalModule module, Transaction trx, Undoable loggable) throws TransactionException {
-        try {
-            module.undo(trx, loggable);
-        }
-        catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        }
-        catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        }
-        catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        }
-        catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        catch (PageException e) {
-            throw new TransactionException.PageException(e);
-        }
-        catch (TransactionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new TransactionException(e);
-        }
-    }
+    static void moduleUndo(TransactionalModule module, Transaction trx,
+			Undoable loggable) throws TransactionException {
+		module.undo(trx, loggable);
+	}
     
-    static void moduleRedo(TransactionalModule module, Page page, Redoable loggable) throws TransactionException {
-        try {
-            module.redo(page, loggable);
-        }
-        catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        }
-        catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        }
-        catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        }
-        catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        catch (PageException e) {
-            throw new TransactionException.PageException(e);
-        }
-        catch (TransactionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new TransactionException(e);
-        }
-    }
+    static void moduleRedo(TransactionalModule module, Page page,
+			Redoable loggable) throws TransactionException {
+		module.redo(page, loggable);
+	}
 
-    static Compensation moduleGenerateCompensation(TransactionalModule module, Undoable loggable) throws TransactionException {
-        try {
-            return module.generateCompensation(loggable);
-        }
-        catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        }
-        catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        }
-        catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        }
-        catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        catch (PageException e) {
-            throw new TransactionException.PageException(e);
-        }
-        catch (TransactionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new TransactionException(e);
-        }
-    }
+    static Compensation moduleGenerateCompensation(TransactionalModule module,
+			Undoable loggable) throws TransactionException {
+		return module.generateCompensation(loggable);
+	}
 
-    static BufferAccessBlock moduleFindAndFixPageForUndo(TransactionalModule module, Undoable loggable) throws TransactionException {
-        try {
-            return module.findAndFixPageForUndo(loggable);
-        }
-        catch (LockException e) {
-            throw new TransactionException.LockException(e);
-        }
-        catch (LogException e) {
-            throw new TransactionException.LogException(e);
-        }
-        catch (BufferManagerException e) {
-            throw new TransactionException.BufMgrException(e);
-        }
-        catch (StorageException e) {
-            throw new TransactionException.StorageException(e);
-        }
-        catch (PageException e) {
-            throw new TransactionException.PageException(e);
-        }
-        catch (TransactionException e) {
-            throw e;
-        }
-        catch (Exception e) {
-            throw new TransactionException(e);
-        }
-    }
+    static BufferAccessBlock moduleFindAndFixPageForUndo(
+			TransactionalModule module, Undoable loggable)
+			throws TransactionException {
+		return module.findAndFixPageForUndo(loggable);
+	}
 
     /**
 	 * @param activeContainers The activeContainers to set.

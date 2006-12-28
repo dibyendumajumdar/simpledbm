@@ -68,7 +68,7 @@ public interface LogManager {
 	/**
 	 * Start the LogMgr instance. This may initiate background threads.
 	 */
-	void start() throws LogException;
+	void start();
 	
     /**
      * Inserts a new Log Record and returns the Lsn assigned to the new record.
@@ -81,7 +81,7 @@ public interface LogManager {
      *            Length of the data
      * @return Lsn assigned to the new log record
      */
-    Lsn insert(byte[] data, int length) throws LogException;
+    Lsn insert(byte[] data, int length);
 
     /**
      * Returns the Lsn of the last Log Record, i.e., the End of Log. This record
@@ -126,7 +126,7 @@ public interface LogManager {
 	 * @throws LogException.StorageException
 	 * @throws LogException
 	 */	
-	LogRecord read(Lsn lsn)  throws LogException;
+	LogRecord read(Lsn lsn);
 	
     /**
      * Forces all the Log Records to disk upto the specified Lsn. Will block the
@@ -138,7 +138,7 @@ public interface LogManager {
      *            Lsn of the Log Record
      * @throws LogException
      */
-    void flush(Lsn upto) throws LogException;
+    void flush(Lsn upto);
 
     /**
      * Forces all Log Records to disk. Will block the caller until the flush is
@@ -149,7 +149,7 @@ public interface LogManager {
      * 
      * @throws LogException
      */
-    void flush() throws LogException;
+    void flush();
 
     /**
      * Obtains a forward scanning reader with the start Lsn set to the specified Lsn.
@@ -160,7 +160,7 @@ public interface LogManager {
      * 
      * @param startLsn
      */
-    LogReader getForwardScanningReader(Lsn startLsn) throws LogException;
+    LogReader getForwardScanningReader(Lsn startLsn);
 
     /**
      * Obtains a backward scanning reader with the start Lsn set to the specified Lsn.
@@ -171,7 +171,7 @@ public interface LogManager {
      * 
      * @param startLsn
      */
-    LogReader getBackwardScanningReader(Lsn startLsn) throws LogException;
+    LogReader getBackwardScanningReader(Lsn startLsn);
     
     /**
      * Closes the Log and releases any resources allocated by the Log.

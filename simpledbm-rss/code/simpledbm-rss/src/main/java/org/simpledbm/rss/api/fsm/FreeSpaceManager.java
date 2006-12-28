@@ -45,7 +45,7 @@ public interface FreeSpaceManager {
 	 * @param extentSize Allocation unit - number of pages in the extent.
 	 * @param dataPageType The type of data pages this container will hold.
 	 */
-	public void createContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType) throws FreeSpaceManagerException;
+	public void createContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType);
 	
 	/**
 	 * Adds a new extent to the container. New free space map pages will be added if necessary.
@@ -55,7 +55,7 @@ public interface FreeSpaceManager {
 	 * @param trx Transaction that will manage this action.
 	 * @param containerId ID of the container that will be extended.
 	 */
-	public void extendContainer(Transaction trx, int containerId) throws FreeSpaceManagerException;
+	public void extendContainer(Transaction trx, int containerId);
 	
 	/**
 	 * Drop an existing container. To avoid having to log the entire contents of the
@@ -66,12 +66,12 @@ public interface FreeSpaceManager {
 	 * @param trx Transaction that will manage this action.
 	 * @param containerId ID of the container that will be dropped.
 	 */
-	public void dropContainer(Transaction trx, int containerId) throws FreeSpaceManagerException;
+	public void dropContainer(Transaction trx, int containerId);
 	
 	/**
 	 * Get a cursor for traversing free space information within the container.
 	 */
-	public FreeSpaceCursor getSpaceCursor(int containerId) throws FreeSpaceManagerException;
+	public FreeSpaceCursor getSpaceCursor(int containerId);
 	
 	/**
 	 * Opens a scan of all the pages within the container that are marked
@@ -80,5 +80,5 @@ public interface FreeSpaceManager {
 	 * check the page type before attempting to modify or access a page's 
 	 * content.
 	 */
-	public FreeSpaceScan openScan(int containerId) throws FreeSpaceManagerException;
+	public FreeSpaceScan openScan(int containerId);
 }

@@ -34,7 +34,7 @@ public abstract class FreeSpaceMapPage extends Page {
      * @param pageNumber The page number whose space allocation value is to be retrieved.
      * @throws FreeSpaceManagerException Thrown if the specified page is not handled by this space map page.
      */
-	public abstract int getSpaceBits(int pageNumber) throws FreeSpaceManagerException;
+	public abstract int getSpaceBits(int pageNumber);
 
     /**
      * Updates the current space value associated with the specified page. For a
@@ -45,6 +45,6 @@ public abstract class FreeSpaceMapPage extends Page {
      * @param value New space allocation value
      * @throws FreeSpaceManagerException Thrown if the specified page is not handled by this space map page.
      */
-	public abstract void setSpaceBits(int pageNumber, int value) throws FreeSpaceManagerException;
+	public abstract void setSpaceBits(int pageNumber, int value);
 	
 }

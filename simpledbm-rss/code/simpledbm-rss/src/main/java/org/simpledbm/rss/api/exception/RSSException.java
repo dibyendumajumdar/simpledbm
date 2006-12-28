@@ -17,36 +17,31 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-/*
- * Created on: Jul 26, 2005
- * Author: Dibyendu Majumdar
- */
-package org.simpledbm.rss.api.locking;
-
-import org.simpledbm.rss.api.exception.RSSException;
+package org.simpledbm.rss.api.exception;
 
 /**
- * LockException is the base class for all exceptions raised by the Locking sub-system.
+ * Base exception class for SimpleDBM exceptions.
+ * 
  * @author Dibyendu Majumdar
- * @since 27-July-2005
+ * @since 27 Dec 2006
  */
-public class LockException extends RSSException {
+public class RSSException extends RuntimeException {
 
-    private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = 1L;
 
-    public LockException() {
-        super();
-    }
+	public RSSException() {
+		super();
+	}
 
-    public LockException(String arg0) {
-        super(arg0);
-    }
+	public RSSException(String arg0, Throwable arg1) {
+		super(arg0, arg1);
+	}
 
-    public LockException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
+	public RSSException(String arg0) {
+		super(arg0);
+	}
 
-    public LockException(Throwable arg0) {
-        super(arg0);
-    }
+	public RSSException(Throwable arg0) {
+		super(arg0);
+	}
 }

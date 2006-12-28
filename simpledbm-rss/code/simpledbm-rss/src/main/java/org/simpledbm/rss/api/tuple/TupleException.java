@@ -23,13 +23,16 @@
  */
 package org.simpledbm.rss.api.tuple;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Exceptions thrown by the Tuple Manager module are all sub-types of 
  * TupleException.
  */
-public class TupleException extends Exception {
+public class TupleException extends RSSException {
 
-    public TupleException() {
+	private static final long serialVersionUID = 1L;
+	public TupleException() {
         super();
     }
     public TupleException(String arg0) {
@@ -41,95 +44,4 @@ public class TupleException extends Exception {
     public TupleException(Throwable arg0) {
         super(arg0);
     }
-    
-    public static class SpaceMgrException extends TupleException {
-        public SpaceMgrException() {
-            super();
-        }
-        public SpaceMgrException(String arg0) {
-            super(arg0);
-        }
-        public SpaceMgrException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public SpaceMgrException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-
-    public static class BufMgrException extends TupleException {
-        public BufMgrException() {
-            super();
-        }
-        public BufMgrException(String arg0) {
-            super(arg0);
-        }
-        public BufMgrException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public BufMgrException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-
-    public static class TrxException extends TupleException {
-        public TrxException() {
-            super();
-        }
-        public TrxException(String arg0) {
-            super(arg0);
-        }
-        public TrxException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public TrxException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-
-    public static class LogException extends TupleException {
-        public LogException() {
-            super();
-        }
-        public LogException(String arg0) {
-            super(arg0);
-        }
-        public LogException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public LogException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-    
-    public static class StorageException extends TupleException {
-        public StorageException() {
-            super();
-        }
-        public StorageException(String arg0) {
-            super(arg0);
-        }
-        public StorageException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public StorageException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-    
-    public static class LockException extends TupleException {
-        public LockException() {
-            super();
-        }
-        public LockException(String arg0) {
-            super(arg0);
-        }
-        public LockException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-        public LockException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-    
 }

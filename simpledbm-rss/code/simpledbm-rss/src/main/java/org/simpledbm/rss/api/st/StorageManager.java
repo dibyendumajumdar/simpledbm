@@ -45,14 +45,14 @@ public interface StorageManager {
      * @return The StorageContainer object associated with the specified id.
      * @throws StorageException Thrown if the specified StorageContainer instance is not found.
      */
-    StorageContainer getInstance(int id) throws StorageException;
+    StorageContainer getInstance(int id);
     
     /**
      * Closes and removes the specified StorageContainer.
      * @param id
      * @throws StorageException 
      */
-    void remove(int id) throws StorageException;
+    void remove(int id);
     
     /**
      * Closes all StorageContainers.

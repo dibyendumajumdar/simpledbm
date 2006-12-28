@@ -55,13 +55,13 @@ public interface TransactionalModule {
 	 * boilerplate stuff shown above, and only asks the module to generate
 	 * compensation log record.
 	 */
-	void undo(Transaction trx, Undoable undoable) throws Exception;
+	void undo(Transaction trx, Undoable undoable);
 
 	/**
 	 * Locates the page where the undo must be performed; used during single page logical undos. 
 	 * @see SinglePageLogicalUndo
 	 */
-	BufferAccessBlock findAndFixPageForUndo(Undoable undoable) throws Exception;
+	BufferAccessBlock findAndFixPageForUndo(Undoable undoable);
 	
 	/**
 	 * Generates a Compensation record to represent an undo.
@@ -78,7 +78,7 @@ public interface TransactionalModule {
 	 * @see Undoable
 	 * @see Compensation
 	 */
-	Compensation generateCompensation(Undoable undoable) throws Exception;
+	Compensation generateCompensation(Undoable undoable);
 	
 	/**
 	 * Performs page oriented redo. Page is already exclusively latched when this is called.
@@ -87,7 +87,7 @@ public interface TransactionalModule {
 	 * restart redo, or when rolling back a transaction, that is, when applying
 	 * Compensation log records.
 	 */
-	void redo(Page page, Redoable loggable) throws Exception;
+	void redo(Page page, Redoable loggable);
 	
 	/**
 	 * Perform NonTransactionRelatedOperation that is not specific to a page.
@@ -95,6 +95,6 @@ public interface TransactionalModule {
 	 * Buffer Manager, or generate any log records. This method is invoked during
 	 * restart redo only.
 	 */	
-	void redo(Loggable loggable) throws Exception;
+	void redo(Loggable loggable);
 	
 }

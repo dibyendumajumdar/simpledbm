@@ -27,9 +27,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
-import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -39,6 +39,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
@@ -60,8 +61,8 @@ import org.simpledbm.rss.api.tx.LogicalUndo;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionException;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.TypeSize;
@@ -193,7 +194,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	}
 
 	@Override
-	public Compensation generateCompensation(Undoable undoable) throws Exception {
+	public Compensation generateCompensation(Undoable undoable) {
 		if (undoable instanceof InsertTupleSegment) {
 			InsertTupleSegment logrec = (InsertTupleSegment) undoable;
 			UndoInsertTupleSegment clr = (UndoInsertTupleSegment) loggableFactory.getInstance(MODULE_ID, TYPE_LOG_UNDOINSERTTUPLESEGMENT);
@@ -221,7 +222,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	}
 
 	@Override
-	public void undo(Transaction trx, Undoable undoable) throws Exception {
+	public void undo(Transaction trx, Undoable undoable) {
 		if (undoable instanceof InsertTupleSegment) {
 			undoInsertSegment(trx, undoable);
 		} else if (undoable instanceof UndoableReplaceSegmentLink) {
@@ -237,7 +238,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * correct restart recovery.
 	 * @see UndoInsertTupleSegment
 	 */
-	public void undoInsertSegment(Transaction trx, Undoable undoable) throws Exception {
+	public void undoInsertSegment(Transaction trx, Undoable undoable) {
 		PageId pageId = undoable.getPageId();
 		InsertTupleSegment logrec = (InsertTupleSegment) undoable;
 		int spaceMapPage = logrec.spaceMapPage;
@@ -286,7 +287,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * map update must be logged before logging the page update to ensure
 	 * correct restart recovery.
 	 */
-	public void undoDeleteSegment(Transaction trx, Undoable undoable) throws Exception {
+	public void undoDeleteSegment(Transaction trx, Undoable undoable) {
 		PageId pageId = undoable.getPageId();
 		UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) undoable;
 		BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false, -1, 0);
@@ -494,7 +495,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					try {
 						trx.acquireLockNowait(location, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION);
 						reclaim = true;
-					} catch (TransactionException.LockException e) {
+					} catch (LockException e) {
 						if (log.isDebugEnabled()) {
 							log.debug(LOG_CLASS_NAME, "reclaimDeletedTuples", "Reclaim of tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") skipped because cannot obtain lock on " + location, e);
 						}
@@ -635,7 +636,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					try {
 						trx.acquireLockNowait(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
 						locked = true;
-					} catch (TransactionException.LockException e) {
+					} catch (LockException e) {
 						if (log.isDebugEnabled()) {
 							log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Failed to obtain conditional lock on location " + location);
 						}
@@ -959,18 +960,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @see org.simpledbm.rss.api.tuple.TupleInserter#startInsert(org.simpledbm.rss.api.tx.Transaction,
 		 *      org.simpledbm.rss.api.tuple.Tuple)
 		 */
-		public Location startInsert(Transaction trx, Storable tuple) throws TupleException {
+		public Location startInsert(Transaction trx, Storable tuple)
+				throws TupleException {
 			this.trx = trx;
 			this.tuple = tuple;
-			try {
-				while (!doStartInsert()) {
-				}
-			} catch (FreeSpaceManagerException e) {
-				throw new TupleException.SpaceMgrException(e);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
-			} catch (TransactionException e) {
-				throw new TupleException.TrxException(e);
+			while (!doStartInsert()) {
 			}
 			return location;
 		}
@@ -979,15 +973,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @see org.simpledbm.rss.api.tuple.TupleInserter#completeInsert()
 		 */
 		public void completeInsert() throws TupleException {
-			try {
-				doCompleteInsert();
-			} catch (FreeSpaceManagerException e) {
-				throw new TupleException.SpaceMgrException(e);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
-			} catch (TransactionException e) {
-				throw new TupleException.TrxException(e);
-			}
+			doCompleteInsert();
 		}
 
 		public Location getLocation() {
@@ -1116,16 +1102,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			}
 		}
 
-		public void delete(Transaction trx, Location location) throws TupleException {
-			try {
-				doDelete(trx, location);
-			} catch (TransactionException e) {
-				throw new TupleException.TrxException(e);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
-			} catch (FreeSpaceManagerException e) {
-				throw new TupleException.SpaceMgrException(e);
-			}
+		public void delete(Transaction trx, Location location)
+				throws TupleException {
+			doDelete(trx, location);
 		}
 
 		byte[] doRead(Location location) throws BufferManagerException, IOException, TupleException {
@@ -1177,9 +1156,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		public byte[] read(Location location) throws TupleException {
 			try {
 				return doRead(location);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
 			} catch (IOException e) {
+				// TODO Auto-generated catch block
 				throw new TupleException(e);
 			}
 		}
@@ -1308,14 +1286,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			}
 		}
 
-		public void update(Transaction trx, Location location, Storable newTuple) throws TupleException {
-			try {
-				doUpdate(trx, location, newTuple);
-			} catch (TransactionException e) {
-				throw new TupleException.TrxException(e);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
-			}
+		public void update(Transaction trx, Location location, Storable newTuple)
+				throws TupleException {
+			doUpdate(trx, location, newTuple);
 		}
 		
 		public TupleScan openScan(Transaction trx, LockMode lockMode) {
@@ -1358,11 +1331,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 */
 		void initScan() throws TupleException {
 			if (spaceScan == null) {
-				try {
-					spaceScan = tupleContainer.tuplemgr.spaceMgr.openScan(tupleContainer.containerId);
-				} catch (FreeSpaceManagerException e) {
-					throw new TupleException.SpaceMgrException(e);
-				}
+				spaceScan = tupleContainer.tuplemgr.spaceMgr
+						.openScan(tupleContainer.containerId);
 			}
 		}
 		
@@ -1373,15 +1343,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		}
 		
 		public boolean fetchNext() throws TupleException {
-			try {
-				return doFetchNext();
-			} catch (FreeSpaceManagerException e) {
-				throw new TupleException.SpaceMgrException(e);
-			} catch (BufferManagerException e) {
-				throw new TupleException.BufMgrException(e);
-			} catch (TransactionException e) {
-				throw new TupleException.TrxException(e);
-			}
+			return doFetchNext();
 		}
 
 		/**
@@ -1456,7 +1418,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 										 */
 										nextLocation = null;
 										continue;
-									} catch (TransactionException.LockException e) {
+									} catch (LockException e) {
 										/*
 										 * Delete is still uncommitted.
 										 */
@@ -1470,7 +1432,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 										 */
 										trx.acquireLockNowait(nextLocation, lockMode, LockDuration.MANUAL_DURATION);
 										state = LOCK_GRANTED;
-									} catch (TransactionException.LockException e) {
+									} catch (LockException e) {
 										/*
 										 * We need to wait for the lock unconditionally. However, before we can
 										 * do that, we must release the page latch.
@@ -1546,11 +1508,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		}
 
 		public void close() throws TupleException {
-			try {
-				spaceScan.close();
-			} catch (FreeSpaceManagerException e) {
-				throw new TupleException.SpaceMgrException(e);
-			}
+			spaceScan.close();
 		}
 		
 	}

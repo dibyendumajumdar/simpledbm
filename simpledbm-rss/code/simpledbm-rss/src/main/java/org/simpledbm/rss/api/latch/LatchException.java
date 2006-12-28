@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.latch;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Parent Exception class for all Latch exceptions. This is a RuntimeException
  * because a Latching error is not supposed to happen. Sinces latches are used
@@ -26,9 +28,9 @@ package org.simpledbm.rss.api.latch;
  *  
  * @author Dibyendu Majumdar
  */
-public class LatchException extends RuntimeException {
+public class LatchException extends RSSException {
 
-	private static final long serialVersionUID = -5898251754382312973L;
+	private static final long serialVersionUID = 1L;
 
 	public LatchException() {
 		super();

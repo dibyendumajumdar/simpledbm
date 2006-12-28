@@ -28,6 +28,6 @@ package org.simpledbm.rss.api.wal;
  */
 public interface LogReader {
 
-	LogRecord getNext() throws LogException;
+	LogRecord getNext();
     void close();
 }

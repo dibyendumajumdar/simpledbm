@@ -1425,7 +1425,7 @@ public final class LockManagerImpl implements LockManager {
         
         LockDuration convertDuration;
 
-		short count = 1;
+		volatile short count = 1;
 
 		LockDuration duration;
 
@@ -1433,7 +1433,7 @@ public final class LockManagerImpl implements LockManager {
 		
 		final LockItem lockItem;
 
-		Thread thread;
+		volatile Thread thread;
 
 		LockRequest(LockItem lockItem, Object owner, LockMode mode, LockDuration duration) {
 			this.lockItem = lockItem;

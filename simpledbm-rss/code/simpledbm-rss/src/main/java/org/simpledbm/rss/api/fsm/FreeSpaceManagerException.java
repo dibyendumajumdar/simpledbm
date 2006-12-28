@@ -19,10 +19,18 @@
  */
 package org.simpledbm.rss.api.fsm;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Exception class for the Space Manager module.
  */
-public class FreeSpaceManagerException extends Exception {
+public class FreeSpaceManagerException extends RSSException {
+
+	public static class TestException extends FreeSpaceManagerException {
+
+		private static final long serialVersionUID = 1L;
+
+	}
 
 	private static final long serialVersionUID = 5065727917034813269L;
 
@@ -62,133 +70,6 @@ public class FreeSpaceManagerException extends Exception {
             super(cause);
         }
     }
-
-    public final static class BufMgrException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -7758126559592658877L;
-
-        public BufMgrException() {
-            super();
-        }
-
-        public BufMgrException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public BufMgrException(String message) {
-            super(message);
-        }
-
-        public BufMgrException(Throwable cause) {
-            super(cause);
-        }
-        
-    }
-
-    public final static class TrxException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -4846086162827557848L;
-
-        public TrxException() {
-            super();
-        }
-
-        public TrxException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public TrxException(String message) {
-            super(message);
-        }
-
-        public TrxException(Throwable cause) {
-            super(cause);
-        }
-        
-    }
-
-    public final static class StorageException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -303858911478075192L;
-
-        public StorageException() {
-            super();
-        }
-
-        public StorageException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public StorageException(String message) {
-            super(message);
-        }
-
-        public StorageException(Throwable cause) {
-            super(cause);
-        }
-        
-    }
-
-    public final static class LogException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -5446631468947672300L;
-
-        public LogException() {
-            super();
-        }
-
-        public LogException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public LogException(String message) {
-            super(message);
-        }
-
-        public LogException(Throwable cause) {
-            super(cause);
-        }
-    }
-    
-    public final static class PageException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -6877029951756113448L;
-
-        public PageException() {
-            super();
-        }
-
-        public PageException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public PageException(String message) {
-            super(message);
-        }
-
-        public PageException(Throwable cause) {
-            super(cause);
-        }
-    }
-    
-    public final static class TestException extends FreeSpaceManagerException {
-
-        public TestException() {
-            super();
-        }
-
-        public TestException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public TestException(String message) {
-            super(message);
-        }
-
-        public TestException(Throwable cause) {
-            super(cause);
-        }
-    }    
 }
 
 

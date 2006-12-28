@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.registry;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Thrown when the Object Registry is unable to create an
  * object of specified type. This is a RuntimeException because
@@ -27,9 +29,9 @@ package org.simpledbm.rss.api.registry;
  * @author Dibyendu Majumdar
  * @since 07-Aug-05
  */
-public class ObjectCreationException extends RuntimeException {
+public class ObjectCreationException extends RSSException {
 
-	private static final long serialVersionUID = -5504507630910747322L;
+	private static final long serialVersionUID = 1L;
 
 	ObjectCreationException() {
 		super();
@@ -49,7 +51,7 @@ public class ObjectCreationException extends RuntimeException {
 
 	public static final class UnknownTypeException extends ObjectCreationException {
 
-		private static final long serialVersionUID = -523003004962722694L;
+		private static final long serialVersionUID = 1L;
 
 		public UnknownTypeException() {
 			super();

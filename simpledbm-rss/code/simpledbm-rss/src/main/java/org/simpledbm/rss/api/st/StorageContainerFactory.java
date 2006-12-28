@@ -37,7 +37,7 @@ public interface StorageContainerFactory {
      * @return Newly created StorageContainer object.
      * @throws StorageException Thrown if the StorageContainer cannot be created.
      */
-    StorageContainer create(String name) throws StorageException;
+    StorageContainer create(String name);
     
     /**
      * Opens an existing StorageContainer. Note that the
@@ -49,11 +49,11 @@ public interface StorageContainerFactory {
      * @return Instance of StorageContainer object
      * @throws StorageException Thrown if the StorageContainer does not exist or cannot be opened.
      */
-    StorageContainer open(String name) throws StorageException;
+    StorageContainer open(String name);
     
     /**
      * Removes a container physically.
      * @throws StorageException 
      */
-    void delete(String name) throws StorageException;
+    void delete(String name);
 }

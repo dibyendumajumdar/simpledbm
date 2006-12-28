@@ -728,48 +728,31 @@ public final class BufferManagerImpl implements BufferManager {
 	/* (non-Javadoc)
 	 * @see org.simpledbm.bm.BufMgr#fixShared(org.simpledbm.pm.PageId, int)
 	 */
-	public BufferAccessBlock fixShared(PageId pageid, int hint) throws BufferManagerException {
-		try {
-            return fix(pageid, false, -1, LATCH_SHARED, hint);
-        } catch (PageException e) {
-        	e.printStackTrace();
-            throw new BufferManagerException.PageException(e);
-        } catch (StorageException e) {
-            throw new BufferManagerException.StorageException(e);
-        }
+	public BufferAccessBlock fixShared(PageId pageid, int hint) {
+		return fix(pageid, false, -1, LATCH_SHARED, hint);
 	}
 
 	/* (non-Javadoc)
 	 * @see org.simpledbm.bm.BufMgr#fixExclusive(org.simpledbm.pm.PageId, boolean, java.lang.String, int)
 	 */
 	public BufferAccessBlock fixExclusive(PageId pageid, boolean isNew,
-            int pagetype, int hint) throws BufferManagerException {
-        try {
-            return fix(pageid, isNew, pagetype, LATCH_EXCLUSIVE, hint);
-        } catch (PageException e) {
-            throw new BufferManagerException.PageException(e);
-        } catch (StorageException e) {
-            throw new BufferManagerException.StorageException(e);
-        }
-    }
+			int pagetype, int hint) {
+		return fix(pageid, isNew, pagetype, LATCH_EXCLUSIVE, hint);
+	}
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see org.simpledbm.bm.BufMgr#fixForUpdate(org.simpledbm.pm.PageId, int)
 	 */
 	public BufferAccessBlock fixForUpdate(PageId pageid, int hint)
-            throws BufferManagerException {
-        try {
-            return fix(pageid, false, -1, LATCH_UPDATE, hint);
-        } catch (PageException e) {
-            throw new BufferManagerException.PageException(e);
-        } catch (StorageException e) {
-            throw new BufferManagerException.StorageException(e);
-        }
-    }
+			throws BufferManagerException {
+		return fix(pageid, false, -1, LATCH_UPDATE, hint);
+	}
 	
 	
 	/**
-	 * Unfix a Buffer. Algorithm: 
+	 * Unfix a Buffer. Algorithm:
 	 * <ol>
 	 * <li>Release page latch.</li>
 	 * <li>Set dirty flag.</li>

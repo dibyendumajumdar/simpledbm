@@ -19,15 +19,17 @@
  */
 package org.simpledbm.rss.api.wal;
 
+import org.simpledbm.rss.api.exception.RSSException;
+
 /**
  * Base class for all exceptions thrown by the Log implementations.
  * 
  * @author Dibyendu Majumdar
  * @since 10-Jun-2005
  */
-public class LogException extends Exception {
+public class LogException extends RSSException {
 
-    private static final long serialVersionUID = -2876572803439089778L;
+    private static final long serialVersionUID = 1L;
 
     public LogException() {
         super();
@@ -44,26 +46,4 @@ public class LogException extends Exception {
     public LogException(Throwable arg0) {
         super(arg0);
     }
-
-    public static class StorageException extends LogException {
-
-        private static final long serialVersionUID = 7663282383200434975L;
-
-        public StorageException() {
-            super();
-        }
-
-        public StorageException(String arg0, Throwable arg1) {
-            super(arg0, arg1);
-        }
-
-        public StorageException(String arg0) {
-            super(arg0);
-        }
-
-        public StorageException(Throwable arg0) {
-            super(arg0);
-        }
-    }
-    
 }
