@@ -712,16 +712,22 @@ public class TestLockManager extends BaseTestCase {
 			}
 		});
 
-		t1.start();
-		t2.start();
-		Thread.sleep(2000);
-		lockmgr.detectDeadlocks();
-		t1.join(10000);
-		t2.join(10000);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-		assertEquals(countDeadlocks, 1);
-		checkThreadFailures();
+		lockmgr.setDeadlockDetectorInterval(1);	// set deadlock detection interval to 1 second
+		lockmgr.start();
+		try {
+			t1.start();
+			t2.start();
+			Thread.sleep(2000);
+			//lockmgr.detectDeadlocks();
+			t1.join(10000);
+			t2.join(10000);
+			assertTrue(!t1.isAlive());
+			assertTrue(!t2.isAlive());
+			assertEquals(countDeadlocks, 1);
+			checkThreadFailures();
+		} finally {
+			lockmgr.shutdown();
+		}
 	}    
     
 	/**
@@ -777,16 +783,22 @@ public class TestLockManager extends BaseTestCase {
 			}
 		});
 
-		t1.start();
-		t2.start();
-		Thread.sleep(2000);
-		lockmgr.detectDeadlocks();
-		t1.join(10000);
-		t2.join(10000);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-		assertEquals(countDeadlocks, 1);
-		checkThreadFailures();
+		lockmgr.setDeadlockDetectorInterval(1);
+		lockmgr.start();
+		try {
+			t1.start();
+			t2.start();
+			Thread.sleep(2000);
+			// lockmgr.detectDeadlocks();
+			t1.join(10000);
+			t2.join(10000);
+			assertTrue(!t1.isAlive());
+			assertTrue(!t2.isAlive());
+			assertEquals(countDeadlocks, 1);
+			checkThreadFailures();
+		} finally {
+			lockmgr.shutdown();
+		}
 	}    	
 
 	/**
@@ -872,19 +884,25 @@ public class TestLockManager extends BaseTestCase {
 			}
 		});
 
-		t1.start();
-		t2.start();
-		t3.start();
-		Thread.sleep(2000);
-		lockmgr.detectDeadlocks();
-		t1.join(10000);
-		t2.join(10000);
-		t3.join(10000);
-		assertTrue(!t1.isAlive());
-		assertTrue(!t2.isAlive());
-		assertTrue(!t3.isAlive());
-		assertEquals(countDeadlocks, 2);
-		checkThreadFailures();
+		lockmgr.setDeadlockDetectorInterval(1);	// set it to detect deadlocks every 1 second
+		lockmgr.start();
+		try {
+			t1.start();
+			t2.start();
+			t3.start();
+			Thread.sleep(500);
+			// lockmgr.detectDeadlocks();
+			t1.join(10000);
+			t2.join(10000);
+			t3.join(10000);
+			assertTrue(!t1.isAlive());
+			assertTrue(!t2.isAlive());
+			assertTrue(!t3.isAlive());
+			assertEquals(countDeadlocks, 2);
+			checkThreadFailures();
+		} finally {
+			lockmgr.shutdown();
+		}
 	}    
 
 	

@@ -26,15 +26,20 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
 
 /**
  * Default implementation of a LockMgrFactory.
+ * 
  * @author Dibyendu Majumdar
  */
 public final class LockManagerFactoryImpl implements LockMgrFactory {
 
 	/**
-	 * Creates a new LockMgr object. 
+	 * Creates a new LockMgr object.
 	 */
 	public final LockManager create(Properties props) {
-		return new LockManagerImpl();
+		String s = props.getProperty("lock.deadlock.detection.interval", "15");
+		int deadlockInterval = Integer.parseInt(s);
+		LockManager lockmgr = new LockManagerImpl();
+		lockmgr.setDeadlockDetectorInterval(deadlockInterval);
+		return lockmgr;
 	}
 
 }

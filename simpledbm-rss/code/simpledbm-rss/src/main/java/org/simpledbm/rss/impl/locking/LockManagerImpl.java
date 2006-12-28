@@ -121,7 +121,7 @@ public final class LockManagerImpl implements LockManager {
 	
 	Thread deadlockDetectorThread;
 	
-	int waitInterval = 10;
+	int deadlockDetectorInterval = 10;
 	
 	/**
 	 * Defines the various lock release methods.
@@ -159,7 +159,7 @@ public final class LockManagerImpl implements LockManager {
 		if (deadlockDetectorThread.isAlive()) {
 			LockSupport.unpark(deadlockDetectorThread);
 			try {
-				deadlockDetectorThread.join(waitInterval*2*1000);
+				deadlockDetectorThread.join(deadlockDetectorInterval*2*1000);
 			} catch (InterruptedException e) {
 				// ignored
 			}
@@ -1536,14 +1536,18 @@ public final class LockManagerImpl implements LockManager {
     	
     	public void run() {
     		while (!lockManager.stop) {
+    			lockManager.detectDeadlocks();
     			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-    					lockManager.waitInterval, TimeUnit.SECONDS));
+    					lockManager.deadlockDetectorInterval, TimeUnit.SECONDS));
     			if (lockManager.stop) {
     				break;
     			}
-    			lockManager.detectDeadlocks();
     		}
     	}
     }
+
+	public void setDeadlockDetectorInterval(int seconds) {
+		this.deadlockDetectorInterval = seconds;
+	}
     
 }

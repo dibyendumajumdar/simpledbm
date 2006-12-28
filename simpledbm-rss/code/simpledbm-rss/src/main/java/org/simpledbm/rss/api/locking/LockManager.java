@@ -122,5 +122,21 @@ public interface LockManager {
 	 * @param lockable The object that is tested, must implement equals() and hashcode() methods.
 	 * @return {@link LockMode} The mode in which lock is held, or {@link LockMode#NONE} if lock is not held.
 	 */
-	LockMode findLock(Object owner, Object lockable);	
+	LockMode findLock(Object owner, Object lockable);
+	
+	/**
+	 * Starts the Lock Manager instance.
+	 */
+	void start();
+
+	/**
+	 * Shuts down the Lock Manager instance.
+	 */
+	void shutdown();
+	
+	/**
+	 * Sets the time interval between deadlock detections.
+	 * @param seconds Interval in seconds
+	 */
+	void setDeadlockDetectorInterval(int seconds);
 }
