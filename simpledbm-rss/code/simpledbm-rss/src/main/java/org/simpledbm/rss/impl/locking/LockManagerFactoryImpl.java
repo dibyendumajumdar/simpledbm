@@ -35,8 +35,12 @@ public final class LockManagerFactoryImpl implements LockMgrFactory {
 	 * Creates a new LockMgr object.
 	 */
 	public final LockManager create(Properties props) {
-		String s = props.getProperty("lock.deadlock.detection.interval", "15");
-		int deadlockInterval = Integer.parseInt(s);
+		int deadlockInterval = 15;
+		if (props != null) {
+			String s = props.getProperty("lock.deadlock.detection.interval",
+					"15");
+			deadlockInterval = Integer.parseInt(s);
+		}
 		LockManager lockmgr = new LockManagerImpl();
 		lockmgr.setDeadlockDetectorInterval(deadlockInterval);
 		return lockmgr;
