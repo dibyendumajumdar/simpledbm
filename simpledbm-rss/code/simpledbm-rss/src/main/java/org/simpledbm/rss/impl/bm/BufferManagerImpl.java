@@ -33,7 +33,6 @@ import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -151,7 +150,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * The interval in milli bseconds for which the Buffer Writer
 	 * thread sleeps between each write.
 	 */
-	private final int bufferWriterSleepInterval = 5000;
+	private int bufferWriterSleepInterval = 5000;
 
 	/**
 	 * The interval for which a client will wait for
@@ -293,12 +292,15 @@ public final class BufferManagerImpl implements BufferManager {
 	 * Shuts down the Buffer Manager instance.
 	 */
 	public void shutdown() {
+		// System.err.println("Shutting down");
 		stop = true;
+		//signalBufferWriter();
 		try {
 			bufferWriter.join();
 		} catch (InterruptedException e) {
 			log.error(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: Error occurred while shutting down Buffer Manager", e);
 		}
+		writeBuffers();
 	}
 
 	/**
@@ -1265,6 +1267,7 @@ public final class BufferManagerImpl implements BufferManager {
 						log.trace(LOG_CLASS_NAME, "run", "BEFORE Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
 					}
 					long start = System.currentTimeMillis();
+					// System.err.println("Writing buffers");
 					bufmgr.writeBuffers();
 					long end = System.currentTimeMillis();
 					if (log.isTraceEnabled()) {
@@ -1276,6 +1279,7 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 				} catch (Exception e) {
 					log.error(LOG_CLASS_NAME, "run", "Error occurred while writing buffer pages", e);
+					e.printStackTrace();
 					bufmgr.stop = true;
 				}
 				if (bufmgr.stop) {
@@ -1286,6 +1290,10 @@ public final class BufferManagerImpl implements BufferManager {
 				log.debug(LOG_CLASS_NAME, "run", "Buffer writer STOPPED");
 			}
 		}
+	}
+
+	public void setBufferWriterSleepInterval(int bufferWriterSleepInterval) {
+		this.bufferWriterSleepInterval = bufferWriterSleepInterval;
 	}
 
 }
