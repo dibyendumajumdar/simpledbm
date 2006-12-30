@@ -37,9 +37,4 @@ public interface LatchFactory {
 	 */
 	Latch newReadWriteUpdateLatch();
 	
-	/**
-	 * Creates a default Latch implementation. This is the most efficient
-	 * implementation, however, may not support Update mode locks.
-	 */
-	Latch newLatch();
 }

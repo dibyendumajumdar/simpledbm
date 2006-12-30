@@ -39,6 +39,7 @@ import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
+import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
@@ -216,7 +217,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	/**
 	 * The default checkpoint interval in milliseconds.
 	 */
-	static final int DEFAULT_CHECKPOINT_INTERVAL = 5000;
+	static final int DEFAULT_CHECKPOINT_INTERVAL = 15000;
 	
 	/**
 	 * The time interval between each checkpoint.
@@ -289,7 +290,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		this.lockmgr = lockmgr;
 		this.loggableFactory = loggableFactory;
 		this.moduleRegistry = moduleRegistry;
-		this.latch = latchFactory.newLatch();
+		this.latch = latchFactory.newReadWriteLatch();
 
 		objectFactory.register(TYPE_TRXPREPARE, TransactionManagerImpl.TrxPrepare.class.getName());
 		objectFactory.register(TYPE_TRXABORT, TransactionManagerImpl.TrxAbort.class.getName());
@@ -1550,6 +1551,24 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}
 		}
 
+		static class MyLockInfo implements LockInfo {
+
+			LockMode mode;
+			
+			public boolean setHeldByOthers(boolean value) {
+				return false;
+			}
+
+			public void setPreviousMode(LockMode mode) {
+				this.mode = mode;
+			}
+			
+			public LockMode getPreviousMode() {
+				return mode;
+			}
+			
+		}
+		
 		/**
          * Acquires a lock in requested mode on behalf of the transaction, 
          * and adds it to the transaction's list of locks. Note that the lock is added
@@ -1567,10 +1586,12 @@ public final class TransactionManagerImpl implements TransactionManager {
          * No latches acquired because there is no change to the persistent state of the 
          * transaction.
          */     
-        private void doAcquireLock(Object lockable, LockMode mode, LockDuration duration, int timeout) throws LockException {
+        private void doAcquireLock(Lockable lockable, LockMode mode, LockDuration duration, int timeout) throws LockException {
             LockHandle handle = null;
+            MyLockInfo lockInfo = new MyLockInfo();
             try {
-                handle = getTrxmgr().lockmgr.acquire(this, lockable, mode, duration, timeout, null);
+            	//System.err.println(Thread.currentThread() + ":Locking " + lockable);
+                handle = getTrxmgr().lockmgr.acquire(this, lockable, mode, duration, timeout, lockInfo);
             }
             catch (LockTimeoutException e) {
             	/*
@@ -1582,19 +1603,27 @@ public final class TransactionManagerImpl implements TransactionManager {
             if (log.isDebugEnabled()) {
                 log.debug(LOG_CLASS_NAME, "acquireLock", "Acquired lock " + handle);
             }
+            //System.err.println(Thread.currentThread() + ":Acquired lock on " + lockable);
             if (duration == LockDuration.INSTANT_DURATION) {
                 return;
             }
-            for (LockRequest r: locks) {
-                if (r.lockable.equals(lockable)) {
-                    /* 
-                     * We already have this lock, so it must be a conversion request.
-                     * Don't add it to the list, but update the handle.
-                     */
-                    r.handle = handle;
-                    return;
-                }
+            if (lockInfo.getPreviousMode() != null) {
+                //System.err.println(Thread.currentThread() + ":Lock was previously held in mode " + lockInfo.getPreviousMode());
+            	/*
+            	 * We held this lock previously so no need to add to our list.
+            	 */
+            	return;
             }
+//            for (LockRequest r: locks) {
+//                if (r.lockable.equals(lockable)) {
+//                    /* 
+//                     * We already have this lock, so it must be a conversion request.
+//                     * Don't add it to the list, but update the handle.
+//                     */
+//                    r.handle = handle;
+//                    return;
+//                }
+//            }
             /*
 			 * Each lock is given a unique position that can be used
 			 * to determine whether the lock should released during
@@ -1663,34 +1692,35 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * @throws TransactionException
 		 */
 		final boolean doReleaseLock(Object lockable) throws LockException, TransactionException {
-			Iterator<LockRequest> iter = locks.iterator();
-			LockRequest req = null;
-			while (iter.hasNext()) {
-				req = iter.next();
-				if (req.lockable.equals(lockable)) {
-					// FIXME We cannot do following because there is a legitimate case
-					// where an EXCLUSIVE lock is released early - ie. nextKeyLocking in btrees
-					// for inserts.
-//                    if (req.handle.getCurrentMode() != LockMode.SHARED &&
-//                    		req.handle.getCurrentMode() != LockMode.UPDATE) {
-//                        throw new TransactionException("SIMPLEDBM-TRXMGR-ERROR: Only a SHARED or UPDATE mode lock can be released early - lock release denied for " + req.handle);
+//			Iterator<LockRequest> iter = locks.iterator();
+//			LockRequest req = null;
+//			while (iter.hasNext()) {
+//				req = iter.next();
+//				if (req.lockable.equals(lockable)) {
+//					// FIXME We cannot do following because there is a legitimate case
+//					// where an EXCLUSIVE lock is released early - ie. nextKeyLocking in btrees
+//					// for inserts.
+////                    if (req.handle.getCurrentMode() != LockMode.SHARED &&
+////                    		req.handle.getCurrentMode() != LockMode.UPDATE) {
+////                        throw new TransactionException("SIMPLEDBM-TRXMGR-ERROR: Only a SHARED or UPDATE mode lock can be released early - lock release denied for " + req.handle);
+////                    }
+//					if (log.isDebugEnabled()) {
+//						log.debug(LOG_CLASS_NAME, "releaseLock", "Releasing lock " + req);
+//					}		
+//					/* 
+//					 * We must not use force here.
+//					 */
+//					boolean released = req.handle.release(false);
+//                    if (released) {
+//                        /* Remove lock from the list */
+//                        iter.remove();
+//                        return true;
 //                    }
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "releaseLock", "Releasing lock " + req);
-					}		
-					/* 
-					 * We must not use force here.
-					 */
-					boolean released = req.handle.release(false);
-                    if (released) {
-                        /* Remove lock from the list */
-                        iter.remove();
-                        return true;
-                    }
-					break;
-				}
-			}
-            return false;
+//					break;
+//				}
+//			}
+//            return false;
+			return trxmgr.lockmgr.release(this, lockable, false);
 		}
 
         /* (non-Javadoc)
@@ -1707,27 +1737,29 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * to be downgraded to SHARED lock.
 		 */
         public final void doDowngradeLock(Object lockable, LockMode downgradeTo) throws LockException {
-            for (LockRequest req: locks) {
-                if (req.lockable.equals(lockable)) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(LOG_CLASS_NAME, "releaseLock", "Downgrading lock " + req + " to " + downgradeTo);
-                    }       
-                    req.handle.downgrade(downgradeTo);
-                    break;
-                }
-            }
+//            for (LockRequest req: locks) {
+//                if (req.lockable.equals(lockable)) {
+//                    if (log.isDebugEnabled()) {
+//                        log.debug(LOG_CLASS_NAME, "releaseLock", "Downgrading lock " + req + " to " + downgradeTo);
+//                    }       
+//                    req.handle.downgrade(downgradeTo);
+//                    break;
+//                }
+//            }
+        	trxmgr.lockmgr.downgrade(this, lockable, downgradeTo);
         }
 
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.tm.Transaction#hasLock(java.lang.Object)
 		 */
 		public LockMode hasLock(Lockable lockable) {
-            for (LockRequest req: locks) {
-                if (req.lockable.equals(lockable)) {
-                    return req.handle.getCurrentMode();
-                }
-            }
-            return LockMode.NONE;
+			return trxmgr.lockmgr.findLock(this, lockable);
+//            for (LockRequest req: locks) {
+//                if (req.lockable.equals(lockable)) {
+//                    return req.handle.getCurrentMode();
+//                }
+//            }
+//            return LockMode.NONE;
         }
 
         /**
@@ -1760,7 +1792,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 					 * because if lock was acquired after the savepoint, it is not required
 					 * any more.
 					 */
-					req.handle.release(true);
+					// req.handle.release(true);
+					trxmgr.lockmgr.release(this, req.lockable, true);
+					//System.err.println(Thread.currentThread() + ": Released lock on " + req.lockable);
 				}
 			}
 		}
@@ -2718,7 +2752,17 @@ public final class TransactionManagerImpl implements TransactionManager {
 //					} catch (InterruptedException e) {
 //					}
 //				}
-				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(trxmgr.checkpointInterval, TimeUnit.MILLISECONDS));
+				long then = System.nanoTime();
+				long timeout = TimeUnit.NANOSECONDS.convert(trxmgr.checkpointInterval, TimeUnit.MILLISECONDS);
+				while (timeout > 0) {
+					LockSupport.parkNanos(timeout);
+					long now = System.nanoTime();
+					timeout -= (now-then);
+					then = now;
+					if (timeout <= 0 || trxmgr.stop) {
+						break;
+					}
+				}
 				try {
 					// System.err.println("WRITING CHECKPOINT");
 					trxmgr.checkpoint();

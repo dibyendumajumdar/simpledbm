@@ -435,6 +435,8 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	private final List<Exception> exceptions = Collections.synchronizedList(new LinkedList<Exception>());
 
+	private boolean disableExplicitFlushRequests = false;
+	
 	/*
 	 * @see org.simpledbm.rss.log.Log#insert(byte[], int)
 	 */
@@ -481,7 +483,9 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	public final void flush(Lsn upto) {
 		assertIsOpen();
-		handleFlushRequest(new FlushRequest(upto));
+		if (!disableExplicitFlushRequests || anchorDirty || upto == null) {
+			handleFlushRequest(new FlushRequest(upto));
+		}
 	}
 
 	/*
@@ -2872,6 +2876,10 @@ public final class LogManagerImpl implements LogManager {
 			}
 			return Boolean.TRUE;
 		}
+	}
+
+	public void setDisableExplicitFlushRequests(boolean disableExplicitFlushRequests) {
+		this.disableExplicitFlushRequests = disableExplicitFlushRequests;
 	}
 
 

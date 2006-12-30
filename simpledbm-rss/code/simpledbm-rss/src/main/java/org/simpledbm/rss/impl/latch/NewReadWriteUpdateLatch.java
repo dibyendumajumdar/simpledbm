@@ -252,8 +252,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
-						System.err
-								.println("Latch: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
+//						System.err
+//								.println("Latch: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}

@@ -38,7 +38,6 @@ import junit.framework.TestSuite;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
-import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.Index;
 import org.simpledbm.rss.api.im.IndexKey;
@@ -64,9 +63,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
-import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.fsm.FreeSpaceManagerImpl;
@@ -88,6 +85,7 @@ import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
 import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
+import org.simpledbm.rss.impl.wal.LogManagerImpl;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.ClassUtils;
 
@@ -2490,6 +2488,7 @@ public class TestBTreeManager extends BaseTestCase {
 			try {
 				doLoadData();
 			} catch (Exception e) {
+				e.printStackTrace();
 				TestBTreeManager.this.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
@@ -2570,6 +2569,7 @@ public class TestBTreeManager extends BaseTestCase {
 			try {
 				doLoadData();
 			} catch (Exception e) {
+				e.printStackTrace();
 				TestBTreeManager.this.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
@@ -2864,11 +2864,11 @@ public class TestBTreeManager extends BaseTestCase {
         final SlottedPageManager spmgr;
         final LockMgrFactory lockmgrFactory;
         final LockManagerImpl lockmgr;
-        final LogManager logmgr;
-        final BufferManager bufmgr;
+        final LogManagerImpl logmgr;
+        final BufferManagerImpl bufmgr;
         final LoggableFactory loggableFactory;
         final TransactionalModuleRegistry moduleRegistry;
-		final TransactionManager trxmgr;
+		final TransactionManagerImpl trxmgr;
         final FreeSpaceManager spacemgr;
         final BTreeIndexManagerImpl btreeMgr;
 
@@ -2880,10 +2880,19 @@ public class TestBTreeManager extends BaseTestCase {
     		properties.setProperty("log.groups.1.path", ".");
     		properties.setProperty("log.archive.path", ".");
     		properties.setProperty("log.group.files", "3");
-    		properties.setProperty("log.file.size", "16384");
-    		properties.setProperty("log.buffer.size", "16384");
-    		properties.setProperty("log.buffer.limit", "4");
-    		properties.setProperty("log.flush.interval", "5");
+    		if (largeBM) {
+    			System.err.println("Using settings for large log");
+        		properties.setProperty("log.file.size", "5242880");
+        		properties.setProperty("log.buffer.size", "5242880");
+        		properties.setProperty("log.buffer.limit", "4");
+        		properties.setProperty("log.flush.interval", "30");
+    		}
+    		else {
+        		properties.setProperty("log.file.size", "16384");
+        		properties.setProperty("log.buffer.size", "16384");
+        		properties.setProperty("log.buffer.limit", "4");
+        		properties.setProperty("log.flush.interval", "5");
+    		}
     		properties.setProperty("storage.basePath", "testdata/TestBTreeManager");
 
     		logFactory = new LogFactoryImpl();
@@ -2898,8 +2907,14 @@ public class TestBTreeManager extends BaseTestCase {
 			spmgr = new SlottedPageManagerImpl(objectFactory);
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(null);
-			logmgr = logFactory.getLog(properties);
+			logmgr = (LogManagerImpl) logFactory.getLog(properties);
+			if (largeBM) {
+				logmgr.setDisableExplicitFlushRequests(true);
+			}
 			bufmgr = new BufferManagerImpl(logmgr, pageFactory, largeBM ? 350 :20, largeBM ? 389 : 11);
+			if (largeBM) {
+				bufmgr.setBufferWriterSleepInterval(60000);
+			}
 			loggableFactory = new LoggableFactoryImpl(objectFactory);
 			moduleRegistry = new TransactionalModuleRegistryImpl();
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory, storageManager, bufmgr, lockmgr, loggableFactory, latchFactory, objectFactory, moduleRegistry);
@@ -2919,6 +2934,9 @@ public class TestBTreeManager extends BaseTestCase {
 				Page page = pageFactory.getInstance(pageFactory
 						.getRawPageType(), new PageId(0, 0));
 				pageFactory.store(page);
+			}
+			if (largeBM) {
+				trxmgr.setCheckpointInterval(60000);
 			}
 	    	trxmgr.start();
         }

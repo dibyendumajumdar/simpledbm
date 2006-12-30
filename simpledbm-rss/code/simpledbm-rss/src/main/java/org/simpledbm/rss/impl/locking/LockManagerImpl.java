@@ -260,6 +260,10 @@ public final class LockManagerImpl implements LockManager {
 		
 		LockMode downgradeMode;
 		ReleaseAction action;
+		
+		public String toString() {
+			return "Lockable="+lockable.toString();
+		}
 	}
 
 	static final class LockState {
@@ -283,6 +287,7 @@ public final class LockManagerImpl implements LockManager {
 		LockStatus getStatus() {
 			return status;
 		}
+		
 	}
 
 	/**
@@ -688,14 +693,21 @@ public final class LockManagerImpl implements LockManager {
 
 		if (lockState.lockRequest == null) {
 			/* 4. If not found, return success. */
+			/*
+			 * Rather than throwing an exception, we return success. This allows
+			 * us to use this method in situations where for reasons of efficiency,
+			 * the client cannot track the status of lock objects, and therefore
+			 * may end up trying to release the same lock multiple times.
+			 */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
 						"request not found, returning success");
 			}
-			throw new LockException(
-					"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-							+ lockState.parms.lockable
-							+ " as it is is not locked at present; seems like invalid call to release lock");
+			return true;
+//			throw new LockException(
+//					"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
+//							+ lockState.parms.lockable
+//							+ " as it is is not locked at present; seems like invalid call to release lock");
 		}
 
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
@@ -787,11 +799,12 @@ public final class LockManagerImpl implements LockManager {
 							+ " to " + lockState.parms.downgradeMode
 							+ " and re-adjusting granted mode");
 				}
-				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
+				// FIXME: We do not need to set LockInfo here anymore 
 				if (lockState.parms.lockInfo != null) {
 					lockState.parms.lockInfo.setPreviousMode(lockState.lockRequest.mode);
 					lockState.parms.lockInfo.setHeldByOthers(false);
 				}
+				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
 			} else {
 				throw new LockException(
 						"SIMPLEDBM-ELOCK-005: Invalid downgrade request from "
@@ -1125,8 +1138,8 @@ public final class LockManagerImpl implements LockManager {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
-						System.err
-								.println("Lock: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
+//						System.err
+//								.println("Lock: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}
@@ -1153,10 +1166,17 @@ public final class LockManagerImpl implements LockManager {
 
 			if (lockState.lockitem == null) {
 				/* 2. If not found, return success. */
-				throw new LockException(
-						"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-								+ lockState.parms.lockable
-								+ " as it is is not locked at present; seems like invalid call to release lock");
+				/*
+				 * Rather than throwing an exception, we return success. This allows
+				 * us to use this method in situations where for reasons of efficiency,
+				 * the client cannot track the status of lock objects, and therefore
+				 * may end up trying to release the same lock multiple times.
+				 */
+				return true;
+//				throw new LockException(
+//						"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
+//								+ lockState.parms.lockable
+//								+ " as it is is not locked at present; seems like invalid call to release lock");
 			}
 			released = releaseLock(lockState);
 		}
@@ -1266,7 +1286,14 @@ public final class LockManagerImpl implements LockManager {
 		 * by Jim Gray and Andreas Reuter.
 		 * See sections 7.11.3 and section 8.5.
 		 */
-		if (!globalLock.tryExclusiveLock()) {
+		int retry = 0;
+		for (; retry < 5; retry ++) {
+			if (globalLock.tryExclusiveLock()) {
+				break;
+			}
+			Thread.yield();
+		}
+		if (retry == 5) {
 			return;
 		}
 		try {
@@ -1274,7 +1301,7 @@ public final class LockManagerImpl implements LockManager {
 			for (LockWaiter waiter: waiterArray) {
 				waiter.cycle = null;
 				waiter.visited = false;
-				System.out.println("Waiter = " + waiter.myLockRequest);
+				// System.out.println("Waiter = " + waiter.myLockRequest);
 			}
 			for (LockWaiter waiter: waiterArray) {
 				findDeadlockCycle(waiter);
