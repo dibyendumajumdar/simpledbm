@@ -78,7 +78,6 @@ public interface Transaction {
 	 * <p>
 	 * Only SHARED or UPDATE mode locks may be released early. It is an error
 	 * to try to release lock held in any other mode.
-	 * @see org.simpledbm.rss.api.locking.LockHandle#release(boolean)
 	 */
 	public boolean releaseLock(Lockable lockable);
     

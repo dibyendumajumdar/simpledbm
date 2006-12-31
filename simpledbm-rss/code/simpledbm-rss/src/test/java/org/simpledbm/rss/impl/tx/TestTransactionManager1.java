@@ -438,6 +438,42 @@ public class TestTransactionManager1 extends TestCase {
             finally {
                 trx.commit();
             }
+            
+            trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
+        	ObjectLock lock1 = new ObjectLock(1, 15);
+        	ObjectLock lock2 = new ObjectLock(2, 16);
+            try {
+            	trx.acquireLock(lock1, LockMode.SHARED, LockDuration.COMMIT_DURATION);
+            	Savepoint savepoint = trx.createSavepoint(false);
+            	trx.acquireLock(lock2, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+            	assertEquals(trx.hasLock(lock1), LockMode.SHARED);
+            	assertEquals(trx.hasLock(lock2), LockMode.EXCLUSIVE);
+            	trx.acquireLock(lock1, LockMode.UPDATE, LockDuration.COMMIT_DURATION);
+            	assertEquals(trx.hasLock(lock1), LockMode.UPDATE);
+            	trx.rollback(savepoint);
+            	// System.err.println("Rolled back to savepoint");
+            	assertEquals(LockMode.UPDATE, trx.hasLock(lock1));
+            	assertEquals(LockMode.NONE, trx.hasLock(lock2));
+            	
+            	savepoint = trx.createSavepoint(false);
+            	trx.acquireLock(lock1, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+            	trx.acquireLock(lock2, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+            	assertEquals(trx.hasLock(lock1), LockMode.EXCLUSIVE);
+            	assertEquals(trx.hasLock(lock2), LockMode.EXCLUSIVE);
+            	trx.rollback(savepoint);
+            	// System.err.println("Rolled back to savepoint");
+            	assertEquals(LockMode.EXCLUSIVE, trx.hasLock(lock1));
+            	assertEquals(LockMode.NONE, trx.hasLock(lock2));}
+            catch (Exception e) {
+            	e.printStackTrace();
+            	throw e;
+            }
+            finally {
+            	trx.commit();
+            	// System.err.println("After commit");
+            	assertEquals(LockMode.NONE, trx.hasLock(lock1));
+            	assertEquals(LockMode.NONE, trx.hasLock(lock2));
+            }
         }
         finally {
         	trxmgr.shutdown();

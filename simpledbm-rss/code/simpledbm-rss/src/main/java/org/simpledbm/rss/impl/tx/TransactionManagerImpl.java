@@ -38,7 +38,6 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
-import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
@@ -1377,13 +1376,15 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * List of locks held by the transaction. Locks are always added
 		 * at the top of the list to facilitate releasing in reverse order.
 		 */
-		final LinkedList<LockRequest> locks = new LinkedList<LockRequest>();
+		// final LinkedList<LockRequest> locks = new LinkedList<LockRequest>();
+		final ArrayList<Lockable> locks = new ArrayList<Lockable>();
 
 		/**
 		 * Each lock is assigned a number - this is used to determine which
 		 * locks can be released during rollbacks to savepoints.
 		 */
-		int lockPos = 0;
+		// int lockPos = 0;
+		int lockPos = -1;
 		
 		/**
 		 * List of post commit actions.
@@ -1587,11 +1588,10 @@ public final class TransactionManagerImpl implements TransactionManager {
          * transaction.
          */     
         private void doAcquireLock(Lockable lockable, LockMode mode, LockDuration duration, int timeout) throws LockException {
-            LockHandle handle = null;
             MyLockInfo lockInfo = new MyLockInfo();
             try {
             	//System.err.println(Thread.currentThread() + ":Locking " + lockable);
-                handle = getTrxmgr().lockmgr.acquire(this, lockable, mode, duration, timeout, lockInfo);
+                getTrxmgr().lockmgr.acquire(this, lockable, mode, duration, timeout, lockInfo);
             }
             catch (LockTimeoutException e) {
             	/*
@@ -1601,7 +1601,7 @@ public final class TransactionManagerImpl implements TransactionManager {
                 throw new LockDeadlockException(e);
             }
             if (log.isDebugEnabled()) {
-                log.debug(LOG_CLASS_NAME, "acquireLock", "Acquired lock " + handle);
+                log.debug(LOG_CLASS_NAME, "acquireLock", "Acquired lock on " + lockable + " in mode " + mode + " for duration " + duration);
             }
             //System.err.println(Thread.currentThread() + ":Acquired lock on " + lockable);
             if (duration == LockDuration.INSTANT_DURATION) {
@@ -1629,14 +1629,15 @@ public final class TransactionManagerImpl implements TransactionManager {
 			 * to determine whether the lock should released during
 			 * rollback to a savepoint.
 			 */
-			LockRequest req = new LockRequest(lockable, handle, ++lockPos);
+			// LockRequest req = new LockRequest(lockable, handle, ++lockPos);
 			/*
 			 * Add to the beginning of the lock table so that most recently acquired locks
 			 * are at the beginning. This also means that when locks are released, they
 			 * will be released in the reverse order of acquisition.
 			 * Lock conversions do not change the position of the lock in this table.
 			 */
-			locks.addFirst(req);
+			// locks.addFirst(req);
+			locks.add(++lockPos, lockable);
         }
         
         
@@ -1774,27 +1775,55 @@ public final class TransactionManagerImpl implements TransactionManager {
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "releaseLocks", "Releasing locks for transaction " + this);
 			}
-			Iterator<LockRequest> iter = locks.iterator();
-			LockRequest req = null;
-			while (iter.hasNext()) {
-				req = iter.next();
+//			Iterator<LockRequest> iter = locks.iterator();
+//			LockRequest req = null;
+//			while (iter.hasNext()) {
+//				req = iter.next();
+//				/*
+//				 * If the lock has a lockPos greater than the Savepoint then
+//				 * it can be released.
+//				 */
+//				if (sp == null || req.lockPos > sp.lockPos) {
+//					iter.remove();
+//					if (log.isDebugEnabled()) {
+//						log.debug(LOG_CLASS_NAME, "releaseLock", "Releasing lock " + req);
+//					}				
+//					/* 
+//					 * Even if rolling back to a savepoint we forcibly release locks
+//					 * because if lock was acquired after the savepoint, it is not required
+//					 * any more.
+//					 */
+//					// req.handle.release(true);
+//					trxmgr.lockmgr.release(this, req.lockable, true);
+//					//System.err.println(Thread.currentThread() + ": Released lock on " + req.lockable);
+//				}
+//			}
+//			Iterator<LockRequest> iter = locks.iterator();
+//			LockRequest req = null;
+			for (int i = locks.size() - 1; i >= 0; i--) {
 				/*
-				 * If the lock has a lockPos greater than the Savepoint then
-				 * it can be released.
+				 * If the lock has a lockPos greater than the Savepoint then it
+				 * can be released.
 				 */
-				if (sp == null || req.lockPos > sp.lockPos) {
-					iter.remove();
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "releaseLock", "Releasing lock " + req);
-					}				
-					/* 
-					 * Even if rolling back to a savepoint we forcibly release locks
-					 * because if lock was acquired after the savepoint, it is not required
-					 * any more.
-					 */
-					// req.handle.release(true);
-					trxmgr.lockmgr.release(this, req.lockable, true);
-					//System.err.println(Thread.currentThread() + ": Released lock on " + req.lockable);
+				if (sp == null || i > sp.lockPos) {
+					Lockable lockable = locks.set(i, null);
+					if (lockable != null) {
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "releaseLock",
+									"Releasing lock " + lockable);
+						}
+						/*
+						 * Even if rolling back to a savepoint we forcibly
+						 * release locks because if lock was acquired after the
+						 * savepoint, it is not required any more.
+						 */
+						// req.handle.release(true);
+						trxmgr.lockmgr.release(this, lockable, true);
+						// System.err.println(Thread.currentThread() + ":Released lock on " + lockable);
+					}
+				}
+				if (sp != null && i <= sp.lockPos) {
+					break;
 				}
 			}
 		}
@@ -2111,20 +2140,21 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 			if (!delete) {
 				getTrxmgr().logmgr.flush(lastLsn);
-				if (rollbackUpto.isNull()) {
-					/* 
-					 * If we have completely rolled back then release all locks 
-					 */
-					releaseLocks(null);
-				} else {
+//				if (rollbackUpto.isNull()) {
+//					/* 
+//					 * If we have completely rolled back then release all locks 
+//					 */
+//					releaseLocks(null);
+//				} else {
 					/* 
 					 * Release all locks acquired since the savepoint. Note that
 					 * lock conversions are not undone, so if a lock was upgraded
 					 * from shared to exclusive after the savepoint, it will remain
 					 * as exclusive.
 					 */
+					// System.err.println("Calling release locks");
 					releaseLocks(sp);
-				}
+//				}
 				/*
 				 * Discard PostCommitActions that were scheduled after the
 				 * Savepoint.
@@ -2275,35 +2305,35 @@ public final class TransactionManagerImpl implements TransactionManager {
 		
 	}
 	
-	/**
-	 * LockRequest holds information about a single Lock object owned by the
-	 * transaction.
-	 * 
-	 * @author Dibyendu Majumdar
-	 * @since 25-Aug-2005
-	 */
-	static final class LockRequest {
-	
-		/**
-		 * TODO lockable is redundant because we should have the same info 
-		 */ 
-		final Object lockable;
-		
-		final int lockPos;
-	
-		LockHandle handle;
-		
-		LockRequest(Object lockable, LockHandle handle, int lockPos) {
-			this.lockable = lockable;
-			this.handle = handle;
-			this.lockPos = lockPos;
-		}
-		
-		@Override
-		public final String toString() {
-			return "LockRequest(" + lockable + ",lockPos=" + lockPos + ")";
-		}
-	}
+//	/**
+//	 * LockRequest holds information about a single Lock object owned by the
+//	 * transaction.
+//	 * 
+//	 * @author Dibyendu Majumdar
+//	 * @since 25-Aug-2005
+//	 */
+//	static final class LockRequest {
+//	
+//		/**
+//		 * TODO lockable is redundant because we should have the same info 
+//		 */ 
+//		final Object lockable;
+//		
+//		final int lockPos;
+//	
+//		LockHandle handle;
+//		
+//		LockRequest(Object lockable, LockHandle handle, int lockPos) {
+//			this.lockable = lockable;
+//			this.handle = handle;
+//			this.lockPos = lockPos;
+//		}
+//		
+//		@Override
+//		public final String toString() {
+//			return "LockRequest(" + lockable + ",lockPos=" + lockPos + ")";
+//		}
+//	}
 
 	/**
 	 * The SavepointImpl records the state of the transaction at the
