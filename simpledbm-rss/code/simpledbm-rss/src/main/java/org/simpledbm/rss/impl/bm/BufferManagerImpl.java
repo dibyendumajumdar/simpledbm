@@ -41,7 +41,6 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.bm.CopyOfBufferManagerImpl.BufferHashBucket;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
