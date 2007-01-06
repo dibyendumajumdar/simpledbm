@@ -222,7 +222,7 @@ public final class BufferManagerImpl implements BufferManager {
 			h = hashPrimes.length-1;
 		}
 		hashsize = hashPrimes[h];
-		System.err.println("Buffer Pool hash size chosen to be " + hashsize);
+		// System.err.println("Buffer Pool hash size chosen to be " + hashsize);
 		bufferHash = new BufferHashBucket[hashsize];
 		for (int i = 0; i < hashsize; i++) {
 			bufferHash[i] = new BufferHashBucket();
@@ -682,6 +682,7 @@ public final class BufferManagerImpl implements BufferManager {
 		assert nextBcb.frameIndex != -1;
 		assert nextBcb.pageId.equals(pageid);
 		// assert nextBcb.latch.isHeldByCurrentThread();
+		assert bucket.latch.isHeldByCurrentThread();
 		
 		/*
 		 * Now that we have got the desired page, a) increment fix count. b)
