@@ -21,7 +21,7 @@ package org.simpledbm.rss.util;
 
 import java.util.Iterator;
 
-public class LinkedList<E extends Linkable> {
+public class LinkedList<E extends Linkable> implements Iterable<E> {
 
 	Linkable head;
 
@@ -29,7 +29,7 @@ public class LinkedList<E extends Linkable> {
 
 	int count;
 
-	public final void append(E link) {
+	public final void addLast(E link) {
 		if (head == null)
 			head = link;
 		link.setPrev(tail);
@@ -40,7 +40,7 @@ public class LinkedList<E extends Linkable> {
 		count++;
 	}
 
-	public final void prepend(E link) {
+	public final void addFirst(E link) {
 		if (tail == null)
 			tail = link;
 		link.setNext(head);
@@ -54,7 +54,7 @@ public class LinkedList<E extends Linkable> {
 	public final void insertBefore(E anchor, E link) {
 
 		if (anchor == null) {
-			prepend(link);
+			addFirst(link);
 		} else {
 			Linkable prev = anchor.getPrev();
 			link.setNext(anchor);
@@ -72,7 +72,7 @@ public class LinkedList<E extends Linkable> {
 	public final void insertAfter(E anchor, E link) {
 
 		if (anchor == null) {
-			append(link);
+			addLast(link);
 		} else {
 			Linkable next = anchor.getNext();
 			link.setPrev(anchor);
@@ -151,7 +151,7 @@ public class LinkedList<E extends Linkable> {
 	}
 
 	public final void push(E link) {
-		append(link);
+		addLast(link);
 	}
 
 	@SuppressWarnings("unchecked")

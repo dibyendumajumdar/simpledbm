@@ -26,15 +26,22 @@ public class TestLinkedList extends TestCase {
 				return false;
 			return true;
 		}
+
+		public String toString() {
+			return "E(" + i + ")";
+		}
 		
 	}
 	
 	public void testBasics() {
 		LinkedList<Element> ll = new LinkedList<Element>();
 		for (int i = 0; i < 10; i++) {
-			ll.append(new Element(i));
+			ll.addLast(new Element(i));
 		}
 		assertEquals(10, ll.size());
+		for (Element e: ll) {
+			System.out.println(e);
+		}
 		Iterator<Element> iter = ll.iterator();
 		int x = 0;
 		while (iter.hasNext()) {
@@ -45,7 +52,7 @@ public class TestLinkedList extends TestCase {
 		}
 		assertEquals(0, ll.size());
 		for (int i = 0; i < 10; i++) {
-			ll.prepend(new Element(i));
+			ll.addFirst(new Element(i));
 		}
 		assertEquals(10, ll.size());
 		x = 9;
