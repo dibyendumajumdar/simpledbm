@@ -60,8 +60,6 @@ import org.simpledbm.rss.util.logging.Logger;
  */
 public final class BufferManagerImpl implements BufferManager {
 
-	private static final String BUFFERPOOL_HASHSIZE = "bufferpool.hashsize";
-
 	private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
 
 	private static final String LOG_CLASS_NAME = BufferManagerImpl.class.getName();
@@ -115,7 +113,7 @@ public final class BufferManagerImpl implements BufferManager {
 	/*
      * Notes on latching:
 	 * In this implementation, the latching order is always: 
-	 * LRU chain -> Hash bucket -> BCB
+	 * LRU chain -> Hash bucket
 	 *
 	 * Page latch is completely outside of the BufMgr processing logic.
 	 */
@@ -204,7 +202,7 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Initialize the Buffer Manager instance.
      */
-    private void init(LogManager logMgr, PageFactory pageFactory, int bufferpoolsize, int hashsize) {
+    private void init(LogManager logMgr, PageFactory pageFactory, int bufferpoolsize) {
 		this.logMgr = logMgr;
 		this.pageFactory = pageFactory;
 		bufferpool = new Page[bufferpoolsize];
@@ -221,8 +219,7 @@ public final class BufferManagerImpl implements BufferManager {
 		if (h == hashPrimes.length) {
 			h = hashPrimes.length-1;
 		}
-		hashsize = hashPrimes[h];
-		// System.err.println("Buffer Pool hash size chosen to be " + hashsize);
+		int hashsize = hashPrimes[h];
 		bufferHash = new BufferHashBucket[hashsize];
 		for (int i = 0; i < hashsize; i++) {
 			bufferHash[i] = new BufferHashBucket();
@@ -241,7 +238,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * @param hashsize Size of the hash table, should preferably be a prime number.
 	 */
 	public BufferManagerImpl(LogManager logMgr, PageFactory pageFactory, int bufferpoolsize, int hashsize) {
-		init(logMgr, pageFactory, bufferpoolsize, hashsize);
+		init(logMgr, pageFactory, bufferpoolsize);
 	}
 
 	/**
@@ -253,8 +250,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	public BufferManagerImpl(LogManager logMgr, PageFactory pageFactory, Properties props) {
 		int bufferpoolsize = getNumericProperty(props, BUFFERPOOL_NUMBUFFERS, 500);
-		int hashsize = getNumericProperty(props, BUFFERPOOL_HASHSIZE, 193);
-		init(logMgr, pageFactory, bufferpoolsize, hashsize);
+		init(logMgr, pageFactory, bufferpoolsize);
 	}
 	
 	/* (non-Javadoc)
@@ -349,14 +345,12 @@ public final class BufferManagerImpl implements BufferManager {
 		int frameNo = -1;
 
 		/* Check if there is a free frame that can be used */
-//		if (nextAvailableFrame >= 0) {
-			synchronized (freeFrames) {
-				if (nextAvailableFrame >= 0) {
-					frameNo = freeFrames[nextAvailableFrame--];
-					return frameNo;
-				}
+		synchronized (freeFrames) {
+			if (nextAvailableFrame >= 0) {
+				frameNo = freeFrames[nextAvailableFrame--];
+				return frameNo;
 			}
-//		}
+		}
 		/*
 		 * Find a replacement victim - this should be the Least Recently Used
 		 * Buffer that is unfixed.
@@ -381,55 +375,51 @@ public final class BufferManagerImpl implements BufferManager {
                      * Hence it is safe to wait unconditionally for the
 					 * bucket k.
 					 */
-					bucket.latch.lock();
+					bucket.lock();
 
 					try {
 						/* In case the BCB has changed then skip */
 						if (!nextBcb.pageId.equals(pageid)) {
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, "getFrame", "Skipping bcb " + nextBcb + " because page id has changed");
+								log
+										.debug(
+												LOG_CLASS_NAME,
+												"getFrame",
+												"Skipping bcb "
+														+ nextBcb
+														+ " because page id has changed");
 							}
 							continue;
 						}
 
 						/*
-						 * If we cannot latch BCB exclusively, then skip. With LATCH OPTION 2, we could wait
-						 * unconditionally here.  
+						 * If the buffer is pinned or is waiting for IO, then
+						 * skip
 						 */
-//						if (!nextBcb.latch.tryLock()) {
-//							if (log.isDebugEnabled()) {
-//								log.debug(LOG_CLASS_NAME, "getFrame", "Skipping bcb " + nextBcb + " because it cannot be latched exclusively");
-//							}
-//							continue;
-//						}
-
-						try {
-							/*
-							 * If the buffer is pinned or is waiting for IO,
-							 * then skip
-							 */
-							if (!nextBcb.invalid && (nextBcb.fixcount > 0 || nextBcb.dirty || nextBcb.frameIndex == -1 || nextBcb.writeInProgress)) {
-								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "getFrame", "Skipping bcb " + nextBcb + " because fixCount > 0 or dirty or IO in progress");
-								}
-								continue;
-							}
-
+						if (nextBcb.isValid()
+								&& (nextBcb.isInUse() || nextBcb.isDirty()
+										|| nextBcb.isBeingRead() || nextBcb.isBeingWritten())) {
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, "getFrame", "Bcb " + nextBcb + " chosen as relacement victim");
+								log.debug(
+									LOG_CLASS_NAME,	"getFrame",	"Skipping bcb "
+										+ nextBcb + " because fixCount > 0 or dirty or IO in progress");
 							}
-							/* Remove BCB from LRU Chain */
-                            iterator.remove();
-							/* Remove BCB from Hash Chain */
-							bucket.chain.remove(nextBcb);
-							bufferpool[nextBcb.frameIndex] = null; 
-							return nextBcb.frameIndex;
-
-						} finally {
-							// nextBcb.latch.unlock();
+							continue;
 						}
+
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "getFrame", "Bcb "
+									+ nextBcb + " chosen as relacement victim");
+						}
+						/* Remove BCB from LRU Chain */
+						iterator.remove();
+						/* Remove BCB from Hash Chain */
+						bucket.chain.remove(nextBcb);
+						bufferpool[nextBcb.frameIndex] = null;
+						return nextBcb.frameIndex;
+
 					} finally {
-						bucket.latch.unlock();
+						bucket.unlock();
 					}
 				}
 			} finally {
@@ -460,7 +450,7 @@ public final class BufferManagerImpl implements BufferManager {
 
 		BufferControlBlock nextBcb = new BufferControlBlock();
 		BufferHashBucket bucket = bufferHash[hashCode];
-		bucket.latch.lock();
+		bucket.lock();
 		try {
 
 			/**
@@ -475,7 +465,7 @@ public final class BufferManagerImpl implements BufferManager {
 			 */
 
 			for (BufferControlBlock bcb : bucket.chain) {
-				if (!bcb.invalid && bcb.pageId.equals(pageId)) {
+				if (bcb.isValid() && bcb.pageId.equals(pageId)) {
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
 					}
@@ -487,7 +477,7 @@ public final class BufferManagerImpl implements BufferManager {
 					// Another bug: 16 Dec 2006
 					// We need to check for writeInProgress as well.
 					// we allow SHARED access if writeInProgress is true.
-					if (bcb.frameIndex == -1 || (bcb.writeInProgress && latchMode != LATCH_SHARED)) {
+					if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
 						// System.err.println(Thread.currentThread().getName() + ": Page " + bcb.pageId + " is being read, so we need to retry");
 						return null;
 					}
@@ -505,7 +495,7 @@ public final class BufferManagerImpl implements BufferManager {
 
 			bucket.chain.addFirst(nextBcb);
 		} finally {
-			bucket.latch.unlock();
+			bucket.unlock();
 		}
 
 		/*
@@ -540,14 +530,14 @@ public final class BufferManagerImpl implements BufferManager {
 					 * and return the buffer pool frame to the freelist. 
 					 */
 					log.error(LOG_CLASS_NAME, "locatePage", "Error occurred while attempting to read page " + pageId);
-					bucket.latch.lock();
+					bucket.lock();
 					try {
 						bucket.chain.remove(nextBcb);
 						synchronized (freeFrames) {
 							freeFrames[++nextAvailableFrame] = frameNo;
 						}
 					} finally {
-						bucket.latch.unlock();
+						bucket.unlock();
 					}
 				}
 			}
@@ -557,12 +547,12 @@ public final class BufferManagerImpl implements BufferManager {
 		/*
 		 * Read complete
 		 */
-		bucket.latch.lock();
+		bucket.lock();
 		try {
 			nextBcb.frameIndex = frameNo;
 		}
 		finally {
-			bucket.latch.unlock();
+			bucket.unlock();
 		}
 
 		return nextBcb;
@@ -609,46 +599,42 @@ public final class BufferManagerImpl implements BufferManager {
 
 			for (;;) {
 				found = false;
-				bucket.latch.lock();
+				bucket.lock();
 				for (BufferControlBlock bcb : bucket.chain) {
                     /*
                      * Ignore invalid pages.
                      */
-					if (!bcb.invalid && bcb.pageId.equals(pageid)) {
+					if (bcb.isValid() && bcb.pageId.equals(pageid)) {
 						found = true;
 						/*
 						 * A frameIndex of -1 indicates that the page is being
 						 * read in. We must wait if this is the case.
+						 * If the page is being written out (writeInProgress ==
+						 * true) we must not allow exclusive access to it
+						 * until the IO is complete. However, a
+						 * non-exclusive access (for reading) is permitted.
+						 * ISSUE: 17-Sep-05
+						 * We treat an update mode access as an exclusive request because
+						 * we do not know whether the page will subsequently be latched
+						 * exclusively or not.  
 						 */
-						if (bcb.frameIndex != -1) {
-							// bcb.latch.lock();
+						if (!bcb.isBeingRead() && (latchMode == LATCH_SHARED || !bcb.isBeingWritten())) {
+							nextBcb = bcb;
 							/*
-							 * If the page is being written out (writeInProgress ==
-							 * true) we must not allow exclusive access to it
-							 * until the IO is complete. However, a
-							 * non-exclusive access (for reading) is permitted.
-							 * ISSUE: 17-Sep-05
-							 * We treat an update mode access as an exclusive request because
-							 * we do not know whether the page will subsequently be latched
-							 * exclusively or not.  
+							 * we leave the BCB exclusively latched and
+							 * bucket latched in shared mode
 							 */
-							if (bcb.pageId.equals(pageid) && (latchMode == LATCH_SHARED || !bcb.writeInProgress)) {
-								nextBcb = bcb;
-								/*
-								 * we leave the BCB exclusively latched and
-								 * bucket latched in shared mode
-								 */
-								break search_again;
-							} else {
-								// bcb.latch.unlock();
-							}
+							break search_again;
 						}
 						break;
 					}
 				}
-				bucket.latch.unlock();
+				bucket.unlock();
 				if (!found) {
 					break;
+				}
+				else {
+					Thread.yield();
 				}
 			}
 
@@ -664,11 +650,10 @@ public final class BufferManagerImpl implements BufferManager {
 				if (stop || nextBcb == null) {
 					throw new BufferManagerException();
 				}
-				bucket.latch.lock();
+				bucket.lock();
 				if (!nextBcb.pageId.equals(pageid)) {
-					bucket.latch.unlock();
+					bucket.unlock();
 				} else {
-					// nextBcb.latch.lock();
 					break;
 				}
 			}
@@ -681,7 +666,6 @@ public final class BufferManagerImpl implements BufferManager {
 
 		assert nextBcb.frameIndex != -1;
 		assert nextBcb.pageId.equals(pageid);
-		// assert nextBcb.latch.isHeldByCurrentThread();
 		assert bucket.latch.isHeldByCurrentThread();
 		
 		/*
@@ -704,13 +688,11 @@ public final class BufferManagerImpl implements BufferManager {
 		/* Allocate a Buffer Access Block and initialize it */
 		BufferAccessBlockImpl bab = new BufferAccessBlockImpl(this, nextBcb, bufferpool[nextBcb.frameIndex]);
 
-		bucket.latch.unlock();
-
 		/*
 		 * All latches must be released before we acquire the user requested
 		 * page latch
 		 */
-//		nextBcb.latch.unlock();
+		bucket.unlock();
 
 		/* 
 		 * At this point the page is in the hash table, but not in LRU.
@@ -798,9 +780,9 @@ public final class BufferManagerImpl implements BufferManager {
 		checkStatus();
 
 		BufferControlBlock bcb = bab.bcb;
-		int h = bab.page.getPageId().hashCode() % bufferHash.length;
+		int h = bcb.pageId.hashCode() % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
-		bucket.latch.lock();
+		bucket.lock();
 		/*
 		 * Note that if the page is being written out, we must not set the dirty
 		 * flag. TEST CASE: Test the situation where a page is unfixed while it
@@ -808,12 +790,12 @@ public final class BufferManagerImpl implements BufferManager {
 		 * FIXME: The test for writeInProgress is probably redundant as the
 		 * Buffer Writer will only steal pages with fixcount == 0. 
 		 */
-		if (bab.dirty && !bcb.writeInProgress && !bcb.dirty && !bcb.invalid) {
+		if (bab.dirty && !bcb.isBeingWritten() && !bcb.isDirty() && bcb.isValid()) {
 			bcb.dirty = true;
 			dirtyBuffersCount++;
 		}
 		bcb.fixcount--;
-		bucket.latch.unlock();
+		bucket.unlock();
 	}
 
 	/**
@@ -825,7 +807,7 @@ public final class BufferManagerImpl implements BufferManager {
 		lruLatch.readLock().lock();
 		try {
 			for (BufferControlBlock bcb : lru) {
-				if (bcb.dirty && !bcb.invalid) {
+				if (bcb.isDirty() && bcb.isValid()) {
 					DirtyPageInfo dp = new DirtyPageInfo(bcb.pageId, bcb.recoveryLsn, bcb.recoveryLsn);
 					/*
 					 * Since we have not latched the BCB, it is possible that within the small
@@ -854,7 +836,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	public void updateRecoveryLsns(DirtyPageInfo[] dirty_pages) {
 		for (BufferControlBlock bcb : lru) {
-			if (bcb.dirty && !bcb.invalid) {
+			if (bcb.isDirty() && bcb.isValid()) {
 				for (DirtyPageInfo dp : dirty_pages) {
 					if (dp.getPageId().equals(bcb.pageId)) {
 						bcb.recoveryLsn = dp.getRealRecoveryLsn();
@@ -878,28 +860,20 @@ public final class BufferManagerImpl implements BufferManager {
             	
         		int h = bcb.pageId.hashCode() % bufferHash.length;
         		BufferHashBucket bucket = bufferHash[h];
-        		bucket.latch.lock();
+        		bucket.lock();
 				try {
-					if (!bcb.invalid
-							&& bcb.pageId.getContainerId() == containerId) {
-						// bcb.latch.lock();
-
-						try {
-							bcb.invalid = true;
-							if (log.isTraceEnabled()) {
-								log.trace(LOG_CLASS_NAME,
-										"invalidateContainer",
-										"INVALIDATING Page " + bcb.pageId);
-							}
-							if (bcb.writeInProgress) {
-								writeWaits++;
-							}
-						} finally {
-							// bcb.latch.unlock();
+					if (bcb.isValid() && bcb.pageId.getContainerId() == containerId) {
+						bcb.invalid = true;
+						if (log.isTraceEnabled()) {
+							log.trace(LOG_CLASS_NAME, "invalidateContainer",
+									"INVALIDATING Page " + bcb.pageId);
+						}
+						if (bcb.isBeingWritten()) {
+							writeWaits++;
 						}
 					}
 				} finally {
-					bucket.latch.unlock();
+					bucket.unlock();
 				}
             }
         } finally {
@@ -921,28 +895,19 @@ public final class BufferManagerImpl implements BufferManager {
             lruLatch.readLock().lock();
             try {
                 for (BufferControlBlock bcb : lru) {
-            		int h = bcb.pageId.hashCode() % bufferHash.length;
-            		BufferHashBucket bucket = bufferHash[h];
-            		bucket.latch.lock();
-            		try {
-                    if (bcb.writeInProgress
-                            && bcb.pageId.getContainerId() == containerId) {
-                        // bcb.latch.lock();
-                        try {
-                            if (bcb.writeInProgress
-                                    && bcb.pageId.getContainerId() == containerId) {
-                                assert bcb.invalid;
-                                writeWaits++;
-                            }
-                        } finally {
-                            // bcb.latch.unlock();
-                        }
-                    }
-            		}
-            		finally {
-                		bucket.latch.unlock();
-            		}
-                }
+					int h = bcb.pageId.hashCode() % bufferHash.length;
+					BufferHashBucket bucket = bufferHash[h];
+					bucket.lock();
+					try {
+						if (bcb.isBeingWritten()
+								&& bcb.pageId.getContainerId() == containerId) {
+							assert bcb.isInvalid();
+							writeWaits++;
+						}
+					} finally {
+						bucket.unlock();
+					}
+				}
             } finally {
                 lruLatch.readLock().unlock();
             }
@@ -969,7 +934,7 @@ public final class BufferManagerImpl implements BufferManager {
 			 * We scan the LRU list and make a note of the dirty pages.
 			 */
 			for (BufferControlBlock bcb : lru) {
-				if (bcb.dirty) {
+				if (bcb.isDirty()) {
 					dplist.add(bcb);
 				}
 			}
@@ -988,8 +953,7 @@ public final class BufferManagerImpl implements BufferManager {
     		int h = bcb.pageId.hashCode() % bufferHash.length;
     		BufferHashBucket bucket = bufferHash[h];
 
-    		// if (!bcb.latch.tryLock()) {
-    		if (!bucket.latch.tryLock()) {
+    		if (!bucket.tryLock()) {
 				continue;
 			}
 
@@ -997,7 +961,7 @@ public final class BufferManagerImpl implements BufferManager {
 				/*
 				 * frameIndex is equal to -1 for a page being faulted in.
 				 */
-				if (!bcb.invalid && bcb.frameIndex != -1 && bcb.dirty && bcb.fixcount == 0) {
+				if (bcb.isValid() && !bcb.isBeingRead() && bcb.isDirty() && !bcb.isInUse()) {
 					/*
 					 * Set a flag to indicate that the page is being written
 					 * out. Pages can be accessed for reading (shared mode) when this is true,
@@ -1007,8 +971,7 @@ public final class BufferManagerImpl implements BufferManager {
                     if (log.isTraceEnabled()) {
                         log.trace(LOG_CLASS_NAME, "writeBuffers", "WRITING Page " + bcb.pageId);
                     }
-					// bcb.latch.unlock();
-                    bucket.latch.unlock();
+                    bucket.unlock();
 
 					try {
 						
@@ -1024,8 +987,7 @@ public final class BufferManagerImpl implements BufferManager {
 						}
 						pageFactory.store(page);
 					} finally {
-						// bcb.latch.lock();
-						bucket.latch.lock();
+						bucket.lock();
 					}
 
                     if (log.isTraceEnabled()) {
@@ -1045,8 +1007,7 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 				}
 			} finally {
-				// bcb.latch.unlock();
-				bucket.latch.unlock();
+				bucket.unlock();
 			}
 		}
 	}
@@ -1102,12 +1063,6 @@ public final class BufferManagerImpl implements BufferManager {
 		volatile int frameIndex = -1;
 
 		/**
-		 * A latch to protect access to this BCB while it is being read/modified
-		 * by the Buffer Manager routines.
-		 */
-//		final ReentrantLock latch = new ReentrantLock();
-
-		/**
 		 * Indicates that the page is dirty and needs to be written out. Can
 		 * only be set when frameIndex != -1 and writeInProgress is not true.
 		 * This is because when a page has been read, it cannot be dirty, and
@@ -1146,7 +1101,31 @@ public final class BufferManagerImpl implements BufferManager {
 
 		@Override
 		public final String toString() {
-			return "BCB(pageid=" + pageId + ", frame=" + frameIndex + ", dirty=" + dirty + ", fixcount=" + fixcount + ", writeInProgress=" + writeInProgress + ")";
+			return "BCB(pageid=" + pageId + ", frame=" + frameIndex + ", isDirty=" + dirty + ", fixcount=" + fixcount + ", isBeingWritten=" + writeInProgress + ")";
+		}
+		
+		final boolean isInUse() {
+			return fixcount > 0;
+		}
+		
+		final boolean isValid() {
+			return !invalid;
+		}
+		
+		final boolean isInvalid() {
+			return invalid;
+		}
+		
+		final boolean isBeingRead() {
+			return frameIndex == -1;
+		}
+		
+		final boolean isBeingWritten() {
+			return writeInProgress;
+		}
+		
+		final boolean isDirty() {
+			return dirty;
 		}
 	}
 
@@ -1160,8 +1139,7 @@ public final class BufferManagerImpl implements BufferManager {
 		/**
 		 * Protects access to the hash chain.
 		 */
-		// final ReentrantReadWriteLock latch = new ReentrantReadWriteLock();
-		final ReentrantLock latch = new ReentrantLock();
+		final private ReentrantLock latch = new ReentrantLock();
 
 		/**
 		 * A linked list of hashed BCBs.
@@ -1169,6 +1147,18 @@ public final class BufferManagerImpl implements BufferManager {
 		 * TODO: Inefficient for removal, need a custom implementation.
 		 */
 		final LinkedList<BufferControlBlock> chain = new LinkedList<BufferControlBlock>();
+		
+		final void lock() {
+			latch.lock();
+		}
+		
+		final void unlock() {
+			latch.unlock();
+		}
+		
+		final boolean tryLock() {
+			return latch.tryLock();
+		}
 	}
 
 	/**
