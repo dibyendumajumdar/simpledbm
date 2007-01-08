@@ -29,20 +29,32 @@ public abstract class Linkable {
 
 	Linkable prev;
 
-	public Linkable getNext() {
+	boolean member;
+	
+	Linkable getNext() {
 		return next;
 	}
 
-	public void setNext(Linkable link) {
+	void setNext(Linkable link) {
 		next = link;
 	}
 
-	public Linkable getPrev() {
+	Linkable getPrev() {
 		return prev;
 	}
 
-	public void setPrev(Linkable link) {
+	void setPrev(Linkable link) {
 		prev = link;
 	}
 
+	public final boolean isMember() {
+		return member;
+	}
+
+	final void setMember(boolean member) {
+		this.member = member;
+	}
+
+	
+	
 }
