@@ -34,7 +34,7 @@ public class TestLinkedList extends TestCase {
 	}
 	
 	public void testBasics() {
-		LinkedList<Element> ll = new LinkedList<Element>();
+		SimpleLinkedList<Element> ll = new SimpleLinkedList<Element>();
 		for (int i = 0; i < 10; i++) {
 			ll.addLast(new Element(i));
 		}
