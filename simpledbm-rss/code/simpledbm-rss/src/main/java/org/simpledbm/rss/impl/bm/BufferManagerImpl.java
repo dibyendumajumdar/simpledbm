@@ -41,6 +41,8 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.util.Linkable;
+import org.simpledbm.rss.util.SimpleLinkedList;
 import org.simpledbm.rss.util.logging.Logger;
 
 /**
@@ -108,7 +110,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * Pages in the cache are also put into the LRU list. The head of the list
 	 * is the LRU end, whereas the tail is the MRU.
 	 */
-	private final LinkedList<BufferControlBlock> lru = new LinkedList<BufferControlBlock>();
+	private final SimpleLinkedList<BufferControlBlock> lru = new SimpleLinkedList<BufferControlBlock>();
 
 	/*
      * Notes on latching:
@@ -175,6 +177,8 @@ public final class BufferManagerImpl implements BufferManager {
 	final Object bufferWriterLatch = new Object();
 
 
+	int dumpLevel = 0;
+	
     /**
      * Define the number of times the BufMgr will retry when it cannot locate
      * an empty frame. Each time, it retries, the Buffer Writer will be triggered.
@@ -306,13 +310,15 @@ public final class BufferManagerImpl implements BufferManager {
 	public void shutdown() {
 		// System.err.println("Shutting down");
 		stop = true;
-		//signalBufferWriter();
+		signalBufferWriter();
 		try {
 			bufferWriter.join();
 		} catch (InterruptedException e) {
 			log.error(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: Error occurred while shutting down Buffer Manager", e);
 		}
+		dumpLevel = 1;
 		writeBuffers();
+		dumpLevel = 0;
 	}
 
 	/**
@@ -713,12 +719,20 @@ public final class BufferManagerImpl implements BufferManager {
 		try {
 			// TODO: This is inefficient, as remove searches through the entire
 			// list. Must implement a custom linked list :-(
-			lru.remove(nextBcb);
 			if (hint == 0) {
-				lru.addLast(nextBcb);
-			}
-			else {
-				lru.addFirst(nextBcb);
+				if (lru.getLast() != nextBcb) {
+					if (nextBcb.isMember()) {
+						lru.remove(nextBcb);
+					}
+					lru.addLast(nextBcb);
+				}
+			} else {
+				if (lru.getFirst() != nextBcb) {
+					if (nextBcb.isMember()) {
+						lru.remove(nextBcb);
+					}
+					lru.addFirst(nextBcb);
+				}
 			}
 		} finally {
 			lruLatch.writeLock().unlock();
@@ -775,10 +789,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	void unfix(BufferAccessBlockImpl bab) {
 
-		bab.unlatch();
-
-		checkStatus();
-
 		BufferControlBlock bcb = bab.bcb;
 		int h = bcb.pageId.hashCode() % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
@@ -796,6 +806,11 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 		bcb.fixcount--;
 		bucket.unlock();
+
+		bab.unlatch();
+
+		checkStatus();
+
 	}
 
 	/**
@@ -985,6 +1000,9 @@ public final class BufferManagerImpl implements BufferManager {
 							 */
 							logMgr.flush(lsn);
 						}
+	                    if (dumpLevel == 1) {
+	                    	System.out.println("BufMgr.writeBuffers: WRITING Page " + page.getPageId() + " lsn " + lsn);
+	                    }
 						pageFactory.store(page);
 					} finally {
 						bucket.lock();
@@ -1049,7 +1067,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * @author Dibyendu Majumdar
 	 * @since 20-Aug-2005
 	 */
-	static final class BufferControlBlock {
+	static final class BufferControlBlock extends Linkable {
 
 		/**
 		 * Id of the page that this BCB holds information about.
