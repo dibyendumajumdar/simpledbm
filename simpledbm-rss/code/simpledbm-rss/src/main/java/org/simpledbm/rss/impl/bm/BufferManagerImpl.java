@@ -176,9 +176,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	final Object bufferWriterLatch = new Object();
 
-
-	int dumpLevel = 0;
-	
     /**
      * Define the number of times the BufMgr will retry when it cannot locate
      * an empty frame. Each time, it retries, the Buffer Writer will be triggered.
@@ -316,9 +313,7 @@ public final class BufferManagerImpl implements BufferManager {
 		} catch (InterruptedException e) {
 			log.error(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: Error occurred while shutting down Buffer Manager", e);
 		}
-		dumpLevel = 1;
 		writeBuffers();
-		dumpLevel = 0;
 	}
 
 	/**
@@ -1000,9 +995,6 @@ public final class BufferManagerImpl implements BufferManager {
 							 */
 							logMgr.flush(lsn);
 						}
-	                    if (dumpLevel == 1) {
-	                    	System.out.println("BufMgr.writeBuffers: WRITING Page " + page.getPageId() + " lsn " + lsn);
-	                    }
 						pageFactory.store(page);
 					} finally {
 						bucket.lock();
