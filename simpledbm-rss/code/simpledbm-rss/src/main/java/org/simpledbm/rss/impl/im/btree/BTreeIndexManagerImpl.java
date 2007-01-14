@@ -3008,7 +3008,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Dumps contents of the BTree node.
 		 */
 		public final void dump() {
+			
 			// dumpAsXml();
+			if (DiagnosticLogger.getDiagnosticsLevel() == 0) {
+				return;
+			}
 			page.dump();
 			assert page.getSpaceMapPageNumber() != -1;
 			if (page.getNumberOfSlots() > 0) {
