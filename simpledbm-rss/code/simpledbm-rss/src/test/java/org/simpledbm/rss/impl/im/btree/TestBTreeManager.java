@@ -1606,7 +1606,7 @@ public class TestBTreeManager extends BaseTestCase {
                             	}
                                 if (scan.getCurrentKey().equals(delkey)) {
                                 	lock.lock();
-                                	lockWaitStarted.await();
+                                	lockWaitStarted.await(15, TimeUnit.SECONDS);
                                 	lock.unlock();
 //                                    System.out.println("--> SCAN Sleeping for 15 seconds");
 //                                    Thread.sleep(15000);
@@ -2881,7 +2881,6 @@ public class TestBTreeManager extends BaseTestCase {
     		properties.setProperty("log.archive.path", ".");
     		properties.setProperty("log.group.files", "3");
     		if (largeBM) {
-    			System.err.println("Using settings for large log");
         		properties.setProperty("log.file.size", "5242880");
         		properties.setProperty("log.buffer.size", "5242880");
         		properties.setProperty("log.buffer.limit", "4");
