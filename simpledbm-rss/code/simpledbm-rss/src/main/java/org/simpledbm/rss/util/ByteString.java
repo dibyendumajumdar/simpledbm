@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.util;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.st.Storable;
@@ -37,7 +38,11 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     }
 
     public ByteString(String s) {
-        bytes = s.getBytes();
+        try {
+			bytes = s.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
     }
     
     public ByteString(byte[] bytes) {
@@ -48,7 +53,11 @@ public final class ByteString implements Storable, Comparable<ByteString> {
 	public String toString() {
         if (bytes == null)
             return "";
-        return new String(bytes);
+        try {
+			return new String(bytes, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new RuntimeException(e);
+		}
     }
     
     public int getStoredLength() {
@@ -78,12 +87,14 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     }
 
 	public int compareTo(ByteString o) {
-		/*
-		 * FIXME: This is inefficient 
-		 */
-		String s1 = new String(bytes);
-		String s2 = new String(o.bytes);
-		return s1.compareTo(s2);
+		int len = (bytes.length <= o.bytes.length) ? bytes.length : o.bytes.length;
+		for (int i = 0; i < len; i++) {
+			int result = bytes[i] - o.bytes[i];
+			if (result != 0) {
+				return result;
+			}
+		}
+		return bytes.length - o.bytes.length;
 	}
 	
 	public int length() {
