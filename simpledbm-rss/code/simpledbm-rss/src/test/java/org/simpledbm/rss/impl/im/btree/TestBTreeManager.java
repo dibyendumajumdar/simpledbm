@@ -1682,7 +1682,7 @@ public class TestBTreeManager extends BaseTestCase {
                         try {
                         	scan.fetchNext();
                         	lock.lock();
-                        	lockWaitStarted.await(1, TimeUnit.SECONDS);
+                        	lockWaitStarted.await(3, TimeUnit.SECONDS);
                         	lock.unlock();
                         }
                         finally {
@@ -1741,8 +1741,8 @@ public class TestBTreeManager extends BaseTestCase {
             t1.start();
             Thread.sleep(1000);
             t2.start();
-            t1.join(5000);
-            t2.join(5000);
+            t1.join(10000);
+            t2.join(10000);
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
             assertEquals(1, status.get());
@@ -1826,7 +1826,6 @@ public class TestBTreeManager extends BaseTestCase {
                         try {
                             trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
                             btree.insert(trx, key, location);
-                            System.out.println("Insertex x,2");
                         }
                         finally {
                         }
@@ -1861,7 +1860,6 @@ public class TestBTreeManager extends BaseTestCase {
                             db.lockmgr.addLockEventListener(listener);
                             trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
                             btree.insert(trx, key, location);
-                            System.out.println("Insertex x1,21");
                         }
                         finally {
                         	db.lockmgr.clearLockEventListeners();
@@ -1886,9 +1884,9 @@ public class TestBTreeManager extends BaseTestCase {
             t2.start();
             Thread.sleep(1000);
             t3.start();
-            t1.join(5000);
-            t2.join(5000);
-            t3.join(5000);
+            t1.join(10000);
+            t2.join(10000);
+            t3.join(10000);
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
             assertTrue(!t3.isAlive());
