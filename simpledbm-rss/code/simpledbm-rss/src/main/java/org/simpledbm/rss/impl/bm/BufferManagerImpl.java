@@ -36,9 +36,7 @@ import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.StorageContainer;
-import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
-import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.Linkable;
@@ -269,9 +267,6 @@ public final class BufferManagerImpl implements BufferManager {
 		if (log.isTraceEnabled()) {
 			log.trace(LOG_CLASS_NAME, "signalBufferWriter", "SIGNALLING Buffer Writer");
 		}
-//		synchronized (bufferWriterLatch) {
-//			bufferWriterLatch.notify();
-//		}
 		LockSupport.unpark(bufferWriter);
 	}
 
@@ -305,7 +300,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 * Shuts down the Buffer Manager instance.
 	 */
 	public void shutdown() {
-		// System.err.println("Shutting down");
 		stop = true;
 		signalBufferWriter();
 		try {
@@ -467,9 +461,6 @@ public final class BufferManagerImpl implements BufferManager {
 
 			for (BufferControlBlock bcb : bucket.chain) {
 				if (bcb.isValid() && bcb.pageId.equals(pageId)) {
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
-					}
 					// Bug discovered when testing on Intel CoreDuo (3 Dec 2006) - if the page is being read
 					// we need to wait for the read to be over. Since we need to give up latches
 					// easiest option is to retry. 
@@ -479,10 +470,15 @@ public final class BufferManagerImpl implements BufferManager {
 					// We need to check for writeInProgress as well.
 					// we allow SHARED access if writeInProgress is true.
 					if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
-						// System.err.println(Thread.currentThread().getName() + ": Page " + bcb.pageId + " is being read, so we need to retry");
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "locatePage", "Another thread is attempting to read/write page " + pageId + ", therefore retrying");
+						}
 						return null;
 					}
 					else {
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
+						}
 						return bcb;
 					}
 				}
@@ -510,8 +506,8 @@ public final class BufferManagerImpl implements BufferManager {
 
 		if (frameNo == -1) {
 			stop = true;
-			// TODO Add proper error message
-			throw new BufferManagerException();
+			throw new BufferManagerException("SIMPLEDBM-BUFMGR: Unexpected error while attempting to " +
+					"read page for " + pageId + " - all buffer pages are in use");
 		}
 
 		assert bufferpool[frameNo] == null;
@@ -561,12 +557,11 @@ public final class BufferManagerImpl implements BufferManager {
 
 	/**
 	 * Check that the Buffer Manager is still valid.
-	 * 
-	 * @throws BufferManagerException
 	 */
 	private void checkStatus() {
 		if (stop) {
-			throw new BufferManagerException();
+			throw new BufferManagerException("SIMPLDBM-BUFMGR: Unable to complete operation " +
+					"because Buffer Manager is shutting down");
 		}
 	}
 
@@ -579,7 +574,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 * <li>Add the BCB to the LRU chain</li>
 	 * <li>Acquire page latch as requested.</li>
 	 * </ol>
-	 * @throws StorageException 
 	 */
 	private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype, int latchMode, int hint) {
 
@@ -649,7 +643,8 @@ public final class BufferManagerImpl implements BufferManager {
 					nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
 				}
 				if (stop || nextBcb == null) {
-					throw new BufferManagerException();
+					throw new BufferManagerException("SIMPLEDBM-BUFMGR: Unexpected error while attempting " +
+							"to read page " + pageid);
 				}
 				bucket.lock();
 				if (!nextBcb.pageId.equals(pageid)) {
@@ -712,8 +707,6 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		lruLatch.writeLock().lock();
 		try {
-			// TODO: This is inefficient, as remove searches through the entire
-			// list. Must implement a custom linked list :-(
 			if (hint == 0) {
 				if (lru.getLast() != nextBcb) {
 					if (nextBcb.isMember()) {
@@ -779,8 +772,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 * <li>Set dirty flag.</li>
 	 * <li>Decrement fix count.</li>
 	 * </ol>
-	 * 
-	 * @throws BufferManagerException
 	 */
 	void unfix(BufferAccessBlockImpl bab) {
 
@@ -802,6 +793,13 @@ public final class BufferManagerImpl implements BufferManager {
 		bcb.fixcount--;
 		bucket.unlock();
 
+		/*
+		 * We release the page latch after the BCB has been updated.
+		 * Releasing the latch earlier seems to cause a problem - pages occasionally
+		 * appear to lose writes. 
+		 * FIXME It is not clear what causes the problem. Ideally, we nee to release
+		 * the page latch earlier.
+		 */
 		bab.unlatch();
 
 		checkStatus();
@@ -874,9 +872,9 @@ public final class BufferManagerImpl implements BufferManager {
 				try {
 					if (bcb.isValid() && bcb.pageId.getContainerId() == containerId) {
 						bcb.invalid = true;
-						if (log.isTraceEnabled()) {
-							log.trace(LOG_CLASS_NAME, "invalidateContainer",
-									"INVALIDATING Page " + bcb.pageId);
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "invalidateContainer",
+									"Invalidating page " + bcb.pageId + " for container " + containerId);
 						}
 						if (bcb.isBeingWritten()) {
 							writeWaits++;
@@ -892,8 +890,8 @@ public final class BufferManagerImpl implements BufferManager {
 
         while (writeWaits > 0) {
             synchronized (waitingForBuffers) {
-                if (log.isTraceEnabled()) {
-                    log.trace(LOG_CLASS_NAME, "invalidateContainer", "Writes were in progress during invalidations, hence must wait");
+                if (log.isDebugEnabled()) {
+                    log.debug(LOG_CLASS_NAME, "invalidateContainer", "Writes were in progress during invalidations, hence must wait");
                 }
                 try {
                     waitingForBuffers.wait(bufferWriterMaxWait);
@@ -927,9 +925,6 @@ public final class BufferManagerImpl implements BufferManager {
 	/**
 	 * Writes dirty pages to disk. After each page is written, clients waiting
 	 * for free frames are informed so that they can try again.
-	 * 
-	 * @throws LogException
-	 * @throws StorageException
 	 */
 	void writeBuffers() {
 
@@ -1154,7 +1149,9 @@ public final class BufferManagerImpl implements BufferManager {
 		/**
 		 * A linked list of hashed BCBs.
 		 * <p>
-		 * TODO: Inefficient for removal, need a custom implementation.
+		 * Although the java.util.LinkedList is inefficient for removal, 
+		 * we don't bother with a custom implementation here because the
+		 * hash bucket chains are expected to be small.
 		 */
 		final LinkedList<BufferControlBlock> chain = new LinkedList<BufferControlBlock>();
 		
@@ -1219,7 +1216,7 @@ public final class BufferManagerImpl implements BufferManager {
 			} else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
 				page.unlatchShared();
 			} else {
-				throw new IllegalStateException();
+				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Latch mode in inconsistent state");
 			}
 			latchMode = 0;
 		}
@@ -1245,7 +1242,7 @@ public final class BufferManagerImpl implements BufferManager {
 				page.setPageLsn(lsn);
 			}
 			else {
-				throw new IllegalStateException("Page can be marked as dirty only if it has been latched exclusively");
+				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Page can be marked as dirty only if it has been latched exclusively");
 			}
 		}
 
@@ -1268,7 +1265,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void upgradeUpdateLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-				throw new IllegalStateException();
+				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Upgrade of update latch requested but latch is " +
+						"not held in update mode currently");
 			}
 			page.upgradeUpdate();
 			latchMode = BufferManagerImpl.LATCH_EXCLUSIVE;
@@ -1279,7 +1277,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void downgradeExclusiveLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-				throw new IllegalStateException();
+				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Downgrade of exclusive latch requested but latch is " +
+						"not held in exclusive mode currently");
 			}
 			page.downgradeExclusive();
 			latchMode = BufferManagerImpl.LATCH_UPDATE;
@@ -1311,20 +1310,12 @@ public final class BufferManagerImpl implements BufferManager {
 				log.debug(LOG_CLASS_NAME, "run", "Buffer writer STARTED");
 			}
 			for (;;) {
-//				synchronized (bufmgr.bufferWriterLatch) {
-//					try {
-//						bufmgr.bufferWriterLatch.wait(bufmgr.bufferWriterSleepInterval);
-//					} catch (InterruptedException e) {
-//						// ignore
-//					}
-//				}
 				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(bufmgr.bufferWriterSleepInterval, TimeUnit.MILLISECONDS));
 				try {
 					if (log.isTraceEnabled()) {
 						log.trace(LOG_CLASS_NAME, "run", "BEFORE Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
 					}
 					long start = System.currentTimeMillis();
-					// System.err.println("Writing buffers");
 					bufmgr.writeBuffers();
 					long end = System.currentTimeMillis();
 					if (log.isTraceEnabled()) {
@@ -1336,7 +1327,6 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 				} catch (Exception e) {
 					log.error(LOG_CLASS_NAME, "run", "Error occurred while writing buffer pages", e);
-					e.printStackTrace();
 					bufmgr.stop = true;
 				}
 				if (bufmgr.stop) {
