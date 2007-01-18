@@ -381,7 +381,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	}
 
 	public void createTupleContainer(Transaction trx, String name, int containerId, int extentSize) {
-		// TODO Auto-generated method stub
+        spaceMgr.createContainer(trx, name, containerId, 2, extentSize, spMgr.getPageType());
 	}
 
 	public TupleContainer getTupleContainer(int containerId) {
