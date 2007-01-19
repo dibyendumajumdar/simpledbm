@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -1406,7 +1407,7 @@ public final class LogManagerImpl implements LogManager {
 					}
 					// Did we flush all available records?
 					boolean flushedAllRecs = true;
-					for (LogRecordBuffer rec : buf.records) {
+					for (LogRecordBuffer rec : buf.records.values()) {
 						if (rec.getLsn().compareTo(anchor.durableLsn) <= 0) {
 							// Log record is already on disk
 							// System.err.println("SKIPPING ALREADY FLUSHED LSN=" + rec.getLsn());
@@ -1477,7 +1478,8 @@ public final class LogManagerImpl implements LogManager {
 						}
 					}
 					if (deleteBuffer) {
-						assert buf.records.getLast().getLsn().compareTo(anchor.durableLsn) <= 0;
+						// assert buf.records.getLast().getLsn().compareTo(anchor.durableLsn) <= 0;
+						assert buf.records.lastKey().compareTo(anchor.durableLsn) <= 0;
 						logBuffers.remove(buf);
 						// Inform inserters that they can proceed to acquire new
 						// buffer
@@ -2632,7 +2634,8 @@ public final class LogManagerImpl implements LogManager {
 		/**
 		 * List of records that are mapped to this buffer.
 		 */
-		final LinkedList<LogRecordBuffer> records;
+		// final LinkedList<LogRecordBuffer> records;
+		final TreeMap<Lsn, LogRecordBuffer> records;
 
 		final int id = ++nextID;
 		
@@ -2645,8 +2648,8 @@ public final class LogManagerImpl implements LogManager {
 			buffer = new byte[size];
 			position = 0;
 			remaining = size;
-			records = new LinkedList<LogRecordBuffer>();
-			
+			// records = new LinkedList<LogRecordBuffer>();
+			records = new TreeMap<Lsn, LogRecordBuffer>();
 		}
 
 		/**
@@ -2683,7 +2686,8 @@ public final class LogManagerImpl implements LogManager {
 			bb.putLong(checksum);
 			position += reclen;
 			remaining -= reclen;
-			records.add(rec);
+			//records.add(rec);
+			records.put(lsn, rec);
 		}
 
 		/**
@@ -2695,11 +2699,12 @@ public final class LogManagerImpl implements LogManager {
 		 *         null.
 		 */
 		LogRecordBuffer find(Lsn lsn) {
-			for (LogRecordBuffer rec : records) {
-				if (rec.getLsn().equals(lsn))
-					return rec;
-			}
-			return null;
+//			for (LogRecordBuffer rec : records) {
+//				if (rec.getLsn().equals(lsn))
+//					return rec;
+//			}
+//			return null;
+			return records.get(lsn);
 		}
 
 		/**
@@ -2709,14 +2714,27 @@ public final class LogManagerImpl implements LogManager {
 		 * @param lsn
 		 */
 		int contains(Lsn lsn) {
-			LogRecordBuffer rec1 = records.getFirst();
-			if (rec1 != null) {
-				LogRecordBuffer rec2 = records.getLast();
-				int rc2 = lsn.compareTo(rec2.getLsn());
+//			LogRecordBuffer rec1 = records.getFirst();
+//			if (rec1 != null) {
+//				LogRecordBuffer rec2 = records.getLast();
+//				int rc2 = lsn.compareTo(rec2.getLsn());
+//				if (rc2 > 0) {
+//					return 1;
+//				}
+//				int rc1 = lsn.compareTo(rec1.getLsn());
+//				if (rc1 >= 0 && rc2 <= 0) {
+//					return 0;
+//				}
+//			}
+//			return -1;
+			Lsn lsn1 = records.firstKey();
+			if (lsn1 != null) {
+				Lsn lsn2 = records.lastKey();
+				int rc2 = lsn.compareTo(lsn2);
 				if (rc2 > 0) {
 					return 1;
 				}
-				int rc1 = lsn.compareTo(rec1.getLsn());
+				int rc1 = lsn.compareTo(lsn1);
 				if (rc1 >= 0 && rc2 <= 0) {
 					return 0;
 				}
@@ -2727,9 +2745,12 @@ public final class LogManagerImpl implements LogManager {
 		@Override
 		public String toString() {
 			if (records.size() > 0) {
-				LogRecordBuffer rec1 = records.getFirst();
-				LogRecordBuffer rec2 = records.getLast();
-				return "LogBuffer(id=" + id + ", firstLsn=" + rec1.getLsn() + ", lastLsn=" + rec2.getLsn() + ")";
+//				LogRecordBuffer rec1 = records.getFirst();
+//				LogRecordBuffer rec2 = records.getLast();
+//				return "LogBuffer(id=" + id + ", firstLsn=" + rec1.getLsn() + ", lastLsn=" + rec2.getLsn() + ")";
+				Lsn lsn1 = records.firstKey();
+				Lsn lsn2 = records.lastKey();
+				return "LogBuffer(id=" + id + ", firstLsn=" + lsn1 + ", lastLsn=" + lsn2 + ")";
 			}
 			return "LogBuffer(id=" + id + ")";
 		}
@@ -2743,7 +2764,7 @@ public final class LogManagerImpl implements LogManager {
 	 * 
 	 * @author Dibyendu Majumdar
 	 */
-	static final class LogRecordBuffer {
+	static final class LogRecordBuffer implements Comparable<LogRecordBuffer> {
 
 		/**
 		 * Position of the log record within the log buffer.
@@ -2785,6 +2806,12 @@ public final class LogManagerImpl implements LogManager {
 			return length - LogManagerImpl.LOGREC_HEADER_SIZE;
 		}
 
+		public int compareTo(LogRecordBuffer o) {
+			return lsn.compareTo(o.lsn);
+		}
+
+		
+		
 	}
 
 	static final class ArchiveCleaner implements Runnable {
