@@ -149,11 +149,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	private static final short TYPE_LOADPAGE_OPERATION = TYPE_BASE + 13;
 	
 	/**
-	 * Space map value for an unused BTree page.
+	 * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
+	 * and 0 means unused.
 	 */
-	// private static final int PAGE_SPACE_FREE = 0;
+	private static final int PAGE_SPACE_UNUSED = 0;
+	
 	/**
-	 * Space map value for a used BTree page.
+	 * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
+	 * and 0 means unused.
 	 */
 	private static final int PAGE_SPACE_USED = 1;
 	
@@ -161,6 +164,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * Root page is always the third page in a container.
 	 */
 	private static final int ROOT_PAGE_NUMBER = 2;
+	
+	/**
+	 * The first slot in a btree node page is occupied by a special
+	 * header record.
+	 */
+	private static final int HEADER_KEY_POS = 0;
+	
+	/**
+	 * The keys start at slot position 1, because the
+	 * first slot is occupied by a header record.
+	 */
+	private static final int FIRST_KEY_POS = 1;
 	
 	final ObjectRegistry objectFactory;
 	
@@ -174,7 +189,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
     
     final LockAdaptor lockAdaptor;
     
-    public static int testingFlag = 0;
+    /**
+     * Setting this flag to 1 artificially limits the number
+     * of keys in each page. This is useful for forcing page splits etc.
+     * when testing.
+     * @see BTreeNode#canAccomodate(org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem)
+     * @see BTreeNode#canMergeWith(org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode)
+     * @see BTreeNode#getSplitKey()
+     */
+    private static int testingFlag = 0;
+    
+    public static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
+    
+    private static final int TEST_MODE_MAX_KEYS = 8;
+    
+    private static final int TEST_MODE_SPLIT_KEY = 4;
     
 	public BTreeIndexManagerImpl(ObjectRegistry objectFactory, LoggableFactory loggableFactory, FreeSpaceManager spaceMgr, BufferManager bufMgr, SlottedPageManager spMgr, TransactionalModuleRegistry moduleRegistry) {
 		this.objectFactory = objectFactory;
@@ -286,7 +315,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			r.setSpaceMapPageNumber(loadPageOp.getSpaceMapPageNumber());
 			BTreeNode node = new BTreeNode(loadPageOp);
 			node.wrap(r);
-			int k = 1; // 0 is position of header item
+			int k = FIRST_KEY_POS; // 0 is position of header item
 			for (IndexItem item : loadPageOp.items) {
 				node.replace(k++, item);
 			}
@@ -336,7 +365,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			newSiblingNode.wrap(r);
 			newSiblingNode.header.leftSibling = splitOperation.getPageId().getPageNumber();
 			newSiblingNode.header.rightSibling = splitOperation.rightSibling;
-			int k = 1;		// 0 is position of header item
+			int k = FIRST_KEY_POS;		// 0 is position of header item
 			for (IndexItem item: splitOperation.items) {
 				newSiblingNode.replace(k++, item);
 			}
@@ -356,7 +385,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
 			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
 			// deallocate
-			smp.setSpaceBits(mergeOperation.rightSibling, 0);
+			smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
 		}
 		else if (page.getPageId().getPageNumber() == mergeOperation.getPageId().getPageNumber()) {
 			// left sibling - this page will aborb contents of right sibling.
@@ -399,7 +428,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		BTreeNode parent = new BTreeNode(linkOperation);
 		parent.wrap(p);
 		int k = 0;
-		for (k = 1; k <= parent.header.keyCount; k++) {
+		for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
 			IndexItem item = parent.getItem(k);
 			// Change the index entry of left child to point to right child
 			if (item.getChildPageNumber() == linkOperation.leftSibling) {
@@ -430,7 +459,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		BTreeNode parent = new BTreeNode(unlinkOperation);
 		parent.wrap(p);
 		int k = 0;
-		for (k = 1; k <= parent.header.keyCount; k++) {
+		for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
 			IndexItem item = parent.getItem(k);
 			if (item.getChildPageNumber() == unlinkOperation.leftSibling) {
 				break;
@@ -496,14 +525,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				// moving key left
 				// delete key from position 1
 				// FIXME Test case
-				p.purge(1);
+				p.purge(FIRST_KEY_POS);
 				node.header.keyCount = node.header.keyCount - 1;
 				node.updateHeader();
 			}
 			else {
 				// moving key right
 				// insert new key at position 1
-				p.insertAt(1, redistributeOperation.key, false);
+				p.insertAt(FIRST_KEY_POS, redistributeOperation.key, false);
 				node.header.keyCount = node.header.keyCount + 1;
 				node.updateHeader();
 			}
@@ -539,7 +568,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			formatPage(p, ithOperation.getKeyFactoryType(), ithOperation.getLocationFactoryType(), ithOperation.isLeaf(), ithOperation.isUnique());
 			p.setSpaceMapPageNumber(ithOperation.spaceMapPageNumber);
 			node.wrap(p);
-			int k = 1;		// 0 is position of header item
+			int k = FIRST_KEY_POS;		// 0 is position of header item
 			for (IndexItem item: ithOperation.items) {
 				node.replace(k++, item);
 			}
@@ -564,7 +593,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// FIXME TEST case
 			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
 			// deallocate
-			smp.setSpaceBits(dthOperation.childPageNumber, 0);
+			smp.setSpaceBits(dthOperation.childPageNumber, PAGE_SPACE_UNUSED);
 		}
 		else if (page.getPageId().getPageNumber() == dthOperation.getPageId().getPageNumber()) {
 			// root page 
@@ -577,7 +606,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// Leaf page status must be replicated from child page
 			formatPage(p, dthOperation.getKeyFactoryType(), dthOperation.getLocationFactoryType(), dthOperation.isLeaf(), dthOperation.isUnique());
 			node.wrap(p);
-			int k = 1;
+			int k = FIRST_KEY_POS;
 			// add the keys from child page
 			for (IndexItem item: dthOperation.items) {
 				p.insertAt(k++, item, true);
@@ -830,7 +859,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			SlottedPage page = (SlottedPage) bab.getPage();
 			unique = (page.getFlags() & BTreeNode.NODE_TREE_UNIQUE) != 0;
 			BTreeNodeHeader header = new BTreeNodeHeader();
-			page.get(0, header);
+			page.get(HEADER_KEY_POS, header);
 			keyFactoryType = header.getKeyFactoryType();
 			locationFactoryType = header.getLocationFactoryType();
 		} finally {
@@ -928,7 +957,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		BTreeNodeHeader header = new BTreeNodeHeader();
 		header.setKeyFactoryType(keyFactoryType);
 		header.setLocationFactoryType(locationFactoryType);
-		page.insertAt(0, header, true);
+		page.insertAt(HEADER_KEY_POS, header, true);
 	}
 	
 	static interface IndexItemHelper {
@@ -1020,7 +1049,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						throw new FreeSpaceManagerException();
 					}
 				}
-				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, 1);
+				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, PAGE_SPACE_USED);
 				spaceMapPageNumber = btree.spaceCursor.getCurrentSpaceMapPage().getPageId().getPageNumber(); 
 			}
 			finally {
@@ -1127,7 +1156,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			mergeOperation.setLocationFactoryType(btree.locationFactoryType);
 			mergeOperation.rightSibling = leftSiblingNode.header.rightSibling;
 			mergeOperation.rightRightSibling = rnode.header.rightSibling;
-			for (int k = 1; k <= rnode.header.keyCount; k++) {
+			for (int k = FIRST_KEY_POS; k <= rnode.header.keyCount; k++) {
 				mergeOperation.items.add(rnode.getItem(k));
 			}
 			mergeOperation.rightSiblingSpaceMapPage = rnode.page.getSpaceMapPageNumber();
@@ -1412,7 +1441,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 				// Make a note of current lsn so that we can link the Compensation record to it.
 				undoNextLsn = trx.getLastLsn();
-				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, 1);
+				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, PAGE_SPACE_USED);
 				spaceMapPageNumber = btree.spaceCursor.getCurrentSpaceMapPage().getPageId().getPageNumber(); 
 			}
 			finally {
@@ -1436,7 +1465,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// New child page will inherit the root page leaf attribute
 			ithOperation.setLeaf(rootNode.isLeaf());
 			ithOperation.setUnique(btree.isUnique());
-			for (int k = 1; k <= rootNode.header.keyCount; k++) {
+			for (int k = FIRST_KEY_POS; k <= rootNode.header.keyCount; k++) {
 				ithOperation.items.add(rootNode.getItem(k));
 			}
 			IndexItem leftChildHighKey = rootNode.getItem(rootNode.header.keyCount);
@@ -1525,7 +1554,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			// root will inherit the leaf status of child node
 			dthOperation.setLeaf(childNode.isLeaf());
 			dthOperation.setUnique(dthOperation.isUnique());
-			for (int k = 1; k <= childNode.header.keyCount; k++) {
+			for (int k = FIRST_KEY_POS; k <= childNode.header.keyCount; k++) {
 				dthOperation.items.add(childNode.getItem(k));
 			}
 			dthOperation.childPageSpaceMap = childNode.page.getSpaceMapPageNumber();
@@ -2178,7 +2207,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					node.wrap((SlottedPage) bcursor.getP().getPage());
 					nextKeyPage = node.header.rightSibling;
 					if (nextKeyPage != -1) {
-						nextk = 1; // first key of next page
+						nextk = FIRST_KEY_POS; // first key of next page
 					}
 				} else {
 					/*
@@ -2348,7 +2377,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					// this is the last key on the page
 					nextKeyPage = node.header.rightSibling;
 					if (nextKeyPage != -1) {
-						nextk = 1;
+						nextk = FIRST_KEY_POS;
 					}
 				}
 				else {
@@ -2446,7 +2475,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * so we are at EOF.
 				 */
 				icursor.eof = true;
-				sr.k = 1;
+				sr.k = FIRST_KEY_POS;
 				sr.exactMatch = false;
 				sr.item = node.getItem(sr.k);
 				return sr;
@@ -2988,7 +3017,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			System.out.println("		<keycount>" + header.keyCount + "</keycount>");
 			System.out.println("	</header>");
 			System.out.println("	<items>");
-			for (int k = 1; k < page.getNumberOfSlots(); k++) {
+			for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
 				if (page.isSlotDeleted(k)) {
 					continue;
 				}
@@ -3016,9 +3045,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			page.dump();
 			assert page.getSpaceMapPageNumber() != -1;
 			if (page.getNumberOfSlots() > 0) {
-				BTreeNodeHeader header = (BTreeNodeHeader) page.get(0, new BTreeNodeHeader());
+				BTreeNodeHeader header = (BTreeNodeHeader) page.get(HEADER_KEY_POS, new BTreeNodeHeader());
 				DiagnosticLogger.log("BTreeNodeHeader=" + header);
-				for (int k = 1; k < page.getNumberOfSlots(); k++) {
+				for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
 					if (page.isSlotDeleted(k)) {
 						continue;
 					}
@@ -3035,7 +3064,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public final void wrap(SlottedPage page) {
 			this.page = page;
-			header = (BTreeNodeHeader) page.get(0, new BTreeNodeHeader());
+			header = (BTreeNodeHeader) page.get(HEADER_KEY_POS, new BTreeNodeHeader());
 		}
 
 		final BTreeNodeHeader getHeader() {
@@ -3199,12 +3228,16 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * splitting a page. 
 		 */
 		final short getSplitKey() {
-			if (BTreeIndexManagerImpl.testingFlag > 0) {
-				return 4;
+			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+				/*
+				 * We are in test mode and therefore artificially limit the
+				 * number of keys to a small value.
+				 */
+				return TEST_MODE_SPLIT_KEY;
 			}
 			int halfSpace = page.getSpace()/2;
 			int space = 0;
-			for (short k = 1; k <= header.keyCount; k++) {
+			for (short k = FIRST_KEY_POS; k <= header.keyCount; k++) {
 				space += page.getSlotLength(k);
 				if (space > halfSpace) {
 					return k;
@@ -3224,7 +3257,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Updates the header stored within the page.
 		 */
 		public final void updateHeader() {
-			page.insertAt(0, header, true);
+			page.insertAt(HEADER_KEY_POS, header, true);
 		}
 		
 		/**
@@ -3240,7 +3273,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			SearchResult result = new SearchResult();
 			int k = 1;
 			// We do not look at the high key when searching
-			for (k = 1; k <= getKeyCount(); k++) {
+			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
 				int comp = item.compareTo(key);
 				if (comp >= 0) {
@@ -3263,7 +3296,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				// TODO throw exception
 			}
 			int k = 1;
-			for (k = 1; k <= getKeyCount(); k++) {
+			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
 				if (item.compareTo(key) >= 0) {
 					/* Item covers key */
@@ -3280,7 +3313,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			if (isLeaf()) {
 				// TODO throw exception
 			}
-			for (int k = 1; k <= getKeyCount(); k++) {
+			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
 				if (item.getChildPageNumber() == childPageNumber) {
 					return item;
@@ -3298,7 +3331,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				// TODO throw exception
 			}
 			IndexItem prev = null;
-			for (int k = 1; k <= getKeyCount(); k++) {
+			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
 				if (item.getChildPageNumber() == childPageNumber) {
 					break;
@@ -3312,17 +3345,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Tests if the current page can be merged with its right sibling. 
 		 */
 		public final boolean canMergeWith(BTreeNode rightSibling) {
-			if (BTreeIndexManagerImpl.testingFlag > 0) {
+			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+				/*
+				 * We are in test mode and therefore artificially limit the
+				 * number of keys to a small value.
+				 */
 				int n = getNumberOfKeys() - (isLeaf() ? 1 : 0) +
 					rightSibling.getNumberOfKeys();
-				return n <= 8;
+				return n <= TEST_MODE_MAX_KEYS;
 			}
 			int requiredSpace = 0;
 			if (isLeaf()) {
 				// delete the high key
 				requiredSpace -= page.getSlotLength(header.keyCount);
 			}
-			for (int k = 1; k <= rightSibling.getNumberOfKeys(); k++) {
+			for (int k = FIRST_KEY_POS; k <= rightSibling.getNumberOfKeys(); k++) {
 				// add all keys from the right sibling
 				requiredSpace += rightSibling.page.getSlotLength(k);
 			}
@@ -3331,8 +3368,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
         }
 		
 		public final boolean canAccomodate(IndexItem v) {
-			if (BTreeIndexManagerImpl.testingFlag > 0) {
-				return getNumberOfKeys() < 8;
+			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+				/*
+				 * We are in test mode and therefore artificially limit the
+				 * number of keys to a small value.
+				 */
+				return getNumberOfKeys() < TEST_MODE_MAX_KEYS;
 			}
 			// FIXME call a method in slottedpage
 			// int requiredSpace = v.getStoredLength() + 6;
@@ -3345,7 +3386,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * Determines if the specified key "bound" to this page.
 		 */
 		public final boolean covers(IndexItem v) {
-			IndexItem first = getItem(1);
+			IndexItem first = getItem(FIRST_KEY_POS);
 			IndexItem last = getItem(getKeyCount());
 			return first.compareTo(v) <= 0 && last.compareTo(v) >= 0;
 		}
@@ -3369,7 +3410,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	public static final class SpaceCheckerImpl implements FreeSpaceChecker {
 
 		public final boolean hasSpace(int value) {
-			return value == 0;
+			return value == PAGE_SPACE_UNUSED;
 		}
 		
 	}
@@ -4693,5 +4734,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 			}
 		}
+	}
+
+	public static final int getTestingFlag() {
+		return testingFlag;
+	}
+
+	public static final void setTestingFlag(int testingFlag) {
+		BTreeIndexManagerImpl.testingFlag = testingFlag;
 	}
 }
