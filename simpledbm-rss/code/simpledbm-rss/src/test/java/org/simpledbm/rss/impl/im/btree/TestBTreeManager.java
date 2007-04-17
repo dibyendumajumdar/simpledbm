@@ -2670,8 +2670,8 @@ public class TestBTreeManager extends BaseTestCase {
      * Scans the tree from a starting key to the eof.
      */
     int doDumpTree(String filename) throws Exception {
-		BufferedWriter writer = new BufferedWriter(new FileWriter(
-				filename));
+//		BufferedWriter writer = new BufferedWriter(new FileWriter(
+//				filename));
 		final BTreeDB db = new BTreeDB(false);
 		int count = 0;
 		try {
@@ -2697,8 +2697,8 @@ public class TestBTreeManager extends BaseTestCase {
 							break;
 						}
 						count++;
-						writer.write(scan.getCurrentKey() + ","
-								+ scan.getCurrentLocation() + "\n");
+//						writer.write(scan.getCurrentKey() + ","
+//								+ scan.getCurrentLocation() + "\n");
 						if (prevKey != null
 								&& !scan.getCurrentKey().toString().equals(
 										StringKey.MAX_KEY)) {
@@ -2714,7 +2714,7 @@ public class TestBTreeManager extends BaseTestCase {
 				trx.abort();
 			}
 		} finally {
-			writer.close();
+//			writer.close();
 			db.shutdown();
 		}
 		System.out.println("Number of keys found = " + count);
@@ -2722,44 +2722,31 @@ public class TestBTreeManager extends BaseTestCase {
 	}
 
     /**
-     * Temporary - reproduce bug in search.
+     * Search for a specific key and return true if found.
      */
-    void doFindRubens() throws Exception {
-		final BTreeDB db = new BTreeDB(false);
+    boolean doFindKey(final BTreeDB db, Transaction trx, String k, int loc, boolean forUpdate)
+			throws Exception {
+		BTreeImpl index = (BTreeImpl) db.btreeMgr.getIndex(1);
+		
+		IndexKey key = index.getNewIndexKey();
+		key.parseString(k);
+		RowLocation location = (RowLocation) index.getNewLocation();
+		location.loc = loc;
+		IndexScan scan = index.openScan(trx, key, location, forUpdate);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
-
-			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
-			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
-
-			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-			try {
-				String k = "acceptive";
-				IndexKey key = keyFactory.newIndexKey(1);
-				key.parseString(k);
-				RowLocation location = (RowLocation) locationFactory
-						.newLocation();
-				location.loc = 1133;
-				IndexScan scan = index.openScan(trx, key, location, false);
-				if (scan.fetchNext()) {
-					// System.out.println("new FindResult(\"" +
-					// scan.getCurrentKey() + "\", \"" +
-					// scan.getCurrentLocation() + "\"),");
-					assertEquals(key.toString(), scan.getCurrentKey()
-							.toString());
-					assertEquals(location.toString(), scan.getCurrentLocation()
-							.toString());
-				} else {
-					fail("Find failed for (" + key + ", " + location + ")");
-				}
-				scan.close();
-			} finally {
-				trx.abort();
+			if (scan.fetchNext()) {
+				assertEquals(key.toString(), scan.getCurrentKey().toString());
+				assertEquals(location.toString(), scan.getCurrentLocation()
+						.toString());
+				return true;
+			} else {
+				assertTrue(scan.isEof());
+				return false;
 			}
 		} finally {
-			db.shutdown();
+			if (scan != null) {
+				scan.close();
+			}
 		}
 	}
     
