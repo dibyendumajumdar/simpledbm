@@ -844,6 +844,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 * @see org.simpledbm.rss.bt.BTreeMgr#getBTree(int)
 	 */
 	public final Index getIndex(int containerId) {
+		/*
+		 * TODO - We could cache the index information here,
+		 * but we would need to ensure that if the index is deleted,
+		 * its information will be removed from the cache. Or maybe that
+		 * is not an issue because the system will never access a deleted
+		 * index?
+		 */
 		int keyFactoryType = -1;
 		int locationFactoryType = -1;
 		boolean unique = false;
@@ -873,7 +880,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/**
 	 * @see #createIndex(Transaction, String, int, int, int, int, boolean)
 	 */
-	final void doCreateBTree(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) {
+	public final void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) {
 		
 		Savepoint sp = trx.createSavepoint(false);
 		boolean success = false;
@@ -928,16 +935,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.bt.BTreeMgr#createBTree(org.simpledbm.rss.tm.Transaction, java.lang.String, int, int, int, int, boolean)
-	 */
-	public final void createIndex(Transaction trx, String name,
-			int containerId, int extentSize, int keyFactoryType,
-			int locationFactoryType, boolean unique) {
-		doCreateBTree(trx, name, containerId, extentSize, keyFactoryType,
-				locationFactoryType, unique);
-	}
-
 	/**
 	 * Formats a new BTree page.
 	 */
@@ -3407,6 +3404,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 	}
 	
+	/**
+	 * Callback for checking whether a page qualifies for reuse.
+	 * 
+	 * @author Dibyendu Majumdar
+	 */
 	public static final class SpaceCheckerImpl implements FreeSpaceChecker {
 
 		public final boolean hasSpace(int value) {
@@ -3529,6 +3531,27 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 	}
 
+	/**
+	 * Base class for all log operations for BTree. A key feature is that
+	 * all log operations have access to information that allows them to generate
+	 * keys, locations and index items. Log operations also _know_ whether
+	 * they are to be applied to leaf pages, or to unique indexes.  
+	 * <p>
+	 * Having all the relevant information to hand is useful specially during restart
+	 * recovery and debugging.
+	 * The downside is that this information is repeated in all log records.
+	 * <p>
+	 * It is possible to avoid storing the index data in log records if we can ensure
+	 * that the information can be obtained some other way. For example, the
+	 * Index manager could cache information about indexes, perhaps keyed
+	 * by container id, and log records could obtain this information by 
+	 * querying the index manager. However, there is the issue that during 
+	 * restart recovery, the index may not exist, and therefore at least one
+	 * log record (the one that creates the index) needs to contain information
+	 * about the index. 
+	 * 
+	 * @author Dibyendu Majumdar
+	 */
 	public static abstract class BTreeLogOperation extends BaseLoggable implements ObjectRegistryAware, IndexItemHelper {
 
 		/**
@@ -3670,10 +3693,22 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 	}
 	
+	/**
+	 * Base class for operations that require a positional update of 
+	 * a key.
+	 * 
+	 * @author Dibyendu Majumdar
+	 */
 	public static abstract class KeyUpdateOperation extends BTreeLogOperation {
 
+		/**
+		 * Item to be updated
+		 */
 		private IndexItem item;
 
+		/**
+		 * Position of the item within the BTree node
+		 */
 		private int position = -1;
 		
 		public final int getPosition() {
@@ -3690,7 +3725,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		public final void setItem(IndexItem item) {
 			this.item = item;
-			assert item.isLeaf();
+			if (!item.isLeaf()) {
+				throw new IndexException("SIMPLEDBM-ERROR: The supplied index item [" + item + "] is not setup as leaf");
+			}
 		}
 
 		@Override
@@ -3720,33 +3757,25 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		public final int getStoredLength() {
 			return super.getStoredLength() + TypeSize.INTEGER + item.getStoredLength();
 		}
+
+		@Override
+		public final void init() {
+		}
 	}
 	
 	/**
 	 * Log record data for inserting a key into the BTree.
 	 */
 	public static final class InsertOperation extends KeyUpdateOperation implements LogicalUndo {
-		@Override
-		public final void init() {
-		}
 	}
 	
 	public static final class UndoInsertOperation extends KeyUpdateOperation implements Compensation {
-		@Override
-		public final void init() {
-		}
 	}
 
 	public static final class DeleteOperation extends KeyUpdateOperation implements LogicalUndo {
-		@Override
-		public final void init() {
-		}
 	}
 	
 	public static final class UndoDeleteOperation extends KeyUpdateOperation implements Compensation {
-		@Override
-		public final void init() {
-		}
 	}
 	
 	/**
@@ -4318,7 +4347,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		/**
 		 * Pointer to child node that has keys <= this key. This is an
-		 * optional foeld; only present in index pages. 
+		 * optional field; only present in index pages. 
 		 */
 		private int childPageNumber;
 		
