@@ -20,7 +20,7 @@
 package org.simpledbm.rss.api.im;
 
 /**
- * An IndexKeyFactory is reposible for generating keys. This interface
+ * An IndexKeyFactory is resposible for generating keys. This interface
  * is typically implemented by the clients of the IndexManager module.
  *
  * @author Dibyendu Majumdar
@@ -40,7 +40,7 @@ public interface IndexKeyFactory {
 
 	/**
 	 * Generates a key that represents Infinity - it must be greater than
-	 * all possible keys in the domain. 
+	 * all possible keys in the domain for the key.
 
 	 * @param containerId ID of the container for which a key is required
 	 */
