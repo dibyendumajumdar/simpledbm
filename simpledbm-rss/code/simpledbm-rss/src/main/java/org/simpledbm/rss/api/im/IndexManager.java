@@ -22,8 +22,8 @@ package org.simpledbm.rss.api.im;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
- * Index Manager interface. Supports creating new Indexes and obtaining instances of existing
- * Indexes.
+ * The Index Manager interface provides facilities for creating creating new Indexes 
+ * and obtaining instances of existing Indexes.
  * 
  * @author Dibyendu Majumdar
  */
@@ -33,7 +33,7 @@ public interface IndexManager {
 	 * Creates a new index with specified container name and ID. Prior to calling this
 	 * method, an exclusive lock should be obtained on the container ID to ensure that no other
 	 * transaction is simultaneously attempting to access the same container. If successful, by the
-	 * end of this call, the container would have been created and registered with the StorageManager,
+	 * end of this call, the container should have been created and registered with the StorageManager,
 	 * and an empty instance of the index created within the container.
 	 * 
 	 * @param trx Transaction managing the creation of the index
@@ -42,7 +42,7 @@ public interface IndexManager {
 	 * @param extentSize Number of pages in each extent of the container
 	 * @param keyFactoryType Identifies the factory for creating IndexKey objects
 	 * @param locationFactoryType Identifies the factory for creating Location objects
-	 * @param unique Whether the new index will allow duplicates keys or not
+	 * @param unique If true, the new index will not allow duplicates keys
 	 */
 	void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique);
 	
