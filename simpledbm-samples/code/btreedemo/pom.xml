@@ -8,6 +8,15 @@
 	<version>0.01</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
+	<scm>
+		<connection>
+			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/btreedemo
+		</connection>
+		<developerConnection>
+			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/btreedemo
+		</developerConnection>
+		<url>http://simpledbm.googlecode.com/svn/</url>
+	</scm>
 	<developers>
 		<developer>
 			<id>dmajumdar</id>
@@ -34,12 +43,12 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>0.61</version>
+			<version>0.65</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>0.01</version>
+			<version>0.02</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.swing-layout</groupId>

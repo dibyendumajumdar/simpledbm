@@ -31,6 +31,7 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionException;
@@ -110,6 +111,13 @@ public class BTreeDemo {
 		public String toString() {
 			return "RowLocation(" + loc + ")";
 		}
+
+		/**
+		 * Unused at present
+		 */
+		public int getContainerId() {
+			return 1;
+		}
 	}
 
 	/**
@@ -143,7 +151,8 @@ public class BTreeDemo {
 		 */
 		public BTreeDatabase(boolean create) throws Exception {
 
-			BTreeIndexManagerImpl.testingFlag = 1;
+			BTreeIndexManagerImpl.setTestingFlag(BTreeIndexManagerImpl.TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE);
+			DiagnosticLogger.setDiagnosticsLevel(1);
 
     		Properties properties = new Properties();
     		properties.setProperty("log.ctl.1", "ctl.a");
@@ -178,7 +187,7 @@ public class BTreeDemo {
 		 * Creates the BTree that will be used for the demo.
 		 */
 		public void createBTree() throws IndexException, TransactionException {
-			Transaction trx = server.getTransactionManager().begin();
+			Transaction trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
 			boolean success = false;
 			try {
 				server.getIndexManager().createIndex(trx, "testbtree.dat", 1, 8, KEY_FACTORY_TYPE, LOCATION_FACTORY_TYPE, true);
@@ -189,7 +198,7 @@ public class BTreeDemo {
 					trx.abort();
 			}
 			// To make it more interesting, lets add 200 keys
-			trx = server.getTransactionManager().begin();
+			trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
 				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
@@ -218,7 +227,7 @@ public class BTreeDemo {
 		 */
 		public boolean add(Transaction trx, String key, String sloc) throws IndexException, TransactionException {
 			boolean success = false;
-			Savepoint sp = trx.createSavepoint();
+			Savepoint sp = trx.createSavepoint(false);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
 				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
@@ -243,7 +252,7 @@ public class BTreeDemo {
 		 */
 		public boolean delete(Transaction trx, String key, String sloc) throws IndexException, TransactionException {
 			boolean success = false;
-			Savepoint sp = trx.createSavepoint();
+			Savepoint sp = trx.createSavepoint(false);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
 				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
@@ -265,7 +274,7 @@ public class BTreeDemo {
 
 		public boolean scan(Transaction trx, String key, String sloc) throws IndexException, TransactionException {
 			boolean success = false;
-			Savepoint sp = trx.createSavepoint();
+			Savepoint sp = trx.createSavepoint(false);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
 				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
@@ -273,10 +282,11 @@ public class BTreeDemo {
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
 				location.parseString(sloc);
-				IndexScan scan = btree.openScan(row, location, LockMode.SHARED);
+				IndexScan scan = btree.openScan(trx, row, location, false);
 				try {
-					while (scan.fetchNext(trx)) {
+					while (scan.fetchNext()) {
 						DiagnosticLogger.log("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
+						System.err.println("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
 						trx.releaseLock(scan.getCurrentLocation());
 					}
 				} finally {
@@ -445,7 +455,7 @@ public class BTreeDemo {
 		void startTransaction() {
 			if (trx == null) {
 				DiagnosticLogger.log("Starting new transaction");
-				trx = db.server.getTransactionManager().begin();
+				trx = db.server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
 				errors = false;
 			}
 		}
