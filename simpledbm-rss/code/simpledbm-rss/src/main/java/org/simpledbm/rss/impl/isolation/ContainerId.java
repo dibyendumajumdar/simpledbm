@@ -21,7 +21,7 @@ package org.simpledbm.rss.impl.isolation;
 
 import org.simpledbm.rss.api.tx.BaseLockable;
 
-public class ContainerId extends BaseLockable {
+class ContainerId extends BaseLockable {
 	
 	final int containerId;
 	
