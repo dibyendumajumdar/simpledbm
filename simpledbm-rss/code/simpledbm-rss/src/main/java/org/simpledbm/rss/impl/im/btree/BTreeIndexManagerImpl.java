@@ -2669,9 +2669,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								.getLocation());
 						if (lockMode == LockMode.SHARED
 								|| lockMode == LockMode.UPDATE) {
-							System.out
-									.println("Releasing lock on previous row "
+							if (log.isDebugEnabled()) {
+								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "Releasing lock on previous row "
 											+ previousKey.getLocation());
+							}
 							trx.releaseLock(previousKey.getLocation());
 						}
 					} else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
@@ -2680,9 +2681,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						LockMode lockMode = trx.hasLock(previousKey
 								.getLocation());
 						if (lockMode == LockMode.UPDATE) {
-							System.out
-									.println("Downgrading lock on previous row "
-											+ previousKey.getLocation());
+							if (log.isDebugEnabled()) {
+								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "Downgrading lock on previous row "
+										+ previousKey.getLocation());
+							}
 							trx.downgradeLock(previousKey.getLocation(),
 									LockMode.SHARED);
 						}
@@ -2723,8 +2725,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								.getLocation());
 						if (lockMode == LockMode.SHARED
 								|| lockMode == LockMode.UPDATE) {
-							System.out.println("Releasing lock on current row "
-									+ currentKey.getLocation());
+							if (log.isDebugEnabled()) {
+								log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "Releasing lock on current row "
+										+ currentKey.getLocation() + " because isolation mode = CS|RC and mode = SHARED|UPDATE");
+							}
 							trx.releaseLock(currentKey.getLocation());
 						}
 					}
@@ -2765,8 +2769,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public void restoreState(Transaction txn, Savepoint sp) {
 			CursorState cs = (CursorState) sp.getValue(this);
-			System.out.println("Current position is set to " + currentKey);
-			System.out.println("Rollback to savepoint is restoring state to " + cs);
+			
+			if (log.isDebugEnabled()) {
+				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "Current position is set to " + currentKey);
+				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "Rollback to savepoint is restoring state to " + cs);
+			}
 			currentKey = cs.currentKey;
 			previousKey = cs.previousKey;
 			searchKey = cs.searchKey;
