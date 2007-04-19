@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
@@ -35,22 +36,25 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 08-Dec-2005
  */
-public class TupleId implements Location {
+public class TupleId extends BaseLockable implements Location {
+	
 	PageId pageId;
-
 	int slotNumber;
 
 	public TupleId() {
+		super((byte)'T');
 		pageId = new PageId();
 		slotNumber = -1;
 	}
 
 	public TupleId(TupleId other) {
+		super((byte)'T');
 		pageId = new PageId(other.pageId);
 		slotNumber = other.slotNumber;
 	}
 
 	public TupleId(PageId pageId, int slotNumber) {
+		super((byte)'T');
 		setPageId(pageId);
 		setSlotNumber(slotNumber);
 	}
@@ -60,7 +64,7 @@ public class TupleId implements Location {
 	}
 
 	public void parseString(String string) {
-		throw new UnsupportedOperationException("SIMNPLEDBM-ERROR: This operation is not yet implemented");
+		throw new UnsupportedOperationException("SIMPLEDBM-ERROR: This operation is not yet implemented");
 	}
 
 	public final void retrieve(ByteBuffer bb) {
