@@ -63,7 +63,6 @@ public interface BufferManager {
 	 *            be inserted to.
 	 * @return A {@link BufferAccessBlock} containing a reference to the desired
 	 *         page.
-	 * @throws BufferManagerException
 	 * @see BufferAccessBlock#unfix()
 	 */
     public BufferAccessBlock fixShared(PageId pageid, int hint);
@@ -87,17 +86,16 @@ public interface BufferManager {
 	 *            previously saved to disk.
 	 * @param pagetype
 	 *            Specifies the type of page to create; only used when isNew is
-	 *            set. The pagetype must be asspciated with a subclass of
+	 *            set. The pagetype must be associated with a subclass of
 	 *            {@link org.simpledbm.rss.api.pm.Page Page} and must have been
 	 *            registered with the
 	 *            {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
 	 * @param hint
 	 *            A hint to indicate which end of the LRU chain the page should
-	 *            be inserted to. The maening of the hint is implementation
+	 *            be inserted to. The meaning of the hint is implementation
 	 *            defined.
 	 * @return A {@link BufferAccessBlock} containing a reference to the desired
 	 *         page.
-	 * @throws BufferManagerException
 	 * @see BufferAccessBlock#unfix()
 	 * @see BufferAccessBlock#downgradeExclusiveLatch()
 	 * @see BufferAccessBlock#setDirty(Lsn)
@@ -118,7 +116,6 @@ public interface BufferManager {
 	 *            A hint to indicate which end of the LRU chain the page should
 	 *            be inserted to.
 	 * @return A {@link BufferAccessBlock} containing a reference to the desired page.
-	 * @throws BufferManagerException
 	 * @see BufferAccessBlock#unfix()
 	 * @see BufferAccessBlock#upgradeUpdateLatch()
 	 */

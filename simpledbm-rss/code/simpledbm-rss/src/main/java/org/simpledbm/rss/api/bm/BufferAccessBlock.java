@@ -90,9 +90,6 @@ public interface BufferAccessBlock {
 	 * called for every fix. Failure to do so will cause pages to get stuck in
 	 * the buffer pool, eventually causing the system to run of slots in the
 	 * buffer pool.
-	 * 
-	 * @throws BufferManagerException
-	 *             Thrown if there was an unexpected error
 	 */
     public void unfix();
 
