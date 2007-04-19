@@ -58,6 +58,7 @@ import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.Transaction;
@@ -209,7 +210,11 @@ public class TestBTreeManager extends BaseTestCase {
 	/**
 	 * A simple location.
 	 */
-	public static class RowLocation implements Location {
+	public static class RowLocation extends BaseLockable implements Location {
+
+		protected RowLocation() {
+			super((byte)'R');
+		}
 
 		int loc;
 
