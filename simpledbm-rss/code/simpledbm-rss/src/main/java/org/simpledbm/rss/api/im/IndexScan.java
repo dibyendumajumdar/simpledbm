@@ -20,14 +20,13 @@
 package org.simpledbm.rss.api.im;
 
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.locking.LockMode;
 
 /**
  * An IndexScan is an implementation of a forward scan on the
  * Index. The scan fetches the next key until it reaches the logical
  * EOF. 
  * 
- * @see Index#openScan(IndexKey, Location, LockMode)
+ * @see Index#openScan(org.simpledbm.rss.api.tx.Transaction, IndexKey, Location, boolean)
  * @author Dibyendu Majumdar
  */
 public interface IndexScan {
@@ -35,13 +34,7 @@ public interface IndexScan {
 	/**
 	 * Fetches the next available key from the Index. Handles the situation
 	 * where current key has been deleted. Note that prior to returning the
-	 * key the Location object associated with the key is locked in the mode
-	 * specified when the scan was opened.
-	 * 
-	 * @see Index#openScan(IndexKey, Location, LockMode)
-	 * @param trx Transaction that is managing the scan
-	 * @return True if fetch okay, false if EOF is reached
-	 * @throws IndexException Thrown in case there was a problem such as Deadlock 
+	 * key the Location object associated with the key is locked.
 	 */
 	public boolean fetchNext();
 	
