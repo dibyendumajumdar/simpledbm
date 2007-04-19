@@ -21,9 +21,8 @@ package org.simpledbm.rss.impl.fsm;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.rss.api.bm.BufferManager;
-import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
+import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -31,7 +30,6 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -50,9 +48,9 @@ import org.simpledbm.rss.api.tx.PageFormatOperation;
 import org.simpledbm.rss.api.tx.PostCommitAction;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
@@ -61,6 +59,10 @@ import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 
 public final class FreeSpaceManagerImpl extends BaseTransactionalModule implements FreeSpaceManager {
+
+	static final String LOG_CLASS_NAME = FreeSpaceManagerImpl.class.getName();
+
+	static final Logger log = Logger.getLogger(FreeSpaceManagerImpl.class.getPackage().getName());
 
 	final PageFactory pageFactory;
 
@@ -1640,10 +1642,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 	}
 
 	public static final class SpaceCursorImpl implements FreeSpaceCursor {
-
-		static final String LOG_CLASS_NAME = SpaceCursorImpl.class.getName();
-
-		static final Logger log = Logger.getLogger("org.simpledbm.rss.sm.impl");
 
 		final FreeSpaceManagerImpl spacemgr;
 
