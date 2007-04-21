@@ -223,8 +223,6 @@ public final class BufferManagerImpl implements BufferManager {
 		for (int i = 0; i < hashsize; i++) {
 			bufferHash[i] = new BufferHashBucket();
 		}
-		// Setup background thread for writer
-		bufferWriter = new Thread(new BufferWriter(this), "BufferWriter");
 	}
 
     
@@ -256,6 +254,8 @@ public final class BufferManagerImpl implements BufferManager {
 	 * @see org.simpledbm.rss.bm.BufMgr#start()
 	 */
 	public void start() {
+		// Setup background thread for writer
+		bufferWriter = new Thread(new BufferWriter(this), "BufferWriter");
 		bufferWriter.start();
 	}
 	
