@@ -24,6 +24,13 @@ public class TestServer extends TestCase {
 		properties.setProperty("storage.basePath", "testdata/TestServer");
 
 		Server.create(properties);
+		
+		Server server = new Server(properties);
+		server.start();
+		server.shutdown();
+		
+		server.start();
+		server.shutdown();
 	}
-
+	
 }
