@@ -147,10 +147,10 @@ public final class LockManagerImpl implements LockManager {
 			LockHashTable[i] = getNewLockBucket();
 		}
 		threshold = (int)(hashTableSize * loadFactor);
-		deadlockDetectorThread = new Thread(new DeadlockDetector(this), "DeadlockDetector");
 	}
 
 	public void start() {
+		deadlockDetectorThread = new Thread(new DeadlockDetector(this), "DeadlockDetector");
 		deadlockDetectorThread.start();
 	}
 	
