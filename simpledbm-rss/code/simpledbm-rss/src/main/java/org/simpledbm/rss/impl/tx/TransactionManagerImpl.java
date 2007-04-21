@@ -298,7 +298,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 		objectFactory.register(TYPE_CHECKPOINTEND, TransactionManagerImpl.CheckpointEnd.class.getName());
 		objectFactory.register(TYPE_DUMMYCLR, TransactionManagerImpl.DummyCLR.class.getName());
 		
-		checkpointWriter = new Thread(new CheckpointWriter(this), "CheckpointWriter");		
 	}
 
 	/**
@@ -1258,6 +1257,7 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     public final void start() throws TransactionException {
 		doRestart();
+		checkpointWriter = new Thread(new CheckpointWriter(this), "CheckpointWriter");		
 		checkpointWriter.start();
 	}
     
