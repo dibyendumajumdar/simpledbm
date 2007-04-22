@@ -2692,31 +2692,40 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 				previousKey = currentKey;
 				btree.fetch(trx, this);
-				if (currentKey != null) {
-					boolean releaseLock = false;
-					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
-						if (eof) {
-							releaseLock = true;
-						}
-					} else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
-						releaseLock = true;
-					}
-					if (releaseLock) {
-						LockMode lockMode = trx.hasLock(currentKey
-								.getLocation());
-						if (lockMode == LockMode.SHARED) {
-							trx.releaseLock(currentKey.getLocation());
-						}
-					}
-				}
 				return true;
 			}
 			return false;
 		}
 		
+		public final void fetchCompleted() {
+			/*
+			 * This method is invoked after the data from tuple container has been
+			 * read. Its main purpose is to release locks in read committed or cursor stability mode.
+			 */
+			if (currentKey != null) {
+				boolean releaseLock = false;
+				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+					if (eof) {
+						releaseLock = true;
+					}
+				} else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+					releaseLock = true;
+				}
+				if (releaseLock) {
+					LockMode lockMode = trx.hasLock(currentKey
+							.getLocation());
+					if (lockMode == LockMode.SHARED) {
+						trx.releaseLock(currentKey.getLocation());
+					}
+				}
+			}	
+		}
+		
 		public final void close() {
 			trx.unregisterTransactionalCursor(this);
 			RSSException ex = null;
+			
+			// Following should be redundant because of fetchCompleted().
 			try {
 				if (currentKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED

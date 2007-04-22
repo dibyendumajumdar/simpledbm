@@ -35,8 +35,20 @@ public interface IndexScan {
 	 * Fetches the next available key from the Index. Handles the situation
 	 * where current key has been deleted. Note that prior to returning the
 	 * key the Location object associated with the key is locked.
+	 * <p>After fetching an index row, typically, data must be fetched from
+	 * associated tuple container. Locks obtained by the fetch protect such
+	 * access. After tuple has been fetched, caller must invoke {@link #fetchCompleted()}
+	 * to ensure that locks are released in certain lock isolation modes. Failure
+	 * to do so will cause extra locking.
 	 */
 	public boolean fetchNext();
+	
+	/**
+	 * In certain isolation modes, releases locks acquired by {@link #fetchNext()}.
+	 * Must be invoked after the data from associated tuple container has been
+	 * fetched. 
+	 */
+	public void fetchCompleted();
 	
 	/**
 	 * Returns the IndexKey on which the scan is currently positioned.
