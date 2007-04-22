@@ -1219,6 +1219,7 @@ public class TestBTreeManager extends BaseTestCase {
                 	}
                 	//System.out.println("DELETING=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	btree.delete(trx, scan.getCurrentKey(), scan.getCurrentLocation());
+                	scan.fetchCompleted();
                 }
             } finally {
                 scan.close();
@@ -1283,6 +1284,7 @@ public class TestBTreeManager extends BaseTestCase {
                 		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
                 		i++;
                 	}
+                	scan.fetchCompleted();
                 	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 }
             } finally {
@@ -1335,6 +1337,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
+						scan.fetchCompleted();
 					} 
 					else {
 						fail("Scan for next key failed at (" + key + ", " + location + ")");
@@ -1387,6 +1390,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
+						scan.fetchCompleted();
 					} 
 					else {
 						fail("Find failed for (" + key + ", " + location + ")");
@@ -1490,6 +1494,7 @@ public class TestBTreeManager extends BaseTestCase {
                             		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
                             		i++;
                             	}
+                            	scan.fetchCompleted();
                                 if (scan.isEof()) {
                                     break;
                                 }
@@ -1615,6 +1620,7 @@ public class TestBTreeManager extends BaseTestCase {
 //                                    Thread.sleep(15000);
 //                                    System.out.println("--> SCAN Sleep completed");
                                 }
+                                scan.fetchCompleted();
                                 if (scan.isEof()) {
                                     break;
                                 }
@@ -1687,6 +1693,7 @@ public class TestBTreeManager extends BaseTestCase {
                         	lock.lock();
                         	lockWaitStarted.await(3, TimeUnit.SECONDS);
                         	lock.unlock();
+                        	scan.fetchCompleted();
                         }
                         finally {
                         	scan.close();
@@ -1795,6 +1802,7 @@ public class TestBTreeManager extends BaseTestCase {
                         	lock.lock();
                         	lockWaitStarted.await(3, TimeUnit.SECONDS);
                         	lock.unlock();
+                        	scan.fetchCompleted();
                         }
                         finally {
                         	scan.close();
@@ -2653,6 +2661,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
+						scan.fetchCompleted();
 					} 
 					else {
 						fail("Find failed for (" + key + ", " + location + ")");
@@ -2685,7 +2694,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getInstance(TYPE_ROWLOCATIONFACTORY);
 
-			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
 			try {
 				IndexKey key = keyFactory.newIndexKey(1);
 				key.parseString(" ");
@@ -2709,6 +2718,7 @@ public class TestBTreeManager extends BaseTestCase {
 									.compareTo(prevKey) > 0);
 						}
 						prevKey = scan.getCurrentKey().toString();
+						scan.fetchCompleted();
 					}
 				} finally {
 					scan.close();
@@ -2741,6 +2751,7 @@ public class TestBTreeManager extends BaseTestCase {
 				assertEquals(key.toString(), scan.getCurrentKey().toString());
 				assertEquals(location.toString(), scan.getCurrentLocation()
 						.toString());
+				scan.fetchCompleted();
 				return true;
 			} else {
 				assertTrue(scan.isEof());
