@@ -905,6 +905,66 @@ public class TestLockManager extends BaseTestCase {
 		}
 	}    
 
+	void checkMemoryUsage() throws Exception {
+
+		LockManager lockmgr = new LockManagerImpl();
+		Object tran1 = new Integer(1);
+
+		long startingMemoryUse = getUsedMemory();
+
+		System.out.println("Initial memory used = " + startingMemoryUse);
+		for (int i = 0; i < 10000; i++) {
+			lockmgr.acquire(tran1, new Integer(i), LockMode.EXCLUSIVE,
+					LockDuration.MANUAL_DURATION, 10, null);
+		}
+		long endingMemoryUse = getUsedMemory();
+		System.out.println("Total memory used for 10000 locks = "
+				+ (endingMemoryUse - startingMemoryUse));
+	}
+	
+
+	static long sizeOf(Class clazz) {
+		long size = 0;
+		Object[] objects = new Object[10000];
+		try {
+			Object primer = clazz.newInstance();
+			long startingMemoryUse = getUsedMemory();
+			for (int i = 0; i < objects.length; i++) {
+				objects[i] = clazz.newInstance();
+			}
+			long endingMemoryUse = getUsedMemory();
+			float approxSize = (endingMemoryUse - startingMemoryUse) / (float)objects.length;
+			size = Math.round(approxSize);
+		} catch (Exception e) {
+			System.out.println("WARNING:couldn't instantiate" + clazz);
+			e.printStackTrace();
+		}
+		return size;
+	}
+
+	private static long getUsedMemory() {
+		gc();
+		long totalMemory = Runtime.getRuntime().totalMemory();
+		gc();
+		long freeMemory = Runtime.getRuntime().freeMemory();
+		long usedMemory = totalMemory - freeMemory;
+		return usedMemory;
+	}
+
+	private static void gc() {
+		try {
+			System.gc();
+			Thread.currentThread().sleep(500);
+			System.runFinalization();
+			Thread.currentThread().sleep(500);
+			System.gc();
+			Thread.currentThread().sleep(500);
+			System.runFinalization();
+			Thread.currentThread().sleep(500);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	private static LockManager createLockManager() {
 		return new LockManagerImpl();
