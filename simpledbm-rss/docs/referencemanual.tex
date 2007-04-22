@@ -2,7 +2,7 @@
 \title{SimpleDBM Developer's Reference Manual}
 \author{Dibyendu Majumdar\\
 dibyendu@mazumdar.demon.co.uk\\
-Copyright \copyright 2005, 2006}
+Copyright \copyright 2005-2007}
 \date{Revised \today}
 \begin{document}
 \maketitle
@@ -210,6 +210,10 @@ components listed in the table given below.
 \begin{tabular}{|l|p{6cm}|}
 \hline \textbf{Package}&
 \textbf{Description} \\
+\hline \verb|org.simpledbm.rss.util|&
+Contains miscellaneous utility classes.  \\
+\hline \verb|org.simpledbm.rss.util.logging|&
+The diagnostic logger sub-system.  \\
 \hline \verb|org.simpledbm.rss.api.registry|&
 The Object Registry subsystem is responsible for constructing objects based upon type information.  \\
 \hline \verb|org.simpledbm.rss.api.st|&
@@ -220,20 +224,24 @@ Latches are efficient locks used to manage mutual exclusion between threads.  \\
 The Write Ahead Log is used to record changes being made to the database for recovery purposes. \\
 \hline \verb|org.simpledbm.rss.api.locking|&
 The Lock Manager subsystem provides facilities for managing table and row level locks. \\
-\hline \verb|org.simpledbm.rss.pm|&
+\hline \verb|org.simpledbm.rss.api.pm|&
 The Page Manager subsystem defines the Page size and manages mapping of pages to the storage subsystem. \\
-\hline \verb|org.simpledbm.rss.bm|&
+\hline \verb|org.simpledbm.rss.api.bm|&
 The Buffer Manager implements the Page Buffer Cache, where recently accessed disk pages are stored temporarily. \\
-\hline \verb|org.simpledbm.rss.tm|&
+\hline \verb|org.simpledbm.rss.api.tx|&
 The Transaction Manager subsystem manages transactions, system restart and recovery. \\
-\hline \verb|org.simpledbm.rss.sm|&
+\hline \verb|org.simpledbm.rss.api.fsm|&
 The Space Manager subsystem is responsible for managing free space information within storage containers. \\
-\hline \verb|org.simpledbm.rss.sp|&
+\hline \verb|org.simpledbm.rss.api.sp|&
 The Slotted Page Manager module provides a common implementation of a Page structure containing slot table. \\
-\hline \verb|org.simpledbm.rss.bt|&
-The Index Manager implements B-Tree indexes. The default implementation is a B-link tree. \\
-\hline \verb|org.simpledbm.rss.tuple|&
+\hline \verb|org.simpledbm.rss.api.loc|&
+Specifies the API for Locations and LocationFactories. A Location is a pointer to tuple data stored in an index. LocationFactories provide methods for creating new Location instances. \\
+\hline \verb|org.simpledbm.rss.api.im|&
+The Index Manager provides sorted keyed access to tuples. The default implementation is a B-link tree. \\
+\hline \verb|org.simpledbm.rss.api.tuple|&
 Tuple Manager module is responsible for handling tuples, which are like table rows, and can span multiple pages. Tuples are low-level entities which can be the basis for implementing table rows. \\
+\hline \verb|org.simpledbm.rss.main|&
+Contains the Server class which represents a RSS Server instance.  \\
 \hline
 \end{tabular}
 \label{tab1} \caption{RSS Modules}
@@ -244,7 +252,7 @@ Tuple Manager module is responsible for handling tuples, which are like table ro
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.api.registry| & \verb|org.simpledbm.common.registry.impl| \\
+ \verb|org.simpledbm.rss.api.registry| & \verb|org.simpledbm.rss.impl.registry| \\
 \hline
 \end{tabular}
 
@@ -316,7 +324,7 @@ class MyObject implements ObjectFactoryAware {
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.api.st| & \verb|org.simpledbm.rss.io.impl| \\
+ \verb|org.simpledbm.rss.api.st| & \verb|org.simpledbm.rss.impl.st| \\
 \hline
 \end{tabular}
 
@@ -399,7 +407,7 @@ also requires the object to be able to stream itself to a
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.api.latch| & \verb|org.simpledbm.common.latch.impl| \\
+ \verb|org.simpledbm.rss.api.latch| & \verb|org.simpledbm.rss.impl.latch| \\
 \hline
 \end{tabular}
 
@@ -448,7 +456,7 @@ ReadWrite latch.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.common.log| & \verb|org.simpledbm.common.log.impl| \\
+ \verb|org.simpledbm.rss.api.wal| & \verb|org.simpledbm.rss.impl.wal| \\
 \hline
 \end{tabular}
 
@@ -796,7 +804,7 @@ then the checkpointLsn should be set to the first checkpoint record.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.api.locking| & \verb|org.simpledbm.rss.locking.impl| \\
+ \verb|org.simpledbm.rss.api.locking| & \verb|org.simpledbm.rss.impl.locking| \\
 \hline
 \end{tabular}
 
@@ -1033,7 +1041,7 @@ uses lock timeout as a workaround to this problem.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.pm| & \verb|org.simpledbm.rss.pm.impl| \\
+ \verb|org.simpledbm.rss.api.pm| & \verb|org.simpledbm.rss.impl.pm| \\
 \hline
 \end{tabular}
 
@@ -1188,7 +1196,7 @@ Registry. Following sample code shows how this may be done:
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.bm| & \verb|org.simpledbm.rss.bm.impl| \\
+ \verb|org.simpledbm.rss.api.bm| & \verb|org.simpledbm.rss.impl.bm| \\
 \hline
 \end{tabular}
 
@@ -1357,7 +1365,7 @@ If necessary the same page can be fixed again.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.tm| & \verb|org.simpledbm.rss.tm.impl| \\
+ \verb|org.simpledbm.rss.api.tx| & \verb|org.simpledbm.rss.impl.tx| \\
 \hline
 \end{tabular}
 
@@ -1891,7 +1899,7 @@ log records that are going to cause containers to be dropped.
 \hline
            Interface           &           Implementation           \\
 \hline
- \verb|org.simpledbm.rss.sm| & \verb|org.simpledbm.rss.sm.impl| \\
+ \verb|org.simpledbm.rss.api.fsm| & \verb|org.simpledbm.rss.impl.fsm| \\
 \hline
 \end{tabular}
 
@@ -2104,7 +2112,7 @@ trx.commit();
 \hline
            Interface           &           Implementation           \\
 \hline
-\verb|org.simpledbm.rss.sp| & \verb|org.simpledbm.rss.sp.impl| \\
+\verb|org.simpledbm.rss.api.sp| & \verb|org.simpledbm.rss.impl.sp| \\
 \hline
 \end{tabular}
 
@@ -2266,7 +2274,7 @@ There are a few methods that provide space usage data.
 \hline
            Interface           &           Implementation           \\
 \hline
-\verb|org.simpledbm.rss.bt| & \verb|org.simpledbm.rss.bt.impl| \\
+\verb|org.simpledbm.rss.api.im| & \verb|org.simpledbm.rss.impl.im.btree| \\
 \hline
 \end{tabular}
 
@@ -2331,8 +2339,16 @@ identifying keys that represent ``Infinity'', as long as it ensures
 that this key will always be greater than any other key in
 the domain.
 
-Given below is an example of an IndexKey and IndexKeyFactory 
-implementation that supports keys in the range of 1-100. Note 
+The methods of \verb|IndexKeyFactory| take the container ID as
+a parameter. In SimpleDBM, each index is stored in a separate container,
+hence container ID can be used as a mechanism for identifying the index.
+The \verb|IndexKeyFactory| implementation is expected to use the
+container ID to determine the type of index key to create.
+
+\section{Example}
+
+Given below is an example of an \verb|IndexKey| and \verb|IndexKeyFactory| 
+implementation that supports integer keys in the range of 1-100. Note 
 this in this implementation, the value of -1 is used to
 represent ``Infinity''.
 
@@ -2357,7 +2373,7 @@ public class IntKey implements IndexKey {
     return -1;
   }
   public void setInt(int i) {
-    if (i < INFINITY || i > 100) {
+    if (i < 1 || i > 100) {
       throw new IllegalArgumentException();
     }
     this.i = i;
@@ -2389,6 +2405,165 @@ public class IntKeyFactory implements IndexKeyFactory {
   }
 }
 \end{verbatim}
+
+\section{Locations}
+
+Indexes contain pointers to tuple data. Such pointers must implement the
+\verb|org.simpledbm.rss.api.loc.Location| interface, and an implementation of
+\verb|org.simpledbm.rss.api.loc.LocationFactory| must be available to SimpleDBM so that
+it is able to create new Location instances.
+
+\section{Creating a new index}
+
+Following code snippet shows the steps required to create a new
+index.
+
+\begin{verbatim}
+int INDEX_KEY_FACTORY_TYPE = 25000;
+int LOCATION_FACTORY_TYPE = 25001;
+
+ObjectRegistry objectRegistry = ...;
+LocationFactory locationFactory = ...;
+IndexKeyFactory indexKeyFactory = ...;
+IndexManager indexManager = ...;
+TransactionManager transactionManager = ...;
+
+// Register key factory
+registry.register(INDEX_KEY_FACTORY_TYPE, indexKeyFactory);
+
+// Register location factory
+registry.register(LOCATION_FACTORY_TYPE, locationFactory);
+
+Transaction trx = transactionManager.begin();
+boolean success = false;
+try {
+  int containerId = 1;
+  int extentSize = 8;
+  boolean isUnique = true;
+  indexManager.createIndex(trx, "testbtree.dat", 
+    containerId, extentSize, INDEX_KEY_FACTORY_TYPE, 
+    LOCATION_FACTORY_TYPE, isUnique);
+} finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Obtaining index instance}
+
+In order to manipulate an index, you must first obtain an instance of the
+index. This is shown below:
+
+\begin{verbatim}
+int containerId = 1;
+Index index = indexManager.getIndex(containerId);
+\end{verbatim}
+
+\section{Working with keys}
+
+\subsection{Adding a key}
+
+To add a key, you need the \verb|IndexKey| instance and the \verb|Location| instance.
+
+\begin{verbatim}
+// To make it more interesting, lets add 200 keys
+Transaction trx = transactionManager.begin();
+boolean success = false;
+try {
+  int containerId = 1;
+  Index index = indexManager.getIndex(containerId);
+  IndexKey key = indexKeyFactory.newIndexKey(containerId);
+  Location location = locationFactory.newLocation();
+  trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+  index.insert(trx, row, location);
+  success = true;
+} finally {
+  if (!success) {
+    trx.abort();
+  }
+  else {
+    trx.commit();
+  }
+}
+\end{verbatim}
+
+Note that prior to inserting the key, the associated location must be
+locked for commit duration. 
+
+\subsection{Deleting a key}
+
+Deleting a key is very similar to adding a key.
+
+\begin{verbatim}
+// To make it more interesting, lets add 200 keys
+Transaction trx = transactionManager.begin();
+boolean success = false;
+try {
+  int containerId = 1;
+  Index index = indexManager.getIndex(containerId);
+  IndexKey key = ...;
+  Location location = ...;
+  trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
+  index.delete(trx, row, location);
+  success = true;
+} finally {
+  if (!success) {
+    trx.abort();
+  }
+  else {
+    trx.commit();
+  }
+}
+\end{verbatim}
+
+Note that prior to deleting the key, the associated location must be
+locked for commit duration. 
+
+\section{Scanning keys}
+
+\subsection{Isolation Modes}
+
+Before describing how to scan keys within an Index, it is necessary to
+describe the various lock isolation modes supported by SimpleDBM.
+
+\subsubsection{Assumptions regarding locking}
+
+\begin{itemize}
+\item All locking is on Locations only. 
+\item When a tuple is inserted or deleted, its Location is first locked in EXCLUSIVE mode, the tuple is inserted or deleted from data page, and only after that, indexes are modified. 
+\item Updates to indexed columns are treated as key deletes followed by key inserts. The updated row is locked in EXCLUSIVE mode before indexes are modified. 
+\item When fetching, the index is looked up first, which causes a SHARED or UPDATE mode lock to be placed on the row, before the data pages are accessed.
+\end{itemize}
+
+\subsubsection{Read Committed/Cursor Stability}
+
+The location is locked while the cursor is positioned on the key. The lock on current location is
+released before the cursor moves to the next key.
+
+Fetch: SHARED lock is obtained on found key or next key for manual duration. SHARED lock on current key/next key is released before moving cursor to next key. However, in the not found case, lock on next key is released immediately after the fetch (making the SHARED lock effectively instant duration). For update cursors, same rules apply except that the lock mode is UPDATE. 
+
+Insert: Instant duration EXCLUSIVE lock on next key is acquired (inserted key already locked by caller). For unique indexes only, SHARED lock is requested on insert key if it is found to already exist, and if lock is granted, return unique constraint violation error and the SHARED lock is released. 
+
+Delete: Commit duration EXCLUSIVE lock on next key is requested (deleted key already locked by caller). 
+
+\subsubsection{Repeatable Read (RR)}
+
+Fetch: S lock on found key or next key for commit duration. In case of U mode cursors, U lock (if it has not been converted to X lock already) should be downgraded to S lock before the cursor moves to the next row. (I think in the not found case, next key lock should be for manual duration only and released after the fetch is complete, as we are not trying to avoid phantoms but only check that there is not an uncommitted delete that would have been fetched). 
+
+Insert: Instant duration X lock on next key (inserted key already locked by caller). (I think this is only required for unique indexes). For unique indexes only, request S lock on found key for commit duration, and if lock is granted, return unique constraint violation error. 
+
+Delete: Same as CS. 
+
+\subsubsection{Serializable}
+Fetch: Same as RR, except that reads should lock next key in the not found case for commit duration. 
+
+Insert: Same as RR except that for non unique indexes too, inserts should lock next key for instant duration. 
+
+Delete: Same as RR. 
+
+
 
 
 \end{document}
