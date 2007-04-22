@@ -17,21 +17,20 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.rss.impl.isolation;
+package org.simpledbm.rss.impl.locking.util;
 
-import org.simpledbm.rss.api.tx.BaseLockable;
+import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.locking.util.LockAdaptor;
+import org.simpledbm.rss.api.tx.Lockable;
 
-class ContainerId extends BaseLockable {
-	
-	final int containerId;
-	
-	public ContainerId(int containerId) {
-		super((byte)'C');
-		this.containerId = containerId;
+public class DefaultLockAdaptor implements LockAdaptor {
+
+	public Lockable getLockableContainerId(int containerId) {
+		return new ContainerId(containerId);
 	}
 
-	public int getContainerId() {
-		return containerId;
+	public Lockable getLockableContainerId(Location location) {
+		return new ContainerId(location.getContainerId());
 	}
-	
+
 }

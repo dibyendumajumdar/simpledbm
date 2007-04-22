@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.rss.api.isolation;
+package org.simpledbm.rss.api.locking.util;
 
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tx.Lockable;
