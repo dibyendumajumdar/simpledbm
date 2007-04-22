@@ -285,18 +285,12 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		}
 	}
 
-    public final void createContainer(Transaction trx, String containerName,
-			int containerid, int spaceBits, int extentSize, int dataPageType)
-			{
-		doCreateContainer(trx, containerName, containerid, spaceBits,
-				extentSize, dataPageType);
-	}
 	/**
 	 * Pre-condition 1 - caller must have acquired exclusive lock on the container id.
      * Pre-condition 2 - There must be an open container with ID = 0. This container must contain at
      * least 1 page.
 	 */
-	final void doCreateContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType) {
+	public final void createContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType) {
 		int spaceMapType = FreeSpaceManagerImpl.TYPE_ONEBITSPACEMAPPAGE;
 		if (spaceBits == 2) {
 			spaceMapType = FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE;
@@ -418,6 +412,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			 */
 			if (commitNTA) {
 				trx.completeNestedTopAction();
+				if (log.isDebugEnabled()) {
+					log.debug(LOG_CLASS_NAME, "createContainer", "SIMPLEDBM-LOG: Created container " + containerName);
+				}
 			} else {
 				trx.resetNestedTopAction();
 			}
