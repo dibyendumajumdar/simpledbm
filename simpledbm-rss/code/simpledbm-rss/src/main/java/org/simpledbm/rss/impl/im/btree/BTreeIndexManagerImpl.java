@@ -2663,6 +2663,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		public final boolean fetchNext() {
 			if (!eof) {
+				if (scanMode == SCAN_FETCH_NEXT) {
+					previousKey = currentKey;
+				}
 				if (previousKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
 						LockMode lockMode = trx.hasLock(previousKey
@@ -2690,7 +2693,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						}
 					}
 				}
-				previousKey = currentKey;
 				btree.fetch(trx, this);
 				return true;
 			}
@@ -2791,11 +2793,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			fetchCount = cs.fetchCount-1;
 			eof = cs.eof;
 			scanMode = SCAN_FETCH_EXACT;
-			try {
-				fetchNext();
-			} catch (IndexException e) {
-				throw new TransactionException(e);
-			}
+			fetchNext();
 		}
 
 		public void saveState(Savepoint sp) {
