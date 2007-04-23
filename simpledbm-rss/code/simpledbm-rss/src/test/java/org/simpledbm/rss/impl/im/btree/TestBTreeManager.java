@@ -2680,6 +2680,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Scans the tree from a starting key to the eof.
+     * Verifies that the keys are in sorted order.
      */
     int doDumpTree(String filename) throws Exception {
 //		BufferedWriter writer = new BufferedWriter(new FileWriter(
@@ -2734,6 +2735,106 @@ public class TestBTreeManager extends BaseTestCase {
 		return count;
 	}
 
+    
+    void doIsolationTest_ReadCommitted() throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			int containerId = 1;
+			Index index = db.btreeMgr.getIndex(containerId);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			/*
+			 * Scan the tree with lock isolation mode of READ_COMMITTED and verify locks.
+			 */
+			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
+			try {
+				IndexKey key = keyFactory.newIndexKey(containerId);
+				key.parseString(" ");
+				RowLocation location = (RowLocation) locationFactory
+						.newLocation();
+				location.loc = 1;
+				IndexScan scan = index.openScan(trx, key, location, false);
+				Location prevLocation = null;
+				try {
+					int i = 0;
+					while (scan.fetchNext() && i < 10) {
+						if (scan.isEof()) {
+							break;
+						}
+						assertEquals(LockMode.SHARED, trx.hasLock(scan.getCurrentLocation()));
+						if (prevLocation != null) {
+							assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
+						}
+						prevLocation = scan.getCurrentLocation();
+						scan.fetchCompleted();
+						assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+    
+    void doIsolationTest_CursorStability() throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			int containerId = 1;
+			Index index = db.btreeMgr.getIndex(containerId);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			/*
+			 * Scan the tree with lock isolation mode of CURSOR_STABILITY and verify locks.
+			 */
+			Transaction trx = db.trxmgr.begin(IsolationMode.CURSOR_STABILITY);
+			try {
+				IndexKey key = keyFactory.newIndexKey(containerId);
+				key.parseString(" ");
+				RowLocation location = (RowLocation) locationFactory
+						.newLocation();
+				location.loc = 1;
+				IndexScan scan = index.openScan(trx, key, location, false);
+				Location prevLocation = null;
+				try {
+					int i = 0;
+					while (scan.fetchNext() && i < 10) {
+						if (scan.isEof()) {
+							break;
+						}
+						assertEquals(LockMode.SHARED, trx.hasLock(scan.getCurrentLocation()));
+						if (prevLocation != null) {
+							assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
+						}
+						prevLocation = scan.getCurrentLocation();
+						scan.fetchCompleted();
+						assertEquals(LockMode.SHARED, trx.hasLock(prevLocation));
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+    
+    
     /**
      * Search for a specific key and return true if found.
      */
@@ -2806,6 +2907,31 @@ public class TestBTreeManager extends BaseTestCase {
     	doTestMultiThreadedInserts("org/simpledbm/rss/impl/im/btree/reverse.0", 
     			"org/simpledbm/rss/impl/im/btree/reverse.1");
 	}
+
+    public void testIsolation() throws Exception {
+		ScanResult[] inserts = new ScanResult[] { new ScanResult("a1", "10"),
+				new ScanResult("a2", "11"), new ScanResult("b1", "21"),
+				new ScanResult("b2", "22"), new ScanResult("b3", "23"),
+				new ScanResult("b4", "24"), new ScanResult("c1", "31"),
+				new ScanResult("c2", "32"), new ScanResult("d1", "41"),
+				new ScanResult("d2", "42"), new ScanResult("d3", "43"),
+				new ScanResult("d4", "44"), new ScanResult("e1", "51"),
+				new ScanResult("e2", "52"), new ScanResult("e3", "53"),
+				new ScanResult("e4", "54"), new ScanResult("f1", "61"),
+				new ScanResult("f2", "62"), new ScanResult("f3", "63"),
+				new ScanResult("f4", "64"), new ScanResult("g1", "71"),
+				new ScanResult("g2", "72"), new ScanResult("h1", "81"),
+				new ScanResult("h2", "82"), new ScanResult("h3", "83"),
+				new ScanResult("h4", "84"), new ScanResult("i1", "91"),
+				new ScanResult("i2", "92"), new ScanResult("j1", "101"),
+				new ScanResult("j2", "102"), new ScanResult("j3", "103"),
+				new ScanResult("j4", "104"), new ScanResult("k1", "111"),
+				new ScanResult("k2", "112") };
+		doInitContainer2();
+		doLoadData(inserts);
+		doIsolationTest_ReadCommitted();
+		doIsolationTest_CursorStability();
+	}
     
     public static Test suite() {
         TestSuite suite = new TestSuite();
@@ -2847,9 +2973,15 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
-        suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
-        suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-        suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+        long i = System.currentTimeMillis() % 3;
+        i += 5;
+        if (i == 0)  
+        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+        else if (i == 1)
+        	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+        else if (i == 2)
+        	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+        suite.addTest(new TestBTreeManager("testIsolation"));
         return suite;
     }
 
