@@ -47,8 +47,9 @@ public interface IndexScan {
 	 * In certain isolation modes, releases locks acquired by {@link #fetchNext()}.
 	 * Must be invoked after the data from associated tuple container has been
 	 * fetched. 
+	 * @param matched If set to true indicates that the key satisfies search query
 	 */
-	public void fetchCompleted();
+	public void fetchCompleted(boolean matched);
 	
 	/**
 	 * Returns the IndexKey on which the scan is currently positioned.

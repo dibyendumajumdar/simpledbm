@@ -2681,12 +2681,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					} else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
 							.getIsolationMode() == IsolationMode.SERIALIZABLE)
 							&& lockMode == LockMode.UPDATE) {
+						/*
+						 * This is an update mode cursor.
+						 * In RR/SR mode, we need to downgrade UPDATE mode lock to SHARED lock when the cursor moves
+						 * to the next row.
+						 */
 						LockMode lockMode = trx.hasLock(previousKey
 								.getLocation());
 						if (lockMode == LockMode.UPDATE) {
 							if (log.isDebugEnabled()) {
 								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "Downgrading lock on previous row "
-										+ previousKey.getLocation());
+										+ previousKey.getLocation() + " to " + LockMode.SHARED);
 							}
 							trx.downgradeLock(previousKey.getLocation(),
 									LockMode.SHARED);
@@ -2699,14 +2704,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return false;
 		}
 		
-		public final void fetchCompleted() {
+		public final void fetchCompleted(boolean matched) {
 			/*
 			 * This method is invoked after the data from tuple container has been
 			 * read. Its main purpose is to release locks in read committed or cursor stability mode.
 			 */
+			eof = !matched;
 			if (currentKey != null) {
 				boolean releaseLock = false;
-				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
 					if (eof) {
 						releaseLock = true;
 					}
@@ -2716,9 +2722,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				if (releaseLock) {
 					LockMode lockMode = trx.hasLock(currentKey
 							.getLocation());
-					if (lockMode == LockMode.SHARED) {
+					if (lockMode == LockMode.SHARED || lockMode == LockMode.UPDATE) {
 						trx.releaseLock(currentKey.getLocation());
 					}
+				}
+				else if (eof) {
+					LockMode lockMode = trx.hasLock(currentKey
+							.getLocation());
+					if (lockMode == LockMode.UPDATE) {
+						trx.downgradeLock(currentKey.getLocation(), LockMode.SHARED);
+					}
+					
 				}
 			}	
 		}
@@ -2731,14 +2745,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			try {
 				if (currentKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
-							|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+							|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
+							|| (eof && trx.getIsolationMode() == IsolationMode.REPEATABLE_READ)) {
 						LockMode lockMode = trx.hasLock(currentKey
 								.getLocation());
 						if (lockMode == LockMode.SHARED
 								|| lockMode == LockMode.UPDATE) {
 							if (log.isDebugEnabled()) {
 								log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "Releasing lock on current row "
-										+ currentKey.getLocation() + " because isolation mode = CS|RC and mode = SHARED|UPDATE");
+										+ currentKey.getLocation() + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
 							}
 							trx.releaseLock(currentKey.getLocation());
 						}

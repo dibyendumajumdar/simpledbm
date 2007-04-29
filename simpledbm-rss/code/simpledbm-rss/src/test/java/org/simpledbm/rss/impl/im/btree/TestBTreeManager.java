@@ -1219,7 +1219,7 @@ public class TestBTreeManager extends BaseTestCase {
                 	}
                 	//System.out.println("DELETING=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
                 	btree.delete(trx, scan.getCurrentKey(), scan.getCurrentLocation());
-                	scan.fetchCompleted();
+                	scan.fetchCompleted(true);
                 }
             } finally {
                 scan.close();
@@ -1284,7 +1284,7 @@ public class TestBTreeManager extends BaseTestCase {
                 		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
                 		i++;
                 	}
-                	scan.fetchCompleted();
+                	scan.fetchCompleted(true);
                 	//System.out.println("new ScanResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
                 }
             } finally {
@@ -1337,7 +1337,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 					} 
 					else {
 						fail("Scan for next key failed at (" + key + ", " + location + ")");
@@ -1390,7 +1390,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 					} 
 					else {
 						fail("Find failed for (" + key + ", " + location + ")");
@@ -1494,7 +1494,7 @@ public class TestBTreeManager extends BaseTestCase {
                             		assertEquals(result[i].getLocation(), scan.getCurrentLocation().toString());
                             		i++;
                             	}
-                            	scan.fetchCompleted();
+                            	scan.fetchCompleted(true);
                                 if (scan.isEof()) {
                                     break;
                                 }
@@ -1620,7 +1620,7 @@ public class TestBTreeManager extends BaseTestCase {
 //                                    Thread.sleep(15000);
 //                                    System.out.println("--> SCAN Sleep completed");
                                 }
-                                scan.fetchCompleted();
+                                scan.fetchCompleted(true);
                                 if (scan.isEof()) {
                                     break;
                                 }
@@ -1693,7 +1693,7 @@ public class TestBTreeManager extends BaseTestCase {
                         	lock.lock();
                         	lockWaitStarted.await(3, TimeUnit.SECONDS);
                         	lock.unlock();
-                        	scan.fetchCompleted();
+                        	scan.fetchCompleted(true);
                         }
                         finally {
                         	scan.close();
@@ -1802,7 +1802,7 @@ public class TestBTreeManager extends BaseTestCase {
                         	lock.lock();
                         	lockWaitStarted.await(3, TimeUnit.SECONDS);
                         	lock.unlock();
-                        	scan.fetchCompleted();
+                        	scan.fetchCompleted(true);
                         }
                         finally {
                         	scan.close();
@@ -2661,7 +2661,7 @@ public class TestBTreeManager extends BaseTestCase {
 						assertEquals(key.toString(), scan.getCurrentKey().toString());
 						assertEquals(location.toString(), scan.getCurrentLocation()
 								.toString());
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 					} 
 					else {
 						fail("Find failed for (" + key + ", " + location + ")");
@@ -2719,7 +2719,7 @@ public class TestBTreeManager extends BaseTestCase {
 									.compareTo(prevKey) > 0);
 						}
 						prevKey = scan.getCurrentKey().toString();
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 					}
 				} finally {
 					scan.close();
@@ -2770,7 +2770,7 @@ public class TestBTreeManager extends BaseTestCase {
 							assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
 						}
 						prevLocation = scan.getCurrentLocation();
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 						assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
 						i++;
 					}
@@ -2819,7 +2819,7 @@ public class TestBTreeManager extends BaseTestCase {
 							assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
 						}
 						prevLocation = scan.getCurrentLocation();
-						scan.fetchCompleted();
+						scan.fetchCompleted(true);
 						assertEquals(LockMode.SHARED, trx.hasLock(prevLocation));
 						i++;
 					}
@@ -2834,34 +2834,160 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
     
+    void doIsolationTest_RepeatableRead(boolean updateMode) throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			int containerId = 1;
+			Index index = db.btreeMgr.getIndex(containerId);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+
+			/*
+			 * Scan the tree with lock isolation mode of CURSOR_STABILITY and verify locks.
+			 */
+			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
+			try {
+				IndexKey key = keyFactory.newIndexKey(containerId);
+				key.parseString(" ");
+				RowLocation location = (RowLocation) locationFactory
+						.newLocation();
+				location.loc = 1;
+				IndexScan scan = index.openScan(trx, key, location, updateMode);
+				Location prevLocation = null;
+				try {
+					int i = 0;
+					LockMode mode = LockMode.SHARED;
+					if (updateMode) {
+						mode = LockMode.UPDATE;						
+					}
+					while (scan.fetchNext() && i < 10) {
+						if (scan.isEof()) {
+							break;
+						}
+						assertEquals(mode, trx.hasLock(scan.getCurrentLocation()));
+						if (prevLocation != null) {
+							assertEquals(LockMode.SHARED, trx.hasLock(prevLocation));
+						}
+						prevLocation = scan.getCurrentLocation();
+						scan.fetchCompleted(true);
+						assertEquals(mode, trx.hasLock(prevLocation));
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
     
     /**
      * Search for a specific key and return true if found.
      */
-    boolean doFindKey(final BTreeDB db, Transaction trx, String k, int loc, boolean forUpdate)
-			throws Exception {
-		BTreeImpl index = (BTreeImpl) db.btreeMgr.getIndex(1);
-		
-		IndexKey key = index.getNewIndexKey();
-		key.parseString(k);
-		RowLocation location = (RowLocation) index.getNewLocation();
-		location.loc = loc;
-		IndexScan scan = index.openScan(trx, key, location, forUpdate);
+    boolean doFindKeyLockTest(IsolationMode isolationMode, String k, int loc,
+			boolean forUpdate) throws Exception {
+		final BTreeDB db = new BTreeDB(false);
 		try {
-			if (scan.fetchNext()) {
-				assertEquals(key.toString(), scan.getCurrentKey().toString());
-				assertEquals(location.toString(), scan.getCurrentLocation()
-						.toString());
-				scan.fetchCompleted();
-				return true;
-			} else {
-				assertTrue(scan.isEof());
-				return false;
+			BTreeImpl index = (BTreeImpl) db.btreeMgr.getIndex(1);
+
+			IndexKey key = index.getNewIndexKey();
+			key.parseString(k);
+			RowLocation location = (RowLocation) index.getNewLocation();
+			location.loc = loc;
+
+			/*
+			 * Searches for a specified key and verifies lock mode in
+			 * found and not found situations.
+			 */
+			Transaction trx = db.trxmgr.begin(isolationMode);
+			boolean found = false;
+			try {
+				IndexScan scan = index.openScan(trx, key, location, forUpdate);
+				try {
+					if (scan.fetchNext()) {
+						if (key.toString().equals(
+								scan.getCurrentKey().toString())
+								&& location.equals(scan.getCurrentLocation())) {
+							// found
+							if (forUpdate) {
+								assertEquals(LockMode.UPDATE, trx.hasLock(scan
+										.getCurrentLocation()));
+							} else {
+								assertEquals(LockMode.SHARED, trx.hasLock(scan
+										.getCurrentLocation()));
+							}
+							found = true;
+						} else {
+							// not found - but IndexScan has no concept of not found
+							// so lock should be held on next key - lock is released if 
+							// necessary when fetchCompleted(false) is called.
+							if (forUpdate) {
+								assertEquals(LockMode.UPDATE, trx.hasLock(scan
+										.getCurrentLocation()));
+							} else {
+								assertEquals(LockMode.SHARED, trx.hasLock(scan
+										.getCurrentLocation()));
+							}
+						}
+						System.err.println("FOUND = " + found);
+						System.err.println("KEY = " + scan.getCurrentKey().toString());
+						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
+						scan.fetchCompleted(found);
+						if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+							/*
+							 * Regardless of fetch result, lock on current key should have been released
+							 * after fetchCompleted().
+							 */
+							assertEquals(LockMode.NONE, trx.hasLock(scan
+									.getCurrentLocation()));
+						} else if (!found) {
+							if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
+								/*
+								 * Lock on next key should have been released
+								 */
+								assertEquals(LockMode.NONE, trx.hasLock(scan
+										.getCurrentLocation()));
+							}
+							else if (trx.getIsolationMode() == IsolationMode.SERIALIZABLE) {
+								/*
+								 * Lock on next key should be downgraded
+								 */
+								assertEquals(LockMode.SHARED, trx.hasLock(scan
+									.getCurrentLocation()));
+							}
+						}
+						return found;
+					} else {
+						assertTrue(scan.isEof());
+						System.err.println("EOF");
+						System.err.println("KEY = " + scan.getCurrentKey().toString());
+						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
+						return false;
+					}
+				} finally {
+					if (scan != null) {
+						scan.close();
+						if (!found) {
+							if (isolationMode == IsolationMode.SERIALIZABLE) {
+								assertEquals(LockMode.SHARED, trx.hasLock(scan.getCurrentLocation()));
+							}
+							else {
+								assertEquals(LockMode.NONE, trx.hasLock(scan.getCurrentLocation()));
+							}
+						}
+					}
+				}
+			} finally {
+				trx.abort();
 			}
 		} finally {
-			if (scan != null) {
-				scan.close();
-			}
+			db.shutdown();
 		}
 	}
     
@@ -2929,8 +3055,19 @@ public class TestBTreeManager extends BaseTestCase {
 				new ScanResult("k2", "112") };
 		doInitContainer2();
 		doLoadData(inserts);
-		doIsolationTest_ReadCommitted();
-		doIsolationTest_CursorStability();
+//		doIsolationTest_ReadCommitted();
+//		doIsolationTest_CursorStability();
+//		doIsolationTest_RepeatableRead(false);
+//		doIsolationTest_RepeatableRead(true);
+		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b13", 21, false);
+		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b13", 21, true);
+		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "zz", 21, false);
+		doFindKeyLockTest(IsolationMode.CURSOR_STABILITY, "b13", 21, false);
+		doFindKeyLockTest(IsolationMode.CURSOR_STABILITY, "b13", 21, true);
+		doFindKeyLockTest(IsolationMode.REPEATABLE_READ, "b13", 21, false);
+		doFindKeyLockTest(IsolationMode.REPEATABLE_READ, "b13", 21, true);
+		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b13", 21, false);
+		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b13", 21, true);
 	}
     
     public static Test suite() {
