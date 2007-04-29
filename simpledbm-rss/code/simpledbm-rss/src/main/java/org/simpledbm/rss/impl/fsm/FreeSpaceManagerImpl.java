@@ -35,7 +35,6 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
-import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
@@ -48,7 +47,6 @@ import org.simpledbm.rss.api.tx.PageFormatOperation;
 import org.simpledbm.rss.api.tx.PostCommitAction;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
@@ -57,6 +55,7 @@ import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 public final class FreeSpaceManagerImpl extends BaseTransactionalModule implements FreeSpaceManager {
 
@@ -64,6 +63,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 
 	static final Logger log = Logger.getLogger(FreeSpaceManagerImpl.class.getPackage().getName());
 
+	static final MessageCatalog mcat = new MessageCatalog();
+	
 	final PageFactory pageFactory;
 
 	final BufferManager bufmgr;
@@ -172,7 +173,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			clr.oldNextSpaceMapPage = logrec.oldNextSpaceMapPage;
 			return clr;
 		}
-		throw new TransactionException();
+		log.error(LOG_CLASS_NAME, "generateCompensation", mcat.getMessage("EF0003") + undoable);
+		throw new FreeSpaceManagerException(mcat.getMessage("EF0003") + undoable);
 	}
 	
 	@Override
@@ -296,7 +298,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			spaceMapType = FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE;
 		}
 		else if (spaceBits != 1) {
-			throw new FreeSpaceManagerException("SIMPLEDBM-SPACEMGR: Invalid number of bits " + spaceBits + " specified for space map page");
+			log.error(LOG_CLASS_NAME, "createContainer", mcat.getMessage("EF0001") + spaceBits);
+			throw new FreeSpaceManagerException(mcat.getMessage("EF0001") + spaceBits);
 		}
 		SpaceMapPageImpl smpPage = (SpaceMapPageImpl) pageFactory.getInstance(spaceMapType, new PageId());
 		if (extentSize > smpPage.getCount()) {
@@ -413,7 +416,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			if (commitNTA) {
 				trx.completeNestedTopAction();
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "createContainer", "SIMPLEDBM-LOG: Created container " + containerName);
+					log.debug(LOG_CLASS_NAME, "createContainer", "SIMPLEDBM-DEBUG: Created container " + containerName);
 				}
 			} else {
 				trx.resetNestedTopAction();
@@ -552,13 +555,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 	public void dropContainer(Transaction trx, int containerId) {
 		DropContainer logrec = (DropContainer) loggableFactory.getInstance(MODULE_ID, TYPE_DROPCONTAINER);
 		StorageContainer sc;
-        try {
-            sc = storageManager.getInstance(containerId);
-        } catch (StorageException e) {
-            throw new FreeSpaceManagerException("SIMPLEDBM-SPACEMGR: Container " + containerId + " cannot be accessed", e);
-        }
+        sc = storageManager.getInstance(containerId);
 		if (sc == null) {
-			throw new FreeSpaceManagerException("SIMPLEDBM-SPACEMGR: Container " + containerId + " does not exist");
+			log.error(LOG_CLASS_NAME, "dropContainer", mcat.getMessage("EF0002") + containerId);
+			throw new FreeSpaceManagerException(mcat.getMessage("EF0002") + containerId);
 		}
 		else {
 			logrec.setContainerId(containerId);
@@ -1439,7 +1439,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			if (contains(pageNumber)) {
 				return get(convertPageNumberToOffset(pageNumber));
 			}
-			throw new FreeSpaceManagerException.PageNotFoundException("SIMPLEDBM-SPACEMGR: Page " + pageNumber + " not found in this space map page");
+			log.error(LOG_CLASS_NAME, "getSpaceBits", mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
+			throw new FreeSpaceManagerException(mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
 		}
 
 		@Override
@@ -1447,7 +1448,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			if (contains(pageNumber)) {
 				set(convertPageNumberToOffset(pageNumber), value);
 			} else {
-				throw new FreeSpaceManagerException.PageNotFoundException("SIMPLEDBM-SPACEMGR: Page " + pageNumber + " not found in this space map page");
+				log.error(LOG_CLASS_NAME, "setSpaceBits", mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
+				throw new FreeSpaceManagerException(mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
 			}
 		}
 		
@@ -1480,7 +1482,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 
 		@Override
 		public final String toString() {
-			return super.toString() + ".SMP(firstPageNumber = " + firstPageNumber + ", nextSMP=" + nextSpaceMapPage + ", pageCount=" + getCount() + ")";
+			return "SpaceMapPageImpl(super=" + super.toString() + ", firstPageNumber = " + firstPageNumber + ", nextSMP=" + nextSpaceMapPage + ", pageCount=" + getCount() + ")";
 		}
 	}
 
@@ -1735,7 +1737,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			}
 
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "Starting search for empty page with currentSMP=" + currentSMP + " currentPageNumber=" + currentPageNumber + " numPasses=" + numPasses);
+				log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "SIMPLEDBM-DEBUG: Starting search for empty page with currentSMP=" + currentSMP + " currentPageNumber=" + currentPageNumber + " numPasses=" + numPasses);
 			}
 			/* 
 			 * The search is executed in two passes. The first pass begins searching from
@@ -1747,7 +1749,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			search: for (int pass = 0; pass < numPasses && !found; pass++) {
 
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "Pass=" + pass + " StartingPageNumber=" + currentPageNumber + "currentSMP=" + smpPageId.getPageNumber() + " stopSMP=" + stopSMP);
+					log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "SIMPLEDBM-DEBUG: Pass=" + pass + " StartingPageNumber=" + currentPageNumber + "currentSMP=" + smpPageId.getPageNumber() + " stopSMP=" + stopSMP);
 				}
 
 				while (pass < numPasses) {
@@ -1770,7 +1772,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 						SpaceMapPageImpl smpPage = (SpaceMapPageImpl) bab.getPage();
 
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "Fixed SpaceMap Page " + smpPage);
+							log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "SIMPLEDBM-DEBUG: Fixed SpaceMap Page " + smpPage);
 						}
 
 						lastPageNumber = smpPage.getLastPageNumber();
@@ -1782,7 +1784,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 								 * Found a page with enough space.
 								 */
 								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "Found requested space " + space + " in page " + currentPageNumber);
+									log.debug(LOG_CLASS_NAME, "findAndFixSMPExclusively", "SIMPLEDBM-DEBUG: Found requested space " + space + " in page " + currentPageNumber);
 								}
 								found = true;
 								currentSMP = smpPageId.getPageNumber();
@@ -1854,7 +1856,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		public final void fixSpaceMapPageExclusively(int spaceMapPageNumber,
 				int pageNumber) {
 			if (bab != null) {
-				throw new FreeSpaceManagerException();
+				log.error(LOG_CLASS_NAME, "fixSpaceMapPageExclusively", mcat.getMessage("EF0005"));
+				throw new IllegalStateException(mcat.getMessage("EF0005"));
 			}
 			PageId smpPageId = new PageId(containerId, spaceMapPageNumber);
 			bab = spacemgr.bufmgr.fixExclusive(smpPageId, false, -1, 0);
@@ -1862,7 +1865,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 			if (!smpPage.contains(pageNumber)) {
 				bab.unfix();
 				bab = null;
-				throw new FreeSpaceManagerException();
+				log.error(LOG_CLASS_NAME, "fixSpaceMapPageExclusively", mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
+				throw new FreeSpaceManagerException(mcat.getMessage("EF0004") + "PageNo=" + pageNumber + ", SMP=" + this);
 			}
 			currentSMP = spaceMapPageNumber;
 			currentPageNumber = pageNumber;
@@ -1871,8 +1875,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.sm.SpaceCursor#unfixCurrentSpaceMapPage()
 		 */
-		public final void unfixCurrentSpaceMapPage()
-				{
+		public final void unfixCurrentSpaceMapPage() {
 			if (bab == null) {
 				return;
 			}
@@ -1887,7 +1890,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		 */
 		public final FreeSpaceMapPage getCurrentSpaceMapPage() {
 			if (bab == null) {
-				throw new FreeSpaceManagerException();
+				log.error(LOG_CLASS_NAME, "getCurrentSpaceMapPage", mcat.getMessage("EF0006"));
+				throw new IllegalStateException(mcat.getMessage("EF0006"));
 			}
 			return (FreeSpaceMapPage) bab.getPage();
 		}
@@ -1902,7 +1906,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		
         final void doUpdateAndLogRedoOnly(Transaction trx, int pageNumber, int value) {
 			if (bab == null) {
-				throw new FreeSpaceManagerException();
+				log.error(LOG_CLASS_NAME, "doUpdateAndLogRedoOnly", mcat.getMessage("EF0006"));
+				throw new IllegalStateException(mcat.getMessage("EF0006"));
 			}
 			UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) spacemgr.loggableFactory.getInstance(MODULE_ID, FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
 			Page page = bab.getPage();
@@ -1923,7 +1928,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
         
 		final void doUpdateAndLogUndoably(Transaction trx, int pageNumber, int value) {
 			if (bab == null) {
-				throw new FreeSpaceManagerException();
+				log.error(LOG_CLASS_NAME, "doUpdateAndLogUndoably", mcat.getMessage("EF0006"));
+				throw new IllegalStateException(mcat.getMessage("EF0006"));
 			}
 			UndoableUpdateSpaceMapPage updateSpaceMapLog = (UndoableUpdateSpaceMapPage) spacemgr.loggableFactory.getInstance(MODULE_ID, FreeSpaceManagerImpl.TYPE_UNDOABLEUPDATESPACEMAPPAGE);
 			SpaceMapPageImpl page = (SpaceMapPageImpl) bab.getPage();
