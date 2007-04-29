@@ -42,6 +42,7 @@ import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.Linkable;
 import org.simpledbm.rss.util.SimpleLinkedList;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Implements the Buffer Manager module. This implementation uses a global
@@ -65,6 +66,8 @@ public final class BufferManagerImpl implements BufferManager {
 	private static final String LOG_CLASS_NAME = BufferManagerImpl.class.getName();
 
 	static final Logger log = Logger.getLogger(BufferManagerImpl.class.getPackage().getName());
+	
+	static final MessageCatalog mcat = new MessageCatalog();
 
 	private static final int LATCH_EXCLUSIVE = 2;
 	
@@ -265,7 +268,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	public void signalBufferWriter() {
 		if (log.isTraceEnabled()) {
-			log.trace(LOG_CLASS_NAME, "signalBufferWriter", "SIGNALLING Buffer Writer");
+			log.trace(LOG_CLASS_NAME, "signalBufferWriter", "SIMPLEDBM-DEBUG: SIGNALLING Buffer Writer");
 		}
 		LockSupport.unpark(bufferWriter);
 	}
@@ -292,7 +295,7 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 		long end = System.currentTimeMillis();
 		if (log.isTraceEnabled()) {
-			log.trace(LOG_CLASS_NAME, "waitForFreeBuffers", "WAITED " + (end - start) + " millisecs for Buffer Writer");
+			log.trace(LOG_CLASS_NAME, "waitForFreeBuffers", "SIMPLEDBM-DEBUG: WAITED " + (end - start) + " millisecs for Buffer Writer");
 		}
 	}
 
@@ -305,7 +308,7 @@ public final class BufferManagerImpl implements BufferManager {
 		try {
 			bufferWriter.join();
 		} catch (InterruptedException e) {
-			log.error(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: Error occurred while shutting down Buffer Manager", e);
+			log.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EM0001"), e);
 		}
 		writeBuffers();
 	}
@@ -353,7 +356,7 @@ public final class BufferManagerImpl implements BufferManager {
 		for (int retryAttempt = 0; retryAttempt < maxRetriesDuringBufferWait; retryAttempt++) {
 
 			if (log.isTraceEnabled()) {
-				log.trace(LOG_CLASS_NAME, "getFrame", "Scanning LRU chain, " + retryAttempt + " attempt");
+				log.trace(LOG_CLASS_NAME, "getFrame", "SIMPLEDBM-DEBUG: Scanning LRU chain, " + retryAttempt + " attempt");
 			}
 
 			lruLatch.writeLock().lock();
@@ -380,7 +383,7 @@ public final class BufferManagerImpl implements BufferManager {
 										.debug(
 												LOG_CLASS_NAME,
 												"getFrame",
-												"Skipping bcb "
+												"SIMPLEDBM-DEBUG: Skipping bcb "
 														+ nextBcb
 														+ " because page id has changed");
 							}
@@ -396,14 +399,14 @@ public final class BufferManagerImpl implements BufferManager {
 										|| nextBcb.isBeingRead() || nextBcb.isBeingWritten())) {
 							if (log.isDebugEnabled()) {
 								log.debug(
-									LOG_CLASS_NAME,	"getFrame",	"Skipping bcb "
+									LOG_CLASS_NAME,	"getFrame",	"SIMPLEDBM-DEBUG: Skipping bcb "
 										+ nextBcb + " because fixCount > 0 or dirty or IO in progress");
 							}
 							continue;
 						}
 
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "getFrame", "Bcb "
+							log.debug(LOG_CLASS_NAME, "getFrame", "SIMPLEDBM-DEBUG: Bcb "
 									+ nextBcb + " chosen as relacement victim");
 						}
 						/* Remove BCB from LRU Chain */
@@ -471,13 +474,13 @@ public final class BufferManagerImpl implements BufferManager {
 					// we allow SHARED access if writeInProgress is true.
 					if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "locatePage", "Another thread is attempting to read/write page " + pageId + ", therefore retrying");
+							log.debug(LOG_CLASS_NAME, "locatePage", "SIMPLEDBM-DEBUG: Another thread is attempting to read/write page " + pageId + ", therefore retrying");
 						}
 						return null;
 					}
 					else {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "locatePage", "Page " + pageId + " has been read in the meantime");
+							log.debug(LOG_CLASS_NAME, "locatePage", "SIMPLEDBM-DEBUG: Page " + pageId + " has been read in the meantime");
 						}
 						return bcb;
 					}
@@ -506,8 +509,8 @@ public final class BufferManagerImpl implements BufferManager {
 
 		if (frameNo == -1) {
 			stop = true;
-			throw new BufferManagerException("SIMPLEDBM-BUFMGR: Unexpected error while attempting to " +
-					"read page for " + pageId + " - all buffer pages are in use");
+			log.error(LOG_CLASS_NAME, "locatePage", mcat.getMessage("EM0004") + pageId);
+			throw new BufferManagerException(mcat.getMessage("EM0004") + pageId);
 		}
 
 		assert bufferpool[frameNo] == null;
@@ -526,7 +529,7 @@ public final class BufferManagerImpl implements BufferManager {
 					 * state. We want to remove the invalid BCB from the hash chain,
 					 * and return the buffer pool frame to the freelist. 
 					 */
-					log.error(LOG_CLASS_NAME, "locatePage", "Error occurred while attempting to read page " + pageId);
+					log.error(LOG_CLASS_NAME, "locatePage", mcat.getMessage("EM0002") + pageId);
 					bucket.lock();
 					try {
 						bucket.chain.remove(nextBcb);
@@ -560,8 +563,8 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	private void checkStatus() {
 		if (stop) {
-			throw new BufferManagerException("SIMPLDBM-BUFMGR: Unable to complete operation " +
-					"because Buffer Manager is shutting down");
+			log.error(LOG_CLASS_NAME, "checkStatus", mcat.getMessage("EM0005"));
+			throw new BufferManagerException(mcat.getMessage("EM0005"));
 		}
 	}
 
@@ -643,8 +646,8 @@ public final class BufferManagerImpl implements BufferManager {
 					nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
 				}
 				if (stop || nextBcb == null) {
-					throw new BufferManagerException("SIMPLEDBM-BUFMGR: Unexpected error while attempting " +
-							"to read page " + pageid);
+					log.error(LOG_CLASS_NAME, "fix", mcat.getMessage("EM0006"));
+					throw new BufferManagerException(mcat.getMessage("EM0006") + pageid);
 				}
 				bucket.lock();
 				if (!nextBcb.pageId.equals(pageid)) {
@@ -874,7 +877,7 @@ public final class BufferManagerImpl implements BufferManager {
 						bcb.invalid = true;
 						if (log.isDebugEnabled()) {
 							log.debug(LOG_CLASS_NAME, "invalidateContainer",
-									"Invalidating page " + bcb.pageId + " for container " + containerId);
+									"SIMPLEDBM-DEBUG: Invalidating page " + bcb.pageId + " for container " + containerId);
 						}
 						if (bcb.isBeingWritten()) {
 							writeWaits++;
@@ -891,7 +894,7 @@ public final class BufferManagerImpl implements BufferManager {
         while (writeWaits > 0) {
             synchronized (waitingForBuffers) {
                 if (log.isDebugEnabled()) {
-                    log.debug(LOG_CLASS_NAME, "invalidateContainer", "Writes were in progress during invalidations, hence must wait");
+                    log.debug(LOG_CLASS_NAME, "invalidateContainer", "SIMPLEDBM-DEBUG: Writes were in progress during invalidations, hence must wait");
                 }
                 try {
                     waitingForBuffers.wait(bufferWriterMaxWait);
@@ -974,7 +977,7 @@ public final class BufferManagerImpl implements BufferManager {
 					 */
 					bcb.writeInProgress = true;
                     if (log.isTraceEnabled()) {
-                        log.trace(LOG_CLASS_NAME, "writeBuffers", "WRITING Page " + bcb.pageId);
+                        log.trace(LOG_CLASS_NAME, "writeBuffers", "SIMPLEDBM-DEBUG: WRITING Page " + bcb.pageId);
                     }
                     bucket.unlock();
 
@@ -996,7 +999,7 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 
                     if (log.isTraceEnabled()) {
-                        log.trace(LOG_CLASS_NAME, "writeBuffers", "COMPLETED WRITING Page " + bcb.pageId);
+                        log.trace(LOG_CLASS_NAME, "writeBuffers", "SIMPLEDBM-DEBUG: COMPLETED WRITING Page " + bcb.pageId);
                     }
 					bcb.recoveryLsn = new Lsn();
 					bcb.dirty = false;
@@ -1216,7 +1219,8 @@ public final class BufferManagerImpl implements BufferManager {
 			} else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
 				page.unlatchShared();
 			} else {
-				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Latch mode in inconsistent state");
+				log.error(LOG_CLASS_NAME, "unlatch", mcat.getMessage("EM0007"));
+				throw new IllegalStateException(mcat.getMessage("EM0007"));
 			}
 			latchMode = 0;
 		}
@@ -1242,7 +1246,8 @@ public final class BufferManagerImpl implements BufferManager {
 				page.setPageLsn(lsn);
 			}
 			else {
-				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Page can be marked as dirty only if it has been latched exclusively");
+				log.error(LOG_CLASS_NAME, "setDirty", mcat.getMessage("EM0008"));
+				throw new IllegalStateException(mcat.getMessage("EM0008"));
 			}
 		}
 
@@ -1265,8 +1270,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void upgradeUpdateLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Upgrade of update latch requested but latch is " +
-						"not held in update mode currently");
+				log.error(LOG_CLASS_NAME, "upgradeUpdateLatch", mcat.getMessage("EM0009"));
+				throw new IllegalStateException(mcat.getMessage("EM0009"));
 			}
 			page.upgradeUpdate();
 			latchMode = BufferManagerImpl.LATCH_EXCLUSIVE;
@@ -1277,8 +1282,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void downgradeExclusiveLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-				throw new IllegalStateException("SIMPLEDBM-BUFMGR: Downgrade of exclusive latch requested but latch is " +
-						"not held in exclusive mode currently");
+				log.error(LOG_CLASS_NAME, "downgradeExclusiveLatch", mcat.getMessage("EM0010"));
+				throw new IllegalStateException(mcat.getMessage("EM0010"));
 			}
 			page.downgradeExclusive();
 			latchMode = BufferManagerImpl.LATCH_UPDATE;
@@ -1307,26 +1312,26 @@ public final class BufferManagerImpl implements BufferManager {
 
 		public final void run() {
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "run", "Buffer writer STARTED");
+				log.debug(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: Buffer writer STARTED");
 			}
 			for (;;) {
 				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(bufmgr.bufferWriterSleepInterval, TimeUnit.MILLISECONDS));
 				try {
 					if (log.isTraceEnabled()) {
-						log.trace(LOG_CLASS_NAME, "run", "BEFORE Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
+						log.trace(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
 					}
 					long start = System.currentTimeMillis();
 					bufmgr.writeBuffers();
 					long end = System.currentTimeMillis();
 					if (log.isTraceEnabled()) {
-						log.trace(LOG_CLASS_NAME, "run", "AFTER Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
-						log.trace(LOG_CLASS_NAME, "run","BUFFER WRITER took " + (end - start) + " millisecs"); 
+						log.trace(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
+						log.trace(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: BUFFER WRITER took " + (end - start) + " millisecs to complete writing pages to disk"); 
 					}
 					synchronized (bufmgr.waitingForBuffers) {
 						bufmgr.waitingForBuffers.notifyAll();
 					}
 				} catch (Exception e) {
-					log.error(LOG_CLASS_NAME, "run", "Error occurred while writing buffer pages", e);
+					log.error(LOG_CLASS_NAME, "run", mcat.getMessage("EM0003"), e);
 					bufmgr.stop = true;
 				}
 				if (bufmgr.stop) {
@@ -1334,7 +1339,7 @@ public final class BufferManagerImpl implements BufferManager {
 				}
 			}
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "run", "Buffer writer STOPPED");
+				log.debug(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: Buffer writer STOPPED");
 			}
 		}
 	}
