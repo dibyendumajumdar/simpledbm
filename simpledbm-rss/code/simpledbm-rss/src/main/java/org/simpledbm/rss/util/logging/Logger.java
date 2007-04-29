@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import org.simpledbm.rss.util.mcat.MessageCatalog;
+
 /**
  * A simple wrapper around JDK logging facilities. The aim is to allow 
  * easy switch to another logging system, such as Log4J.
@@ -36,6 +38,8 @@ public final class Logger {
 	 * Instance of the real logger object.
 	 */
 	private final java.util.logging.Logger realLogger;
+	
+	private static final MessageCatalog mcat = new MessageCatalog();
 	
 	/**
 	 * Obtain a new or existing Logger instance. 
@@ -52,8 +56,7 @@ public final class Logger {
 			LogManager.getLogManager().readConfiguration(is);
 		}
 		catch (Exception e) {
-			System.err.println("SIMPLEDBM-ERROR: Failed to initialize logging system due to following error: " + e.getMessage());
-			// e.printStackTrace();
+			System.err.println(mcat.getMessage("WL0001") + e.getMessage());
 		}
 		finally {
 			try {
