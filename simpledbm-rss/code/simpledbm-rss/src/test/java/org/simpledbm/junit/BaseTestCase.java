@@ -23,6 +23,8 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
+import org.simpledbm.rss.util.logging.Logger;
+
 public abstract class BaseTestCase extends TestCase {
 
 	Vector<ThreadFailure> threadFailureExceptions;
@@ -42,6 +44,7 @@ public abstract class BaseTestCase extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		threadFailureExceptions = new Vector<ThreadFailure>();
+		Logger.configure("logging.properties");
 	}
 
 	@Override
