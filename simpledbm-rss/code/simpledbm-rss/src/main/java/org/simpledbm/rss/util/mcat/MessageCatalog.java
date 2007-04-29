@@ -68,13 +68,20 @@ public class MessageCatalog {
 		msgs.put("EM0001", "SIMPLEDBM-EM0001: Error occurred while shutting down Buffer Manager");
 		msgs.put("EM0002", "SIMPLEDBM-EM0002: Error occurred while attempting to read page:");
 		msgs.put("EM0003", "SIMPLEDBM-EM0003: Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
-		msgs.put("EM0004", "SIMPLEDBM-EM0004: Unexpected error: while attempting to read a page an empty frame could not be found: ");
+		msgs.put("EM0004", "SIMPLEDBM-EM0004: Unexpected error - while attempting to read a page an empty frame could not be found: ");
 		msgs.put("EM0005", "SIMPLEDBM-EM0005: Unable to complete operation because Buffer Manager is shutting down");
-		msgs.put("EM0006", "SIMPLEDBM-EM0006: Unexpected error: while attempting to locate a page an empty frame could not be found or buffer manager is shutting down: ");
+		msgs.put("EM0006", "SIMPLEDBM-EM0006: Unexpected error - while attempting to locate a page an empty frame could not be found or buffer manager is shutting down: ");
 		msgs.put("EM0007", "SIMPLEDBM-EM0007: Latch mode in inconsistent state");
 		msgs.put("EM0008", "SIMPLEDBM-EM0008: Page can be marked dirty only if it has been latched exclusively");
 		msgs.put("EM0009", "SIMPLEDBM-EM0009: Upgrade of update latch requested but latch is not held in update mode currently");
 		msgs.put("EM0010", "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
+		msgs.put("EF0001", "SIMPLEDBM-EF0001: Invalid number of bits specified for space map page: ");
+		msgs.put("EF0002", "SIMPLEDBM-EF0002: Specified container does not exist: ");
+		msgs.put("EF0003", "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type: ");
+		msgs.put("EF0004", "SIMPLEDBM-EF0004: Unexpected error - specified page does not belong to this space map page: ");
+		msgs.put("EF0005", "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
+		msgs.put("EF0006", "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
+		
 	}
 	
 	public String getMessage(String key) {
