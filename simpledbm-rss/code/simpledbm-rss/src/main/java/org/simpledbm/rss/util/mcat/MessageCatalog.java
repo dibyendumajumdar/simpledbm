@@ -55,7 +55,7 @@ public class MessageCatalog {
 	 *  X - transaction
 	 *  C - lock manager
 	 *  H - latch
-	 *  B - btree
+	 *  B - b-tree
 	 *  M - buffer manager
 	 *  F - free space manager
 	 *  O - slotted page manager
@@ -81,7 +81,10 @@ public class MessageCatalog {
 		msgs.put("EF0004", "SIMPLEDBM-EF0004: Unexpected error - specified page does not belong to this space map page: ");
 		msgs.put("EF0005", "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
 		msgs.put("EF0006", "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
-		
+		msgs.put("EB0001", "SIMPLEDBM-EB0001: Unexpected error - missing child pointer in parent node");
+		msgs.put("EB0002", "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
+		msgs.put("WB0003", "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of: ");
+		msgs.put("EB0004", "SIMPLEDBM-EB0004: Unexpected error - key to be deleted not found: ");
 	}
 	
 	public String getMessage(String key) {
