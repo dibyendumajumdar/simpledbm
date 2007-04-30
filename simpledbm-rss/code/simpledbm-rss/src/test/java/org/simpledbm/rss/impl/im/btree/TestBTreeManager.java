@@ -1666,7 +1666,7 @@ public class TestBTreeManager extends BaseTestCase {
         final AtomicInteger status = new AtomicInteger(0);
         final LockEventListener listener = new LockEventListener() {
 			public void beforeLockWait(Object owner, Object lockable, LockMode mode) {
-				System.out.println("LOCK WAIT STARTED");
+				//System.out.println("LOCK WAIT STARTED");
 				lock.lock();
 				lockWaitStarted.signal();
 				status.incrementAndGet();
@@ -1755,8 +1755,8 @@ public class TestBTreeManager extends BaseTestCase {
             t2.join(10000);
             assertTrue(!t1.isAlive());
             assertTrue(!t2.isAlive());
-            assertEquals(1, status.get());
             checkThreadFailures();
+            assertEquals(1, status.get());
         } finally {
 			db.shutdown();
         }       
@@ -3125,14 +3125,18 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
         suite.addTest(new TestBTreeManager("testIsolation"));
-        long i = System.currentTimeMillis() % 3;
-        i += 5;
+        long i = System.currentTimeMillis() % 4;
         if (i == 0)  
         	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
         else if (i == 1)
         	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
         else if (i == 2)
         	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+        else {
+        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+        }
         return suite;
     }
 
