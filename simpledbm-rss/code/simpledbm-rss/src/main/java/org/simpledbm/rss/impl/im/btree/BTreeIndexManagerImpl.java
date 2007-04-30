@@ -2988,6 +2988,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	}
 	
 	public static final class SearchResult {
+		/**
+		 * The key number can range from {@link BTreeIndexManagerImpl#FIRST_KEY_POS}
+		 * to {@link BTreeNode#getKeyCount()}. A value of -1 indicates that the
+		 * search key is greater than all keys in the node.
+		 */
 		int k = -1;
 		IndexItem item = null;
 		boolean exactMatch = false;
@@ -3311,21 +3316,75 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final SearchResult search(IndexItem key) {
 			SearchResult result = new SearchResult();
-//			int k = 1;
-//			// We do not look at the high key when searching
-//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-//				IndexItem item = getItem(k);
-//				int comp = item.compareTo(key);
-//				if (comp >= 0) {
-//					result.k = k;
-//					result.item = item;
-//					if (comp == 0) {
-//						result.exactMatch = true;
-//					}
-//					break;
-//				}
-//			}
-			
+			/*
+			 * Binary search algorithm
+			 */
+			int low = FIRST_KEY_POS;
+			int high = getKeyCount();
+			while (low <= high) {
+				int mid = (low + high) >>> 1;
+				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
+					throw new IndexException("Invalid binary search result");
+				}
+				IndexItem item = getItem(mid);
+				int comp = item.compareTo(key);
+				if (comp < 0)
+					low = mid + 1;
+				else if (comp > 0)
+					high = mid - 1;
+				else {
+					result.k = mid;
+					result.exactMatch = true;
+					result.item = item;
+					return result;
+				}
+			}
+			/*
+			 * If the result is not equal, we need to return the
+			 * next key if available or -1 if the search key is greater than
+			 * all keys in this node.
+			 */
+			if (low <= getKeyCount()) {
+				result.k = low;
+				result.item = getItem(low);
+			}
+			return result;
+		}
+		public final SearchResult search_(IndexItem key) {
+			SearchResult result = new SearchResult();
+			int k = 1;
+			// We do not look at the high key when searching
+			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+				IndexItem item = getItem(k);
+				int comp = item.compareTo(key);
+				if (comp >= 0) {
+					result.k = k;
+					result.item = item;
+					if (comp == 0) {
+						result.exactMatch = true;
+					}
+					break;
+				}
+			}
+			return result;
+		}
+		public final SearchResult searchBinaryDebug(IndexItem key) {
+			SearchResult result = new SearchResult();
+			int k = 1;
+			// We do not look at the high key when searching
+			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+				IndexItem item = getItem(k);
+				int comp = item.compareTo(key);
+				if (comp >= 0) {
+					result.k = k;
+					result.item = item;
+					if (comp == 0) {
+						result.exactMatch = true;
+					}
+					break;
+				}
+			}
+			SearchResult result1 = new SearchResult();
 			int j = -1;
 			int low = FIRST_KEY_POS;
 			int high = getKeyCount();
@@ -3335,7 +3394,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
 					throw new IndexException("Invalid binary search result");
 				}
-				result.item = item = getItem(mid);
+				item = getItem(mid);
 				int comp = item.compareTo(key);
 				if (comp < 0)
 					low = mid + 1;
@@ -3345,8 +3404,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					// k = mid;
 					// result.exactMatch = true;
 					j = mid;
-					result.k = mid;
-					result.exactMatch = true;
+					result1.k = j;
+					result1.exactMatch = true;
+					result1.item = item;
 //					if (j != result.k) {
 //						throw new IndexException("Invalid binary search result");
 //					}
@@ -3359,12 +3419,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				}
 				else {
 					j = low;
-					result.k = low;
+					result1.k = low;
+					result1.item = getItem(low);
 				}
-				// System.out.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
 			}
-//			if (j != result.k) {
+			System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+//			if (result1.k != result.k || result1.item != result.item || result1.exactMatch != result.exactMatch) {
 //				System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+//				System.err.println("result.item = " + result.item + " result1.item = " + result1.item);
+//				
 //				throw new IndexException("Invalid search result for binary search");
 //			}
 		
