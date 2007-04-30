@@ -1666,7 +1666,7 @@ public class TestBTreeManager extends BaseTestCase {
         final AtomicInteger status = new AtomicInteger(0);
         final LockEventListener listener = new LockEventListener() {
 			public void beforeLockWait(Object owner, Object lockable, LockMode mode) {
-				//System.out.println("LOCK WAIT STARTED");
+				System.out.println("LOCK WAIT STARTED");
 				lock.lock();
 				lockWaitStarted.signal();
 				status.incrementAndGet();
@@ -3055,10 +3055,14 @@ public class TestBTreeManager extends BaseTestCase {
 				new ScanResult("k2", "112") };
 		doInitContainer2();
 		doLoadData(inserts);
-//		doIsolationTest_ReadCommitted();
-//		doIsolationTest_CursorStability();
-//		doIsolationTest_RepeatableRead(false);
-//		doIsolationTest_RepeatableRead(true);
+		
+		// next key locking and lock release test for various isolation modes
+		doIsolationTest_ReadCommitted();
+		doIsolationTest_CursorStability();
+		doIsolationTest_RepeatableRead(false);
+		doIsolationTest_RepeatableRead(true);
+		
+		// not found scenario
 		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b13", 21, false);
 		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b13", 21, true);
 		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "zz", 21, false);
@@ -3068,6 +3072,16 @@ public class TestBTreeManager extends BaseTestCase {
 		doFindKeyLockTest(IsolationMode.REPEATABLE_READ, "b13", 21, true);
 		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b13", 21, false);
 		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b13", 21, true);
+		
+		// found scenario
+		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b1", 21, false);
+		doFindKeyLockTest(IsolationMode.READ_COMMITTED, "b1", 21, true);
+		doFindKeyLockTest(IsolationMode.CURSOR_STABILITY, "b1", 21, false);
+		doFindKeyLockTest(IsolationMode.CURSOR_STABILITY, "b1", 21, true);
+		doFindKeyLockTest(IsolationMode.REPEATABLE_READ, "b1", 21, false);
+		doFindKeyLockTest(IsolationMode.REPEATABLE_READ, "b1", 21, true);
+		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b1", 21, false);
+		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "b1", 21, true);
 	}
     
     public static Test suite() {
@@ -3110,6 +3124,7 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
         suite.addTest(new TestBTreeManager("testPhantomRecords1"));
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
+        suite.addTest(new TestBTreeManager("testIsolation"));
         long i = System.currentTimeMillis() % 3;
         i += 5;
         if (i == 0)  
@@ -3118,7 +3133,6 @@ public class TestBTreeManager extends BaseTestCase {
         	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
         else if (i == 2)
         	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
-        suite.addTest(new TestBTreeManager("testIsolation"));
         return suite;
     }
 
