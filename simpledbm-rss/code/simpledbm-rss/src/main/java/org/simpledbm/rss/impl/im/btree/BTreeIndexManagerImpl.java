@@ -33,7 +33,6 @@ import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
-import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.im.Index;
 import org.simpledbm.rss.api.im.IndexException;
@@ -65,7 +64,6 @@ import org.simpledbm.rss.api.tx.MultiPageRedo;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
@@ -75,6 +73,7 @@ import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -132,6 +131,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	static final String LOG_CLASS_NAME = BTreeIndexManagerImpl.class.getName();
 	static final Logger log = Logger.getLogger(BTreeIndexManagerImpl.class.getPackage().getName());
 
+	static final MessageCatalog mcat = new MessageCatalog();
+	
 	private static final short MODULE_ID = 4;
 	
 	private static final short TYPE_BASE = MODULE_ID * 100;
@@ -438,7 +439,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 		}
 		if (k > parent.header.keyCount) {
-			throw new TransactionException();
+			// child pointer not found - corrupt b-tree?
+			log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0001"));
+			throw new IndexException(mcat.getMessage("EB0001"));
 		}
 		// Insert new entry for left child
 		IndexItem u = linkOperation.leftChildHighKey;
@@ -465,9 +468,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				break;
 			}
 		}
-		assert k <= parent.header.keyCount;
 		if (k > parent.header.keyCount) {
-			throw new TransactionException();
+			log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat.getMessage("EB0001"));
+			throw new IndexException(mcat.getMessage("EB0001"));
 		}
 		p.purge(k);
 		IndexItem item = parent.getItem(k);
@@ -476,7 +479,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			p.insertAt(k, item, true);
 		}
 		else {
-			throw new TransactionException();
+			log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat.getMessage("EB0001"));
+			throw new IndexException(mcat.getMessage("EB0001"));
 		}
 		parent.header.keyCount = parent.header.keyCount - 1;
 		parent.updateHeader();
@@ -1043,7 +1047,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					undoNextLsn = trx.getLastLsn();
 					newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
 					if (newSiblingPageNumber == -1) {
-						throw new FreeSpaceManagerException();
+						log.error(LOG_CLASS_NAME, "doSplit", mcat.getMessage("EB0002"));
+						throw new IndexException(mcat.getMessage("EB0002"));
 					}
 				}
 				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, PAGE_SPACE_USED);
@@ -1433,7 +1438,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					btree.btreeMgr.spaceMgr.extendContainer(trx, btree.containerId);
 					newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
 					if (newSiblingPageNumber == -1) {
-						throw new FreeSpaceManagerException();
+						log.error(LOG_CLASS_NAME, "doIncreaseTreeHeight", mcat.getMessage("EB0002"));
+						throw new IndexException(mcat.getMessage("EB0002"));
 					}
 				}
 				// Make a note of current lsn so that we can link the Compensation record to it.
@@ -2111,7 +2117,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			} catch (LockException e) {
 				
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "doNextKeyLock", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + mode + " lock on " + nextItem.getLocation());
+					log.debug(LOG_CLASS_NAME, "doNextKeyLock", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + mode + " lock on " + nextItem.getLocation());
 				}
 
 				/*
@@ -2228,7 +2234,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 							} catch (LockException e) {
 								// FIXME Test case
 								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-LOG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + loc);
+									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + loc);
 								}
 								/*
 								 * Failed to acquire conditional lock. 
@@ -2253,7 +2259,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 										trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
 									trx.releaseLock(loc);
 								}
-								throw new UniqueConstraintViolationException("SIMPLEDBM-ERROR: Unique contraint would be violated by inserting key [" + key + "] and location [" + location + "]");
+								log.warn(LOG_CLASS_NAME, "doInsert", mcat.getMessage("WB0003") + "key [" + key + "] and location [" + location + "]");
+								throw new UniqueConstraintViolationException(mcat.getMessage("WB0003") + "key [" + key + "] and location [" + location + "]");
 							}
 							/*
 							 * Key has been deleted or has been rolled back in the meantime
@@ -2364,7 +2371,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				SearchResult sr = node.search(bcursor.searchKey);
 				if (!sr.exactMatch) {
 					// key not found?? something is wrong
-					throw new IndexException("Search key " + bcursor.searchKey.toString() + " not found"); 
+					log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage("EB0004") + bcursor.searchKey.toString());
+					throw new IndexException(mcat.getMessage("EB0004") + bcursor.searchKey.toString()); 
 				}
 
 				int nextKeyPage = -1;
@@ -2572,7 +2580,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				} catch (LockException e) {
 					
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-LOG: failed to acquire NOWAIT " + icursor.lockMode + " lock on " + sr.item.getLocation());
+						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + icursor.lockMode + " lock on " + sr.item.getLocation());
 					}
 					/*
 					 * Failed to acquire conditional lock. 
@@ -2632,6 +2640,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		IndexItem previousKey;
 		
+		/**
+		 * Cached value of {@link SearchResult#k}
+		 */
+		int k = 0;
+		
 		int fetchCount = 0;
 		
 		final BTreeCursor bcursor = new BTreeCursor();
@@ -2673,7 +2686,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						if (lockMode == LockMode.SHARED
 								|| lockMode == LockMode.UPDATE) {
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "Releasing lock on previous row "
+								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "SIMPLEDBM-DEBUG: Releasing lock on previous row "
 											+ previousKey.getLocation());
 							}
 							trx.releaseLock(previousKey.getLocation());
@@ -2690,7 +2703,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 								.getLocation());
 						if (lockMode == LockMode.UPDATE) {
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "Downgrading lock on previous row "
+								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
 										+ previousKey.getLocation() + " to " + LockMode.SHARED);
 							}
 							trx.downgradeLock(previousKey.getLocation(),
@@ -2709,7 +2722,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			 * This method is invoked after the data from tuple container has been
 			 * read. Its main purpose is to release locks in read committed or cursor stability mode.
 			 */
-			eof = !matched;
+			if (!matched && !eof) {
+				eof = true;
+			}
 			if (currentKey != null) {
 				boolean releaseLock = false;
 				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
@@ -2732,7 +2747,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					if (lockMode == LockMode.UPDATE) {
 						trx.downgradeLock(currentKey.getLocation(), LockMode.SHARED);
 					}
-					
 				}
 			}	
 		}
@@ -2752,7 +2766,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						if (lockMode == LockMode.SHARED
 								|| lockMode == LockMode.UPDATE) {
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "Releasing lock on current row "
+								log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "SIMPLEDBM-DEBUG: Releasing lock on current row "
 										+ currentKey.getLocation() + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
 							}
 							trx.releaseLock(currentKey.getLocation());
@@ -2797,8 +2811,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			CursorState cs = (CursorState) sp.getValue(this);
 			
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "Current position is set to " + currentKey);
-				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "Rollback to savepoint is restoring state to " + cs);
+				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "SIMPLEDBM-DEBUG: Current position is set to " + currentKey);
+				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "SIMPLEDBM-DEBUG: Rollback to savepoint is restoring state to " + cs);
 			}
 			currentKey = cs.currentKey;
 			previousKey = cs.previousKey;
@@ -3297,20 +3311,63 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final SearchResult search(IndexItem key) {
 			SearchResult result = new SearchResult();
-			int k = 1;
-			// We do not look at the high key when searching
-			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
+//			int k = 1;
+//			// We do not look at the high key when searching
+//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+//				IndexItem item = getItem(k);
+//				int comp = item.compareTo(key);
+//				if (comp >= 0) {
+//					result.k = k;
+//					result.item = item;
+//					if (comp == 0) {
+//						result.exactMatch = true;
+//					}
+//					break;
+//				}
+//			}
+			
+			int j = -1;
+			int low = FIRST_KEY_POS;
+			int high = getKeyCount();
+			IndexItem item = null;
+			while (low <= high) {
+				int mid = (low + high) >>> 1;
+				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
+					throw new IndexException("Invalid binary search result");
+				}
+				result.item = item = getItem(mid);
 				int comp = item.compareTo(key);
-				if (comp >= 0) {
-					result.k = k;
-					result.item = item;
-					if (comp == 0) {
-						result.exactMatch = true;
-					}
+				if (comp < 0)
+					low = mid + 1;
+				else if (comp > 0)
+					high = mid - 1;
+				else {
+					// k = mid;
+					// result.exactMatch = true;
+					j = mid;
+					result.k = mid;
+					result.exactMatch = true;
+//					if (j != result.k) {
+//						throw new IndexException("Invalid binary search result");
+//					}
 					break;
 				}
 			}
+			if (j == -1) {
+				if (low > getKeyCount()) {
+					j = -1;
+				}
+				else {
+					j = low;
+					result.k = low;
+				}
+				// System.out.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+			}
+//			if (j != result.k) {
+//				System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+//				throw new IndexException("Invalid search result for binary search");
+//			}
+		
 			return result;
 		}
 		
