@@ -194,7 +194,7 @@ public final class LockManagerImpl implements LockManager {
 					if (item.target == null) {
 						continue;
 					}
-					int h = item.target.hashCode() % newHashTableSize;
+					int h = (item.target.hashCode() & 0x7FFFFFFF) % newHashTableSize;
 					// System.out.println("Moving lock item " + item + " from old bucket " + i + " to new bucket " + h);
 					LockBucket newBucket = newLockHashTable[h];
 					newBucket.chainAppend(item);
@@ -628,7 +628,7 @@ public final class LockManagerImpl implements LockManager {
 		globalLock.sharedLock();
 		try {
 			/* 1. Search for the lock. */
-			int h = lockState.parms.lockable.hashCode() % hashTableSize;
+			int h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF) % hashTableSize;
 			lockState.lockitem = null;
 			lockState.bucket = LockHashTable[h];
 			lockState.lockRequest = null;
@@ -1067,7 +1067,7 @@ public final class LockManagerImpl implements LockManager {
 		lockState.prevThread = Thread.currentThread();
 
 		/* 1. Search for the lock. */
-		int h = lockState.parms.lockable.hashCode() % hashTableSize;
+		int h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF) % hashTableSize;
 		lockState.lockitem = null;
 		lockState.bucket = LockHashTable[h];
 		lockState.lockRequest = null;
@@ -1132,7 +1132,7 @@ public final class LockManagerImpl implements LockManager {
 			 * As the hash table may have been resized while we were waiting, we
 			 * need to recalculate the bucket.
 			 */
-			h = lockState.parms.lockable.hashCode() % hashTableSize;
+			h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF) % hashTableSize;
 			lockState.bucket = LockHashTable[h];
 			synchronized (lockState.bucket) {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
@@ -1158,7 +1158,7 @@ public final class LockManagerImpl implements LockManager {
 			log.debug(LOG_CLASS_NAME, "doReleaseInternal", "Request by " + lockState.parms.owner
 					+ " to release lock for " + lockState.parms.lockable);
 		}
-		int h = lockState.parms.lockable.hashCode() % hashTableSize;
+		int h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF) % hashTableSize;
 		lockState.bucket = LockHashTable[h];
 		synchronized (lockState.bucket) {
 			/* 1. Search for the lock. */

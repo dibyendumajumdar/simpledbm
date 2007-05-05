@@ -365,7 +365,7 @@ public final class BufferManagerImpl implements BufferManager {
                 while (iterator.hasNext()) {
                     BufferControlBlock nextBcb = iterator.next();
 					PageId pageid = nextBcb.pageId;
-					int h = pageid.hashCode() % bufferHash.length;
+					int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 					BufferHashBucket bucket = bufferHash[h];
 
 					/*
@@ -590,7 +590,7 @@ public final class BufferManagerImpl implements BufferManager {
 
 		boolean found = false;
 		BufferControlBlock nextBcb = null;
-		int h = pageid.hashCode() % bufferHash.length;
+		int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
 
 		search_again: for (;;) {
@@ -779,7 +779,7 @@ public final class BufferManagerImpl implements BufferManager {
 	void unfix(BufferAccessBlockImpl bab) {
 
 		BufferControlBlock bcb = bab.bcb;
-		int h = bcb.pageId.hashCode() % bufferHash.length;
+		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
 		bucket.lock();
 		/*
@@ -869,7 +869,7 @@ public final class BufferManagerImpl implements BufferManager {
         try {
             for (BufferControlBlock bcb : lru) {
             	
-        		int h = bcb.pageId.hashCode() % bufferHash.length;
+        		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
         		BufferHashBucket bucket = bufferHash[h];
         		bucket.lock();
 				try {
@@ -906,7 +906,7 @@ public final class BufferManagerImpl implements BufferManager {
             lruLatch.readLock().lock();
             try {
                 for (BufferControlBlock bcb : lru) {
-					int h = bcb.pageId.hashCode() % bufferHash.length;
+					int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 					BufferHashBucket bucket = bufferHash[h];
 					bucket.lock();
 					try {
@@ -958,7 +958,7 @@ public final class BufferManagerImpl implements BufferManager {
 			 * If we cannot obtain a conditional latch on the page, then skip
 			 * it.
 			 */
-    		int h = bcb.pageId.hashCode() % bufferHash.length;
+    		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
     		BufferHashBucket bucket = bufferHash[h];
 
     		if (!bucket.tryLock()) {
