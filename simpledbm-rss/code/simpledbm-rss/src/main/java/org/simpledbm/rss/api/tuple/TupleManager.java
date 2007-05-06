@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.api.tuple;
 
+import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
@@ -40,11 +41,30 @@ public interface TupleManager {
 
     /**
      * Creates a new Tuple Container. 
+     * 
+     * @param trx Transaction to be used for creating the container
+     * @param name Name of the container
+     * @param containerId A numeric ID for the container - must be unique for each container
+     * @param extentSize The number of pages that should be part of each extent in the container
      */
 	void createTupleContainer(Transaction trx, String name, int containerId, int extentSize);
 
     /**
      * Gets an instance of TupleContainer. Specified container must already exist.
+     * @param containerId ID of the container
      */
 	TupleContainer getTupleContainer(int containerId);
+	
+	/**
+	 * Returns the type ID of the location factory used by the tuple manager.
+	 * An instance of the {@link org.simpledbm.rss.api.loc.LocationFactory LocationFactory} may be
+	 * obtained from the {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
+	 * <p>
+	 * <pre>
+	 * TupleManager tupleManager = ...;
+	 * ObjectRegistry objectRegistry = ...;
+	 * LocationFactory locationFactory = (LocationFactory) objectRegistry.getInstance(tupleManager.getLocationFactoryType());
+	 * </pre>
+	 */
+	int getLocationFactoryType();
 }
