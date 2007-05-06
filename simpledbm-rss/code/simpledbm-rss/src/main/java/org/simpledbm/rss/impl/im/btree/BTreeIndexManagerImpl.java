@@ -2712,7 +2712,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					}
 				}
 				btree.fetch(trx, this);
-				return true;
+				return !eof;
 			}
 			return false;
 		}
