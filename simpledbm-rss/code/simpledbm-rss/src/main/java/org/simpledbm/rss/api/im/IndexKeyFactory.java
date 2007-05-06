@@ -20,7 +20,7 @@
 package org.simpledbm.rss.api.im;
 
 /**
- * An IndexKeyFactory is resposible for generating keys. This interface
+ * An IndexKeyFactory is responsible for generating keys. This interface
  * is typically implemented by the clients of the IndexManager module.
  *
  * @author Dibyendu Majumdar
@@ -40,9 +40,25 @@ public interface IndexKeyFactory {
 
 	/**
 	 * Generates a key that represents Infinity - it must be greater than
-	 * all possible keys in the domain for the key.
-
+	 * all possible keys in the domain for the key.  The Container ID is meant to be used as key
+	 * for locating information specific to a container; for instance,
+	 * the attributes of an Index.
+	 * 
 	 * @param containerId ID of the container for which a key is required
 	 */
 	IndexKey maxIndexKey(int containerId);
+	
+	/**
+	 * Generates a key that represents negative Infinity - it must be smaller than
+	 * all possible keys in the domain for the key. The Container ID is meant to be used as key
+	 * for locating information specific to a container; for instance,
+	 * the attributes of an Index.
+	 * <p>
+	 * The key returned by this method can be used as an argument to index scans.
+	 * The result will be a scan of the index starting from the first key in 
+	 * the index.
+	 * 
+	 * @param containerId ID of the container for which a key is required
+	 */
+	IndexKey minIndexKey(int containerId);
 }
