@@ -117,6 +117,7 @@ public class TestBTreeManager extends BaseTestCase {
 	public static class StringKey implements IndexKey {
 
 		static final String MAX_KEY = "<INFINITY>";
+		static final String MIN_KEY = "<NEG_INFINITY>";
 		
 		ByteString string = new ByteString();
 		
@@ -133,12 +134,19 @@ public class TestBTreeManager extends BaseTestCase {
 			if (isMaxKey()) {
 				return MAX_KEY;
 			}
+			else if (isMinKey()) {
+				return MIN_KEY;
+			}
 			return string.toString().trim();
 		}
 		
 		public void parseString(String string) {
 			if (MAX_KEY.equals(string)) {
 				this.string = new ByteString(new byte[1]);
+			}
+			else if (MIN_KEY.equals(string)) {
+				byte[] data = { ' ' };
+				this.string = new ByteString(data);
 			}
 			else {
 				byte data[];
@@ -172,6 +180,10 @@ public class TestBTreeManager extends BaseTestCase {
 			return string.length() == 1 && string.get(0) == 0;
 		}
 		
+		public boolean isMinKey() {
+			return string.length() == 1 && string.get(0) == ' ';
+		}
+		
 		public int compareTo(IndexKey o) {
 			StringKey sk = (StringKey) o;
 			if (isMaxKey() || sk.isMaxKey()) {
@@ -183,6 +195,17 @@ public class TestBTreeManager extends BaseTestCase {
 				}
 				else {
 					return -1;
+				}
+			}
+			else if (isMinKey() || sk.isMinKey()) {
+				if (isMinKey() && sk.isMinKey()) {
+					return 0;
+				}
+				else if (isMinKey()) {
+					return -1;
+				}
+				else {
+					return 1;
 				}
 			}
 			return string.compareTo(sk.string);
@@ -203,6 +226,12 @@ public class TestBTreeManager extends BaseTestCase {
 		public IndexKey maxIndexKey(int id) {
 			StringKey s = new StringKey();
 			s.setBytes(new byte[1]);
+			return s;
+		}
+		
+		public IndexKey minIndexKey(int id) {
+			StringKey s = new StringKey();
+			s.parseString(StringKey.MIN_KEY);
 			return s;
 		}
 	}
