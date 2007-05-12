@@ -50,26 +50,6 @@ public class FreeSpaceManagerException extends RSSException {
 		super(cause);
 	}
 
-    public final static class PageNotFoundException extends FreeSpaceManagerException {
-
-        private static final long serialVersionUID = -7652256777358071992L;
-
-        public PageNotFoundException() {
-            super();
-        }
-
-        public PageNotFoundException(String message, Throwable cause) {
-            super(message, cause);
-        }
-
-        public PageNotFoundException(String message) {
-            super(message);
-        }
-
-        public PageNotFoundException(Throwable cause) {
-            super(cause);
-        }
-    }
 }
 
 
