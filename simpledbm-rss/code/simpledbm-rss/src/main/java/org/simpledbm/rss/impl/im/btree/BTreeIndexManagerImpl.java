@@ -1926,6 +1926,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		/**
 		 * Walks down the tree using UPDATE mode latching. On the way down, pages may be
 		 * split or merged to ensure that the tree maintains its balance. 
+		 * bcursor.searchKey represents the key being searched for.
+		 * When this returns bcursor.p will point to the page that contains or should
+		 * contain the search key. This page will be latched in UPDATE mode.
+		 * <p>This traversal mode is used for inserts and deletes.
+		 * Corresponds to Update-mode-traverse in btree paper.
 		 */
 		public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) {
 			/*
@@ -1936,7 +1941,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			p.wrap((SlottedPage) bcursor.getP().getPage());
 			if (p.header.rightSibling != -1) {
 				/* 
-				 * Root page has a right sibling.
+				 * Root page has a right sibling. This means that the root page
+				 * was split at some point, but the parent has not yet been
+				 * created.
 				 * A new child page will be allocated and the root will become
 				 * the parent of this new child, and its right sibling. 
 				 */
@@ -2022,7 +2029,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 		}
 
+		/**
+		 * Walks down the tree acquiring shared latches on the way.
+		 * bcursor.searchKey represents the key being searched for.
+		 * When this returns bcursor.p will point to the leaf page that should
+		 * contain the search key. bcursor.p will be left in shared latch.
+		 * Corresponds to read-mode-traverse() in btree paper. 
+		 */
 		public final void readModeTraverse(BTreeCursor bcursor) {
+
+			if (log.isDebugEnabled()) {
+				log.debug(LOG_CLASS_NAME, "readModeTraverse", "SIMPLEDBM-DEBUG: Read mode traverse for search key = " + bcursor.getSearchKey());
+			}
+			
 			/*
 			 * Fix root page
 			 */
@@ -2453,9 +2472,29 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
 			// node.dump();
 			icursor.eof = false;
-			SearchResult sr = node.search(icursor.currentKey);
+			SearchResult sr = null;
+			if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
+					&& node.getPage().getPageLsn().equals(icursor.pageLsn)) {
+				// This is a call to fetch Next
+				// Check if we can avoid searching the node
+				// Page LSN hasn't changed so we can used cached values
+				sr = new SearchResult();
+				sr.item = icursor.currentKey;
+				sr.k = icursor.k;
+				sr.exactMatch = true;
+				assert node.getItem(sr.k).equals(icursor.currentKey);
+				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
+					throw new IndexException();
+				}
+				// System.err.println("Avoided searching node because page is
+				// unchanged - current key = " + sr.item);
+			}
+			else {
+				sr = node.search(icursor.currentKey);
+			}
+				
 			// if (sr.exactMatch && icursor.fetchCount > 0) {
-			if (sr.exactMatch && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_NEXT) {
+			if (sr.exactMatch && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
 				/*
 				 * If we have an exact match, there are two possibilities.
 				 * If this is the first call to fetch (fetchCount == 0), then
@@ -2542,7 +2581,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				boolean doSearch = false;
 				BTreeNode node = getBTreeNode();
 				// if (icursor.fetchCount > 0) {
-				if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_NEXT) {
+				if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
 					// This is not the first call to fetch
 					// Check to see if the BTree should be scanned to locate the key
 					icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(icursor.pageId, 0));
@@ -2582,9 +2621,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					icursor.currentKey = sr.item;
 					icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
 					icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
+					icursor.k = sr.k;
 					icursor.bcursor.unfixP();
 					icursor.fetchCount++;
-					icursor.scanMode = IndexCursorImpl.SCAN_FETCH_NEXT;
+					icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
 					return true;
 				} catch (LockException e) {
 					
@@ -2612,9 +2652,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						icursor.currentKey = sr1.item;
 						icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
 						icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
+						icursor.k = sr.k;
 						icursor.bcursor.unfixP();
 						icursor.fetchCount++;
-						icursor.scanMode = IndexCursorImpl.SCAN_FETCH_NEXT;
+						icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
 						return true;
 					}
 					trx.rollback(sp);
@@ -2639,18 +2680,42 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	}
 	
 	public static final class IndexCursorImpl implements IndexScan, TransactionalCursor {
+		
+		/**
+		 * The page that we were at last time fetch was called.
+		 */
 		PageId pageId;
 		
+		/**
+		 * The LSN of the page we were at last. Saved so that we can detect
+		 * whether the page has since changed.
+		 */
 		Lsn pageLsn;
 		
+		/**
+		 * Search key - this is used internally by the fetch routines.
+		 * Initially set to the user supplied search key. Changes over time as the scan moves.
+		 * Hence should not be accessed outside the scan and is not necessarily equal to the
+		 * original search key. 
+		 */
 		IndexItem searchKey;
 		
+		/**
+		 * The key the cursor is currently positioned on.
+		 * The associated location must always be locked.
+		 */
 		IndexItem currentKey;
 		
+		/**
+		 * Saved reference to previous key - used to release
+		 * lock on previous key in certain Isolation modes.
+		 */
 		IndexItem previousKey;
 		
 		/**
-		 * Cached value of {@link SearchResult#k}
+		 * Cached value of {@link SearchResult#k}. If the last page we 
+		 * were at hasn't changed, then we can use the cached value to avoid
+		 * searching the page.
 		 */
 		int k = 0;
 		
@@ -2668,24 +2733,25 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		int scanMode = 0;
 		
-		static final int SCAN_FETCH_EXACT = 1;
+		static final int SCAN_FETCH_GREATER_OR_EQUAL = 1;
 		
-		static final int SCAN_FETCH_NEXT = 2;
+		static final int SCAN_FETCH_GREATER = 2;
 
 		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem searchKey, LockMode lockMode) {
 			this.btree = btree;
 			this.trx = trx;
-			this.searchKey = searchKey;
+			this.searchKey = searchKey;		// initial search key
 			this.currentKey = searchKey;
+			this.previousKey = null;
 			this.fetchCount = 0;
 			this.lockMode = lockMode;
-			this.scanMode = SCAN_FETCH_EXACT;
+			this.scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
 			trx.registerTransactionalCursor(this);
 		}
 		
 		public final boolean fetchNext() {
 			if (!eof) {
-				if (scanMode == SCAN_FETCH_NEXT) {
+				if (scanMode == SCAN_FETCH_GREATER) {
 					previousKey = currentKey;
 				}
 				if (previousKey != null) {
@@ -2830,7 +2896,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			pageLsn = cs.pageLsn;
 			fetchCount = cs.fetchCount-1;
 			eof = cs.eof;
-			scanMode = SCAN_FETCH_EXACT;
+			scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
 			fetchNext();
 		}
 
