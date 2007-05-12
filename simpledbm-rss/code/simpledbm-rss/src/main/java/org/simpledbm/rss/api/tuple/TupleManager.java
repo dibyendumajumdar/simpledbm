@@ -51,10 +51,19 @@ public interface TupleManager {
 
     /**
      * Gets an instance of TupleContainer. Specified container must already exist.
+     * Caller must obtain SHARED lock on containerId prior to invoking this
+     * method.
      * @param containerId ID of the container
      */
 	TupleContainer getTupleContainer(int containerId);
 	
+    /**
+     * Gets an instance of TupleContainer. Specified container must already exist.
+     * Obtains SHARED lock on specified containerId.
+     * @param containerId ID of the container
+     */
+	TupleContainer getTupleContainer(Transaction trx, int containerId);
+
 	/**
 	 * Returns the type ID of the location factory used by the tuple manager.
 	 * An instance of the {@link org.simpledbm.rss.api.loc.LocationFactory LocationFactory} may be
@@ -67,4 +76,10 @@ public interface TupleManager {
 	 * </pre>
 	 */
 	int getLocationFactoryType();
+	
+	/**
+	 * Returns the location factory used by the tuple container.
+	 * @return LocationFactory instance
+	 */
+	LocationFactory getLocationFactory();
 }

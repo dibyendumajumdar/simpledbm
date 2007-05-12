@@ -212,6 +212,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		this.spaceMgr = spaceMgr;
 		this.bufmgr = bufMgr;
         this.spMgr = spMgr;
+		// TODO lockAdaptor should be injected rather than be hard-coded
         this.lockAdaptor = new DefaultLockAdaptor();
 
 		moduleRegistry.registerModule(MODULE_ID, this);
@@ -845,7 +846,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.bt.BTreeMgr#getBTree(int)
+	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(int)
 	 */
 	public final Index getIndex(int containerId) {
 		/*
@@ -880,9 +881,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				unique);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(org.simpledbm.rss.api.tx.Transaction, int)
+	 */
+	public Index getIndex(Transaction trx, int containerId) {
+		trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.SHARED, LockDuration.COMMIT_DURATION);
+		return getIndex(containerId);
+	}
 
-	/**
-	 * @see #createIndex(Transaction, String, int, int, int, int, boolean)
+
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.im.IndexManager#createIndex(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int, int, int, boolean)
 	 */
 	public final void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) {
 		

@@ -41,6 +41,7 @@ import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -65,6 +66,7 @@ import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 
@@ -170,9 +172,15 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 
 	final PageFactory pageFactory;
 
-	final TupleIdFactory locationFactory = new TupleIdFactory();
+	final TupleIdFactory locationFactory;
+	
+    final LockAdaptor lockAdaptor;
 
 	public TupleManagerImpl(ObjectRegistry objectFactory, LoggableFactory loggableFactory, FreeSpaceManager spaceMgr, BufferManager bufMgr, SlottedPageManager spMgr, TransactionalModuleRegistry moduleRegistry, PageFactory pageFactory) {
+		// TODO lockAdaptor and locationFactory should be injected
+		// rather than be hard-coded
+		this.lockAdaptor = new DefaultLockAdaptor();
+		this.locationFactory = new TupleIdFactory();
 		this.objectFactory = objectFactory;
 		this.loggableFactory = loggableFactory;
 		this.spaceMgr = spaceMgr;
@@ -380,18 +388,39 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		p.dump();
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.tuple.TupleManager#createTupleContainer(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int)
+	 */
 	public void createTupleContainer(Transaction trx, String name, int containerId, int extentSize) {
+		trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
         spaceMgr.createContainer(trx, name, containerId, 2, extentSize, spMgr.getPageType());
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.tuple.TupleManager#getTupleContainer(int)
+	 */
 	public TupleContainer getTupleContainer(int containerId) {
 		return new TupleContainerImpl(this, containerId);
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.tuple.TupleManager#getTupleContainer(org.simpledbm.rss.api.tx.Transaction, int)
+	 */
+	public TupleContainer getTupleContainer(Transaction trx, int containerId) {
+		trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.SHARED, LockDuration.COMMIT_DURATION);
+		return getTupleContainer(containerId);
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.tuple.TupleManager#getLocationFactory()
+	 */
 	public LocationFactory getLocationFactory() {
 		return locationFactory;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.tuple.TupleManager#getLocationFactoryType()
+	 */
 	public int getLocationFactoryType() {
 		return TYPE_LOCATIONFACTORY;
 	}

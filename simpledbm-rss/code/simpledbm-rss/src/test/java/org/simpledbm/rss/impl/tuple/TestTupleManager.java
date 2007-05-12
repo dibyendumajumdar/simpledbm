@@ -98,9 +98,17 @@ public class TestTupleManager extends TestCase {
 
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            db.spacemgr.createContainer(trx, "testctr.dat", 1, 2, 20, db.spmgr
-                    .getPageType());
-            trx.commit();
+            boolean success = false;
+            try {
+            	db.tuplemgr.createTupleContainer(trx, "testctr.dat", 1, 20);
+            	success = true;
+            }
+            finally {
+            	if (success)
+            		trx.commit();
+            	else
+            		trx.abort();
+            }
             db.trxmgr.checkpoint();
         } finally {
         	db.shutdown();
