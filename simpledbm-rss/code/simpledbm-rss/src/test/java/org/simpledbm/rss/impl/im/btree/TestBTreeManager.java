@@ -2790,7 +2790,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Location prevLocation = null;
 				try {
 					int i = 0;
-					while (scan.fetchNext() && i < 10) {
+					while (scan.fetchNext()) {
 						if (scan.isEof()) {
 							break;
 						}
@@ -2802,10 +2802,14 @@ public class TestBTreeManager extends BaseTestCase {
 						scan.fetchCompleted(true);
 						assertEquals(LockMode.NONE, trx.hasLock(prevLocation));
 						i++;
+						if (i == 10)
+							break;
 					}
 				} finally {
 					scan.close();
 				}
+				int count = ((TransactionManagerImpl.TransactionImpl)trx).countLocks();
+				assertEquals(0, count);
 			} finally {
 				trx.abort();
 			}
@@ -2839,7 +2843,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Location prevLocation = null;
 				try {
 					int i = 0;
-					while (scan.fetchNext() && i < 10) {
+					while (scan.fetchNext()) {
 						if (scan.isEof()) {
 							break;
 						}
@@ -2851,10 +2855,14 @@ public class TestBTreeManager extends BaseTestCase {
 						scan.fetchCompleted(true);
 						assertEquals(LockMode.SHARED, trx.hasLock(prevLocation));
 						i++;
+						if (i == 10)
+							break;
 					}
 				} finally {
 					scan.close();
 				}
+				int count = ((TransactionManagerImpl.TransactionImpl)trx).countLocks();
+				assertEquals(0, count);
 			} finally {
 				trx.abort();
 			}
@@ -2892,7 +2900,7 @@ public class TestBTreeManager extends BaseTestCase {
 					if (updateMode) {
 						mode = LockMode.UPDATE;						
 					}
-					while (scan.fetchNext() && i < 10) {
+					while (scan.fetchNext()) {
 						if (scan.isEof()) {
 							break;
 						}
@@ -2904,9 +2912,13 @@ public class TestBTreeManager extends BaseTestCase {
 						scan.fetchCompleted(true);
 						assertEquals(mode, trx.hasLock(prevLocation));
 						i++;
+						if (i == 10)
+							break;
 					}
 				} finally {
 					scan.close();
+					int count = ((TransactionManagerImpl.TransactionImpl)trx).countLocks();
+					assertEquals(10, count);
 				}
 			} finally {
 				trx.abort();
@@ -2964,9 +2976,9 @@ public class TestBTreeManager extends BaseTestCase {
 										.getCurrentLocation()));
 							}
 						}
-						System.err.println("FOUND = " + found);
-						System.err.println("KEY = " + scan.getCurrentKey().toString());
-						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
+//						System.err.println("FOUND = " + found);
+//						System.err.println("KEY = " + scan.getCurrentKey().toString());
+//						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
 						scan.fetchCompleted(found);
 						if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
 							/*
@@ -2994,9 +3006,9 @@ public class TestBTreeManager extends BaseTestCase {
 						return found;
 					} else {
 						assertTrue(scan.isEof());
-						System.err.println("EOF");
-						System.err.println("KEY = " + scan.getCurrentKey().toString());
-						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
+//						System.err.println("EOF");
+//						System.err.println("KEY = " + scan.getCurrentKey().toString());
+//						System.err.println("LOCATION = " + scan.getCurrentLocation().toString());
 						return false;
 					}
 				} finally {
@@ -3162,9 +3174,9 @@ public class TestBTreeManager extends BaseTestCase {
         else if (i == 2)
         	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
         else {
-        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
-           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+//        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+//           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+//           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
         }
         return suite;
     }
