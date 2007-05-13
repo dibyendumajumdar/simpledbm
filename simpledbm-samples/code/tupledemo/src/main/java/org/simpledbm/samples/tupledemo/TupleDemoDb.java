@@ -55,10 +55,14 @@ class TupleDemoDb {
 
 	private boolean serverStarted = false;
 	
+	/** Table container ID */
 	public final static int TABLE_CONTNO = 1;
+	/** Primary key index container ID */
 	public final static int PKEY_CONTNO = 2;
+	/** Secondary key index container ID */
 	public final static int SKEY1_CONTNO = 3;
 
+	/** Object registry id for row factory */
 	final static int ROW_FACTORY_TYPE_ID = 25000;
 	
 	static Properties getServerProperties() {
@@ -236,10 +240,6 @@ class TupleDemoDb {
 	 */
 	public void addRow(int id, String name, String surname, String city) {
 		
-		TupleContainer table = server.getTupleManager().getTupleContainer(TABLE_CONTNO);
-		Index primaryIndex = server.getIndexManager().getIndex(PKEY_CONTNO);
-		Index secondaryIndex = server.getIndexManager().getIndex(SKEY1_CONTNO);
-		
 		Row tableRow = makeRow(TABLE_CONTNO);
 		tableRow.get(0).setInt(id);
 		tableRow.get(1).setString(name);
@@ -256,24 +256,32 @@ class TupleDemoDb {
 		// Set name
 		secondaryKeyRow.set(1, (Field) tableRow.get(1).cloneMe());
 		
-		Transaction trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+		// Start a new transaction
+		Transaction trx = server.getTransactionManager().begin(IsolationMode.READ_COMMITTED);
+		
 		boolean success = false;
 		try {
+			TupleContainer table = server.getTupleManager().getTupleContainer(
+					trx, TABLE_CONTNO);
+			Index primaryIndex = server.getIndexManager().getIndex(trx,
+					PKEY_CONTNO);
+			Index secondaryIndex = server.getIndexManager().getIndex(trx,
+					SKEY1_CONTNO);
+
 			// First lets create a new row and lock the location
 			TupleInserter inserter = table.insert(trx, tableRow);
-			// Insert the primary key - may fail with unique constraint violation
+			// Insert the primary key - may fail with unique constraint
+			// violation
 			primaryIndex.insert(trx, primaryKeyRow, inserter.getLocation());
 			// Insert seconary key
 			secondaryIndex.insert(trx, secondaryKeyRow, inserter.getLocation());
 			// Complete the insert - may be a no-op.
 			inserter.completeInsert();
 			success = true;
-		}
-		finally {
+		} finally {
 			if (success) {
 				trx.commit();
-			}
-			else {
+			} else {
 				trx.abort();
 			}
 		}
