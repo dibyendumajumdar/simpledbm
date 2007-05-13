@@ -200,7 +200,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
      */
     private static int testingFlag = 0;
     
-    public static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
+    private static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
     
     private static final int TEST_MODE_MAX_KEYS = 8;
     
@@ -232,9 +232,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	}
 
 	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.tm.TransactionalModule#redo(org.simpledbm.rss.pm.Page, org.simpledbm.rss.tm.Redoable)
+	 * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#redo(org.simpledbm.rss.api.pm.Page, org.simpledbm.rss.api.tx.Redoable)
 	 */
-	@Override
 	public final void redo(Page page, Redoable loggable){
 		if (loggable instanceof SplitOperation) {
 			redoSplitOperation(page, (SplitOperation) loggable);
@@ -275,9 +274,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.tm.TransactionalModule#undo(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.tm.Undoable)
+	 * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#undo(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.api.tx.Undoable)
 	 */
-	@Override
 	public final void undo(Transaction trx, Undoable undoable) {
 		if (undoable instanceof InsertOperation) {
 			undoInsertOperation(trx, (InsertOperation) undoable);
@@ -297,7 +295,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	 */
 	private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
 		/*
-		 * A LoadPageOperation is applied to couple of pages: the BTree page being initialised
+		 * A LoadPageOperation is applied to two pages: the BTree page being initialised
 		 * and the Space Map page that contains the used/unused status for the BTree page.
 		 */
 		if (page.getPageId().getPageNumber() == loadPageOp.getSpaceMapPageNumber()) {
@@ -332,7 +330,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	
 	/**
 	 * Redo a page split operation. 
-	 * @see BTreeImpl#doSplit(Transaction, BTreeCursor)
+	 * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
 	 * @see SplitOperation
 	 */
 	private void redoSplitOperation(Page page, SplitOperation splitOperation) {
@@ -380,13 +378,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 	/**
 	 * Redo a merge operation.
-	 * @see BTreeImpl#doMerge(Transaction, BTreeCursor) 
+	 * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor) 
 	 * @see MergeOperation
 	 */
 	private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
 		if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
 			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
-			// deallocate
+			// deallocate page by marking it unused
 			smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
 		}
 		else if (page.getPageId().getPageNumber() == mergeOperation.getPageId().getPageNumber()) {
@@ -422,7 +420,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 	/**
 	 * Redo a link operation
-	 * @see BTreeImpl#doLink(Transaction, BTreeCursor)
+	 * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
 	 * @see LinkOperation
 	 */
 	private void redoLinkOperation(Page page, LinkOperation linkOperation) {
@@ -629,6 +627,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}	
 	}
 
+	/**
+	 * Performs an insert operation on the leaf page. 
+	 * @param page Page where the insert should take place
+	 * @param insertOp The log record containing details of the insert operation
+	 * @see BTreeImpl#doInsert(Transaction, IndexKey, Location)
+	 * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+	 */
 	private void redoInsertOperation(Page page, InsertOperation insertOp) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode node = new BTreeNode(insertOp);
@@ -648,6 +653,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		node.dump();
 	}
 	
+	/**
+	 * Undo an insert operation on a leaf page. The insert key will be deleted.
+	 * @param page The page where the insert should be undone.
+	 * @param undoInsertOp The log record containing information on the undo operation.
+	 */
 	private void redoUndoInsertOperation(Page page, UndoInsertOperation undoInsertOp) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode node = new BTreeNode(undoInsertOp);
@@ -658,7 +668,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		node.dump();
 	}
-	
+
+	/**
+	 * Performs a logical undo of a key insert. Checks if the page
+	 * that originally contained the key is still the right page. If not,
+	 * traverses the tree to find the correct page.
+	 * @param trx The transaction handling this operation
+	 * @param insertOp The insert operation that will be undone.
+	 */
 	private void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
 //		Undo-insert(T,P,k,m) { X-latch(P);
 //		if (P still contains r and will not underflow if r is deleted) { Q = P;
@@ -676,21 +693,36 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			BTreeNode node = new BTreeNode(insertOp);
 			node.wrap(p);
 			
+			SearchResult sr = null;
+			boolean doSearch = false;
 			/*
-			 * FIXME - are these asserts valid? 
-			 * Page may have been legitimately deleted by the time the undo operation is executed.
+			 * Page may have been deleted by the time the undo operation is executed.
 			 */
-			assert node.isLeaf();
-			assert !node.isDeallocated();
-			
-			SearchResult sr = node.search(insertOp.getItem());
-			if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
+			if (!node.isLeaf() || node.isDeallocated()) {
 				/*
-				 * Page still contains the key and will not underflow if the key
-				 * is deleted
-				 */ 
+				 * We need to traverse the tree to find the leaf page where the key
+				 * now lives.
+				 */
+				doSearch = true;
 			}
 			else {
+				sr = node.search(insertOp.getItem());
+				if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
+					/*
+					 * Page still contains the key and will not underflow if the key
+					 * is deleted
+					 */ 
+					doSearch = false;
+				}
+				else {
+					/*
+					 * We need to traverse the tree to find the leaf page where the key
+					 * now lives.
+					 */
+					doSearch = true;
+				}
+			}
+			if (doSearch) {
 				/*
 				 * We need to traverse the tree to find the leaf page where the key
 				 * now lives.
@@ -699,8 +731,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				BTreeImpl btree = getBTreeImpl(insertOp.getPageId().getContainerId(), insertOp.getKeyFactoryType(),
 						insertOp.getLocationFactoryType(), insertOp.isUnique());
 				bcursor.setSearchKey(insertOp.getItem());
-				//PageId rootPageId = new PageId(insertOp.getPageId().getContainerId(), ROOT_PAGE_NUMBER);
-				//bcursor.p = bufmgr.fixForUpdate(rootPageId, 0);
 				btree.updateModeTravese(trx, bcursor);
 				/* At this point p points to the leaf page where the key is present */
 				assert bcursor.getP() != null;
@@ -714,6 +744,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				
 				sr = node.search(insertOp.getItem());
 			}
+			assert sr != null;
 			assert sr.exactMatch;
 			assert node.header.keyCount > node.minimumKeys();
 
@@ -733,7 +764,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 
 	}
-	
+
+	/**
+	 * Redo a delete operation on the leaf page.
+	 * @param page Page where the key is to be deleted from
+	 * @param deleteOp The log operation describing the delete
+	 */
 	private void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode node = new BTreeNode(deleteOp);
@@ -747,6 +783,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		node.dump();
 	}
 	
+	/**
+	 * Redo a undo operation on a key delete on the specified leaf page.
+	 * @param page Page where the deleted key will be restored
+	 * @param undoDeleteOp The log operation describing the undo operation.
+	 */
 	private void redoUndoDeleteOperation(Page page, UndoDeleteOperation undoDeleteOp) {
 		SlottedPage p = (SlottedPage) page;
 		BTreeNode node = new BTreeNode(undoDeleteOp);
@@ -758,6 +799,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		node.dump();
 	}
 
+	/**
+	 * Perform a logical undo operation. If the page containing the original 
+	 * key is no longer the right page to perform an undo, then the BTree will be
+	 * traversed to locate the right page.
+	 * 
+	 * @param trx The transaction constrolling this operation
+	 * @param deleteOp The log record that describes the delete that will be undone.
+	 */
 	private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
 //		X-latch(P);
 //		if (P still covers r and there is a room for r in P) { Q = P;
@@ -1416,7 +1465,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 * concurrency, as it allows the space map page update to be completed before
 		 * any other page is latched exclusively. The SMO is logged as a Compensation
 		 * record and linked to the log record prior to the space map update. This makes the
-		 * SMO redoable, but the space map update will be undon if the SMO log does
+		 * SMO redoable, but the space map update will be undone if the SMO log does
 		 * not survive.
 		 * </li>
 		 * </ol>
