@@ -2471,13 +2471,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			BTreeNode node = getBTreeNode();
 			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
 			// node.dump();
-			icursor.eof = false;
+			icursor.setEof(false);
 			SearchResult sr = null;
 			if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
 					&& node.getPage().getPageLsn().equals(icursor.pageLsn)) {
-				// This is a call to fetch Next
-				// Check if we can avoid searching the node
-				// Page LSN hasn't changed so we can used cached values
+				// If this is a call to fetchNext, check if we can avoid searching the node
+				// If page LSN hasn't changed we can used cached values.
 				sr = new SearchResult();
 				sr.item = icursor.currentKey;
 				sr.k = icursor.k;
@@ -2486,8 +2485,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
 					throw new IndexException();
 				}
-				// System.err.println("Avoided searching node because page is
-				// unchanged - current key = " + sr.item);
 			}
 			else {
 				sr = node.search(icursor.currentKey);
@@ -2527,7 +2524,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				 * Only one key, which by definition is the high key,
 				 * so we are at EOF.
 				 */
-				icursor.eof = true;
+				icursor.setEof(true);
 				sr.k = FIRST_KEY_POS;
 				sr.exactMatch = false;
 				sr.item = node.getItem(sr.k);
@@ -2539,6 +2536,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		/**
 		 * Moves to the node to the right if possible or sets EOF status.
+		 * Leaves current page latched in SHARED mode.
 		 */
 		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) {
 			// Key to be fetched is in the next page
@@ -2547,9 +2545,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				/*
 				 * There isn't a node to our right, so we are at EOF.
 				 */
-				icursor.eof = true;
-				// sr.k = sr.k + 1;
-				// FIXME perhaps we should set sr.k to node.header.keyCount
+				icursor.setEof(true);
 				sr.k = node.header.keyCount;
 				sr.exactMatch = false;
 				sr.item = node.getItem(sr.k);
@@ -2560,7 +2556,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						nextPageId, 0));
 				node.wrap((SlottedPage) icursor.bcursor.getP()
 						.getPage());
-				// node.dump();
 				icursor.bcursor.unfixQ();
 				sr = node.search(icursor.currentKey);
 			}
@@ -2693,15 +2688,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		Lsn pageLsn;
 		
 		/**
-		 * Search key - this is used internally by the fetch routines.
-		 * Initially set to the user supplied search key. Changes over time as the scan moves.
-		 * Hence should not be accessed outside the scan and is not necessarily equal to the
-		 * original search key. 
+		 * The start key for the scan. Only recorded for information.
 		 */
-		IndexItem searchKey;
+		IndexItem startKey;
 		
 		/**
-		 * The key the cursor is currently positioned on.
+		 * Used by fetch routines. Initially set to the user supplied search key. As the scan
+		 * moves, tracks the current key the cursor is positioned on.
 		 * The associated location must always be locked.
 		 */
 		IndexItem currentKey;
@@ -2719,29 +2712,55 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		int k = 0;
 		
+		/**
+		 * Keeps a count of the number of keys fetched so far.
+		 */
 		int fetchCount = 0;
 		
+		/**
+		 * Internal use
+		 */
 		final BTreeCursor bcursor = new BTreeCursor();
 		
+		/**
+		 * The lock mode to be used for locking locations retrieved by the scan.
+		 */
 		LockMode lockMode;
 		
+		/**
+		 * The BTree that we are scanning.
+		 */
 		final BTreeImpl btree;
 		
-		boolean eof = false;
+		/**
+		 * Indicates whether we have reached end of file. Also set when {@link #fetchCompleted(boolean)}
+		 * is invoked with an argument of false.
+		 */
+		private boolean eof = false;
 		
+		/**
+		 * Transaction that is managing this scan. 
+		 */
 		final Transaction trx;
 		
+		/**
+		 * Initially set to {@link #SCAN_FETCH_GREATER_OR_EQUAL}, and after the first
+		 * fetch, set to {@link #SCAN_FETCH_GREATER}. The scan mode determines how the fetch
+		 * will operate.
+		 */
 		int scanMode = 0;
+		
+		int stateFetchCompleted = 0;
 		
 		static final int SCAN_FETCH_GREATER_OR_EQUAL = 1;
 		
 		static final int SCAN_FETCH_GREATER = 2;
 
-		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem searchKey, LockMode lockMode) {
+		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem startKey, LockMode lockMode) {
 			this.btree = btree;
 			this.trx = trx;
-			this.searchKey = searchKey;		// initial search key
-			this.currentKey = searchKey;
+			this.startKey = startKey;		
+			this.currentKey = startKey;			// initial search key
 			this.previousKey = null;
 			this.fetchCount = 0;
 			this.lockMode = lockMode;
@@ -2749,9 +2768,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			trx.registerTransactionalCursor(this);
 		}
 		
+		/* (non-Javadoc)
+		 * @see org.simpledbm.rss.api.im.IndexScan#fetchNext()
+		 */
 		public final boolean fetchNext() {
-			if (!eof) {
+			if (stateFetchCompleted != 0) {
+				log.warn(LOG_CLASS_NAME, "close", "fetchCompleted() has not been called after fetchNext()");
+			}
+			if (!isEof()) {
 				if (scanMode == SCAN_FETCH_GREATER) {
+					/*
+					 * scanMode == SCAN_FETCH_GREATER_OR_EQUAL is set initially before the
+					 * first fetch. It is also set when the cursor has been restored and a
+					 * rescan is needed to set the current key. In both these cases, previousKey is
+					 * not meaningful.
+					 */
 					previousKey = currentKey;
 				}
 				if (previousKey != null) {
@@ -2787,7 +2818,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					}
 				}
 				btree.fetch(trx, this);
-				return !eof;
+				if (!isEof()) {
+					stateFetchCompleted = 1;
+				}
+				return !isEof();
 			}
 			return false;
 		}
@@ -2797,13 +2831,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			 * This method is invoked after the data from tuple container has been
 			 * read. Its main purpose is to release locks in read committed or cursor stability mode.
 			 */
-			if (!matched && !eof) {
-				eof = true;
+			stateFetchCompleted = 0;
+			if (!matched && !isEof()) {
+				setEof(true);
 			}
 			if (currentKey != null) {
 				boolean releaseLock = false;
 				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
-					if (eof) {
+					if (isEof()) {
 						releaseLock = true;
 					}
 				} else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
@@ -2816,7 +2851,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 						trx.releaseLock(currentKey.getLocation());
 					}
 				}
-				else if (eof) {
+				else if (isEof()) {
 					LockMode lockMode = trx.hasLock(currentKey
 							.getLocation());
 					if (lockMode == LockMode.UPDATE) {
@@ -2835,7 +2870,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				if (currentKey != null) {
 					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
 							|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
-							|| (eof && trx.getIsolationMode() == IsolationMode.REPEATABLE_READ)) {
+							|| (isEof() && trx.getIsolationMode() == IsolationMode.REPEATABLE_READ)) {
 						LockMode lockMode = trx.hasLock(currentKey
 								.getLocation());
 						if (lockMode == LockMode.SHARED
@@ -2862,6 +2897,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			if (ex != null) {
 				throw ex;
 			}
+			if (stateFetchCompleted != 0) {
+				log.warn(LOG_CLASS_NAME, "close", "fetchCompleted() has not been called after fetchNext()");
+			}
 		}
 		
 		public final IndexKey getCurrentKey() {
@@ -2878,10 +2916,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			return currentKey.getLocation();
 		}
 		
-		public final boolean isEof() {
-			return eof;
-		}
-		
 		public void restoreState(Transaction txn, Savepoint sp) {
 			CursorState cs = (CursorState) sp.getValue(this);
 			
@@ -2891,11 +2925,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 			currentKey = cs.currentKey;
 			previousKey = cs.previousKey;
-			searchKey = cs.searchKey;
+			startKey = cs.searchKey;
 			pageId = cs.pageId;
 			pageLsn = cs.pageLsn;
 			fetchCount = cs.fetchCount-1;
-			eof = cs.eof;
+			setEof(cs.eof);
 			scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
 			fetchNext();
 		}
@@ -2903,6 +2937,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		public void saveState(Savepoint sp) {
 			CursorState cs = new CursorState(this);
 			sp.saveValue(this, cs);
+		}
+
+		void setEof(boolean eof) {
+			this.eof = eof;
+		}
+
+		public final boolean isEof() {
+			return eof;
 		}
 
 		static final class CursorState {
@@ -2920,10 +2962,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				this.scan = scan;
 				this.currentKey = scan.currentKey;
 				this.previousKey = scan.previousKey;
-				this.searchKey = scan.searchKey;
+				this.searchKey = scan.startKey;
 				this.pageId = scan.pageId;
 				this.pageLsn = scan.pageLsn;
-				this.eof = scan.eof;
+				this.eof = scan.isEof();
 				this.fetchCount = scan.fetchCount;
 				this.scanMode = scan.scanMode;
 			}
@@ -2942,6 +2984,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		
 		private BufferAccessBlock p = null;
 		
+		/**
+		 * Search key - this is used internally by the various BTree routines.
+		 */
 		public IndexItem searchKey = null;
 		
 		/**
