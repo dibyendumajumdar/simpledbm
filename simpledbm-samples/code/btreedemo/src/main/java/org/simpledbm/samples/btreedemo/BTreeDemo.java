@@ -40,10 +40,11 @@ import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
-import org.simpledbm.typesystem.impl.GenericIndexKeyFactory;
-import org.simpledbm.typesystem.impl.IndexRow;
+import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
 
 /**
@@ -135,7 +136,7 @@ public class BTreeDemo {
 		
 		final FieldFactory fieldFactory = new DefaultFieldFactory();
 
-		final GenericIndexKeyFactory keyFactory = new GenericIndexKeyFactory(fieldFactory);
+		final RowFactory keyFactory = new GenericRowFactory(fieldFactory);
 
 		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { new IntegerType() };
 
@@ -201,7 +202,7 @@ public class BTreeDemo {
 			trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
-				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
+				Row row = (Row) keyFactory.newIndexKey(1);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				RowLocation location = (RowLocation) locationFactory.newLocation();
 				for (int i = 1; i <= 201; i += 2) {
@@ -230,7 +231,7 @@ public class BTreeDemo {
 			Savepoint sp = trx.createSavepoint(false);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
-				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
+				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
@@ -255,7 +256,7 @@ public class BTreeDemo {
 			Savepoint sp = trx.createSavepoint(false);
 			try {
 				Index btree = server.getIndexManager().getIndex(1);
-				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
+				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
@@ -276,8 +277,8 @@ public class BTreeDemo {
 			boolean success = false;
 			Savepoint sp = trx.createSavepoint(false);
 			try {
-				Index btree = server.getIndexManager().getIndex(1);
-				IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
+				Index btree = server.getIndexManager().getIndex(trx, 1);
+				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
@@ -287,7 +288,8 @@ public class BTreeDemo {
 					while (scan.fetchNext()) {
 						DiagnosticLogger.log("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
 						System.err.println("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
-						trx.releaseLock(scan.getCurrentLocation());
+						// trx.releaseLock(scan.getCurrentLocation());
+						scan.fetchCompleted(true);
 					}
 				} finally {
 					if (scan != null) {
