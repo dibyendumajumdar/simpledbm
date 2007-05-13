@@ -2481,9 +2481,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				sr.item = icursor.currentKey;
 				sr.k = icursor.k;
 				sr.exactMatch = true;
-				assert node.getItem(sr.k).equals(icursor.currentKey);
 				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-					throw new IndexException();
+					throw new IndexException("Current key [" + node.getItem(sr.k) + "] does not match expected key [" + icursor.currentKey + "]");
 				}
 			}
 			else {
