@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
@@ -34,10 +35,11 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
-import org.simpledbm.typesystem.impl.GenericIndexKeyFactory;
-import org.simpledbm.typesystem.impl.IndexRow;
+import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
 import org.simpledbm.typesystem.impl.VarcharType;
 
@@ -130,7 +132,7 @@ class TupleDemoDb {
 
 		final FieldFactory fieldFactory = new DefaultFieldFactory();
 
-		final GenericIndexKeyFactory keyFactory = new GenericIndexKeyFactory(fieldFactory);
+		final RowFactory rowFactory = new GenericRowFactory(fieldFactory);
 
 		/**
 		 * Table row (id, name, surname, city)
@@ -157,11 +159,11 @@ class TupleDemoDb {
 				rowtype_for_mytable[1], /* name */
 				};
 		
-		keyFactory.registerRowType(TABLE_CONTNO, rowtype_for_mytable);
-		keyFactory.registerRowType(PKEY_CONTNO, rowtype_for_pk);
-		keyFactory.registerRowType(SKEY1_CONTNO, rowtype_for_sk1);
+		rowFactory.registerRowType(TABLE_CONTNO, rowtype_for_mytable);
+		rowFactory.registerRowType(PKEY_CONTNO, rowtype_for_pk);
+		rowFactory.registerRowType(SKEY1_CONTNO, rowtype_for_sk1);
 		
-		server.getObjectRegistry().register(ROW_FACTORY_TYPE_ID, keyFactory);
+		server.getObjectRegistry().register(ROW_FACTORY_TYPE_ID, rowFactory);
 	}
 
 	/**
@@ -169,9 +171,9 @@ class TupleDemoDb {
 	 * @param containerId ID of the container
 	 * @return Appropriate row type
 	 */
-	IndexRow makeRow(int containerId) {
-		IndexKeyFactory keyFactory = (IndexKeyFactory) server.getObjectRegistry().getInstance(ROW_FACTORY_TYPE_ID);
-		return (IndexRow) keyFactory.newIndexKey(containerId);
+	Row makeRow(int containerId) {
+		RowFactory rowFactory = (RowFactory) server.getObjectRegistry().getInstance(ROW_FACTORY_TYPE_ID);
+		return rowFactory.newRow(containerId);
 	}
 	
 	/**
@@ -180,9 +182,9 @@ class TupleDemoDb {
 	 * @param containerId ID of the container
 	 * @return Appropriate row type
 	 */
-	IndexRow makeMinRow(int containerId) {
-		IndexKeyFactory keyFactory = (IndexKeyFactory) server.getObjectRegistry().getInstance(ROW_FACTORY_TYPE_ID);
-		return (IndexRow) keyFactory.minIndexKey(containerId);
+	IndexKey makeMinRow(int containerId) {
+		IndexKeyFactory rowFactory = (RowFactory) server.getObjectRegistry().getInstance(ROW_FACTORY_TYPE_ID);
+		return rowFactory.minIndexKey(containerId);
 	}
 
 	/**
@@ -232,27 +234,27 @@ class TupleDemoDb {
 	 * @param tableRow Row to be added to the table
 	 * @throws CloneNotSupportedException 
 	 */
-	public void addRow(int id, String name, String surname, String city) throws CloneNotSupportedException {
+	public void addRow(int id, String name, String surname, String city) {
 		
 		TupleContainer table = server.getTupleManager().getTupleContainer(TABLE_CONTNO);
 		Index primaryIndex = server.getIndexManager().getIndex(PKEY_CONTNO);
 		Index secondaryIndex = server.getIndexManager().getIndex(SKEY1_CONTNO);
 		
-		IndexRow tableRow = makeRow(TABLE_CONTNO);
+		Row tableRow = makeRow(TABLE_CONTNO);
 		tableRow.get(0).setInt(id);
 		tableRow.get(1).setString(name);
 		tableRow.get(2).setString(surname);		
 		tableRow.get(3).setString(city);
 
-		IndexRow primaryKeyRow = makeRow(PKEY_CONTNO);
+		Row primaryKeyRow = makeRow(PKEY_CONTNO);
 		// Set id
-		primaryKeyRow.set(0, (Field) tableRow.get(0).clone());
+		primaryKeyRow.set(0, (Field) tableRow.get(0).cloneMe());
 	
-		IndexRow secondaryKeyRow = makeRow(SKEY1_CONTNO);
+		Row secondaryKeyRow = makeRow(SKEY1_CONTNO);
 		// Set surname as the first field
-		secondaryKeyRow.set(0, (Field) tableRow.get(2).clone());
+		secondaryKeyRow.set(0, (Field) tableRow.get(2).cloneMe());
 		// Set name
-		secondaryKeyRow.set(1, (Field) tableRow.get(1).clone());
+		secondaryKeyRow.set(1, (Field) tableRow.get(1).cloneMe());
 		
 		Transaction trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
 		boolean success = false;
@@ -281,7 +283,7 @@ class TupleDemoDb {
 	 * Prints the contents of a single row.
 	 * @param tableRow Row to be printed
 	 */
-	public void printTableRow(IndexRow tableRow) {
+	public void printTableRow(Row tableRow) {
 
 		System.out.println("ID = " + tableRow.get(0).getString() + ", Name = " + tableRow.get(1).getString()
 				+ ", Surname = " + tableRow.get(2).getString() + ", City = " + tableRow.get(3).getString());
@@ -295,11 +297,11 @@ class TupleDemoDb {
 	public void listRowsByKey(int keyContainerId) {
 
 		LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(server.getTupleManager().getLocationFactoryType());
-		IndexRow startRow = makeMinRow(keyContainerId);
+		IndexKey startRow = makeMinRow(keyContainerId);
 		Transaction trx = server.getTransactionManager().begin(IsolationMode.READ_COMMITTED);
 		try {
-			TupleContainer table = server.getTupleManager().getTupleContainer(TABLE_CONTNO);
-			Index index = server.getIndexManager().getIndex(keyContainerId);
+			TupleContainer table = server.getTupleManager().getTupleContainer(trx, TABLE_CONTNO);
+			Index index = server.getIndexManager().getIndex(trx, keyContainerId);
 			IndexScan scan = index.openScan(trx, startRow, locationFactory
 					.newLocation(), false);
 			try {
@@ -309,7 +311,7 @@ class TupleDemoDb {
 					byte[] data = table.read(location);
 					// parse the data
 					ByteBuffer bb = ByteBuffer.wrap(data);
-					IndexRow tableRow = makeRow(TABLE_CONTNO);
+					Row tableRow = makeRow(TABLE_CONTNO);
 					tableRow.retrieve(bb);
 					// do something with the row 
 					printTableRow(tableRow);
