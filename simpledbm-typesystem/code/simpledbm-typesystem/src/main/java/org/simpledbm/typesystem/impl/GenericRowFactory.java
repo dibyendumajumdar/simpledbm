@@ -26,55 +26,72 @@ package org.simpledbm.typesystem.impl;
 import java.util.HashMap;
 
 import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class GenericIndexKeyFactory implements IndexKeyFactory {
+public class GenericRowFactory implements RowFactory {
 
+	/**
+	 * Maintains a cache of row factories by container ID.
+	 * When a row factory is accessed for the first time for a particular container ID, it 
+	 * is put into this hash table. 
+	 */
     private HashMap<Integer, IndexRowFactory> rowCache = new HashMap<Integer, IndexRowFactory>();
     
+    /**
+     * The field factory instance that will be used to create fields.
+     */
     private final FieldFactory fieldFactory;
     
+    /**
+     * Contains a mapping of container IDs to row type descriptors.
+     */
     private HashMap<Integer, TypeDescriptor[]> typeDescMap = new HashMap<Integer, TypeDescriptor[]>();
     
-    public GenericIndexKeyFactory(FieldFactory fieldFactory) {
+    public GenericRowFactory(FieldFactory fieldFactory) {
         this.fieldFactory = fieldFactory;
     }
     
-    public IndexKey newIndexKey() {
-        return null;
+    public IndexKey newIndexKey(int containerId) {
+    	return newRow(containerId);
     }
 
-    public IndexKey maxIndexKey() {
-        return null;
-    }
-    
-    public IndexKey newIndexKey(int keytype) {
-        IndexRowFactory rowFactory = rowCache.get(keytype);
+    public synchronized Row newRow(int containerId) {
+        IndexRowFactory rowFactory = rowCache.get(containerId);
         if (rowFactory == null) {
-            TypeDescriptor[] rowTypeDesc = getTypeDescriptor(keytype);
+            TypeDescriptor[] rowTypeDesc = getTypeDescriptor(containerId);
             rowFactory = new IndexRowFactory(fieldFactory, rowTypeDesc);
-            rowCache.put(keytype, rowFactory);
+            rowCache.put(containerId, rowFactory);
         }
         return rowFactory.makeRow();
     }
-
+    
     public IndexKey maxIndexKey(int keytype) {
-    	IndexRow row = (IndexRow) newIndexKey(keytype);
+    	GenericRow row = (GenericRow) newIndexKey(keytype);
     	for (int i = 0; i < row.getNumberOfFields(); i++) {
     		Field field = row.get(i);
     		field.setPositiveInfinity();
     	}
     	return row;
     }
+
+    public IndexKey minIndexKey(int keytype) {
+    	GenericRow row = (GenericRow) newIndexKey(keytype);
+    	for (int i = 0; i < row.getNumberOfFields(); i++) {
+    		Field field = row.get(i);
+    		field.setNegativeInfinity();
+    	}
+    	return row;
+    }
     
-    TypeDescriptor[] getTypeDescriptor(int keytype) {
+    synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
         return typeDescMap.get(keytype);
     }
     
-    public void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
+    public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
     	typeDescMap.put(keytype, rowTypeDesc);
     }
 
@@ -89,8 +106,8 @@ public class GenericIndexKeyFactory implements IndexKeyFactory {
             this.rowTypeDesc = rowTypeDesc;
         }
         
-        public IndexRow makeRow() {
-            return new IndexRow(fieldFactory, rowTypeDesc);
+        public GenericRow makeRow() {
+            return new GenericRow(fieldFactory, rowTypeDesc);
         }
 
     }

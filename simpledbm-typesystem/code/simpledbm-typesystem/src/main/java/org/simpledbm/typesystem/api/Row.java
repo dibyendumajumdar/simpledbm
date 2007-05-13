@@ -19,13 +19,32 @@
  */
 package org.simpledbm.typesystem.api;
 
+import org.simpledbm.rss.api.im.IndexKey;
 
-public interface Row extends Cloneable {
+/**
+ * A Row is an array of fields, and can be used as multi-field record within
+ * a table or an index.
+ * @author Dibyendu Majumdar
+ */
+public interface Row extends IndexKey {
 
+	/**
+	 * Returns the number of fields in the row.
+	 */
 	int getNumberOfFields();
 
+	/**
+	 * Returns a specific field
+	 */
 	Field get(int i);
 
+	/**
+	 * Sets the specified field
+	 */
 	void set(int i, Field field);
-
+	
+	/**
+	 * Creates a copy of this row.
+	 */
+	Row cloneMe();	
 }

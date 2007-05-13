@@ -28,6 +28,8 @@ import java.nio.ByteBuffer;
 import junit.framework.TestCase;
 
 import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class TypeSystemTest extends TestCase {
@@ -41,12 +43,12 @@ public class TypeSystemTest extends TestCase {
 
     public void testCase1() throws Exception {
         FieldFactory fieldFactory = new DefaultFieldFactory();
-        GenericIndexKeyFactory keyFactory = new GenericIndexKeyFactory(fieldFactory);
+        RowFactory rowFactory = new GenericRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             new IntegerType(), new VarcharType(10)
         };
-        keyFactory.registerRowType(1, rowtype1);
-        IndexRow row = (IndexRow) keyFactory.newIndexKey(1);
+        rowFactory.registerRowType(1, rowtype1);
+        Row row = rowFactory.newRow(1);
         assertEquals(row.getNumberOfFields(), 2);
         System.err.println("Number of fields in row = " + row.getNumberOfFields());
         row.get(0).setInt(5432);
@@ -54,14 +56,16 @@ public class TypeSystemTest extends TestCase {
         assertEquals(row.get(0).getInt(), 5432);
         assertEquals(row.get(1).getInt(), 2345);
         System.err.println("Row contents = " + row);
+        Row rowClone = row.cloneMe();
+        System.err.println("Cloned Row contents = " + rowClone);
         ByteBuffer bb = ByteBuffer.allocate(row.getStoredLength());
         row.store(bb);
         bb.flip();
-        IndexRow row1 = (IndexRow) keyFactory.newIndexKey(1);
+        Row row1 = rowFactory.newRow(1);
         row1.retrieve(bb);
         assertTrue(row.compareTo(row1) == 0);
         System.err.println("Row1 contents = " + row1);
-        IndexRow row3 = (IndexRow) row.clone();
+        Row row3 = row.cloneMe();
         assertTrue(row.compareTo(row3) == 0);
         row.get(0).setString("9876");
         assertTrue(row.compareTo(row3) > 0);

@@ -19,7 +19,15 @@
  */
 package org.simpledbm.typesystem.api;
 
-
+/**
+ * A FieldFactory is responsible for creating fields of specified type.
+ * 
+ * @author Dibyendu Majumdar
+ */
 public interface FieldFactory {
+	
+	/**
+	 * Creates a field instance of the specified type.
+	 */
 	Field getInstance(TypeDescriptor typeDesc);
 }

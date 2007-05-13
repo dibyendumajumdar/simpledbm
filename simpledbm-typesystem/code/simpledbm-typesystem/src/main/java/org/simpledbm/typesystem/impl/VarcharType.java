@@ -25,7 +25,11 @@ package org.simpledbm.typesystem.impl;
 
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-
+/**
+ * The VarChar type represents a variable length byte string, that has a specified
+ * maximum length.
+ * @author Dibyendu Majumdar
+ */
 public class VarcharType implements TypeDescriptor {
 
     final int maxLength;

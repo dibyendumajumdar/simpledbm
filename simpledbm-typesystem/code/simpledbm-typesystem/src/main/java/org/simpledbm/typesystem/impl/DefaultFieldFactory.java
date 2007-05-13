@@ -31,7 +31,7 @@ public class DefaultFieldFactory implements FieldFactory {
         case TypeDescriptor.TYPE_VARCHAR: return new VarcharField(typeDesc);
         case TypeDescriptor.TYPE_INTEGER: return new IntegerField(typeDesc);
         }
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException("Unknown type: " + typeDesc);
     }
     
 }

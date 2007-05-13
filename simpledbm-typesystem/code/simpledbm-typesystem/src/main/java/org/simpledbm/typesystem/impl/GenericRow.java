@@ -27,13 +27,13 @@ import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class IndexRow implements Row, IndexKey {
+public class GenericRow implements Row, IndexKey, Cloneable {
 
     Field[] fields;
     
     // final FieldFactory fieldFactory;
     
-    public IndexRow(FieldFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
+    public GenericRow(FieldFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
         // this.fieldFactory = fieldFactory;
         fields = new Field[rowTypeDesc.length];
         for (int i = 0; i < rowTypeDesc.length; i++) {
@@ -68,14 +68,12 @@ public class IndexRow implements Row, IndexKey {
 	public void retrieve(ByteBuffer bb) {
         for (int i = 0; i < fields.length; i++) {
             fields[i].retrieve(bb);
-            // fields[i] = fieldFactory.retrieve(bb);
         }
 	}
 
 	public void store(ByteBuffer bb) {
         for (int i = 0; i < fields.length; i++) {
             fields[i].store(bb);
-            // fieldFactory.store(bb, fields[i]);
         }
 	}
 
@@ -83,16 +81,15 @@ public class IndexRow implements Row, IndexKey {
         int n = 0;
         for (Field f: fields) {
             n += f.getStoredLength();
-            // n += fieldFactory.getStoredLength(f);
         }
         return n;
 	}
 
 	public int compareTo(IndexKey o) {
-        if (o == null || !(o instanceof IndexRow)) {
+        if (o == null || !(o instanceof GenericRow)) {
             return -1;
         }
-        IndexRow other = (IndexRow) o;
+        GenericRow other = (GenericRow) o;
         for (int i = 0; i < fields.length; i++) {
             int result = fields[i].compareTo(other.get(i));
             if (result != 0) {
@@ -104,14 +101,23 @@ public class IndexRow implements Row, IndexKey {
 
     @Override
     public Object clone() throws CloneNotSupportedException {
-        IndexRow row = (IndexRow) super.clone();
+        GenericRow row = (GenericRow) super.clone();
         row.fields = new Field[fields.length];
         for (int i = 0; i < fields.length; i++) {
-            row.fields[i] = (Field) fields[i].clone();
+            row.fields[i] = (Field) fields[i].cloneMe();
         }
         return row;
     }
 
+    public Row cloneMe() {
+    	try {
+    		return (Row) clone();
+    	}
+    	catch (CloneNotSupportedException e) {
+    		throw new RuntimeException(e);
+    	}
+    }
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

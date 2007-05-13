@@ -25,7 +25,10 @@ package org.simpledbm.typesystem.impl;
 
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-
+/**
+ * The IntegerType provides storage for a 32-bit integer.
+ * @author Dibyendu Majumdar
+ */
 public class IntegerType implements TypeDescriptor {
 
     public final int getTypeCode() {

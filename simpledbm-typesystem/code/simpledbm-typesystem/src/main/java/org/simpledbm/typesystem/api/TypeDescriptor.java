@@ -19,12 +19,24 @@
  */
 package org.simpledbm.typesystem.api;
 
+/**
+ * Provides type information.
+ * @author Dibyendu Majumdar
+ */
 public interface TypeDescriptor {
 
     static final int TYPE_INTEGER = 1;
     static final int TYPE_VARCHAR = 2;
 
+    /**
+     * Returns a unique integer code for the type. This is useful for 
+     * serializing the type.
+     */
     int getTypeCode();
+    
+    /**
+     * Returns the maximum length of any value of this type.
+     */
     int getMaxLength();
 	
 }

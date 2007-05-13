@@ -25,21 +25,86 @@ package org.simpledbm.typesystem.api;
 
 import org.simpledbm.rss.api.st.Storable;
 
-public interface Field extends Storable, Comparable<Field>, Cloneable {
+/**
+ * A field is a data item with a type, and suitable for use in a multi-field row.
+ * The set of values that a field can hold is called its value domain. The value domain is logically
+ * bounded by "negative infinity" and "positive infinity", such that:
+ * <p>
+ * <pre>
+ * null &lt; negative_infinity &lt; value &lt; positive_infinity
+ * </pre>
+ * 
+ * @author Dibyendu Majumdar
+ */
+public interface Field extends Storable, Comparable<Field> {
 
+	/**
+	 * Returns an integer representation of the field value.
+	 */
 	int getInt();
-    void setInt(Integer integer);
-    String getString();
-    void setString(String string);
-    boolean isNull();
+
+	/**
+	 * Converts the supplied integer value to a suitable value for the field 
+	 */
+	void setInt(Integer integer);
+
+	/**
+	 * Returns a string representation of the field value.
+	 */
+	String getString();
+
+	/**
+	 * Converts the supplied string value to a suitable value for the field
+	 */
+	void setString(String string);
+
+	/**
+	 * Checks if the field is NULL, which is a special value indicating that the field's value
+	 * has not been set.
+	 */
+	boolean isNull();
+	
+	/**
+	 * Sets the field to be NULL.
+	 */
     void setNull();
+
+    /**
+     * Checks if this field is set to the value signifying negative infinity.
+     * Negative infinity represents a value that is less than all the valid values
+     * in the field's domain.
+     */
     boolean isNegativeInfinity();
+
+    /**
+     * Sets this field to the value of negative infinity.
+     */
     void setNegativeInfinity();
+    
+    /**
+     * Checks if this field is set to the value signifying positive infinity.
+     * Positive infinity represents a value that is greater than all the valid values
+     * in the field's domain.
+     */
     boolean isPositiveInfinity();
+    
+    /**
+     * Sets this field to the value of positive infinity.
+     */
     void setPositiveInfinity();
+    
+    /**
+     * Checks if this field is set to a value in the field's domain.
+     */
     boolean isValue();
-    void setValue();
+
+    /**
+     * Returns the TypeDescriptor for the field
+     */
     TypeDescriptor getType();
-    Object clone()  throws CloneNotSupportedException;
-  
+
+    /**
+     * Creates and returns a copy of this field.
+     */
+    Field cloneMe();
 }

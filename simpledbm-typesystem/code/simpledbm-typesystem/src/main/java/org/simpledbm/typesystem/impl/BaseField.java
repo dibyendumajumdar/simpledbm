@@ -29,7 +29,7 @@ import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 
-abstract class BaseField implements Field {
+abstract class BaseField implements Field, Cloneable {
 
     private static final int NULL_FIELD = 1;
     private static final int MINUS_INFINITY_FIELD = 2;
@@ -107,7 +107,7 @@ abstract class BaseField implements Field {
         return (statusByte & VALUE_FIELD) != 0;
     }
 
-    public final void setValue() {
+    protected final void setValue() {
         statusByte = VALUE_FIELD;
     }
 
@@ -119,11 +119,18 @@ abstract class BaseField implements Field {
         return compareTo((BaseField) o) == 0;
     }
 
-	@Override
 	public Object clone() throws CloneNotSupportedException {
 		BaseField o = (BaseField) super.clone();
-		o.statusByte = statusByte;
-		o.typeDesc = typeDesc;
+		return o;
+	}
+
+	public Field cloneMe() {
+		Field o;
+		try {
+			o = (Field) clone();
+		} catch (CloneNotSupportedException e) {
+			throw new RuntimeException(e);
+		}
 		return o;
 	}
 
