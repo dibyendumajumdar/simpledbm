@@ -1338,7 +1338,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * accessed by a single thread only; if multiple threads access the same
 	 * transaction object, results are undefined.
 	 */
-	static final class TransactionImpl implements Transaction, Storable {
+	public static final class TransactionImpl implements Transaction, Storable {
 		
 		private static final String LOG_CLASS_NAME = TransactionImpl.class.getName();
 
@@ -1827,6 +1827,19 @@ public final class TransactionManagerImpl implements TransactionManager {
 				}
 			}
 		}
+		
+		public final int countLocks() throws LockException {
+			int count = 0;
+			for (int i = locks.size() - 1; i >= 0; i--) {
+				Lockable lockable = locks.get(i);
+				LockMode mode = hasLock(lockable);
+				if (mode != LockMode.NONE) {
+					count++;
+				}
+			}
+			return count;
+		}
+
 		
 		/**
 		 * Discards PostCommitActions that were scheduled after
