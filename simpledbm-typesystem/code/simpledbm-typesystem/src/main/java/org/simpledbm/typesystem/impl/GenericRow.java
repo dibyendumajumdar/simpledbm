@@ -99,6 +99,14 @@ public class GenericRow implements Row, IndexKey, Cloneable {
 		return 0;
 	}
 
+	public boolean equals(Object o) {
+		if (o == null || !(o instanceof GenericRow)) {
+			return false;
+		}
+        GenericRow other = (GenericRow) o;
+		return compareTo(other) == 0;
+	}
+	
     @Override
     public Object clone() throws CloneNotSupportedException {
         GenericRow row = (GenericRow) super.clone();
