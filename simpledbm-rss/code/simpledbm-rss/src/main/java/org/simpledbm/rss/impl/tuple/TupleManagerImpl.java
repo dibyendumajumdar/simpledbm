@@ -481,7 +481,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 				 * Is the slot logically deleted?
 				 */
 				if (TupleHelper.isDeleted(page, slotNumber)) {
-					// FIXME Test case needed
 					TupleId location;
 
 					if (!TupleHelper.isSegmented(page, slotNumber) || TupleHelper.isFirstSegment(page, slotNumber)) {
@@ -1138,7 +1137,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			doDelete(trx, location);
 		}
 
-		byte[] doRead(Location location) throws BufferManagerException, IOException, TupleException {
+		byte[] doRead(Location location) throws IOException {
 			BufferManager bufmgr = tuplemgr.bufmgr;
 			TupleId tupleid = (TupleId) location;
 
@@ -1195,7 +1194,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 
 		/**
 		 * An update is carried out in two stages. In the first stage
-		 * exsiting tuple segments are updated with new data. If the new tuple is
+		 * existing tuple segments are updated with new data. If the new tuple is
 		 * smaller or equal to the size of existing tuple, then the process
 		 * ends here. If however, the new tuple is larger than the existing
 		 * tuple, then additional tuple segments are added, using the
@@ -1480,7 +1479,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 								 * to provide an option to skip deleted rows.
 								 */
 								if (TupleHelper.isDeleted(page, currentSlot)) {
-									// FIXME Test case needed
 									try {
 										trx.acquireLockNowait(nextLocation, lockMode, LockDuration.INSTANT_DURATION);
 										/*
