@@ -18,7 +18,6 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -178,7 +177,7 @@ public class TestTupleManager extends TestCase {
             }
             
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            TupleScan scan = tcont.openScan(trx, LockMode.SHARED);
+            TupleScan scan = tcont.openScan(trx, false);
             int i = 0;
             while (scan.fetchNext()) {
             	byte[] data = scan.getCurrentTuple();
@@ -190,6 +189,7 @@ public class TestTupleManager extends TestCase {
             	System.err.println("Location=" + scan.getCurrentLocation() + ", tupleData=[" + t.toString() + "]");
             	i++;
             }
+            assertEquals(((TransactionManagerImpl.TransactionImpl)trx).countLocks(), i);
             trx.commit();
         }
         finally {
@@ -258,8 +258,8 @@ public class TestTupleManager extends TestCase {
             else {
             	tlens = new int[] { 18000, 15, 95, 138, 516, 1700, 4500, 13000 };
             }
-            Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            TupleScan scan = tcont.openScan(trx, LockMode.SHARED);
+            Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
+            TupleScan scan = tcont.openScan(trx, false);
             
             thr.start();
             Thread.sleep(100);
@@ -280,6 +280,7 @@ public class TestTupleManager extends TestCase {
             	System.err.println("Fetching next tuple");
             }
         	System.err.println("Scan completed");
+            assertEquals(((TransactionManagerImpl.TransactionImpl)trx).countLocks(), 0);
             trx.commit();
             
             thr.join(2000);
@@ -305,7 +306,7 @@ public class TestTupleManager extends TestCase {
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
-            TupleScan scan = tcont.openScan(trx, LockMode.UPDATE);
+            TupleScan scan = tcont.openScan(trx, true);
             int i = 0;
             ArrayList<Integer> lens = new ArrayList<Integer>();
             ArrayList<Integer> newLens = new ArrayList<Integer>();
@@ -326,7 +327,7 @@ public class TestTupleManager extends TestCase {
             }
             scan.close();
             
-            scan = tcont.openScan(trx, LockMode.UPDATE);
+            scan = tcont.openScan(trx, true);
             i = 0;
             while (scan.fetchNext()) {
             	byte[] data = scan.getCurrentTuple();
@@ -338,7 +339,7 @@ public class TestTupleManager extends TestCase {
             trx.abort();
 
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            scan = tcont.openScan(trx, LockMode.SHARED);
+            scan = tcont.openScan(trx, false);
             i = 0;
             while (scan.fetchNext()) {
             	byte[] data = scan.getCurrentTuple();
@@ -373,7 +374,7 @@ public class TestTupleManager extends TestCase {
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
-            TupleScan scan = tcont.openScan(trx, LockMode.UPDATE);
+            TupleScan scan = tcont.openScan(trx, true);
             int n_total = 0;
             int n_deleted = 0;
             ArrayList<Integer> lens = new ArrayList<Integer>();
@@ -397,7 +398,7 @@ public class TestTupleManager extends TestCase {
             
             System.err.println("Map = " + map);
             
-            scan = tcont.openScan(trx, LockMode.SHARED);
+            scan = tcont.openScan(trx, false);
             int j = 0;
             while (scan.fetchNext()) {
         		Location location = scan.getCurrentLocation();
@@ -410,7 +411,7 @@ public class TestTupleManager extends TestCase {
             assertEquals(j, n_total-n_deleted);
             
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            scan = tcont.openScan(trx, LockMode.SHARED);
+            scan = tcont.openScan(trx, false);
             int i = 0;
             while (scan.fetchNext()) {
             	byte[] data = scan.getCurrentTuple();
@@ -442,7 +443,7 @@ public class TestTupleManager extends TestCase {
             trx.commit();
             
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            scan = tcont.openScan(trx, LockMode.SHARED);
+            scan = tcont.openScan(trx, false);
             i = 0;
             while (scan.fetchNext()) {
             	byte[] data = scan.getCurrentTuple();

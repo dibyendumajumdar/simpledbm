@@ -57,6 +57,7 @@ import org.simpledbm.rss.api.tuple.TupleScan;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LogicalUndo;
 import org.simpledbm.rss.api.tx.Redoable;
@@ -99,6 +100,7 @@ import org.simpledbm.rss.util.logging.Logger;
  * the Location of a tuple from any of the deleted segments. This is important
  * because the tuple reclamation logic uses locking to determine whether a logically
  * deleted tuple can be physically removed.</li>
+ * <li>If the delete is undone, the links are restored.</li>
  * <li>When tuples are updated, existing segments are updated with new data. If the new
  * tuple is longer than the old tuple, then additional segments are added. The 
  * {@link TupleInserter#completeInsert()} interface is reused for this purpose. No attempt is
@@ -1320,8 +1322,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			doUpdate(trx, location, newTuple);
 		}
 		
-		public TupleScan openScan(Transaction trx, LockMode lockMode) {
-			return new TupleScanImpl(this, trx, lockMode);
+		public TupleScan openScan(Transaction trx, boolean forUpdate) {
+			return new TupleScanImpl(this, trx, forUpdate ? LockMode.UPDATE : LockMode.SHARED);
 		}
 
 	}
@@ -1372,7 +1374,46 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		}
 		
 		public boolean fetchNext() throws TupleException {
-			return doFetchNext();
+			if (previousLocation != null) {
+				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+					LockMode lockMode = trx.hasLock(previousLocation);
+					if (lockMode == LockMode.SHARED
+							|| lockMode == LockMode.UPDATE) {
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "fetchNext", "SIMPLEDBM-DEBUG: Releasing lock on previous row "
+										+ previousLocation);
+						}
+						trx.releaseLock(previousLocation);
+					}
+				} else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
+						.getIsolationMode() == IsolationMode.SERIALIZABLE)
+						&& lockMode == LockMode.UPDATE) {
+					/*
+					 * This is an update mode cursor.
+					 * In RR/SR mode, we need to downgrade UPDATE mode lock to SHARED lock when the cursor moves
+					 * to the next row.
+					 */
+					LockMode lockMode = trx.hasLock(previousLocation);
+					if (lockMode == LockMode.UPDATE) {
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, "fetchNext", "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
+									+ previousLocation + " to " + LockMode.SHARED);
+						}
+						trx.downgradeLock(previousLocation,	LockMode.SHARED);
+					}
+				}
+			}
+			boolean result = doFetchNext();
+			if (!isEof() && currentLocation != null) {
+				if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+					LockMode lockMode = trx.hasLock(currentLocation);
+					if (lockMode == LockMode.SHARED || lockMode == LockMode.UPDATE) {
+						trx.releaseLock(currentLocation);
+					}
+				}
+			}	
+
+			return result;
 		}
 
 		/**
@@ -1537,6 +1578,20 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		}
 
 		public void close() throws TupleException {
+			if (!isEof() && currentLocation != null) {
+				if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
+						|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+					LockMode lockMode = trx.hasLock(currentLocation);
+					if (lockMode == LockMode.SHARED
+							|| lockMode == LockMode.UPDATE) {
+						if (log.isDebugEnabled()) {
+							log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "SIMPLEDBM-DEBUG: Releasing lock on current row "
+									+ currentLocation + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
+						}
+						trx.releaseLock(currentLocation);
+					}
+				}
+			}
 			spaceScan.close();
 		}
 		

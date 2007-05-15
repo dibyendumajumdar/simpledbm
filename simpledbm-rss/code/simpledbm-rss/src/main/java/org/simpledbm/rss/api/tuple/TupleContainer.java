@@ -20,7 +20,6 @@
 package org.simpledbm.rss.api.tuple;
 
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.tx.Transaction;
 
@@ -80,8 +79,8 @@ public interface TupleContainer {
     
     /**
      * Opens a tuple scan that reads all used pages within the container
-     * and returns tuples sequentially. Each tuple is locked in specified mode before
-     * it is returned. 
+     * and returns tuples sequentially. Each tuple is locked in UPDATE mode if
+     * forUpdate is true, else in SHARED mode.
      */
-    TupleScan openScan(Transaction trx, LockMode lockMode);
+    TupleScan openScan(Transaction trx, boolean forUpdate);
 }

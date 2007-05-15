@@ -27,7 +27,7 @@ import org.simpledbm.rss.api.loc.Location;
  * IndexScans, TupleScans do not support next-key locking, hence cannot ensure
  * repeatable reads.
  * 
- * @see org.simpledbm.rss.api.tuple.TupleContainer#openScan(Transaction, LockMode)
+ * @see org.simpledbm.rss.api.tuple.TupleContainer#openScan(org.simpledbm.rss.api.tx.Transaction, boolean)
  * @author Dibyendu Majumdar
  */
 public interface TupleScan {
