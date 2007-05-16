@@ -131,6 +131,8 @@ public class TestTupleManager extends TestCase {
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             byte[] data = tcont.read(location);
             assertEquals(data.length, 16526);
+            ByteBuffer bb = ByteBuffer.wrap(data);
+            t.retrieve(bb);
             assertTrue(t.toString().equals("hello"));
             tcont.delete(trx, location);
             trx.abort();
@@ -142,7 +144,7 @@ public class TestTupleManager extends TestCase {
             tcont.update(trx, location, t);
             data = tcont.read(location);
             t = new StringTuple();
-            ByteBuffer bb = ByteBuffer.wrap(data);
+            bb = ByteBuffer.wrap(data);
             t.retrieve(bb);
             trx.commit();
             assertEquals(t.getStoredLength(), 18002);
@@ -216,7 +218,6 @@ public class TestTupleManager extends TestCase {
 				public void run() {
 					TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
 					Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-					boolean ok = false;
 					try {
 						StringTuple t = new StringTuple();
 						t.parseString("sample", 10000);
@@ -225,7 +226,6 @@ public class TestTupleManager extends TestCase {
 						inserter.completeInsert();
 						System.err.println("Inserted new tuple - going to sleep");
 						Thread.sleep(1000);
-						ok = true;
 					} catch (Exception e) {
 						e.printStackTrace();
 					} finally {
