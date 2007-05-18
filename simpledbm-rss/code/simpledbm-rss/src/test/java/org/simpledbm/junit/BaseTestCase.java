@@ -44,7 +44,7 @@ public abstract class BaseTestCase extends TestCase {
 	protected void setUp() throws Exception {
 		super.setUp();
 		threadFailureExceptions = new Vector<ThreadFailure>();
-		Logger.configure("logging.properties");
+		Logger.configure("classpath:logging.properties");
 	}
 
 	@Override
