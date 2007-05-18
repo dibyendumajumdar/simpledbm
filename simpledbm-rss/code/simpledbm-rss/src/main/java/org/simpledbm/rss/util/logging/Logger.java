@@ -21,9 +21,11 @@ package org.simpledbm.rss.util.logging;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 
+import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
@@ -49,10 +51,29 @@ public final class Logger {
 		return new Logger(name);
 	}
 	
-	public static void configure(String filename) {
-		FileInputStream is = null; 
+	/**
+	 * Configures the logging system using properties in the supplied file.
+	 * If the filename is prefixed by &quot;classpath:&quot;, the file must exist
+	 * in the classpath, else it must exist on the specified location on the filesystem.
+	 * 
+	 * @param name Name of the logging properties file, optionally prefixed by &quot;classpath:&quot; 
+	 */
+	public static void configure(String name) {
+		final String classpathPrefix = "classpath:";
+		boolean searchClasspath = false;
+		String filename = name;
+		if (filename.startsWith(classpathPrefix)) {
+			filename = filename.substring(classpathPrefix.length());
+			searchClasspath = true;
+		}
+		InputStream is = null;
 		try {
-			is = new FileInputStream(filename);
+			if (searchClasspath) {
+				is = ClassUtils.getResourceAsStream(filename);
+			}
+			else {
+				is = new FileInputStream(filename);
+			}
 			LogManager.getLogManager().readConfiguration(is);
 		}
 		catch (Exception e) {
@@ -75,12 +96,20 @@ public final class Logger {
 		realLogger.logp(Level.INFO, sourceClass, sourceMethod, message);
 	}
 	
+	public void info(String sourceClass, String sourceMethod, String message, Object ... args) {
+		realLogger.logp(Level.INFO, sourceClass, sourceMethod, message, args);
+	}
+	
 	public void info(String sourceClass, String sourceMethod, String message, Throwable thrown) {
 		realLogger.logp(Level.INFO, sourceClass, sourceMethod, message, thrown);
 	}
 	
 	public void debug(String sourceClass, String sourceMethod, String message) {
 		realLogger.logp(Level.FINE, sourceClass, sourceMethod, message);
+	}
+	
+	public void debug(String sourceClass, String sourceMethod, String message, Object ... args) {
+		realLogger.logp(Level.FINE, sourceClass, sourceMethod, message, args);
 	}
 	
 	public void debug(String sourceClass, String sourceMethod, String message, Throwable thrown) {
@@ -91,6 +120,10 @@ public final class Logger {
 		realLogger.logp(Level.FINER, sourceClass, sourceMethod, message);
 	}
 	
+	public void trace(String sourceClass, String sourceMethod, String message, Object ... args ) {
+		realLogger.logp(Level.FINER, sourceClass, sourceMethod, message, args);
+	}
+	
 	public void trace(String sourceClass, String sourceMethod, String message, Throwable thrown) {
 		realLogger.logp(Level.FINER, sourceClass, sourceMethod, message, thrown);
 	}
@@ -99,12 +132,20 @@ public final class Logger {
 		realLogger.logp(Level.WARNING, sourceClass, sourceMethod, message);
 	}
 	
+	public void warn(String sourceClass, String sourceMethod, String message, Object ... args ) {
+		realLogger.logp(Level.WARNING, sourceClass, sourceMethod, message, args);
+	}
+	
 	public void warn(String sourceClass, String sourceMethod, String message, Throwable thrown) {
 		realLogger.logp(Level.WARNING, sourceClass, sourceMethod, message, thrown);
 	}
 
 	public void error(String sourceClass, String sourceMethod, String message) {
 		realLogger.logp(Level.SEVERE, sourceClass, sourceMethod, message);
+	}
+
+	public void error(String sourceClass, String sourceMethod, String message, Object ... args) {
+		realLogger.logp(Level.SEVERE, sourceClass, sourceMethod, message, args);
 	}
 
 	public void error(String sourceClass, String sourceMethod, String message, Throwable thrown) {
