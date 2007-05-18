@@ -31,7 +31,7 @@ public class BitwiseOperations {
 	 * @param p Position of the bit (0-31)
 	 */
 	static final int getbit(final int x, final int p) {
-		// TPDO return value should be boolean, not the integer
+		// TODO return value should be boolean, not the integer
 		return x & (1 << (31 - p));
 	}
 
