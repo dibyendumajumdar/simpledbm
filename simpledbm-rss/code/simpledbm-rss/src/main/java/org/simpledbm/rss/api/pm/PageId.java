@@ -22,6 +22,8 @@ package org.simpledbm.rss.api.pm;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.rss.util.TypeSize;
 
 /**
  * Each page in the database is uniquely identified by a pageid consisting of 
@@ -30,12 +32,12 @@ import org.simpledbm.rss.api.st.Storable;
  * @author Dibyendu Majumdar
  * @since 19-Aug-2005
  */
-public final class PageId implements Comparable<PageId>, Storable {
+public final class PageId implements Comparable<PageId>, Storable, Dumpable {
 
     /**
      * Size of PageId in bytes. 
      */
-	public final static int SIZE =  (Integer.SIZE / Byte.SIZE) * 2;
+	public final static int SIZE = TypeSize.INTEGER * 2;
 	
 	private int containerId;
 	private int pageNumber;
@@ -53,15 +55,6 @@ public final class PageId implements Comparable<PageId>, Storable {
 	public PageId(PageId pageId) {
 		this.containerId = pageId.containerId;
 		this.pageNumber = pageId.pageNumber;
-	}
-
-	@Override
-	public final boolean equals(Object obj) {
-		if (obj instanceof PageId) {
-			PageId pageId = (PageId) obj;
-			return containerId == pageId.containerId && pageNumber == pageId.pageNumber;
-		}
-		return false;
 	}
 
 	public final int compareTo(PageId pageId) {
@@ -105,14 +98,35 @@ public final class PageId implements Comparable<PageId>, Storable {
 		return containerId == -1 && pageNumber == -1;
 	}
 	
-	@Override
-	public final String toString() {
-		return "PageId(" + containerId + "," + pageNumber + ")";
-	}
-
-	@Override
-	public final int hashCode() {
-		return containerId ^ pageNumber;
+	public final StringBuilder appendTo(StringBuilder sb) {
+		return sb.append("PageId(").append(containerId).append(",").append(pageNumber).append(")");
 	}
 	
+	public final String toString() {
+		return appendTo(new StringBuilder()).toString();
+	}
+
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = 1;
+		result = PRIME * result + containerId;
+		result = PRIME * result + pageNumber;
+		return result;
+	}
+
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final PageId other = (PageId) obj;
+		if (containerId != other.containerId)
+			return false;
+		if (pageNumber != other.pageNumber)
+			return false;
+		return true;
+	}
+
 }
