@@ -85,6 +85,15 @@ public class MessageCatalog {
 		msgs.put("EB0002", "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
 		msgs.put("WB0003", "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of: ");
 		msgs.put("EB0004", "SIMPLEDBM-EB0004: Unexpected error - key to be deleted not found: ");
+		msgs.put("EB0005", "SIMPLEDBM-EB0005: Unexpected error - current key k1 does not match expected key k2: ");
+		msgs.put("EB0006", "SIMPLEDBM-EB0006: Unexpected error - search result returned null, B-Tree may be corrupt : search key = ");
+		msgs.put("EB0007", "SIMPLEDBM-EB0007: Unexpected error - while attempting to locate the split key in a page");
+		msgs.put("EB0008", "SIMPLEDBM-EB0008: Unexpected error - invalid binary search result while searching for ");
+		msgs.put("EB0009", "SIMPLEDBM-EB0009: Unexpected error - leaf page encountered when expecting an index page");
+		msgs.put("EB0010", "SIMPLEDBM-EB0010: Supplied index item not setup as leaf: ");
+		msgs.put("WB0011", "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
+		msgs.put("EB0012", "SIMPLEDBM-EB0012: Unexpected error - exception caught");
+		
 	}
 	
 	public String getMessage(String key) {
