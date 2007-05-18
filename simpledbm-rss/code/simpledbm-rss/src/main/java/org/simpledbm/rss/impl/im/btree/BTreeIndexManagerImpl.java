@@ -28,7 +28,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
-import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
@@ -2531,7 +2530,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				sr.k = icursor.k;
 				sr.exactMatch = true;
 				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-					throw new IndexException("Current key [" + node.getItem(sr.k) + "] does not match expected key [" + icursor.currentKey + "]");
+					log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0005") + "k1=[" + node.getItem(sr.k) + "] k2=[" + icursor.currentKey + "]");
+					throw new IndexException(mcat.getMessage("EB0005") + "k1=[" + node.getItem(sr.k) + "] k2=[" + icursor.currentKey + "]");
 				}
 			}
 			else {
@@ -2656,9 +2656,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 				Savepoint sp = trx.createSavepoint(false);
 				try {
-					// System.out.println(Thread.currentThread().getName() + ":doFetch: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
 					if (sr.item == null) {
-						throw new IndexException(icursor.currentKey.toString());
+						log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage("EB0006") + icursor.currentKey.toString());
+						throw new IndexException(mcat.getMessage("EB0006") + icursor.currentKey.toString());
 					}
 					trx.acquireLockNowait(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					icursor.currentKey = sr.item;
@@ -2672,7 +2672,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				} catch (LockException e) {
 					
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + icursor.lockMode + " lock on " + sr.item.getLocation());
+						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-DEBUG: Failed to acquire conditional " + icursor.lockMode + " lock on " + sr.item.getLocation());
 					}
 					/*
 					 * Failed to acquire conditional lock. 
@@ -2946,7 +2946,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				throw ex;
 			}
 			if (stateFetchCompleted != 0) {
-				log.warn(LOG_CLASS_NAME, "close", "fetchCompleted() has not been called after fetchNext()");
+				log.warn(LOG_CLASS_NAME, "close", mcat.getMessage("WB0011"));
 			}
 		}
 		
@@ -3122,24 +3122,26 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 		
 		public final void unfixAll() {
-			BufferManagerException e = null;
+			RSSException e = null;
 			try {
 				unfixP();
 			}
-			catch (BufferManagerException e1) {
+			catch (RSSException e1) {
 				e = e1;
 			}
 			try {
 				unfixQ();
 			}
-			catch (BufferManagerException e1) {
-				e = e1;
+			catch (RSSException e1) {
+				if (e == null)
+					e = e1;
 			}
 			try {
 				unfixR();
 			}
-			catch (BufferManagerException e1) {
-				e = e1;
+			catch (RSSException e1) {
+				if (e == null)
+					e = e1;
 			}
 			if (e != null) {
 				throw e;
@@ -3243,7 +3245,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 			System.out.println("	</items>");
 			System.out.println("</page>");
-				
 		}
 		
 		/**
@@ -3456,7 +3457,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					return k;
 				}
 			}
-			throw new IllegalStateException();
+			log.error(LOG_CLASS_NAME, "getSplitKey", mcat.getMessage("EB0007"));
+			throw new IllegalStateException(mcat.getMessage("EB0007"));
 		}
 
 		/**
@@ -3492,7 +3494,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			while (low <= high) {
 				int mid = (low + high) >>> 1;
 				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-					throw new IndexException("Invalid binary search result");
+					log.error(LOG_CLASS_NAME, "search", mcat.getMessage("EB0007") + key.toString());
+					throw new IndexException(mcat.getMessage("EB0007") + key.toString());
 				}
 				IndexItem item = getItem(mid);
 				int comp = item.compareTo(key);
@@ -3518,96 +3521,97 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			}
 			return result;
 		}
-		public final SearchResult search_(IndexItem key) {
-			SearchResult result = new SearchResult();
-			int k = 1;
-			// We do not look at the high key when searching
-			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
-				int comp = item.compareTo(key);
-				if (comp >= 0) {
-					result.k = k;
-					result.item = item;
-					if (comp == 0) {
-						result.exactMatch = true;
-					}
-					break;
-				}
-			}
-			return result;
-		}
-		public final SearchResult searchBinaryDebug(IndexItem key) {
-			SearchResult result = new SearchResult();
-			int k = 1;
-			// We do not look at the high key when searching
-			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
-				int comp = item.compareTo(key);
-				if (comp >= 0) {
-					result.k = k;
-					result.item = item;
-					if (comp == 0) {
-						result.exactMatch = true;
-					}
-					break;
-				}
-			}
-			SearchResult result1 = new SearchResult();
-			int j = -1;
-			int low = FIRST_KEY_POS;
-			int high = getKeyCount();
-			IndexItem item = null;
-			while (low <= high) {
-				int mid = (low + high) >>> 1;
-				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-					throw new IndexException("Invalid binary search result");
-				}
-				item = getItem(mid);
-				int comp = item.compareTo(key);
-				if (comp < 0)
-					low = mid + 1;
-				else if (comp > 0)
-					high = mid - 1;
-				else {
-					// k = mid;
-					// result.exactMatch = true;
-					j = mid;
-					result1.k = j;
-					result1.exactMatch = true;
-					result1.item = item;
-//					if (j != result.k) {
-//						throw new IndexException("Invalid binary search result");
+//		public final SearchResult search_(IndexItem key) {
+//			SearchResult result = new SearchResult();
+//			int k = 1;
+//			// We do not look at the high key when searching
+//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+//				IndexItem item = getItem(k);
+//				int comp = item.compareTo(key);
+//				if (comp >= 0) {
+//					result.k = k;
+//					result.item = item;
+//					if (comp == 0) {
+//						result.exactMatch = true;
 //					}
-					break;
-				}
-			}
-			if (j == -1) {
-				if (low > getKeyCount()) {
-					j = -1;
-				}
-				else {
-					j = low;
-					result1.k = low;
-					result1.item = getItem(low);
-				}
-			}
-			System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
-//			if (result1.k != result.k || result1.item != result.item || result1.exactMatch != result.exactMatch) {
-//				System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
-//				System.err.println("result.item = " + result.item + " result1.item = " + result1.item);
-//				
-//				throw new IndexException("Invalid search result for binary search");
+//					break;
+//				}
 //			}
-		
-			return result;
-		}
+//			return result;
+//		}
+//		public final SearchResult searchBinaryDebug(IndexItem key) {
+//			SearchResult result = new SearchResult();
+//			int k = 1;
+//			// We do not look at the high key when searching
+//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+//				IndexItem item = getItem(k);
+//				int comp = item.compareTo(key);
+//				if (comp >= 0) {
+//					result.k = k;
+//					result.item = item;
+//					if (comp == 0) {
+//						result.exactMatch = true;
+//					}
+//					break;
+//				}
+//			}
+//			SearchResult result1 = new SearchResult();
+//			int j = -1;
+//			int low = FIRST_KEY_POS;
+//			int high = getKeyCount();
+//			IndexItem item = null;
+//			while (low <= high) {
+//				int mid = (low + high) >>> 1;
+//				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
+//					throw new IndexException("Invalid binary search result");
+//				}
+//				item = getItem(mid);
+//				int comp = item.compareTo(key);
+//				if (comp < 0)
+//					low = mid + 1;
+//				else if (comp > 0)
+//					high = mid - 1;
+//				else {
+//					// k = mid;
+//					// result.exactMatch = true;
+//					j = mid;
+//					result1.k = j;
+//					result1.exactMatch = true;
+//					result1.item = item;
+////					if (j != result.k) {
+////						throw new IndexException("Invalid binary search result");
+////					}
+//					break;
+//				}
+//			}
+//			if (j == -1) {
+//				if (low > getKeyCount()) {
+//					j = -1;
+//				}
+//				else {
+//					j = low;
+//					result1.k = low;
+//					result1.item = getItem(low);
+//				}
+//			}
+//			System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+////			if (result1.k != result.k || result1.item != result.item || result1.exactMatch != result.exactMatch) {
+////				System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
+////				System.err.println("result.item = " + result.item + " result1.item = " + result1.item);
+////				
+////				throw new IndexException("Invalid search result for binary search");
+////			}
+//		
+//			return result;
+//		}
 		
 		/**
 		 * Finds the child page associated with an index item.
 		 */
 		public final int findChildPage(IndexItem key) {
 			if (isLeaf()) {
-				// TODO throw exception
+				log.error(LOG_CLASS_NAME, "findChildPage", mcat.getMessage("EB0009"));
+				throw new IndexException(mcat.getMessage("EB0009"));
 			}
 			int k = 1;
 			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
@@ -3625,7 +3629,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final IndexItem findIndexItem(int childPageNumber) {
 			if (isLeaf()) {
-				// TODO throw exception
+				log.error(LOG_CLASS_NAME, "findIndexItem", mcat.getMessage("EB0009"));
+				throw new IndexException(mcat.getMessage("EB0009"));
 			}
 			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
@@ -3642,7 +3647,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final IndexItem findPrevIndexItem(int childPageNumber) {
 			if (isLeaf()) {
-				// TODO throw exception
+				log.error(LOG_CLASS_NAME, "findPrevIndexItem", mcat.getMessage("EB0009"));
+				throw new IndexException(mcat.getMessage("EB0009"));
 			}
 			IndexItem prev = null;
 			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
@@ -4043,7 +4049,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		public final void setItem(IndexItem item) {
 			this.item = item;
 			if (!item.isLeaf()) {
-				throw new IndexException("SIMPLEDBM-ERROR: The supplied index item [" + item + "] is not setup as leaf");
+				log.error(LOG_CLASS_NAME, "setItem", mcat.getMessage("EB0010") + item);
+				throw new IndexException(mcat.getMessage("EB0010") + item);
 			}
 		}
 
@@ -4828,8 +4835,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		@Override
 		public final String toString() {
-			return "IndexItem(key=[" + key + "], isLeaf=" + isLeaf + ", isUnique=" + isUnique + 
-				(isLocationRequired() ? (", Location=" + location) : "") + (isLeaf ? "" : (", ChildPage=" + String.valueOf(childPageNumber))) + ")";
+			StringBuilder sb = new StringBuilder();
+			sb.append("IndexItem(key=[").append(key)
+				.append("], isLeaf=").append(isLeaf)
+				.append(", isUnique=").append(isUnique);
+			if (isLocationRequired()) {
+				sb.append(", Location=").append(location);
+			}
+			if (!isLeaf()) {
+				sb.append(", ChildPage=").append(childPageNumber);
+			}
+			sb.append(")");
+			return sb.toString();
+//			return "IndexItem(key=[" + key + "], isLeaf=" + isLeaf + ", isUnique=" + isUnique + 
+//				(isLocationRequired() ? (", Location=" + location) : "") + (isLeaf ? "" : (", ChildPage=" + String.valueOf(childPageNumber))) + ")";
 		}
 	}
 
