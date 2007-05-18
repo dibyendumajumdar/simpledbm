@@ -21,7 +21,9 @@ package org.simpledbm.rss.util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.st.Storable;
 
 /**
@@ -35,13 +37,14 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     private byte[] bytes;
     
     public ByteString() {
+    	bytes = new byte[0];
     }
 
     public ByteString(String s) {
         try {
 			bytes = s.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			throw new RSSException(e);
 		}
     }
     
@@ -56,12 +59,12 @@ public final class ByteString implements Storable, Comparable<ByteString> {
         try {
 			return new String(bytes, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new RuntimeException(e);
+			throw new RSSException(e);
 		}
     }
     
     public int getStoredLength() {
-        return bytes.length + (Short.SIZE / Byte.SIZE);
+        return bytes.length + TypeSize.SHORT;
     }
     
     public void store(ByteBuffer bb) {
@@ -103,5 +106,25 @@ public final class ByteString implements Storable, Comparable<ByteString> {
 	
 	public byte get(int offset) {
 		return bytes[offset];
+	}
+
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = 1;
+		result = PRIME * result + Arrays.hashCode(bytes);
+		return result;
+	}
+
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final ByteString other = (ByteString) obj;
+		if (!Arrays.equals(bytes, other.bytes))
+			return false;
+		return true;
 	}
 }
