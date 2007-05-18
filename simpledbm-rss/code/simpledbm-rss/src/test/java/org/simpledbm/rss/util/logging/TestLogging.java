@@ -1,10 +1,8 @@
 package org.simpledbm.rss.util.logging;
 
-import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.junit.BaseTestCase;
 
-import junit.framework.TestCase;
-
-public class TestLogging extends TestCase {
+public class TestLogging extends BaseTestCase {
 
 	public TestLogging() {
 		super();
@@ -15,7 +13,6 @@ public class TestLogging extends TestCase {
 	}
 
 	public void testCase1() throws Exception {
-		Logger.configure("logging.properties");
 		Logger logger = Logger.getLogger(getClass().getName());
 		assertFalse(logger.isDebugEnabled());
 		logger.debug("test", "test", "This should not appear");
@@ -26,6 +23,7 @@ public class TestLogging extends TestCase {
 		assertFalse(logger.isDebugEnabled());
 		logger.debug("test", "test", "This should not appear");
 		logger.info("test", "test", "This is the second message that should appear");
+		logger.info(this.getClass().getName(), "testCase1", "This message has two arguments: [{0}] and [{1}]", "one", "two");
 	}
 	
 }
