@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.tx.BaseLockable;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
@@ -36,7 +37,7 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 08-Dec-2005
  */
-public class TupleId extends BaseLockable implements Location {
+public class TupleId extends BaseLockable implements Location, Dumpable {
 	
 	PageId pageId;
 	int slotNumber;
@@ -97,25 +98,15 @@ public class TupleId extends BaseLockable implements Location {
 		return comp;
 	}
 
-	@Override
-	public final boolean equals(Object arg0) {
-		if (arg0 == this) {
-			return true;
-		}
-		if (!(arg0 instanceof TupleId)) {
-			throw new IllegalArgumentException("SIMPLEDBM-ERROR: Object " + arg0 + " is not of the required type");
-		}
-		return compareTo((Location) arg0) == 0;
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("TupleId(");
+		pageId.appendTo(sb);
+		sb.append(", slot=").append(slotNumber).append(")");
+		return sb;
 	}
 
-	@Override
-	public final int hashCode() {
-		return pageId.hashCode() ^ slotNumber;
-	}
-
-	@Override
 	public final String toString() {
-		return "TupleId(" + pageId + ", slot=" + slotNumber + ")";
+		return appendTo(new StringBuilder()).toString();
 	}
 
 	private final void setPageId(PageId pageId) {
@@ -140,4 +131,31 @@ public class TupleId extends BaseLockable implements Location {
 		}
 		return pageId.getContainerId();
 	}
+
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = super.hashCode();
+		result = PRIME * result + ((pageId == null) ? 0 : pageId.hashCode());
+		result = PRIME * result + slotNumber;
+		return result;
+	}
+
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final TupleId other = (TupleId) obj;
+		if (pageId == null) {
+			if (other.pageId != null)
+				return false;
+		} else if (!pageId.equals(other.pageId))
+			return false;
+		if (slotNumber != other.slotNumber)
+			return false;
+		return true;
+	}
+
 }
