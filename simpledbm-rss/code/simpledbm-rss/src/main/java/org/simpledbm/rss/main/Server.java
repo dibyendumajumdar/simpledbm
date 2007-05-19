@@ -102,7 +102,7 @@ public class Server {
 		final LogFactory logFactory = new LogFactoryImpl();
 		logFactory.createLog(server.storageFactory, props);
 		// SimpleDBM components expect a virtual container to exist with
-		// a container ID of 1. This container must have at least one page.
+		// a container ID of 0. This container must have at least one page.
 		StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
 		server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
 		Page page = server.pageFactory.getInstance(server.pageFactory.getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
@@ -159,6 +159,7 @@ public class Server {
 	 * <p>
 	 * FIXME: Exception signature needs to be fixed.
 	 * 
+	 * @see LockManager#start()
 	 * @see LogManager#start()
 	 * @see BufferManager#start()
 	 * @see TransactionManager#start()
@@ -180,6 +181,7 @@ public class Server {
 	 * <li>The Buffer Manager is shutdown.</li>
 	 * <li>The Log instance is shutdown.</li>
 	 * <li>The Storage Manager instance is shutdown.</li>
+	 * <li>The Lock Manager is shutdown.</li>
 	 * </ol>
 	 * 
 	 * @see TransactionManager#shutdown()
