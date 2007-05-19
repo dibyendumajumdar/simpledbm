@@ -21,6 +21,8 @@ package org.simpledbm.rss.impl.st;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.nio.channels.FileChannel;
+import java.nio.channels.FileLock;
 
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageException;
@@ -49,6 +51,8 @@ public final class FileStorageContainer implements StorageContainer {
     private final RandomAccessFile file;
 
     private final String name;
+
+    private FileLock lock;
     
 	/**
 	 * Creates a new FileStorageContainer from an existing
@@ -126,6 +130,34 @@ public final class FileStorageContainer implements StorageContainer {
 		}
 	}
     
+	public final synchronized void lock() {
+		isValid();
+		if (lock != null) {
+			throw new StorageException("Already locked");
+		}
+		try {
+			FileChannel channel = file.getChannel();
+			lock = channel.lock();
+		}
+		catch (IOException e) {
+			throw new StorageException(e);
+		}
+	}
+
+	public final synchronized void unlock() {
+		isValid();
+		if (lock == null) {
+			throw new StorageException("Not locked");
+		}
+		try {
+			lock.release();
+			lock = null;
+		}
+		catch (IOException e) {
+			throw new StorageException(e);
+		}
+	}
+	
     public String getName() {
         return name;
     }
