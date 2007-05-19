@@ -122,10 +122,6 @@ public class Server {
 
 	/**
 	 * Initializes a new RSS Server instance.
-	 * <p>
-	 * FIXME: Change exception specification.
-	 * 
-	 * @inheritDoc
 	 * @see #start()
 	 * @see #shutdown()
 	 * @param props Properties that define various parameters for the system
@@ -167,7 +163,6 @@ public class Server {
 	 * <p>
 	 * To prevent two server instances running concurrently on the same path, a lock file is used.
 	 * If a server is already running on the specified path, the start() will fail with an exception.
-	 * FIXME: Exception signature needs to be fixed.
 	 * 
 	 * @see LockManager#start()
 	 * @see LogManager#start()

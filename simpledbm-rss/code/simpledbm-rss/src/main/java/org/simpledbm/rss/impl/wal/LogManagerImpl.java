@@ -45,7 +45,9 @@ import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.ChecksumCalculator;
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * The default LogMgr implementation.
@@ -253,10 +255,10 @@ public final class LogManagerImpl implements LogManager {
 	 * </ol>
 	 * The minimum length of a Log Record is {@value}.
 	 */
-	private static final int LOGREC_HEADER_SIZE = (Integer.SIZE / Byte.SIZE) + // length
+	private static final int LOGREC_HEADER_SIZE = TypeSize.INTEGER + // length
 			Lsn.SIZE + // lsn
 			Lsn.SIZE + // prevLsn
-			(Long.SIZE / Byte.SIZE); // checksum
+			TypeSize.LONG; // checksum
 
 	/**
 	 * An EOF Record is simply one that has no data. EOF Records are used to
@@ -436,23 +438,32 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	private final List<Exception> exceptions = Collections.synchronizedList(new LinkedList<Exception>());
 
+	/**
+	 * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
+	 * Log flushes still happen during log switches or when there is a checkpoint.
+	 * This option can improve performance at the expense of lost transactions after recovery.
+	 */
 	private boolean disableExplicitFlushRequests = false;
 	
-	/*
-	 * @see org.simpledbm.rss.log.Log#insert(byte[], int)
+	MessageCatalog mcat = new MessageCatalog();
+	
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#insert(byte[], int)
 	 */
 	public final Lsn insert(byte[] data, int length) {
 		assertIsOpen();
 		int reclen = calculateLogRecordSize(length);
 		if (reclen > getMaxLogRecSize()) {
-			throw new LogException("SIMPLEDBM-ELOG-110: Log record is too big");
+			logger.error(LOG_CLASS_NAME, "insert", mcat.getMessage("EW0001", reclen, getMaxLogRecSize()));
+			throw new LogException(mcat.getMessage("EW0001", reclen, getMaxLogRecSize()));
 		}
 		bufferLock.lock();
 		if (logBuffers.size() > anchor.maxBuffers) {
 			try {
 				buffersAvailable.await();
 			} catch (InterruptedException e) {
-				throw new LogException("SIMPLEDBM-ELOG-100: Error ocurred while attempting to insert a log record", e);
+				logger.error(LOG_CLASS_NAME, "insert", mcat.getMessage("EW0002"), e);
+				throw new LogException(mcat.getMessage("EW0002"), e);
 			}
 		}
 		try {
@@ -479,51 +490,54 @@ public final class LogManagerImpl implements LogManager {
 		}
 	}
 
-	/*
-	 * @see org.simpledbm.rss.log.Log#flush(Lsn)
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#flush(org.simpledbm.rss.api.wal.Lsn)
 	 */
 	public final void flush(Lsn upto) {
 		assertIsOpen();
-		if (!disableExplicitFlushRequests || anchorDirty || upto == null) {
+		if (!getDisableExplicitFlushRequests() || anchorDirty || upto == null) {
 			handleFlushRequest(new FlushRequest(upto));
 		}
 	}
 
-	/*
-	 * @see org.simpledbm.rss.log.Log#flush()
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#flush()
 	 */
 	public final void flush() {
 		assertIsOpen();
 		flush(null);
 	}
 
-	/*
-	 * @see org.simpledbm.rss.log.Log#getLogReader(Lsn startLsn)
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#getForwardScanningReader(org.simpledbm.rss.api.wal.Lsn)
 	 */
 	public final LogReader getForwardScanningReader(Lsn startLsn) {
 		assertIsOpen();
 		return new LogForwardReaderImpl(this, startLsn == null ? LogManagerImpl.FIRST_LSN : startLsn);
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * @see org.simpledbm.rss.log.LogMgr#getBackwardScanningReader(org.simpledbm.rss.log.Lsn)
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#getBackwardScanningReader(org.simpledbm.rss.api.wal.Lsn)
 	 */
 	public final LogReader getBackwardScanningReader(Lsn startLsn) {
 		assertIsOpen();
 		return new LogBackwardReaderImpl(this, startLsn == null ? getMaxLsn() : startLsn); 
 	}
 
-	/**
-	 * Opens the Log. After opening the control files, and the log files, the
-	 * log is scanned in order to locate the End of Log. See {@link #scanToEof}
-	 * for details of why this is necessary.
-	 * 
+
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#start()
 	 */
-	final synchronized public void start() {
+	public final synchronized void start() {
+		/*
+		 * Opens the Log. After opening the control files, and the log files, the
+		 * log is scanned in order to locate the End of Log. See {@link #scanToEof}
+		 * for details of why this is necessary.
+		 */
 		if (started || errored) {
+			logger.error(LOG_CLASS_NAME, "start", mcat.getMessage("EW0003"));
 			throw new LogException(
-					"SIMPLEDBM-ELOG-002: Log is already open or has encountered an error.");
+					mcat.getMessage("EW0003"));
 		}
 		openCtlFiles();
 		openLogFiles();
@@ -533,8 +547,8 @@ public final class LogManagerImpl implements LogManager {
 		started = true;
 	}
 
-	/*
-	 * @see org.simpledbm.rss.log.Log#close()
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#shutdown()
 	 */
 	public final synchronized void shutdown() {
 		if (started) {
@@ -546,31 +560,34 @@ public final class LogManagerImpl implements LogManager {
 			try {
 				flushService.awaitTermination(60, TimeUnit.SECONDS);
 			} catch (InterruptedException e1) {
+				logger.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EW0004"), e1);
 			}
 			if (!errored) {
 				try {
 					flush();
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EW0004"), e);
 				}
 			}
 			archiveService.shutdown();
 			try {
 				archiveService.awaitTermination(60, TimeUnit.SECONDS);
 			} catch (InterruptedException e1) {
+				logger.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EW0004"), e1);
 			}
 			closeLogFiles();
 			closeCtlFiles();
 			/*
 			 * TODO // move this to the beginning Let us first set the flag so
 			 * that further client requests will not be entertained.
+			 * FIXME Is it legal to invoke start() after shutdown()?
 			 */
 			started = false;
 		}
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.log.LogMgr#getCheckpointLsn()
+	 * @see org.simpledbm.rss.api.wal.LogManager#getCheckpointLsn()
 	 */
 	public final Lsn getCheckpointLsn() {
 		anchorLock.lock();
@@ -580,7 +597,7 @@ public final class LogManagerImpl implements LogManager {
 	}
 	
 	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.log.LogMgr#getOldestInterestingLsn()
+	 * @see org.simpledbm.rss.api.wal.LogManager#getOldestInterestingLsn()
 	 */
 	public final Lsn getOldestInterestingLsn() {
 		anchorLock.lock();
@@ -589,10 +606,7 @@ public final class LogManagerImpl implements LogManager {
 		return lsn;
 	}
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.log.LogMgr#setCheckpointLsn(org.simpledbm.rss.log.Lsn)
-	 */
-	public final void setCheckpointLsn(Lsn lsn) {
+	final void setCheckpointLsn(Lsn lsn) {
 		anchorLock.lock();
         try {
             anchorWriteLock.lock();
@@ -609,6 +623,9 @@ public final class LogManagerImpl implements LogManager {
         }
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.wal.LogManager#setCheckpointLsn(org.simpledbm.rss.api.wal.Lsn, org.simpledbm.rss.api.wal.Lsn)
+	 */
 	public final void setCheckpointLsn(Lsn lsn, Lsn oldestInterestingLsn) {
 		anchorLock.lock();
         try {
@@ -642,7 +659,8 @@ public final class LogManagerImpl implements LogManager {
 				try {
 					logFilesSemaphore.acquire();
 				} catch (InterruptedException e) {
-					throw new LogException("SIMPLEDBM-ELOG-999: Unexpected error occurred.", e);
+					logger.error(LOG_CLASS_NAME, "setupBackgroundThreads", mcat.getMessage("EW0005"), e);
+					throw new LogException(mcat.getMessage("EW0005"), e);
 				}
 			}
 		}
@@ -725,7 +743,8 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	final void setCtlFiles(String files[]) {
 		if (files.length > MAX_CTL_FILES) {
-			throw new LogException("SIMPLEDBM-ELOG-003: Number of Control Files exceeds limit of " + MAX_CTL_FILES);
+			logger.error(LOG_CLASS_NAME, "setCtlFiles", mcat.getMessage("EW0006", files.length, MAX_CTL_FILES));
+			throw new LogException(mcat.getMessage("EW0006", files.length, MAX_CTL_FILES));
 		}
 		for (int i = 0; i < files.length; i++) {
 			anchor.ctlFiles[i] = new ByteString(files[i]);
@@ -743,10 +762,12 @@ public final class LogManagerImpl implements LogManager {
 	final void setLogFiles(String groupPaths[], short n_LogFiles) {
 		int n_LogGroups = groupPaths.length;
 		if (n_LogGroups > MAX_LOG_GROUPS) {
-			throw new LogException("SIMPLEDBM-ELOG-004: Number of Log Groups exceeds limt of " + MAX_LOG_GROUPS);
+			logger.error(LOG_CLASS_NAME, "setLogFiles", mcat.getMessage("EW0007", n_LogGroups, MAX_LOG_GROUPS));
+			throw new LogException(mcat.getMessage("EW0007", n_LogGroups, MAX_LOG_GROUPS));
 		}
 		if (n_LogFiles > MAX_LOG_FILES) {
-			throw new LogException("SIMPLEDBM-ELOG-005: Number of Log Files exceeds limit of " + MAX_LOG_FILES);
+			logger.error(LOG_CLASS_NAME, "setLogFiles", mcat.getMessage("EW0008", n_LogFiles, MAX_LOG_FILES));
+			throw new LogException(mcat.getMessage("EW0008", n_LogFiles, MAX_LOG_FILES));
 		}
 		anchor.n_LogGroups = (short) n_LogGroups;
 		anchor.n_LogFiles = n_LogFiles;
@@ -866,10 +887,11 @@ public final class LogManagerImpl implements LogManager {
 	private LogAnchor readLogAnchor(StorageContainer container) {
 		int n;
 		long checksum;
-		byte bufh[] = new byte[(Integer.SIZE / Byte.SIZE) + (Long.SIZE / Byte.SIZE)];
+		byte bufh[] = new byte[TypeSize.INTEGER + TypeSize.LONG];
 		long position = 0;
 		if (container.read(position, bufh, 0, bufh.length) != bufh.length) {
-			throw new LogException("SIMPLEDBM-ELOG-006: Error occured while reading Log Anchor header information");
+			logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat.getMessage("EW0009"));
+			throw new LogException(mcat.getMessage("EW0009"));
 		}
 		position += bufh.length;
 		ByteBuffer bh = ByteBuffer.wrap(bufh);
@@ -877,11 +899,13 @@ public final class LogManagerImpl implements LogManager {
 		checksum = bh.getLong();
 		byte bufb[] = new byte[n];
 		if (container.read(position, bufb, 0, n) != n) {
-			throw new LogException("SIMPLEDBM-ELOG-007: Error occurred while reading Log Anchor body");
+			logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat.getMessage("EW0010"));
+			throw new LogException(mcat.getMessage("EW0010"));
 		}
 		long newChecksum = ChecksumCalculator.compute(bufb, 0, n);
 		if (newChecksum != checksum) {
-			throw new LogException("SIMPLEDBM-ELOG-008: Error occurred while validating a Log Anchor - checksums do not match");
+			logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat.getMessage("EW0011"));
+			throw new LogException(mcat.getMessage("EW0011"));
 		}
 		ByteBuffer bb = ByteBuffer.wrap(bufb);
 		LogAnchor anchor = new LogAnchor();
@@ -895,8 +919,9 @@ public final class LogManagerImpl implements LogManager {
 	 * @param filename
 	 */
 	private void createLogAnchor(String filename) {
-		logger.debug(LOG_CLASS_NAME, "createLogAnchor", "SIMPLEDBM: Creating log control file " + filename);
-
+		if (logger.isDebugEnabled()) {
+			logger.debug(LOG_CLASS_NAME, "createLogAnchor", "SIMPLEDBM-DEBUG: Creating log control file " + filename);
+		}
 		StorageContainer file = null;
 		try {
 			file = storageFactory.create(filename);
@@ -933,7 +958,7 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	private void updateLogAnchor(StorageContainer container, ByteBuffer bb) {
 		long checksum = ChecksumCalculator.compute(bb.array(), 0, bb.limit());
-		ByteBuffer bh = ByteBuffer.allocate((Integer.SIZE / Byte.SIZE) + (Long.SIZE / Byte.SIZE));
+		ByteBuffer bh = ByteBuffer.allocate(TypeSize.INTEGER + TypeSize.LONG);
 		bh.putInt(bb.limit());
 		bh.putLong(checksum);
 		bh.flip();
@@ -966,7 +991,9 @@ public final class LogManagerImpl implements LogManager {
 	 */
 	private void createLogFile(String filename, LogFileHeader header) {
 
-		logger.debug(LOG_CLASS_NAME, "createLogFile", "SIMPLEDBM: Creating log file " + filename);
+		if (logger.isDebugEnabled()) {
+			logger.debug(LOG_CLASS_NAME, "createLogFile", "SIMPLEDBM-DEBUG: Creating log file " + filename);
+		}
 
 		StorageContainer file = null;
 		int buflen = 8192;
@@ -1064,12 +1091,14 @@ public final class LogManagerImpl implements LogManager {
 		files[groupno][fileno] = storageFactory.open(anchor.groups[groupno].files[fileno].toString());
 		if (anchor.fileStatus[fileno] != LOG_FILE_UNUSED) {
 			if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
-				throw new LogException("SIMPLEDBM-ELOG-009: Error occurred while reading a Log File header record");
+				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage("EW0012", anchor.groups[groupno].files[fileno].toString()));
+				throw new LogException(mcat.getMessage("EW0012", anchor.groups[groupno].files[fileno].toString()));
 			}
 			ByteBuffer bh = ByteBuffer.wrap(bufh);
 			fh.retrieve(bh);
 			if (fh.id != LOG_GROUP_IDS[groupno] || fh.index != anchor.logIndexes[fileno]) {
-				throw new LogException("SIMPLEDBM-ELOG-010: Error while opening a Log File - header is corrupted");
+				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage("EW0013", anchor.groups[groupno].files[fileno].toString()));
+				throw new LogException(mcat.getMessage("EW0013", anchor.groups[groupno].files[fileno].toString()));
 			}
 		}
 	}
@@ -1097,8 +1126,7 @@ public final class LogManagerImpl implements LogManager {
 					try {
 						files[i][j].close();
 					} catch (Exception e) {
-						// TODO proper exception handling
-						e.printStackTrace();
+						logger.error(LOG_CLASS_NAME, "closeLogFiles", mcat.getMessage("EW0014"), e);
 					}
 					files[i][j] = null;
 				}
@@ -1128,9 +1156,8 @@ public final class LogManagerImpl implements LogManager {
 			if (ctlFiles[i] != null) {
 				try {
 					ctlFiles[i].close();
-				} catch (StorageException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+				} catch (Exception e) {
+					logger.error(LOG_CLASS_NAME, "closeCtlFiles", mcat.getMessage("EW0015"), e);
 				}
 				ctlFiles[i] = null;
 			}
@@ -1176,7 +1203,8 @@ public final class LogManagerImpl implements LogManager {
 
 	private void assertIsOpen() {
 		if (!started || errored) {
-			throw new LogException("SIMPLEDBM-ELOG-011: Log file is not open or has encountered errors.");
+			logger.error(LOG_CLASS_NAME, "assertIsOpen", mcat.getMessage("EW0016"));
+			throw new LogException(mcat.getMessage("EW0016"));
 		}
 	}
 
@@ -1231,9 +1259,9 @@ public final class LogManagerImpl implements LogManager {
 		ArchiveRequest arec = new ArchiveRequest();
 		anchorLock.lock();
 		try {
-			if (anchor.fileStatus[anchor.currentLogFile] != LOG_FILE_CURRENT) { 
-				throw new LogException(Thread.currentThread().getName() + ":ERROR - UNEXPECTED LOG FILE STATUS OF " + anchor.currentLogFile + " STATUS=" + anchor.fileStatus[anchor.currentLogFile]);
-				// assert anchor.fileStatus[anchor.currentLogFile] == LOG_FILE_CURRENT;
+			if (anchor.fileStatus[anchor.currentLogFile] != LOG_FILE_CURRENT) {
+				logger.error(LOG_CLASS_NAME, "logSwitch", mcat.getMessage("EW0017", anchor.currentLogFile, anchor.fileStatus[anchor.currentLogFile]));
+				throw new LogException(mcat.getMessage("EW0017", anchor.currentLogFile, anchor.fileStatus[anchor.currentLogFile]));
 			}
 
 			// System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + anchor.currentLogFile + " CHANGED TO FULL");
@@ -1403,7 +1431,7 @@ public final class LogManagerImpl implements LogManager {
 					// Get the oldest log buffer
 					buf = logBuffers.getFirst();
 					if (logger.isDebugEnabled()) {
-						logger.debug(LOG_CLASS_NAME, "handleFlushRequest_", "SIMPLEDBM: Flushing Log Buffer " + buf);
+						logger.debug(LOG_CLASS_NAME, "handleFlushRequest_", "SIMPLEDBM-DEBUG: Flushing Log Buffer " + buf);
 					}
 					// Did we flush all available records?
 					boolean flushedAllRecs = true;
@@ -2905,10 +2933,22 @@ public final class LogManagerImpl implements LogManager {
 		}
 	}
 
+	/**
+	 * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
+	 * Log flushes still happen during log switches or when there is a checkpoint.
+	 * This option can improve performance at the expense of lost transactions after recovery.
+	 */
 	public void setDisableExplicitFlushRequests(boolean disableExplicitFlushRequests) {
 		this.disableExplicitFlushRequests = disableExplicitFlushRequests;
 	}
 
-
+	/**
+	 * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
+	 * Log flushes still happen during log switches or when there is a checkpoint.
+	 * This option can improve performance at the expense of lost transactions after recovery.
+	 */
+	public boolean getDisableExplicitFlushRequests() {
+		return disableExplicitFlushRequests;
+	}
 	
 }

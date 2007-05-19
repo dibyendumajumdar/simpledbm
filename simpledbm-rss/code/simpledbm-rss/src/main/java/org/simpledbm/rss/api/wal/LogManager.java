@@ -111,8 +111,6 @@ public interface LogManager {
 	 * that this is reliably recorded on disk.
 	 * @param lsn LSN of the Checkpoint log record.
 	 */
-	void setCheckpointLsn(Lsn lsn);
-
 	void setCheckpointLsn(Lsn lsn, Lsn oldestInterestingLsn);
 	
 	/**

@@ -101,6 +101,23 @@ public class MessageCatalog {
 		msgs.put("EV0003", "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
 		msgs.put("EV0004", "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
 		msgs.put("EV0005", "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
+		msgs.put("EW0001", "SIMPLEDBM-EW0001: Log record is {0} bytes whereas maximum allowed log record size is {0}");
+		msgs.put("EW0002", "SIMPLEDBM-EW0002: Unexpected error ocurred while attempting to insert a log record");
+		msgs.put("EW0003", "SIMPLEDBM-EW0003: Log is already open or has encountered an error");
+		msgs.put("EW0004", "SIMPLEDBM-EW0004: Unexpected error occurred during shutdown");
+		msgs.put("EW0005", "SIMPLEDBM-EW0005: Unexpected error occurred");
+		msgs.put("EW0006", "SIMPLEDBM-EW0006: Specified number of log control files {0} exceeds the maximum limit of {1}");
+		msgs.put("EW0007", "SIMPLEDBM-EW0007: Specified number of log groups {0} exceeds the maximum limit of {1}");
+		msgs.put("EW0008", "SIMPLEDBM-EW0008: Specified number of log files {0} exceeds the maximum limit of {1}");
+		msgs.put("EW0009", "SIMPLEDBM-EW0009: Error occured while reading Log Anchor header information");
+		msgs.put("EW0010", "SIMPLEDBM-EW0010: Error occurred while reading Log Anchor body");
+		msgs.put("EW0011", "SIMPLEDBM-EW0011: Error occurred while validating Log Anchor - checksums do not match");
+		msgs.put("EW0012", "SIMPLEDBM-EW0012: Error occurred while reading header record for Log File {0}");
+		msgs.put("EW0013", "SIMPLEDBM-EW0013: Error occurred while opening Log File {0} - header is corrupted");
+		msgs.put("EW0014", "SIMPLEDBM-EW0014: Unexpected error occurred while closing Log File");
+		msgs.put("EW0015", "SIMPLEDBM-EW0015: Unexpected error occurred while closing Control File");
+		msgs.put("EW0016", "SIMPLEDBM-EW0016: Log file is not open or has encountered errors");
+		msgs.put("EW0017", "SIMPLEDBM-EW0017: Log file {0} has unexpected status {1}");
 	}
 	
 	public String getMessage(String key) {
@@ -108,7 +125,7 @@ public class MessageCatalog {
 		if (s != null) {
 			return s;
 		}		
-		return "U9999: Unknown message";
+		return "SIMPLEDBM-U9999: Unknown message key - " + key;
 	}
 	
 	public String getMessage(String key, Object ...args) {
@@ -116,6 +133,6 @@ public class MessageCatalog {
 		if (s != null) {
 			return MessageFormat.format(s, args);
 		}
-		return "U9999: Unknown message";
+		return "SIMPLEDBM-U9999: Unknown message key - " + key;
 	}
 }
