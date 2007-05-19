@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.util.mcat;
 
+import java.text.MessageFormat;
 import java.util.HashMap;
 
 /**
@@ -93,17 +94,27 @@ public class MessageCatalog {
 		msgs.put("EB0010", "SIMPLEDBM-EB0010: Supplied index item not setup as leaf: ");
 		msgs.put("WB0011", "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
 		msgs.put("EB0012", "SIMPLEDBM-EB0012: Unexpected error - exception caught");
-		
+		msgs.put("EU0001", "SIMPLEDBM-EU0001: Unable to obtain classloader");
+		msgs.put("EU0002", "SIMPLEDBM-EU0002: Unable to load resource {0}");
+		msgs.put("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server startup completed");
+		msgs.put("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server shutdown completed");
+		msgs.put("EV0003", "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
+		msgs.put("EV0004", "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
 	}
 	
 	public String getMessage(String key) {
-		
 		String s = msgs.get(key);
 		if (s != null) {
 			return s;
-		}
-		
+		}		
 		return "U9999: Unknown message";
 	}
 	
+	public String getMessage(String key, Object ...args) {
+		String s = msgs.get(key);
+		if (s != null) {
+			return MessageFormat.format(s, args);
+		}
+		return "U9999: Unknown message";
+	}
 }

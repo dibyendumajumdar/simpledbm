@@ -54,8 +54,6 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     
     @Override
 	public String toString() {
-        if (bytes == null)
-            return "";
         try {
 			return new String(bytes, "UTF-8");
 		} catch (UnsupportedEncodingException e) {

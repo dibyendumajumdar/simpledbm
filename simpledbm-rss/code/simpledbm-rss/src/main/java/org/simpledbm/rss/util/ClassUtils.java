@@ -26,7 +26,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Various Class Loader utilities. 
@@ -37,6 +39,8 @@ public final class ClassUtils {
 
 	private static final String LOG_CLASS_NAME = ClassUtils.class.getName();
 	private static final Logger log = Logger.getLogger(ClassUtils.class.getPackage().getName());
+	
+	static final MessageCatalog mcat = new MessageCatalog();
 
 	/**
 	 * Get the ClassLoader to use. We always use the current Thread's
@@ -46,7 +50,7 @@ public final class ClassUtils {
 	private static ClassLoader getClassLoader() {
 	    ClassLoader cl = Thread.currentThread().getContextClassLoader();
 	    if (cl == null) {
-	        throw new NullPointerException();
+	        throw new RSSException(mcat.getMessage("EU0001"));
 	    }
 	    return cl;
 	}
@@ -63,7 +67,7 @@ public final class ClassUtils {
 		ClassLoader cl = getClassLoader();
 		Class clazz = null;
 		if (log.isDebugEnabled()) {
-		    log.debug(LOG_CLASS_NAME, "forName", "SIMPLEDBM: Loading class " + name + " using ClassLoader " + cl.toString());
+		    log.debug(LOG_CLASS_NAME, "forName", "SIMPLEDBM-DEBUG: Loading class " + name + " using ClassLoader " + cl.toString());
 		}
 		clazz = Class.forName(name, true, cl);
 		return clazz;
@@ -80,10 +84,10 @@ public final class ClassUtils {
 	    InputStream is = null;
         is = cl.getResourceAsStream(name);
 	    if (is == null) {
-	        throw new IOException("Unable to load "+ " " + name);
+	        throw new IOException(mcat.getMessage("EU0002", name));
 	    }
 	    if (log.isDebugEnabled()) {
-		    log.debug(LOG_CLASS_NAME, "getResourceAsStream", "SIMPLEDBM: Opened resource " + name);
+		    log.debug(LOG_CLASS_NAME, "getResourceAsStream", "SIMPLEDBM-DEBUG: Opened resource " + name);
 	    }
 	    return is;
 	}
@@ -100,12 +104,17 @@ public final class ClassUtils {
 	    InputStream is = null;
         is = cl.getResourceAsStream(name);
 	    if (is == null) {
-	        throw new IOException("Unable to load "+ " " + name);
+	        throw new IOException(mcat.getMessage("EU0002", name));
 	    }
-	    Properties props = new Properties();
-	    props.load(is);
+    	Properties props = new Properties();
+	    try {
+	    	props.load(is);
+	    }
+	    finally {
+	    	is.close();
+	    }
 	    if (log.isDebugEnabled()) {
-		    log.debug(LOG_CLASS_NAME, "getResourceAsProperties", "SIMPLEDBM: Loaded properties = " + props + " from resource " + name);
+		    log.debug(LOG_CLASS_NAME, "getResourceAsProperties", "SIMPLEDBM-DEBUG: Loaded properties = " + props + " from resource " + name);
 	    }
 	    return props;
 	}

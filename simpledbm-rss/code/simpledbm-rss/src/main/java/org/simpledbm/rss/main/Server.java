@@ -3,6 +3,7 @@ package org.simpledbm.rss.main;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
@@ -18,8 +19,8 @@ import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tuple.TupleManager;
 import org.simpledbm.rss.api.tx.LoggableFactory;
-import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.TransactionManager;
+import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.impl.bm.BufferManagerImpl;
@@ -34,10 +35,11 @@ import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
 import org.simpledbm.rss.impl.tuple.TupleManagerImpl;
 import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
-import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
+import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * A Server instance encapsulates all the modules that comprise the RSS. 
@@ -72,7 +74,23 @@ public class Server {
     final FreeSpaceManager spaceManager;
     final IndexManager indexManager;
     final TupleManager tupleManager;
+    
+    final static MessageCatalog mcat = new MessageCatalog();
+    
+    boolean started = false;
 	
+    private void assertNotStarted() {
+    	if (started) {
+    		throw new RSSException(mcat.getMessage("EV0003"));
+    	}
+    }
+
+    private void assertStarted() {
+    	if (!started) {
+    		throw new RSSException(mcat.getMessage("EV0004"));
+    	}
+    }
+ 
 	/**
 	 * Creates a new RSS Server instance. An RSS Server instance contains at least a 
 	 * LOG instance, and a VIRTUAL TABLE called dual. 
@@ -82,13 +100,13 @@ public class Server {
 	public static void create(Properties props) {
 		Server server = new Server(props);
 		final LogFactory logFactory = new LogFactoryImpl();
-		logFactory.createLog(server.getStorageFactory(), props);
+		logFactory.createLog(server.storageFactory, props);
 		// SimpleDBM components expect a virtual container to exist with
 		// a container ID of 1. This container must have at least one page.
-		StorageContainer sc = server.getStorageFactory().create(VIRTUAL_TABLE);
-		server.getStorageManager().register(VIRTUAL_TABLE_CONTAINER_ID, sc);
-		Page page = server.getPageFactory().getInstance(server.getPageFactory().getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
-		server.getPageFactory().store(page);
+		StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
+		server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
+		Page page = server.pageFactory.getInstance(server.pageFactory.getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
+		server.pageFactory.store(page);
 		// We start the server so that a checkpoint can be taken which will
 		// ensure that the VIRTUAL_TABLE is automatically opened at system startup.
 		server.start();
@@ -107,7 +125,7 @@ public class Server {
 	 */
 	public Server(Properties props) {
 
-		String logProperties = props.getProperty("logging.properties.file", "logging.properties");
+		String logProperties = props.getProperty("logging.properties.file", "classpath:logging.properties");
 		Logger.configure(logProperties);
 		
 		final LogFactory logFactory = new LogFactoryImpl();
@@ -145,12 +163,14 @@ public class Server {
 	 * @see BufferManager#start()
 	 * @see TransactionManager#start()
 	 */
-	public void start() {
-		getLockManager().start();
-		getLogManager().start();
-		getBufferManager().start();
-		getTransactionManager().start();
-		log.info(LOG_CLASS_NAME, "start", "SIMPLEDBM-LOG: RSS Server started.");
+	public synchronized void start() {
+		assertNotStarted();
+		lockManager.start();
+		logManager.start();
+		bufferManager.start();
+		transactionManager.start();
+		log.info(LOG_CLASS_NAME, "start", mcat.getMessage("IV0001"));
+		started = true;
 	}
 	
 	/**
@@ -167,72 +187,88 @@ public class Server {
 	 * @see LogManager#shutdown()
 	 * @see StorageManager#shutdown()
 	 */
-	public void shutdown() {
-		getTransactionManager().shutdown();
-		getBufferManager().shutdown();
-		getLogManager().shutdown();
-		getStorageManager().shutdown();
-		getLockManager().shutdown();
-		log.info(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-LOG: RSS Server shutdown completed.");
+	public synchronized void shutdown() {
+		assertStarted();
+		transactionManager.shutdown();
+		bufferManager.shutdown();
+		logManager.shutdown();
+		storageManager.shutdown();
+		lockManager.shutdown();
+		log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
 	}
 
-	public final IndexManager getIndexManager() {
+	public synchronized  final IndexManager getIndexManager() {
+		assertStarted();
 		return indexManager;
 	}
 
-	public final BufferManager getBufferManager() {
+	public synchronized  final BufferManager getBufferManager() {
+		assertStarted();
 		return bufferManager;
 	}
 
-	public final LatchFactory getLatchFactory() {
+	public synchronized  final LatchFactory getLatchFactory() {
+		assertStarted();
 		return latchFactory;
 	}
 
-	public final LockManager getLockManager() {
+	public synchronized  final LockManager getLockManager() {
+		assertStarted();
 		return lockManager;
 	}
 
-	public final LoggableFactory getLoggableFactory() {
+	public synchronized  final LoggableFactory getLoggableFactory() {
+		assertStarted();
 		return loggableFactory;
 	}
 
-	public final LogManager getLogManager() {
+	public synchronized  final LogManager getLogManager() {
+		assertStarted();
 		return logManager;
 	}
 
-	public final TransactionalModuleRegistry getModuleRegistry() {
+	public synchronized  final TransactionalModuleRegistry getModuleRegistry() {
+		assertStarted();
 		return moduleRegistry;
 	}
 
-	public final ObjectRegistry getObjectRegistry() {
+	public synchronized  final ObjectRegistry getObjectRegistry() {
+		assertStarted();
 		return objectRegistry;
 	}
 
-	public final PageFactory getPageFactory() {
+	public synchronized  final PageFactory getPageFactory() {
+		assertStarted();
 		return pageFactory;
 	}
 
-	public final FreeSpaceManager getSpaceManager() {
+	public synchronized  final FreeSpaceManager getSpaceManager() {
+		assertStarted();
 		return spaceManager;
 	}
 
-	public final SlottedPageManager getSlottedPageManager() {
+	public synchronized  final SlottedPageManager getSlottedPageManager() {
+		assertStarted();
 		return slottedPageManager;
 	}
 
-	public final StorageContainerFactory getStorageFactory() {
+	public synchronized  final StorageContainerFactory getStorageFactory() {
+		assertStarted();
 		return storageFactory;
 	}
 
-	public final StorageManager getStorageManager() {
+	public  synchronized final StorageManager getStorageManager() {
+		assertStarted();
 		return storageManager;
 	}
 
-	public final TransactionManager getTransactionManager() {
+	public synchronized  final TransactionManager getTransactionManager() {
+		assertStarted();
 		return transactionManager;
 	}
 
-	public final TupleManager getTupleManager() {
+	public synchronized final TupleManager getTupleManager() {
+		assertStarted();
 		return tupleManager;
 	}
 }
