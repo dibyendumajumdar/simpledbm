@@ -57,6 +57,7 @@ public class Server {
 	private static Logger log = Logger.getLogger(Server.class.getPackage().getName());
 	
 	public static final String VIRTUAL_TABLE = "_internal/dual";
+	public static final String LOCK_TABLE = "_internal/lock";
 	public static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
 	
     final ObjectRegistry objectRegistry;
@@ -76,6 +77,7 @@ public class Server {
     final TupleManager tupleManager;
     
     final static MessageCatalog mcat = new MessageCatalog();
+    StorageContainer lock;
     
     boolean started = false;
 	
@@ -103,6 +105,7 @@ public class Server {
 		logFactory.createLog(server.storageFactory, props);
 		// SimpleDBM components expect a virtual container to exist with
 		// a container ID of 0. This container must have at least one page.
+		server.storageFactory.create(LOCK_TABLE).close();
 		StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
 		server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
 		Page page = server.pageFactory.getInstance(server.pageFactory.getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
@@ -166,6 +169,8 @@ public class Server {
 	 */
 	public synchronized void start() {
 		assertNotStarted();
+		lock = storageFactory.open(LOCK_TABLE);
+		lock.lock();
 		lockManager.start();
 		logManager.start();
 		bufferManager.start();
@@ -196,6 +201,8 @@ public class Server {
 		logManager.shutdown();
 		storageManager.shutdown();
 		lockManager.shutdown();
+		lock.unlock();
+		lock.close();
 		log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
 	}
 
