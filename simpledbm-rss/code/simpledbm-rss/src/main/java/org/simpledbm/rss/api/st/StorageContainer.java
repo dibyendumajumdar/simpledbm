@@ -68,6 +68,16 @@ public interface StorageContainer {
     void flush();
     
     /**
+     * Locks the container excluisvely at the operating system level.
+     */
+    void lock();
+
+    /**
+     * Releases lock on the container. 
+     */
+    void unlock();
+    
+    /**
      * Closes the container. A container cannot be used after it has been closed.
      *
      * @throws StorageException Thrown if there is an error while closing the container.
