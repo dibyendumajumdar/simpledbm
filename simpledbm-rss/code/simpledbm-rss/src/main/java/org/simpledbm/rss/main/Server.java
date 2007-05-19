@@ -16,6 +16,7 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
+import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tuple.TupleManager;
 import org.simpledbm.rss.api.tx.LoggableFactory;
@@ -56,30 +57,30 @@ public class Server {
 	private static String LOG_CLASS_NAME = Server.class.getName();
 	private static Logger log = Logger.getLogger(Server.class.getPackage().getName());
 	
-	public static final String VIRTUAL_TABLE = "_internal/dual";
-	public static final String LOCK_TABLE = "_internal/lock";
-	public static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
+	private static final String VIRTUAL_TABLE = "_internal/dual";
+	private static final String LOCK_TABLE = "_internal/lock";
+	private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
 	
-    final ObjectRegistry objectRegistry;
-    final StorageContainerFactory storageFactory;
-    final StorageManager storageManager;
-    final LatchFactory latchFactory;
-    final PageFactory pageFactory;
-    final SlottedPageManager slottedPageManager;
-    final LockManager lockManager;
-    final LogManager logManager;
-    final BufferManager bufferManager;
-    final LoggableFactory loggableFactory;
-    final TransactionalModuleRegistry moduleRegistry;
-	final TransactionManager transactionManager;
-    final FreeSpaceManager spaceManager;
-    final IndexManager indexManager;
-    final TupleManager tupleManager;
+    final private ObjectRegistry objectRegistry;
+    final private StorageContainerFactory storageFactory;
+    final private StorageManager storageManager;
+    final private LatchFactory latchFactory;
+    final private PageFactory pageFactory;
+    final private SlottedPageManager slottedPageManager;
+    final private LockManager lockManager;
+    final private LogManager logManager;
+    final private BufferManager bufferManager;
+    final private LoggableFactory loggableFactory;
+    final private TransactionalModuleRegistry moduleRegistry;
+	final private TransactionManager transactionManager;
+    final private FreeSpaceManager spaceManager;
+    final private IndexManager indexManager;
+    final private TupleManager tupleManager;
     
-    final static MessageCatalog mcat = new MessageCatalog();
-    StorageContainer lock;
+    final private static MessageCatalog mcat = new MessageCatalog();
+    private StorageContainer lock;
     
-    boolean started = false;
+    private boolean started = false;
 	
     private void assertNotStarted() {
     	if (started) {
@@ -95,11 +96,14 @@ public class Server {
  
 	/**
 	 * Creates a new RSS Server instance. An RSS Server instance contains at least a 
-	 * LOG instance, and a VIRTUAL TABLE called dual. 
+	 * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
+	 * any existing database on the same path, hence caller needs to be sure that the
+	 * intention is to create a new database.  
 	 * @see LogFactory#createLog(Properties)
 	 * @see LogFactory
 	 */
 	public static void create(Properties props) {
+		// TODO Need to ensure that we do not overwrite an existing database without warning
 		Server server = new Server(props);
 		final LogFactory logFactory = new LogFactoryImpl();
 		logFactory.createLog(server.storageFactory, props);
@@ -154,12 +158,15 @@ public class Server {
 	/**
 	 * Starts the Server instance. This results in following actions:
 	 * <ol>
-	 * <li>The Log instance is opened. This starts the background threads that manage log writes.</li>
-	 * <li>The Buffer Manager instance is started. This starts up the Buffer Writer thread.</li>
+	 * <li>The Lock Manager is started. This enables background thread for deadlock detection.</li>
+	 * <li>The Log instance is opened. This starts the background threads that manage log writes and log archiving.</li>
+	 * <li>The Buffer Manager instance is started. This starts up the background Buffer Writer thread.</li>
 	 * <li>The Transaction Manager is started. This initiates restart recovery, and also starts the
 	 *     Checkpoint thread.</li>
 	 * </ol>
 	 * <p>
+	 * To prevent two server instances running concurrently on the same path, a lock file is used.
+	 * If a server is already running on the specified path, the start() will fail with an exception.
 	 * FIXME: Exception signature needs to be fixed.
 	 * 
 	 * @see LockManager#start()
@@ -169,8 +176,31 @@ public class Server {
 	 */
 	public synchronized void start() {
 		assertNotStarted();
-		lock = storageFactory.open(LOCK_TABLE);
-		lock.lock();
+		boolean lockObtained = false;
+		/*
+		 * We have to carefully handle locks - so that
+		 * a) We do not overwrite the exiting lock object in case server has been erroneously started second time
+		 * b) We do not leave file handle open if the lock fails
+		 */
+		StorageContainer lock = null;
+		try {
+			lock = storageFactory.open(LOCK_TABLE);
+			lock.lock();
+			lockObtained = true;
+		} catch (StorageException e) {
+			log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e.getMessage());
+			throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
+		}
+		finally {
+			if (!lockObtained) {
+				if (lock != null) {
+					lock.close();
+				}
+			}
+			else {
+				this.lock = lock;
+			}
+		}
 		lockManager.start();
 		logManager.start();
 		bufferManager.start();

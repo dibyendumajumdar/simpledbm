@@ -137,7 +137,10 @@ public final class FileStorageContainer implements StorageContainer {
 		}
 		try {
 			FileChannel channel = file.getChannel();
-			lock = channel.lock();
+			lock = channel.tryLock();
+			if (lock == null) {
+				throw new StorageException("Lock cannot be obtained");
+			}
 		}
 		catch (IOException e) {
 			throw new StorageException(e);

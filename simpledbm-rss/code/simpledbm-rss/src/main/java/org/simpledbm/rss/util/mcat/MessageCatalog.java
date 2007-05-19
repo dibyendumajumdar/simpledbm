@@ -100,6 +100,7 @@ public class MessageCatalog {
 		msgs.put("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server shutdown completed");
 		msgs.put("EV0003", "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
 		msgs.put("EV0004", "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
+		msgs.put("EV0005", "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
 	}
 	
 	public String getMessage(String key) {
