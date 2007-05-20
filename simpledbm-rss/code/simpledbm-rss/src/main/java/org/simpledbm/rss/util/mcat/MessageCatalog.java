@@ -109,7 +109,7 @@ public class MessageCatalog {
 		msgs.put("EW0006", "SIMPLEDBM-EW0006: Specified number of log control files {0} exceeds the maximum limit of {1}");
 		msgs.put("EW0007", "SIMPLEDBM-EW0007: Specified number of log groups {0} exceeds the maximum limit of {1}");
 		msgs.put("EW0008", "SIMPLEDBM-EW0008: Specified number of log files {0} exceeds the maximum limit of {1}");
-		msgs.put("EW0009", "SIMPLEDBM-EW0009: Error occured while reading Log Anchor header information");
+		msgs.put("EW0009", "SIMPLEDBM-EW0009: Error occurred while reading Log Anchor header information");
 		msgs.put("EW0010", "SIMPLEDBM-EW0010: Error occurred while reading Log Anchor body");
 		msgs.put("EW0011", "SIMPLEDBM-EW0011: Error occurred while validating Log Anchor - checksums do not match");
 		msgs.put("EW0012", "SIMPLEDBM-EW0012: Error occurred while reading header record for Log File {0}");
@@ -118,6 +118,17 @@ public class MessageCatalog {
 		msgs.put("EW0015", "SIMPLEDBM-EW0015: Unexpected error occurred while closing Control File");
 		msgs.put("EW0016", "SIMPLEDBM-EW0016: Log file is not open or has encountered errors");
 		msgs.put("EW0017", "SIMPLEDBM-EW0017: Log file {0} has unexpected status {1}");
+		msgs.put("EW0018", "SIMPLEDBM-EW0018: Unexpected error occurred");
+		msgs.put("EW0019", "SIMPLEDBM-EW0019: Error occurred while attempting to archive Log File");
+		msgs.put("EW0020", "SIMPLEDBM-EW0020: Error occurred while processing archive request - expected request {0} but got {1}");
+		msgs.put("EW0021", "SIMPLEDBM-EW0021: Error occurred while reading Log Record {0} - checksum mismatch");
+		msgs.put("EW0022", "SIMPLEDBM-EW0022: Error occurred while reading Log Record {0} - invalid log index");
+		msgs.put("EW0023", "SIMPLEDBM-EW0023: Error occurred while reading Log Record {0} - log header cannot be read");
+		msgs.put("EW0024", "SIMPLEDBM-EW0024: Log Record {0} has invalid length {1} - possibly garbage");
+		msgs.put("EW0025", "SIMPLEDBM-EW0025: Error occurred while reading Log Record {0} - read error");
+		msgs.put("EW0026", "SIMPLEDBM-EW0026: Error occurred while flushing the Log");
+		msgs.put("EW0027", "SIMPLEDBM-EW0027: Error occurred while archiving a Log File");
+		
 	}
 	
 	public String getMessage(String key) {

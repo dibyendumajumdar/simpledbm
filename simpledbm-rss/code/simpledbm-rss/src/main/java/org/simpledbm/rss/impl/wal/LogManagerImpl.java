@@ -1280,7 +1280,8 @@ public final class LogManagerImpl implements LogManager {
 		try {
 			logFilesSemaphore.acquire();
 		} catch (InterruptedException e) {
-			throw new LogException("SIMPLEDBM-ELOG-999: Unexpected error occurred.", e);
+			logger.error(LOG_CLASS_NAME, "logSwitch", mcat.getMessage("EW0018"), e);
+			throw new LogException(mcat.getMessage("EW0018"), e);
 		}
 
 		ByteBuffer bb = null;
@@ -1311,7 +1312,8 @@ public final class LogManagerImpl implements LogManager {
 					//for (int j = 0; j < anchor.n_LogFiles; j++) {
 					//	System.err.println("FileStatus[" + j + "]=" + anchor.fileStatus[j]);
 					//}
-					throw new LogException("SIMPLEDBM-ELOG-999: Unexpected error occurred.");
+					logger.error(LOG_CLASS_NAME, "logSwitch", mcat.getMessage("EW0018"));
+					throw new LogException(mcat.getMessage("EW0018"));
 				} else {
 					anchor.currentLogIndex++;
 					//System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + next_log_file + " CHANGED TO CURRENT");
@@ -1601,7 +1603,8 @@ public final class LogManagerImpl implements LogManager {
 				n = files[0][f].read(position, buf, 0, buf.length);
 			}
 			if (position != anchor.logFileSize) {
-				throw new LogException("SIMPLEDBM-ELOG-012: Error occurred while attempting to archive Log File.");
+				logger.error(LOG_CLASS_NAME, "archiveLogFile", mcat.getMessage("EW0019"));
+				throw new LogException(mcat.getMessage("EW0019"));
 			}
 			archive.flush();
 		} finally {
@@ -1629,9 +1632,9 @@ public final class LogManagerImpl implements LogManager {
 			}
 			else {
 				if (request.logIndex != lastArchivedFile + 1) {
-					//System.err.println("FATAL ERROR - expected " + (lastArchivedFile + 1) + ", but got " + request.logIndex);
 					this.errored = true;
-					throw new LogException();
+					logger.error(LOG_CLASS_NAME, "handleNextArchiveRequest", mcat.getMessage("EW0020", lastArchivedFile + 1, request.logIndex));
+					throw new LogException(mcat.getMessage("EW0020", lastArchivedFile + 1, request.logIndex));
 				}
 				lastArchivedFile = request.logIndex;
 			}
@@ -1736,7 +1739,8 @@ public final class LogManagerImpl implements LogManager {
 		long ck = ChecksumCalculator.compute(bb.array(), offset, bb.position() - offset);
 		long checksum = bb.getLong();
 		if (!lsn.equals(readLsn) || checksum != ck) {
-			throw new LogException("SIMPLEDBM-ELOG-013: Error occurred while reading Log Record - checksum mismatch.");
+			logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0021", readLsn));
+			throw new LogException(mcat.getMessage("EW0021", readLsn));
 		}
 		return logrec;
 	}
@@ -1807,7 +1811,8 @@ public final class LogManagerImpl implements LogManager {
 							}
 						}
 						if (fileno == -1) {
-							throw new LogException("SIMPLEDBM-ELOG-014: Invalid Log File in Log Read request.");
+							logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0022", lsn));
+							throw new LogException(mcat.getMessage("EW0022", lsn));
 						}
 						/*
 						 * Try to obtain a read lock on the file without
@@ -1841,19 +1846,22 @@ public final class LogManagerImpl implements LogManager {
 				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
 				int n = container.read(position, lbytes, 0, lbytes.length);
 				if (n != lbytes.length) {
-					throw new LogException("SIMPLEDBM-ELOG-015: Error occurred while reading Log Record header.");
+					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0023", lsn));
+					throw new LogException(mcat.getMessage("EW0023", lsn));
 				}
 				position += lbytes.length;
 				ByteBuffer bb = ByteBuffer.wrap(lbytes);
 				int length = bb.getInt();
 				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-					throw new LogException("SIMPLEDBM-ELOG-016: Log Record at LSN " + lsn + " has invalid length, possibly garbage data");
+					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0024", lsn, length));
+					throw new LogException(mcat.getMessage("EW0024", lsn, length));
 				}
 				byte[] bytes = new byte[length];
 				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
 				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
 				if (n != (bytes.length - lbytes.length)) {
-					throw new LogException("SIMPLEDBM-ELOG-017: Error occurred while reading Log Record");
+					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0025", lsn));
+					throw new LogException(mcat.getMessage("EW0025", lsn));
 				}
 				bb = ByteBuffer.wrap(bytes);
 				return doRead(lsn, bb);
@@ -1887,19 +1895,22 @@ public final class LogManagerImpl implements LogManager {
 				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
 				int n = container.read(position, lbytes, 0, lbytes.length);
 				if (n != lbytes.length) {
-					throw new LogException("SIMPLEDBM-ELOG-015: Error occurred while reading Log Record header.");
+					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0023", lsn));
+					throw new LogException(mcat.getMessage("EW0023", lsn));
 				}
 				position += lbytes.length;
 				ByteBuffer bb = ByteBuffer.wrap(lbytes);
 				int length = bb.getInt();
 				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-					throw new LogException("SIMPLEDBM-ELOG-016: Log Record at LSN " + lsn + " has invalid length, possibly garbage data");
+					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0024", lsn, length));
+					throw new LogException(mcat.getMessage("EW0024", lsn, length));
 				}
 				byte[] bytes = new byte[length];
 				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
 				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
 				if (n != (bytes.length - lbytes.length)) {
-					throw new LogException("SIMPLEDBM-ELOG-017: Error occurred while reading Log Record");
+					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0025", lsn));
+					throw new LogException(mcat.getMessage("EW0025", lsn));
 				}
 				bb = ByteBuffer.wrap(bytes);
 				LogRecordImpl logrec = doRead(lsn, bb);
@@ -1908,14 +1919,6 @@ public final class LogManagerImpl implements LogManager {
 				}
 				lsn = advanceToNextRecord(lsn, calculateLogRecordSize(logrec.getDataLength()));
 			}
-		}
-		catch (StorageException e1) {
-			e1.printStackTrace();
-			throw e1;
-		}
-		catch (LogException e2) {
-			e2.printStackTrace();
-			throw e2;
 		} finally {
 			container.close();
 		}
@@ -1972,8 +1975,8 @@ public final class LogManagerImpl implements LogManager {
 		writeLogAnchor();
 	}
 
-	void logException(Exception e) {
-		e.printStackTrace();
+	void logException(String className, String methodName, String key, Exception e) {
+		logger.error(className, methodName, mcat.getMessage(key), e);
 		exceptions.add(e);
 		errored = true;
 	}
@@ -2662,7 +2665,6 @@ public final class LogManagerImpl implements LogManager {
 		/**
 		 * List of records that are mapped to this buffer.
 		 */
-		// final LinkedList<LogRecordBuffer> records;
 		final TreeMap<Lsn, LogRecordBuffer> records;
 
 		final int id = ++nextID;
@@ -2676,7 +2678,6 @@ public final class LogManagerImpl implements LogManager {
 			buffer = new byte[size];
 			position = 0;
 			remaining = size;
-			// records = new LinkedList<LogRecordBuffer>();
 			records = new TreeMap<Lsn, LogRecordBuffer>();
 		}
 
@@ -2714,7 +2715,6 @@ public final class LogManagerImpl implements LogManager {
 			bb.putLong(checksum);
 			position += reclen;
 			remaining -= reclen;
-			//records.add(rec);
 			records.put(lsn, rec);
 		}
 
@@ -2727,11 +2727,6 @@ public final class LogManagerImpl implements LogManager {
 		 *         null.
 		 */
 		LogRecordBuffer find(Lsn lsn) {
-//			for (LogRecordBuffer rec : records) {
-//				if (rec.getLsn().equals(lsn))
-//					return rec;
-//			}
-//			return null;
 			return records.get(lsn);
 		}
 
@@ -2742,19 +2737,6 @@ public final class LogManagerImpl implements LogManager {
 		 * @param lsn
 		 */
 		int contains(Lsn lsn) {
-//			LogRecordBuffer rec1 = records.getFirst();
-//			if (rec1 != null) {
-//				LogRecordBuffer rec2 = records.getLast();
-//				int rc2 = lsn.compareTo(rec2.getLsn());
-//				if (rc2 > 0) {
-//					return 1;
-//				}
-//				int rc1 = lsn.compareTo(rec1.getLsn());
-//				if (rc1 >= 0 && rc2 <= 0) {
-//					return 0;
-//				}
-//			}
-//			return -1;
 			Lsn lsn1 = records.firstKey();
 			if (lsn1 != null) {
 				Lsn lsn2 = records.lastKey();
@@ -2773,9 +2755,6 @@ public final class LogManagerImpl implements LogManager {
 		@Override
 		public String toString() {
 			if (records.size() > 0) {
-//				LogRecordBuffer rec1 = records.getFirst();
-//				LogRecordBuffer rec2 = records.getLast();
-//				return "LogBuffer(id=" + id + ", firstLsn=" + rec1.getLsn() + ", lastLsn=" + rec2.getLsn() + ")";
 				Lsn lsn1 = records.firstKey();
 				Lsn lsn2 = records.lastKey();
 				return "LogBuffer(id=" + id + ", firstLsn=" + lsn1 + ", lastLsn=" + lsn2 + ")";
@@ -2837,9 +2816,6 @@ public final class LogManagerImpl implements LogManager {
 		public int compareTo(LogRecordBuffer o) {
 			return lsn.compareTo(o.lsn);
 		}
-
-		
-		
 	}
 
 	static final class ArchiveCleaner implements Runnable {
@@ -2858,7 +2834,7 @@ public final class LogManagerImpl implements LogManager {
 				try {
 					log.storageFactory.delete(name);
 					if (logger.isDebugEnabled()) {
-						logger.debug(ArchiveCleaner.class.getName(), "run", "Removed archived log file " + name);
+						logger.debug(ArchiveCleaner.class.getName(), "run", "SIMPLEDBM-DEBUG: Removed archived log file " + name);
 					}
 					// System.err.println("REMOVED ARCHIVED LOG FILE " + name);
 				} catch (StorageException e) {
@@ -2893,8 +2869,8 @@ public final class LogManagerImpl implements LogManager {
 		public void run() {
 			try {
 				log.flush();
-			} catch (LogException e) {
-				log.logException(e);
+			} catch (Exception e) {
+				log.logException(LogWriter.class.getName(), "run", "EW0026", e);
 			}
 		}
 	}
@@ -2924,10 +2900,8 @@ public final class LogManagerImpl implements LogManager {
 		public Boolean call() {
 			try {
 				log.handleNextArchiveRequest(request);
-			} catch (StorageException e) {
-				log.logException(e);
-			} catch (LogException e) {
-				log.logException(e);
+			} catch (Exception e) {
+				log.logException(ArchiveRequestHandler.class.getName(), "call", "EW0027", e);
 			}
 			return Boolean.TRUE;
 		}
