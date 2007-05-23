@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageException;
@@ -137,7 +138,12 @@ public final class FileStorageContainer implements StorageContainer {
 		}
 		try {
 			FileChannel channel = file.getChannel();
-			lock = channel.tryLock();
+			try {
+				lock = channel.tryLock();
+			}
+			catch (OverlappingFileLockException e) {
+				// ignore this error
+			}
 			if (lock == null) {
 				throw new StorageException("Lock cannot be obtained");
 			}
