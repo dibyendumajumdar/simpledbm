@@ -929,7 +929,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * Writes dirty pages to disk. After each page is written, clients waiting
 	 * for free frames are informed so that they can try again.
 	 */
-	void writeBuffers() {
+	public void writeBuffers() {
 
 		/*
 		 * First make a list of all the dirty pages. By making a copy we avoid
@@ -1013,6 +1013,9 @@ public final class BufferManagerImpl implements BufferManager {
 					synchronized (waitingForBuffers) {
 						waitingForBuffers.notifyAll();
 					}
+				}
+				else {
+					// System.err.println("Skipping write of bcb " + bcb.pageId);
 				}
 			} finally {
 				bucket.unlock();

@@ -162,5 +162,11 @@ public interface BufferManager {
 	 * @param containerId
 	 *            ID of the container that is to be invalidated
 	 */
-    void invalidateContainer(int containerId);    
+    void invalidateContainer(int containerId);
+    
+    /**
+     * Requests that buffers be flushed to disk. Note that this is a hint only;
+     * the buffer manager is not required to honour this request.
+     */
+    void writeBuffers();
 }

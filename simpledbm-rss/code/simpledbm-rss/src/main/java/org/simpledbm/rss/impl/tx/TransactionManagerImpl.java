@@ -1268,11 +1268,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 */
     public final void shutdown() {
     	stop = true;
+    	/*
+    	 * By writing out the buffers prior to checkpoint we can cust down restart recovery time.
+    	 */
+    	bufmgr.writeBuffers();
     	while (checkpointWriter.isAlive()) {
     		LockSupport.unpark(checkpointWriter);
-//    		synchronized(checkpointWriterSync) {
-//    			checkpointWriterSync.notify();
-//    		}
     		try {
 				checkpointWriter.join();
 			} catch (InterruptedException e) {		
@@ -2657,12 +2658,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 		public void run() {
 
 			for (;;) {
-//				synchronized(trxmgr.checkpointWriterSync) {
-//					try {
-//						trxmgr.checkpointWriterSync.wait(trxmgr.checkpointInterval);
-//					} catch (InterruptedException e) {
-//					}
-//				}
 				long then = System.nanoTime();
 				long timeout = TimeUnit.NANOSECONDS.convert(trxmgr.checkpointInterval, TimeUnit.MILLISECONDS);
 				while (timeout > 0) {
