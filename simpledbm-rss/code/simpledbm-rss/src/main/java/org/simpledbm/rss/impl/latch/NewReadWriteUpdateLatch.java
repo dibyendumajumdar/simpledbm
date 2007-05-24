@@ -27,6 +27,7 @@ import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * @author Dibyendu Majumdar
@@ -81,6 +82,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	 * Flags that there are threads waiting to be granted latch requests.
 	 */
 	boolean waiting = false;
+	
+	MessageCatalog mcat = new MessageCatalog();
 
 	/**
 	 * Defines the various lock release methods.
@@ -114,6 +117,13 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		ReleaseAction action;
 		LockMode downgradeMode;
 		boolean upgrade;
+		
+		public String toString() {
+			return "LockRequestParams(owner=" + owner +
+				", mode=" + mode + ", timeout=" + timeout + 
+				", releaseAction=" + action + ", downgradeMode=" + downgradeMode + 
+				", upgrade=" + upgrade + ")";
+		}
 	}
 
 	static final class LockState {
@@ -291,7 +301,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			/*
 			 * An upgrade request without a prior lock request is an error.
 			 */
-			throw new LatchException("Invalid request for upgrade");
+			log.error(this.getClass().getName(), "handleNewRequest", mcat.getMessage("EH0001", lockState.parms));
+			throw new LatchException(mcat.getMessage("EH0001", lockState.parms));
 		}
 		
 		/*
@@ -304,15 +315,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 		if (!can_grant && lockState.parms.timeout == 0) {
 			/* 7. Otherwise, if nowait was specified, return failure. */
-			if (log.isDebugEnabled()) {
-				log.debug(
-					LOG_CLASS_NAME,	"handleNewRequest",
-					"SIMPLEDBM-DEBUG: Lock "	+ this
-					+ " is not compatible with requested mode, TIMED OUT since NOWAIT specified");
-			}
-			throw new LatchException(
-					"Lock "	+ this
-					+ " is not compatible with requested mode, TIMED OUT since NOWAIT specified");
+			log.warn(
+					LOG_CLASS_NAME,	"handleNewRequest", mcat.getMessage("WH0002", this, lockState.parms.mode));
+			throw new LatchException(mcat.getMessage("WH0002", this, lockState.parms.mode));
 		}
 
 		/* Allocate new lock request */
@@ -354,8 +359,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		 */
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
 				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
-			throw new LatchException(
-					"SIMPLEDBM-ELOCK-001: Requested lock is already being waited for by requestor");
+			log.error(this.getClass().getName(), "handleConversionRequest",
+					mcat.getMessage("EH0003", this, lockState.parms.owner));
+			throw new LatchException(mcat.getMessage("EH0003", this, lockState.parms.owner));
 		}
 
 		else if (lockState.lockRequest.status == LockRequestStatus.GRANTED) {
@@ -400,16 +406,9 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 				else if (!can_grant && lockState.parms.timeout == 0) {
 					/* 15. If not, and nowait specified, return failure. */
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-								"SIMPLEDBM-DEBUG: Conversion request is not compatible with granted group "
-										+ this
-										+ ", TIMED OUT since NOWAIT");
-					}
-					throw new LatchException(
-							"Conversion request is not compatible with granted group "
-									+ this
-									+ ", TIMED OUT since NOWAIT");
+					log.warn(this.getClass().getName(), "handleConversionRequest",
+							mcat.getMessage("EH0004", lockState.parms, this));
+					throw new LatchException(mcat.getMessage("EH0004", lockState.parms, this));
 				}
 
 				else {
@@ -419,7 +418,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			}
 		}
 		else {
-			throw new LatchException("Unexpected error occurred while handling a lock conversion request");
+			log.error(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EH0005"));
+			throw new LatchException(mcat.getMessage("EH0005"));
 		}
 	}
 
@@ -509,7 +509,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			lockState.lockRequest.convertMode = lockState.lockRequest.mode;
 			lockState.lockRequest.waitingThread = lockState.prevThread;
 		}
-		throw new LatchException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
+		log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("EH0006", lockState.parms));
+		throw new LatchException(mcat.getMessage("EH0006", lockState.parms));
 	}
 
 	private void grantWaiters(ReleaseAction action, LockRequest r) {
@@ -637,27 +638,16 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		lockState.lockRequest = find(lockState.parms.owner);
 
 		if (lockState.lockRequest == null) {
-			/* 4. If not found, return success. */
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "release",
-						"SIMPLEDBM-DEBUG: request not found, returning success");
-			}
-			throw new LatchException(
-					"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-							+ this
-							+ " as it is is not locked at present; seems like invalid call to release lock");
+			/* 4. If not found, throw exception. */
+			log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0007", this));
+			throw new LatchException(mcat.getMessage("EH0007", this));
 		}
 
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
 				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
 			/* 5. If lock in invalid state, return error. */
-			if (log.isDebugEnabled()) {
-				log
-						.debug(LOG_CLASS_NAME, "release",
-								"SIMPLEDBM-DEBUG: Cannot release a lock request that is not granted");
-			}
-			throw new LatchException(
-					"SIMPLEDBM-ELOCK-004: Cannot release a lock that is being waited for");
+			log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0008", this));
+			throw new LatchException(mcat.getMessage("EH0008", this));
 		}
 
 		if (lockState.parms.action == ReleaseAction.DOWNGRADE && lockState.lockRequest.mode == lockState.parms.downgradeMode) {
@@ -726,9 +716,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 				}
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
 			} else {
-				throw new LatchException(
-						"SIMPLEDBM-ELOCK-005: Invalid downgrade request from "
-								+ lockState.lockRequest.mode + " to " + lockState.parms.downgradeMode);
+				log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
+				throw new LatchException(mcat.getMessage("EH0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
 			}
 			released = false;
 		}
