@@ -129,14 +129,14 @@ public class MessageCatalog {
 		msgs.put("EW0026", "SIMPLEDBM-EW0026: Error occurred while flushing the Log");
 		msgs.put("EW0027", "SIMPLEDBM-EW0027: Error occurred while archiving a Log File");
 		msgs.put("EH0001", "SIMPLEDBM-EH0001: Invalid upgrade request, as there is no prior lock: {0}");
-		msgs.put("WH0002", "SIMPLEDBM-WH0002: Lock {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
+		msgs.put("WH0002", "SIMPLEDBM-WH0002: Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
 		msgs.put("EH0003", "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
 		msgs.put("EH0004", "SIMPLEDBM-EH0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
 		msgs.put("EH0005", "SIMPLEDBM-EH0005: Unexpected error while handling conversion request");
-		msgs.put("EH0006", "SIMPLEDBM-EH0006: Lock request {0} has timed out");
+		msgs.put("EH0006", "SIMPLEDBM-EH0006: Latch request {0} has timed out");
 		msgs.put("EH0007", "SIMPLEDBM-EH0007: Invalid request as caller does not hold a lock on {0}");
 		msgs.put("EH0008", "SIMPLEDBM-EH0008: Cannot release lock {0} as it is being waited for");
-		msgs.put("EH0009", "SIMPLEDBM-EH0009: Invalid downgrade request: mode requested {0}, mode held {1}");
+		msgs.put("EH0009", "SIMPLEDBM-EH0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
 		
 	}
 	

@@ -28,7 +28,8 @@ import org.simpledbm.rss.api.latch.Latch;
 
 /**
  * Implements a Latch that supports two lock modes: Shared and Exclusive. This
- * implementation is based upon standard Java ReentrantReadWriteLock.
+ * implementation is based upon standard Java ReentrantReadWriteLock. Update mode locks
+ * are implemented as exclusive locks.
  */
 public final class ReadWriteLatch implements Latch {
 
@@ -57,22 +58,18 @@ public final class ReadWriteLatch implements Latch {
 
 	public boolean tryUpdateLock() {
 		return wlock.tryLock();
-		// throw new UnsupportedOperationException();
 	}
 
 	public void updateLock() {
 		wlock.lock();
-		// throw new UnsupportedOperationException();
 	}
 
 	public void updateLockInterruptibly() throws InterruptedException {
 		wlock.lockInterruptibly();
-		// throw new UnsupportedOperationException();
 	}
 
 	public void unlockUpdate() {
 		wlock.unlock();
-		// throw new UnsupportedOperationException();
 	}
 
 	public boolean trySharedLock() {
@@ -94,29 +91,23 @@ public final class ReadWriteLatch implements Latch {
 	public boolean tryUpgradeUpdateLock() {
 		assert lock.isWriteLocked();
 		return true;
-		// throw new UnsupportedOperationException();
 	}
 
 	public void upgradeUpdateLock() {
 		assert lock.isWriteLocked();
-		// throw new UnsupportedOperationException();
 	}
 
 	public void upgradeUpdateLockInterruptibly() {
 		assert lock.isWriteLocked();
-		// throw new UnsupportedOperationException();
 	}
 
 	public void downgradeExclusiveLock() {
 		assert lock.isWriteLocked();
-		// rlock.lock();
-		// wlock.unlock();
 	}
 
 	public void downgradeUpdateLock() {
 		rlock.lock();
 		wlock.unlock();
-		// throw new UnsupportedOperationException();
 	}
 
 	public boolean isLatchedExclusively() {

@@ -166,6 +166,10 @@ public final class NewReadWriteUpdateLatch implements Latch {
 		
 		doAcquire(lockState);
 	}
+	
+	public synchronized String toString() {
+		return "Latch(grantedMode=" + grantedMode + ", waiting=" + waiting + ", queue=" + queue + ")";
+	}
 
 	/**
 	 * Acquires a lock in the specified mode. Handles most of the cases except
@@ -211,7 +215,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	private void doAcquire(LockState lockState) {
 
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "acquire", "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
+			log.debug(LOG_CLASS_NAME, "doAcquire", "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
 					+ " for " + this + ", mode=" + lockState.parms.mode);
 		}
 
@@ -262,8 +266,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
-//						System.err
-//								.println("Latch: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}
@@ -866,7 +868,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
 		@Override
 		public String toString() {
-			return "LockRequest(mode=" + mode + ", convertMode=" + convertMode + ", status=" + status + ", count=" + count + ", owner=" + owner + ", thread=" + waitingThread + ")";
+			return "LockRequest(mode=" + mode + ", convertMode=" + convertMode + ", status=" + status + ", count=" + count + ", owner=" + owner + ", waitingThread=" + waitingThread + ")";
 		}
 	}
 
