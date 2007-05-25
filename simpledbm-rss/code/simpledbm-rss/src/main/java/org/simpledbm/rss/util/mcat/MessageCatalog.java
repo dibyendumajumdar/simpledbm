@@ -137,6 +137,9 @@ public class MessageCatalog {
 		msgs.put("EH0007", "SIMPLEDBM-EH0007: Invalid request as caller does not hold a lock on {0}");
 		msgs.put("EH0008", "SIMPLEDBM-EH0008: Cannot release lock {0} as it is being waited for");
 		msgs.put("EH0009", "SIMPLEDBM-EH0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
+		msgs.put("EC0001", "SIMPLEDBM-EC0001: Lock request {0} timed out");
+		msgs.put("WC0002", "SIMPLEDBM-WC0002: Lock request {0} failed due to a deadlock");
+		msgs.put("EC0003", "SIMPLEDBM-EC0003: Unexpected error occurred while attempting to acquire lock request {0}");
 		
 	}
 	
