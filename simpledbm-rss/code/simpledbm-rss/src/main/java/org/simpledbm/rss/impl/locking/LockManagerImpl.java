@@ -519,7 +519,7 @@ public final class LockManagerImpl implements LockManager {
 			}
 		}
 		else {
-			throw new RuntimeException("Unexpected error occurred while handling a lock conversion request");
+			throw new LockException("Unexpected error occurred while handling a lock conversion request");
 		}
 	}
 
