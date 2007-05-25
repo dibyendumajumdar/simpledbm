@@ -40,6 +40,7 @@ import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * The default implementation of the LockMgr interface is a memory based lock
@@ -110,6 +111,8 @@ public final class LockManagerImpl implements LockManager {
 	//FIXME Need to create the latch using the factory
 	private LatchFactory latchFactory = new LatchFactoryImpl();
 	
+	private MessageCatalog mcat = new MessageCatalog();
+	
 	/**
 	 * To keep the algorithm simple, the deadlock detector uses a global exclusive lock
 	 * on the lock manager. The lock manager itself acquires shared locks during normal operations,
@@ -121,6 +124,10 @@ public final class LockManagerImpl implements LockManager {
 	
 	Thread deadlockDetectorThread;
 	
+	/**
+	 * The interval between deadlock detection scans, specified in seconds.
+	 * Default is 10 seconds.
+	 */
 	int deadlockDetectorInterval = 10;
 	
 	/**
@@ -182,7 +189,9 @@ public final class LockManagerImpl implements LockManager {
 				return;
 			}
 			int newHashTableSize = hashPrimes[++htsz];
-			//System.out.println("Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
+			if (log.isDebugEnabled()) {
+				log.debug(this.getClass().getName(), "rehash", "SIMPLEDBM-DEBUG: Growing hash table size from " + hashTableSize + " to " + newHashTableSize);
+			}
 			LockBucket[] newLockHashTable = new LockBucket[newHashTableSize];
 			for (int i = 0; i < newHashTableSize; i++) {
 				newLockHashTable[i] = getNewLockBucket();
@@ -195,7 +204,6 @@ public final class LockManagerImpl implements LockManager {
 						continue;
 					}
 					int h = (item.target.hashCode() & 0x7FFFFFFF) % newHashTableSize;
-					// System.out.println("Moving lock item " + item + " from old bucket " + i + " to new bucket " + h);
 					LockBucket newBucket = newLockHashTable[h];
 					newBucket.chainAppend(item);
 				}
@@ -262,7 +270,9 @@ public final class LockManagerImpl implements LockManager {
 		ReleaseAction action;
 		
 		public String toString() {
-			return "Lockable="+lockable.toString();
+			return "LockParameters(Lockable="+lockable.toString() + ", owner=" + owner + 
+				", mode=" + mode + ", duration=" + duration + ", timeout=" + timeout +
+				", downgradeMode=" + downgradeMode + ", releaseAction=" + action + ")";
 		}
 	}
 
@@ -286,8 +296,7 @@ public final class LockManagerImpl implements LockManager {
 
 		LockStatus getStatus() {
 			return status;
-		}
-		
+		}	
 	}
 
 	/**
@@ -296,7 +305,7 @@ public final class LockManagerImpl implements LockManager {
 	private void handleNewLock(LockState lockState) {
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "acquire",
-					"Lock not found, therefore granting immediately");
+					"SIMPLEDBM-DEBUG: Lock not found, therefore granting immediately");
 		}
 		if (lockState.parms.duration != LockDuration.INSTANT_DURATION) {
 			LockItem lockitem = getNewLockItem(lockState.parms.lockable, lockState.parms.mode);
@@ -331,7 +340,7 @@ public final class LockManagerImpl implements LockManager {
 			 */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "handleWaitResult",
-						"Woken up, and lock granted");
+						"SIMPLEDBM-DEBUG: Woken up, and lock granted");
 			}
 			checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.parms.lockInfo);
 			return;
@@ -340,7 +349,7 @@ public final class LockManagerImpl implements LockManager {
 		/* 10. Else return failure. */
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "handleWaitResult",
-					"Woken up, and lock failed");
+					"SIMPLEDBM-DEBUG: Woken up, and lock failed");
 		}
 
 		if (!lockState.converting) {
@@ -363,13 +372,18 @@ public final class LockManagerImpl implements LockManager {
 			 */
 			grantWaiters(ReleaseAction.RELEASE, lockState.lockRequest, lockState.handle, lockState.lockitem, lockState.parms.lockInfo);
 		}
-		if (lockState.getStatus() == LockStatus.TIMEOUT)
-			throw new LockTimeoutException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " timed out");
-		else if (lockState.getStatus() == LockStatus.DEADLOCK)
-			throw new LockDeadlockException("SIMPLEDBM-ELOCK: Lock request " + lockState.parms.toString() + " failed due to a deadlock");
-		else
-			throw new LockException(
-					"SIMPLEDBM-ELOCK-002: Unexpected error occurred while attempting to acqure lock " + lockState.parms.toString());
+		if (lockState.getStatus() == LockStatus.TIMEOUT) {
+			log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("EC0001", lockState.parms));
+			throw new LockTimeoutException(mcat.getMessage("EC0001", lockState.parms));
+		}
+		else if (lockState.getStatus() == LockStatus.DEADLOCK) {
+			log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("WC0002", lockState.parms));
+			throw new LockDeadlockException(mcat.getMessage("WC0002", lockState.parms));
+		}
+		else {
+			log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("EC0003", lockState.parms));		
+			throw new LockException(mcat.getMessage("EC0003", lockState.parms));
+		}
 	}
 
 	/**
@@ -380,14 +394,14 @@ public final class LockManagerImpl implements LockManager {
 		if (!lockState.converting) {
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "prepareToWait",
-						"Waiting for lock to be free");
+						"SIMPLEDBM-DEBUG: Waiting for lock to be free");
 			}
 			lockState.lockRequest.status = LockRequestStatus.WAITING;
 		} else {
 			if (log.isDebugEnabled()) {
 				log
 						.debug(LOG_CLASS_NAME, "prepareToWait",
-								"Conversion NOT compatible with granted group, therefore waiting ...");
+								"SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
 			}
 			lockState.lockRequest.convertMode = lockState.parms.mode;
 			lockState.lockRequest.convertDuration = lockState.parms.duration;
@@ -408,7 +422,7 @@ public final class LockManagerImpl implements LockManager {
 		 */
 		if (log.isTraceEnabled()) {
 			log.trace(LOG_CLASS_NAME, "handleConversionRequest",
-					"Lock conversion request by transaction " + lockState.parms.owner
+					"SIMPLEDBM-DEBUG: Lock conversion request by transaction " + lockState.parms.owner
 							+ " for target " + lockState.parms.lockable);
 		}
 
@@ -435,7 +449,7 @@ public final class LockManagerImpl implements LockManager {
 				if (log.isDebugEnabled()) {
 					log
 							.debug(LOG_CLASS_NAME, "handleConversionRequest",
-									"Requested mode is the same as currently held mode, therefore granting");
+									"SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
 				}
 				if (lockState.parms.duration != LockDuration.INSTANT_DURATION) {
 					lockState.lockRequest.count++;
@@ -465,7 +479,7 @@ public final class LockManagerImpl implements LockManager {
 					/* 13. If so, grant lock and return. */
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-								"Conversion request is compatible with granted group "
+								"SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
 										+ lockState.lockitem
 										+ ", therefore granting");
 					}
@@ -488,7 +502,7 @@ public final class LockManagerImpl implements LockManager {
 					/* 15. If not, and nowait specified, return failure. */
 					if (log.isDebugEnabled()) {
 						log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-								"Conversion request is not compatible with granted group "
+								"SIMPLEDBM-DEBUG: Conversion request is not compatible with granted group "
 										+ lockState.lockitem
 										+ ", TIMED OUT since NOWAIT");
 					}
@@ -518,7 +532,7 @@ public final class LockManagerImpl implements LockManager {
 		/* 4. If not, this is the first request by the transaction. */
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "handleNewRequest",
-					"New request by transaction " + lockState.parms.owner
+					"SIMPLEDBM-DEBUG: New request by transaction " + lockState.parms.owner
 							+ " for target " + lockState.parms.lockable);
 		}
 
@@ -546,7 +560,7 @@ public final class LockManagerImpl implements LockManager {
 						.debug(
 								LOG_CLASS_NAME,
 								"handleNewRequest",
-								"Lock "
+								"SIMPLEDBM-DEBUG: Lock "
 										+ lockState.lockitem
 										+ " is not compatible with requested mode, TIMED OUT since NOWAIT specified");
 			}
@@ -564,7 +578,7 @@ public final class LockManagerImpl implements LockManager {
 			/* 6. If yes, grant the lock and return success. */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "handleNewRequest",
-						"There are no waiting locks and request is compatible with  "
+						"SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
 								+ lockState.lockitem
 								+ ", therefore granting lock");
 			}
@@ -701,13 +715,9 @@ public final class LockManagerImpl implements LockManager {
 			 */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
-						"request not found, returning success");
+						"SIMPLEDBM-DEBUG: request not found, returning success");
 			}
 			return true;
-//			throw new LockException(
-//					"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-//							+ lockState.parms.lockable
-//							+ " as it is is not locked at present; seems like invalid call to release lock");
 		}
 
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
@@ -716,7 +726,7 @@ public final class LockManagerImpl implements LockManager {
 			if (log.isDebugEnabled()) {
 				log
 						.debug(LOG_CLASS_NAME, "release",
-								"cannot release a lock request that is not granted");
+								"SIMPLEDBM-DEBUG: Cannot release a lock request that is not granted");
 			}
 			throw new LockException(
 					"SIMPLEDBM-ELOCK-004: Cannot release a lock that is being waited for");
@@ -727,7 +737,7 @@ public final class LockManagerImpl implements LockManager {
 			 * If downgrade request and lock is already in target mode,
 			 * return success.
 			 */
-			return false;
+			return true;
 		}
 
 		if (lockState.parms.action == ReleaseAction.RELEASE && lockState.lockRequest.duration == LockDuration.COMMIT_DURATION) {
@@ -737,7 +747,7 @@ public final class LockManagerImpl implements LockManager {
 			 */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
-						"lock not released as it is held for commit duration");
+						"SIMPLEDBM-DEBUG: Lock not released as it is held for commit duration");
 			}
 			return false;
 		}
@@ -750,7 +760,7 @@ public final class LockManagerImpl implements LockManager {
 			 */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
-						"count decremented but lock not released");
+						"SIMPLEDBM-DEBUG: Count decremented but lock not released");
 			}
 			lockState.lockRequest.count--;
 			return false;
@@ -766,7 +776,7 @@ public final class LockManagerImpl implements LockManager {
 			/* 7. If sole lock request, then release the lock and return Ok. */
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
-						"removing sole lock, releasing lock object");
+						"SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
 			}
 			lockState.lockitem.queueRemove(lockState.lockRequest);
 			lockState.lockitem.reset();
@@ -781,7 +791,7 @@ public final class LockManagerImpl implements LockManager {
 		if (lockState.parms.action != ReleaseAction.DOWNGRADE) {
 			if (log.isDebugEnabled()) {
 				log.debug(LOG_CLASS_NAME, "release",
-						"Removing lock request " + lockState.lockRequest
+						"SIMPLEDBM-DEBUG: Removing lock request " + lockState.lockRequest
 								+ " and re-adjusting granted mode");
 			}
 			lockState.lockitem.queueRemove(lockState.lockRequest);
@@ -795,7 +805,7 @@ public final class LockManagerImpl implements LockManager {
 			LockMode mode = lockState.parms.downgradeMode.maximumOf(lockState.lockRequest.mode);
 			if (mode == lockState.lockRequest.mode) {
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "release", "Downgrading " + lockState.lockRequest
+					log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Downgrading " + lockState.lockRequest
 							+ " to " + lockState.parms.downgradeMode
 							+ " and re-adjusting granted mode");
 				}
@@ -868,7 +878,7 @@ public final class LockManagerImpl implements LockManager {
 				can_grant = checkCompatible(lockitem, r, r.convertMode, null);
 				if (can_grant) {
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "release", "Granting conversion request " + r + " because request is compatible with " + lockitem);
+						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Granting conversion request " + r + " because request is compatible with " + lockitem);
 					}
 		            if (r.convertDuration == LockDuration.INSTANT_DURATION) {
 		                /*
@@ -901,14 +911,14 @@ public final class LockManagerImpl implements LockManager {
 			else if (r.status == LockRequestStatus.WAITING) {
 				if (!converting && r.mode.isCompatible(lockitem.grantedMode)) {
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "release", "Granting waiting request " + r + " because not converting and request is compatible with " + lockitem);
+						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Granting waiting request " + r + " because not converting and request is compatible with " + lockitem);
 					}
 					r.status = LockRequestStatus.GRANTED;
 		            lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
 					LockSupport.unpark(r.thread);
 				} else {
 					if (log.isDebugEnabled() && converting) {
-						log.debug(LOG_CLASS_NAME, "release", "Cannot grant waiting request " + r + " because conversion request pending");
+						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Cannot grant waiting request " + r + " because conversion request pending");
 					}
 					lockitem.waiting = true;
 					break;
@@ -1057,7 +1067,7 @@ public final class LockManagerImpl implements LockManager {
 			{
 
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "acquire", "Lock requested by " + lockState.parms.owner
+			log.debug(LOG_CLASS_NAME, "acquire", "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
 					+ " for " + lockState.parms.lockable + ", mode=" + lockState.parms.mode + ", duration="
 					+ lockState.parms.duration);
 		}
@@ -1138,8 +1148,6 @@ public final class LockManagerImpl implements LockManager {
 				if (lockState.lockRequest.status == LockRequestStatus.WAITING
 						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
 					if (timeToWait > 0 || lockState.parms.timeout == -1) {
-//						System.err
-//								.println("Lock: Need to retry as this was a spurious wakeup, next wait=" + TimeUnit.SECONDS.convert(timeToWait, TimeUnit.NANOSECONDS));
 						continue;
 					}
 				}
@@ -1155,7 +1163,7 @@ public final class LockManagerImpl implements LockManager {
 		boolean released = false;
 
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "doReleaseInternal", "Request by " + lockState.parms.owner
+			log.debug(LOG_CLASS_NAME, "doReleaseInternal", "SIMPLEDBM-DEBUG: Request by " + lockState.parms.owner
 					+ " to release lock for " + lockState.parms.lockable);
 		}
 		int h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF) % hashTableSize;
@@ -1173,10 +1181,6 @@ public final class LockManagerImpl implements LockManager {
 				 * may end up trying to release the same lock multiple times.
 				 */
 				return true;
-//				throw new LockException(
-//						"SIMPLEDBM-ELOCK-003: Cannot release a lock on "
-//								+ lockState.parms.lockable
-//								+ " as it is is not locked at present; seems like invalid call to release lock");
 			}
 			released = releaseLock(lockState);
 		}

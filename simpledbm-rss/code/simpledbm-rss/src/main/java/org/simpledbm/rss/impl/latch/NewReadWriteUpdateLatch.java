@@ -657,7 +657,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 			 * If downgrade request and lock is already in target mode,
 			 * return success.
 			 */
-			return false;
+			return true;
 		}
 
 		if (lockState.parms.action == ReleaseAction.RELEASE && lockState.lockRequest.count > 1) {
