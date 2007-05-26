@@ -382,7 +382,7 @@ public final class LockManagerImpl implements LockManager {
 		}
 		else {
 			log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("EC0003", lockState.parms));		
-			throw new LockException(mcat.getMessage("EC0003", lockState.parms));
+			throw new LockException(mcat.getMessage("EC0099", lockState.parms));
 		}
 	}
 
@@ -432,8 +432,8 @@ public final class LockManagerImpl implements LockManager {
 		 */
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
 				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
-			throw new LockException(
-					"SIMPLEDBM-ELOCK-001: Requested lock is already being waited for by requestor");
+			log.error(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EC0003", lockState.parms.lockable, lockState.parms.owner));
+			throw new LockException(mcat.getMessage("EC0003", lockState.parms.lockable, lockState.parms.owner));
 		}
 
 		else if (lockState.lockRequest.status == LockRequestStatus.GRANTED) {
@@ -456,7 +456,6 @@ public final class LockManagerImpl implements LockManager {
 				}
 				checkCompatible(lockState.lockitem, lockState.lockRequest, lockState.parms.mode, lockState.parms.lockInfo);
 				if (lockState.parms.duration == LockDuration.INSTANT_DURATION) {
-					// lockState.handle.setStatus(lockState.lockRequest, LockStatus.GRANTABLE);
 					lockState.setStatus(LockStatus.GRANTABLE);
 				} else {
 					if (lockState.lockRequest.duration == LockDuration.MANUAL_DURATION && lockState.parms.duration == LockDuration.COMMIT_DURATION) {
@@ -500,16 +499,8 @@ public final class LockManagerImpl implements LockManager {
 
 				else if (!can_grant && lockState.parms.timeout == 0) {
 					/* 15. If not, and nowait specified, return failure. */
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-								"SIMPLEDBM-DEBUG: Conversion request is not compatible with granted group "
-										+ lockState.lockitem
-										+ ", TIMED OUT since NOWAIT");
-					}
-					throw new LockTimeoutException(
-							"Conversion request is not compatible with granted group "
-									+ lockState.lockitem
-									+ ", TIMED OUT since NOWAIT");
+					log.warn(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EC0004", lockState.parms, lockState.lockitem));
+					throw new LockTimeoutException(mcat.getMessage("EC0004", lockState.parms, lockState.lockitem));
 				}
 
 				else {
@@ -519,7 +510,8 @@ public final class LockManagerImpl implements LockManager {
 			}
 		}
 		else {
-			throw new LockException("Unexpected error occurred while handling a lock conversion request");
+			log.error(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EC0005"));
+			throw new LockException(mcat.getMessage("EC0005"));
 		}
 	}
 
