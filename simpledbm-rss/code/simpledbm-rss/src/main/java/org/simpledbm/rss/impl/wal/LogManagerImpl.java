@@ -536,8 +536,7 @@ public final class LogManagerImpl implements LogManager {
 		 */
 		if (started || errored) {
 			logger.error(LOG_CLASS_NAME, "start", mcat.getMessage("EW0003"));
-			throw new LogException(
-					mcat.getMessage("EW0003"));
+			throw new LogException(mcat.getMessage("EW0003"));
 		}
 		openCtlFiles();
 		openLogFiles();
@@ -562,6 +561,7 @@ public final class LogManagerImpl implements LogManager {
 			} catch (InterruptedException e1) {
 				logger.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EW0004"), e1);
 			}
+			logger.info(this.getClass().getName(), "shutdown", mcat.getMessage("IW0030"));
 			if (!errored) {
 				try {
 					flush();
@@ -575,8 +575,10 @@ public final class LogManagerImpl implements LogManager {
 			} catch (InterruptedException e1) {
 				logger.error(LOG_CLASS_NAME, "shutdown", mcat.getMessage("EW0004"), e1);
 			}
+			logger.info(this.getClass().getName(), "shutdown", mcat.getMessage("IW0031"));
 			closeLogFiles();
 			closeCtlFiles();
+			logger.info(this.getClass().getName(), "shutdown", mcat.getMessage("IW0032"));
 			/*
 			 * TODO // move this to the beginning Let us first set the flag so
 			 * that further client requests will not be entertained.
@@ -668,7 +670,9 @@ public final class LogManagerImpl implements LogManager {
 		archiveService = Executors.newSingleThreadExecutor();
 
 		flushService.scheduleWithFixedDelay(new LogWriter(this), anchor.logFlushInterval, anchor.logFlushInterval, TimeUnit.SECONDS);
+		logger.info(this.getClass().getName(), "setupBackgroundThreads", mcat.getMessage("IW0028"));
 		flushService.scheduleWithFixedDelay(new ArchiveCleaner(this), anchor.logFlushInterval, anchor.logFlushInterval, TimeUnit.SECONDS);
+		logger.info(this.getClass().getName(), "setupBackgroundThreads", mcat.getMessage("IW0029"));
 	}
 
 	/**
@@ -1749,6 +1753,31 @@ public final class LogManagerImpl implements LogManager {
 		return doRead(lsn);
 	}
     
+    private byte[] readLogRecordData(StorageContainer container, Lsn lsn) {
+		long position = lsn.getOffset();
+		byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
+		int n = container.read(position, lbytes, 0, lbytes.length);
+		if (n != lbytes.length) {
+			logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0023", lsn));
+			throw new LogException(mcat.getMessage("EW0023", lsn));
+		}
+		position += lbytes.length;
+		ByteBuffer bb = ByteBuffer.wrap(lbytes);
+		int length = bb.getInt();
+		if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
+			logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0024", lsn, length));
+			throw new LogException(mcat.getMessage("EW0024", lsn, length));
+		}
+		byte[] bytes = new byte[length];
+		System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
+		n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
+		if (n != (bytes.length - lbytes.length)) {
+			logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0025", lsn));
+			throw new LogException(mcat.getMessage("EW0025", lsn));
+		}
+		return bytes;
+    }
+    
 	/**
 	 * Reads the specified LogRecord, from log buffers if possible, otherwise
 	 * from disk. Handles the situation where a log record has been archived. To
@@ -1842,28 +1871,29 @@ public final class LogManagerImpl implements LogManager {
 					 */
 					container = storageFactory.open(name);
 				}
-				long position = lsn.getOffset();
-				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
-				int n = container.read(position, lbytes, 0, lbytes.length);
-				if (n != lbytes.length) {
-					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0023", lsn));
-					throw new LogException(mcat.getMessage("EW0023", lsn));
-				}
-				position += lbytes.length;
-				ByteBuffer bb = ByteBuffer.wrap(lbytes);
-				int length = bb.getInt();
-				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0024", lsn, length));
-					throw new LogException(mcat.getMessage("EW0024", lsn, length));
-				}
-				byte[] bytes = new byte[length];
-				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
-				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
-				if (n != (bytes.length - lbytes.length)) {
-					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0025", lsn));
-					throw new LogException(mcat.getMessage("EW0025", lsn));
-				}
-				bb = ByteBuffer.wrap(bytes);
+//				long position = lsn.getOffset();
+//				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
+//				int n = container.read(position, lbytes, 0, lbytes.length);
+//				if (n != lbytes.length) {
+//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0023", lsn));
+//					throw new LogException(mcat.getMessage("EW0023", lsn));
+//				}
+//				position += lbytes.length;
+//				ByteBuffer bb = ByteBuffer.wrap(lbytes);
+//				int length = bb.getInt();
+//				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
+//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0024", lsn, length));
+//					throw new LogException(mcat.getMessage("EW0024", lsn, length));
+//				}
+//				byte[] bytes = new byte[length];
+//				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
+//				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
+//				if (n != (bytes.length - lbytes.length)) {
+//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0025", lsn));
+//					throw new LogException(mcat.getMessage("EW0025", lsn));
+//				}
+				byte[] bytes = readLogRecordData(container, lsn);
+				ByteBuffer bb = ByteBuffer.wrap(bytes);
 				return doRead(lsn, bb);
 			} finally {
 				if (!archived) {
@@ -1891,28 +1921,30 @@ public final class LogManagerImpl implements LogManager {
 		try {
 			while (true) {
 				// System.err.println("VALIDATING LSN=" + lsn);
-				long position = lsn.getOffset();
-				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
-				int n = container.read(position, lbytes, 0, lbytes.length);
-				if (n != lbytes.length) {
-					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0023", lsn));
-					throw new LogException(mcat.getMessage("EW0023", lsn));
-				}
-				position += lbytes.length;
-				ByteBuffer bb = ByteBuffer.wrap(lbytes);
-				int length = bb.getInt();
-				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0024", lsn, length));
-					throw new LogException(mcat.getMessage("EW0024", lsn, length));
-				}
-				byte[] bytes = new byte[length];
-				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
-				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
-				if (n != (bytes.length - lbytes.length)) {
-					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0025", lsn));
-					throw new LogException(mcat.getMessage("EW0025", lsn));
-				}
-				bb = ByteBuffer.wrap(bytes);
+//				long position = lsn.getOffset();
+//				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
+//				int n = container.read(position, lbytes, 0, lbytes.length);
+//				if (n != lbytes.length) {
+//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0023", lsn));
+//					throw new LogException(mcat.getMessage("EW0023", lsn));
+//				}
+//				position += lbytes.length;
+//				ByteBuffer bb = ByteBuffer.wrap(lbytes);
+//				int length = bb.getInt();
+//				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
+//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0024", lsn, length));
+//					throw new LogException(mcat.getMessage("EW0024", lsn, length));
+//				}
+//				byte[] bytes = new byte[length];
+//				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
+//				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
+//				if (n != (bytes.length - lbytes.length)) {
+//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0025", lsn));
+//					throw new LogException(mcat.getMessage("EW0025", lsn));
+//				}
+//				bb = ByteBuffer.wrap(bytes);
+				byte[] bytes = readLogRecordData(container, lsn);
+				ByteBuffer bb = ByteBuffer.wrap(bytes);
 				LogRecordImpl logrec = doRead(lsn, bb);
 				if (logrec.getDataLength() == 0) {
 					break;

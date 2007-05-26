@@ -76,6 +76,8 @@ public class MessageCatalog {
 		msgs.put("EM0008", "SIMPLEDBM-EM0008: Page can be marked dirty only if it has been latched exclusively");
 		msgs.put("EM0009", "SIMPLEDBM-EM0009: Upgrade of update latch requested but latch is not held in update mode currently");
 		msgs.put("EM0010", "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
+		msgs.put("IM0011", "SIMPLEDBM-IM0011: Buffer Writer STARTED");
+		msgs.put("IM0012", "SIMPLEDBM-IM0011: Buffer Writer STOPPED");
 		msgs.put("EF0001", "SIMPLEDBM-EF0001: Invalid number of bits specified for space map page: ");
 		msgs.put("EF0002", "SIMPLEDBM-EF0002: Specified container does not exist: ");
 		msgs.put("EF0003", "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type: ");
@@ -96,8 +98,8 @@ public class MessageCatalog {
 		msgs.put("EB0012", "SIMPLEDBM-EB0012: Unexpected error - exception caught");
 		msgs.put("EU0001", "SIMPLEDBM-EU0001: Unable to obtain classloader");
 		msgs.put("EU0002", "SIMPLEDBM-EU0002: Unable to load resource {0}");
-		msgs.put("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server startup completed");
-		msgs.put("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server shutdown completed");
+		msgs.put("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server STARTED");
+		msgs.put("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server STOPPED");
 		msgs.put("EV0003", "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
 		msgs.put("EV0004", "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
 		msgs.put("EV0005", "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
@@ -128,6 +130,11 @@ public class MessageCatalog {
 		msgs.put("EW0025", "SIMPLEDBM-EW0025: Error occurred while reading Log Record {0} - read error");
 		msgs.put("EW0026", "SIMPLEDBM-EW0026: Error occurred while flushing the Log");
 		msgs.put("EW0027", "SIMPLEDBM-EW0027: Error occurred while archiving a Log File");
+		msgs.put("IW0028", "SIMPLEDBM-IW0028: Log Writer STARTED");
+		msgs.put("IW0029", "SIMPLEDBM-IW0029: Archive Cleaner STARTED");
+		msgs.put("IW0030", "SIMPLEDBM-IW0030: Log Writer STOPPED");
+		msgs.put("IW0031", "SIMPLEDBM-IW0031: Archive Cleaner STOPPED");
+		msgs.put("IW0032", "SIMPLEDBM-IW0032: Write Ahead Log Manager STOPPED");
 		msgs.put("EH0001", "SIMPLEDBM-EH0001: Invalid upgrade request, as there is no prior lock: {0}");
 		msgs.put("WH0002", "SIMPLEDBM-WH0002: Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
 		msgs.put("EH0003", "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
@@ -141,8 +148,14 @@ public class MessageCatalog {
 		msgs.put("WC0002", "SIMPLEDBM-WC0002: Lock request {0} failed due to a deadlock");
 		msgs.put("EC0099", "SIMPLEDBM-EC0099: Unexpected error occurred while attempting to acquire lock request {0}");
 		msgs.put("EC0003", "SIMPLEDBM-EC0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
-		msgs.put("EC0004", "SIMPLEDBM-EC0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
+		msgs.put("WC0004", "SIMPLEDBM-WC0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
 		msgs.put("EC0005", "SIMPLEDBM-EC0005: Unexpected error while handling conversion request");
+		msgs.put("EC0008", "SIMPLEDBM-EC0008: Invalid request to release lock {0} as it is being waited for");
+		msgs.put("EC0009", "SIMPLEDBM-EC0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
+		msgs.put("EC0010", "SIMPLEDBM-EC0010: Listener {0} failed unexpectedly: lock parameters {1}");
+		msgs.put("WC0011", "SIMPLEDBM-WC0011: Detected deadlock cycle: R1 {0} (victim) waiting for R2 {1}\nR1 {2}\nR2 {3}");
+		msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
+		msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
 		
 	}
 	

@@ -67,7 +67,7 @@ public final class BufferManagerImpl implements BufferManager {
 
 	static final Logger log = Logger.getLogger(BufferManagerImpl.class.getPackage().getName());
 	
-	static final MessageCatalog mcat = new MessageCatalog();
+	final MessageCatalog mcat = new MessageCatalog();
 
 	private static final int LATCH_EXCLUSIVE = 2;
 	
@@ -1222,8 +1222,8 @@ public final class BufferManagerImpl implements BufferManager {
 			} else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
 				page.unlatchShared();
 			} else {
-				log.error(LOG_CLASS_NAME, "unlatch", mcat.getMessage("EM0007"));
-				throw new IllegalStateException(mcat.getMessage("EM0007"));
+				log.error(LOG_CLASS_NAME, "unlatch", bufMgr.mcat.getMessage("EM0007"));
+				throw new IllegalStateException(bufMgr.mcat.getMessage("EM0007"));
 			}
 			latchMode = 0;
 		}
@@ -1249,8 +1249,8 @@ public final class BufferManagerImpl implements BufferManager {
 				page.setPageLsn(lsn);
 			}
 			else {
-				log.error(LOG_CLASS_NAME, "setDirty", mcat.getMessage("EM0008"));
-				throw new IllegalStateException(mcat.getMessage("EM0008"));
+				log.error(LOG_CLASS_NAME, "setDirty", bufMgr.mcat.getMessage("EM0008"));
+				throw new IllegalStateException(bufMgr.mcat.getMessage("EM0008"));
 			}
 		}
 
@@ -1273,8 +1273,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void upgradeUpdateLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-				log.error(LOG_CLASS_NAME, "upgradeUpdateLatch", mcat.getMessage("EM0009"));
-				throw new IllegalStateException(mcat.getMessage("EM0009"));
+				log.error(LOG_CLASS_NAME, "upgradeUpdateLatch", bufMgr.mcat.getMessage("EM0009"));
+				throw new IllegalStateException(bufMgr.mcat.getMessage("EM0009"));
 			}
 			page.upgradeUpdate();
 			latchMode = BufferManagerImpl.LATCH_EXCLUSIVE;
@@ -1285,8 +1285,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 */
 		public void downgradeExclusiveLatch() {
 			if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-				log.error(LOG_CLASS_NAME, "downgradeExclusiveLatch", mcat.getMessage("EM0010"));
-				throw new IllegalStateException(mcat.getMessage("EM0010"));
+				log.error(LOG_CLASS_NAME, "downgradeExclusiveLatch", bufMgr.mcat.getMessage("EM0010"));
+				throw new IllegalStateException(bufMgr.mcat.getMessage("EM0010"));
 			}
 			page.downgradeExclusive();
 			latchMode = BufferManagerImpl.LATCH_UPDATE;
@@ -1314,9 +1314,7 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 
 		public final void run() {
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: Buffer writer STARTED");
-			}
+			log.info(this.getClass().getName(), "run", bufmgr.mcat.getMessage("IM0011"));
 			for (;;) {
 				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(bufmgr.bufferWriterSleepInterval, TimeUnit.MILLISECONDS));
 				try {
@@ -1334,16 +1332,14 @@ public final class BufferManagerImpl implements BufferManager {
 						bufmgr.waitingForBuffers.notifyAll();
 					}
 				} catch (Exception e) {
-					log.error(LOG_CLASS_NAME, "run", mcat.getMessage("EM0003"), e);
+					log.error(LOG_CLASS_NAME, "run", bufmgr.mcat.getMessage("EM0003"), e);
 					bufmgr.stop = true;
 				}
 				if (bufmgr.stop) {
 					break;
 				}
 			}
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "run", "SIMPLEDBM-DEBUG: Buffer writer STOPPED");
-			}
+			log.info(this.getClass().getName(), "run", bufmgr.mcat.getMessage("IM0012"));
 		}
 	}
 

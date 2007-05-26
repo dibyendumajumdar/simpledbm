@@ -499,8 +499,8 @@ public final class LockManagerImpl implements LockManager {
 
 				else if (!can_grant && lockState.parms.timeout == 0) {
 					/* 15. If not, and nowait specified, return failure. */
-					log.warn(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EC0004", lockState.parms, lockState.lockitem));
-					throw new LockTimeoutException(mcat.getMessage("EC0004", lockState.parms, lockState.lockitem));
+					log.warn(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("WC0004", lockState.parms, lockState.lockitem));
+					throw new LockTimeoutException(mcat.getMessage("WC0004", lockState.parms, lockState.lockitem));
 				}
 
 				else {
@@ -547,19 +547,8 @@ public final class LockManagerImpl implements LockManager {
 
 		else if (!can_grant && lockState.parms.timeout == 0) {
 			/* 7. Otherwise, if nowait was specified, return failure. */
-			if (log.isDebugEnabled()) {
-				log
-						.debug(
-								LOG_CLASS_NAME,
-								"handleNewRequest",
-								"SIMPLEDBM-DEBUG: Lock "
-										+ lockState.lockitem
-										+ " is not compatible with requested mode, TIMED OUT since NOWAIT specified");
-			}
-			throw new LockTimeoutException(
-					"Lock "
-							+ lockState.lockitem
-							+ " is not compatible with requested mode, TIMED OUT since NOWAIT specified");
+			log.warn(this.getClass().getName(), "handleNewRequest", mcat.getMessage("WC0004", lockState.parms, lockState.lockitem));
+			throw new LockTimeoutException(mcat.getMessage("WC0004", lockState.parms, lockState.lockitem));
 		}
 
 		/* Allocate new lock request */
@@ -715,13 +704,8 @@ public final class LockManagerImpl implements LockManager {
 		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
 				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
 			/* 5. If lock in invalid state, return error. */
-			if (log.isDebugEnabled()) {
-				log
-						.debug(LOG_CLASS_NAME, "release",
-								"SIMPLEDBM-DEBUG: Cannot release a lock request that is not granted");
-			}
-			throw new LockException(
-					"SIMPLEDBM-ELOCK-004: Cannot release a lock that is being waited for");
+			log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EC0008", lockState.lockRequest));
+			throw new LockException(mcat.getMessage("EC0008", lockState.lockRequest));
 		}
 
 		if (lockState.parms.action == ReleaseAction.DOWNGRADE && lockState.lockRequest.mode == lockState.parms.downgradeMode) {
@@ -808,9 +792,8 @@ public final class LockManagerImpl implements LockManager {
 				}
 				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
 			} else {
-				throw new LockException(
-						"SIMPLEDBM-ELOCK-005: Invalid downgrade request from "
-								+ lockState.lockRequest.mode + " to " + lockState.parms.downgradeMode);
+				log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EC0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
+				throw new LockException(mcat.getMessage("EC0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
 			}
 			released = false;
 		}
@@ -1055,8 +1038,7 @@ public final class LockManagerImpl implements LockManager {
 	 * </ol>
 	 * </p>
 	 */
-	private LockHandleImpl doAcquire(LockState lockState)
-			{
+	private LockHandleImpl doAcquire(LockState lockState) {
 
 		if (log.isDebugEnabled()) {
 			log.debug(LOG_CLASS_NAME, "acquire", "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
@@ -1106,8 +1088,14 @@ public final class LockManagerImpl implements LockManager {
 			prepareToWait(lockState);
 		}
 		notifyLockEventListeners(lockState);
+		/*
+		 * Add request to list of waiters to allow deadlock detection.
+		 */
 		LockWaiter waiter = new LockWaiter(lockState.lockRequest, Thread.currentThread());
 		waiters.put(lockState.lockRequest.owner, waiter);
+		/*
+		 * Global lock is released only after the waiter list has been updated.
+		 */
 		globalLock.unlockShared();
 		long then = System.nanoTime();
 		long timeToWait = lockState.parms.timeout;
@@ -1201,7 +1189,7 @@ public final class LockManagerImpl implements LockManager {
 				listener.beforeLockWait(state.parms.owner, state.parms.lockable, state.parms.mode);
 			}
 			catch (Exception e) {
-				log.error(LOG_CLASS_NAME, "notifyLockEventListeners", "Lister [" + listener + "] failed unexpectedly", e);
+				log.error(this.getClass().getName(), "notifyLockEventListeners",  mcat.getMessage("EC0010", listener, state.parms), e);
 			}
 		}
 	}
@@ -1257,13 +1245,7 @@ public final class LockManagerImpl implements LockManager {
 				}
 				me.cycle = him;
 				if (him.cycle != null) {
-					log.info(LOG_CLASS_NAME, "findDeadlockCycle", "DEADLOCK DETECTED: "
-							+ me.myLockRequest + " waiting for "
-							+ him.myLockRequest);
-					log.info(LOG_CLASS_NAME, "findDeadlockCycle", " Other=> "
-							+ him.myLockRequest.lockItem);
-					log.info(LOG_CLASS_NAME, "findDeadlockCycle", " Victim=> " 
-							+ me.myLockRequest.lockItem);
+					log.warn(log.getClass().getName(), "findDeadlockCycle", mcat.getMessage("WC0011", me.myLockRequest, him.myLockRequest, me.myLockRequest.lockItem, him.myLockRequest.lockItem));
 					me.myLockRequest.status = LockRequestStatus.DENIED;
 					LockSupport.unpark(me.thread);
 					return true;
@@ -1297,7 +1279,6 @@ public final class LockManagerImpl implements LockManager {
 			for (LockWaiter waiter: waiterArray) {
 				waiter.cycle = null;
 				waiter.visited = false;
-				// System.out.println("Waiter = " + waiter.myLockRequest);
 			}
 			for (LockWaiter waiter: waiterArray) {
 				findDeadlockCycle(waiter);
@@ -1319,7 +1300,7 @@ public final class LockManagerImpl implements LockManager {
 				iter.remove();
 				continue;
 			}
-			if (lockState.parms.lockable.equals(item.target)) {
+			if (lockState.parms.lockable == item.target || lockState.parms.lockable.equals(item.target)) {
 				return item;
 			}
 		}
@@ -1558,6 +1539,7 @@ public final class LockManagerImpl implements LockManager {
     	}
     	
     	public void run() {
+			log.info(this.getClass().getName(), "run", lockManager.mcat.getMessage("IC0012"));
     		while (!lockManager.stop) {
     			lockManager.detectDeadlocks();
     			LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
@@ -1566,6 +1548,7 @@ public final class LockManagerImpl implements LockManager {
     				break;
     			}
     		}
+			log.info(this.getClass().getName(), "run", lockManager.mcat.getMessage("IC0013"));
     	}
     }
 
