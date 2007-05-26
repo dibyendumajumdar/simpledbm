@@ -30,6 +30,8 @@ import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Default implementation of PageFactory.
@@ -44,6 +46,7 @@ public final class PageFactoryImpl implements PageFactory {
     static final int TYPE_BASE = 5 * 100;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
     
+	private static Logger log = Logger.getLogger(PageFactoryImpl.class.getPackage().getName());
     
 	/**
 	 * Default page size is 8 KB.
@@ -60,6 +63,8 @@ public final class PageFactoryImpl implements PageFactory {
 	private final StorageManager storageManager;
 	
 	private final LatchFactory latchFactory;
+
+	private final MessageCatalog mcat = new MessageCatalog();
 	
 	public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory, StorageManager storageManager, LatchFactory latchFactory) {
 		this.pageSize = pageSize;
@@ -77,16 +82,9 @@ public final class PageFactoryImpl implements PageFactory {
 		return pageSize;
 	}
 
-//	public final Page getInstance(String pagetype, PageId pageId) {
-//		Page page = (Page) objectFactory.getInstance(pagetype);
-//		page.setType(objectFactory.getTypeCode(pagetype));
-//        page.setPageFactory(this);
-//        page.setLatch(latchFactory.newReadWriteUpdateLatch());
-//		page.setPageId(pageId);
-//		page.init();
-//		return page;
-//	}
-
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
+	 */
 	public final Page getInstance(int pagetype, PageId pageId) {
 		Page page = (Page) objectFactory.getInstance(pagetype);
 		page.setType(pagetype);
@@ -97,6 +95,13 @@ public final class PageFactoryImpl implements PageFactory {
 		return page;
 	}
 
+	/**
+	 * Converts a byte stream to a page. First two bytes must contain the type
+	 * information for the page. This is used to obtain the correct Page implementation
+	 * from the Object Registry. 
+	 * @param bb The ByteBuffer that provides access to the byte stream
+	 * @return Page instance initialized with the contents of the byte stream
+	 */
 	private Page getInstance(ByteBuffer bb) {
 		bb.mark();
 		short pagetype = bb.getShort();
@@ -109,25 +114,36 @@ public final class PageFactoryImpl implements PageFactory {
 		return page;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.pm.PageFactory#retrieve(org.simpledbm.rss.api.pm.PageId)
+	 */
 	public final Page retrieve(PageId pageId) {
 		StorageContainer container = storageManager.getInstance(pageId
 				.getContainerId());
+		if (container == null) {
+			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0002", pageId));
+			throw new PageException(mcat.getMessage("EP0002", pageId));
+		}
 		long offset = pageId.getPageNumber() * pageSize;
 		byte[] data = new byte[pageSize];
 		int n = container.read(offset, data, 0, pageSize);
 		if (n != pageSize) {
-			throw new PageReadException();
+			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0001", pageId, n, pageSize));
+			throw new PageReadException(mcat.getMessage("EP0001", pageId, n, pageSize));
 		}
 		ByteBuffer bb = ByteBuffer.wrap(data);
 		return getInstance(bb);
 	}
 	
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.pm.PageFactory#store(org.simpledbm.rss.api.pm.Page)
+	 */
 	public final void store(Page page) {
 		StorageContainer container = storageManager.getInstance(page
 				.getPageId().getContainerId());
 		if (container == null) {
-			throw new PageException("Error writing page " + page
-					+ " as container is not available");
+			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0003", page.getPageId()));
+			throw new PageException(mcat.getMessage("EP0003", page.getPageId()));
 		}
 		long offset = page.getPageId().getPageNumber() * pageSize;
 		byte[] data = new byte[pageSize];

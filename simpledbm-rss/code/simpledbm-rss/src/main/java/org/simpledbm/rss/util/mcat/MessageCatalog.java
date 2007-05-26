@@ -156,6 +156,9 @@ public class MessageCatalog {
 		msgs.put("WC0011", "SIMPLEDBM-WC0011: Detected deadlock cycle: R1 {0} (victim) waiting for R2 {1}\nR1 {2}\nR2 {3}");
 		msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
 		msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
+		msgs.put("EP0001", "SIMPLEDBM-EP0001: Error occurred while reading page {0}: the number of bytes read is {1}; but expected {2} bytes");
+		msgs.put("EP0002", "SIMPLEDBM-EP0002: Error occurred while reading page {0}: container not available");
+		msgs.put("EP0003", "SIMPLEDBM-EP0003: Error occurred while writing page {0}: container not available");
 		
 	}
 	
