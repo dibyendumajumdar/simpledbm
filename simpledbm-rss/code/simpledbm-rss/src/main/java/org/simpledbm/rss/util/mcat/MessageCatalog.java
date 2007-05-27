@@ -66,6 +66,8 @@ public class MessageCatalog {
 	static {
 		msgs = new HashMap<String,String>();
 		msgs.put("WL0001", "SIMPLEDBM-WL0001: Failed to initialize logging system due to following error:");
+		
+		// Buffer Manager messages
 		msgs.put("EM0001", "SIMPLEDBM-EM0001: Error occurred while shutting down Buffer Manager");
 		msgs.put("EM0002", "SIMPLEDBM-EM0002: Error occurred while attempting to read page:");
 		msgs.put("EM0003", "SIMPLEDBM-EM0003: Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
@@ -78,12 +80,16 @@ public class MessageCatalog {
 		msgs.put("EM0010", "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
 		msgs.put("IM0011", "SIMPLEDBM-IM0011: Buffer Writer STARTED");
 		msgs.put("IM0012", "SIMPLEDBM-IM0011: Buffer Writer STOPPED");
+		
+		// Free Space Manager messages
 		msgs.put("EF0001", "SIMPLEDBM-EF0001: Invalid number of bits specified for space map page: ");
 		msgs.put("EF0002", "SIMPLEDBM-EF0002: Specified container does not exist: ");
 		msgs.put("EF0003", "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type: ");
 		msgs.put("EF0004", "SIMPLEDBM-EF0004: Unexpected error - specified page does not belong to this space map page: ");
 		msgs.put("EF0005", "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
 		msgs.put("EF0006", "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
+		
+		// BTree Index Manager messages
 		msgs.put("EB0001", "SIMPLEDBM-EB0001: Unexpected error - missing child pointer in parent node");
 		msgs.put("EB0002", "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
 		msgs.put("WB0003", "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of: ");
@@ -96,13 +102,19 @@ public class MessageCatalog {
 		msgs.put("EB0010", "SIMPLEDBM-EB0010: Supplied index item not setup as leaf: ");
 		msgs.put("WB0011", "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
 		msgs.put("EB0012", "SIMPLEDBM-EB0012: Unexpected error - exception caught");
+		
+		// Class Utils messages
 		msgs.put("EU0001", "SIMPLEDBM-EU0001: Unable to obtain classloader");
 		msgs.put("EU0002", "SIMPLEDBM-EU0002: Unable to load resource {0}");
+		
+		// Server messages
 		msgs.put("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server STARTED");
 		msgs.put("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server STOPPED");
 		msgs.put("EV0003", "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
 		msgs.put("EV0004", "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
 		msgs.put("EV0005", "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
+		
+		// Write Ahead Log Manager messages
 		msgs.put("EW0001", "SIMPLEDBM-EW0001: Log record is {0} bytes whereas maximum allowed log record size is {0}");
 		msgs.put("EW0002", "SIMPLEDBM-EW0002: Unexpected error ocurred while attempting to insert a log record");
 		msgs.put("EW0003", "SIMPLEDBM-EW0003: Log is already open or has encountered an error");
@@ -135,6 +147,8 @@ public class MessageCatalog {
 		msgs.put("IW0030", "SIMPLEDBM-IW0030: Log Writer STOPPED");
 		msgs.put("IW0031", "SIMPLEDBM-IW0031: Archive Cleaner STOPPED");
 		msgs.put("IW0032", "SIMPLEDBM-IW0032: Write Ahead Log Manager STOPPED");
+		
+		// Latch Manager messages
 		msgs.put("EH0001", "SIMPLEDBM-EH0001: Invalid upgrade request, as there is no prior lock: {0}");
 		msgs.put("WH0002", "SIMPLEDBM-WH0002: Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
 		msgs.put("EH0003", "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
@@ -144,6 +158,8 @@ public class MessageCatalog {
 		msgs.put("EH0007", "SIMPLEDBM-EH0007: Invalid request as caller does not hold a lock on {0}");
 		msgs.put("EH0008", "SIMPLEDBM-EH0008: Cannot release lock {0} as it is being waited for");
 		msgs.put("EH0009", "SIMPLEDBM-EH0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
+		
+		// Lock Manager messages
 		msgs.put("EC0001", "SIMPLEDBM-EC0001: Lock request {0} timed out");
 		msgs.put("WC0002", "SIMPLEDBM-WC0002: Lock request {0} failed due to a deadlock");
 		msgs.put("EC0099", "SIMPLEDBM-EC0099: Unexpected error occurred while attempting to acquire lock request {0}");
@@ -156,9 +172,20 @@ public class MessageCatalog {
 		msgs.put("WC0011", "SIMPLEDBM-WC0011: Detected deadlock cycle: R1 {0} (victim) waiting for R2 {1}\nR1 {2}\nR2 {3}");
 		msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
 		msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
+		
+		// Page factory messages
 		msgs.put("EP0001", "SIMPLEDBM-EP0001: Error occurred while reading page {0}: the number of bytes read is {1}; but expected {2} bytes");
 		msgs.put("EP0002", "SIMPLEDBM-EP0002: Error occurred while reading page {0}: container not available");
 		msgs.put("EP0003", "SIMPLEDBM-EP0003: Error occurred while writing page {0}: container not available");
+		
+		// Object Registry messages
+		msgs.put("WR0001", "SIMPLEDBM-WR0001: Duplicate registration of type {0} ignored");
+		msgs.put("ER0002", "SIMPLEDBM-ER0002: Duplicate registration of type {0} does not match previous registration: previous type {1}, new type {2}");
+		msgs.put("WR0003", "SIMPLEDBM-WR0003: Duplicate registration of singleton {0} ignored");
+		msgs.put("ER0004", "SIMPLEDBM-ER0004: Duplicate registration of singleton {0} does not match previous registration: previous object {1}, new object {2}");
+		msgs.put("ER0005", "SIMPLEDBM-ER0005: Error occurred when attempting to load class {0}");
+		msgs.put("ER0006", "SIMPLEDBM-ER0006: Unknown typecode {0}");
+		msgs.put("ER0007", "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");
 		
 	}
 	

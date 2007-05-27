@@ -40,16 +40,6 @@ public interface PageFactory {
 	 * Instantiate a Page of the specified type, and initialize it with the 
 	 * PageID.
 	 *  
-	 * @param pagetype The Page type name as registered in the Object Registry
-	 * @param pageId The ID of the Page
-	 */
-	//Page getInstance(String pagetype, PageId pageId);
-	
-	
-	/**
-	 * Instantiate a Page of the specified type, and initialize it with the 
-	 * PageID.
-	 *  
 	 * @param typecode The Page type code as registered in the Object Registry
 	 * @param pageId The ID of the Page
 	 */
@@ -75,6 +65,9 @@ public interface PageFactory {
 	 */
 	void store(Page page);
 
+	/**
+	 * Gets the type code for a raw page which is just a blob of bytes.
+	 */
     int getRawPageType();
     
 }
