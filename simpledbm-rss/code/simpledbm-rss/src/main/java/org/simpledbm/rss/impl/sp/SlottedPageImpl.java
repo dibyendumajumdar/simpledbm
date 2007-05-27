@@ -54,8 +54,6 @@ import org.simpledbm.rss.util.logging.Logger;
  */
 public final class SlottedPageImpl extends SlottedPage {
 
-	private static final String LOG_CLASS_NAME = SlottedPageImpl.class.getName();
-
 	static final Logger log = Logger.getLogger(SlottedPageImpl.class.getPackage().getName());
 
 	/**
