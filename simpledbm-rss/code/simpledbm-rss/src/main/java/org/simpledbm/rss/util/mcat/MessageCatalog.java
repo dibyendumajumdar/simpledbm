@@ -195,6 +195,15 @@ public class MessageCatalog {
 		msgs.put("EO0005", "SIMPLEDBM-EO0005: Invalid page contents");
 		msgs.put("EO0006", "SIMPLEDBM-EO0006: Unexpected error: failed to find insertion point in page");
 		
+		// storage manager messages
+		msgs.put("ES0001", "SIMPLEDBM-ES0001: StorageContainer {0} is not valid");
+		msgs.put("ES0003", "SIMPLEDBM-ES0003: Error occurred while writing to StorageContainer {0}");
+		msgs.put("ES0004", "SIMPLEDBM-ES0004: Error occurred while reading from StorageContainer {0}");
+		msgs.put("ES0005", "SIMPLEDBM-ES0005: Error occurred while flushing StorageContainer {0}");
+		msgs.put("ES0006", "SIMPLEDBM-ES0006: Error occurred while closing StorageContainer {0}");
+		msgs.put("ES0007", "SIMPLEDBM-ES0007: StorageContainer {0} is already locked");
+		msgs.put("ES0008", "SIMPLEDBM-ES0008: An exclusive lock could not be obtained on StorageContainer {0}");
+		
 		
 	}
 	

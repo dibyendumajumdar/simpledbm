@@ -27,6 +27,8 @@ import java.nio.channels.OverlappingFileLockException;
 
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageException;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Implements a File based StorageContainer.
@@ -36,16 +38,10 @@ import org.simpledbm.rss.api.st.StorageException;
  */
 public final class FileStorageContainer implements StorageContainer {
 
-    private static final String SIMPLEDBM_EIO006 = "SIMPLEDBM-EIO-006: Error occurred while closing StorageContainer: ";
+    private static final Logger log = Logger.getLogger(FileStorageContainer.class.getPackage().getName());
 
-    private static final String SIMPLEDBM_EIO005 = "SIMPLEDBM-EIO-005: Error occurred while flushing StorageContainer: ";
-
-    private static final String SIMPLEDBM_EIO004 = "SIMPLEDBM-EIO-004: Error occurred while reading from StorageContainer: ";
-
-    private static final String SIMPLEDBM_EIO003 = "SIMPLEDBM-EIO-003: Error occurred while writing to StorageContainer: ";
-
-    private static final String SIMPLEDBM_EIO001 = "SIMPLEDBM-EIO-001: StorageContainer is not valid: ";
-
+    private static final MessageCatalog mcat = new MessageCatalog();
+    
 	/**
 	 * The underlying file object.
 	 */
@@ -71,7 +67,8 @@ public final class FileStorageContainer implements StorageContainer {
 	 */
 	private void isValid() throws StorageException {
 		if (file == null || !file.getChannel().isOpen()) {
-			throw new StorageException(SIMPLEDBM_EIO001 + name);
+			log.error(this.getClass().getName(), "isValid", mcat.getMessage("ES0001", name));
+			throw new StorageException(mcat.getMessage("ES0001", name));
 		}
 	}
 
@@ -85,7 +82,8 @@ public final class FileStorageContainer implements StorageContainer {
 			file.seek(position);
 			file.write(data, offset, length);
 		} catch (IOException e) {
-			throw new StorageException(SIMPLEDBM_EIO003 + name, e);
+			log.error(this.getClass().getName(), "write", mcat.getMessage("ES0003", name), e);
+			throw new StorageException(mcat.getMessage("ES0003", name), e);
 		}
 	}
 
@@ -100,7 +98,8 @@ public final class FileStorageContainer implements StorageContainer {
 			file.seek(position);
 			n = file.read(data, offset, length);
 		} catch (IOException e) {
-			throw new StorageException(SIMPLEDBM_EIO004 + name, e);
+			log.error(this.getClass().getName(), "read", mcat.getMessage("ES0004", name), e);
+			throw new StorageException(mcat.getMessage("ES0004", name), e);
 		}
 		return n;
 	}
@@ -114,7 +113,8 @@ public final class FileStorageContainer implements StorageContainer {
 		try {
 			file.getChannel().force(true);
 		} catch (IOException e) {
-			throw new StorageException(SIMPLEDBM_EIO005 + name, e);
+			log.error(this.getClass().getName(), "flush", mcat.getMessage("ES0005", name), e);
+			throw new StorageException(mcat.getMessage("ES0005", name), e);
 		}
 	}
 
@@ -127,14 +127,16 @@ public final class FileStorageContainer implements StorageContainer {
 		try {
 			file.close();
 		} catch (IOException e) {
-			throw new StorageException(SIMPLEDBM_EIO006 + name, e);
+			log.error(this.getClass().getName(), "close", mcat.getMessage("ES0006", name), e);
+			throw new StorageException(mcat.getMessage("ES0006", name), e);
 		}
 	}
     
 	public final synchronized void lock() {
 		isValid();
 		if (lock != null) {
-			throw new StorageException("Already locked");
+			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0007", name));
+			throw new StorageException(mcat.getMessage("ES0007", name));
 		}
 		try {
 			FileChannel channel = file.getChannel();
@@ -145,11 +147,13 @@ public final class FileStorageContainer implements StorageContainer {
 				// ignore this error
 			}
 			if (lock == null) {
-				throw new StorageException("Lock cannot be obtained");
+				log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0008", name));
+				throw new StorageException(mcat.getMessage("ES0008", name));
 			}
 		}
 		catch (IOException e) {
-			throw new StorageException(e);
+			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0008", name), e);
+			throw new StorageException(mcat.getMessage("ES0008", name), e);
 		}
 	}
 
@@ -167,14 +171,14 @@ public final class FileStorageContainer implements StorageContainer {
 		}
 	}
 	
-    public String getName() {
+    public final String getName() {
         return name;
     }
     
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
-    public String toString() {
+    public final String toString() {
     	return "FileStorageContainer(name=" + name + ", file=" + file + ")";
     }
 }
