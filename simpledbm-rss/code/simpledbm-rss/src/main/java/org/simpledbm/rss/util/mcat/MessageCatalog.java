@@ -223,7 +223,8 @@ public class MessageCatalog {
 		msgs.put("ET0001", "SIMPLEDBM-ET0001: This operation has not yet been implemented");
 		msgs.put("ET0002", "SIMPLEDBM-ET0002: Comparison is not possible because the supplied argument {0} is not of type {1}");
 		msgs.put("ET0003", "SIMPLEDBM-ET0003: TupleId {0} has not been initialized");
-		
+		msgs.put("ET0004", "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
+		msgs.put("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
 	}
 	
 	public String getMessage(String key) {

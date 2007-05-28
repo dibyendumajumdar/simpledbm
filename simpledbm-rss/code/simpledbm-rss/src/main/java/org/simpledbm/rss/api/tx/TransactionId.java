@@ -22,6 +22,7 @@ package org.simpledbm.rss.api.tx;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
@@ -32,7 +33,7 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
  */
-public final class TransactionId implements Storable {
+public final class TransactionId implements Storable, Dumpable {
 
     public static final int SIZE = TypeSize.LONG;
 
@@ -79,9 +80,14 @@ public final class TransactionId implements Storable {
         return id == -1;
     }
 
+    public final StringBuilder appendTo(StringBuilder sb) {
+    	sb.append("TrxId(").append(id).append(")");
+    	return sb;
+    }
+    
     @Override
     public final String toString() {
-        return "TrxId(" + id + ")";
+    	return appendTo(new StringBuilder()).toString();
     }
 
 }

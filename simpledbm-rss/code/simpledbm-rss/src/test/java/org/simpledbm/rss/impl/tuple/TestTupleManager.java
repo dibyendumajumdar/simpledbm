@@ -534,7 +534,7 @@ public class TestTupleManager extends TestCase {
 
         public TupleDB(Properties props, boolean create) throws Exception {
 
-        	Logger.configure("logging.properties");
+        	Logger.configure("classpath:logging.properties");
 			storageFactory = new FileStorageContainerFactory(props);
         	logFactory = new LogFactoryImpl();
         	if (create) {

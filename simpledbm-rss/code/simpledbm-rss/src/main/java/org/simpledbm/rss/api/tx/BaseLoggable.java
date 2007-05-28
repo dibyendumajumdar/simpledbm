@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
@@ -40,7 +41,7 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 06-Nov-2005
  */
-public abstract class BaseLoggable implements Loggable {
+public abstract class BaseLoggable implements Loggable, Dumpable {
 	
 	/**
 	 * Loggable object typecode, used to ensure that the correct type can be
@@ -188,12 +189,18 @@ public abstract class BaseLoggable implements Loggable {
 
 	public abstract void init(); 
 	
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("Typecode=").append(typecode).append(", prevTrxLsn=");
+		prevTrxLsn.appendTo(sb).append(", undoNextLsn=");
+		undoNextLsn.appendTo(sb).append(", trxId=");
+		trxId.appendTo(sb).append(", pageType=").append(pageType).append(", pageId=");
+		pageId.appendTo(sb).append(", moduleId=").append(moduleId);
+		return sb;
+	}
+	
 	@Override
 	public String toString() {
-		return "Typecode=" + typecode + ", prevTrxLsn="  + prevTrxLsn +
-			", undoNextLsn=" + undoNextLsn + ", trxId=" + trxId + 
-			", pageType=" + pageType + ", pageId=" + pageId + 
-			", moduleId=" + moduleId;
+		return appendTo(new StringBuilder()).toString();
 	}
 
 }
