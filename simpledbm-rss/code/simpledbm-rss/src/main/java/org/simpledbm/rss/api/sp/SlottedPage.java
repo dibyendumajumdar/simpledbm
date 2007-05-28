@@ -34,11 +34,6 @@ import org.simpledbm.rss.api.st.Storable;
 public abstract class SlottedPage extends Page {
 
 	/**
-	 * Returns the maximum number of slots that can be accomodated in a page.
-	 */
-	public abstract int getMaximumSlots();
-	
-	/**
 	 * Returns the total space available for slot data, including the 
 	 * slot table.
 	 * @see #getFreeSpace()

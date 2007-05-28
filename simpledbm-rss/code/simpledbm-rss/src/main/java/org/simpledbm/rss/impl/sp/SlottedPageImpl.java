@@ -22,11 +22,13 @@ package org.simpledbm.rss.impl.sp;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * SlottedPageImpl is an implementation of SlottedPage that can support page sizes
@@ -55,6 +57,8 @@ import org.simpledbm.rss.util.logging.Logger;
 public final class SlottedPageImpl extends SlottedPage {
 
 	static final Logger log = Logger.getLogger(SlottedPageImpl.class.getPackage().getName());
+	
+	static final MessageCatalog mcat = new MessageCatalog();
 
 	/**
 	 * This is the length of fixed length header in each page. 
@@ -213,6 +217,7 @@ public final class SlottedPageImpl extends SlottedPage {
 		freeSpace = bb.getInt();
 		highWaterMark = bb.getInt();
 		spaceMapPageNumber = bb.getInt();
+		validatePageHeader();
 		data = new byte[getSpace()];
 		bb.get(data);
 		slotTable.clear();
@@ -223,6 +228,7 @@ public final class SlottedPageImpl extends SlottedPage {
 			slot.retrieve(bb1);
 			slotTable.add(slotNumber, slot);
 		}
+		validatePageSize();
 	}
 
 	@Override
@@ -242,14 +248,33 @@ public final class SlottedPageImpl extends SlottedPage {
 		bb.put(data);
 	}
 
+	private void validatePageHeader() {
+		if (numberOfSlots < 0 || numberOfSlots > getMaximumSlots() || 
+				freeSpace < 0 || freeSpace > getSpace() || 
+				highWaterMark < 0 || highWaterMark > getSpace()) {
+			log.error(this.getClass().getName(), "validate", mcat.getMessage("EO0005"));
+			throw new PageException(mcat.getMessage("EO0005") + this);
+		}
+	}
+
+	private void validatePageSize() {
+		int length = 0;
+		for (int i = 0; i < getNumberOfSlots(); i++) {
+			length += getSlotLength(i);
+		}
+		length += freeSpace;
+		if (length != getSpace()) {
+			log.error(this.getClass().getName(), "validatePageSize", mcat.getMessage("EO0005"));
+			throw new PageException(mcat.getMessage("EO0005") + this);
+		}
+	}
+	
+	
 	/**
-	 * Returns the maximum number of slots that can be accomodated in a page.
-	 * The slot table is restricted (arbitrarily) to 1/4th of the total
-	 * space available in the page.
+	 * Returns the theoretical maximum number of slots that can be accomodated in a page.
 	 */
-	@Override
-	public final int getMaximumSlots() {
-		return (getSpace() / 4) / Slot.SIZE;
+	private final int getMaximumSlots() {
+		return getSpace() / Slot.SIZE;
 	}
 
 	/**
@@ -301,6 +326,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final int getSlotLength(int slotNo) {
+		validateSlotNumber(slotNo, false);
 		return slotTable.get(slotNo).getLength() + Slot.SIZE;
 	}
 
@@ -309,6 +335,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final int getDataLength(int slotNo) {
+		validateSlotNumber(slotNo, false);
 		return slotTable.get(slotNo).getLength();
 	}
 
@@ -319,6 +346,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final boolean isSlotDeleted(int slotNo) {
+		validateSlotNumber(slotNo, false);
 		return slotTable.get(slotNo).getLength() == 0;
 	}
 
@@ -460,12 +488,12 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insert(Storable item)
 	{
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
 		int len = item.getStoredLength();
 		int slotNumber = findInsertionPoint();
 		if (!hasSpace(slotNumber, len)) {
-			throw new RuntimeException("Unexpected error - unable to insert data due to lack of space");
-			// return false;
+			log.error(this.getClass().getName(), "insert", mcat.getMessage("EO0001", item, this));
+			throw new PageException(mcat.getMessage("EO0001", item, this));
 		}
 		/* find contiguous space */
 		Slot slot = findSpace(slotNumber, len);
@@ -493,7 +521,8 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insertAt(int slotNumber, Storable item, boolean replaceMode)
 	{
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
+		validateSlotNumber(slotNumber, true);
 		int len = item.getStoredLength();
 		// Calculate required space.
 		// If the tuple being inserted is beyond the last tuple, then
@@ -517,8 +546,8 @@ public final class SlottedPageImpl extends SlottedPage {
 		// Do we have enough space in the page?
 		// TODO: Maybe we should also reserve some free space
 		if (freeSpace < requiredSpace) {
-			throw new RuntimeException("Unexpected error - unable to insert data due to lack of space");
-			// return false;
+			log.error(this.getClass().getName(), "insertAt", mcat.getMessage("EO0002", item, this, slotNumber));
+			throw new PageException(mcat.getMessage("EO0002", item, this, slotNumber));
 		}
 		
 		int savedFlags = 0;
@@ -560,7 +589,8 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final void delete(int slotNumber) {
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
+		validateSlotNumber(slotNumber, false);
 		if (isSlotDeleted(slotNumber)) {
 			return;
 		}
@@ -583,7 +613,8 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final void purge(int slotNumber)
 	{
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
+		validateSlotNumber(slotNumber, false);
 		if (isSlotDeleted(slotNumber)) {
 			deletedSlots--;
 		}
@@ -592,9 +623,19 @@ public final class SlottedPageImpl extends SlottedPage {
 		numberOfSlots -= 1;
 	}	
 	
-//	private void validateSlotNumber(int slotNumber) {
-//		
-//	}
+	private final void validateSlotNumber(int slotNumber, boolean allow) {
+		if (slotNumber < 0 || slotNumber > (numberOfSlots - (allow ? 0 : 1))) {
+			log.error(this.getClass().getName(), "validateSlotNumber", mcat.getMessage("EO0003", slotNumber, numberOfSlots));
+			throw new PageException(mcat.getMessage("EO0003", slotNumber, numberOfSlots));
+		}
+	}
+	
+	private final void validateLatchMode() {
+		if (!lock.isLatchedExclusively()) {
+			log.error(this.getClass().getName(), "validateLatchMode", mcat.getMessage("EO0004"));
+			throw new PageException(mcat.getMessage("EO0004"));
+		}
+	}
 	
 	/**
 	 * Return a pointer to tuple's data, as well as its length.
@@ -602,6 +643,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final Storable get(int slotNumber, Storable item)
 	{
+		validateSlotNumber(slotNumber, false);
 		Slot slot = slotTable.get(slotNumber);
 		ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot.getLength());
 		item.retrieve(bb);
@@ -616,7 +658,8 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final void setFlags(int slotNumber, short flags) {
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
+		validateSlotNumber(slotNumber, false);
 		Slot slot = slotTable.get(slotNumber);
 		slot.setFlags(flags);
 	}
@@ -627,6 +670,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final int getFlags(int slotNumber) {
+		validateSlotNumber(slotNumber, false);
 		Slot slot = slotTable.get(slotNumber);
 		return slot.getFlags();
 	}
@@ -642,7 +686,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setFlags(short flags) {
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
 		this.flags = flags;
 	}
 	
@@ -667,7 +711,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setSpaceMapPageNumber(int spaceMapPageNumber) {
-		assert lock.isLatchedExclusively();
+		validateLatchMode();
 		this.spaceMapPageNumber = spaceMapPageNumber;
 	}
 	
@@ -676,6 +720,36 @@ public final class SlottedPageImpl extends SlottedPage {
         return Slot.SIZE;
     }
 
+	public StringBuilder appendTo(StringBuilder sb) {
+		
+		sb.append("=========================================================================");
+		sb.append("PAGE DUMP : ").append(getPageId()).append("\n");
+		sb.append("PageSize=").append(getStoredLength()).append("\n");
+		sb.append("FIXED OVERHEAD=").append(SlottedPageImpl.FIXED_OVERHEAD).append("\n");
+		sb.append("UsableSpace=").append(getSpace()).append("\n");
+		// DiagnosticLogger.log("PageLsn=" + getPageLsn());
+		sb.append("PageType=").append(getType()).append("\n");
+		sb.append("PageFlags=").append(getFlags()).append("\n");
+		sb.append("#Slots=").append(getNumberOfSlots()).append("\n");
+		sb.append("#DeletedSlots=").append(getDeletedSlots()).append("\n");
+		sb.append("HighWaterMark=").append(highWaterMark).append("\n");
+		sb.append("FreeSpace=").append(getFreeSpace()).append("\n");
+		sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append("\n");
+		int length = 0;
+		for (int i = 0; i < getNumberOfSlots(); i++) {
+			sb.append("Slot#").append(i).append("=").append(slotTable.get(i)).append("\n");
+			length += getSlotLength(i);
+		}
+		length += FIXED_OVERHEAD;
+		length += freeSpace;
+		sb.append("Calculated PageSize=").append(length).append("\n");
+		return sb;
+	}
+	
+	public String toString() {
+		return appendTo(new StringBuilder()).toString();
+	}
+	
     @Override
 	public final void dump() {
 		DiagnosticLogger.log("=========================================================================");

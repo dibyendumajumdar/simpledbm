@@ -187,6 +187,14 @@ public class MessageCatalog {
 		msgs.put("ER0006", "SIMPLEDBM-ER0006: Unknown typecode {0}");
 		msgs.put("ER0007", "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");
 		
+		// Slotted Page Manager
+		msgs.put("EO0001", "SIMPLEDBM-EO0001: Cannot insert item {0} into page {1} due to lack of space");
+		msgs.put("EO0002", "SIMPLEDBM-EO0002: Cannot insert item {0} into page {1} at slot {2} due to lack of space");
+		msgs.put("EO0003", "SIMPLEDBM-EO0003: Cannot access item at slot {0}, number of slots in page is {1}");
+		msgs.put("EO0004", "SIMPLEDBM-EO0004: Cannot modify page contents as page is not latched EXCLUSIVELY");
+		msgs.put("EO0005", "SIMPLEDBM-EO0005: Invalid page contents");
+		
+		
 	}
 	
 	public String getMessage(String key) {
