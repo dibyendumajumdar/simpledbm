@@ -28,6 +28,7 @@ import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Factory for creating instances of File based StorageContainer objects.
@@ -46,13 +47,17 @@ public final class FileStorageContainerFactory implements
 	 * Mode for creating new container objects. This should be
 	 * configurable.
 	 */
-	private final String createMode = "rws";
-	
+	private final String createMode;
+	private static final String CREATE_MODE = "storage.createMode";
+	private static final String defaultCreateMode = "rws";
+
 	/**
 	 * Mode for openeing existing container objects. This should be 
 	 * configurable.
 	 */
-	private final String openMode = "rws";
+	private final String openMode;
+	private static final String OPEN_MODE = "storage.openMode";
+	private static final String defaultOpenMode = "rws";
 
 	/**
 	 * Base path for containers. All containers will be
@@ -75,12 +80,18 @@ public final class FileStorageContainerFactory implements
 	 */
 	private boolean basePathVerified = false;
 	
+	private static final MessageCatalog mcat = new MessageCatalog();
+	
 	public FileStorageContainerFactory(Properties props) {
 		basePath = props.getProperty(BASE_PATH, defaultBasePath);
+		createMode = props.getProperty(CREATE_MODE, defaultCreateMode);
+		openMode = props.getProperty(OPEN_MODE, defaultOpenMode);
 	}
 	
 	public FileStorageContainerFactory() {
 		basePath = defaultBasePath;
+		createMode = defaultCreateMode;
+		openMode = defaultOpenMode;
 	}
 
 	/**
@@ -93,17 +104,20 @@ public final class FileStorageContainerFactory implements
 		File file = new File(basePath);
 		if (!file.exists()) {
 			if (!create) {
-				throw new StorageException("SIMPLEDBM-EIO: Directory specified by " + basePath + " does not exist");
+				log.error(this.getClass().getName(), "checkBasePath", mcat.getMessage("ES0011", BASE_PATH, basePath));
+				throw new StorageException(mcat.getMessage("ES0011", BASE_PATH, basePath));
 			}
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "checkBasePath", "SIMPLEDBM-LOG: Creating base path " + basePath);
+				log.debug(this.getClass().getName(), "checkBasePath", "SIMPLEDBM-DEBUG: Creating base path " + basePath);
 			}
 			if (!file.mkdirs()) {
-				throw new StorageException("SIMPLEDBM-EIO: Unable to create the directory specified by " + basePath);
+				log.error(this.getClass().getName(), "checkBasePath", mcat.getMessage("ES0012", BASE_PATH, basePath));
+				throw new StorageException(mcat.getMessage("ES0012", BASE_PATH, basePath));
 			}
 		}
 		if (!file.isDirectory() || !file.canRead() || !file.canWrite()) {
-			throw new StorageException("SIMPLEDBM-EIO: Specified base path " + basePath + " is not accessible or is not a directory");
+			log.error(this.getClass().getName(), "checkBasePath", mcat.getMessage("ES0013", BASE_PATH, basePath));
+			throw new StorageException(mcat.getMessage("ES0013", BASE_PATH, basePath));
 		}
 		basePathVerified = true;
 	}
@@ -119,14 +133,16 @@ public final class FileStorageContainerFactory implements
 			File parentFile = file.getParentFile();
 			if (parentFile.exists()) {
 				if (!parentFile.isDirectory() || !parentFile.canWrite() || !parentFile.canRead()) {
-					throw new StorageException("SIMPLEDBM-EIO: Path name " + parentFile.getPath() + " must be a directory");
+					log.error(this.getClass().getName(), "getFileName", mcat.getMessage("ES0014", parentFile.getPath()));
+					throw new StorageException(mcat.getMessage("ES0014", parentFile.getPath()));
 				}
 			} else {
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "getFileName", "SIMPLEDBM-LOG: Creating path " + parentFile.getPath());
+					log.debug(this.getClass().getName(), "getFileName", "SIMPLEDBM-DEBUG: Creating path " + parentFile.getPath());
 				}
 				if (!parentFile.mkdirs()) {
-					throw new StorageException("SIMPLEDBM-EIO: Failed to create path " + parentFile.getPath());
+					log.error(this.getClass().getName(), "getFileName", mcat.getMessage("ES0015", parentFile.getPath()));
+					throw new StorageException(mcat.getMessage("ES0015", parentFile.getPath()));
 				}
 			}
 		}
@@ -141,6 +157,9 @@ public final class FileStorageContainerFactory implements
 	 */
     public final StorageContainer create(String logicalName)
             throws StorageException {
+		if (log.isDebugEnabled()) {
+			log.debug(this.getClass().getName(), "create", "SIMPLEDBM-DEBUG: Creating StorageContainer " + logicalName);
+		}
     	checkBasePath(true);
     	String name = getFileName(logicalName, true);
         RandomAccessFile rafile = null;
@@ -149,17 +168,20 @@ public final class FileStorageContainerFactory implements
             if (file.exists()) {
                 if (file.isFile()) {
                     if (!file.delete()) {
-                        throw new StorageException("SIMPLEDBM-EIO-101: Unable to delete existing Storage Container - " + name);
+    					log.error(this.getClass().getName(), "create", mcat.getMessage("ES0016", name));
+    					throw new StorageException(mcat.getMessage("ES0016", name));
                     }
                 }
                 else {
-                    throw new StorageException("SIMPLEDBM-EIO-102: An object of this name already exists - " + name);
+					log.error(this.getClass().getName(), "create", mcat.getMessage("ES0017", name));
+					throw new StorageException(mcat.getMessage("ES0017", name));
                 }
             }
             rafile = new RandomAccessFile(name, createMode);
         }
         catch (FileNotFoundException e) {
-            throw new StorageException("SIMPLEDBM-EIO-103: Unexpected error while creating Storage Container - " + name, e);
+			log.error(this.getClass().getName(), "create", mcat.getMessage("ES0018", name), e);
+			throw new StorageException(mcat.getMessage("ES0018", name), e);
         }
         return new FileStorageContainer(logicalName, rafile);
     }
@@ -179,12 +201,14 @@ public final class FileStorageContainerFactory implements
         File file = new File(name);
         try {
             if (!file.exists() || !file.isFile() || !file.canRead() || !file.canWrite()) {
-                throw new StorageException("SIMPLEDBM-EIO-104: Storage Container either does not exist or is not accessible - " + name);
+				log.error(this.getClass().getName(), "open", mcat.getMessage("ES0019", name));
+				throw new StorageException(mcat.getMessage("ES0019", name));
             }
             rafile = new RandomAccessFile(name, openMode);
         }
         catch (FileNotFoundException e) {
-            throw new StorageException("SIMPLEDBM-EIO-105: Unexpected error while opening Storage Container - " + name, e);
+			log.error(this.getClass().getName(), "open", mcat.getMessage("ES0020", name), e);
+			throw new StorageException(mcat.getMessage("ES0020", name), e);
         }
         return new FileStorageContainer(logicalName, rafile);
     }
@@ -199,14 +223,12 @@ public final class FileStorageContainerFactory implements
         if (file.exists()) {
             if (file.isFile()) {
                 if (!file.delete()) {
-                    throw new StorageException(
-                            "SIMPLEDBM-EIO-101: Unable to delete Storage Container - "
-                                    + name);
+					log.error(this.getClass().getName(), "delete", mcat.getMessage("ES0016", name));
+					throw new StorageException(mcat.getMessage("ES0016", name));
                 }
             } else {
-                throw new StorageException(
-                        "SIMPLEDBM-EIO-102: Named object is not a storage container - "
-                                + name);
+				log.error(this.getClass().getName(), "delete", mcat.getMessage("ES0021", name));
+				throw new StorageException(mcat.getMessage("ES0021", name));
             }
         }
     }

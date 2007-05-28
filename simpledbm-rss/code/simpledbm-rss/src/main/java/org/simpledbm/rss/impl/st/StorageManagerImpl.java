@@ -26,7 +26,9 @@ import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Implements the StorageManager interface.
@@ -36,13 +38,13 @@ import org.simpledbm.rss.util.logging.Logger;
  */
 public final class StorageManagerImpl implements StorageManager {
 
-	static final String LOG_CLASS_NAME = StorageManagerImpl.class.getName();
-
-	static final Logger log = Logger.getLogger(StorageManagerImpl.class.getPackage().getName());
+	private static final Logger log = Logger.getLogger(StorageManagerImpl.class.getPackage().getName());
 
 	private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
 
-    public final void register(int id, StorageContainer container) {
+	private static final MessageCatalog mcat = new MessageCatalog();
+
+	public final void register(int id, StorageContainer container) {
         synchronized (map) {
             map.put(id, new StorageContainerHolder(id, container));
         }
@@ -89,10 +91,12 @@ public final class StorageManagerImpl implements StorageManager {
     				remove(sc.getContainerId());
     			}
     			catch (StorageException e) {
-    				log.error(LOG_CLASS_NAME, "shutdown", "SIMPLEDBM-ERROR: Error occurred while closing container " + sc);
+    				log.error(this.getClass().getName(), "shutdown", mcat.getMessage("ES0023", sc), e);
+    				throw new StorageException(mcat.getMessage("ES0023", sc), e);
     			}
     		}
     	}
+    	log.info(this.getClass().getName(), "shutdown", mcat.getMessage("IS0022"));
     }
 
     public StorageContainerInfo[] getActiveContainers() {
@@ -124,12 +128,17 @@ public final class StorageManagerImpl implements StorageManager {
             return name;
         }
         
-        public String toString() {
-        	return "StorageContainerInfoImpl(name = " + name + ", id=" + containerId + ")";
+        public final StringBuilder appendTo(StringBuilder sb) {
+        	sb.append("StorageContainerInfoImpl(name=").append(name).append(", id=").append(containerId).append(")");
+        	return sb;
+        }
+        
+        public final String toString() {
+        	return appendTo(new StringBuilder()).toString();
         }
     }
 
-    static class StorageContainerHolder {
+    static class StorageContainerHolder implements Dumpable {
         
         final int containerId;
         
@@ -148,8 +157,13 @@ public final class StorageManagerImpl implements StorageManager {
             return containerId;
         }
         
-        public String toString() {
-        	return "StorageContainerHolder(containerId = " + containerId + ", container = " + container + ")";
+        public final StringBuilder appendTo(StringBuilder sb) {
+        	sb.append("StorageContainerHolder(containerId=").append(containerId).append(", container=").append(container).append(")");
+        	return sb;
+        }
+        
+        public final String toString() {
+        	return appendTo(new StringBuilder()).toString();
         }
     }
     

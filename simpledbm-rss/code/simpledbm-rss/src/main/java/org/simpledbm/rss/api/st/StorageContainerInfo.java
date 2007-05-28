@@ -23,13 +23,15 @@
  */
 package org.simpledbm.rss.api.st;
 
+import org.simpledbm.rss.util.Dumpable;
+
 /**
  * Represents information about an active storage container.
  *
  * @author Dibyendu Majumdar
  * @since 18-Nov-2005
  */
-public interface StorageContainerInfo {
+public interface StorageContainerInfo extends Dumpable {
 
     /**
      * Returns the numeric ID assigned to the storage container.

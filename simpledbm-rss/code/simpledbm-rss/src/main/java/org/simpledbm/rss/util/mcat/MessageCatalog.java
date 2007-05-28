@@ -203,6 +203,21 @@ public class MessageCatalog {
 		msgs.put("ES0006", "SIMPLEDBM-ES0006: Error occurred while closing StorageContainer {0}");
 		msgs.put("ES0007", "SIMPLEDBM-ES0007: StorageContainer {0} is already locked");
 		msgs.put("ES0008", "SIMPLEDBM-ES0008: An exclusive lock could not be obtained on StorageContainer {0}");
+		msgs.put("ES0009", "SIMPLEDBM-ES0009: StorageContainer {0} is not locked");
+		msgs.put("ES0010", "SIMPLEDBM-ES0010: Error occurred while releasing lock on StorageContainer {0}");
+		msgs.put("ES0011", "SIMPLEDBM-ES0011: Directory specified by {0}={1} does not exist");
+		msgs.put("ES0012", "SIMPLEDBM-ES0012: Error creating directory specified by {0}={1}");
+		msgs.put("ES0013", "SIMPLEDBM-ES0013: Specified base path {0}={1} is not a directory or is not accessible");
+		msgs.put("ES0014", "SIMPLEDBM-ES0014: Path name {0} must be a directory");
+		msgs.put("ES0015", "SIMPLEDBM-ES0015: Error creating directory {0}");
+		msgs.put("ES0016", "SIMPLEDBM-ES0016: Unable to delete StorageContainer {0}");
+		msgs.put("ES0017", "SIMPLEDBM-ES0017: Unable to create StorageContainer {0} because an object of the name already exists");
+		msgs.put("ES0018", "SIMPLEDBM-ES0018: Unexpected error occurred while creating StorageContainer {0}");
+		msgs.put("ES0019", "SIMPLEDBM-ES0019: StorageContainer {0} does not exist or is not accessible");
+		msgs.put("ES0020", "SIMPLEDBM-ES0020: Unexpected error occurred while opening StorageContainer {0}");
+		msgs.put("ES0021", "SIMPLEDBM-ES0021: Unable to delete {0} as named object is not a StorageContainer");
+		msgs.put("IS0022", "SIMPLEDBM-IS0022: StorageManager STOPPED");
+		msgs.put("ES0023", "SIMPLEDBM-ES0023: Unexpected error occurred while closing StorageContainer {0}");
 		
 		
 	}

@@ -27,6 +27,7 @@ import java.nio.channels.OverlappingFileLockException;
 
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageException;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -36,7 +37,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * @author Dibyendu Majumdar
  * @since 24-Jun-2005
  */
-public final class FileStorageContainer implements StorageContainer {
+public final class FileStorageContainer implements StorageContainer, Dumpable {
 
     private static final Logger log = Logger.getLogger(FileStorageContainer.class.getPackage().getName());
 
@@ -160,14 +161,16 @@ public final class FileStorageContainer implements StorageContainer {
 	public final synchronized void unlock() {
 		isValid();
 		if (lock == null) {
-			throw new StorageException("Not locked");
+			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0009", name));
+			throw new StorageException(mcat.getMessage("ES0009", name));
 		}
 		try {
 			lock.release();
 			lock = null;
 		}
 		catch (IOException e) {
-			throw new StorageException(e);
+			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0010", name), e);
+			throw new StorageException(mcat.getMessage("ES0010", name), e);
 		}
 	}
 	
@@ -175,10 +178,15 @@ public final class FileStorageContainer implements StorageContainer {
         return name;
     }
     
+    public final StringBuilder appendTo(StringBuilder sb) {
+    	sb.append("FileStorageContainer(name=").append(name).append(", file=").append(file).append(")");
+    	return sb;
+    }
+    
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public final String toString() {
-    	return "FileStorageContainer(name=" + name + ", file=" + file + ")";
+    	return appendTo(new StringBuilder()).toString();
     }
 }
