@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.util.logging.Logger;
@@ -54,7 +55,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * @author Dibyendu Majumdar
  * @since 9 Sep 2005
  */
-public final class SlottedPageImpl extends SlottedPage {
+public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
 	static final Logger log = Logger.getLogger(SlottedPageImpl.class.getPackage().getName());
 	
@@ -115,7 +116,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	/**
 	 * A Slot entry in the slot table.  
 	 */
-	public static final class Slot implements Storable {
+	public static final class Slot implements Storable, Dumpable {
 
 		/**
 		 * Persistent data size.
@@ -202,9 +203,15 @@ public final class SlottedPageImpl extends SlottedPage {
 			this.offset = (short) offset;
 		}
 		
+		public final StringBuilder appendTo(StringBuilder sb) {
+			sb.append("slot(offset=").append(offset).append(", length=").append(length)
+				.append(", flags=").append(flags).append(")");
+			return sb;
+		}
+		
 		@Override
 		public final String toString() {
-			return "slot(offset=" + offset + ", length=" + length + ", flags=" + flags + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 
@@ -286,6 +293,7 @@ public final class SlottedPageImpl extends SlottedPage {
 		if (!TESTING) {
 			return super.getStoredLength() - FIXED_OVERHEAD;
 		}
+		// During testing it is useful to artificially restrict the usable space
 		return 200;
 	}
 
@@ -363,7 +371,10 @@ public final class SlottedPageImpl extends SlottedPage {
 					break;
 				}
 			}
-			assert slotNumber != numberOfSlots;
+			if (slotNumber != numberOfSlots) {
+				log.error(this.getClass().getName(), "findInsertionPoint", mcat.getMessage("EO0006"));
+				throw new PageException(mcat.getMessage("EO0006"));
+			}
 		}
 		else {
 			slotNumber = numberOfSlots;
@@ -374,11 +385,12 @@ public final class SlottedPageImpl extends SlottedPage {
 	
 	/**
 	 * Find the insertion point for a slot of specified length.
-	 * If we have enough space, return true, else, return false.
+	 * If we have enough space, return a slot object, else, return null.
 	 * Set slot.offset to the start of the space.
 	 * Note that this method is called when we already know that there 
 	 * is enough space for the slot, but we do not know whether there is
 	 * enough contiguous space.
+	 * @return Null if there is not enough contiguous space, a Slot object otherwise.
 	 */
 	private Slot findSpace(int slotNumber, int length) {
 		/* To find space between slots we would have to carry out some
@@ -423,6 +435,12 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	/**
 	 * Add the slot to the specified slotnumber.
+	 * Handles following cases:
+	 * <ol>
+	 * <li>A new slot to be added at the end.</li>
+	 * <li>A deleted slot being reused.</li>
+	 * <li>A new slot being inserted into the middle of the slot table. This causes existing slots to move right.</li>
+	 * </ol>
 	 */
 	private void addSlot(int slotNumber, Storable item, Slot slot) {
 		if (slotNumber == numberOfSlots) {
@@ -488,7 +506,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insert(Storable item)
 	{
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		int len = item.getStoredLength();
 		int slotNumber = findInsertionPoint();
 		if (!hasSpace(slotNumber, len)) {
@@ -521,7 +539,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final boolean insertAt(int slotNumber, Storable item, boolean replaceMode)
 	{
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		validateSlotNumber(slotNumber, true);
 		int len = item.getStoredLength();
 		// Calculate required space.
@@ -589,7 +607,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	 */
 	@Override
 	public final void delete(int slotNumber) {
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		validateSlotNumber(slotNumber, false);
 		if (isSlotDeleted(slotNumber)) {
 			return;
@@ -613,7 +631,7 @@ public final class SlottedPageImpl extends SlottedPage {
 	@Override
 	public final void purge(int slotNumber)
 	{
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		validateSlotNumber(slotNumber, false);
 		if (isSlotDeleted(slotNumber)) {
 			deletedSlots--;
@@ -623,14 +641,22 @@ public final class SlottedPageImpl extends SlottedPage {
 		numberOfSlots -= 1;
 	}	
 	
-	private final void validateSlotNumber(int slotNumber, boolean allow) {
-		if (slotNumber < 0 || slotNumber > (numberOfSlots - (allow ? 0 : 1))) {
+	/**
+	 * Validates the slot number.
+	 * @param slotNumber Slot number to be validated
+	 * @param adding Boolean flag to indcate whether to allow last+1 position
+	 */
+	private final void validateSlotNumber(int slotNumber, boolean adding) {
+		if (slotNumber < 0 || slotNumber > (numberOfSlots - (adding ? 0 : 1))) {
 			log.error(this.getClass().getName(), "validateSlotNumber", mcat.getMessage("EO0003", slotNumber, numberOfSlots));
 			throw new PageException(mcat.getMessage("EO0003", slotNumber, numberOfSlots));
 		}
 	}
 	
-	private final void validateLatchMode() {
+	/**
+	 * Validates that the page latch has been acquired in exclusive mode.
+	 */
+	private final void validateLatchHeldExclusively() {
 		if (!lock.isLatchedExclusively()) {
 			log.error(this.getClass().getName(), "validateLatchMode", mcat.getMessage("EO0004"));
 			throw new PageException(mcat.getMessage("EO0004"));
@@ -652,13 +678,13 @@ public final class SlottedPageImpl extends SlottedPage {
 	
 	
 	/**
-	 * Set flags.
+	 * Set flags for a particular slot.
 	 * @param slotNumber
 	 * @param flags
 	 */
 	@Override
 	public final void setFlags(int slotNumber, short flags) {
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		validateSlotNumber(slotNumber, false);
 		Slot slot = slotTable.get(slotNumber);
 		slot.setFlags(flags);
@@ -686,7 +712,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setFlags(short flags) {
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		this.flags = flags;
 	}
 	
@@ -711,7 +737,7 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	@Override
 	public final void setSpaceMapPageNumber(int spaceMapPageNumber) {
-		validateLatchMode();
+		validateLatchHeldExclusively();
 		this.spaceMapPageNumber = spaceMapPageNumber;
 	}
 	
@@ -722,13 +748,14 @@ public final class SlottedPageImpl extends SlottedPage {
 
 	public StringBuilder appendTo(StringBuilder sb) {
 		
-		sb.append("=========================================================================");
-		sb.append("PAGE DUMP : ").append(getPageId()).append("\n");
+		sb.append("\n");
+		sb.append("=========================================================================").append("\n");
+		sb.append("PAGE DUMP : ");
+		super.appendTo(sb).append("\n");
 		sb.append("PageSize=").append(getStoredLength()).append("\n");
 		sb.append("FIXED OVERHEAD=").append(SlottedPageImpl.FIXED_OVERHEAD).append("\n");
 		sb.append("UsableSpace=").append(getSpace()).append("\n");
 		// DiagnosticLogger.log("PageLsn=" + getPageLsn());
-		sb.append("PageType=").append(getType()).append("\n");
 		sb.append("PageFlags=").append(getFlags()).append("\n");
 		sb.append("#Slots=").append(getNumberOfSlots()).append("\n");
 		sb.append("#DeletedSlots=").append(getDeletedSlots()).append("\n");
@@ -737,7 +764,8 @@ public final class SlottedPageImpl extends SlottedPage {
 		sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append("\n");
 		int length = 0;
 		for (int i = 0; i < getNumberOfSlots(); i++) {
-			sb.append("Slot#").append(i).append("=").append(slotTable.get(i)).append("\n");
+			sb.append("Slot#").append(i).append("=");
+			slotTable.get(i).appendTo(sb).append("\n");
 			length += getSlotLength(i);
 		}
 		length += FIXED_OVERHEAD;

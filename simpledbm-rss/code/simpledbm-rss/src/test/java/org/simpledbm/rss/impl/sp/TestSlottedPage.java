@@ -153,6 +153,7 @@ public class TestSlottedPage extends TestCase {
 		assertEquals(page.getDeletedSlots(), 0);
 		assertEquals(page.getFlags(2), 6);
 		printItems(page);
+		System.out.println(page.toString());
 		SlottedPageImpl.TESTING = false;
 	}
 }

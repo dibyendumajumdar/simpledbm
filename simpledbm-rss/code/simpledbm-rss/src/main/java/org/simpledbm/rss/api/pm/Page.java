@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
@@ -33,7 +34,7 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
-public abstract class Page implements Storable {
+public abstract class Page implements Storable, Dumpable {
 
 	public static final int SIZE = TypeSize.SHORT +
 		PageId.SIZE + Lsn.SIZE;
@@ -183,9 +184,15 @@ public abstract class Page implements Storable {
         return true;
     }
 
+    public StringBuilder appendTo(StringBuilder sb) {
+    	sb.append("Page(type=").append(type).append(", pageId=").append(pageId).append(", pageLsn=");
+    	pageLsn.appendTo(sb).append(")");
+    	return sb;
+    }
+    
     @Override
 	public String toString() {
-		return "Page(type=" + type + ", pageId=" + pageId + ", pageLsn=" + pageLsn + ")";
+		return appendTo(new StringBuilder()).toString();
 	}
 	
 }

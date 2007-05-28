@@ -22,6 +22,8 @@ package org.simpledbm.rss.api.wal;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.rss.util.TypeSize;
 
 /**
  * Lsn is short for Log Sequence Number, and is a unique monotonically
@@ -31,12 +33,12 @@ import org.simpledbm.rss.api.st.Storable;
  * @since 10-June-2005
  * 
  */
-public final class Lsn implements Comparable<Lsn>, Storable {
+public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
 
     /**
      * Size of Lsn in bytes. 
      */
-	public final static int SIZE =  (Integer.SIZE / Byte.SIZE) * 2;
+	public final static int SIZE =  TypeSize.INTEGER * 2;
 	
     /**
      * The index identifies the log file by number.
@@ -116,9 +118,14 @@ public final class Lsn implements Comparable<Lsn>, Storable {
 		bb.putInt(offset);
 	}
 
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("Lsn(").append(index).append(",").append(offset).append(")");
+		return sb;
+	}
+	
 	@Override
 	public final String toString() {
-		return "Lsn(" + index + "," + offset + ")";
+		return appendTo(new StringBuilder()).toString();
 	}
 
 	@Override

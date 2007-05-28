@@ -193,6 +193,7 @@ public class MessageCatalog {
 		msgs.put("EO0003", "SIMPLEDBM-EO0003: Cannot access item at slot {0}, number of slots in page is {1}");
 		msgs.put("EO0004", "SIMPLEDBM-EO0004: Cannot modify page contents as page is not latched EXCLUSIVELY");
 		msgs.put("EO0005", "SIMPLEDBM-EO0005: Invalid page contents");
+		msgs.put("EO0006", "SIMPLEDBM-EO0006: Unexpected error: failed to find insertion point in page");
 		
 		
 	}
