@@ -136,8 +136,6 @@ import org.simpledbm.rss.util.logging.Logger;
  */
 public class TupleManagerImpl extends BaseTransactionalModule implements TupleManager {
 
-	static final String LOG_CLASS_NAME = TupleManagerImpl.class.getName();
-
 	static final Logger log = Logger.getLogger(TupleManagerImpl.class.getPackage().getName());
 
 	private static final short MODULE_ID = 6;
@@ -277,7 +275,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 				try {
 					spcursor.updateAndLogRedoOnly(trx, pageId.getPageNumber(), spacebitsAfter);
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "undoInsertSegment", "SIMPLEDBM-LOG: Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + pageId + " in space map page " + spaceMapPage + " as a result of " + clr);
+						log.debug(this.getClass().getName(), "undoInsertSegment", "SIMPLEDBM-DEBUG: Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + pageId + " in space map page " + spaceMapPage + " as a result of " + clr);
 					}
 				} finally {
 					spcursor.unfixCurrentSpaceMapPage();
@@ -327,7 +325,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 				try {
 					spcursor.updateAndLogRedoOnly(trx, pageId.getPageNumber(), spacebitsAfter);
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "undoDeleteSegment", "Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + pageId + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + clr);
+						log.debug(this.getClass().getName(), "undoDeleteSegment", "SIMPLEDBM-DEBUG: Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + pageId + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + clr);
 					}
 				} finally {
 					spcursor.unfixCurrentSpaceMapPage();
@@ -433,8 +431,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 */
 	public static class TupleInserterImpl implements TupleInserter {
 
-		private static String LOG_CLASS_NAME = TupleInserter.class.getName();
-		
 		TupleContainerImpl tupleContainer;
 
 		Transaction trx;
@@ -511,7 +507,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						 * insert.
 						 */
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "reclaimDeletedTuples", "Reclaim of tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") skipped as the associated tuple " + location + " is locked in this transaction");
+							log.debug(this.getClass().getName(), "reclaimDeletedTuples", "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") skipped as the associated tuple " + location + " is locked in this transaction");
 						}
 						continue;
 					}
@@ -527,12 +523,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						reclaim = true;
 					} catch (LockException e) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "reclaimDeletedTuples", "Reclaim of tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") skipped because cannot obtain lock on " + location, e);
+							log.debug(this.getClass().getName(), "reclaimDeletedTuples", "Reclaim of tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") skipped because cannot obtain lock on " + location, e);
 						}
 					}
 					if (reclaim) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "reclaimDeletedTuples", "Reclaiming tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") associated with tuple at " + location);
+							log.debug(this.getClass().getName(), "reclaimDeletedTuples", "Reclaiming tuple segment at (page=" + page.getPageId() + ", slot=" + slotNumber + ") associated with tuple at " + location);
 						}
 						DeleteSlot logrec = (DeleteSlot) tupleContainer.tuplemgr.loggableFactory.getInstance(TupleManagerImpl.MODULE_ID, TupleManagerImpl.TYPE_LOG_DELETESLOT);
 						logrec.slotNumber = slotNumber;
@@ -623,7 +619,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 				}
 			}
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Page number " + pageNumber + " has been selected for tuple's first segment");
+				log.debug(this.getClass().getName(), "startInsert", "SIMPLEDBM-LOG: Page number " + pageNumber + " has been selected for tuple's first segment");
 			}
 
 			try {
@@ -656,7 +652,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					 */
 					location = new TupleId(page.getPageId(), slotNumber);
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Tentative location for new tuple will be " + location);
+						log.debug(this.getClass().getName(), "startInsert", "SIMPLEDBM-LOG: Tentative location for new tuple will be " + location);
 					}
 
 					/*
@@ -668,7 +664,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						locked = true;
 					} catch (LockException e) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Failed to obtain conditional lock on location " + location);
+							log.debug(this.getClass().getName(), "startInsert", "SIMPLEDBM-LOG: Failed to obtain conditional lock on location " + location);
 						}
 					}
 
@@ -708,7 +704,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 									 */
 									trx.rollback(sp);
 									if (log.isDebugEnabled()) {
-										log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Unable to continue insert of new tuple at " + location + " as page has changed in the meantime");
+										log.debug(this.getClass().getName(), "startInsert", "SIMPLEDBM-LOG: Unable to continue insert of new tuple at " + location + " as page has changed in the meantime");
 									}
 								}
 							} else {
@@ -729,7 +725,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					 * to lack of space. Must restart the insert
 					 */
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "startInsert", "SIMPLEDBM-LOG: Unable to continue insert of new tuple at " + location + " as page has changed in the meantime - Insert will be restarted");
+						log.debug(this.getClass().getName(), "startInsert", "SIMPLEDBM-LOG: Unable to continue insert of new tuple at " + location + " as page has changed in the meantime - Insert will be restarted");
 					}
 					return false;
 				}
@@ -777,7 +773,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 						if (smp.getSpaceBits(pageNumber) != spacebits) {
 							spcursor.updateAndLogRedoOnly(trx, pageNumber, spacebits);
 							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, "doStartInsert", "Updated space map information from " + spacebitsBefore + " to " + spacebits + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
+								log.debug(this.getClass().getName(), "doStartInsert", "Updated space map information from " + spacebitsBefore + " to " + spacebits + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
 							}
 						}
 					} finally {
@@ -913,7 +909,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 							if (smp.getSpaceBits(pageNumber) != spacebits) {
 								spcursor.updateAndLogRedoOnly(trx, pageNumber, spacebits);
 								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "doCompleteInsert", "Updated space map information from " + spacebitsBefore + " to " + spacebits + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
+									log.debug(this.getClass().getName(), "doCompleteInsert", "Updated space map information from " + spacebitsBefore + " to " + spacebits + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
 								}
 							}
 						} finally {
@@ -1013,8 +1009,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 
 	public static class TupleContainerImpl implements TupleContainer {
 
-		private static String LOG_CLASS_NAME = TupleContainerImpl.class.getName();
-		
 		final TupleManagerImpl tuplemgr;
 
 		final int containerId;
@@ -1113,7 +1107,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 							if (smp.getSpaceBits(page.getPageId().getPageNumber()) != spacebitsAfter) {
 								spcursor.updateAndLogRedoOnly(trx, page.getPageId().getPageNumber(), spacebitsAfter);
 								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "doDelete", "Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
+									log.debug(this.getClass().getName(), "doDelete", "Updated space map information from " + spacebitsBefore + " to " + spacebitsAfter + " for page " + page.getPageId() + " in space map page " + page.getSpaceMapPageNumber() + " as a result of " + logrec);
 								}
 							}
 						} finally {
@@ -1379,7 +1373,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					if (lockMode == LockMode.SHARED
 							|| lockMode == LockMode.UPDATE) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "fetchNext", "SIMPLEDBM-DEBUG: Releasing lock on previous row "
+							log.debug(this.getClass().getName(), "fetchNext", "SIMPLEDBM-DEBUG: Releasing lock on previous row "
 										+ previousLocation);
 						}
 						trx.releaseLock(previousLocation);
@@ -1395,7 +1389,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					LockMode lockMode = trx.hasLock(previousLocation);
 					if (lockMode == LockMode.UPDATE) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, "fetchNext", "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
+							log.debug(this.getClass().getName(), "fetchNext", "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
 									+ previousLocation + " to " + LockMode.SHARED);
 						}
 						trx.downgradeLock(previousLocation,	LockMode.SHARED);
@@ -1583,7 +1577,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					if (lockMode == LockMode.SHARED
 							|| lockMode == LockMode.UPDATE) {
 						if (log.isDebugEnabled()) {
-							log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "SIMPLEDBM-DEBUG: Releasing lock on current row "
+							log.debug(this.getClass().getName(), "close", "SIMPLEDBM-DEBUG: Releasing lock on current row "
 									+ currentLocation + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
 						}
 						trx.releaseLock(currentLocation);

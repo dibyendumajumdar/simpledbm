@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.tx;
 
+import org.simpledbm.rss.util.Dumpable;
+
 /**
  * BaseLockable provides a convenient base class which transactional modules
  * can use to create their own {@link Lockable} implementations.
@@ -26,7 +28,7 @@ package org.simpledbm.rss.api.tx;
  * @author Dibyendu Majumdar
  * @since 15 Dec 2006
  */
-public abstract class BaseLockable implements Lockable {
+public abstract class BaseLockable implements Lockable, Dumpable {
 
 	/**
 	 * Locks are divided into separate namespaces. For instance,
@@ -63,6 +65,11 @@ public abstract class BaseLockable implements Lockable {
 		if (namespace != other.namespace)
 			return false;
 		return true;
+	}
+	
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("ns=").append(namespace);
+		return sb;
 	}
 	
 }

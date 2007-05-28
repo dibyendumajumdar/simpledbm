@@ -219,6 +219,10 @@ public class MessageCatalog {
 		msgs.put("IS0022", "SIMPLEDBM-IS0022: StorageManager STOPPED");
 		msgs.put("ES0023", "SIMPLEDBM-ES0023: Unexpected error occurred while closing StorageContainer {0}");
 		
+		// tuple manager messages
+		msgs.put("ET0001", "SIMPLEDBM-ET0001: This operation has not yet been implemented");
+		msgs.put("ET0002", "SIMPLEDBM-ET0002: Comparison is not possible because the supplied argument {0} is not of type {1}");
+		msgs.put("ET0003", "SIMPLEDBM-ET0003: TupleId {0} has not been initialized");
 		
 	}
 	

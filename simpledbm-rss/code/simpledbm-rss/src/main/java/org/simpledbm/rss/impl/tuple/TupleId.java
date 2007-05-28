@@ -23,9 +23,12 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.tuple.TupleException;
 import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * TupleId uniquely identifies the location of a tuple within the Relation.
@@ -37,7 +40,10 @@ import org.simpledbm.rss.util.TypeSize;
  * @author Dibyendu Majumdar
  * @since 08-Dec-2005
  */
-public class TupleId extends BaseLockable implements Location, Dumpable {
+public final class TupleId extends BaseLockable implements Location, Dumpable {
+	
+	private static final Logger log = Logger.getLogger(TupleId.class.getPackage().getName());
+	private static final MessageCatalog mcat = new MessageCatalog();
 	
 	PageId pageId;
 	int slotNumber;
@@ -65,7 +71,8 @@ public class TupleId extends BaseLockable implements Location, Dumpable {
 	}
 
 	public void parseString(String string) {
-		throw new UnsupportedOperationException("SIMPLEDBM-ERROR: This operation is not yet implemented");
+		log.error(this.getClass().getName(), "parseString", mcat.getMessage("ET0001"));
+		throw new TupleException(mcat.getMessage("ET0001"));
 	}
 
 	public final void retrieve(ByteBuffer bb) {
@@ -83,14 +90,15 @@ public class TupleId extends BaseLockable implements Location, Dumpable {
 		return pageId.getStoredLength() + TypeSize.SHORT;
 	}
 
-	public final int compareTo(Location arg0) {
-		if (arg0 == this) {
+	public final int compareTo(Location location) {
+		if (location == this) {
 			return 0;
 		}
-		if (!(arg0 instanceof TupleId)) {
-			throw new IllegalArgumentException("SIMPLEDBM-ERROR: Object " + arg0 + " is not of the required type");
+		if (getClass() != location.getClass()) {
+			log.error(this.getClass().getName(), "compareTo", mcat.getMessage("ET0002", location, getClass().getName()));
+			throw new TupleException(mcat.getMessage("ET0002", location, getClass().getName()));
 		}
-		TupleId other = (TupleId) arg0;
+		TupleId other = (TupleId) location;
 		int comp = pageId.compareTo(other.pageId);
 		if (comp == 0) {
 			comp = slotNumber - other.slotNumber;
@@ -100,6 +108,7 @@ public class TupleId extends BaseLockable implements Location, Dumpable {
 
 	public StringBuilder appendTo(StringBuilder sb) {
 		sb.append("TupleId(");
+		super.appendTo(sb).append(", pageId=");
 		pageId.appendTo(sb);
 		sb.append(", slot=").append(slotNumber).append(")");
 		return sb;
@@ -127,7 +136,8 @@ public class TupleId extends BaseLockable implements Location, Dumpable {
 
 	public int getContainerId() {
 		if (pageId == null) {
-			throw new IllegalStateException("TupleId has not been initialized");
+			log.error(this.getClass().getName(), "getContainerId", mcat.getMessage("ET0003", this));
+			throw new TupleException(mcat.getMessage("ET0003", this));
 		}
 		return pageId.getContainerId();
 	}
