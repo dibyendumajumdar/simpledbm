@@ -226,6 +226,25 @@ public class MessageCatalog {
 		msgs.put("ET0004", "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
 		msgs.put("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
 		msgs.put("ET0006", "SIMPLEDBM-ET0006: Unexpected IO error occurred while reading tuple data");
+
+		// transaction manager messages
+		msgs.put("EX0001", "SIMPLEDBM-EX0001: Unknown transaction module {0}");
+		msgs.put("EX0002", "SIMPLEDBM-EX0002: Invalid log operation {0}: A Redoable log record must not implement the NonTransactionRelatedOperation interface");
+		msgs.put("EX0003", "SIMPLEDBM-EX0003: Invalid log operation {0}: A Redoable log record must not implement the PostCommitAction interface");
+		msgs.put("EX0004", "SIMPLEDBM-EX0004: Invalid log operation {0}: A Redoable log record must not implement the Checkpoint interface");
+		msgs.put("EX0005", "SIMPLEDBM-EX0005: Invalid log operation {0}: A Redoable log record must not implement the TrxControl interface");
+		msgs.put("EX0006", "SIMPLEDBM-EX0006: Invalid log operation {0}: An Undoable record must not implement MultiPageRedo interface");
+		msgs.put("EX0007", "SIMPLEDBM-EX0007: Invalid log operation {0}: An Undoable record must not implement Compensation interface");
+		msgs.put("EX0008", "SIMPLEDBM-EX0008: Invalid log operation {0}: An Undoable record must not implement ContainerDelete interface");
+		msgs.put("EX0009", "SIMPLEDBM-EX0009: Log operation {0} is not an instance of {1}");
+		msgs.put("EX0010", "SIMPLEDBM-EX0010: The StorageContainer registered as {0} is named {1} instead of {2}");
+		msgs.put("EX0011", "SIMPLEDBM-EX0011: Unexpected EOF occurred in write ahead log while reading checkpoint records");
+		msgs.put("WX0012", "SIMPLEDBM-WX0012: Ignoring exception caused due to {0}");
+		msgs.put("IX0013", "SIMPLEDBM-IX0013: Checkpoint Writer STARTED");
+		msgs.put("EX0014", "SIMPLEDBM-EX0014: Error occurred while shutting down Transaction Manager");
+		msgs.put("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
+		msgs.put("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
+		
 	}
 	
 	public String getMessage(String key) {
