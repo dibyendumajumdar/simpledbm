@@ -1190,7 +1190,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					try {
 						os.write(ts.data);
 					} catch (IOException e) {
-						throw new TupleException(e);
+						log.error(this.getClass().getName(), "doRead", mcat.getMessage("ET0006"), e);
+						throw new TupleException(mcat.getMessage("ET0006"), e);
 					}
 
 					if (TupleHelper.isSegmented(page, slotNumber)) {
@@ -1343,8 +1344,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			}
 		}
 
-		public void update(Transaction trx, Location location, Storable newTuple)
-				{
+		public void update(Transaction trx, Location location, Storable newTuple) {
 			doUpdate(trx, location, newTuple);
 		}
 		
@@ -1561,8 +1561,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 					 * need to double check that the locked tuple is still eligible.
 					 */
 					BufferAccessBlock bab = tupleContainer.tuplemgr.bufmgr.fixShared(new PageId(tupleContainer.containerId, currentPage), 0);
-					SlottedPage page = (SlottedPage) bab.getPage();
 					try {
+						SlottedPage page = (SlottedPage) bab.getPage();
 						if (!savedPageLsn.equals(page.getPageLsn())) {
 							if (page.isSlotDeleted(currentSlot) || (TupleHelper.isSegmented(page, currentSlot) && !TupleHelper.isFirstSegment(page, currentSlot)) || TupleHelper.isDeleted(page, currentSlot)) {
 								//System.err.println("Found slot " + nextLocation + " is no longer valid");
@@ -1570,6 +1570,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 								 * The tuple is no longer valid, so we release the lock on the tuple
 								 * and start the search again.
 								 */
+								if (log.isDebugEnabled()) {
+									log.debug(this.getClass().getName(), "doFetchNext", "SIMPLEDBM-DEBUG: The tuple at location " + nextLocation + " is no longer valid, hence it will be skipped and the cusror repositioned");
+								}
 								trx.rollback(sp);
 								state = FIND_NEXT_SLOT;
 							}
@@ -2154,9 +2157,15 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			bb.putShort((short) newSegmentationFlags);
 		}
 
+		public StringBuilder appendTo(StringBuilder sb) {
+			super.appendTo(sb);
+			sb.append("newSegmentationFlags=").append(newSegmentationFlags);
+			return sb;
+		}
+		
 		@Override
 		public String toString() {
-			return "newSegmentationFlags=" + newSegmentationFlags + ", " + super.toString();
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 
@@ -2197,9 +2206,19 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			bb.putShort((short) oldSegmentationFlags);
 		}
 
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("UndoableReplaceSegmentLink(");
+			super.appendTo(sb);
+			sb.append(", oldSegmentationFlags=").append(oldSegmentationFlags);
+			sb.append(", oldNextSegmentPage=").append(oldNextSegmentPage);
+			sb.append(", oldNextSegmentSlot=").append(oldNextSegmentSlot);
+			sb.append(")");
+			return sb;
+		}
+		
 		@Override
 		public String toString() {
-			return "UndoableReplaceSegmentLink(oldSegmentationFlags=" + oldSegmentationFlags + ", oldNextSegmentPage=" + oldNextSegmentPage + ", oldNextSegmentSlot=" + oldNextSegmentSlot + ", " + super.toString() + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 
@@ -2208,8 +2227,14 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * caused during tuple deletes, and tuple updates.
 	 */
 	public static class UndoReplaceSegmentLink extends ExtendedUpdateSegmentLink implements Compensation {
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("UndoReplaceSegmentLink(");
+			super.appendTo(sb);
+			sb.append(")");
+			return sb;
+		}
 		public String toString() {
-			return "UndoReplaceSegmentLink(" + super.toString() + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 
@@ -2226,8 +2251,14 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * @see UndoableReplaceSegmentLink
 	 */
 	public static class UpdateSegmentLink extends BaseUpdateSegmentLink implements Redoable {
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("UpdateSegmentLink(");
+			super.appendTo(sb);
+			sb.append(")");
+			return sb;
+		}
 		public String toString() {
-			return "UpdateSegmentLink(" + super.toString() + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 }

@@ -225,6 +225,7 @@ public class MessageCatalog {
 		msgs.put("ET0003", "SIMPLEDBM-ET0003: TupleId {0} has not been initialized");
 		msgs.put("ET0004", "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
 		msgs.put("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
+		msgs.put("ET0006", "SIMPLEDBM-ET0006: Unexpected IO error occurred while reading tuple data");
 	}
 	
 	public String getMessage(String key) {
