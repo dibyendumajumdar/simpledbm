@@ -1812,26 +1812,25 @@ public final class TransactionManagerImpl implements TransactionManager {
 			assert state == TrxState.TRX_UNPREPARED;
 			
 			/*
-			 * TODO - uncomment following
+			 * Optimise for readonly transaction.
+			 * A readonly transaction would not have generated log records
 			 */
-//			if (lastLsn.isNull() && postCommitActions.isEmpty()) {
-//				// No need to generate a prepare record
-//				state = TrxState.TRX_PREPARED;
-//				return;
-//			}
-			TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
-			prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
-			prepareLogRec.setTrxId(trxId);
-			prepareLogRec.setPrevTrxLsn(lastLsn);
-			prepareLogRec.setPostCommitActions(postCommitActions);
-			/*
-			 * FIXME Log all exclusive locks in the prepare record so that we can
-			 * reacquire locks after recovery - only needed for distributed
-			 * transactions.
-			 */
-			Lsn myLsn = getTrxmgr().doLogInsert(prepareLogRec);
-			registerLsn(prepareLogRec, myLsn);
-			getTrxmgr().logmgr.flush(myLsn);
+			if (!lastLsn.isNull() || !postCommitActions.isEmpty()) {
+				TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory
+						.getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
+				prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
+				prepareLogRec.setTrxId(trxId);
+				prepareLogRec.setPrevTrxLsn(lastLsn);
+				prepareLogRec.setPostCommitActions(postCommitActions);
+				/*
+				 * FIXME Log all exclusive locks in the prepare record so that
+				 * we can reacquire locks after recovery - only needed for
+				 * distributed transactions.
+				 */
+				Lsn myLsn = getTrxmgr().doLogInsert(prepareLogRec);
+				registerLsn(prepareLogRec, myLsn);
+				getTrxmgr().logmgr.flush(myLsn);
+			}
 			state = TrxState.TRX_PREPARED;
 			/*
 			 * At this point read locks can be released.
@@ -1843,12 +1842,13 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		final void endTransaction() {
 			/*
-			 * TODO - uncomment following
+			 * Optimise for readonly transaction.
+			 * A readonly transaction would not have generated log records
 			 */
-//			if (lastLsn.isNull() && postCommitActions.isEmpty()) {
-//				// No need to generate an end record
-//				return;
-//			}
+			if (lastLsn.isNull() && postCommitActions.isEmpty()) {
+				// No need to generate an end record
+				return;
+			}
 			TrxEnd commitLogRec = (TrxEnd) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
 			commitLogRec.setTrxId(trxId);
 			commitLogRec.setPrevTrxLsn(lastLsn);
@@ -2081,9 +2081,11 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 			if (!delete) {
 				/*
-				 * Following should be conditional - only if lastLsn is not null
+				 * Optimise for readonly transactions.
 				 */
-				getTrxmgr().logmgr.flush(lastLsn);
+				if (!lastLsn.isNull()) {
+					getTrxmgr().logmgr.flush(lastLsn);
+				}
 				releaseLocks(sp);
 				/*
 				 * Discard PostCommitActions that were scheduled after the
@@ -2127,23 +2129,21 @@ public final class TransactionManagerImpl implements TransactionManager {
 					log.debug(LOG_CLASS_NAME, "abort", "Aborting transaction " + this);
 				}
 				/*
-				 * FIXME: Uncomment following
+				 * Optimise for readonly transactions
 				 */
-//				if (lastLsn.isNull() && postCommitActions.isEmpty()) {
-//					// No need to write any log records
-//					
-//				}
-//				else {
-				/*
-				 * First write the Abort log record.
-				 */
-				TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory.getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
-				abortLogRec.setTrxId(trxId);
-				abortLogRec.setPrevTrxLsn(lastLsn);
-				Lsn myLsn = getTrxmgr().doLogInsert(abortLogRec);
-				registerLsn(abortLogRec, myLsn);
-				getTrxmgr().logmgr.flush(myLsn);
-//				}
+				if (!lastLsn.isNull() || !postCommitActions.isEmpty()) {
+					/*
+					 * First write the Abort log record.
+					 */
+					TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory
+							.getInstance(0,
+									TransactionManagerImpl.TYPE_TRXABORT);
+					abortLogRec.setTrxId(trxId);
+					abortLogRec.setPrevTrxLsn(lastLsn);
+					Lsn myLsn = getTrxmgr().doLogInsert(abortLogRec);
+					registerLsn(abortLogRec, myLsn);
+					getTrxmgr().logmgr.flush(myLsn);
+				}
 				state = TrxState.TRX_UNPREPARED;
 				/*
 				 * Undo changes.
