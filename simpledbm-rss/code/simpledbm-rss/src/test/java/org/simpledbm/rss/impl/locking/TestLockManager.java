@@ -723,7 +723,7 @@ public class TestLockManager extends BaseTestCase {
 			t2.join(10000);
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
-			assertEquals(countDeadlocks, 1);
+			assertEquals(1, countDeadlocks);
 			checkThreadFailures();
 		} finally {
 			lockmgr.shutdown();
@@ -794,7 +794,7 @@ public class TestLockManager extends BaseTestCase {
 			t2.join(10000);
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
-			assertEquals(countDeadlocks, 1);
+			assertEquals(1, countDeadlocks);
 			checkThreadFailures();
 		} finally {
 			lockmgr.shutdown();
@@ -820,7 +820,7 @@ public class TestLockManager extends BaseTestCase {
 					try {
 						LockHandle handle2 = lockmgr.acquire(tran1, lockname2, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10, null);
 						try {
-							Thread.sleep(1000);
+							Thread.sleep(1500);
 							LockHandle handle3 = lockmgr.acquire(tran1, lockname3, LockMode.SHARED, LockDuration.MANUAL_DURATION, 10, null);
 							handle3.release(false);
 						}
@@ -871,7 +871,7 @@ public class TestLockManager extends BaseTestCase {
 		Thread t3 = new Thread(new Runnable() {
 			public void run() {
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(1500);
 					LockHandle handle1 = lockmgr.acquire(tran3, lockname2, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION, 10, null);
 					handle1.release(false);
 				} catch (LockDeadlockException e) {
@@ -884,7 +884,7 @@ public class TestLockManager extends BaseTestCase {
 			}
 		});
 
-		lockmgr.setDeadlockDetectorInterval(1);	// set it to detect deadlocks every 1 second
+		lockmgr.setDeadlockDetectorInterval(5);	// set it to detect deadlocks every 1 second
 		lockmgr.start();
 		try {
 			t1.start();
@@ -898,7 +898,7 @@ public class TestLockManager extends BaseTestCase {
 			assertTrue(!t1.isAlive());
 			assertTrue(!t2.isAlive());
 			assertTrue(!t3.isAlive());
-			assertEquals(countDeadlocks, 2);
+			assertEquals(2, countDeadlocks);
 			checkThreadFailures();
 		} finally {
 			lockmgr.shutdown();
