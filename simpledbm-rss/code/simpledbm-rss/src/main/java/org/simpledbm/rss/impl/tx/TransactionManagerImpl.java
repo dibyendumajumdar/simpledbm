@@ -34,12 +34,10 @@ import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
-import org.simpledbm.rss.api.locking.LockTimeoutException;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -146,7 +144,6 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class TransactionManagerImpl implements TransactionManager {
 
-	private static final String LOG_CLASS_NAME = TransactionManagerImpl.class.getName();
 	static final Logger log = Logger.getLogger(TransactionManagerImpl.class.getPackage().getName());
 	static final MessageCatalog mcat = new MessageCatalog();
 	
@@ -368,7 +365,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		}
 		trxTable.add(trx);
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "newTransaction", "SIMPLEDBM-DEBUG: Starting new transaction " + trx.trxId);
+			log.debug(this.getClass().getName(), "newTransaction", "SIMPLEDBM-DEBUG: Starting new transaction " + trx.trxId);
 		}
 		return trx;
 	}
@@ -383,7 +380,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	void deleteTransaction(TransactionImpl trx) {
         assert trx.state != TrxState.TRX_DEAD;
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "deleteTransaction", "SIMPLEDBM-DEBUG: Deleting transaction " + trx);
+			log.debug(this.getClass().getName(), "deleteTransaction", "SIMPLEDBM-DEBUG: Deleting transaction " + trx);
 		}
 		trx.releaseLocks(null);
 		trx.state = TrxState.TRX_DEAD;
@@ -450,7 +447,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	Lsn doLogInsert(Loggable logrec) {
 		validateLoggableHierarchy(logrec);
 		if (log.isTraceEnabled()) {
-			log.trace(LOG_CLASS_NAME, "doLogInsert", "SIMPLEDBM-TRACE: Inserting log record " + logrec);
+			log.trace(this.getClass().getName(), "doLogInsert", "SIMPLEDBM-TRACE: Inserting log record " + logrec);
 		}
 		byte[] data = new byte[logrec.getStoredLength()];
 		ByteBuffer bb = ByteBuffer.wrap(data);
@@ -520,7 +517,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	private void writeCheckpoint() {
 		
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "writeCheckPoint", "SIMPLEDBM-DEBUG: Creating a checkpoint");			
+			log.debug(this.getClass().getName(), "writeCheckPoint", "SIMPLEDBM-DEBUG: Creating a checkpoint");			
 		}
 
         /* 
@@ -570,7 +567,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		Lsn flushLsn = doLogInsert(checkpointEnd);	
 
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "writeCheckpoint", "SIMPLEDBM-DEBUG: CheckpointLSN = " + checkpointLsn + ", oldestInterestingLSN = " + undoLWM);
+			log.debug(this.getClass().getName(), "writeCheckpoint", "SIMPLEDBM-DEBUG: CheckpointLSN = " + checkpointLsn + ", oldestInterestingLSN = " + undoLWM);
 		}
 		
 		/*
@@ -604,7 +601,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 				continue;
 			}
             if (log.isDebugEnabled()) {
-                log.debug(LOG_CLASS_NAME, "reopenActiveContainers", "SIMPLEDBM-DEBUG: Reopening container " + getActiveContainers()[i]);
+                log.debug(this.getClass().getName(), "reopenActiveContainers", "SIMPLEDBM-DEBUG: Reopening container " + getActiveContainers()[i]);
             }
 			StorageContainer sc = storageManager.getInstance(getActiveContainers()[i].containerId);
 			if (sc == null) {
@@ -630,7 +627,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	private LogReader readCheckpoint() {
 		Lsn scanLsn = logmgr.getCheckpointLsn();
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "readCheckpoint", "SIMPLEDBM-DEBUG: Reading checkpoint record at " + scanLsn);
+			log.debug(this.getClass().getName(), "readCheckpoint", "SIMPLEDBM-DEBUG: Reading checkpoint record at " + scanLsn);
 		}
 		LogReader reader = logmgr.getForwardScanningReader(scanLsn);
 		LogRecord logrec = reader.getNext();
@@ -760,7 +757,7 @@ public final class TransactionManagerImpl implements TransactionManager {
     private void removeDeletedContainer(Loggable loggable) {
         ContainerDeleteOperation containerDelete = (ContainerDeleteOperation) loggable;
         if (log.isDebugEnabled()) {
-            log.debug(LOG_CLASS_NAME, "removeContainerDelete", "SIMPLEDBM-DEBUG: Removing container " + containerDelete.getContainerId() + " from Storage Manager");
+            log.debug(this.getClass().getName(), "removeContainerDelete", "SIMPLEDBM-DEBUG: Removing container " + containerDelete.getContainerId() + " from Storage Manager");
         }
         if (storageManager.getInstance(containerDelete.getContainerId()) != null) {
             storageManager.remove(containerDelete.getContainerId());
@@ -793,7 +790,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			PostCommitAction action = iter.next();
 			if (action.getTrxId().equals(deleteaction.getTrxId()) && action.getActionId() == deleteaction.getActionId()) {
                 if (log.isDebugEnabled()) {
-                    log.debug(LOG_CLASS_NAME, "removePostCommitAction", "SIMPLEDBM-DEBUG: Discarding Post Commit Action " + action);
+                    log.debug(this.getClass().getName(), "removePostCommitAction", "SIMPLEDBM-DEBUG: Discarding Post Commit Action " + action);
                 }
 				iter.remove();
 				break;
@@ -810,7 +807,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			PostCommitAction action = iter.next();
 			if (action.getTrxId().equals(trxid)) {
                 if (log.isDebugEnabled()) {
-                    log.debug(LOG_CLASS_NAME, "discardPostCommitActions", "SIMPLEDBM-DEBUG: Discarding Post Commit Action " + action);
+                    log.debug(this.getClass().getName(), "discardPostCommitActions", "SIMPLEDBM-DEBUG: Discarding Post Commit Action " + action);
                 }
 				iter.remove();
 				break;
@@ -867,7 +864,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	private void restartAnalysis() {
 
 		if (log.isDebugEnabled()) {
-			log.debug(this.getClass().getName(), "restartAnalysis", "Starting restart analysis");
+			log.debug(this.getClass().getName(), "restartAnalysis", "SIMPLEDBM-DEBUG: Starting restart analysis");
 		}
 		
 		/* Open logscan at Begin checkpint record */
@@ -989,7 +986,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		deleteUnpreparedNullTransactions();
 		redoLsn = getMinimumRecoveryLsn(dirtyPages);
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "restartAnalysis", "SIMPLEDBM-DEBUG: Redo processing will start from log record " + redoLsn);
+			log.debug(this.getClass().getName(), "restartAnalysis", "SIMPLEDBM-DEBUG: Redo processing will start from log record " + redoLsn);
 		}
 	}
 
@@ -1340,8 +1337,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 */
 	public static final class TransactionImpl implements Transaction, Storable {
 		
-		private static final String LOG_CLASS_NAME = TransactionImpl.class.getName();
-
 		private TransactionManagerImpl trxmgr;
 		
 		public static final int SIZE = Lsn.SIZE * 3 + TransactionId.SIZE + TypeSize.BYTE * 2;
@@ -1697,7 +1692,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		final void releaseLocks(SavepointImpl sp) {
 			if (log.isDebugEnabled()) {
-				log.debug(this.getClass().getName(), "releaseLocks", "Releasing locks for transaction " + this + " upto savepoint " + sp);
+				log.debug(this.getClass().getName(), "releaseLocks", "SIMPLEDBM-DEBUG: Releasing locks for transaction " + this + " upto savepoint " + sp);
 			}
 			for (int i = locks.size() - 1; i >= 0; i--) {
 				/*
@@ -1807,7 +1802,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		final void prepare() {
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "prepare", "Preparing to commit transaction " + this);
+				log.debug(this.getClass().getName(), "prepare", "SIMPLEDBM-DEBUG: Preparing to commit transaction " + this);
 			}				
 			assert state == TrxState.TRX_UNPREPARED;
 			
@@ -1880,9 +1875,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		public final void doCommit() {
 		
-			Exception thrown = null;
 			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "prepare", "Committing transaction " + this);
+				log.debug(this.getClass().getName(), "prepare", "SIMPLEDBM-DEBUG: Committing transaction " + this);
 			}
 			latchHelper.sharedLock();
 			try {
@@ -1892,9 +1886,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 				getTrxmgr().deleteTransaction(this);
 			} finally {
 				latchHelper.unlockShared();
-			}
-			if (thrown != null) {
-				throw new TransactionException(thrown);
 			}
 		}
 
@@ -1930,7 +1921,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		public final void startNestedTopAction() {
 			if (dummyCLR != null) {
-				throw new TransactionException();
+				log.error(this.getClass().getName(), "startNestedTopAction", mcat.getMessage("EX0016"));
+				throw new TransactionException(mcat.getMessage("EX0016"));
 			}
 			dummyCLR = (DummyCLR) getTrxmgr().loggableFactory.getInstance(TransactionManagerImpl.MODULE_ID, TransactionManagerImpl.TYPE_DUMMYCLR);
 			dummyCLR.setUndoNextLsn(getLastLsn());
@@ -1941,7 +1933,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		public final void completeNestedTopAction() {
 			if (dummyCLR == null) {
-				throw new TransactionException();
+				log.error(this.getClass().getName(), "startNestedTopAction", mcat.getMessage("EX0017"));
+				throw new TransactionException(mcat.getMessage("EX0017"));
 			}
 			logInsert(null, dummyCLR);
 			resetNestedTopAction();
@@ -2031,9 +2024,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 			Lsn rollbackUpto = delete ? new Lsn() : sp.lsn;
 			if (log.isDebugEnabled()) {
 				if (delete) {
-					log.debug(LOG_CLASS_NAME, "rollback", "Rolling back transaction " + this + " completely");
+					log.debug(this.getClass().getName(), "rollback", "SIMPLEDBM-DEBUG: Rolling back transaction " + this + " completely");
 				} else {
-					log.debug(LOG_CLASS_NAME, "rollback", "Rolling back transaction " + this + " upto " + sp);
+					log.debug(this.getClass().getName(), "rollback", "SIMPLEDBM-DEBUG: Rolling back transaction " + this + " upto " + sp);
 				}
 			}
 
@@ -2047,7 +2040,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 				if (loggable instanceof Undoable) {
 
 					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "rollback", "Undoing effects of log record " + loggable + " to transaction " + this);
+						log.debug(this.getClass().getName(), "rollback", "Undoing effects of log record " + loggable + " to transaction " + this);
 					}
 
 					/*
@@ -2126,7 +2119,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			latchHelper.sharedLock();
 			try {
 				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "abort", "Aborting transaction " + this);
+					log.debug(this.getClass().getName(), "abort", "SIMPLEDBM-DEBUG: Aborting transaction " + this);
 				}
 				/*
 				 * Optimise for readonly transactions
@@ -2701,7 +2694,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 					// System.err.println("WRITING CHECKPOINT");
 					trxmgr.checkpoint();
 				} catch (TransactionException e) {
-					log.error(CheckpointWriter.class.getName(), "run", "Error occurred while writing a checkpoint", e);
+					log.error(CheckpointWriter.class.getName(), "run", mcat.getMessage("EX0018"), e);
 					trxmgr.errored = true;
 					break;
 				}

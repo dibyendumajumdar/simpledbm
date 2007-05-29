@@ -244,6 +244,9 @@ public class MessageCatalog {
 		msgs.put("EX0014", "SIMPLEDBM-EX0014: Error occurred while shutting down Transaction Manager");
 		msgs.put("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
 		msgs.put("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
+		msgs.put("EX0016", "SIMPLEDBM-EX0016: Invalid state: Nested top action cannot be started as one is already active");
+		msgs.put("EX0017", "SIMPLEDBM-EX0017: Invalid state: Nested top action cannot be completed as there is none active");
+		msgs.put("EX0018", "SIMPLEDBM-EX0018: Error occurred while writing a Checkpoint");
 		
 	}
 	
