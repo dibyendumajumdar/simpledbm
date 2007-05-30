@@ -2495,7 +2495,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 				size += dp.getStoredLength();
 			}
 			
-			size += (Integer.SIZE/Byte.SIZE) * 2;
+			size += TypeSize.INTEGER * 2;
 			size += super.getStoredLength();
 			return size;
 		}
@@ -2600,7 +2600,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			for (PostCommitAction action: postCommitActions) {
 				size += action.getStoredLength();
 			}
-			size += (Integer.SIZE/Byte.SIZE);
+			size += TypeSize.INTEGER;
 			return size;
 		}
 
@@ -2662,6 +2662,17 @@ public final class TransactionManagerImpl implements TransactionManager {
 		@Override
 		public final void init() {
 		}
+		
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("TrxAbort(");
+			super.appendTo(sb);
+			sb.append(")");
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
+		}
 
 	}
 
@@ -2671,6 +2682,16 @@ public final class TransactionManagerImpl implements TransactionManager {
 		public final void init() {
 		}
 
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("TrxEnd(");
+			super.appendTo(sb);
+			sb.append(")");
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
+		}
 	}
 
 	/**
@@ -2719,10 +2740,19 @@ public final class TransactionManagerImpl implements TransactionManager {
 		public final void init() {
 		}
 
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("DummyCLR(");
+			super.appendTo(sb);
+			sb.append(")");
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
+		}
 	}
 	
-    static void moduleRedo(TransactionalModule module, Loggable loggable)
-			{
+    static void moduleRedo(TransactionalModule module, Loggable loggable) {
 		module.redo(loggable);
 	}
 
@@ -2788,7 +2818,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 					}
 				}
 				try {
-					// System.err.println("WRITING CHECKPOINT");
 					trxmgr.checkpoint();
 				} catch (TransactionException e) {
 					log.error(CheckpointWriter.class.getName(), "run", mcat.getMessage("EX0018"), e);
