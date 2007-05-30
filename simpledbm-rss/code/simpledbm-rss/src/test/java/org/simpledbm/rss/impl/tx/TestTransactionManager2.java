@@ -22,8 +22,7 @@ package org.simpledbm.rss.impl.tx;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
@@ -66,11 +65,10 @@ import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
-import org.simpledbm.rss.impl.tx.TestTransactionManager1.ObjectLock;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
 
-public class TestTransactionManager2 extends TestCase {
+public class TestTransactionManager2 extends BaseTestCase {
 
 	static final short TYPE_BITMGRPAGE = 25000;
 	static final short TYPE_BITMGRLOGCREATECONTAINER = 25001;

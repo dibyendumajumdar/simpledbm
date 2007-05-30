@@ -75,6 +75,7 @@ import org.simpledbm.rss.api.wal.LogReader;
 import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.ByteString;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
@@ -324,19 +325,40 @@ public final class TransactionManagerImpl implements TransactionManager {
 	}
 
 	public final int getCheckpointInterval() {
-		return checkpointInterval;
+		latch.sharedLock();
+		try {
+			return checkpointInterval;
+		}
+		finally {
+			latch.unlockShared();
+		}
 	}
 
 	public final void setCheckpointInterval(int checkpointInterval) {
-		this.checkpointInterval = checkpointInterval;
+		latch.exclusiveLock();
+		try {
+			this.checkpointInterval = checkpointInterval;
+		} finally {
+			latch.unlockExclusive();
+		}
 	}
 
 	public final int getLockWaitTimeout() {
-		return lockWaitTimeout;
+		latch.sharedLock();
+		try {
+			return lockWaitTimeout;
+		} finally {
+			latch.unlockShared();
+		}
 	}
 
 	public final void setLockWaitTimeout(int lockWaitTimeout) {
-		this.lockWaitTimeout = lockWaitTimeout;
+		latch.exclusiveLock();
+		try {
+			this.lockWaitTimeout = lockWaitTimeout;
+		} finally {
+			latch.unlockExclusive();
+		}
 	}
 
 	/**
@@ -457,6 +479,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	
 	/**
 	 * Inserts non-transaction related log record.
+	 * No latching needed.
 	 */
 	public final Lsn logNonTransactionRelatedOperation(Loggable operation) {
 		if (operation instanceof NonTransactionRelatedOperation) {
@@ -823,7 +846,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * The Transaction Manager must be latched exclusively prior
 	 * to calling this method.
 	 */
-	Lsn getOldestInterestingLsn() {
+	private Lsn getOldestInterestingLsn() {
 		Lsn lsn = new Lsn();
 		for (TransactionImpl trx: trxTable) {
 			if (trx.state == TrxState.TRX_DEAD) {
@@ -995,7 +1018,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * <p>
 	 * Latching issues: all latching handled by caller.
 	 */
-	void doPostCommitActions(LinkedList<PostCommitAction> actions, TransactionId trxId) {
+	private void doPostCommitActions(LinkedList<PostCommitAction> actions, TransactionId trxId) {
 		Iterator<PostCommitAction> iter = actions.iterator();
 		while (iter.hasNext()) {
 			PostCommitAction action = iter.next();
@@ -1284,7 +1307,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * Latching issues: Not latched as it causes deadlock due to lack of reentrancy in current
 	 * implementation of Latch. When this is fixed, it would be desirable to latch exclusively.
 	 */	
-	final void doRestart() {
+	private final void doRestart() {
 		
 		Lsn checkpointLsn = logmgr.getCheckpointLsn();
 		if (checkpointLsn.isNull()) {
@@ -1335,7 +1358,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * accessed by a single thread only; if multiple threads access the same
 	 * transaction object, results are undefined.
 	 */
-	public static final class TransactionImpl implements Transaction, Storable {
+	public static final class TransactionImpl implements Transaction, Storable, Dumpable {
 		
 		private TransactionManagerImpl trxmgr;
 		
@@ -1391,6 +1414,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		int actionId = 1;
 
+		/**
+		 * Dummy CLR used for nested top actions.
+		 */
 		DummyCLR dummyCLR;
 		
 		/**
@@ -1404,11 +1430,19 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		int lockTimeout = 60;
 		
-		LatchHelper latchHelper;
+		/**
+		 * Reference to transaction manager's latch - used to coordinate
+		 * actions with the transaction manager.
+		 */
+		LatchHelper trxMgrLatchRef;
 		
+		/**
+		 * Set of cursors associated with this transaction. Used to reset cusror
+		 * state after partial rollbacks.
+		 */
 		HashSet<TransactionalCursor> cursorSet = new HashSet<TransactionalCursor>(); 
 		
-		public IsolationMode getIsolationMode() {
+		public synchronized IsolationMode getIsolationMode() {
 			return isolationMode;
 		}
 		
@@ -1423,7 +1457,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * We do not acquire any latches because only current thread can modify
 		 * the trx structure.
 		 */		
-		final Lsn registerLsn(Loggable logrec, Lsn newLsn) {
+		private final Lsn registerLsn(Loggable logrec, Lsn newLsn) {
 			if (log.isTraceEnabled()) {
 				log.trace(this.getClass().getName(), "registerLsn", "SIMPLEDBM-TRACE: Adding log record " + logrec  +
 						" to transaction " + this);
@@ -1456,7 +1490,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * These logs should not be associated with any particular transaction,
 		 * and care should be taken to ensure that a checkpoint is not in progress.
 		 */
-		public final void schedulePostCommitAction(PostCommitAction action) {
+		public synchronized final void schedulePostCommitAction(PostCommitAction action) {
 			action.setActionId(actionId++);
 			action.setTrxId(trxId);
 			assert action.getModuleId() != -1;
@@ -1467,16 +1501,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 		}
 		
 		/**
-		 * Discard all the post commit actions.
-		 */
-		final void discardPostCommitActions() {
-			postCommitActions.clear();
-		}
-
-		/**
 		 * Insert a log record, and wrap any exceptions in TrxException.
 		 */
-        public final Lsn logInsert(Page page, Loggable logrec) {
+        public synchronized final Lsn logInsert(Page page, Loggable logrec) {
 			return doLogInsert(page, logrec);
 		}
         
@@ -1489,7 +1516,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * persistent state, we need to latch the trxmgr so that we can avoid
 		 * conflicts with checkpoints.
 		 */
-		final Lsn doLogInsert(Page page, Loggable logrec) {
+		private final Lsn doLogInsert(Page page, Loggable logrec) {
 			if (logrec instanceof Redoable) {
 				assert logrec.getModuleId() != -1;
 			}
@@ -1498,14 +1525,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 			if (!(logrec instanceof DummyCLR)) {
 				logrec.setPageId(page.getType(), page.getPageId());
 			}
-			latchHelper.sharedLock();
+			trxMgrLatchRef.sharedLock();
 			Lsn lsn = null;
 			try {
 				lsn = getTrxmgr().doLogInsert(logrec);
 				registerLsn(logrec, lsn);
 			}
 			finally {
-				latchHelper.unlockShared();
+				trxMgrLatchRef.unlockShared();
 			}
 			return lsn;
 		}
@@ -1515,7 +1542,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 */
 		TransactionImpl(TransactionManagerImpl trxmgr, TransactionId trxId) {
 			this.trxmgr = trxmgr;
-			this.latchHelper = new LatchHelper(trxmgr.latch);
+			this.trxMgrLatchRef = new LatchHelper(trxmgr.latch);
 			this.trxId = trxId;
 			this.lockTimeout = trxmgr.getLockWaitTimeout();
 		}
@@ -1527,21 +1554,21 @@ public final class TransactionManagerImpl implements TransactionManager {
 		TransactionImpl() {
 		}
 
-        public int getLockTimeout() {
+        public synchronized int getLockTimeout() {
 			return lockTimeout;
 		}
 
-		public void setLockTimeout(int seconds) {
+		public synchronized void setLockTimeout(int seconds) {
 			this.lockTimeout = seconds;
 		}
 
-		public void registerTransactionalCursor(TransactionalCursor cursor) {
+		public synchronized void registerTransactionalCursor(TransactionalCursor cursor) {
 			synchronized(cursorSet) {
 				cursorSet.add(cursor);
 			}
 		}
 
-		public void unregisterTransactionalCursor(TransactionalCursor cursor) {
+		public synchronized void unregisterTransactionalCursor(TransactionalCursor cursor) {
 			synchronized(cursorSet) {
 				cursorSet.remove(cursor);
 			}
@@ -1610,23 +1637,17 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLock(Lockable lockable, LockMode mode,	LockDuration duration) {
-			/*
-			 * Currently the LockMgr does not detect deadlocks so we use
-			 * timeouts as a simple way of detecting a deadlock. If the attempt
-			 * to acquire lock times out within specified timeout period, we
-			 * assume the system is deadlocked.
-			 */
+		public synchronized final void acquireLock(Lockable lockable, LockMode mode, LockDuration duration) {
 			doAcquireLock(lockable, mode, duration, lockTimeout);
 		}
 
 		/**
 		 * Attempts to acquire a lock without waiting; if the lock is not
-		 * avaiabl, an excepton will be thrown.
+		 * available, an exception will be thrown.
 		 * 
 		 * @see #doAcquireLock(Object, LockMode, LockDuration, int)
 		 */		
-		public final void acquireLockNowait(Lockable lockable, LockMode mode,
+		public synchronized final void acquireLockNowait(Lockable lockable, LockMode mode,
 				LockDuration duration) {
 			doAcquireLock(lockable, mode, duration, 0);
 		}
@@ -1637,7 +1658,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * where a lock must be released prior to the commit, for example, in
 		 * cursor stability or read committed isolation modes.
 		 */
-        public final boolean releaseLock(Lockable lockable)	{
+        public synchronized final boolean releaseLock(Lockable lockable)	{
 			return doReleaseLock(lockable);
 		}
         
@@ -1655,14 +1676,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * state of the transaction.
 		 * 
 		 */
-		final boolean doReleaseLock(Object lockable) {
+		private final boolean doReleaseLock(Object lockable) {
 			return trxmgr.lockmgr.release(this, lockable, false);
 		}
 
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#downgradeLock(java.lang.Object, org.simpledbm.rss.locking.LockMode)
          */
-        public final void downgradeLock(Lockable lockable, LockMode downgradeTo) {
+        public synchronized final void downgradeLock(Lockable lockable, LockMode downgradeTo) {
 			doDowngradeLock(lockable, downgradeTo);
 		}
         
@@ -1671,14 +1692,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * when a cursor has placed an UPDATE lock on a record, and this needs
 		 * to be downgraded to SHARED lock.
 		 */
-        public final void doDowngradeLock(Object lockable, LockMode downgradeTo) {
+        public synchronized final void doDowngradeLock(Object lockable, LockMode downgradeTo) {
         	trxmgr.lockmgr.downgrade(this, lockable, downgradeTo);
         }
 
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.tm.Transaction#hasLock(java.lang.Object)
 		 */
-		public LockMode hasLock(Lockable lockable) {
+		public synchronized LockMode hasLock(Lockable lockable) {
 			return trxmgr.lockmgr.findLock(this, lockable);
         }
 
@@ -1690,7 +1711,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Latching issues:<br>
 		 * No latches required because there is no change to the persistent state of the transaction.
 		 */
-		final void releaseLocks(SavepointImpl sp) {
+		private final void releaseLocks(SavepointImpl sp) {
 			if (log.isDebugEnabled()) {
 				log.debug(this.getClass().getName(), "releaseLocks", "SIMPLEDBM-DEBUG: Releasing locks for transaction " + this + " upto savepoint " + sp);
 			}
@@ -1720,7 +1741,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 			}
 		}
 		
-		public final int countLocks() {
+		public synchronized final int countLocks() {
 			int count = 0;
 			for (int i = locks.size() - 1; i >= 0; i--) {
 				Lockable lockable = locks.get(i);
@@ -1740,7 +1761,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Discards PostCommitActions that were scheduled after
 		 * specified Savepoint.
 		 */
-		final void discardCommitActions(SavepointImpl sp) {
+		private final void discardCommitActions(SavepointImpl sp) {
 			if (log.isDebugEnabled()) {
 				log.debug(this.getClass().getName(), "discardCommitActions", "SIMPLEDBM-DEBUG: Discarding commit actions upto savepoint " + sp);
 			}
@@ -1781,7 +1802,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * <p>Latching issues:<br>
 		 * No latches required because only current thread may modify last_lsn.
 		 */
-		public final SavepointImpl createSavepoint(boolean saveCursors) {
+		public synchronized final SavepointImpl createSavepoint(boolean saveCursors) {
 			SavepointImpl sp = new SavepointImpl(lastLsn, lockPos, actionId, saveCursors);
 			if (saveCursors) {
 				saveCursorStates(sp);
@@ -1800,7 +1821,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Latching issues:<br>
 		 * Caller must S latch trxmgr in order to avoid conflicts with checkpoints.
 		 */
-		final void prepare() {
+		private final void prepare() {
 			if (log.isDebugEnabled()) {
 				log.debug(this.getClass().getName(), "prepare", "SIMPLEDBM-DEBUG: Preparing to commit transaction " + this);
 			}				
@@ -1835,7 +1856,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * Log the end of a transaction.
 		 */
-		final void endTransaction() {
+		private final void endTransaction() {
 			/*
 			 * Optimise for readonly transaction.
 			 * A readonly transaction would not have generated log records
@@ -1855,7 +1876,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#commit()
          */
-        public final void commit() {
+        public synchronized final void commit() {
 			doCommit();
 		}
         
@@ -1873,26 +1894,26 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Latching issues: we S latch trxmgr so as to avoid conflicts with
 		 * checkpointing.
 		 */
-		public final void doCommit() {
+		private final void doCommit() {
 		
 			if (log.isDebugEnabled()) {
 				log.debug(this.getClass().getName(), "prepare", "SIMPLEDBM-DEBUG: Committing transaction " + this);
 			}
-			latchHelper.sharedLock();
+			trxMgrLatchRef.sharedLock();
 			try {
 				prepare();
 				endTransaction();
 				getTrxmgr().doPostCommitActions(postCommitActions, trxId);
 				getTrxmgr().deleteTransaction(this);
 			} finally {
-				latchHelper.unlockShared();
+				trxMgrLatchRef.unlockShared();
 			}
 		}
 
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#rollback(org.simpledbm.rss.tm.Savepoint)
          */
-        public final void rollback(Savepoint savepoint)	{
+        public synchronized final void rollback(Savepoint savepoint)	{
 			doRollback(savepoint);
 		}
         
@@ -1905,21 +1926,21 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * it would lead to a deadlock with the Buffer Manager. This is because,
 		 * normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
 		 */
-		final void doRollback(Savepoint savepoint) {
+		private final void doRollback(Savepoint savepoint) {
 			assert savepoint != null;
-			latchHelper.sharedLock();
+			trxMgrLatchRef.sharedLock();
 			try {
 				doRollbackInternal(savepoint);
 			}
 			finally {
-				latchHelper.unlockShared();
+				trxMgrLatchRef.unlockShared();
 			}
 		}
 
 		/**
 		 * Starts a Nested Top Action. Will throw an exception if a nested top action is already in scope.
 		 */
-		public final void startNestedTopAction() {
+		public synchronized final void startNestedTopAction() {
 			if (dummyCLR != null) {
 				log.error(this.getClass().getName(), "startNestedTopAction", mcat.getMessage("EX0016"));
 				throw new TransactionException(mcat.getMessage("EX0016"));
@@ -1931,7 +1952,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * Completes a nested top action. Will throw an exception if there isn't a nested top action in scope.
 		 */
-		public final void completeNestedTopAction() {
+		public synchronized final void completeNestedTopAction() {
 			if (dummyCLR == null) {
 				log.error(this.getClass().getName(), "startNestedTopAction", mcat.getMessage("EX0017"));
 				throw new TransactionException(mcat.getMessage("EX0017"));
@@ -1943,7 +1964,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/**
 		 * Abandons a nested top action.
 		 */
-		public final void resetNestedTopAction() {
+		public synchronized final void resetNestedTopAction() {
 			dummyCLR = null;
 		}
 		
@@ -1951,7 +1972,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * Performs page oriented physical undo, ie, the undo is performed on the
 		 * same page that was modified during normal operation.
 		 */
-		final void performPhysicalUndo(TransactionalModule module, Undoable undoable) {
+		private final void performPhysicalUndo(TransactionalModule module, Undoable undoable) {
 			PageId pageId = undoable.getPageId();
 			BufferAccessBlock bab = getTrxmgr().bufmgr.fixExclusive(pageId, false, -1, 0);
 			try {
@@ -1983,7 +2004,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * An example of multiple page logic undo is a btree that does not use
 		 * logical key deletes.
 		 */
-		final void performLogicalUndo(TransactionalModule module, Undoable undoable) {
+		private final void performLogicalUndo(TransactionalModule module, Undoable undoable) {
 			if (undoable instanceof SinglePageLogicalUndo) {
 				BufferAccessBlock bab = moduleFindAndFixPageForUndo(module, undoable);
 				try {
@@ -2017,7 +2038,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * @see #doAbort()
 		 * @see #rollback(Savepoint)
 		 */
-		final void doRollbackInternal(Savepoint savepoint) {
+		private final void doRollbackInternal(Savepoint savepoint) {
 
 			SavepointImpl sp = (SavepointImpl) savepoint;
 			boolean delete = (sp == null);
@@ -2098,7 +2119,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         /* (non-Javadoc)
          * @see org.simpledbm.rss.tm.Transaction#abort()
          */
-        public final void abort() {
+        public synchronized final void abort() {
 			doAbort();
 		}
 
@@ -2115,8 +2136,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 		 * it would lead to a deadlock with the Buffer Manager. This is because,
 		 * normal WAL protocol requires FIX-DO-LOG-UNFIX sequence.
 		 */
-		public final void doAbort() {
-			latchHelper.sharedLock();
+		private final void doAbort() {
+			trxMgrLatchRef.sharedLock();
 			try {
 				if (log.isDebugEnabled()) {
 					log.debug(this.getClass().getName(), "abort", "SIMPLEDBM-DEBUG: Aborting transaction " + this);
@@ -2152,7 +2173,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 				getTrxmgr().deleteTransaction(this);
 			}
 			finally {
-				latchHelper.unlockShared();
+				trxMgrLatchRef.unlockShared();
 			}
 		}
 		
@@ -2212,26 +2233,31 @@ public final class TransactionManagerImpl implements TransactionManager {
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.tm.Transaction#getLastLsn()
 		 */
-		public final Lsn getLastLsn() {
+		public synchronized final Lsn getLastLsn() {
 			return new Lsn(lastLsn);
 		}
 
-		/* (non-Javadoc)
-		 * @see java.lang.Object#toString()
-		 */
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("Transaction(trxId=");
+			trxId.appendTo(sb).append(", firstLsn");
+			firstLsn.appendTo(sb).append(", lastLsn=");
+			lastLsn.appendTo(sb).append(", undoNextLsn=");
+			undoNextLsn.appendTo(sb).append(", state=").append(state)
+				.append(", isolationMode=").append(isolationMode).append(")");
+			return sb;
+		}
+		
 		@Override
 		public final String toString() {
-			return "Transaction(trxId=" + trxId + ", firstLsn" + firstLsn +
-				", lastLsn=" + lastLsn + ", undoNextLsn=" + undoNextLsn +
-				", state=" + state + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 
-		void setTrxmgr(TransactionManagerImpl trxmgr) {
+		private void setTrxmgr(TransactionManagerImpl trxmgr) {
 			this.trxmgr = trxmgr;
-			this.latchHelper = new LatchHelper(trxmgr.latch);
+			this.trxMgrLatchRef = new LatchHelper(trxmgr.latch);
 		}
 
-		TransactionManagerImpl getTrxmgr() {
+		private TransactionManagerImpl getTrxmgr() {
 			return trxmgr;
 		}
 		
@@ -2250,7 +2276,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 	 * table beyond which actions can be discarded.</li>
 	 * </ol>
 	 */
-	static final class SavepointImpl implements Savepoint {
+	static final class SavepointImpl implements Savepoint, Dumpable {
 		final Lsn lsn;
 		final int lockPos;
 		final int actionId;
@@ -2280,9 +2306,16 @@ public final class TransactionManagerImpl implements TransactionManager {
 			return saveCursors;
 		}
 		
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("Savepoint(lsn=");
+			lsn.appendTo(sb).append(", lockPos=").append(lockPos).append(", actionId=").append(actionId);
+			sb.append(", saveCursors=").append(saveCursors).append(")");
+			return sb;
+		}
+		
 		@Override
 		public final String toString() {
-			return "Savepoint(" + lsn + ", lockPos=" + lockPos + ", actionId=" + actionId + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 
@@ -2321,9 +2354,14 @@ public final class TransactionManagerImpl implements TransactionManager {
 			return name.getStoredLength() + TypeSize.INTEGER;
 		}
 		
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("ActiveContainerInfo(name=").append(name.toString()).append(", id=").append(containerId).append(")");
+			return sb;
+		}
+		
 		@Override
         public String toString() {
-			return "ActiveContainerInfo(name=" + name.toString() + ", id=" + containerId + ")";
+			return appendTo(new StringBuilder()).toString();
 		}
 	}
 	
@@ -2386,6 +2424,21 @@ public final class TransactionManagerImpl implements TransactionManager {
 
 		public ActiveContainerInfo[] getActiveContainers() {
 			return activeContainers;
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("CheckpointBegin(");
+			super.appendTo(sb);
+			sb.append(", activeContainers={");
+			for (ActiveContainerInfo aci: activeContainers) {
+				aci.appendTo(sb).append(",");
+			}
+			sb.append("})");
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
 		}
 		
 	}
@@ -2489,6 +2542,28 @@ public final class TransactionManagerImpl implements TransactionManager {
 				dp.store(bb);
 			}
 		}
+		
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("CheckpointEnd(");
+			super.appendTo(sb);
+			sb.append(", trxTable={");
+			for (TransactionImpl trx: trxTable) {
+				if (trx.state == TrxState.TRX_DEAD) {
+					continue;
+				}
+				trx.appendTo(sb).append(',');
+	 		}
+			sb.append("}, dirtyPages={");
+			for (DirtyPageInfo dp: dirtyPages) {
+				sb.append(dp).append(',');
+			}
+			sb.append("})");
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
+		}
 	}
 
 	static abstract class TrxControl extends BaseLoggable {
@@ -2558,6 +2633,28 @@ public final class TransactionManagerImpl implements TransactionManager {
 		public final void setLoggableFactory(LoggableFactory loggableFactory) {
 			this.loggableFactory = loggableFactory;
 		}
+		
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("TrxPrepare(");
+			super.appendTo(sb);
+			sb.append(", postCommitActions={");
+			for (PostCommitAction action: postCommitActions) {
+				if (action instanceof Dumpable) {
+					((Dumpable)action).appendTo(sb);
+				}
+				else {
+					sb.append(action);
+				}
+				sb.append(',');
+			}
+			sb.append("})");			
+			return sb;
+		}
+		
+		public String toString() {
+			return appendTo(new StringBuilder()).toString();
+		}
+		
 	}
 
 	static public final class TrxAbort extends TrxControl {
