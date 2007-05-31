@@ -185,7 +185,8 @@ public abstract class Page implements Storable, Dumpable {
     }
 
     public StringBuilder appendTo(StringBuilder sb) {
-    	sb.append("Page(type=").append(type).append(", pageId=").append(pageId).append(", pageLsn=");
+    	sb.append("Page(type=").append(type).append(", pageId=");
+    	pageId.appendTo(sb).append(", pageLsn=");
     	pageLsn.appendTo(sb).append(")");
     	return sb;
     }

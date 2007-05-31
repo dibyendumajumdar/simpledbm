@@ -2335,8 +2335,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 										trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
 									trx.releaseLock(loc);
 								}
-								log.warn(LOG_CLASS_NAME, "doInsert", mcat.getMessage("WB0003") + "key [" + key + "] and location [" + location + "]");
-								throw new UniqueConstraintViolationException(mcat.getMessage("WB0003") + "key [" + key + "] and location [" + location + "]");
+								log.warn(LOG_CLASS_NAME, "doInsert", mcat.getMessage("WB0003", key, location));
+								throw new UniqueConstraintViolationException(mcat.getMessage("WB0003", key, location));
 							}
 							/*
 							 * Key has been deleted or has been rolled back in the meantime
@@ -2447,8 +2447,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				SearchResult sr = node.search(bcursor.searchKey);
 				if (!sr.exactMatch) {
 					// key not found?? something is wrong
-					log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage("EB0004") + bcursor.searchKey.toString());
-					throw new IndexException(mcat.getMessage("EB0004") + bcursor.searchKey.toString()); 
+					log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage("EB0004", bcursor.searchKey.toString()));
+					throw new IndexException(mcat.getMessage("EB0004", bcursor.searchKey.toString())); 
 				}
 
 				int nextKeyPage = -1;
@@ -2530,8 +2530,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				sr.k = icursor.k;
 				sr.exactMatch = true;
 				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-					log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0005") + "k1=[" + node.getItem(sr.k) + "] k2=[" + icursor.currentKey + "]");
-					throw new IndexException(mcat.getMessage("EB0005") + "k1=[" + node.getItem(sr.k) + "] k2=[" + icursor.currentKey + "]");
+					log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0005", node.getItem(sr.k), icursor.currentKey));
+					throw new IndexException(mcat.getMessage("EB0005", node.getItem(sr.k), icursor.currentKey));
 				}
 			}
 			else {
@@ -2657,8 +2657,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 				Savepoint sp = trx.createSavepoint(false);
 				try {
 					if (sr.item == null) {
-						log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage("EB0006") + icursor.currentKey.toString());
-						throw new IndexException(mcat.getMessage("EB0006") + icursor.currentKey.toString());
+						log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage("EB0006", icursor.currentKey.toString()));
+						throw new IndexException(mcat.getMessage("EB0006", icursor.currentKey.toString()));
 					}
 					trx.acquireLockNowait(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
 					icursor.currentKey = sr.item;
@@ -3457,8 +3457,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 					return k;
 				}
 			}
-			log.error(LOG_CLASS_NAME, "getSplitKey", mcat.getMessage("EB0007"));
-			throw new IllegalStateException(mcat.getMessage("EB0007"));
+			log.error(LOG_CLASS_NAME, "getSplitKey", mcat.getMessage("EB0007", page));
+			throw new IndexException(mcat.getMessage("EB0007", page));
 		}
 
 		/**
@@ -3494,8 +3494,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 			while (low <= high) {
 				int mid = (low + high) >>> 1;
 				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-					log.error(LOG_CLASS_NAME, "search", mcat.getMessage("EB0007") + key.toString());
-					throw new IndexException(mcat.getMessage("EB0007") + key.toString());
+					log.error(LOG_CLASS_NAME, "search", mcat.getMessage("EB0008", key.toString()));
+					throw new IndexException(mcat.getMessage("EB0008", key.toString()));
 				}
 				IndexItem item = getItem(mid);
 				int comp = item.compareTo(key);
@@ -3610,8 +3610,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final int findChildPage(IndexItem key) {
 			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findChildPage", mcat.getMessage("EB0009"));
-				throw new IndexException(mcat.getMessage("EB0009"));
+				log.error(LOG_CLASS_NAME, "findChildPage", mcat.getMessage("EB0009", page));
+				throw new IndexException(mcat.getMessage("EB0009", page));
 			}
 			int k = 1;
 			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
@@ -3629,8 +3629,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final IndexItem findIndexItem(int childPageNumber) {
 			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findIndexItem", mcat.getMessage("EB0009"));
-				throw new IndexException(mcat.getMessage("EB0009"));
+				log.error(LOG_CLASS_NAME, "findIndexItem", mcat.getMessage("EB0009", page));
+				throw new IndexException(mcat.getMessage("EB0009", page));
 			}
 			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
 				IndexItem item = getItem(k);
@@ -3647,8 +3647,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final IndexItem findPrevIndexItem(int childPageNumber) {
 			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findPrevIndexItem", mcat.getMessage("EB0009"));
-				throw new IndexException(mcat.getMessage("EB0009"));
+				log.error(LOG_CLASS_NAME, "findPrevIndexItem", mcat.getMessage("EB0009", page));
+				throw new IndexException(mcat.getMessage("EB0009", page));
 			}
 			IndexItem prev = null;
 			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
@@ -4049,8 +4049,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		public final void setItem(IndexItem item) {
 			this.item = item;
 			if (!item.isLeaf()) {
-				log.error(LOG_CLASS_NAME, "setItem", mcat.getMessage("EB0010") + item);
-				throw new IndexException(mcat.getMessage("EB0010") + item);
+				log.error(LOG_CLASS_NAME, "setItem", mcat.getMessage("EB0010", item));
+				throw new IndexException(mcat.getMessage("EB0010", item));
 			}
 		}
 

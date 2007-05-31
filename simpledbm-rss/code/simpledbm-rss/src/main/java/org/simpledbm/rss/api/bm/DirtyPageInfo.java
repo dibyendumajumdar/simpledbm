@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.util.Dumpable;
 
 /**
  * Holds information about a dirty page. 
@@ -31,7 +32,7 @@ import org.simpledbm.rss.api.wal.Lsn;
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
  */
-public final class DirtyPageInfo implements Storable {
+public final class DirtyPageInfo implements Storable, Dumpable {
    
 	private static final int SIZE = PageId.SIZE + Lsn.SIZE;
 	
@@ -83,9 +84,17 @@ public final class DirtyPageInfo implements Storable {
 		return realRecoveryLsn;
 	}
 
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("DirtyPageInfo(pageId=");
+		pageId.appendTo(sb).append(", recoLsn=");
+		recoveryLsn.appendTo(sb).append(", realRecoLsn=");
+		realRecoveryLsn.appendTo(sb).append(")");
+		return sb;
+	}
+	
 	@Override
 	public String toString() {
-		return "DirtyPageInfo(pageId=" + pageId + ", recoLsn=" + recoveryLsn + ", realRecoLsn=" + realRecoveryLsn + ")";
+		return appendTo(new StringBuilder()).toString();
 	}
 
 	public void retrieve(ByteBuffer bb) {

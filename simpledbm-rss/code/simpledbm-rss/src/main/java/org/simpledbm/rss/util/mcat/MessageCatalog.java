@@ -69,37 +69,37 @@ public class MessageCatalog {
 		
 		// Buffer Manager messages
 		msgs.put("EM0001", "SIMPLEDBM-EM0001: Error occurred while shutting down Buffer Manager");
-		msgs.put("EM0002", "SIMPLEDBM-EM0002: Error occurred while attempting to read page:");
+		msgs.put("EM0002", "SIMPLEDBM-EM0002: Error occurred while attempting to read page {0}");
 		msgs.put("EM0003", "SIMPLEDBM-EM0003: Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
-		msgs.put("EM0004", "SIMPLEDBM-EM0004: Unexpected error - while attempting to read a page an empty frame could not be found: ");
+		msgs.put("EM0004", "SIMPLEDBM-EM0004: Unexpected error - while attempting to read page {0} an empty frame could not be found: ");
 		msgs.put("EM0005", "SIMPLEDBM-EM0005: Unable to complete operation because Buffer Manager is shutting down");
-		msgs.put("EM0006", "SIMPLEDBM-EM0006: Unexpected error - while attempting to locate a page an empty frame could not be found or buffer manager is shutting down: ");
+		msgs.put("EM0006", "SIMPLEDBM-EM0006: Unexpected error - while attempting to locate page {0} an empty frame could not be found or buffer manager is shutting down");
 		msgs.put("EM0007", "SIMPLEDBM-EM0007: Latch mode in inconsistent state");
 		msgs.put("EM0008", "SIMPLEDBM-EM0008: Page can be marked dirty only if it has been latched exclusively");
 		msgs.put("EM0009", "SIMPLEDBM-EM0009: Upgrade of update latch requested but latch is not held in update mode currently");
 		msgs.put("EM0010", "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
 		msgs.put("IM0011", "SIMPLEDBM-IM0011: Buffer Writer STARTED");
-		msgs.put("IM0012", "SIMPLEDBM-IM0011: Buffer Writer STOPPED");
+		msgs.put("IM0012", "SIMPLEDBM-IM0012: Buffer Writer STOPPED");
 		
 		// Free Space Manager messages
-		msgs.put("EF0001", "SIMPLEDBM-EF0001: Invalid number of bits specified for space map page: ");
-		msgs.put("EF0002", "SIMPLEDBM-EF0002: Specified container does not exist: ");
-		msgs.put("EF0003", "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type: ");
-		msgs.put("EF0004", "SIMPLEDBM-EF0004: Unexpected error - specified page does not belong to this space map page: ");
+		msgs.put("EF0001", "SIMPLEDBM-EF0001: Invalid number of bits [{0}] specified for space map page");
+		msgs.put("EF0002", "SIMPLEDBM-EF0002: Container {0} does not exist");
+		msgs.put("EF0003", "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type {0}");
+		msgs.put("EF0004", "SIMPLEDBM-EF0004: Unexpected error - page {0} does not belong to this map page {1}");
 		msgs.put("EF0005", "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
 		msgs.put("EF0006", "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
 		
 		// BTree Index Manager messages
 		msgs.put("EB0001", "SIMPLEDBM-EB0001: Unexpected error - missing child pointer in parent node");
 		msgs.put("EB0002", "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
-		msgs.put("WB0003", "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of: ");
-		msgs.put("EB0004", "SIMPLEDBM-EB0004: Unexpected error - key to be deleted not found: ");
-		msgs.put("EB0005", "SIMPLEDBM-EB0005: Unexpected error - current key k1 does not match expected key k2: ");
-		msgs.put("EB0006", "SIMPLEDBM-EB0006: Unexpected error - search result returned null, B-Tree may be corrupt : search key = ");
-		msgs.put("EB0007", "SIMPLEDBM-EB0007: Unexpected error - while attempting to locate the split key in a page");
-		msgs.put("EB0008", "SIMPLEDBM-EB0008: Unexpected error - invalid binary search result while searching for ");
-		msgs.put("EB0009", "SIMPLEDBM-EB0009: Unexpected error - leaf page encountered when expecting an index page");
-		msgs.put("EB0010", "SIMPLEDBM-EB0010: Supplied index item not setup as leaf: ");
+		msgs.put("WB0003", "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of key={0} and location={1}");
+		msgs.put("EB0004", "SIMPLEDBM-EB0004: Unexpected error - key {0} not found");
+		msgs.put("EB0005", "SIMPLEDBM-EB0005: Unexpected error - current key k1={0} does not match expected key k2={1}");
+		msgs.put("EB0006", "SIMPLEDBM-EB0006: Unexpected error - search result returned null, B-Tree may be corrupt : search key = {0}");
+		msgs.put("EB0007", "SIMPLEDBM-EB0007: Unexpected error - while attempting to locate the split key in page {0}");
+		msgs.put("EB0008", "SIMPLEDBM-EB0008: Unexpected error - invalid binary search result while searching for {0}");
+		msgs.put("EB0009", "SIMPLEDBM-EB0009: Unexpected error - leaf page {0} encountered when expecting an index page");
+		msgs.put("EB0010", "SIMPLEDBM-EB0010: Index item {0} is not setup as leaf");
 		msgs.put("WB0011", "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
 		msgs.put("EB0012", "SIMPLEDBM-EB0012: Unexpected error - exception caught");
 		
@@ -149,7 +149,7 @@ public class MessageCatalog {
 		msgs.put("IW0032", "SIMPLEDBM-IW0032: Write Ahead Log Manager STOPPED");
 		
 		// Latch Manager messages
-		msgs.put("EH0001", "SIMPLEDBM-EH0001: Invalid upgrade request, as there is no prior lock: {0}");
+		msgs.put("EH0001", "SIMPLEDBM-EH0001: Upgrade request {0} is invalid, as there is no prior lock");
 		msgs.put("WH0002", "SIMPLEDBM-WH0002: Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
 		msgs.put("EH0003", "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
 		msgs.put("EH0004", "SIMPLEDBM-EH0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
