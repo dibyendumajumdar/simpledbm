@@ -19,7 +19,8 @@ public class IntegerKey implements IndexKey {
 	}
 
 	public IntegerKey(int value) {
-		statusByte = VALUE_FIELD;	
+		statusByte = VALUE_FIELD;
+		this.value = value;
 	}
 	
 	protected IntegerKey(byte statusByte, int value) {
@@ -29,7 +30,7 @@ public class IntegerKey implements IndexKey {
 	
 	public int getValue() {
 		if (statusByte != VALUE_FIELD) {
-			throw new IllegalStateException();
+			throw new IllegalStateException("Value has not been set");
 		}
 		return value;
 	}
@@ -54,6 +55,10 @@ public class IntegerKey implements IndexKey {
 	}
 
 	public int compareTo(IndexKey key) {
+		if (key == null) {
+			throw new IllegalArgumentException(
+				"Supplied key is null");
+		}
 		if (key == this) {
 			return 0;
 		}
@@ -86,6 +91,13 @@ public class IntegerKey implements IndexKey {
 	}
 
 	public boolean equals(Object o) {
+		if (o == null) {
+			throw new IllegalArgumentException(
+				"Supplied key is null");
+		}
+		if (o == this) {
+			return true;
+		}
 		if (o == null || !(o instanceof IntegerKey)) {
 			return false;
 		}
