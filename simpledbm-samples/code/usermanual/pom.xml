@@ -2,7 +2,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.simpledbm.samples-usermanual</groupId>
+	<groupId>org.simpledbm.samples</groupId>
 	<artifactId>simpledbm-samples-usermanual</artifactId>
 	<packaging>jar</packaging>
 	<version>0.01</version>
@@ -43,12 +43,7 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>0.65</version>
-		</dependency>
-		<dependency>
-			<groupId>org.simpledbm.typesystem</groupId>
-			<artifactId>simpledbm-typesystem</artifactId>
-			<version>0.02</version>
+			<version>1.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
