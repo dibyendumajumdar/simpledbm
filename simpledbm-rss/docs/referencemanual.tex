@@ -237,7 +237,8 @@ The Slotted Page Manager module provides a common implementation of a Page struc
 \hline \verb|org.simpledbm.rss.api.loc|&
 Specifies the API for Locations and LocationFactories. A Location is a pointer to tuple data stored in an index. LocationFactories provide methods for creating new Location instances. \\
 \hline \verb|org.simpledbm.rss.api.im|&
-The Index Manager provides sorted keyed access to tuples. The default implementation is a B-link tree. \\
+The Index Manager provides sorted keyed access to tuples. The default implementation 
+is a B-link tree. \\
 \hline \verb|org.simpledbm.rss.api.tuple|&
 Tuple Manager module is responsible for handling tuples, which are like table rows, and can span multiple pages. Tuples are low-level entities which can be the basis for implementing table rows. \\
 \hline \verb|org.simpledbm.rss.main|&
@@ -2326,39 +2327,39 @@ The special keys are used by the Index Manager internally.
 \begin{verbatim}
 public interface IndexKeyFactory {
 
-	/**
-	 * Generates a new (empty) key for the specified
-	 * Container. The Container ID is meant to be used as key
-	 * for locating information specific to a container; for instance,
-	 * the attributes of an Index.
-	 * 
-	 * @param containerId ID of the container for which a key is required
-	 */
-	IndexKey newIndexKey(int containerId);
+  /**
+   * Generates a new (empty) key for the specified
+   * Container. The Container ID is meant to be used as key
+   * for locating information specific to a container; for instance,
+   * the attributes of an Index.
+   * 
+   * @param containerId ID of the container for which a key is required
+   */
+  IndexKey newIndexKey(int containerId);
 
-	/**
-	 * Generates a key that represents Infinity - it must be greater than
-	 * all possible keys in the domain for the key.  The Container ID is meant to be used as key
-	 * for locating information specific to a container; for instance,
-	 * the attributes of an Index.
-	 * 
-	 * @param containerId ID of the container for which a key is required
-	 */
-	IndexKey maxIndexKey(int containerId);
+  /**
+   * Generates a key that represents Infinity - it must be greater than
+   * all possible keys in the domain for the key.  The Container ID is meant to be used as key
+   * for locating information specific to a container; for instance,
+   * the attributes of an Index.
+   * 
+   * @param containerId ID of the container for which a key is required
+   */
+  IndexKey maxIndexKey(int containerId);
 	
-	/**
-	 * Generates a key that represents negative Infinity - it must be smaller than
-	 * all possible keys in the domain for the key. The Container ID is meant to be used as key
-	 * for locating information specific to a container; for instance,
-	 * the attributes of an Index.
+  /**
+   * Generates a key that represents negative Infinity - it must be smaller than
+   * all possible keys in the domain for the key. The Container ID is meant to be used as key
+   * for locating information specific to a container; for instance,
+   * the attributes of an Index.
    *
-	 * The key returned by this method can be used as an argument to index scans.
-	 * The result will be a scan of the index starting from the first key in 
-	 * the index.
-	 * 
-	 * @param containerId ID of the container for which a key is required
-	 */
-	IndexKey minIndexKey(int containerId);
+   * The key returned by this method can be used as an argument to index scans.
+   * The result will be a scan of the index starting from the first key in 
+   * the index.
+   * 
+   * @param containerId ID of the container for which a key is required
+   */
+  IndexKey minIndexKey(int containerId);
 }
 \end{verbatim}
 
@@ -2377,65 +2378,169 @@ by the index key.
 \section{Example}
 
 Given below is an example of an \verb|IndexKey| implementation. This 
-implementation uses a special byte field to
-and \verb|IndexKeyFactory| 
-implementation that supports integer keys in the range of 1-100. Note 
-this in this implementation, the value of -1 is used to
-represent ``Infinity''.
+implementation uses a special byte field to maintain the status information.
 
 \begin{verbatim}
-public class IntKey implements IndexKey {
-  static final int INFINITY = -1;
- 	static final int NULL = 0;
- 	int i;
- 	public IntKey() {
-    i = NULL;
- 	}
- 	public IntKey(int i) {
-    setInt(i);
- 	}
-  public int compareTo(IndexKey o) {
-    if (o instanceof IntKey) {
-      if (i == INFINITY) {
-        return 1;
-      }
-      return i - ((IntKey)o).i;
-    }
-    return -1;
-  }
-  public void setInt(int i) {
-    if (i < 1 || i > 100) {
-      throw new IllegalArgumentException();
-    }
-    this.i = i;
-  }
-  @Override
-  public String toString() {
-    return Integer.toString(i);
-  }
-  public void parseString(String string) {
-    setInt(Integer.parseInt(string));
-  }
-  public int getStoredLength() {
-    return Integer.SIZE/Byte.SIZE;
-  }
-  public void retrieve(ByteBuffer bb) {
-    i = bb.getInt();
-  }
-  public void store(ByteBuffer bb) {
-    bb.putInt(i);
-  }
-}
+public class IntegerKey implements IndexKey {
 
-public class IntKeyFactory implements IndexKeyFactory {
-  public IndexKey newIndexKey(int containerId) {
-    return new IntKey();
+  private static final byte NULL_FIELD = 1;
+  private static final byte MINUS_INFINITY_FIELD = 2;
+  private static final byte VALUE_FIELD = 4;
+  private static final byte PLUS_INFINITY_FIELD = 8;
+
+  private byte statusByte = NULL_FIELD;
+  private int value;
+
+  public IntegerKey() {
+    statusByte = NULL_FIELD;
   }
-  public IndexKey maxIndexKey(int containerId) {
-    return new IntKey(IntKey.INFINITY);
+
+  public IntegerKey(int value) {
+    statusByte = VALUE_FIELD;
+    this.value = value;
+  }
+
+  protected IntegerKey(byte statusByte, int value) {
+    this.statusByte = statusByte;
+    this.value = value;
+  }
+
+  public int getValue() {
+    if (statusByte != VALUE_FIELD) {
+      throw new IllegalStateException("Value has not been set");
+    }
+    return value;
+  }
+
+  public void setValue(int i) {
+    value = i;
+    statusByte = VALUE_FIELD;
+  }
+
+  public void retrieve(ByteBuffer bb) {
+    statusByte = bb.get();
+    value = bb.getInt();
+  }
+
+  public void store(ByteBuffer bb) {
+    bb.put(statusByte);
+    bb.putInt(value);
+  }
+
+  public int getStoredLength() {
+    return 5;
+  }
+
+  public int compareTo(IndexKey key) {
+    if (key == null) {
+      throw new IllegalArgumentException("Supplied key is null");
+    }
+    if (key == this) {
+      return 0;
+    }
+    if (key.getClass() != getClass()) {
+      throw new IllegalArgumentException(
+          "Supplied key is not of the correct type");
+    }
+    IntegerKey other = (IntegerKey) key;
+    int result = statusByte - other.statusByte;
+    if (result == 0 && statusByte == VALUE_FIELD) {
+      result = value - other.value;
+    }
+    return result;
+  }
+
+  public final boolean isNull() {
+    return statusByte == NULL_FIELD;
+  }
+
+  public final boolean isMinKey() {
+    return statusByte == MINUS_INFINITY_FIELD;
+  }
+
+  public final boolean isMaxKey() {
+    return statusByte == PLUS_INFINITY_FIELD;
+  }
+
+  public final boolean isValue() {
+    return statusByte == VALUE_FIELD;
+  }
+
+  public boolean equals(Object o) {
+    if (o == null) {
+      throw new IllegalArgumentException("Supplied key is null");
+    }
+    if (o == this) {
+      return true;
+    }
+    if (o == null || !(o instanceof IntegerKey)) {
+      return false;
+    }
+    return compareTo((IntegerKey) o) == 0;
+  }
+
+  public void parseString(String s) {
+    if ("<NULL>".equals(s)) {
+      statusByte = NULL_FIELD;
+    } else if ("<MINKEY>".equals(s)) {
+      statusByte = MINUS_INFINITY_FIELD;
+    } else if ("<MAXKEY>".equals(s)) {
+      statusByte = PLUS_INFINITY_FIELD;
+    } else {
+      value = Integer.parseInt(s);
+      statusByte = VALUE_FIELD;
+    }
+  }
+
+  public String toString() {
+    if (isNull()) {
+      return "<NULL>";
+    } else if (isMinKey()) {
+      return "<MINKEY>";
+    } else if (isMaxKey()) {
+      return "<MAXKEY>";
+    } else {
+      return Integer.toString(value);
+    }
+  }
+
+  public static IntegerKey createNullKey() {
+    return new IntegerKey(NULL_FIELD, 0);
+  }
+
+  public static IntegerKey createMinKey() {
+    return new IntegerKey(MINUS_INFINITY_FIELD, 0);
+  }
+
+  public static IntegerKey createMaxKey() {
+    return new IntegerKey(PLUS_INFINITY_FIELD, 0);
   }
 }
 \end{verbatim}
+
+Shown below is the corresponding \verb|IndexKeyFactory| implementation.
+
+\begin{verbatim}
+public class IntegerKeyFactory implements IndexKeyFactory {
+
+  public IndexKey maxIndexKey(int containerId) {
+    return IntegerKey.createMaxKey();
+  }
+
+  public IndexKey minIndexKey(int containerId) {
+    return IntegerKey.createMinKey();
+  }
+
+  public IndexKey newIndexKey(int containerId) {
+    return IntegerKey.createNullKey();
+  }
+}
+\end{verbatim}
+
+The example shown above is a simple key. It is possible to create 
+multi-attribute keys as well. For an example of how this can be done,
+please see the sample \verb|typesystem| package supplied with SimpleDBM,
+and the sample project \verb|tupledemo|.
 
 \section{Locations}
 
