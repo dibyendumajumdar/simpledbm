@@ -83,7 +83,7 @@ public final class ByteString implements Storable, Comparable<ByteString> {
             bb.get(bytes);
         }
         else {
-            bytes = null;
+            bytes = new byte[0];
         }
     }
 
