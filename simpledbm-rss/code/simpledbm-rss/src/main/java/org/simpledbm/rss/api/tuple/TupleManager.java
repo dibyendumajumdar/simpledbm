@@ -55,7 +55,7 @@ public interface TupleManager {
      * method.
      * @param containerId ID of the container
      */
-	TupleContainer getTupleContainer(int containerId);
+	//TupleContainer getTupleContainer(int containerId);
 	
     /**
      * Gets an instance of TupleContainer. Specified container must already exist.

@@ -71,7 +71,7 @@ public final class PageFactoryImpl implements PageFactory {
 		this.objectFactory = objectFactory;
 		this.storageManager = storageManager;
 		this.latchFactory = latchFactory;
-        objectFactory.register(TYPE_RAW_PAGE, RawPage.class.getName());
+        objectFactory.registerType(TYPE_RAW_PAGE, RawPage.class.getName());
 	}
 
 	public PageFactoryImpl(ObjectRegistry objectFactory, StorageManager storageManager, LatchFactory latchFactory) {

@@ -68,10 +68,10 @@ public class TestServer extends TestCase {
 		server = new Server(properties);
 		server.start();
 		try {
-			TupleContainer container = server.getTupleManager().getTupleContainer(1);
-			Transaction trx = server.getTransactionManager().begin(IsolationMode.SERIALIZABLE);
-            container.insert(trx, new ByteString("Hello World!"));
-            trx.commit();			
+      Transaction trx = server.getTransactionManager().begin(IsolationMode.SERIALIZABLE);
+      TupleContainer container = server.getTupleManager().getTupleContainer(trx, 1);
+      container.insert(trx, new ByteString("Hello World!"));
+      trx.commit();			
 		}
 		finally {
 			server.shutdown();

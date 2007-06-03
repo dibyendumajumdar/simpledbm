@@ -42,7 +42,7 @@ public interface ObjectRegistry {
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-    public void register(int typecode, String classname);    
+    public void registerType(int typecode, String classname);    
     
     /**
      * Registers a Singleton object to the registry.
@@ -50,7 +50,7 @@ public interface ObjectRegistry {
      * @param typecode A unique type code for the type.
      * @param object The object to be registered.
      */
-    public void register(int typecode, Object object);
+    public void registerSingleton(int typecode, Object object);
 
 	/**
 	 * Creates an instance of the specified type. If the

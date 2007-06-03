@@ -121,7 +121,7 @@ public class TestTupleManager extends TestCase {
         try {
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
+            TupleContainer tcont = db.tuplemgr.getTupleContainer(trx, 1);
             StringTuple t = new StringTuple();
             t.parseString("hello", 16524);
             TupleInserter inserter = tcont.insert(trx, t);
@@ -129,6 +129,7 @@ public class TestTupleManager extends TestCase {
             inserter.completeInsert();
             trx.commit();
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             byte[] data = tcont.read(location);
             assertEquals(data.length, 16526);
             ByteBuffer bb = ByteBuffer.wrap(data);
@@ -139,6 +140,7 @@ public class TestTupleManager extends TestCase {
             t = new StringTuple();
             t.parseString("updated hello", 18000);
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             data = tcont.read(location);
             assertEquals(data.length, 16526);
             tcont.update(trx, location, t);
@@ -163,13 +165,14 @@ public class TestTupleManager extends TestCase {
         try {
             db.trxmgr.start();
             
-            TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
+            TupleContainer tcont = null;
             /*
              * First insert a few rows.
              */
             int[] tlens = new int[] { 18000, 15, 95, 138, 516, 1700, 4500, 13000 };
             for (int i = 1; i < tlens.length; i++) {
                 Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+                tcont = db.tuplemgr.getTupleContainer(trx, 1);
                 StringTuple t = new StringTuple();
                 t.parseString("rec" + i, tlens[i]);
                 TupleInserter inserter = tcont.insert(trx, t);
@@ -179,6 +182,7 @@ public class TestTupleManager extends TestCase {
             }
             
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             TupleScan scan = tcont.openScan(trx, false);
             int i = 0;
             while (scan.fetchNext()) {
@@ -191,7 +195,7 @@ public class TestTupleManager extends TestCase {
             	System.err.println("Location=" + scan.getCurrentLocation() + ", tupleData=[" + t.toString() + "]");
             	i++;
             }
-            assertEquals(((TransactionManagerImpl.TransactionImpl)trx).countLocks(), i);
+            assertEquals(i+1, ((TransactionManagerImpl.TransactionImpl)trx).countLocks());
             trx.commit();
         }
         finally {
@@ -216,8 +220,8 @@ public class TestTupleManager extends TestCase {
 
             Thread thr = new Thread(new Runnable() {
 				public void run() {
-					TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
 					Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+					TupleContainer tcont = db.tuplemgr.getTupleContainer(trx, 1);
 					try {
 						StringTuple t = new StringTuple();
 						t.parseString("sample", 10000);
@@ -247,7 +251,6 @@ public class TestTupleManager extends TestCase {
 				}
 			});
             
-            TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
             /*
              * First insert a few rows.
              */
@@ -259,6 +262,7 @@ public class TestTupleManager extends TestCase {
             	tlens = new int[] { 18000, 15, 95, 138, 516, 1700, 4500, 13000 };
             }
             Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
+            TupleContainer tcont = db.tuplemgr.getTupleContainer(trx, 1);
             TupleScan scan = tcont.openScan(trx, false);
             
             thr.start();
@@ -280,7 +284,7 @@ public class TestTupleManager extends TestCase {
             	System.err.println("Fetching next tuple");
             }
         	System.err.println("Scan completed");
-            assertEquals(((TransactionManagerImpl.TransactionImpl)trx).countLocks(), 0);
+            assertEquals(1, ((TransactionManagerImpl.TransactionImpl)trx).countLocks());
             trx.commit();
             
             thr.join(2000);
@@ -305,7 +309,7 @@ public class TestTupleManager extends TestCase {
         try {
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
+            TupleContainer tcont = db.tuplemgr.getTupleContainer(trx, 1);
             TupleScan scan = tcont.openScan(trx, true);
             int i = 0;
             ArrayList<Integer> lens = new ArrayList<Integer>();
@@ -339,6 +343,7 @@ public class TestTupleManager extends TestCase {
             trx.abort();
 
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             scan = tcont.openScan(trx, false);
             i = 0;
             while (scan.fetchNext()) {
@@ -373,7 +378,7 @@ public class TestTupleManager extends TestCase {
         try {
             db.trxmgr.start();
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
-            TupleContainer tcont = db.tuplemgr.getTupleContainer(1);
+            TupleContainer tcont = db.tuplemgr.getTupleContainer(trx, 1);
             TupleScan scan = tcont.openScan(trx, true);
             int n_total = 0;
             int n_deleted = 0;
@@ -411,6 +416,7 @@ public class TestTupleManager extends TestCase {
             assertEquals(j, n_total-n_deleted);
             
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             scan = tcont.openScan(trx, false);
             int i = 0;
             while (scan.fetchNext()) {
@@ -428,6 +434,7 @@ public class TestTupleManager extends TestCase {
             n_total -= n_deleted;
             
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             int len = 100;
             for (i = 0; i < 20; i++) {
                 StringTuple t = new StringTuple();
@@ -443,6 +450,7 @@ public class TestTupleManager extends TestCase {
             trx.commit();
             
             trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+            tcont = db.tuplemgr.getTupleContainer(trx, 1);
             scan = tcont.openScan(trx, false);
             i = 0;
             while (scan.fetchNext()) {

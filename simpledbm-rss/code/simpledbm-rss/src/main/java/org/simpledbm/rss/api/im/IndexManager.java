@@ -53,7 +53,7 @@ public interface IndexManager {
 	 * 
 	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
 	 */
-	Index getIndex(int containerId);	
+	// Index getIndex(int containerId);	
 	
 	/**
 	 * Obtains an existing index with specified container ID. A Shared lock is obtained on 

@@ -39,9 +39,9 @@ public class TestObjectRegistry extends TestCase {
 	public void testRegistry() throws Exception {
 		ObjectRegistry factory = new ObjectRegistryImpl();
 		Integer i = new Integer(55);
-        factory.register(1, String.class.getName());
-        factory.register(2, i);
-        factory.register(2, i);
+        factory.registerType(1, String.class.getName());
+        factory.registerSingleton(2, i);
+        factory.registerSingleton(2, i);
         assertTrue(i == factory.getInstance(2));
         assertTrue(i == factory.getInstance(2));
 		Object s = factory.getInstance(1);
@@ -60,16 +60,16 @@ public class TestObjectRegistry extends TestCase {
 		}	
 		Integer x = new Integer(10);
 		try {
-			factory.register(2, x);
+			factory.registerSingleton(2, x);
 			fail();
 		}
 		catch (ObjectCreationException e) {
 			assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
 		}
         assertTrue(i == factory.getInstance(2));
-        factory.register(1, String.class.getName());
+        factory.registerType(1, String.class.getName());
         try {
-        	factory.register(1, Integer.class.getName());
+        	factory.registerType(1, Integer.class.getName());
         	fail();
         }
    		catch (ObjectCreationException e) {

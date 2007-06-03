@@ -191,15 +191,15 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 
 		moduleRegistry.registerModule(MODULE_ID, this);
 
-		objectFactory.register(TYPE_LOCATIONFACTORY, locationFactory);
-		objectFactory.register(TYPE_LOG_DELETESLOT, DeleteSlot.class.getName());
-		objectFactory.register(TYPE_LOG_INSERTTUPLESEGMENT, InsertTupleSegment.class.getName());
-		objectFactory.register(TYPE_LOG_UNDOINSERTTUPLESEGMENT, UndoInsertTupleSegment.class.getName());
-		objectFactory.register(TYPE_LOG_UPDATESEGMENTLINK, UpdateSegmentLink.class.getName());
-		objectFactory.register(TYPE_LOG_UNDOABLEREPLACESEGMENTLINK, UndoableReplaceSegmentLink.class.getName());
-		objectFactory.register(TYPE_LOG_UNDOREPLACESEGMENTLINK, UndoReplaceSegmentLink.class.getName());
-		objectFactory.register(TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT, UndoableUpdateTupleSegment.class.getName());
-		objectFactory.register(TYPE_LOG_UNDOUPDATETUPLESEGMENT, UndoUpdateTupleSegment.class.getName());
+		objectFactory.registerSingleton(TYPE_LOCATIONFACTORY, locationFactory);
+		objectFactory.registerType(TYPE_LOG_DELETESLOT, DeleteSlot.class.getName());
+		objectFactory.registerType(TYPE_LOG_INSERTTUPLESEGMENT, InsertTupleSegment.class.getName());
+		objectFactory.registerType(TYPE_LOG_UNDOINSERTTUPLESEGMENT, UndoInsertTupleSegment.class.getName());
+		objectFactory.registerType(TYPE_LOG_UPDATESEGMENTLINK, UpdateSegmentLink.class.getName());
+		objectFactory.registerType(TYPE_LOG_UNDOABLEREPLACESEGMENTLINK, UndoableReplaceSegmentLink.class.getName());
+		objectFactory.registerType(TYPE_LOG_UNDOREPLACESEGMENTLINK, UndoReplaceSegmentLink.class.getName());
+		objectFactory.registerType(TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT, UndoableUpdateTupleSegment.class.getName());
+		objectFactory.registerType(TYPE_LOG_UNDOUPDATETUPLESEGMENT, UndoUpdateTupleSegment.class.getName());
 	}
 
 	/* (non-Javadoc)

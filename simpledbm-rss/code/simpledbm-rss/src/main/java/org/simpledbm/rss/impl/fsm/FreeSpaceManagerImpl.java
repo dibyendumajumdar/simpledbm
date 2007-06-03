@@ -116,23 +116,23 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule implemen
 		
 		moduleRegistry.registerModule(MODULE_ID, this);
 
-		objectFactory.register(TYPE_HEADERPAGE, HeaderPage.class.getName());
-		objectFactory.register(TYPE_ONEBITSPACEMAPPAGE, OneBitSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_TWOBITSPACEMAPPAGE, TwoBitSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_CREATECONTAINER, CreateContainer.class.getName());
-		objectFactory.register(TYPE_OPENCONTAINER, OpenContainer.class.getName());
-		objectFactory.register(TYPE_FORMATHEADERPAGE, FormatHeaderPage.class.getName());
-		objectFactory.register(TYPE_FORMATSPACEMAPPAGE, FormatSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_UPDATESPACEMAPPAGE, UpdateSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_UPDATEHEADERPAGE, UpdateHeaderPage.class.getName());
-		objectFactory.register(TYPE_UNDOUPDATEHEADERPAGE, UndoUpdateHeaderPage.class.getName());
-		objectFactory.register(TYPE_LINKSPACEMAPPAGE, LinkSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_UNDOLINKSPACEMAPPAGE, UndoLinkSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_FORMATRAWPAGE, FormatRawPage.class.getName());
-		objectFactory.register(TYPE_UNDOCREATECONTAINER, UndoCreateContainer.class.getName());
-		objectFactory.register(TYPE_UNDOABLEUPDATESPACEMAPPAGE, UndoableUpdateSpaceMapPage.class.getName());
-		objectFactory.register(TYPE_UNDOSPACEMAPPAGEUPDATE, UndoSpaceMapPageUpdate.class.getName());
-		objectFactory.register(TYPE_DROPCONTAINER, DropContainer.class.getName());
+		objectFactory.registerType(TYPE_HEADERPAGE, HeaderPage.class.getName());
+		objectFactory.registerType(TYPE_ONEBITSPACEMAPPAGE, OneBitSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_TWOBITSPACEMAPPAGE, TwoBitSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_CREATECONTAINER, CreateContainer.class.getName());
+		objectFactory.registerType(TYPE_OPENCONTAINER, OpenContainer.class.getName());
+		objectFactory.registerType(TYPE_FORMATHEADERPAGE, FormatHeaderPage.class.getName());
+		objectFactory.registerType(TYPE_FORMATSPACEMAPPAGE, FormatSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_UPDATESPACEMAPPAGE, UpdateSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_UPDATEHEADERPAGE, UpdateHeaderPage.class.getName());
+		objectFactory.registerType(TYPE_UNDOUPDATEHEADERPAGE, UndoUpdateHeaderPage.class.getName());
+		objectFactory.registerType(TYPE_LINKSPACEMAPPAGE, LinkSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_UNDOLINKSPACEMAPPAGE, UndoLinkSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_FORMATRAWPAGE, FormatRawPage.class.getName());
+		objectFactory.registerType(TYPE_UNDOCREATECONTAINER, UndoCreateContainer.class.getName());
+		objectFactory.registerType(TYPE_UNDOABLEUPDATESPACEMAPPAGE, UndoableUpdateSpaceMapPage.class.getName());
+		objectFactory.registerType(TYPE_UNDOSPACEMAPPAGEUPDATE, UndoSpaceMapPageUpdate.class.getName());
+		objectFactory.registerType(TYPE_DROPCONTAINER, DropContainer.class.getName());
 	}
 
     public final void setTesting(int level) {

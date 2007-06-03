@@ -3247,8 +3247,8 @@ public class TestBTreeManager extends BaseTestCase {
 			spacemgr = new FreeSpaceManagerImpl(objectFactory, pageFactory, logmgr, bufmgr, storageManager, storageFactory, loggableFactory, trxmgr, moduleRegistry);
 			btreeMgr = new BTreeIndexManagerImpl(objectFactory, loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry);
 
-	    	objectFactory.register(TYPE_STRINGKEYFACTORY, StringKeyFactory.class.getName());
-			objectFactory.register(TYPE_ROWLOCATIONFACTORY, RowLocationFactory.class.getName());
+	    	objectFactory.registerType(TYPE_STRINGKEYFACTORY, StringKeyFactory.class.getName());
+			objectFactory.registerType(TYPE_ROWLOCATIONFACTORY, RowLocationFactory.class.getName());
 
 			lockmgr.start();
 			logmgr.start();

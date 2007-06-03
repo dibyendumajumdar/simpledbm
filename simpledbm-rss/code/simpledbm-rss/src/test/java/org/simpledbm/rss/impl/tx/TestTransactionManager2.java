@@ -82,12 +82,12 @@ public class TestTransactionManager2 extends BaseTestCase {
 	}
 
 	void setupObjectFactory(ObjectRegistry objectFactory) {
-        objectFactory.register(TYPE_BITMGRPAGE, BitMgrPage.class.getName());
-		objectFactory.register(TYPE_BITMGRLOGCREATECONTAINER, BitMgrLogCreateContainer.class.getName());
-		objectFactory.register(TYPE_BITMGRLOGFORMATPAGE, BitMgrLogFormatPage.class.getName());
-		objectFactory.register(TYPE_BITMGRLOGREDOUNDO, BitMgrLogRedoUndo.class.getName());
-		objectFactory.register(TYPE_BITMGRLOGCLR, BitMgrLogCLR.class.getName());
-		objectFactory.register(TYPE_BITMGRLOGOPENCONTAINER, BitMgrLogOpenContainer.class.getName());
+        objectFactory.registerType(TYPE_BITMGRPAGE, BitMgrPage.class.getName());
+		objectFactory.registerType(TYPE_BITMGRLOGCREATECONTAINER, BitMgrLogCreateContainer.class.getName());
+		objectFactory.registerType(TYPE_BITMGRLOGFORMATPAGE, BitMgrLogFormatPage.class.getName());
+		objectFactory.registerType(TYPE_BITMGRLOGREDOUNDO, BitMgrLogRedoUndo.class.getName());
+		objectFactory.registerType(TYPE_BITMGRLOGCLR, BitMgrLogCLR.class.getName());
+		objectFactory.registerType(TYPE_BITMGRLOGOPENCONTAINER, BitMgrLogOpenContainer.class.getName());
 	}
 	
 	public void testTrxMgrStart() throws Exception {

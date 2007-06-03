@@ -216,18 +216,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 
 		moduleRegistry.registerModule(MODULE_ID, this);
 		
-		objectFactory.register(TYPE_SPLIT_OPERATION, SplitOperation.class.getName());
-		objectFactory.register(TYPE_MERGE_OPERATION, MergeOperation.class.getName());
-		objectFactory.register(TYPE_LINK_OPERATION, LinkOperation.class.getName());
-		objectFactory.register(TYPE_UNLINK_OPERATION, UnlinkOperation.class.getName());
-		objectFactory.register(TYPE_REDISTRIBUTE_OPERATION, RedistributeOperation.class.getName());
-		objectFactory.register(TYPE_INCREASETREEHEIGHT_OPERATION, IncreaseTreeHeightOperation.class.getName());	
-		objectFactory.register(TYPE_DECREASETREEHEIGHT_OPERATION, DecreaseTreeHeightOperation.class.getName());
-		objectFactory.register(TYPE_INSERT_OPERATION, InsertOperation.class.getName());
-		objectFactory.register(TYPE_UNDOINSERT_OPERATION, UndoInsertOperation.class.getName());
-		objectFactory.register(TYPE_DELETE_OPERATION, DeleteOperation.class.getName());
-		objectFactory.register(TYPE_UNDODELETE_OPERATION, UndoDeleteOperation.class.getName());
-		objectFactory.register(TYPE_LOADPAGE_OPERATION, LoadPageOperation.class.getName());
+		objectFactory.registerType(TYPE_SPLIT_OPERATION, SplitOperation.class.getName());
+		objectFactory.registerType(TYPE_MERGE_OPERATION, MergeOperation.class.getName());
+		objectFactory.registerType(TYPE_LINK_OPERATION, LinkOperation.class.getName());
+		objectFactory.registerType(TYPE_UNLINK_OPERATION, UnlinkOperation.class.getName());
+		objectFactory.registerType(TYPE_REDISTRIBUTE_OPERATION, RedistributeOperation.class.getName());
+		objectFactory.registerType(TYPE_INCREASETREEHEIGHT_OPERATION, IncreaseTreeHeightOperation.class.getName());	
+		objectFactory.registerType(TYPE_DECREASETREEHEIGHT_OPERATION, DecreaseTreeHeightOperation.class.getName());
+		objectFactory.registerType(TYPE_INSERT_OPERATION, InsertOperation.class.getName());
+		objectFactory.registerType(TYPE_UNDOINSERT_OPERATION, UndoInsertOperation.class.getName());
+		objectFactory.registerType(TYPE_DELETE_OPERATION, DeleteOperation.class.getName());
+		objectFactory.registerType(TYPE_UNDODELETE_OPERATION, UndoDeleteOperation.class.getName());
+		objectFactory.registerType(TYPE_LOADPAGE_OPERATION, LoadPageOperation.class.getName());
 	}
 
 	/* (non-Javadoc)

@@ -287,12 +287,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 		this.moduleRegistry = moduleRegistry;
 		this.latch = latchFactory.newReadWriteLatch();
 
-		objectFactory.register(TYPE_TRXPREPARE, TransactionManagerImpl.TrxPrepare.class.getName());
-		objectFactory.register(TYPE_TRXABORT, TransactionManagerImpl.TrxAbort.class.getName());
-		objectFactory.register(TYPE_TRXEND, TransactionManagerImpl.TrxEnd.class.getName());
-		objectFactory.register(TYPE_CHECKPOINTBEGIN, TransactionManagerImpl.CheckpointBegin.class.getName());
-		objectFactory.register(TYPE_CHECKPOINTEND, TransactionManagerImpl.CheckpointEnd.class.getName());
-		objectFactory.register(TYPE_DUMMYCLR, TransactionManagerImpl.DummyCLR.class.getName());
+		objectFactory.registerType(TYPE_TRXPREPARE, TransactionManagerImpl.TrxPrepare.class.getName());
+		objectFactory.registerType(TYPE_TRXABORT, TransactionManagerImpl.TrxAbort.class.getName());
+		objectFactory.registerType(TYPE_TRXEND, TransactionManagerImpl.TrxEnd.class.getName());
+		objectFactory.registerType(TYPE_CHECKPOINTBEGIN, TransactionManagerImpl.CheckpointBegin.class.getName());
+		objectFactory.registerType(TYPE_CHECKPOINTEND, TransactionManagerImpl.CheckpointEnd.class.getName());
+		objectFactory.registerType(TYPE_DUMMYCLR, TransactionManagerImpl.DummyCLR.class.getName());
 		
 	}
 

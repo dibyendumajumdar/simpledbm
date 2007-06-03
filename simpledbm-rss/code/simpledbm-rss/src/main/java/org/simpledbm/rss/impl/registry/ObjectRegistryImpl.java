@@ -54,7 +54,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 	 * @see org.simpledbm.common.registry.ObjectFactory#register(int,
 	 *      java.lang.String)
 	 */
-	public synchronized final void register(int tc, String classname) {
+	public synchronized final void registerType(int tc, String classname) {
 		try {
 			if (log.isDebugEnabled()) {
 				log.debug(this.getClass().getName(), "register",
@@ -89,7 +89,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 	 * @see org.simpledbm.common.registry.ObjectFactory#register(int,
 	 *      java.lang.Object)
 	 */
-	public synchronized final void register(int tc, Object object) {
+	public synchronized final void registerSingleton(int tc, Object object) {
 		short typecode = (short) tc;
 		if (log.isDebugEnabled()) {
 			log.debug(this.getClass().getName(), "register",

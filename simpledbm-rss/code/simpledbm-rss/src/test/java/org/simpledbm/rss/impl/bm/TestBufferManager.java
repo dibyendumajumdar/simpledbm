@@ -118,7 +118,7 @@ public class TestBufferManager extends TestCase {
         
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.register(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
         
@@ -171,7 +171,7 @@ public class TestBufferManager extends TestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.register(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
         
@@ -287,7 +287,7 @@ public class TestBufferManager extends TestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.register(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
         
@@ -411,7 +411,7 @@ public class TestBufferManager extends TestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.register(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
         
@@ -488,7 +488,7 @@ public class TestBufferManager extends TestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.register(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
         
