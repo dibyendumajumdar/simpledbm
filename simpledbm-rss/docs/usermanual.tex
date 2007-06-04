@@ -175,7 +175,56 @@ public interface Storable {
 An example implementation of the \verb|Storable| interface is 
 given below:
 
+\begin{verbatim}
+public final class ByteString implements Storable {
+    
+  private byte[] bytes;
+    
+  public int getStoredLength() {
+    return bytes.length + 2;
+  }
+    
+  public void store(ByteBuffer bb) {
+    short n = 0;
+    if (bytes != null) {
+      n = (short) bytes.length;
+    }
+    bb.putShort(n);
+    if (n > 0) {
+      bb.put(bytes, 0, n);
+    }
+  }
+    
+  public void retrieve(ByteBuffer bb) {
+    short n = bb.getShort();
+    if (n > 0) {
+      bytes = new byte[n];
+      bb.get(bytes);
+    }
+    else {
+      bytes = new byte[0];
+    }
+  }
+}
+\end{verbatim}
 
+A coding standard in SimpleDBM is to make sure that Storable
+objects are immutable. Once created, a Storable object can 
+only mutate when it is re-constructed from a byte stream using the
+retrieve() method. Another precaution taken is to ensure that
+retrieve() creates new instances of any Storable member objects rather
+than modifying these - again keeping with the philosophy of immutability
+of Storable objects. 
+
+\chapter{SimpleDBM Servers}
+
+\section{Introduction}
+
+A SimpleDBM server is a set of background threads and a library
+of API calls that clients can hook into. The background threads
+take care of various tasks, such as writing out buffer pages,
+writing out logs, archiving older log files, creating checkpoints,
+etc.
 
 
 \chapter{Latch Manager}
