@@ -96,6 +96,7 @@ public final class LogFactoryImpl implements LogFactory {
 		logmgr.setLogFiles(parms.groupPaths, parms.n_LogFiles);
 		logmgr.setMaxBuffers(parms.maxLogBuffers);
 		logmgr.setLogFlushInterval(parms.logFlushInterval);
+		logmgr.setDisableExplicitFlushRequests(parms.disableExplicitFlushRequests);
 		logmgr.create();
 	}
 	
@@ -152,6 +153,8 @@ public final class LogFactoryImpl implements LogFactory {
 		int maxLogBuffers;
 
 		int logFlushInterval;
+		
+		boolean disableExplicitFlushRequests;
 
 		final void setDefaults() {
 			ctlFiles = new String[LogManagerImpl.DEFAULT_CTL_FILES];
@@ -168,6 +171,7 @@ public final class LogFactoryImpl implements LogFactory {
 			logFileSize = LogManagerImpl.DEFAULT_LOG_FILE_SIZE;
 			logFlushInterval = 60000;
 			maxLogBuffers = n_LogFiles * 10;
+			disableExplicitFlushRequests = false;
 		}
 		
 		LogMgrParms(Properties props) {
@@ -228,6 +232,11 @@ public final class LogFactoryImpl implements LogFactory {
 			value = props.getProperty(key);
 			if (value != null) {
 				logFlushInterval = Integer.parseInt(value);
+			}
+			key = "log.disableExplicitFlushRequests";
+			value = props.getProperty(key);
+			if (value != null) {
+				disableExplicitFlushRequests = Boolean.parseBoolean(value);
 			}
 		}
 	}
