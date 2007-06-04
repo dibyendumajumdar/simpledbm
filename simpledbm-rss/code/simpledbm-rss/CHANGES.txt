@@ -1,3 +1,6 @@
+1.0.2-BETA:
+ * dm: log.disableExplicitFlushRequests is now a property that can be set when creating a log instance.
+
 1.0.1-BETA: 03 June 2007
  * dm: Added CHANGES.txt.
  * dm: Renamed register() methods in ObjectRegistry to registerType() and registerSingleton().
