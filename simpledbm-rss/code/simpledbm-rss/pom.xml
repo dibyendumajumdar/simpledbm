@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.rss</groupId>
 	<artifactId>simpledbm-rss</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.1-BETA</version>
+	<version>1.0.2-BETA</version>
 	<name>SimpleDBM</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
