@@ -216,7 +216,7 @@ retrieve() creates new instances of any Storable member objects rather
 than modifying these - again keeping with the philosophy of immutability
 of Storable objects. 
 
-\chapter{SimpleDBM Servers}
+\chapter{SimpleDBM Servers and Databases}
 
 \section{Introduction}
 
@@ -224,19 +224,151 @@ A SimpleDBM server is a set of background threads and a library
 of API calls that clients can hook into. The background threads
 take care of various tasks, such as writing out buffer pages,
 writing out logs, archiving older log files, creating checkpoints,
-etc.
+etc. 
 
+A SimpleDBM server operates on a set of data and index files,
+known as the SimpleDBM database. 
 
-\chapter{Latch Manager}
-\begin{tabular}{|c|c|}
+Only one server instance is allowed to access a SimpleDBM database at any point
+in time. SimpleDBM uses a lock file to detect 
+multiple concurrent access to a database, and will refuse to start
+if it detects that a server is already accessing a database.
+
+Internally, SimpleDBM operates on Containers. Externally, Containers
+are mapped to files. Tables and Indexes are stored in Containers known
+as TupleContainers and IndexContainers.
+
+The SimpleDBM database initially consists of  
+a set of transaction log files, a lock file and a special container 
+used internally by SimpleDBM. 
+
+\section{Creating a SimpleDBM database}
+
+A SimpleDBM database is created by a call to Server.create(), as
+shown below:
+
+\begin{verbatim}
+import org.simpledbm.rss.main.Server;
+
+...
+
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath", "demodata/TupleDemo1");
+
+Server.create(properties);
+\end{verbatim}
+
+The Server.create() method accepts a Properties object as
+the sole argument. The Properties object can be used to pass a
+number of parameters:
+
+\begin{table}[h]
+\begin{tabular}{|l|p{6cm}|}
 \hline
-           Interface           &           Implementation           \\
+  \textbf{Property Name}&\textbf{Description}  \\
+\hline \verb|log.ctl.{n}|&The fully qualified path to the
+  log control file. The first file should be specified as
+\verb|log.ctl.1|, second as \verb|log.ctl.2|, and so on. Up to a
+maximum of 3 can
+be specified. Default is 2. \\
 \hline
- \verb|org.simpledbm.rss.api.latch| & \verb|org.simpledbm.rss.impl.latch| \\
+  \verb|log.groups.{n}.path|&The path where log
+files of a group should be stored. The first log group is specified
+as \verb|log.groups.1.path|, the second as \verb|log.groups.2.path|,
+and so on. Up to a maximum of 3 log groups can be specified. Default
+number of
+groups is 1. Path defaults to current directory.  \\
+\hline
+  \verb|log.archive.path|&Defines the path for storing archive files. Defaults to current
+directory.  \\
+\hline
+  \verb|log.group.files|&Specifies the number of log files within each group.
+Up to a maximum of 8 are allowed. Defaults to 2. \\
+\hline \verb|log.file.size|&Specifies the size of each log file in
+bytes. Default is 2 KB. \\
+\hline \verb|log.buffer.size|&Specifies the size of the log buffer
+in bytes.
+Default is 2 KB. \\
+\hline \verb|log.buffer.limit|&Sets a limit on the maximum number of
+log buffers that can be allocated. Default is 10 *
+\verb|log.group.files|.  \\
+\hline \verb|log.flush.interval|&Sets the interval (in seconds)
+between log flushes. Default is 6 seconds.  \\
+\hline \verb|log.disableExplicitFlushRequests|&Boolean value, if set, disables log flushes
+requested explicitly by the Buffer Manager or Transaction Manager. Log flushes still occur
+during checkpoints and log switches. By reducing the log flushes, performance is improved,
+but transactions may not be durable. Only those transactions will survive a system crash 
+that have all their log records on disk.  \\
+\hline \verb|storage.basePath|&Defines the base location of the
+SimpleDBM database. All files and directories are created relative to this
+location.  \\
+\hline \verb|storage.createMode|&Defines mode in which files will be
+created. Default is ``rws''.  \\
+\hline \verb|storage.openMode|&Defines mode in which files will be
+opened. Default is ``rws''.  \\
+\hline \verb|bufferpool.numbuffers|&Sets the number of buffers to be created in the
+Buffer Pool.  \\
+\hline \verb|bufferpool.bufferWriterSleepInterval|&Sets the interval in milliseconds between each
+run of the BufferWriter. Note that BufferWriter may run earlier than the specified interval if
+the pool runs out of buffers, and a new page has to be read in. In such cases, the Buffer Writer
+may be manually triggered to clean out buffers.  \\
 \hline
 \end{tabular}
+\label{tab2} \caption{Log Options}
+\end{table}
 
-\section{Overview}
+The Server.create() call will overwrite any existing database
+in the specified storage path, so it must be called only when you know
+for sure that you want to create a database.
+
+\section{Opening a database}
+
+Once a database has been created, it can be opened by creating an
+instance of SimpleDBM server, and starting it. The same properties that were
+supplied while creating the database, can be supplied when starting it.
+
+Here is a code snippet that shows how this is done:
+
+\begin{verbatim}
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath", "demodata/TupleDemo1");
+
+Server server = new Server(properties);
+server.start();
+try {
+  // do some work
+}
+finally {
+  server.shutdown();
+}
+\end{verbatim}
+
+Some points to bear in mind when starting SimpleDBM server instances:
+
+\begin{enumerate}
+	\item Make sure that you invoke shutdown() eventually to ensure proper shutdown of the database.
+	\item Database startup/shutdown is relatively expensive, so do it only once during the life-cycle of your application.
+	\item A Server object can be used only once - after calling shutdown(), it is an error to do any operation with the server object.
+\end{enumerate}
+
 A Latch is an efficient lock that is used by the system to manage
 concurrent access to physical structures. In many ways, Latches are
 similar to Mutexes, however, latches supports additional lock modes,
