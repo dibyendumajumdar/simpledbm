@@ -62,6 +62,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class BufferManagerImpl implements BufferManager {
 
 	private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
+	private static final String BUFFER_WRITER_WAIT = "bufferpool.bufferWriterSleepInterval";
 
 	static final Logger log = Logger.getLogger(BufferManagerImpl.class.getPackage().getName());
 	
@@ -248,6 +249,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	public BufferManagerImpl(LogManager logMgr, PageFactory pageFactory, Properties props) {
 		int bufferpoolsize = getNumericProperty(props, BUFFERPOOL_NUMBUFFERS, 500);
+		bufferWriterSleepInterval = getNumericProperty(props, BUFFER_WRITER_WAIT, 5000);
 		init(logMgr, pageFactory, bufferpoolsize);
 	}
 	
