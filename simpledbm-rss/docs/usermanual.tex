@@ -384,10 +384,132 @@ Some points to bear in mind when starting SimpleDBM server instances:
 \chapter{Transactions}
 
 Most SimpleDBM operations take place in the context of a Transaction.
+Following are the main API calls for managing transactions.
+
+\section{Creating new Transactions}
+
+To start a new Transaction, invoke the Server.begin() method as 
+shown below. You must supply an IsolationMode, try \verb|READ_COMMITTED| to
+start with.
+
+\begin{verbatim}
+Server server = ...;
+
+// Start a new Transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+
+\end{verbatim}
+
+The Transaction interface provides the following methods for
+clients to invoke:
+
+\begin{verbatim}
+public interface Transaction {
+	
+  /**
+   * Creates a transaction savepoint.
+   */
+  public Savepoint createSavepoint(boolean saveCursors);
+
+  /**
+   * Commits the transaction. All locks held by the
+   * transaction are released.
+   */
+  public void commit();	
+
+  /**
+   * Rolls back a transaction upto a savepoint. Locks acquired
+   * since the Savepoint are released. PostCommitActions queued
+   * after the Savepoint was created are discarded.
+   */
+  public void rollback(Savepoint sp);	
+
+  /**
+   * Aborts the transaction, undoing all changes and releasing locks.
+   */
+  public void abort();	
+
+}
+\end{verbatim}
+
+A transaction must always be either committed or aborted. Failure to do
+so will lead to resource leaks, such as locks, which will not be released.
+The correct way to work with transactions is shown below:
+
+\begin{verbatim}
+// Start a new Transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  // do some work and if this is completed succesfully ...
+  // set success to true.
+  doSomething();
+  success = true;
+}
+finally {
+  if (success) {
+    trx.commit();
+  }
+  else {
+    trx.abort();
+  }
+}
+\end{verbatim}
 
 \chapter{Tables}
 
-TODO
+\section{TupleContainers}
+
+SimpleDBM provides support for tables with variable length records.
+These are known as TupleContainers.  As far as SimpleDBM is concerned,
+a row in a TupleContainer is just a blob of data; it can contain
+anything you like. SimpleDBM will automatically break up a large row
+into smaller chunks so the chunks can be stored in individual data
+pages. This chunking is transparent from a client perspective, as the
+client only ever sees full records.
+
+\section{Creating a TupleContainer}
+
+When you create a TupleContainer, you must supply a name for the
+container, a unique numeric ID which should not be in use by any other
+container, and the extent size. For efficiency, SimpleDBM allocates
+space in extents; an extent is logically a set of contiguous pages.
+
+\begin{verbatim}
+/**
+ * Creates a new Tuple Container. 
+ * 
+ * @param trx Transaction to be used for creating the container
+ * @param name Name of the container
+ * @param containerId A numeric ID for the container - must be unique 
+ *        for each container
+ * @param extentSize The number of pages that should be part of each 
+ *        extent in the container
+ */
+public void createTupleContainer(Transaction trx, String name,
+ int containerId, int extentSize);
+\end{verbatim}
+
+Note that the createTupleContainer() method requires a Transaction.
+Given below is an example of how a tuple container may be created.
+
+\begin{verbatim}
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  server.createTupleContainer(trx, "test.db", 1, 20);
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();			
+  else 
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Accessing a TupleContainer}
+
 
 \chapter{Indexes}
 
