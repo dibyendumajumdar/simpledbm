@@ -492,6 +492,8 @@ public void createTupleContainer(Transaction trx, String name,
 
 Note that the createTupleContainer() method requires a Transaction.
 Given below is an example of how a tuple container may be created.
+In this instance, we are creating a TupleContainer named ``test.db'', which
+will be assigned container ID 1, and will have an extent size of 20 pages.
 
 \begin{verbatim}
 Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
@@ -508,8 +510,181 @@ finally {
 }
 \end{verbatim}
 
+Notes: When you create a Container it is exclusively locked. The lock
+is released when you commit or abort the transaction. The exclusive lock
+prevents any other transaction from manipulating the container while it is
+being created.
+
+Recommendation: You should create standalone transactions for creating
+containers, and commit the transaction as soon as the container has been
+created.
+
 \section{Accessing a TupleContainer}
 
+To manipulate a TupleContainer, you must first get access to it. This is
+done by invoking the getTupleContainer() method provided by the SimpleDBM
+Server object. Note that when you access a TupleContainer in this way, a shared
+lock is placed on the container. This prevents other transactions from
+deleting the container while you are working with it.
+
+\begin{verbatim}
+Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false      
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  // do something
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Inserting tuples}
+
+SimpleDBM treats tuples (rows) as blobs of data, and does not care 
+about the internal structure of a tuple. The only requirement is that
+a tuple must implement the Storable interface.
+
+An insert operation is split into two parts. In the first part,
+the initial chunk of the tuple is inserted and a Location assigned to
+the tuple. At this point, you can do other things such as add entries 
+to indexes. You can finally complete the insert as a second step.
+
+The reason for this split is to ensure that for large tuples that
+span multiple pages, the insert does not proceed until it is certain
+that the insert will be successful. It is assumed that once the
+indexes have been successfully updated, in particular, the primary 
+key has been created, then the insert can proceed.
+
+In the example below, we insert a tuple of type ByteString, which is
+a Storable wrapper for String objects.
+
+\begin{verbatim}
+Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false      
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleInserter inserter = container.insert(trx, new ByteString("Hello World!"));
+  Location location = inserter.getLocation();
+ 
+  // Create index entires here
+
+  inserter.completeInsert();
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Reading tuples}
+
+In order to read tuples, you must open a scan. A scan is a mechanism
+for accessing tuples one by one. You can open Index Scans (described in
+next chapter) or Tuple Scans. A Tuple Scan directly scans a TupleContainer.
+Compared to index scans, tuple scans are unordered, and do not support
+Serializable or Repeatable Read lock modes.
+
+\begin{verbatim}
+Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false      
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, false);
+  while (scan.fetchNext()) {
+    byte[] data = scan.getCurrentTuple();
+    // Do somthing with the tuple data
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Updating tuples}
+
+In order to update a tuple, you must first obtain its Location using a
+scan. typically, if you intend to update the tuple, you should open the
+scan in UPDATE mode. This is done by supplying a Boolean.TRUE as the
+second argument to openScan() method.
+
+Note that in the current implementation of SimpleDBM, once space has been
+allocated for a tuple, it may be expanded if the tuple grows, but it is not 
+compressed when the tuple grows smaller. In the latter case, after the update,
+you will end up with garbage data at the end of the tuple. In practice this
+is not a problem because the first two bytes of a Storable object contain the
+length of the data contained in the object. This allows any excess bytes to be
+ignored. 
+
+\begin{verbatim}
+Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false      
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, true);
+  while (scan.fetchNext()) {
+    Location location = scan.getCurrentLocation();
+    byte[] data = scan.getCurrentTuple();
+    // Do somthing with the tuple data
+    // Assume updatedTuple contains update tuple data.
+    Storable updatedTuple = ... ;
+    // Update the tuple
+    container.update(trx, location, updatedTuple);
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
+
+\section{Deleting tuples}
+
+Here is an example:
+
+\begin{verbatim}
+Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false      
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, true);
+  while (scan.fetchNext()) {
+    Location location = scan.getCurrentLocation();
+    container.delete(trx, location);
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}
+\end{verbatim}
 
 \chapter{Indexes}
 
