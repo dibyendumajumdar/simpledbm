@@ -37,7 +37,7 @@ import junit.framework.TestSuite;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
-import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
@@ -342,7 +342,7 @@ public class TestBTreeManager extends BaseTestCase {
 
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -369,7 +369,7 @@ public class TestBTreeManager extends BaseTestCase {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(ClassUtils.getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -1337,7 +1337,7 @@ public class TestBTreeManager extends BaseTestCase {
 				ClassUtils.getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -1393,7 +1393,7 @@ public class TestBTreeManager extends BaseTestCase {
 				ClassUtils.getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2470,7 +2470,7 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 					ClassUtils.getResourceAsStream(filename)));
 			try {
-				Index index = db.btreeMgr.getIndex(1);
+				IndexContainer index = db.btreeMgr.getIndex(1);
 
 				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 						.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2553,7 +2553,7 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 					ClassUtils.getResourceAsStream(filename)));
 			try {
-				Index index = db.btreeMgr.getIndex(1);
+				IndexContainer index = db.btreeMgr.getIndex(1);
 
 				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 						.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2667,7 +2667,7 @@ public class TestBTreeManager extends BaseTestCase {
 				ClassUtils.getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2717,7 +2717,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final BTreeDB db = new BTreeDB(false);
 		int count = 0;
 		try {
-			Index index = db.btreeMgr.getIndex(1);
+			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2769,7 +2769,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			int containerId = 1;
-			Index index = db.btreeMgr.getIndex(containerId);
+			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2822,7 +2822,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			int containerId = 1;
-			Index index = db.btreeMgr.getIndex(containerId);
+			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);
@@ -2875,7 +2875,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			int containerId = 1;
-			Index index = db.btreeMgr.getIndex(containerId);
+			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
 					.getInstance(TYPE_STRINGKEYFACTORY);

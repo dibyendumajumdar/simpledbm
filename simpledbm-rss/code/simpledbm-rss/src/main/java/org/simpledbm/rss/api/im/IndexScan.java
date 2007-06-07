@@ -26,7 +26,7 @@ import org.simpledbm.rss.api.loc.Location;
  * Index. The scan fetches the next key until it reaches the logical
  * EOF. 
  * 
- * @see Index#openScan(org.simpledbm.rss.api.tx.Transaction, IndexKey, Location, boolean)
+ * @see IndexContainer#openScan(org.simpledbm.rss.api.tx.Transaction, IndexKey, Location, boolean)
  * @author Dibyendu Majumdar
  */
 public interface IndexScan {

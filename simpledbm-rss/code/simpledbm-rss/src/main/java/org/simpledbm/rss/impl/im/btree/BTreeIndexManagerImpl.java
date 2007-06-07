@@ -33,7 +33,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
-import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
@@ -896,7 +896,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/* (non-Javadoc)
 	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(int)
 	 */
-	public final Index getIndex(int containerId) {
+	public final IndexContainer getIndex(int containerId) {
 		/*
 		 * TODO - We could cache the index information here,
 		 * but we would need to ensure that if the index is deleted,
@@ -932,7 +932,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 	/* (non-Javadoc)
 	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(org.simpledbm.rss.api.tx.Transaction, int)
 	 */
-	public Index getIndex(Transaction trx, int containerId) {
+	public IndexContainer getIndex(Transaction trx, int containerId) {
 		trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.SHARED, LockDuration.COMMIT_DURATION);
 		return getIndex(containerId);
 	}
@@ -1026,7 +1026,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		public IndexKey getMaxIndexKey();		
 	}
 	
-	public static final class BTreeImpl implements IndexItemHelper, Index {
+	public static final class BTreeImpl implements IndexItemHelper, IndexContainer {
 		public final FreeSpaceCursor spaceCursor;
 		final BTreeIndexManagerImpl btreeMgr;
 		final int containerId;

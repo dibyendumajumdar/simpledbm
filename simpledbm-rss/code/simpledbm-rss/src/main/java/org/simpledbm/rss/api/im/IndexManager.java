@@ -62,6 +62,6 @@ public interface IndexManager {
 	 * 
 	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
 	 */
-	Index getIndex(Transaction trx, int containerId);
+	IndexContainer getIndex(Transaction trx, int containerId);
 
 }

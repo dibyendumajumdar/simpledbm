@@ -5,6 +5,7 @@ import java.util.Properties;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
+import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
@@ -13,13 +14,17 @@ import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
+import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleManager;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
+import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.wal.LogFactory;
@@ -305,4 +310,89 @@ public class Server {
 		assertStarted();
 		return tupleManager;
 	}
+
+    /**
+     * Creates a new index with specified container name and ID. Prior to calling this
+     * method, an exclusive lock should be obtained on the container ID to ensure that no other
+     * transaction is simultaneously attempting to access the same container. If successful, by the
+     * end of this call, the container should have been created and registered with the StorageManager,
+     * and an empty instance of the index created within the container.
+     * 
+     * @param trx Transaction managing the creation of the index
+     * @param name Name of the container
+     * @param containerId ID of the new container, must be unused
+     * @param extentSize Number of pages in each extent of the container
+     * @param keyFactoryType Identifies the factory for creating IndexKey objects
+     * @param locationFactoryType Identifies the factory for creating Location objects
+     * @param unique If true, the new index will not allow duplicates keys
+     */
+    public void createIndex(Transaction trx, String name, int containerId,
+            int extentSize, int keyFactoryType, int locationFactoryType,
+            boolean unique) {
+        getIndexManager().createIndex(trx, name, containerId, extentSize,
+                keyFactoryType, locationFactoryType, unique);
+    }
+
+    /**
+     * Obtains an existing index with specified container ID. A Shared lock is obtained on 
+     * the container ID to ensure that no other transaction is simultaneously attempting to 
+     * create/delete the same container. 
+     * 
+     * @param containerId ID of the container, must have been initialized as an Index prior to this call
+     */
+    public IndexContainer getIndex(Transaction trx, int containerId) {
+        return getIndexManager().getIndex(trx, containerId);
+    }
+
+    /**
+     * Registers a Singleton object to the registry.
+     * 
+     * @param typecode A unique type code for the type.
+     * @param object The object to be registered.
+     */
+    public void registerSingleton(int typecode, Object object) {
+        getObjectRegistry().registerSingleton(typecode, object);
+    }
+
+    /**
+     * Registers a class to the Object Registry. 
+     * The class must implement a no-arg constructor.
+     * The class may optionally implement {@link ObjectRegistryAware}
+     * interface.
+     *  
+     * @param typecode A unique type code for the type.
+     * @param classname The class name.
+     */
+    public void registerType(int typecode, String classname) {
+        getObjectRegistry().registerType(typecode, classname);
+    }
+
+    /** 
+     * Begins a new transaction.
+     */     
+    public Transaction begin(IsolationMode isolationMode) {
+        return getTransactionManager().begin(isolationMode);
+    }
+
+    /**
+     * Creates a new Tuple Container. 
+     * 
+     * @param trx Transaction to be used for creating the container
+     * @param name Name of the container
+     * @param containerId A numeric ID for the container - must be unique for each container
+     * @param extentSize The number of pages that should be part of each extent in the container
+     */
+    public void createTupleContainer(Transaction trx, String name,
+            int containerId, int extentSize) {
+        getTupleManager().createTupleContainer(trx, name, containerId, extentSize);
+    }
+
+    /**
+     * Gets an instance of TupleContainer. Specified container must already exist.
+     * Obtains SHARED lock on specified containerId.
+     * @param containerId ID of the container
+     */
+    public TupleContainer getTupleContainer(Transaction trx, int containerId) {
+        return getTupleManager().getTupleContainer(trx, containerId);
+    }
 }

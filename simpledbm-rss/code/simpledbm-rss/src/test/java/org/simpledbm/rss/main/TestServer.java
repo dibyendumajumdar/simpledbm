@@ -55,7 +55,7 @@ public class TestServer extends TestCase {
 		Server server = new Server(properties);
 		server.start();
 		try {
-			Transaction trx = server.getTransactionManager().begin(IsolationMode.SERIALIZABLE);
+			Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
             server.getSpaceManager().createContainer(
             		trx, "test.db", 1, 2, 20,
             		server.getSlottedPageManager().getPageType());

@@ -27,7 +27,7 @@ import org.simpledbm.rss.api.tx.Transaction;
  * 
  * @author Dibyendu Majumdar
  */
-public interface Index {
+public interface IndexContainer {
 
 	/**
 	 * Inserts a new key and location. If the Index is unique, only one
