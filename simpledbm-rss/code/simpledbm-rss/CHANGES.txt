@@ -1,6 +1,8 @@
 1.0.2-BETA:
  * dm: log.disableExplicitFlushRequests is now a property that can be set when creating a log instance.
  * dm: Property bufferpool.bufferWriterSleepInterval can now be set.
+ * dm: Renamed Index to IndexContainer to match TupleContainer.
+ * dm: Added a number of delegate methods in Server to simplify the API for clients.
  
 1.0.1-BETA: 03 June 2007
  * dm: Added CHANGES.txt.
