@@ -327,10 +327,9 @@ public class Server {
      * @param unique If true, the new index will not allow duplicates keys
      */
     public void createIndex(Transaction trx, String name, int containerId,
-            int extentSize, int keyFactoryType, int locationFactoryType,
-            boolean unique) {
+            int extentSize, int keyFactoryType, boolean unique) {
         getIndexManager().createIndex(trx, name, containerId, extentSize,
-                keyFactoryType, locationFactoryType, unique);
+                keyFactoryType, getTupleManager().getLocationFactoryType(), unique);
     }
 
     /**
