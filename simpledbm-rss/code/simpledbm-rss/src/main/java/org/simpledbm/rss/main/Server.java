@@ -236,37 +236,37 @@ public class Server {
 		log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
 	}
 
-	public synchronized  final IndexManager getIndexManager() {
+	synchronized  final IndexManager getIndexManager() {
 		assertStarted();
 		return indexManager;
 	}
 
-	public synchronized  final BufferManager getBufferManager() {
+	synchronized  final BufferManager getBufferManager() {
 		assertStarted();
 		return bufferManager;
 	}
 
-	public synchronized  final LatchFactory getLatchFactory() {
+	synchronized  final LatchFactory getLatchFactory() {
 		assertStarted();
 		return latchFactory;
 	}
 
-	public synchronized  final LockManager getLockManager() {
+	synchronized  final LockManager getLockManager() {
 		assertStarted();
 		return lockManager;
 	}
 
-	public synchronized  final LoggableFactory getLoggableFactory() {
+	synchronized  final LoggableFactory getLoggableFactory() {
 		assertStarted();
 		return loggableFactory;
 	}
 
-	public synchronized  final LogManager getLogManager() {
+	synchronized  final LogManager getLogManager() {
 		assertStarted();
 		return logManager;
 	}
 
-	public synchronized  final TransactionalModuleRegistry getModuleRegistry() {
+	synchronized  final TransactionalModuleRegistry getModuleRegistry() {
 		assertStarted();
 		return moduleRegistry;
 	}
@@ -278,37 +278,37 @@ public class Server {
 		return objectRegistry;
 	}
 
-	public synchronized  final PageFactory getPageFactory() {
+	synchronized  final PageFactory getPageFactory() {
 		assertStarted();
 		return pageFactory;
 	}
 
-	public synchronized  final FreeSpaceManager getSpaceManager() {
+	synchronized  final FreeSpaceManager getSpaceManager() {
 		assertStarted();
 		return spaceManager;
 	}
 
-	public synchronized  final SlottedPageManager getSlottedPageManager() {
+	synchronized  final SlottedPageManager getSlottedPageManager() {
 		assertStarted();
 		return slottedPageManager;
 	}
 
-	public synchronized  final StorageContainerFactory getStorageFactory() {
+	synchronized  final StorageContainerFactory getStorageFactory() {
 		assertStarted();
 		return storageFactory;
 	}
 
-	public  synchronized final StorageManager getStorageManager() {
+	synchronized final StorageManager getStorageManager() {
 		assertStarted();
 		return storageManager;
 	}
 
-	public synchronized  final TransactionManager getTransactionManager() {
+	synchronized  final TransactionManager getTransactionManager() {
 		assertStarted();
 		return transactionManager;
 	}
 
-	public synchronized final TupleManager getTupleManager() {
+	synchronized final TupleManager getTupleManager() {
 		assertStarted();
 		return tupleManager;
 	}
