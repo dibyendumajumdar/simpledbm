@@ -272,7 +272,9 @@ public class Server {
 	}
 
 	public synchronized  final ObjectRegistry getObjectRegistry() {
-		assertStarted();
+		// assertStarted();
+	    // Because there are valid reasons for accessing the registry prior
+	    // starting the server
 		return objectRegistry;
 	}
 
