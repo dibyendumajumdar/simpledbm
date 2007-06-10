@@ -226,6 +226,7 @@ public class MessageCatalog {
 		msgs.put("ET0004", "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
 		msgs.put("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
 		msgs.put("ET0006", "SIMPLEDBM-ET0006: Unexpected IO error occurred while reading tuple data");
+        msgs.put("ET0007", "SIMPLEDBM-ET0007: Invalid call to completeInsert() as startInsert() did not succeed");
 
 		// transaction manager messages
 		msgs.put("EX0001", "SIMPLEDBM-EX0001: Unknown transaction module {0}");
