@@ -51,6 +51,30 @@ public class TupleDemo1 {
 
 			System.out.println("Listing rows ordered by ID");
 			db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
+			
+			System.out.println("Changing John Lennon to Paul McCartney");
+			db.updateRow(2, "Paul", "McCartney", "London");
+			
+            System.out.println("Listing rows ordered by surname, name");
+            db.listRowsByKey(TupleDemoDb.SKEY1_CONTNO);
+
+            System.out.println("Listing rows ordered by ID");
+            db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
+
+            System.out.println("Deleting Paul McCartney");
+            db.deleteRow(2);
+            
+            System.out.println("Adding John Lennon");
+            db.addRow(2, "John", "Lennon", "New York");
+
+            System.out.println("Adding Dibyendu Majumdar");
+            db.addRow(5, "Dibyendu", "Majumdar", "London");
+
+            System.out.println("Listing rows ordered by surname, name");
+            db.listRowsByKey(TupleDemoDb.SKEY1_CONTNO);
+
+            System.out.println("Listing rows ordered by ID");
+            db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
 		} 
 		finally {
 			db.shutdownServer();
