@@ -22,12 +22,11 @@ package org.simpledbm.samples.tupledemo;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.IsolationMode;
@@ -167,7 +166,7 @@ class TupleDemoDb {
 		rowFactory.registerRowType(PKEY_CONTNO, rowtype_for_pk);
 		rowFactory.registerRowType(SKEY1_CONTNO, rowtype_for_sk1);
 		
-		server.getObjectRegistry().register(ROW_FACTORY_TYPE_ID, rowFactory);
+		server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
 	}
 
 	/**
@@ -196,10 +195,10 @@ class TupleDemoDb {
 	 */
 	void createTableAndIndexes() {
 
-		Transaction trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+		Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 		boolean success = false;
 		try {
-			server.getTupleManager().createTupleContainer(trx, "MYTABLE.DAT", TABLE_CONTNO, 8);
+			server.createTupleContainer(trx, "MYTABLE.DAT", TABLE_CONTNO, 8);
 			success = true;
 		} finally {
 			if (success)
@@ -208,10 +207,10 @@ class TupleDemoDb {
 				trx.abort();
 		}
 		
-		trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+		trx = server.begin(IsolationMode.READ_COMMITTED);
 		success = false;
 		try {
-			server.getIndexManager().createIndex(trx, "MYTABLE_PK.IDX", PKEY_CONTNO, 8, ROW_FACTORY_TYPE_ID, server.getTupleManager().getLocationFactoryType(), true);
+			server.createIndex(trx, "MYTABLE_PK.IDX", PKEY_CONTNO, 8, ROW_FACTORY_TYPE_ID, true);
 			success = true;
 		} finally {
 			if (success)
@@ -220,10 +219,10 @@ class TupleDemoDb {
 				trx.abort();
 		}
 
-		trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+		trx = server.begin(IsolationMode.CURSOR_STABILITY);
 		success = false;
 		try {
-			server.getIndexManager().createIndex(trx, "MYTABLE_SKEY1.IDX", SKEY1_CONTNO, 8, ROW_FACTORY_TYPE_ID, server.getTupleManager().getLocationFactoryType(), false);
+			server.createIndex(trx, "MYTABLE_SKEY1.IDX", SKEY1_CONTNO, 8, ROW_FACTORY_TYPE_ID, false);
 			success = true;
 		} finally {
 			if (success)
@@ -257,15 +256,14 @@ class TupleDemoDb {
 		secondaryKeyRow.set(1, (Field) tableRow.get(1).cloneMe());
 		
 		// Start a new transaction
-		Transaction trx = server.getTransactionManager().begin(IsolationMode.READ_COMMITTED);
-		
+		Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 		boolean success = false;
 		try {
-			TupleContainer table = server.getTupleManager().getTupleContainer(
+			TupleContainer table = server.getTupleContainer(
 					trx, TABLE_CONTNO);
-			Index primaryIndex = server.getIndexManager().getIndex(trx,
+			IndexContainer primaryIndex = server.getIndex(trx,
 					PKEY_CONTNO);
-			Index secondaryIndex = server.getIndexManager().getIndex(trx,
+			IndexContainer secondaryIndex = server.getIndex(trx,
 					SKEY1_CONTNO);
 
 			// First lets create a new row and lock the location
@@ -273,7 +271,7 @@ class TupleDemoDb {
 			// Insert the primary key - may fail with unique constraint
 			// violation
 			primaryIndex.insert(trx, primaryKeyRow, inserter.getLocation());
-			// Insert seconary key
+			// Insert secondary key
 			secondaryIndex.insert(trx, secondaryKeyRow, inserter.getLocation());
 			// Complete the insert - may be a no-op.
 			inserter.completeInsert();
@@ -286,6 +284,85 @@ class TupleDemoDb {
 			}
 		}
 	}
+
+    /**
+     * Updates an existing row in the table, and its associated indexes.
+     */
+    public void updateRow(int id, String name, String surname, String city) {
+
+        // Make new row
+        Row tableRow = makeRow(TABLE_CONTNO);
+        tableRow.get(0).setInt(id);
+        tableRow.get(1).setString(name);
+        tableRow.get(2).setString(surname);     
+        tableRow.get(3).setString(city);
+
+        // New primary key
+        Row primaryKeyRow = makeRow(PKEY_CONTNO);
+        // Set id
+        primaryKeyRow.set(0, (Field) tableRow.get(0).cloneMe());
+    
+        // New secondary key
+        Row secondaryKeyRow = makeRow(SKEY1_CONTNO);
+        // Set surname as the first field
+        secondaryKeyRow.set(0, (Field) tableRow.get(2).cloneMe());
+        // Set name
+        secondaryKeyRow.set(1, (Field) tableRow.get(1).cloneMe());
+        
+        // Start a new transaction
+        Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+        boolean success = false;
+        try {
+            TupleContainer table = server.getTupleContainer(
+                    trx, TABLE_CONTNO);
+            IndexContainer primaryIndex = server.getIndex(trx,
+                    PKEY_CONTNO);
+            IndexContainer secondaryIndex = server.getIndex(trx,
+                    SKEY1_CONTNO);
+
+            IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow, null, true);
+            if (indexScan.fetchNext()) {
+                boolean matched = indexScan.getCurrentKey().equals(primaryKeyRow);
+                try {
+                    if (matched) {
+                        // Get location of the tuple
+                        Location location = indexScan.getCurrentLocation();
+                        // We need the old row data to be able to delete indexes
+                        // fetch tuple data
+                        byte[] data = table.read(location);
+                        // parse the data
+                        ByteBuffer bb = ByteBuffer.wrap(data);
+                        Row oldTableRow = makeRow(TABLE_CONTNO);
+                        oldTableRow.retrieve(bb);
+                        // Update the table row
+                        table.update(trx, location, tableRow);
+                        // Update secondary indexes
+                        // Old secondary key
+                        Row oldSecondaryKeyRow = makeRow(SKEY1_CONTNO);
+                        // Set surname as the first field
+                        oldSecondaryKeyRow.set(0, (Field) oldTableRow.get(2).cloneMe());
+                        // Set name
+                        oldSecondaryKeyRow.set(1, (Field) oldTableRow.get(1).cloneMe());
+                        // Delete old key
+                        secondaryIndex.delete(trx, oldSecondaryKeyRow, location);
+                        // Insert new key
+                        secondaryIndex.insert(trx, secondaryKeyRow, location);
+                    }
+                } finally {
+                    indexScan.fetchCompleted(matched);
+                }
+            }
+            success = true;
+        } finally {
+            if (success) {
+                trx.commit();
+            } else {
+                trx.abort();
+            }
+        }
+    }
+	
+	
 	
 	/**
 	 * Prints the contents of a single row.
@@ -304,14 +381,11 @@ class TupleDemoDb {
 	 */
 	public void listRowsByKey(int keyContainerId) {
 
-		LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(server.getTupleManager().getLocationFactoryType());
-		IndexKey startRow = makeMinRow(keyContainerId);
-		Transaction trx = server.getTransactionManager().begin(IsolationMode.READ_COMMITTED);
+		Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 		try {
-			TupleContainer table = server.getTupleManager().getTupleContainer(trx, TABLE_CONTNO);
-			Index index = server.getIndexManager().getIndex(trx, keyContainerId);
-			IndexScan scan = index.openScan(trx, startRow, locationFactory
-					.newLocation(), false);
+			TupleContainer table = server.getTupleContainer(trx, TABLE_CONTNO);
+			IndexContainer index = server.getIndex(trx, keyContainerId);
+			IndexScan scan = index.openScan(trx, null, null, false);
 			try {
 				while (scan.fetchNext()) {
 					Location location = scan.getCurrentLocation();
