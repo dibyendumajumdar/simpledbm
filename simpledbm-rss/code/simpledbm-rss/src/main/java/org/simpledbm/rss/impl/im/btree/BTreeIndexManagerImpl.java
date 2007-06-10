@@ -2717,6 +2717,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		}
 		
 		public final IndexScan openScan(Transaction trx, IndexKey key, Location location, boolean forUpdate) {
+		    if (key == null) {
+		        // Use minimum key
+		        key = keyFactory.minIndexKey(containerId);
+		    }
+            if (location == null) {
+                // Use null location
+                location = locationFactory.newLocation();
+            }
 			IndexCursorImpl icursor = new IndexCursorImpl(trx, this, new IndexItem(key, location, -1, true, isUnique()), forUpdate ? LockMode.UPDATE : LockMode.SHARED);
 			return icursor;
 		}
