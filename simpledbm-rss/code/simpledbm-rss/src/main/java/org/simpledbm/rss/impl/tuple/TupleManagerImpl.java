@@ -253,7 +253,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * correct restart recovery.
 	 * @see UndoInsertTupleSegment
 	 */
-	public void undoInsertSegment(Transaction trx, Undoable undoable) {
+	void undoInsertSegment(Transaction trx, Undoable undoable) {
 		PageId pageId = undoable.getPageId();
 		InsertTupleSegment logrec = (InsertTupleSegment) undoable;
 		int spaceMapPage = logrec.spaceMapPage;
@@ -304,7 +304,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	 * map update must be logged before logging the page update to ensure
 	 * correct restart recovery.
 	 */
-	public void undoDeleteSegment(Transaction trx, Undoable undoable) {
+	void undoDeleteSegment(Transaction trx, Undoable undoable) {
 		PageId pageId = undoable.getPageId();
 		UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) undoable;
 		BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false, -1, 0);
@@ -413,7 +413,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 	/* (non-Javadoc)
 	 * @see org.simpledbm.rss.api.tuple.TupleManager#getTupleContainer(int)
 	 */
-	public TupleContainer getTupleContainer(int containerId) {
+	TupleContainer getTupleContainer(int containerId) {
 		return new TupleContainerImpl(this, containerId);
 	}
 
@@ -467,7 +467,20 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 
 		int prevSegmentSlotNumber;
 
+		/**
+		 * Savepoint created at the start of an insert. As inserts are a two-step
+		 * process, we need to remember the savepoint in case completeInsert() fails.
+		 */
+		Savepoint savepoint;
+		
 		boolean updateMode = false;
+		
+		/**
+		 * Flag to indicate that insert was started successfully,
+		 * and that it is okay to complete the insert. Always set to
+		 * true when called from update().
+		 */
+		boolean proceedWithInsert = false;
 
 		public TupleInserterImpl(TupleContainerImpl relation) {
 			this.tupleContainer = relation;
@@ -1004,12 +1017,22 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @see org.simpledbm.rss.api.tuple.TupleInserter#startInsert(org.simpledbm.rss.api.tx.Transaction,
 		 *      org.simpledbm.rss.api.tuple.Tuple)
 		 */
-		public Location startInsert(Transaction trx, Storable tuple)
-				 {
+		Location startInsert(Transaction trx, Storable tuple) {
 			this.trx = trx;
 			this.tuple = tuple;
-			while (!doStartInsert()) {
-			}
+			savepoint = trx.createSavepoint(false);
+			proceedWithInsert = false;
+			try {
+                while (!doStartInsert()) {
+                }
+                proceedWithInsert = true;
+            } finally {
+                if (!proceedWithInsert) {
+                    // Need to rollback to the savepoint
+                    trx.rollback(savepoint);
+                    savepoint = null;
+                }
+            }
 			return location;
 		}
 
@@ -1017,7 +1040,20 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @see org.simpledbm.rss.api.tuple.TupleInserter#completeInsert()
 		 */
 		public void completeInsert()  {
-			doCompleteInsert();
+            if (!proceedWithInsert) {
+                log.error(this.getClass().getName(), "completInsert", mcat.getMessage("ET0007"));
+                throw new TupleException(mcat.getMessage("ET0007"));
+            }
+            boolean success = false;
+		    try {
+		        doCompleteInsert();
+		        success = true;
+		    }
+		    finally {
+		        if (!success && savepoint != null) {
+		            trx.rollback(savepoint);
+		        }
+		    }
 		}
 
 		public Location getLocation() {
@@ -1063,7 +1099,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @see TupleManagerImpl#redo(Page, Redoable)
 		 * @see TupleManagerImpl#undoDeleteSegment(Transaction, Undoable)
 		 */
-		public void doDelete(Transaction trx, Location location) {
+		void doDelete(Transaction trx, Location location) {
 
 			if (location.getContainerId() != containerId) {
 				log.error(this.getClass().getName(), "doDelete", mcat.getMessage("ET0005", location));
@@ -1148,9 +1184,18 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 			}
 		}
 
-		public void delete(Transaction trx, Location location)
-				{
-			doDelete(trx, location);
+		public void delete(Transaction trx, Location location) {
+		    Savepoint savepoint = trx.createSavepoint(false);
+		    boolean success = false;
+		    try {
+		        doDelete(trx, location);
+		        success = true;
+		    }
+		    finally {
+		        if (!success) {
+		            trx.rollback(savepoint);
+		        }
+		    }
 		}
 
 		byte[] doRead(Location location) {
@@ -1340,12 +1385,23 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 				inserter.tupleData = tupleData;
 				inserter.tupleLength = tupleLength;
 				inserter.updateMode = true;
+				inserter.proceedWithInsert = true;
 				inserter.completeInsert();
 			}
 		}
 
 		public void update(Transaction trx, Location location, Storable newTuple) {
-			doUpdate(trx, location, newTuple);
+		    Savepoint savepoint = trx.createSavepoint(false);
+		    boolean success = false;
+		    try {
+		        doUpdate(trx, location, newTuple);
+		        success = true;
+		    }
+		    finally {
+		        if (!success) {
+		            trx.rollback(savepoint);
+		        }
+		    }
 		}
 		
 		public TupleScan openScan(Transaction trx, boolean forUpdate) {
@@ -1675,7 +1731,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * @param desiredFreeSpace
 		 *            Desired amount of free space
 		 */
-		public TwoBitSpaceCheckerImpl initSearch(int availableSpace, int desiredFreeSpace) {
+		TwoBitSpaceCheckerImpl initSearch(int availableSpace, int desiredFreeSpace) {
 			final int onethird = availableSpace / 3;
 			final int twothird = onethird * 2;
 			if (desiredFreeSpace > twothird) {
@@ -1710,7 +1766,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * of space.</li>
 		 * </ol>
 		 */
-		public static int mapFreeSpaceInfo(int availableSize, int freeSpace) {
+		static int mapFreeSpaceInfo(int availableSize, int freeSpace) {
 			final int onethird = availableSize / 3;
 			final int twothird = onethird * 2;
 			if (freeSpace >= availableSize) {
@@ -1758,7 +1814,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		/**
 		 * Checks whether a particular slot is marked as a tuple segment.
 		 */
-		public static boolean isSegmented(SlottedPage page, int slot) {
+		static boolean isSegmented(SlottedPage page, int slot) {
 			int flags = page.getFlags(slot);
 			return (flags & TUPLE_SEGMENT) != 0;
 		}
@@ -1767,7 +1823,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * Checks whether a particular slot is marked as the first segment of a
 		 * tuple.
 		 */
-		public static boolean isFirstSegment(SlottedPage page, int slot) {
+		static boolean isFirstSegment(SlottedPage page, int slot) {
 			int flags = page.getFlags(slot);
 			return (flags & TUPLE_FIRST_SEGMENT) != 0;
 		}
@@ -1776,7 +1832,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * Checks whether a particular slot is marked as the last segment of a
 		 * tuple.
 		 */
-		public static boolean isLastSegment(SlottedPage page, int slot) {
+		static boolean isLastSegment(SlottedPage page, int slot) {
 			int flags = page.getFlags(slot);
 			return (flags & TUPLE_LAST_SEGMENT) != 0;
 		}
@@ -1785,7 +1841,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements TupleMa
 		 * Checks whether a particular slot is marked as a logically deleted
 		 * tuple.
 		 */
-		public static boolean isDeleted(SlottedPage page, int slot) {
+		static boolean isDeleted(SlottedPage page, int slot) {
 			int flags = page.getFlags(slot);
 			return (flags & TUPLE_DELETED) != 0;
 		}
