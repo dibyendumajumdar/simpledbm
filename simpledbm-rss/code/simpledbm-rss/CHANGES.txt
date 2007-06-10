@@ -3,7 +3,13 @@
  * dm: Property bufferpool.bufferWriterSleepInterval can now be set.
  * dm: Renamed Index to IndexContainer to match TupleContainer.
  * dm: Added a number of delegate methods in Server to simplify the API for clients.
- 
+ * dm: Server API simplified by removing accessor methods not required by most use cases.
+ * dm: The openScan() method now accepts null key and null location parameters. If these are null,
+       the scan starts from the first key in the tree. This similifies the interface for Server as
+       there is no need to create minKey or null location.
+ * dm: Allowed access to objectRegistry() from Server without a status check on the server, as there are
+       legitimate use cases for this operation to occur prior to server start.
+       
 1.0.1-BETA: 03 June 2007
  * dm: Added CHANGES.txt.
  * dm: Renamed register() methods in ObjectRegistry to registerType() and registerSingleton().
