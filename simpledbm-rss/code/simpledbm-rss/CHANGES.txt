@@ -1,4 +1,4 @@
-1.0.2-BETA:
+1.0.2-BETA: 10 June 2007:
  * dm: log.disableExplicitFlushRequests is now a property that can be set when creating a log instance.
  * dm: Property bufferpool.bufferWriterSleepInterval can now be set.
  * dm: Renamed Index to IndexContainer to match TupleContainer.
@@ -9,6 +9,9 @@
        there is no need to create minKey or null location.
  * dm: Allowed access to objectRegistry() from Server without a status check on the server, as there are
        legitimate use cases for this operation to occur prior to server start.
+ * dm: Insert savepoint and rollback to savepoint (on failure) in tuple insert, update and delete methods.
+ * dm: Insert savepoint and rollback to savepoint (on failure) in index insert and delete methods.
+ * dm: Created usermanual.
        
 1.0.1-BETA: 03 June 2007
  * dm: Added CHANGES.txt.
