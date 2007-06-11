@@ -260,16 +260,20 @@ properties.setProperty("log.file.size", "16384");
 properties.setProperty("log.buffer.size", "16384");
 properties.setProperty("log.buffer.limit", "4");
 properties.setProperty("log.flush.interval", "5");
-properties.setProperty("storage.basePath", "demodata/TupleDemo1");
+properties.setProperty("storage.basePath", 
+  "demodata/TupleDemo1");
 
 Server.create(properties);
 \end{verbatim}
 
 The Server.create() method accepts a Properties object as
 the sole argument. The Properties object can be used to pass a
-number of parameters. 
+number of parameters. The available options are shown in
+\ref{tblogoptions}, \ref{tbstorageoptions}, \ref{tbbufferoptions}. 
 
-\begin{table}[h]
+\clearpage
+\begin{table}[tbp]
+\begin{center}
 \begin{tabular}{|l|p{6cm}|}
   \hline
   \textbf{Property Name}&\textbf{Description}  \\
@@ -304,12 +308,24 @@ number of parameters.
   \verb|log.flush.interval|&Sets the interval (in seconds)
   between log flushes. Default is 6 seconds.  \\
   \hline 
-  \verb|log.disableExplicitFlushRequests|&Boolean value, if set, disables 
+  \verb|log.explicitFlushRequests|&Boolean value, if set, disables 
   log flushes requested explicitly by the Buffer Manager or Transaction 
   Manager. Log flushes still occur during checkpoints and log switches. 
   By reducing the log flushes, performance is improved, but transactions 
   may not be durable. Only those transactions will survive a system crash 
   that have all their log records on disk.  \\
+  \hline 
+\end{tabular}
+\end{center}
+\caption{Log Options}
+\label{tblogoptions}
+\end{table}
+
+\begin{table}[tbp]
+\begin{center}
+\begin{tabular}{|l|p{6cm}|}
+  \hline
+  \textbf{Property Name}&\textbf{Description}  \\
   \hline 
   \verb|storage.basePath|&Defines the base location of the
   SimpleDBM database. All files and directories are created relative to this
@@ -321,17 +337,31 @@ number of parameters.
   \verb|storage.openMode|&Defines mode in which files will be
   opened. Default is ``rws''.  \\
   \hline 
+\end{tabular}
+\end{center}
+\caption{Storage Options}
+\label{tbstorageoptions}
+\end{table}
+
+\begin{table}[tbp]
+\begin{center}
+\begin{tabular}{|l|p{5cm}|}
+  \hline
+  \textbf{Property Name}&\textbf{Description}  \\
+  \hline 
   \verb|bufferpool.numbuffers|&Sets the number of buffers to be created in 
   the Buffer Pool.  \\
   \hline 
-  \verb|bufferpool.bufferWriterSleepInterval|&Sets the interval in 
+  \verb|bufferpool.writerSleepInterval|&Sets the interval in 
   milliseconds between each run of the BufferWriter. Note that BufferWriter 
   may run earlier than the specified interval if the pool runs out of 
   buffers, and a new page has to be read in. In such cases, the Buffer Writer
   may be manually triggered to clean out buffers.  \\
   \hline
 \end{tabular}
-\label{tab2} \caption{Log Options}
+\end{center}
+\caption{Buffer Manager Options}
+\label{tbbufferoptions}
 \end{table}
 
 The Server.create() call will overwrite any existing database
@@ -357,7 +387,8 @@ properties.setProperty("log.file.size", "16384");
 properties.setProperty("log.buffer.size", "16384");
 properties.setProperty("log.buffer.limit", "4");
 properties.setProperty("log.flush.interval", "5");
-properties.setProperty("storage.basePath", "demodata/TupleDemo1");
+properties.setProperty("storage.basePath", 
+  "demodata/TupleDemo1");
 
 Server server = new Server(properties);
 server.start();
@@ -372,12 +403,12 @@ finally {
 Some points to bear in mind when starting SimpleDBM server instances:
 
 \begin{enumerate}
-\item Make sure that you invoke shutdown() eventually to ensure proper
+\item Make sure that you invoke \verb|shutdown()| eventually to ensure proper
   shutdown of the database.
 \item Database startup/shutdown is relatively expensive, so do it only
   once during the life-cycle of your application.
 \item A Server object can be used only once - after calling
-  shutdown(), it is an error to do any operation with the server
+  \verb|shutdown()|, it is an error to do any operation with the server
   object.
 \end{enumerate}
 
@@ -388,9 +419,9 @@ Following are the main API calls for managing transactions.
 
 \section{Creating new Transactions}
 
-To start a new Transaction, invoke the Server.begin() method as 
-shown below. You must supply an IsolationMode, try \verb|READ_COMMITTED| to
-start with.
+To start a new Transaction, invoke the \verb|Server.begin()| method as
+shown below. You must supply an \verb|IsolationMode|, try
+\verb|READ_COMMITTED| to start with.
 
 \begin{verbatim}
 Server server = ...;
@@ -400,8 +431,14 @@ Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 
 \end{verbatim}
 
-The Transaction interface provides the following methods for
-clients to invoke:
+\verb|IsolationMode| are discussed in more detail in the next chapter.
+
+\section{Working with Transactions}
+
+\subsection{Transaction API}
+
+The Transaction interface provides the following methods for clients
+to invoke:
 
 \begin{verbatim}
 public interface Transaction {
@@ -425,16 +462,17 @@ public interface Transaction {
   public void rollback(Savepoint sp);	
 
   /**
-   * Aborts the transaction, undoing all changes and releasing locks.
+   * Aborts the transaction, undoing all changes and releasing 
+   * locks.
    */
-  public void abort();	
+  public void abort();
 
 }
 \end{verbatim}
 
-A transaction must always be either committed or aborted. Failure to do
-so will lead to resource leaks, such as locks, which will not be released.
-The correct way to work with transactions is shown below:
+A transaction must always be either committed or aborted. Failure to
+do so will lead to resource leaks, such as locks, which will not be
+released.  The correct way to work with transactions is shown below:
 
 \begin{verbatim}
 // Start a new Transaction
@@ -456,6 +494,29 @@ finally {
 }
 \end{verbatim}
 
+\subsection{Transaction Savepoints}
+
+You can create transaction savepoints at any point in time.  When you
+create a savepoint, you need to decide whether the scans associated
+with the transaction should save their state so that in the event of
+a rollback, they can be restored to the state they were in at
+the time of the savepoint. This is important if you intend to use the
+scans after you have performed a rollback to savepoint.
+
+Bear in mind that in certain IsolationModes, locks are released as the
+scan cursor moves, When using such an IsolationMode, rollback to a
+Savepoint can fail if after the rollback, the scan cursor cannot be
+positioned on a suitable location, for example, if a deadlock occurs when
+it attempts to reacquire lock on the previous location. Also, in case
+the location itself is no longer valid, perhaps due to a delete
+operation by some other transaction, then the scan may position itself
+on the next available location.
+
+If you are preserving cursor state during savepoints, be
+prepared that in certain IsolationModes, a rollback may fail due to
+locking, or the scan may not be able to reposition itself on exactly
+the same location.
+
 \chapter{Tables}
 
 \section{TupleContainers}
@@ -473,7 +534,7 @@ client only ever sees full records.
 When you create a TupleContainer, you must supply a name for the
 container, a unique numeric ID which should not be in use by any other
 container, and the extent size. For efficiency, SimpleDBM allocates
-space in extents; an extent is logically a set of contiguous pages.
+space in extents; an extent is simply a set of contiguous pages.
 
 \begin{verbatim}
 /**
@@ -481,10 +542,10 @@ space in extents; an extent is logically a set of contiguous pages.
  * 
  * @param trx Transaction to be used for creating the container
  * @param name Name of the container
- * @param containerId A numeric ID for the container - must be unique 
- *        for each container
- * @param extentSize The number of pages that should be part of each 
- *        extent in the container
+ * @param containerId A numeric ID for the container - must 
+ *                    be unique for each container
+ * @param extentSize The number of pages that should be part 
+ *                   of each extent in the container
  */
 public void createTupleContainer(Transaction trx, String name,
  int containerId, int extentSize);
@@ -521,11 +582,13 @@ created.
 
 \section{Accessing a TupleContainer}
 
-To manipulate a TupleContainer, you must first get access to it. This is
-done by invoking the getTupleContainer() method provided by the SimpleDBM
-Server object. Note that when you access a TupleContainer in this way, a shared
-lock is placed on the container. This prevents other transactions from
-deleting the container while you are working with it.
+To manipulate a TupleContainer, you must first get access to it. This
+is done by invoking the getTupleContainer() method provided by the
+SimpleDBM Server object. Note that when you access a TupleContainer in
+this way, a shared lock is placed on the container. This prevents
+other transactions from deleting the container while you are working
+with it. However, other transactions can perform row level operations
+on the same container concurrently.
 
 \begin{verbatim}
 Server server ...
@@ -547,19 +610,23 @@ finally {
 
 \section{Inserting tuples}
 
-SimpleDBM treats tuples (rows) as blobs of data, and does not care 
+SimpleDBM treats tuples (rows) as blobs of data, and does not care
 about the internal structure of a tuple. The only requirement is that
 a tuple must implement the Storable interface.
 
-An insert operation is split into two parts. In the first part,
+An insert operation is split into two steps. In the first step,
 the initial chunk of the tuple is inserted and a Location assigned to
 the tuple. At this point, you can do other things such as add entries 
-to indexes. You can finally complete the insert as a second step.
+to indexes. 
 
-The reason for this split is to ensure that for large tuples that
-span multiple pages, the insert does not proceed until it is certain
-that the insert will be successful. It is assumed that once the
-indexes have been successfully updated, in particular, the primary 
+You complete the insert as a second step. At this point, if the tuple
+was larger than the space allowed for in the first chunk, additional
+chunks get created and allocated for the tuple.
+
+The reason for the two step operation is to ensure that for large
+tuples that span multiple pages, the insert does not proceed until it
+is certain that the insert will be successful. It is assumed that once
+the indexes have been successfully updated, in particular, the primary
 key has been created, then the insert can proceed.
 
 In the example below, we insert a tuple of type ByteString, which is
@@ -572,7 +639,8 @@ Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 try {
   boolean success = false      
   TupleContainer container = server.getTupleContainer(trx, 1);
-  TupleInserter inserter = container.insert(trx, new ByteString("Hello World!"));
+  TupleInserter inserter = 
+    container.insert(trx, new ByteString("Hello World!"));
   Location location = inserter.getLocation();
  
   // Create index entires here
@@ -591,10 +659,13 @@ finally {
 \section{Reading tuples}
 
 In order to read tuples, you must open a scan. A scan is a mechanism
-for accessing tuples one by one. You can open Index Scans (described in
-next chapter) or Tuple Scans. A Tuple Scan directly scans a TupleContainer.
-Compared to index scans, tuple scans are unordered, and do not support
-Serializable or Repeatable Read lock modes.
+for accessing tuples one by one. You can open Index Scans (described
+in next chapter) or Tuple Scans. A Tuple Scan directly scans a
+TupleContainer.  Compared to index scans, tuple scans are unordered,
+and do not support Serializable or Repeatable Read lock modes. Another
+limitation at present is that tuple scans do not save their state
+during savepoints, and therefore cannot restore their state in the event of
+a rollback to a savepoint.
 
 \begin{verbatim}
 Server server ...
@@ -618,20 +689,17 @@ finally {
 }
 \end{verbatim}
 
+
 \section{Updating tuples}
 
 In order to update a tuple, you must first obtain its Location using a
 scan. typically, if you intend to update the tuple, you should open the
-scan in UPDATE mode. This is done by supplying a Boolean.TRUE as the
-second argument to openScan() method.
+scan in UPDATE mode. This is done by supplying a boolean true as the
+second argument to \verb|openScan()| method.
 
-Note that in the current implementation of SimpleDBM, once space has been
-allocated for a tuple, it may be expanded if the tuple grows, but it is not 
-compressed when the tuple grows smaller. In the latter case, after the update,
-you will end up with garbage data at the end of the tuple. In practice this
-is not a problem because the first two bytes of a Storable object contain the
-length of the data contained in the object. This allows any excess bytes to be
-ignored. 
+Note that in the current implementation of SimpleDBM, the space
+allocated to a tuple is never reduced, even if the tuple grows smaller
+due to updates.
 
 \begin{verbatim}
 Server server ...
@@ -662,7 +730,9 @@ finally {
 
 \section{Deleting tuples}
 
-Here is an example:
+Tuple deletes are done in a similar way as tuple updates.
+Start a scan in UPDATE mode, if you intend to delete tuples
+during the scan. Here is an example:
 
 \begin{verbatim}
 Server server ...
@@ -688,14 +758,14 @@ finally {
 
 \chapter{Indexes}
 
-
 \section{Index Keys}
 
 Index Keys are the searchable attributes stored in the Index. This module
 specifies Index Keys in a fairly general way:
 
 \begin{verbatim}
-public interface IndexKey extends Storable, Comparable<IndexKey> {
+public interface IndexKey 
+  extends Storable, Comparable<IndexKey> {
 	
   /**
    * Used mainly for building test cases; this method should
@@ -707,26 +777,33 @@ public interface IndexKey extends Storable, Comparable<IndexKey> {
 \end{verbatim}
 
 The requirements for an IndexKey are fairly simple. The key must be
-Storable and Comparable. Note that this interface does not say anything
-about the internal structure of the key; in particular it does not 
-specify whether the key contains multiple attributes. This is deliberate,
-as it makes the Index Manager module more generic.
+\verb|Storable| and \verb|Comparable|. Note that this interface does
+not say anything about the internal structure of the key; in
+particular it does not specify whether the key contains multiple
+attributes. This is deliberate, as it makes the Index Manager module
+more generic.
 
 Depending upon the implementation, there may be restricions on the
-size of the key. For instance, in a BTree implementation, the key
-should not exceed 1/8th of the page size, ie, 1KB in a 8KB page. 
+size of the key. For instance, in the SimpleDBM BTree implementation,
+the key should not exceed 1/8th of the page size, ie, 1KB in a 8KB
+page.
 
 \section{Index Key Factories}
 
-An Index Key Factory is used to create new keys. In addition to normal keys, an Index
-Key Factory must be able to create two special type of keys:
+An Index Key Factory is used to create new keys. In addition to normal
+keys, an Index Key Factory must be able to create two special type of
+keys:
 
 \begin{itemize}
-	\item \textbf{MinKey} - this is a special key that represents negative infinity. All valid keys must be greater than this key.
-	\item \textbf{MaxKey} - this is a special key that represents positive infinity. All valid keys must be less than this key.
+\item \textbf{MinKey} - this is a special key that represents negative
+  infinity. All valid keys must be greater than this key.
+\item \textbf{MaxKey} - this is a special key that represents positive
+  infinity. All valid keys must be less than this key.
 \end{itemize}
 
-The special keys are used by the Index Manager internally.
+The special keys are used by the Index Manager internally. You can
+also specify the \verb|MinKey| when opening a scan, to effectively
+start the scan from the first available key.
 
 \begin{verbatim}
 public interface IndexKeyFactory {
@@ -734,55 +811,61 @@ public interface IndexKeyFactory {
   /**
    * Generates a new (empty) key for the specified
    * Container. The Container ID is meant to be used as key
-   * for locating information specific to a container; for instance,
-   * the attributes of an Index.
+   * for locating information specific to a container; for 
+   * instance, the attributes of an Index.
    * 
-   * @param containerId ID of the container for which a key is required
+   * @param containerId ID of the container for which a key 
+   *                    is required
    */
   IndexKey newIndexKey(int containerId);
 
   /**
-   * Generates a key that represents Infinity - it must be greater than
-   * all possible keys in the domain for the key.  The Container ID is meant to be used as key
-   * for locating information specific to a container; for instance,
-   * the attributes of an Index.
+   * Generates a key that represents Infinity - it must be 
+   * greater than all possible keys in the domain for the key. 
+   * The Container ID is meant to be used as key
+   * for locating information specific to a container; for 
+   * instance, the attributes of an Index.
    * 
-   * @param containerId ID of the container for which a key is required
+   * @param containerId ID of the container for which a key 
+   *                    is required
    */
   IndexKey maxIndexKey(int containerId);
 	
   /**
-   * Generates a key that represents negative Infinity - it must be smaller than
-   * all possible keys in the domain for the key. The Container ID is meant to be used as key
-   * for locating information specific to a container; for instance,
-   * the attributes of an Index.
+   * Generates a key that represents negative Infinity - it 
+   * must be smaller than all possible keys in the domain for 
+   * the key. The Container ID is meant to be used as key
+   * for locating information specific to a container; for 
+   * instance, the attributes of an Index.
    *
-   * The key returned by this method can be used as an argument to index scans.
-   * The result will be a scan of the index starting from the first key in 
-   * the index.
+   * The key returned by this method can be used as an
+   * argument to index scans. The result will be a scan of 
+   * the index starting from the first key in the index.
    * 
-   * @param containerId ID of the container for which a key is required
+   * @param containerId ID of the container for which a key 
+   * is required
    */
   IndexKey minIndexKey(int containerId);
 }
 \end{verbatim}
 
-An implementation is free to use any method it likes for 
-identifying keys that represent ``MinKey'' and ``MaxKey'', as long as it ensures
+An implementation is free to use any method it likes for identifying
+keys that represent ``MinKey'' and ``MaxKey'', as long as it ensures
 that these keys will obey the contract defined above.
 
-The methods of \verb|IndexKeyFactory| take the container ID as
-a parameter. In SimpleDBM, each index is stored in a separate container,
+The methods of \verb|IndexKeyFactory| take the container ID as a
+parameter. In SimpleDBM, each index is stored in a separate container,
 hence container ID is used as a mechanism for identifying the index.
 The \verb|IndexKeyFactory| implementation is expected to use the
-container ID to determine the type of index key to create. For example, it may
-consult a data dictionary to determine the type of key attributes required
-by the index key.
+container ID to determine the type of index key to create. For
+example, it may consult a data dictionary to determine the type of key
+attributes required by the index key.
 
 \section{Example}
 
-Given below is an example of an \verb|IndexKey| implementation. This 
-implementation uses a special byte field to maintain the status information.
+Given below is an example of an \verb|IndexKey| implementation. This
+implementation uses a special byte field to maintain the status
+information.
 
 \begin{verbatim}
 public class IntegerKey implements IndexKey {
@@ -948,10 +1031,9 @@ and the sample project \verb|tupledemo|.
 
 \section{Locations}
 
-Indexes contain pointers to tuple data. Such pointers must implement the
-\verb|org.simpledbm.rss.api.loc.Location| interface, and an implementation of
-\verb|org.simpledbm.rss.api.loc.LocationFactory| must be available to SimpleDBM so that
-it is able to create new Location instances.
+Indexes contain pointers to tuple data. When you insert a tuple in a
+tuple container, a location is assigned to the tuple. This location
+can be stored in an index to point to the tuple.
 
 \section{Creating a new index}
 
@@ -960,29 +1042,24 @@ index.
 
 \begin{verbatim}
 int INDEX_KEY_FACTORY_TYPE = 25000;
-int LOCATION_FACTORY_TYPE = 25001;
 
-ObjectRegistry objectRegistry = ...;
-LocationFactory locationFactory = ...;
+Server server = ...;
 IndexKeyFactory indexKeyFactory = ...;
-IndexManager indexManager = ...;
-TransactionManager transactionManager = ...;
 
 // Register key factory
-registry.register(INDEX_KEY_FACTORY_TYPE, indexKeyFactory);
+server.registerSingleton(INDEX_KEY_FACTORY_TYPE, 
+  indexKeyFactory);
 
-// Register location factory
-registry.register(LOCATION_FACTORY_TYPE, locationFactory);
-
-Transaction trx = transactionManager.begin();
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 boolean success = false;
 try {
   int containerId = 1;
   int extentSize = 8;
   boolean isUnique = true;
-  indexManager.createIndex(trx, "testbtree.dat", 
+  server.createIndex(trx, "testbtree.dat", 
     containerId, extentSize, INDEX_KEY_FACTORY_TYPE, 
-    LOCATION_FACTORY_TYPE, isUnique);
+    isUnique);
+  success = true;
 } finally {
   if (success)
     trx.commit();
@@ -993,73 +1070,167 @@ try {
 
 \section{Obtaining index instance}
 
-In order to manipulate an index, you must first obtain an instance of the
-index. This is shown below:
+In order to manipulate an index, you must first obtain an instance of
+the index. This is shown below:
 
 \begin{verbatim}
+Transacton trx = ...;
 int containerId = 1;
-Index index = indexManager.getIndex(containerId);
+IndexContainer index = server.getIndex(trx, containerId);
 \end{verbatim}
+
+This operation causes a SHARED mode lock to be placed on the container
+ID. This lock is to prevent other transactions from dropping the
+container. Concurrent insert, delete and scan operations are
+permitted, however.
 
 \section{Working with keys}
 
 \subsection{Adding a key}
 
-To add a key, you need the \verb|IndexKey| instance and the \verb|Location| instance.
+The API for inserting new keys is shown below:
 
 \begin{verbatim}
-// To make it more interesting, lets add 200 keys
-Transaction trx = transactionManager.begin();
+public interface IndexContainer {
+  /**
+   * Inserts a new key and location. If the Index is unique, 
+   * only one instance of key is allowed. In non-unique indexes, 
+   * multiple instances of the same key may exist, but only
+   * one instance of the combination of key/location
+   * is allowed.
+   *
+   * The caller must obtain a Shared lock on the Index 
+   * Container prior to this call.
+   * 
+   * The caller must acquire an Exclusive lock on Location 
+   * before this call.
+   * 
+   * @param trx Transaction managing the insert
+   * @param key Key to be inserted
+   * @param location Location associated with the key
+   */
+  public void insert(Transaction trx, IndexKey key, 
+                     Location location);
+}
+\end{verbatim}
+
+To add a key, you need the \verb|IndexKey| instance and the
+\verb|Location|. The most common use case is to insert the keys
+after inserting a tuple in a tuple container. An example of this is
+shown below:
+
+\begin{verbatim}
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 boolean success = false;
 try {
-  int containerId = 1;
-  Index index = indexManager.getIndex(containerId);
-  IndexKey key = indexKeyFactory.newIndexKey(containerId);
-  Location location = locationFactory.newLocation();
-  trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
-  index.insert(trx, row, location);
+  TupleContainer table = server.getTupleContainer(
+    trx, TABLE_CONTNO);
+  IndexContainer primaryIndex = 
+    server.getIndex(trx, PKEY_CONTNO);
+  IndexContainer secondaryIndex = 
+    server.getIndex(trx, SKEY1_CONTNO);
+
+  // First lets create a new row and lock the location
+  TupleInserter inserter = table.insert(trx, tableRow);
+
+  // Insert the primary key - may fail with unique constraint
+  // violation
+  primaryIndex.insert(trx, primaryKeyRow, 
+    inserter.getLocation());
+  
+  // Insert seconary key
+  secondaryIndex.insert(trx, secondaryKeyRow, 
+    inserter.getLocation());
+
+  // Complete the insert - may be a no-op.
+  inserter.completeInsert();
   success = true;
 } finally {
-  if (!success) {
-    trx.abort();
-  }
-  else {
+  if (success) {
     trx.commit();
+  } else {
+    trx.abort();
   }
 }
 \end{verbatim}
 
-Note that prior to inserting the key, the associated location must be
-locked for commit duration. 
+Above example is taken from the sample \verb|tupledemo|. 
 
 \subsection{Deleting a key}
 
-Deleting a key is very similar to adding a key.
+Deleting a key is very similar to adding a key. First lets look
+at the API:
 
 \begin{verbatim}
-// To make it more interesting, lets add 200 keys
-Transaction trx = transactionManager.begin();
+public interface IndexContainer {
+  /**
+   * Deletes specified key and location. 
+   * 
+   * The caller must obtain a Shared lock on the Index 
+   * Container prior to this call.
+   *
+   * The caller must acquire an Exclusive lock on Location 
+   * before this call.
+   * 
+   * @param trx Transaction managing the delete
+   * @param key Key to be deleted
+   * @param location Location associated with the key
+   */
+  public void delete(Transaction trx, IndexKey key, 
+                     Location location);
+}
+\end{verbatim}
+
+Again we take an example from the tupledemo sample (note that
+the code has been simplified a bit):
+
+\begin{verbatim}
+// Start a new transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 boolean success = false;
 try {
-  int containerId = 1;
-  Index index = indexManager.getIndex(containerId);
-  IndexKey key = ...;
-  Location location = ...;
-  trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
-  index.delete(trx, row, location);
+  TupleContainer table = 
+    server.getTupleContainer(trx, TABLE_CONTNO);
+  IndexContainer primaryIndex = 
+    server.getIndex(trx, PKEY_CONTNO);
+
+  // Start a scan, with the primary key as argument
+  IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
+    null, true);
+  if (indexScan.fetchNext()) {
+    // Scan always return item >= search key, so let's
+    // check if we had an exact match
+    boolean matched = indexScan.getCurrentKey().equals(
+      primaryKeyRow);
+    try {
+      if (matched) {
+        Location location = indexScan.getCurrentLocation();
+        // Delete tuple data
+        table.delete(trx, location);
+        // Delete primary key
+        primaryIndex.delete(trx, primaryKeyRow, location);
+      }
+    } finally {
+      indexScan.fetchCompleted(matched);
+    }
+  }
   success = true;
 } finally {
-  if (!success) {
-    trx.abort();
-  }
-  else {
+  if (success) {
     trx.commit();
+  } else {
+    trx.abort();
   }
 }
 \end{verbatim}
 
-Note that prior to deleting the key, the associated location must be
-locked for commit duration. 
+Prior to deleting the key, the associated location must be
+exclusively locked for commit duration. Fortunately, when you delete
+a tuple, it is locked exclusively, hence in the example shown above,
+there is no need for the Location to be locked again.
+
+Above example demonstrates also a very common use case, ie, scanning
+an index in UPDATE mode and then carrying out modifications. 
 
 \section{Scanning keys}
 
@@ -1071,38 +1242,33 @@ describe the various lock isolation modes supported by SimpleDBM.
 \subsubsection{Assumptions regarding locking}
 
 \begin{itemize}
-\item All locking is on Locations only. 
-\item When a tuple is inserted or deleted, its Location is first locked in EXCLUSIVE mode, the tuple is inserted or deleted from data page, and only after that, indexes are modified. 
-\item Updates to indexed columns are treated as key deletes followed by key inserts. The updated row is locked in EXCLUSIVE mode before indexes are modified. 
-\item When fetching, the index is looked up first, which causes a SHARED or UPDATE mode lock to be placed on the row, before the data pages are accessed.
+\item All locking is on Tuple Locations (rowids) only.
+\item When a tuple is inserted or deleted, its Location is first
+  locked in EXCLUSIVE mode, the tuple is inserted or deleted from data
+  page, and only after that, indexes are modified.
+\item Updates to indexed columns are treated as key deletes followed
+  by key inserts. The updated row is locked in EXCLUSIVE mode before
+  indexes are modified.
+\item When fetching, the index is looked up first, which causes a
+  SHARED or UPDATE mode lock to be placed on the row, before the data
+  pages are accessed.
 \end{itemize}
 
 \subsubsection{Read Committed/Cursor Stability}
 
-The location is locked while the cursor is positioned on the key. The lock on current location is
-released before the cursor moves to the next key.
-
-Fetch: SHARED lock is obtained on found key or next key for manual duration. SHARED lock on current key/next key is released before moving cursor to next key. However, in the not found case, lock on next key is released immediately after the fetch (making the SHARED lock effectively instant duration). For update cursors, same rules apply except that the lock mode is UPDATE. 
-
-Insert: Instant duration EXCLUSIVE lock on next key is acquired (inserted key already locked by caller). For unique indexes only, SHARED lock is requested on insert key if it is found to already exist, and if lock is granted, return unique constraint violation error and the SHARED lock is released. 
-
-Delete: Commit duration EXCLUSIVE lock on next key is requested (deleted key already locked by caller). 
+During scans, the tuple location is locked in SHARED or UPDATE mode
+while the cursor is positioned on the key. The lock on current
+location is released before the cursor moves to the next key.
 
 \subsubsection{Repeatable Read (RR)}
 
-Fetch: S lock on found key or next key for commit duration. In case of U mode cursors, U lock (if it has not been converted to X lock already) should be downgraded to S lock before the cursor moves to the next row. (I think in the not found case, next key lock should be for manual duration only and released after the fetch is complete, as we are not trying to avoid phantoms but only check that there is not an uncommitted delete that would have been fetched). 
-
-Insert: Instant duration X lock on next key (inserted key already locked by caller). (I think this is only required for unique indexes). For unique indexes only, request S lock on found key for commit duration, and if lock is granted, return unique constraint violation error. 
-
-Delete: Same as CS. 
+Locks obtained on tuple locations during scans are retained until
+the transaction completes.
 
 \subsubsection{Serializable}
-Fetch: Same as RR, except that reads should lock next key in the not found case for commit duration. 
 
-Insert: Same as RR except that for non unique indexes too, inserts should lock next key for instant duration. 
-
-Delete: Same as RR. 
-
+Same as Repeatable Read, with additional locking (next key) during
+scans to prevent phantom reads.
 
 
 
