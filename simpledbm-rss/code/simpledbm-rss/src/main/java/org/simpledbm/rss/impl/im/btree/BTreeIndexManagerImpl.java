@@ -2412,10 +2412,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final void insert(Transaction trx, IndexKey key,
 				Location location) {
-			boolean success = doInsert(trx, key, location);
-			while (!success) {
-				success = doInsert(trx, key, location);
-			}
+		    Savepoint savepoint = trx.createSavepoint(false);
+		    boolean success = false;
+		    try {
+		        success = doInsert(trx, key, location);
+		        while (!success) {
+		            success = doInsert(trx, key, location);
+		        }
+		    }
+		    finally {
+		        if (!success) {
+		            trx.rollback(savepoint);
+		        }
+		    }
 		}
 
 		/**
@@ -2504,10 +2513,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 		 */
 		public final void delete(Transaction trx, IndexKey key,
 				Location location) {
-			boolean success = doDelete(trx, key, location);
-			while (!success) {
-				success = doDelete(trx, key, location);
-			}
+		    Savepoint savepoint = trx.createSavepoint(false);
+		    boolean success = false;
+		    try {
+                success = doDelete(trx, key, location);
+                while (!success) {
+                    success = doDelete(trx, key, location);
+                }
+            } finally {
+                if (!success) {
+                    trx.rollback(savepoint);
+                }
+            }
 		}
 
 		/**
