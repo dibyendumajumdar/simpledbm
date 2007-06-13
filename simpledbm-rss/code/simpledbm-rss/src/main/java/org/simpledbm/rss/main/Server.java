@@ -1,3 +1,22 @@
+/***
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *    Project: www.simpledbm.org
+ *    Author : Dibyendu Majumdar
+ *    Email  : dibyendu@mazumdar.demon.co.uk
+ */
 package org.simpledbm.rss.main;
 
 import java.util.Properties;
@@ -8,6 +27,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.pm.Page;
@@ -236,37 +256,37 @@ public class Server {
 		log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
 	}
 
-	synchronized  final IndexManager getIndexManager() {
+	public synchronized  final IndexManager getIndexManager() {
 		assertStarted();
 		return indexManager;
 	}
 
-	synchronized  final BufferManager getBufferManager() {
+	public synchronized  final BufferManager getBufferManager() {
 		assertStarted();
 		return bufferManager;
 	}
 
-	synchronized  final LatchFactory getLatchFactory() {
+	public synchronized  final LatchFactory getLatchFactory() {
 		assertStarted();
 		return latchFactory;
 	}
 
-	synchronized  final LockManager getLockManager() {
+	public synchronized  final LockManager getLockManager() {
 		assertStarted();
 		return lockManager;
 	}
 
-	synchronized  final LoggableFactory getLoggableFactory() {
+	public synchronized  final LoggableFactory getLoggableFactory() {
 		assertStarted();
 		return loggableFactory;
 	}
 
-	synchronized  final LogManager getLogManager() {
+	public synchronized  final LogManager getLogManager() {
 		assertStarted();
 		return logManager;
 	}
 
-	synchronized  final TransactionalModuleRegistry getModuleRegistry() {
+	public synchronized  final TransactionalModuleRegistry getModuleRegistry() {
 		assertStarted();
 		return moduleRegistry;
 	}
@@ -278,40 +298,69 @@ public class Server {
 		return objectRegistry;
 	}
 
-	synchronized  final PageFactory getPageFactory() {
+	public synchronized  final PageFactory getPageFactory() {
 		assertStarted();
 		return pageFactory;
 	}
 
-	synchronized  final FreeSpaceManager getSpaceManager() {
+	public synchronized  final FreeSpaceManager getSpaceManager() {
 		assertStarted();
 		return spaceManager;
 	}
 
-	synchronized  final SlottedPageManager getSlottedPageManager() {
+	public synchronized  final SlottedPageManager getSlottedPageManager() {
 		assertStarted();
 		return slottedPageManager;
 	}
 
-	synchronized  final StorageContainerFactory getStorageFactory() {
+	public synchronized  final StorageContainerFactory getStorageFactory() {
 		assertStarted();
 		return storageFactory;
 	}
 
-	synchronized final StorageManager getStorageManager() {
+	public synchronized final StorageManager getStorageManager() {
 		assertStarted();
 		return storageManager;
 	}
 
-	synchronized  final TransactionManager getTransactionManager() {
+	public synchronized  final TransactionManager getTransactionManager() {
 		assertStarted();
 		return transactionManager;
 	}
 
-	synchronized final TupleManager getTupleManager() {
+	public synchronized final TupleManager getTupleManager() {
 		assertStarted();
 		return tupleManager;
 	}
+	
+	public synchronized final LocationFactory getLocationFactory() {
+	    return getTupleManager().getLocationFactory();
+	}
+	
+    public synchronized final int getLocationFactoryType() {
+        return getTupleManager().getLocationFactoryType();
+    }
+	
+
+    /**
+     * Creates a new index with specified container name and ID. Prior to calling this
+     * method, an exclusive lock should be obtained on the container ID to ensure that no other
+     * transaction is simultaneously attempting to access the same container. If successful, by the
+     * end of this call, the container should have been created and registered with the StorageManager,
+     * and an empty instance of the index created within the container.
+     * 
+     * @param trx Transaction managing the creation of the index
+     * @param name Name of the container
+     * @param containerId ID of the new container, must be unused
+     * @param extentSize Number of pages in each extent of the container
+     * @param keyFactoryType Identifies the factory for creating IndexKey objects
+     * @param unique If true, the new index will not allow duplicates keys
+     */
+    public void createIndex(Transaction trx, String name, int containerId,
+            int extentSize, int keyFactoryType, boolean unique) {
+        getIndexManager().createIndex(trx, name, containerId, extentSize,
+                keyFactoryType, getTupleManager().getLocationFactoryType(), unique);
+    }
 
     /**
      * Creates a new index with specified container name and ID. Prior to calling this
@@ -329,9 +378,10 @@ public class Server {
      * @param unique If true, the new index will not allow duplicates keys
      */
     public void createIndex(Transaction trx, String name, int containerId,
-            int extentSize, int keyFactoryType, boolean unique) {
-        getIndexManager().createIndex(trx, name, containerId, extentSize,
-                keyFactoryType, getTupleManager().getLocationFactoryType(), unique);
+            int extentSize, int keyFactoryType, int locationFactoryType,
+            boolean unique) {
+        indexManager.createIndex(trx, name, containerId, extentSize,
+                keyFactoryType, locationFactoryType, unique);
     }
 
     /**
