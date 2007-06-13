@@ -199,7 +199,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
      */
     private static int testingFlag = 0;
     
-    private static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
+    public static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
     
     private static final int TEST_MODE_MAX_KEYS = 8;
     
