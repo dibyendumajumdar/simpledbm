@@ -24,7 +24,7 @@ import java.util.Properties;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import org.simpledbm.rss.api.im.Index;
+import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexException;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
@@ -140,7 +140,7 @@ public class BTreeDemo {
 
 		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { new IntegerType() };
 
-		Index btree;
+		IndexContainer btree;
 
 		static int KEY_FACTORY_TYPE = 25000;
 
@@ -176,8 +176,8 @@ public class BTreeDemo {
 
 			keyFactory.registerRowType(1, rowtype1);
 
-			server.getObjectRegistry().register(KEY_FACTORY_TYPE, keyFactory);
-			server.getObjectRegistry().register(LOCATION_FACTORY_TYPE, RowLocationFactory.class.getName());
+			server.registerSingleton(KEY_FACTORY_TYPE, keyFactory);
+			server.registerType(LOCATION_FACTORY_TYPE, RowLocationFactory.class.getName());
 
 			if (create) {
 				createBTree();
@@ -188,10 +188,10 @@ public class BTreeDemo {
 		 * Creates the BTree that will be used for the demo.
 		 */
 		public void createBTree() throws IndexException, TransactionException {
-			Transaction trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+			Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 			boolean success = false;
 			try {
-				server.getIndexManager().createIndex(trx, "testbtree.dat", 1, 8, KEY_FACTORY_TYPE, LOCATION_FACTORY_TYPE, true);
+				server.createIndex(trx, "testbtree.dat", 1, 8, KEY_FACTORY_TYPE, LOCATION_FACTORY_TYPE, true);
 			} finally {
 				if (success)
 					trx.commit();
@@ -199,9 +199,9 @@ public class BTreeDemo {
 					trx.abort();
 			}
 			// To make it more interesting, lets add 200 keys
-			trx = server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+			trx = server.begin(IsolationMode.READ_COMMITTED);
 			try {
-				Index btree = server.getIndexManager().getIndex(1);
+				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				RowLocation location = (RowLocation) locationFactory.newLocation();
@@ -230,7 +230,7 @@ public class BTreeDemo {
 			boolean success = false;
 			Savepoint sp = trx.createSavepoint(false);
 			try {
-				Index btree = server.getIndexManager().getIndex(1);
+				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
@@ -255,7 +255,7 @@ public class BTreeDemo {
 			boolean success = false;
 			Savepoint sp = trx.createSavepoint(false);
 			try {
-				Index btree = server.getIndexManager().getIndex(1);
+				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
@@ -277,7 +277,7 @@ public class BTreeDemo {
 			boolean success = false;
 			Savepoint sp = trx.createSavepoint(false);
 			try {
-				Index btree = server.getIndexManager().getIndex(trx, 1);
+				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.get(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
@@ -457,7 +457,7 @@ public class BTreeDemo {
 		void startTransaction() {
 			if (trx == null) {
 				DiagnosticLogger.log("Starting new transaction");
-				trx = db.server.getTransactionManager().begin(IsolationMode.CURSOR_STABILITY);
+				trx = db.server.begin(IsolationMode.READ_COMMITTED);
 				errors = false;
 			}
 		}
