@@ -1262,14 +1262,116 @@ location is released before the cursor moves to the next key.
 
 \subsubsection{Repeatable Read (RR)}
 
-Locks obtained on tuple locations during scans are retained until
-the transaction completes.
+SHARED mode locks obtained on tuple locations during scans are retained until
+the transaction completes. UPDATE mode locks are downgraded to SHARED mode when
+the cursor moves.
 
 \subsubsection{Serializable}
 
 Same as Repeatable Read, with additional locking (next key) during
 scans to prevent phantom reads.
 
+\subsection{Scanning API}
+
+Opening an IndexScan requires you to specify a start condition.
+If you want to start from the beginning, then you may specify null values
+as the start key/location. 
+
+In SimpleDBM, scans do not have a stop key. Instead, a scan starts fetching
+data from the first key/location that is greater or equal to the supplied
+start key/location. You must determine whether the fetched key satisfies
+the search criteria or not. If the fetched key no longer meets the search
+criteria, you should call fetchCompleted() with a false value, indicating that
+there is no need to fetch any more keys. This then causes the scan to
+reach EOF.
+
+The API for index scans is shown below:
+
+\begin{verbatim}
+public interface IndexContainer {
+	
+  /**
+   * Opens a new index scan. The Scan will fetch keys >= the 
+   * specified key and location. Before returning fetched keys, 
+   * the associated Location objects will be locked. The lock mode
+   * depends upon the forUpdate flag. The IsolationMode
+   * of the transaction determines when lock are released. 
+   * 
+   * Caller must obtain a Shared lock on the Index Container 
+   * prior to calling this method.
+   * 
+   * @param trx Transaction that will manage locks obtained 
+   *            by the scan
+   * @param key The starting key to be searched for
+   * @param location The starting location to be searched for.
+   * @param forUpdate If this set, UPDATED mode locks will 
+   *                  be acquired, else SHARED mode locks will
+   *                  be acquired.
+   */
+  public IndexScan openScan(Transaction trx, IndexKey key, 
+    Location location, boolean forUpdate);	
+	
+}
+
+
+public interface IndexScan {
+	
+  /**
+   * Fetches the next available key from the Index. 
+   * Handles the situation where current key has been deleted.
+   * Note that prior to returning the key the Location 
+   * object associated with the key is locked.
+   * After fetching an index row, typically, data must 
+   * be fetched from associated tuple container. Locks 
+   * obtained by the fetch protect such access. After 
+   * tuple has been fetched, caller must invoke 
+   * fetchCompleted() to ensure that locks are released 
+   * in certain lock isolation modes. Failure to do so will 
+   * cause extra locking.
+   */
+  public boolean fetchNext();
+	
+  /**
+   * In certain isolation modes, releases locks acquired 
+   * by fetchNext(). Must be invoked after the data from 
+   * associated tuple container has been fetched.
+   * If the argument matched is set to false, the scan 
+   * is assumed to have reached eof of file. The next
+   * call to fetchNext() will return false.
+   * 
+   * @param matched If set to true indicates that the 
+   *                key satisfies search query
+   */
+  public void fetchCompleted(boolean matched);
+	
+  /**
+   * Returns the IndexKey on which the scan is currently 
+   * positioned.
+   */
+  public IndexKey getCurrentKey();
+	
+  /**
+   * Returns the Location associated with the current 
+   * IndexKey.
+   */
+  public Location getCurrentLocation();
+	
+  /**
+   * After the scan is completed, the close method 
+   * should be called to release all resources acquired 
+   * by the scan.
+   */
+  public void close();
+	
+  /**
+   * Returns the End of File status of the scan. Once 
+   * the scan has gone past the last available key in 
+   * the Index, this will return true.  
+   */
+  public boolean isEof();
+}
+
+\end{verbatim}
 
 
 \end{document}
