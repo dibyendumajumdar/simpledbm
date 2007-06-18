@@ -295,8 +295,7 @@ Server server;
 
 // Let's assume we would like to register a type called
 // IntegerKey, and assign it the unique code 7001. 
-server.getObjectRegistry().registerType(7001,
-  IntegerKey.class.getName());
+server.registerType(7001, IntegerKey.class.getName());
 \end{verbatim}
 
 Above registers the \verb|IntegerKey| class with the Object Registry. It
@@ -327,12 +326,12 @@ use the 2-byte short integer type code used in the Object Registry
 module to efficiently store type information.
 
 SimpleDBM provides the \verb|org.simpledbm.rss.api.st.Storable|
-interface as a substitute for \verb|java.io.Serializable| interface. The
-\verb|Storable| interface requires the implementation to be able to predict
-its persistent size in bytes when the \verb|getStoredLength()| method is invoked. It
-also requires the implementation to be able to stream itself to a
-\verb|ByteBuffer| object, and also restore its contents from a
-\verb|ByteBuffer| object.
+interface as a substitute for \verb|java.io.Serializable|
+interface. The \verb|Storable| interface requires the implementation
+to be able to predict its persistent size in bytes when the
+\verb|getStoredLength()| method is invoked. It also requires the
+implementation to be able to stream itself to a \verb|ByteBuffer|
+object, and also restore its contents from a \verb|ByteBuffer| object.
 
 The Storable interface specification is as follows:
 
@@ -416,13 +415,13 @@ public final class ByteString implements Storable {
 }
 \end{verbatim}
 
-A coding standard in SimpleDBM is to make sure that Storable
-objects are immutable. Once created, a Storable object can 
-only mutate when it is re-constructed from a byte stream using the
-retrieve() method. Another precaution taken is to ensure that
-retrieve() creates new instances of any Storable member objects rather
-than modifying these - again keeping with the philosophy of immutability
-of Storable objects. 
+A coding standard in SimpleDBM is to make sure that Storable objects
+are immutable. Once created, a Storable object can only mutate when it
+is re-constructed from a byte stream using the retrieve()
+method. Another precaution taken is to ensure that retrieve() creates
+new instances of any Storable member objects rather than modifying
+these - again keeping with the philosophy of immutability of Storable
+objects.
 
 \chapter{Transactions}
 
@@ -443,7 +442,7 @@ Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 
 \end{verbatim}
 
-\verb|IsolationMode| are discussed in more detail in the next chapter.
+\verb|IsolationMode|s are discussed in more detail in \ref{sec:isolationmodes}.
 
 \section{Working with Transactions}
 
@@ -524,10 +523,10 @@ the location itself is no longer valid, perhaps due to a delete
 operation by some other transaction, then the scan may position itself
 on the next available location.
 
-If you are preserving cursor state during savepoints, be
-prepared that in certain IsolationModes, a rollback may fail due to
-locking, or the scan may not be able to reposition itself on exactly
-the same location.
+If you are preserving cursor state during savepoints, be prepared that
+in certain IsolationModes, a rollback may fail due to locking, or the
+scan may not be able to reposition itself on exactly the same
+location.
 
 \chapter{Tables}
 \label{sec:tables}
@@ -1250,6 +1249,7 @@ an index in UPDATE mode and then carrying out modifications.
 \section{Scanning keys}
 
 \subsection{Isolation Modes}
+\label{sec:isolationmodes}
 
 Before describing how to scan keys within an Index, it is necessary to
 describe the various lock isolation modes supported by SimpleDBM.
