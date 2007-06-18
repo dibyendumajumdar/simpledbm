@@ -1,4 +1,5 @@
 \documentclass[a4paper,draft,oneside]{book}
+\usepackage{hyperref}
 \begin{document}
 \title{SimpleDBM User's Manual}
 \author{Dibyendu Majumdar\\
@@ -32,8 +33,13 @@ SimpleDBM has the following features:
     \item Deadlock detection - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
 \end{enumerate}
 
+\section{Non-Features}
+SimpleDBM is not an SQL engine. 
+
 \section{Status}
-SimpleDBM is currently in early BETA and not suitable for use in Production systems. The latest builds can be downloaded from:
+SimpleDBM is currently in early BETA and not suitable for use in Production systems. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
+
+The latest builds can be downloaded from:
 
 http://code.google.com/p/simpledbm/downloads/list.
 
@@ -43,7 +49,206 @@ There are no special requirements or third party library dependencies; all you
 need to ensure is that the SimpleDBM jar file is in your classpath.
 
 SimpleDBM does not come with a type system of its own, but there is a sample
-typesystem implementation available, which you can enhance. 
+type system implementation available, which you can enhance. 
+
+\chapter{SimpleDBM Servers and Databases}
+
+\section{Introduction}
+
+A SimpleDBM server is a set of background threads and a library of API
+calls that clients can hook into. The background threads take care of
+various tasks, such as writing out buffer pages, writing out logs,
+archiving older log files, creating checkpoints, etc.
+
+A SimpleDBM server operates on a set of data and index files, known as
+the SimpleDBM database.
+
+Only one server instance is allowed to access a SimpleDBM database at
+any point in time. SimpleDBM uses a lock file to detect multiple
+concurrent access to a database, and will refuse to start if it
+detects that a server is already accessing a database.
+
+Internally, SimpleDBM operates on logical entities called Storage
+Containers. From an implementation point of view, Storage Containers
+are mapped to files. 
+
+Tables and Indexes are stored in Containers known as TupleContainers
+and IndexContainers, respectively.
+
+The SimpleDBM database initially consists of a set of transaction log
+files, a lock file and a special container used internally by
+SimpleDBM.
+
+\section{Creating a SimpleDBM database}
+
+A SimpleDBM database is created by a call to Server.create(), as shown
+below:
+
+\begin{verbatim}
+import org.simpledbm.rss.main.Server;
+
+...
+
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath", 
+  "demodata/TupleDemo1");
+
+Server.create(properties);
+\end{verbatim}
+
+The Server.create() method accepts a Properties object as
+the sole argument. The Properties object can be used to pass a
+number of parameters. The available options are shown in
+\ref{tab:logoptions}, \ref{tab:storageoptions}, \ref{tab:bufferoptions}. 
+
+\begin{table}[tbp]
+\begin{center}
+\begin{tabular}{|l|p{6cm}|}
+  \hline
+  \textbf{Property Name}&\textbf{Description}  \\
+  \hline 
+  \verb|log.ctl.{n}|&The fully qualified path to the
+  log control file. The first file should be specified as
+  \verb|log.ctl.1|, second as \verb|log.ctl.2|, and so on. Up to a
+  maximum of 3 can be specified. Default is 2. \\
+  \hline
+  \verb|log.groups.{n}.path|&The path where log
+  files of a group should be stored. The first log group is specified
+  as \verb|log.groups.1.path|, the second as \verb|log.groups.2.path|,
+  and so on. Up to a maximum of 3 log groups can be specified. Default
+  number of groups is 1. Path defaults to current directory.  \\
+  \hline
+  \verb|log.archive.path|&Defines the path for storing archive files. 
+  Defaults to current directory.  \\
+  \hline
+  \verb|log.group.files|&Specifies the number of log files within each group.
+  Up to a maximum of 8 are allowed. Defaults to 2. \\
+  \hline 
+  \verb|log.file.size|&Specifies the size of each log file in
+  bytes. Default is 2 KB. \\
+  \hline 
+  \verb|log.buffer.size|&Specifies the size of the log buffer
+  in bytes. Default is 2 KB. \\
+  \hline 
+  \verb|log.buffer.limit|&Sets a limit on the maximum number of
+  log buffers that can be allocated. Default is 10 *
+  \verb|log.group.files|.  \\
+  \hline 
+  \verb|log.flush.interval|&Sets the interval (in seconds)
+  between log flushes. Default is 6 seconds.  \\
+  \hline 
+  \verb|log.explicitFlushRequests|&Boolean value, if set, disables 
+  log flushes requested explicitly by the Buffer Manager or Transaction 
+  Manager. Log flushes still occur during checkpoints and log switches. 
+  By reducing the log flushes, performance is improved, but transactions 
+  may not be durable. Only those transactions will survive a system crash 
+  that have all their log records on disk.  \\
+  \hline 
+\end{tabular}
+\end{center}
+\caption{Log Options}
+\label{tab:logoptions}
+\end{table}
+
+\begin{table}[tbp]
+\begin{center}
+\begin{tabular}{|l|p{6cm}|}
+  \hline
+  \textbf{Property Name}&\textbf{Description}  \\
+  \hline 
+  \verb|storage.basePath|&Defines the base location of the
+  SimpleDBM database. All files and directories are created relative to this
+  location.  \\
+  \hline 
+  \verb|storage.createMode|&Defines mode in which files will be
+  created. Default is ``rws''.  \\
+  \hline 
+  \verb|storage.openMode|&Defines mode in which files will be
+  opened. Default is ``rws''.  \\
+  \hline 
+\end{tabular}
+\end{center}
+\caption{Storage Options}
+\label{tab:storageoptions}
+\end{table}
+
+\begin{table}[tbp]
+\begin{center}
+\begin{tabular}{|l|p{5cm}|}
+  \hline
+  \textbf{Property Name}&\textbf{Description}  \\
+  \hline 
+  \verb|bufferpool.numbuffers|&Sets the number of buffers to be created in 
+  the Buffer Pool.  \\
+  \hline 
+  \verb|bufferpool.writerSleepInterval|&Sets the interval in 
+  milliseconds between each run of the BufferWriter. Note that BufferWriter 
+  may run earlier than the specified interval if the pool runs out of 
+  buffers, and a new page has to be read in. In such cases, the Buffer Writer
+  may be manually triggered to clean out buffers.  \\
+  \hline
+\end{tabular}
+\end{center}
+\caption{Buffer Manager Options}
+\label{tab:bufferoptions}
+\end{table}
+
+The Server.create() call will overwrite any existing database
+in the specified storage path, so it must be called only when you know
+for sure that you want to create a database.
+
+\section{Opening a database}
+
+Once a database has been created, it can be opened by creating an
+instance of SimpleDBM server, and starting it. The same properties that were
+supplied while creating the database, can be supplied when starting it.
+
+Here is a code snippet that shows how this is done:
+
+\begin{verbatim}
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath", 
+  "demodata/TupleDemo1");
+
+Server server = new Server(properties);
+server.start();
+try {
+  // do some work
+}
+finally {
+  server.shutdown();
+}
+\end{verbatim}
+
+Some points to bear in mind when starting SimpleDBM server instances:
+
+\begin{enumerate}
+\item Make sure that you invoke \verb|shutdown()| eventually to ensure proper
+  shutdown of the database.
+\item Database startup/shutdown is relatively expensive, so do it only
+  once during the life-cycle of your application.
+\item A Server object can be used only once - after calling
+  \verb|shutdown()|, it is an error to do any operation with the server
+  object.
+\end{enumerate}
 
 \chapter{Common Infrastructure}
 
@@ -64,17 +269,21 @@ The Object Registry is important because it provides
 coupling between SimpleDBM and clients. For instance, index key
 types, table row types, etc. can be registered in SimpleDBM's
 Object Registry and thereby made available to SimpleDBM. You will
-see how this is done when we discuss Indexes and Tables.
+see how this is done when we discuss Tables (\ref{sec:tables}) and 
+Indexes (\ref{sec:indexes}).
 
 \section{Registering a type}
 To allow SimpleDBM to access a particular type, you must assign a
 unique 2-byte (short) typecode to the type, and register it with the
 ObjectRegistry. Note that because the typecode is recorded in
-persistent storage, it must be stable, i.e., it must not change within
-the scope of a database. Also, ensure that you have registered all the
-required types prior to starting a SimpleDBM database instance.
+persistent storage, it must be stable, i.e., once registered, the
+typecode association must remain the same for the lifespan of the
+the database. 
 
-Note that typecodes between the range 0-1000 are reserved for use by
+An important consideration is to ensure that all the required types
+are available to a SimpleDBM database instance. 
+
+Typecodes between the range 0-1000 are reserved for use by
 SimpleDBM.
 
 Following example shows how to register a type with SimpleDBM's Object
@@ -87,7 +296,7 @@ Server server;
 // Let's assume we would like to register a type called
 // IntegerKey, and assign it the unique code 7001. 
 server.getObjectRegistry().registerType(7001,
-  org.simpledbm.samples.usermanual.im.IntegerKey.class.getName());
+  IntegerKey.class.getName());
 \end{verbatim}
 
 Above registers the \verb|IntegerKey| class with the Object Registry. It
@@ -215,203 +424,6 @@ retrieve() creates new instances of any Storable member objects rather
 than modifying these - again keeping with the philosophy of immutability
 of Storable objects. 
 
-\chapter{SimpleDBM Servers and Databases}
-
-\section{Introduction}
-
-A SimpleDBM server is a set of background threads and a library of API
-calls that clients can hook into. The background threads take care of
-various tasks, such as writing out buffer pages, writing out logs,
-archiving older log files, creating checkpoints, etc.
-
-A SimpleDBM server operates on a set of data and index files, known as
-the SimpleDBM database.
-
-Only one server instance is allowed to access a SimpleDBM database at
-any point in time. SimpleDBM uses a lock file to detect multiple
-concurrent access to a database, and will refuse to start if it
-detects that a server is already accessing a database.
-
-Internally, SimpleDBM operates on Containers. Externally, Containers
-are mapped to files. Tables and Indexes are stored in Containers known
-as TupleContainers and IndexContainers.
-
-The SimpleDBM database initially consists of a set of transaction log
-files, a lock file and a special container used internally by
-SimpleDBM.
-
-\section{Creating a SimpleDBM database}
-
-A SimpleDBM database is created by a call to Server.create(), as shown
-below:
-
-\begin{verbatim}
-import org.simpledbm.rss.main.Server;
-
-...
-
-Properties properties = new Properties();
-properties.setProperty("log.ctl.1", "ctl.a");
-properties.setProperty("log.ctl.2", "ctl.b");
-properties.setProperty("log.groups.1.path", ".");
-properties.setProperty("log.archive.path", ".");
-properties.setProperty("log.group.files", "3");
-properties.setProperty("log.file.size", "16384");
-properties.setProperty("log.buffer.size", "16384");
-properties.setProperty("log.buffer.limit", "4");
-properties.setProperty("log.flush.interval", "5");
-properties.setProperty("storage.basePath", 
-  "demodata/TupleDemo1");
-
-Server.create(properties);
-\end{verbatim}
-
-The Server.create() method accepts a Properties object as
-the sole argument. The Properties object can be used to pass a
-number of parameters. The available options are shown in
-\ref{tblogoptions}, \ref{tbstorageoptions}, \ref{tbbufferoptions}. 
-
-\clearpage
-\begin{table}[tbp]
-\begin{center}
-\begin{tabular}{|l|p{6cm}|}
-  \hline
-  \textbf{Property Name}&\textbf{Description}  \\
-  \hline 
-  \verb|log.ctl.{n}|&The fully qualified path to the
-  log control file. The first file should be specified as
-  \verb|log.ctl.1|, second as \verb|log.ctl.2|, and so on. Up to a
-  maximum of 3 can be specified. Default is 2. \\
-  \hline
-  \verb|log.groups.{n}.path|&The path where log
-  files of a group should be stored. The first log group is specified
-  as \verb|log.groups.1.path|, the second as \verb|log.groups.2.path|,
-  and so on. Up to a maximum of 3 log groups can be specified. Default
-  number of groups is 1. Path defaults to current directory.  \\
-  \hline
-  \verb|log.archive.path|&Defines the path for storing archive files. 
-  Defaults to current directory.  \\
-  \hline
-  \verb|log.group.files|&Specifies the number of log files within each group.
-  Up to a maximum of 8 are allowed. Defaults to 2. \\
-  \hline 
-  \verb|log.file.size|&Specifies the size of each log file in
-  bytes. Default is 2 KB. \\
-  \hline 
-  \verb|log.buffer.size|&Specifies the size of the log buffer
-  in bytes. Default is 2 KB. \\
-  \hline 
-  \verb|log.buffer.limit|&Sets a limit on the maximum number of
-  log buffers that can be allocated. Default is 10 *
-  \verb|log.group.files|.  \\
-  \hline 
-  \verb|log.flush.interval|&Sets the interval (in seconds)
-  between log flushes. Default is 6 seconds.  \\
-  \hline 
-  \verb|log.explicitFlushRequests|&Boolean value, if set, disables 
-  log flushes requested explicitly by the Buffer Manager or Transaction 
-  Manager. Log flushes still occur during checkpoints and log switches. 
-  By reducing the log flushes, performance is improved, but transactions 
-  may not be durable. Only those transactions will survive a system crash 
-  that have all their log records on disk.  \\
-  \hline 
-\end{tabular}
-\end{center}
-\caption{Log Options}
-\label{tblogoptions}
-\end{table}
-
-\begin{table}[tbp]
-\begin{center}
-\begin{tabular}{|l|p{6cm}|}
-  \hline
-  \textbf{Property Name}&\textbf{Description}  \\
-  \hline 
-  \verb|storage.basePath|&Defines the base location of the
-  SimpleDBM database. All files and directories are created relative to this
-  location.  \\
-  \hline 
-  \verb|storage.createMode|&Defines mode in which files will be
-  created. Default is ``rws''.  \\
-  \hline 
-  \verb|storage.openMode|&Defines mode in which files will be
-  opened. Default is ``rws''.  \\
-  \hline 
-\end{tabular}
-\end{center}
-\caption{Storage Options}
-\label{tbstorageoptions}
-\end{table}
-
-\begin{table}[tbp]
-\begin{center}
-\begin{tabular}{|l|p{5cm}|}
-  \hline
-  \textbf{Property Name}&\textbf{Description}  \\
-  \hline 
-  \verb|bufferpool.numbuffers|&Sets the number of buffers to be created in 
-  the Buffer Pool.  \\
-  \hline 
-  \verb|bufferpool.writerSleepInterval|&Sets the interval in 
-  milliseconds between each run of the BufferWriter. Note that BufferWriter 
-  may run earlier than the specified interval if the pool runs out of 
-  buffers, and a new page has to be read in. In such cases, the Buffer Writer
-  may be manually triggered to clean out buffers.  \\
-  \hline
-\end{tabular}
-\end{center}
-\caption{Buffer Manager Options}
-\label{tbbufferoptions}
-\end{table}
-
-The Server.create() call will overwrite any existing database
-in the specified storage path, so it must be called only when you know
-for sure that you want to create a database.
-
-\section{Opening a database}
-
-Once a database has been created, it can be opened by creating an
-instance of SimpleDBM server, and starting it. The same properties that were
-supplied while creating the database, can be supplied when starting it.
-
-Here is a code snippet that shows how this is done:
-
-\begin{verbatim}
-Properties properties = new Properties();
-properties.setProperty("log.ctl.1", "ctl.a");
-properties.setProperty("log.ctl.2", "ctl.b");
-properties.setProperty("log.groups.1.path", ".");
-properties.setProperty("log.archive.path", ".");
-properties.setProperty("log.group.files", "3");
-properties.setProperty("log.file.size", "16384");
-properties.setProperty("log.buffer.size", "16384");
-properties.setProperty("log.buffer.limit", "4");
-properties.setProperty("log.flush.interval", "5");
-properties.setProperty("storage.basePath", 
-  "demodata/TupleDemo1");
-
-Server server = new Server(properties);
-server.start();
-try {
-  // do some work
-}
-finally {
-  server.shutdown();
-}
-\end{verbatim}
-
-Some points to bear in mind when starting SimpleDBM server instances:
-
-\begin{enumerate}
-\item Make sure that you invoke \verb|shutdown()| eventually to ensure proper
-  shutdown of the database.
-\item Database startup/shutdown is relatively expensive, so do it only
-  once during the life-cycle of your application.
-\item A Server object can be used only once - after calling
-  \verb|shutdown()|, it is an error to do any operation with the server
-  object.
-\end{enumerate}
-
 \chapter{Transactions}
 
 Most SimpleDBM operations take place in the context of a Transaction.
@@ -518,6 +530,7 @@ locking, or the scan may not be able to reposition itself on exactly
 the same location.
 
 \chapter{Tables}
+\label{sec:tables}
 
 \section{TupleContainers}
 
@@ -757,6 +770,7 @@ finally {
 \end{verbatim}
 
 \chapter{Indexes}
+\label{sec:indexes}
 
 \section{Index Keys}
 
@@ -1074,7 +1088,7 @@ In order to manipulate an index, you must first obtain an instance of
 the index. This is shown below:
 
 \begin{verbatim}
-Transacton trx = ...;
+Transaction trx = ...;
 int containerId = 1;
 IndexContainer index = server.getIndex(trx, containerId);
 \end{verbatim}
@@ -1157,6 +1171,7 @@ try {
 Above example is taken from the sample \verb|tupledemo|. 
 
 \subsection{Deleting a key}
+\label{sec:delkey}
 
 Deleting a key is very similar to adding a key. First lets look
 at the API:
@@ -1293,8 +1308,8 @@ public interface IndexContainer {
   /**
    * Opens a new index scan. The Scan will fetch keys >= the 
    * specified key and location. Before returning fetched keys, 
-   * the associated Location objects will be locked. The lock mode
-   * depends upon the forUpdate flag. The IsolationMode
+   * the associated Location objects will be locked. The lock 
+   * mode depends upon the forUpdate flag. The IsolationMode
    * of the transaction determines when lock are released. 
    * 
    * Caller must obtain a Shared lock on the Index Container 
@@ -1373,5 +1388,27 @@ public interface IndexScan {
 
 \end{verbatim}
 
+Following code snippet, taken from the btreedemo sample,
+shows how to implement index scans.
+
+\begin{verbatim}
+Transaction trx = ...;
+IndexContainer indexContainer = ...;
+IndexScan scan = indexContainer.openScan(trx, null, 
+  null, false);
+try {
+  while (scan.fetchNext()) {
+    System.err.println("SCAN NEXT=" + scan.getCurrentKey() + 
+      "," + scan.getCurrentLocation());
+    scan.fetchCompleted(true);
+  }
+} finally {
+  if (scan != null) {
+    scan.close();
+  }
+}
+\end{verbatim}
+
+Another example of an index scan can be found in section \ref{sec:delkey}.
 
 \end{document}
