@@ -1,3 +1,8 @@
+1.0.3-BETA:
+ * dm: Refactored synthronization code in Buffer Manager, in particular, handling of volatile instance variables.
+ * dm: Renamed the property log.disableExplicitFlushRequests to log.explicitFlushRequests.
+ * dm: Renamed the property bufferpool.bufferWriterSleepInterval to bufferpool.writerSleepInterval.
+
 1.0.2-BETA: 10 June 2007:
  * dm: log.disableExplicitFlushRequests is now a property that can be set when creating a log instance.
  * dm: Property bufferpool.bufferWriterSleepInterval can now be set.
