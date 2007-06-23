@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -62,7 +63,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class BufferManagerImpl implements BufferManager {
 
 	private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
-	private static final String BUFFER_WRITER_WAIT = "bufferpool.bufferWriterSleepInterval";
+	private static final String BUFFER_WRITER_WAIT = "bufferpool.writerSleepInterval";
 
 	static final Logger log = Logger.getLogger(BufferManagerImpl.class.getPackage().getName());
 	
@@ -162,7 +163,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * A count of number of pages estimated to be
 	 * dirty.
 	 */
-	volatile int dirtyBuffersCount = 0;
+	private AtomicInteger dirtyBuffersCount = new AtomicInteger(0);
 
 	/**
 	 * Used for managing synchronisation between Buffer Writer
@@ -280,15 +281,16 @@ public final class BufferManagerImpl implements BufferManager {
 	private void waitForFreeBuffers() {
 		long start = System.currentTimeMillis();
 		signalBufferWriter();
-		for (;;) {
+		for (int retry_count = 0; retry_count < 5; retry_count++) {
 			synchronized (waitingForBuffers) {
 				try {
 					waitingForBuffers.wait(bufferWriterMaxWait);
 				} catch (InterruptedException e) {
+				    e.printStackTrace();
 					// ignore
 				}
 			}
-			if (stop || dirtyBuffersCount < bufferpool.length) {
+			if (stop || getDirtyBuffersCount() < bufferpool.length) {
 				break;
 			}
 			signalBufferWriter();
@@ -299,11 +301,15 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 	}
 
+	private void setStop() {
+	    stop = true;
+	}
+	
 	/**
 	 * Shuts down the Buffer Manager instance.
 	 */
 	public void shutdown() {
-		stop = true;
+		setStop();
 		signalBufferWriter();
 		try {
 			bufferWriter.join();
@@ -364,7 +370,7 @@ public final class BufferManagerImpl implements BufferManager {
                 Iterator<BufferControlBlock> iterator = lru.iterator();
                 while (iterator.hasNext()) {
                     BufferControlBlock nextBcb = iterator.next();
-					PageId pageid = nextBcb.pageId;
+					PageId pageid = nextBcb.getPageId();
 					int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 					BufferHashBucket bucket = bufferHash[h];
 
@@ -377,7 +383,7 @@ public final class BufferManagerImpl implements BufferManager {
 
 					try {
 						/* In case the BCB has changed then skip */
-						if (!nextBcb.pageId.equals(pageid)) {
+						if (!nextBcb.getPageId().equals(pageid)) {
 							if (log.isDebugEnabled()) {
 								log
 										.debug(
@@ -413,8 +419,8 @@ public final class BufferManagerImpl implements BufferManager {
 						iterator.remove();
 						/* Remove BCB from Hash Chain */
 						bucket.chain.remove(nextBcb);
-						bufferpool[nextBcb.frameIndex] = null;
-						return nextBcb.frameIndex;
+						bufferpool[nextBcb.getFrameIndex()] = null;
+						return nextBcb.getFrameIndex();
 
 					} finally {
 						bucket.unlock();
@@ -446,7 +452,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	private BufferControlBlock locatePage(PageId pageId, int hashCode, boolean isNew, int pagetype, int latchMode) {
 
-		BufferControlBlock nextBcb = new BufferControlBlock();
+		BufferControlBlock nextBcb = new BufferControlBlock(pageId);
 		BufferHashBucket bucket = bufferHash[hashCode];
 		bucket.lock();
 		try {
@@ -459,11 +465,11 @@ public final class BufferManagerImpl implements BufferManager {
 			 * is ever enough !). To work around this situation, we check the
 			 * the hash chain again.
 			 * Dec-2006: We need to additionally check whether the page is
-			 * currently beig read or written, in which case, we need to retry.
+			 * currently being read or written, in which case, we need to retry.
 			 */
 
 			for (BufferControlBlock bcb : bucket.chain) {
-				if (bcb.isValid() && bcb.pageId.equals(pageId)) {
+				if (bcb.isValid() && bcb.getPageId().equals(pageId)) {
 					// Bug discovered when testing on Intel CoreDuo (3 Dec 2006) - if the page is being read
 					// we need to wait for the read to be over. Since we need to give up latches
 					// easiest option is to retry. 
@@ -487,11 +493,10 @@ public final class BufferManagerImpl implements BufferManager {
 				}
 			}
 
-			nextBcb.pageId = pageId;
 			/*
 			 * frameIndex set to -1 indicates that the page is being read in.
 			 */
-			nextBcb.frameIndex = -1;
+			nextBcb.setFrameIndex(-1);
 
 			bucket.chain.addFirst(nextBcb);
 		} finally {
@@ -508,7 +513,7 @@ public final class BufferManagerImpl implements BufferManager {
 		int frameNo = getFrame();
 
 		if (frameNo == -1) {
-			stop = true;
+			setStop();
 			log.error(this.getClass().getName(), "locatePage", mcat.getMessage("EM0004", pageId));
 			throw new BufferManagerException(mcat.getMessage("EM0004", pageId));
 		}
@@ -543,13 +548,13 @@ public final class BufferManagerImpl implements BufferManager {
 			}
 		}
 
-		assert nextBcb.pageId.equals(bufferpool[frameNo].getPageId());
+		assert nextBcb.getPageId().equals(bufferpool[frameNo].getPageId());
 		/*
 		 * Read complete
 		 */
 		bucket.lock();
 		try {
-			nextBcb.frameIndex = frameNo;
+			nextBcb.setFrameIndex(frameNo);
 		}
 		finally {
 			bucket.unlock();
@@ -602,7 +607,7 @@ public final class BufferManagerImpl implements BufferManager {
                     /*
                      * Ignore invalid pages.
                      */
-					if (bcb.isValid() && bcb.pageId.equals(pageid)) {
+					if (bcb.isValid() && bcb.getPageId().equals(pageid)) {
 						found = true;
 						/*
 						 * A frameIndex of -1 indicates that the page is being
@@ -650,7 +655,7 @@ public final class BufferManagerImpl implements BufferManager {
 					throw new BufferManagerException(mcat.getMessage("EM0006", pageid));
 				}
 				bucket.lock();
-				if (!nextBcb.pageId.equals(pageid)) {
+				if (!nextBcb.getPageId().equals(pageid)) {
 					bucket.unlock();
 				} else {
 					break;
@@ -663,8 +668,8 @@ public final class BufferManagerImpl implements BufferManager {
 		 * should be latched in EXCLUSIVE mode
 		 */
 
-		assert nextBcb.frameIndex != -1;
-		assert nextBcb.pageId.equals(pageid);
+		assert nextBcb.getFrameIndex() != -1;
+		assert nextBcb.getPageId().equals(pageid);
 		assert bucket.latch.isHeldByCurrentThread();
 		
 		/*
@@ -672,7 +677,7 @@ public final class BufferManagerImpl implements BufferManager {
 		 * Make this page the most recently used one c) release all latches d)
 		 * Acquire user requested page latch.
 		 */
-		nextBcb.fixcount++;
+		nextBcb.incrementFixCount();
 		/*
 		 * ISSUE: 17-Sep-05
 		 * We set the recoveryLsn if an update mode access is requested because
@@ -680,12 +685,12 @@ public final class BufferManagerImpl implements BufferManager {
 		 * exclusively or not.  
 		 */
 		if (latchMode == LATCH_EXCLUSIVE || latchMode == LATCH_UPDATE) {
-			if (nextBcb.recoveryLsn.isNull() && logMgr != null) {
-				nextBcb.recoveryLsn = logMgr.getMaxLsn();
+			if (nextBcb.getRecoveryLsn().isNull() && logMgr != null) {
+				nextBcb.setRecoveryLsn(logMgr.getMaxLsn());
 			}
 		}
 		/* Allocate a Buffer Access Block and initialize it */
-		BufferAccessBlockImpl bab = new BufferAccessBlockImpl(this, nextBcb, bufferpool[nextBcb.frameIndex]);
+		BufferAccessBlockImpl bab = new BufferAccessBlockImpl(this, nextBcb, bufferpool[nextBcb.getFrameIndex()]);
 
 		/*
 		 * All latches must be released before we acquire the user requested
@@ -738,7 +743,7 @@ public final class BufferManagerImpl implements BufferManager {
 			bab.latchShared();
 		}
 
-		assert bab.bcb.pageId.equals(bab.page.getPageId());
+		assert bab.bcb.getPageId().equals(bab.page.getPageId());
 		
 		return bab;
 	}
@@ -767,6 +772,13 @@ public final class BufferManagerImpl implements BufferManager {
 		return fix(pageid, false, -1, LATCH_UPDATE, hint);
 	}
 	
+	private void incrementDirtyBuffersCount() {
+	    dirtyBuffersCount.incrementAndGet();
+    }
+
+	private void decrementDirtyBuffersCount() {
+	    dirtyBuffersCount.decrementAndGet();
+    }
 	
 	/**
 	 * Unfix a Buffer. Algorithm:
@@ -779,7 +791,7 @@ public final class BufferManagerImpl implements BufferManager {
 	void unfix(BufferAccessBlockImpl bab) {
 
 		BufferControlBlock bcb = bab.bcb;
-		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
+		int h = (bcb.getPageId().hashCode() & 0x7FFFFFFF) % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
 		bucket.lock();
 		/*
@@ -790,10 +802,10 @@ public final class BufferManagerImpl implements BufferManager {
 		 * Buffer Writer will only steal pages with fixcount == 0. 
 		 */
 		if (bab.dirty && !bcb.isBeingWritten() && !bcb.isDirty() && bcb.isValid()) {
-			bcb.dirty = true;
-			dirtyBuffersCount++;
+			bcb.setDirty(true);
+			incrementDirtyBuffersCount();
 		}
-		bcb.fixcount--;
+		bcb.decrementFixCount();
 		bucket.unlock();
 
 		/*
@@ -818,20 +830,24 @@ public final class BufferManagerImpl implements BufferManager {
 		lruLatch.readLock().lock();
 		try {
 			for (BufferControlBlock bcb : lru) {
-				if (bcb.isDirty() && bcb.isValid()) {
-					DirtyPageInfo dp = new DirtyPageInfo(bcb.pageId, bcb.recoveryLsn, bcb.recoveryLsn);
-					/*
-					 * Since we have not latched the BCB, it is possible that within the small
-					 * gap between the check for bcb.dirty and the copying of dirty page info,
-					 * the page has been written out to disk, and therefore no longer dirty.
-					 * Since a dirty page has recoveryLsn set to a non-null value, we can use this
-					 * fact to double-check.
-					 * The alternative to this approach would be to latch hash bucket/bcb everytime we check a BCB. 
-					 */
-					if (!dp.getRecoveryLsn().isNull()) {
-						dplist.add(dp);
-					}
-				}
+			    DirtyPageInfo dp = bcb.getDirtyPageInfo();
+			    if (dp != null) {
+			        dplist.add(dp);
+			    }
+//				if (bcb.isDirty() && bcb.isValid()) {
+//					DirtyPageInfo dp = new DirtyPageInfo(bcb.getPageId(), bcb.getRecoveryLsn(), bcb.getRecoveryLsn());
+//					/*
+//					 * Since we have not latched the BCB, it is possible that within the small
+//					 * gap between the check for bcb.dirty and the copying of dirty page info,
+//					 * the page has been written out to disk, and therefore no longer dirty.
+//					 * Since a dirty page has recoveryLsn set to a non-null value, we can use this
+//					 * fact to double-check.
+//					 * The alternative to this approach would be to latch hash bucket/bcb everytime we check a BCB. 
+//					 */
+//					if (!dp.getRecoveryLsn().isNull()) {
+//						dplist.add(dp);
+//					}
+//				}
 			}
 			return dplist.toArray(new DirtyPageInfo[0]);
 		} finally {
@@ -849,8 +865,8 @@ public final class BufferManagerImpl implements BufferManager {
 		for (BufferControlBlock bcb : lru) {
 			if (bcb.isDirty() && bcb.isValid()) {
 				for (DirtyPageInfo dp : dirty_pages) {
-					if (dp.getPageId().equals(bcb.pageId)) {
-						bcb.recoveryLsn = dp.getRealRecoveryLsn();
+					if (dp.getPageId().equals(bcb.getPageId())) {
+						bcb.setRecoveryLsn(dp.getRealRecoveryLsn());
 						break;
 					}
 				}
@@ -869,15 +885,15 @@ public final class BufferManagerImpl implements BufferManager {
         try {
             for (BufferControlBlock bcb : lru) {
             	
-        		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
+        		int h = (bcb.getPageId().hashCode() & 0x7FFFFFFF) % bufferHash.length;
         		BufferHashBucket bucket = bufferHash[h];
         		bucket.lock();
 				try {
-					if (bcb.isValid() && bcb.pageId.getContainerId() == containerId) {
-						bcb.invalid = true;
+					if (bcb.isValid() && bcb.getPageId().getContainerId() == containerId) {
+						bcb.setInvalid(true);
 						if (log.isDebugEnabled()) {
 							log.debug(this.getClass().getName(), "invalidateContainer",
-									"SIMPLEDBM-DEBUG: Invalidating page " + bcb.pageId + " for container " + containerId);
+									"SIMPLEDBM-DEBUG: Invalidating page " + bcb.getPageId() + " for container " + containerId);
 						}
 						if (bcb.isBeingWritten()) {
 							writeWaits++;
@@ -906,12 +922,12 @@ public final class BufferManagerImpl implements BufferManager {
             lruLatch.readLock().lock();
             try {
                 for (BufferControlBlock bcb : lru) {
-					int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
+					int h = (bcb.getPageId().hashCode() & 0x7FFFFFFF) % bufferHash.length;
 					BufferHashBucket bucket = bufferHash[h];
 					bucket.lock();
 					try {
 						if (bcb.isBeingWritten()
-								&& bcb.pageId.getContainerId() == containerId) {
+								&& bcb.getPageId().getContainerId() == containerId) {
 							assert bcb.isInvalid();
 							writeWaits++;
 						}
@@ -958,7 +974,7 @@ public final class BufferManagerImpl implements BufferManager {
 			 * If we cannot obtain a conditional latch on the page, then skip
 			 * it.
 			 */
-    		int h = (bcb.pageId.hashCode() & 0x7FFFFFFF) % bufferHash.length;
+    		int h = (bcb.getPageId().hashCode() & 0x7FFFFFFF) % bufferHash.length;
     		BufferHashBucket bucket = bufferHash[h];
 
     		if (!bucket.tryLock()) {
@@ -975,16 +991,16 @@ public final class BufferManagerImpl implements BufferManager {
 					 * out. Pages can be accessed for reading (shared mode) when this is true,
 					 * but not for writing (exclusive mode).
 					 */
-					bcb.writeInProgress = true;
+					bcb.setBeingWritten(true);
                     if (log.isTraceEnabled()) {
-                        log.trace(this.getClass().getName(), "writeBuffers", "SIMPLEDBM-DEBUG: WRITING Page " + bcb.pageId);
+                        log.trace(this.getClass().getName(), "writeBuffers", "SIMPLEDBM-DEBUG: WRITING Page " + bcb.getPageId());
                     }
                     bucket.unlock();
 
 					try {
 						
-						Page page = bufferpool[bcb.frameIndex];
-						assert bcb.pageId.equals(page.getPageId());
+						Page page = bufferpool[bcb.getFrameIndex()];
+						assert bcb.getPageId().equals(page.getPageId());
 						Lsn lsn = page.getPageLsn();
 						if (logMgr != null && !lsn.isNull()) {
 							/*
@@ -999,12 +1015,12 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 
                     if (log.isTraceEnabled()) {
-                        log.trace(this.getClass().getName(), "writeBuffers", "SIMPLEDBM-DEBUG: COMPLETED WRITING Page " + bcb.pageId);
+                        log.trace(this.getClass().getName(), "writeBuffers", "SIMPLEDBM-DEBUG: COMPLETED WRITING Page " + bcb.getPageId());
                     }
-					bcb.recoveryLsn = new Lsn();
-					bcb.dirty = false;
-					bcb.writeInProgress = false;
-					dirtyBuffersCount--;
+					bcb.setRecoveryLsn(new Lsn());
+					bcb.setDirty(false);
+					bcb.setBeingWritten(false);
+					decrementDirtyBuffersCount();
 
 					/*
 					 * Inform any waiting clients that a page has been 
@@ -1065,13 +1081,13 @@ public final class BufferManagerImpl implements BufferManager {
 		/**
 		 * Id of the page that this BCB holds information about.
 		 */
-		volatile PageId pageId = new PageId();
+		private final PageId pageId;
 
 		/**
 		 * Location of the page within the buffer pool array. When this is -1,
 		 * the system assumes that the page has yet not been read from disk.
 		 */
-		volatile int frameIndex = -1;
+		private volatile int frameIndex = -1;
 
 		/**
 		 * Indicates that the page is dirty and needs to be written out. Can
@@ -1080,13 +1096,13 @@ public final class BufferManagerImpl implements BufferManager {
 		 * there is no point of setting this if a page is in the process of
 		 * being written out.
 		 */
-		volatile boolean dirty = false;
+		private volatile boolean dirty = false;
 
         /**
          * This flag is set when a container is deleted and its buffers
          * are invalidated.
          */
-        volatile boolean invalid = false;
+        private volatile boolean invalid = false;
         
 		/**
 		 * Maintains count of the number of fixes. A fixed page cannot be be the
@@ -1094,29 +1110,41 @@ public final class BufferManagerImpl implements BufferManager {
 		 * written out by the Buffer Writer, however, a page may be fixed in
 		 * shared mode after Buffer Writer has marked the page for writing.
 		 */
-		volatile int fixcount = 0;
+        private volatile int fixcount = 0;
 
 		/**
 		 * LSN of the oldest log record that may have made changes to the
 		 * contents of the page. Set when the page is latched exclusively for
 		 * the first time. This is reset when the page has been written out.
 		 */
-		volatile Lsn recoveryLsn = new Lsn();
+		private volatile Lsn recoveryLsn = new Lsn();
 
 		/**
 		 * Indicates that a write is in progress. This prevents any exclusive
 		 * access to the page while it is being written out. Note that once this
 		 * is set, the page may be fixed for read access.
 		 */
-		volatile boolean writeInProgress = false;
+		private volatile boolean writeInProgress = false;
 
+		BufferControlBlock(PageId pageId) {
+		    this.pageId = pageId;
+		}
+		
 		@Override
 		public final String toString() {
-			return "BCB(pageid=" + pageId + ", frame=" + frameIndex + ", isDirty=" + dirty + ", fixcount=" + fixcount + ", isBeingWritten=" + writeInProgress + ")";
+			return "BCB(pageid=" + getPageId() + ", frame=" + getFrameIndex() + ", isDirty=" + dirty + ", fixcount=" + fixcount + ", isBeingWritten=" + writeInProgress + ")";
 		}
 		
 		final boolean isInUse() {
-			return fixcount > 0;
+		    return fixcount > 0;
+		}
+
+		final synchronized void incrementFixCount() {
+		    fixcount++;
+		}
+		
+		final synchronized void decrementFixCount() {
+		    fixcount--;
 		}
 		
 		final boolean isValid() {
@@ -1126,18 +1154,59 @@ public final class BufferManagerImpl implements BufferManager {
 		final boolean isInvalid() {
 			return invalid;
 		}
+
+		final synchronized void setInvalid(boolean value) {
+		    invalid = value;
+		}
 		
 		final boolean isBeingRead() {
-			return frameIndex == -1;
+			return getFrameIndex() == -1;
 		}
 		
 		final boolean isBeingWritten() {
 			return writeInProgress;
 		}
+
+		final synchronized void setBeingWritten(boolean value) {
+		    writeInProgress = value;
+		}
 		
 		final boolean isDirty() {
 			return dirty;
 		}
+
+		final synchronized void setDirty(boolean value) {
+		    dirty = value;
+		}
+		
+        final synchronized void setFrameIndex(int frameIndex) {
+            this.frameIndex = frameIndex;
+        }
+
+        final int getFrameIndex() {
+            return frameIndex;
+        }
+
+        final PageId getPageId() {
+            return pageId;
+        }
+
+        final synchronized void setRecoveryLsn(Lsn recoveryLsn) {
+            this.recoveryLsn = recoveryLsn;
+        }
+
+        final Lsn getRecoveryLsn() {
+            return recoveryLsn;
+        }
+        
+        final synchronized DirtyPageInfo getDirtyPageInfo() {
+            if (isDirty() && isValid()) {
+                assert !recoveryLsn.isNull();
+                DirtyPageInfo dp = new DirtyPageInfo(getPageId(), getRecoveryLsn(), getRecoveryLsn());
+                return dp;
+            }
+            return null;
+        }
 	}
 
 	/**
@@ -1317,13 +1386,13 @@ public final class BufferManagerImpl implements BufferManager {
 				LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(bufmgr.bufferWriterSleepInterval, TimeUnit.MILLISECONDS));
 				try {
 					if (log.isTraceEnabled()) {
-						log.trace(this.getClass().getName(), "run", "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
+						log.trace(this.getClass().getName(), "run", "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = " + bufmgr.getDirtyBuffersCount());
 					}
 					long start = System.currentTimeMillis();
 					bufmgr.writeBuffers();
 					long end = System.currentTimeMillis();
 					if (log.isTraceEnabled()) {
-						log.trace(this.getClass().getName(), "run", "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = " + bufmgr.dirtyBuffersCount);
+						log.trace(this.getClass().getName(), "run", "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = " + bufmgr.getDirtyBuffersCount());
 						log.trace(this.getClass().getName(), "run", "SIMPLEDBM-DEBUG: BUFFER WRITER took " + (end - start) + " millisecs to complete writing pages to disk"); 
 					}
 					synchronized (bufmgr.waitingForBuffers) {
@@ -1331,7 +1400,7 @@ public final class BufferManagerImpl implements BufferManager {
 					}
 				} catch (Exception e) {
 					log.error(this.getClass().getName(), "run", bufmgr.mcat.getMessage("EM0003"), e);
-					bufmgr.stop = true;
+					bufmgr.setStop();
 				}
 				if (bufmgr.stop) {
 					break;
@@ -1344,5 +1413,9 @@ public final class BufferManagerImpl implements BufferManager {
 	public void setBufferWriterSleepInterval(int bufferWriterSleepInterval) {
 		this.bufferWriterSleepInterval = bufferWriterSleepInterval;
 	}
+
+    int getDirtyBuffersCount() {
+        return dirtyBuffersCount.get();
+    }
 
 }

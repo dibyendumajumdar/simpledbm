@@ -233,7 +233,7 @@ public final class LogFactoryImpl implements LogFactory {
 			if (value != null) {
 				logFlushInterval = Integer.parseInt(value);
 			}
-			key = "log.disableExplicitFlushRequests";
+			key = "log.explicitFlushRequests";
 			value = props.getProperty(key);
 			if (value != null) {
 				disableExplicitFlushRequests = Boolean.parseBoolean(value);
