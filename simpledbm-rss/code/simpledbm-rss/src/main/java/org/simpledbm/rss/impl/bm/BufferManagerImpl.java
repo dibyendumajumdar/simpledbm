@@ -84,17 +84,18 @@ public final class BufferManagerImpl implements BufferManager {
     
 	/**
 	 * The page factory instance that will manage IO of pages.
+	 * The page size is determined by the page factory.
 	 */
 	private PageFactory pageFactory;
 
 	/**
-	 * Log Manager instance, may be set to null for testing
+	 * Write Ahead Log Manager instance, may be set to null for testing
 	 * purposes.
 	 */
 	private LogManager logMgr;
 
 	/**
-	 * The BufferPool is an array of slots where pages can be held. Each slot is
+	 * The BufferPool is an array of slots where pages are held. Each slot is
 	 * called a frame (using terminology from the book <cite>Transaction
 	 * Processing: Concepts and Techniques</cite>).
 	 */
@@ -132,23 +133,26 @@ public final class BufferManagerImpl implements BufferManager {
 	private Thread bufferWriter;
 
 	/**
-	 * Causes the Buffer Manager to shutdown. 
+	 * Flag that triggers Buffer Manager to shutdown. 
 	 */
 	volatile boolean stop = false;
 
 	/**
 	 * Points to the top of the {@link #freeFrames} stack.
+	 * Access to this is protected by synchronizing the freeFrames
+	 * array. 
 	 */
-	private volatile int nextAvailableFrame = -1;
+	private int nextAvailableFrame = -1;
 
 	/**
 	 * A stack of available free slots in the buffer pool.
 	 * {@link #nextAvailableFrame} points to the top of the stack.
+	 * Access must be synchronized for thread safety.
 	 */
 	private int[] freeFrames;
 
 	/**
-	 * The interval in milli bseconds for which the Buffer Writer
+	 * The interval in milliseconds for which the Buffer Writer
 	 * thread sleeps between each write.
 	 */
 	private int bufferWriterSleepInterval = 5000;
@@ -170,12 +174,6 @@ public final class BufferManagerImpl implements BufferManager {
 	 * thread and clients.
 	 */
 	final Object waitingForBuffers = new Object();
-
-	/**
-	 * Used for managing synchronisation between Buffer Writer
-	 * thread and clients.
-	 */
-	final Object bufferWriterLatch = new Object();
 
     /**
      * Define the number of times the BufMgr will retry when it cannot locate
@@ -232,7 +230,7 @@ public final class BufferManagerImpl implements BufferManager {
 	/**
 	 * Create a Buffer Manager instance.
 	 * 
-	 * @param logMgr Log Manager intance, may be null for testing purspose.
+	 * @param logMgr Log Manager instance, may be null for testing purposes.
 	 * @param pageFactory PageFactory instance, required.
 	 * @param bufferpoolsize The size of the buffer pool.
 	 * @param hashsize Size of the hash table, should preferably be a prime number.
@@ -244,7 +242,7 @@ public final class BufferManagerImpl implements BufferManager {
 	/**
 	 * Create a Buffer Manager instance.
 	 * 
-	 * @param logMgr Log Manager intance, may be null for testing purspose.
+	 * @param logMgr Log Manager instance, may be null for testing purposes.
 	 * @param pageFactory PageFactory instance, required.
 	 * @param props Properties that specify how the Buffer Manager should be configured
 	 */
@@ -276,7 +274,6 @@ public final class BufferManagerImpl implements BufferManager {
 
 	/**
 	 * Waits for some buffers to become available
-     * FIXME: This does not work very reliably. 
 	 */
 	private void waitForFreeBuffers() {
 		long start = System.currentTimeMillis();
@@ -286,11 +283,12 @@ public final class BufferManagerImpl implements BufferManager {
 				try {
 					waitingForBuffers.wait(bufferWriterMaxWait);
 				} catch (InterruptedException e) {
-				    e.printStackTrace();
 					// ignore
 				}
 			}
 			if (stop || getDirtyBuffersCount() < bufferpool.length) {
+			    // Either we are stopping or
+			    // at least one page is now available for reuse
 				break;
 			}
 			signalBufferWriter();
@@ -301,6 +299,9 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 	}
 
+	/**
+	 * Instructs the Buffer Manager to shutdown.
+	 */
 	private void setStop() {
 	    stop = true;
 	}
@@ -326,7 +327,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * <ol>
 	 * <li> First, check if there is an unused frame that can be used. </li>
 	 * <li> If not, we need to identify a page that can be replaced. This page
-	 * should ideally be the least recently used page which is unpinned and not
+	 * should ideally be the least recently used page which is unfixed and not
 	 * dirty. Scan the LRU list for a page that qualifies for replacement. </li>
 	 * <li> If found, remove the page BCB from the Hash chain, and from the LRU
 	 * list, and return frame index previously occupied by the page. </li>
@@ -458,11 +459,10 @@ public final class BufferManagerImpl implements BufferManager {
 		try {
 
 			/**
-			 * 16-feb-03: The gap between releasing the shared latch and
-			 * acquiring it in exclusive mode here means that some other thread
-			 * may have read the page we are trying to read. (I hit this problem
-			 * while testing - just goes to show that no amount of testing
-			 * is ever enough !). To work around this situation, we check the
+			 * 16-feb-03: The gap between releasing the bucket lock and
+			 * re-acquiring it here means that some other thread
+			 * may have read the page we are trying to read. 
+			 * To work around this situation, we check the
 			 * the hash chain again.
 			 * Dec-2006: We need to additionally check whether the page is
 			 * currently being read or written, in which case, we need to retry.
@@ -477,7 +477,7 @@ public final class BufferManagerImpl implements BufferManager {
 					// FIXME - need to do this in a better way
 					// Another bug: 16 Dec 2006
 					// We need to check for writeInProgress as well.
-					// we allow SHARED access if writeInProgress is true.
+					// Exception: we allow SHARED access if writeInProgress is true.
 					if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
 						if (log.isDebugEnabled()) {
 							log.debug(this.getClass().getName(), "locatePage", "SIMPLEDBM-DEBUG: Another thread is attempting to read/write page " + pageId + ", therefore retrying");
@@ -505,14 +505,15 @@ public final class BufferManagerImpl implements BufferManager {
 
 		/*
 		 * If any other thread attempts to read the same page, they will find
-		 * the BCB we have just inserted. However, they will notice the
-		 * io_in_progress flag and wait for us to finish IO.
+		 * the BCB we have just inserted. However, they will notice
+		 * that frameIndex == -1 and wait for us to finish IO.
 		 */
 
 		/* Get an empty frame */
 		int frameNo = getFrame();
 
 		if (frameNo == -1) {
+		    // Failed to obtain a frame
 			setStop();
 			log.error(this.getClass().getName(), "locatePage", mcat.getMessage("EM0004", pageId));
 			throw new BufferManagerException(mcat.getMessage("EM0004", pageId));
@@ -521,10 +522,15 @@ public final class BufferManagerImpl implements BufferManager {
 		assert bufferpool[frameNo] == null;
 		
 		if (isNew) {
+		    // If it is a new page, we do not need to read the page.
 			bufferpool[frameNo] = pageFactory.getInstance(pagetype, pageId);
 		} else {
 			boolean readOk = false;
 			try {
+			    /*
+			     * Note that while reading the page, we do not hold any
+			     * latches/locks.
+			     */
 				bufferpool[frameNo] = pageFactory.retrieve(pageId);
 				readOk = true;
 			} finally {
@@ -550,7 +556,8 @@ public final class BufferManagerImpl implements BufferManager {
 
 		assert nextBcb.getPageId().equals(bufferpool[frameNo].getPageId());
 		/*
-		 * Read complete
+		 * Read completed, at this point, we set the frameIndex,
+		 * which indicates to other threads that the page is now ready.
 		 */
 		bucket.lock();
 		try {
@@ -734,6 +741,9 @@ public final class BufferManagerImpl implements BufferManager {
 			lruLatch.writeLock().unlock();
 		}
 
+		/*
+		 * Latch the page as requested.
+		 */
 		if (latchMode == LATCH_EXCLUSIVE) {
 			bab.latchExclusively();
 		}
@@ -790,6 +800,8 @@ public final class BufferManagerImpl implements BufferManager {
 	 */
 	void unfix(BufferAccessBlockImpl bab) {
 
+	    //bab.unlatch();
+	    
 		BufferControlBlock bcb = bab.bcb;
 		int h = (bcb.getPageId().hashCode() & 0x7FFFFFFF) % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
@@ -812,7 +824,7 @@ public final class BufferManagerImpl implements BufferManager {
 		 * We release the page latch after the BCB has been updated.
 		 * Releasing the latch earlier seems to cause a problem - pages occasionally
 		 * appear to lose writes. 
-		 * FIXME It is not clear what causes the problem. Ideally, we nee to release
+		 * FIXME It is not clear what causes the problem. Ideally, we should release
 		 * the page latch earlier.
 		 */
 		bab.unlatch();
