@@ -2,6 +2,8 @@
  * dm: Refactored synthronization code in Buffer Manager, in particular, handling of volatile instance variables.
  * dm: Renamed the property log.disableExplicitFlushRequests to log.explicitFlushRequests.
  * dm: Renamed the property bufferpool.bufferWriterSleepInterval to bufferpool.writerSleepInterval.
+ * dm: Reformatted all code using eclipse 3.3 to convert tabs to spaces.
+ * dm: Added maven release plugin to pom.xml.
 
 1.0.2-BETA: 10 June 2007:
  * dm: log.disableExplicitFlushRequests is now a property that can be set when creating a log instance.
