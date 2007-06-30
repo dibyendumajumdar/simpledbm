@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.rss</groupId>
 	<artifactId>simpledbm-rss</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.3-BETA</version>
+	<version>1.0.3-SNAPSHOT</version>
 	<name>SimpleDBM</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -86,6 +86,15 @@
 					</execution>
 				</executions>
 			</plugin>
+ 			<plugin>
+        		<artifactId>maven-release-plugin</artifactId>
+        			<configuration>
+          				<tagBase>
+          					scm:svn:https://simpledbm.googlecode.com/svn/tags/simpledbm-rss/code/simpledbm-rss
+          				</tagBase>
+			        </configuration>
+      		</plugin>			
+			
 <!--
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
