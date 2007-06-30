@@ -36,134 +36,134 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public interface BufferManager {
 
-	/**
-	 * Starts the Buffer Manager instance. This may cause background threads to
-	 * be started.
-	 */
-	public void start();
-	
     /**
-	 * Shuts down the Buffer Manager instance. Any background threads will be
-	 * stopped. It is recommended that the Buffer Manager writes all buffered
-	 * pages to disk before shutting down.
-	 */
+     * Starts the Buffer Manager instance. This may cause background threads to
+     * be started.
+     */
+    public void start();
+
+    /**
+     * Shuts down the Buffer Manager instance. Any background threads will be
+     * stopped. It is recommended that the Buffer Manager writes all buffered
+     * pages to disk before shutting down.
+     */
     public void shutdown();
 
     /**
-	 * Fixes a page in memory, reading it from disk if necessary, and latches it
-	 * in shared mode. It is an error if the page does not already exist in
-	 * persistent storage. Note that while the page is fixed in memory, the
-	 * Buffer Manager cannot swap it to disk to make room for other pages. Hence
-	 * it is advisable to fix pages for a short while only.
-	 * 
-	 * @param pageid
-	 *            The identity of the page that should be fixed.
-	 * @param hint
-	 *            A hint to indicate which end of the LRU chain the page should
-	 *            be inserted to.
-	 * @return A {@link BufferAccessBlock} containing a reference to the desired
-	 *         page.
-	 * @see BufferAccessBlock#unfix()
-	 */
+     * Fixes a page in memory, reading it from disk if necessary, and latches it
+     * in shared mode. It is an error if the page does not already exist in
+     * persistent storage. Note that while the page is fixed in memory, the
+     * Buffer Manager cannot swap it to disk to make room for other pages. Hence
+     * it is advisable to fix pages for a short while only.
+     * 
+     * @param pageid
+     *            The identity of the page that should be fixed.
+     * @param hint
+     *            A hint to indicate which end of the LRU chain the page should
+     *            be inserted to.
+     * @return A {@link BufferAccessBlock} containing a reference to the desired
+     *         page.
+     * @see BufferAccessBlock#unfix()
+     */
     public BufferAccessBlock fixShared(PageId pageid, int hint);
-    
-    /**
-	 * Fixes a page in memory, reading it from disk if necessary, and latches it
-	 * in exclusive mode.
-	 * <p>
-	 * A exclusive latch on the page may be downgraded to an update latch by
-	 * calling {@link BufferAccessBlock#downgradeExclusiveLatch()}.
-	 * <p>
-	 * Unless the request is being made to fix a new page, the page must already
-	 * exist in persistent storage. Caller must ensure that request for a new
-	 * page is not made for a page already in the buffer pool.
-	 * 
-	 * @param pageid
-	 *            The identity of the page that should be fixed.
-	 * @param isNew
-	 *            If this is set to true, the page will not be read from disk.
-	 *            It is assumed that the requested page is new and has not been
-	 *            previously saved to disk.
-	 * @param pagetype
-	 *            Specifies the type of page to create; only used when isNew is
-	 *            set. The pagetype must be associated with a subclass of
-	 *            {@link org.simpledbm.rss.api.pm.Page Page} and must have been
-	 *            registered with the
-	 *            {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
-	 * @param hint
-	 *            A hint to indicate which end of the LRU chain the page should
-	 *            be inserted to. The meaning of the hint is implementation
-	 *            defined.
-	 * @return A {@link BufferAccessBlock} containing a reference to the desired
-	 *         page.
-	 * @see BufferAccessBlock#unfix()
-	 * @see BufferAccessBlock#downgradeExclusiveLatch()
-	 * @see BufferAccessBlock#setDirty(Lsn)
-	 */
-    public BufferAccessBlock fixExclusive(PageId pageid, boolean isNew, int pagetype,
-            int hint);
 
     /**
-	 * Fixes a page in memory, reading it from disk if necessary, and latches
-	 * the page in Update mode. A page that is latched in update mode can be
-	 * upgraded to exclusive mode by calling
-	 * {@link BufferAccessBlock#upgradeUpdateLatch()}. It is an error if the
-	 * page does not already exist in persistent storage.
-	 * 
-	 * @param pageid
-	 *            The identity of the page that should be fixed.
-	 * @param hint
-	 *            A hint to indicate which end of the LRU chain the page should
-	 *            be inserted to.
-	 * @return A {@link BufferAccessBlock} containing a reference to the desired page.
-	 * @see BufferAccessBlock#unfix()
-	 * @see BufferAccessBlock#upgradeUpdateLatch()
-	 */
-    public BufferAccessBlock fixForUpdate(PageId pageid, int hint);
-    
+     * Fixes a page in memory, reading it from disk if necessary, and latches it
+     * in exclusive mode.
+     * <p>
+     * A exclusive latch on the page may be downgraded to an update latch by
+     * calling {@link BufferAccessBlock#downgradeExclusiveLatch()}.
+     * <p>
+     * Unless the request is being made to fix a new page, the page must already
+     * exist in persistent storage. Caller must ensure that request for a new
+     * page is not made for a page already in the buffer pool.
+     * 
+     * @param pageid
+     *            The identity of the page that should be fixed.
+     * @param isNew
+     *            If this is set to true, the page will not be read from disk.
+     *            It is assumed that the requested page is new and has not been
+     *            previously saved to disk.
+     * @param pagetype
+     *            Specifies the type of page to create; only used when isNew is
+     *            set. The pagetype must be associated with a subclass of
+     *            {@link org.simpledbm.rss.api.pm.Page Page} and must have been
+     *            registered with the
+     *            {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
+     * @param hint
+     *            A hint to indicate which end of the LRU chain the page should
+     *            be inserted to. The meaning of the hint is implementation
+     *            defined.
+     * @return A {@link BufferAccessBlock} containing a reference to the desired
+     *         page.
+     * @see BufferAccessBlock#unfix()
+     * @see BufferAccessBlock#downgradeExclusiveLatch()
+     * @see BufferAccessBlock#setDirty(Lsn)
+     */
+    public BufferAccessBlock fixExclusive(PageId pageid, boolean isNew,
+            int pagetype, int hint);
+
     /**
-	 * Returns information about dirty pages in the Buffer Pool. This method is
-	 * called by the Transaction Manager during checkpoints.
-	 * <p>
-	 * For each dirty page, the Buffer Manager must return the
-	 * {@link DirtyPageInfo#getPageId() pageId} and
-	 * {@link DirtyPageInfo#getRecoveryLsn() recoveryLsn}. The recoveryLsn is
-	 * the LSN of the oldest log record that may have modified the page since it
-	 * was last written to disk.
-	 * 
-	 * @return An array of {@link DirtyPageInfo} objects containing information
-	 *         about dirty pages.
-	 */
+     * Fixes a page in memory, reading it from disk if necessary, and latches
+     * the page in Update mode. A page that is latched in update mode can be
+     * upgraded to exclusive mode by calling
+     * {@link BufferAccessBlock#upgradeUpdateLatch()}. It is an error if the
+     * page does not already exist in persistent storage.
+     * 
+     * @param pageid
+     *            The identity of the page that should be fixed.
+     * @param hint
+     *            A hint to indicate which end of the LRU chain the page should
+     *            be inserted to.
+     * @return A {@link BufferAccessBlock} containing a reference to the desired page.
+     * @see BufferAccessBlock#unfix()
+     * @see BufferAccessBlock#upgradeUpdateLatch()
+     */
+    public BufferAccessBlock fixForUpdate(PageId pageid, int hint);
+
+    /**
+     * Returns information about dirty pages in the Buffer Pool. This method is
+     * called by the Transaction Manager during checkpoints.
+     * <p>
+     * For each dirty page, the Buffer Manager must return the
+     * {@link DirtyPageInfo#getPageId() pageId} and
+     * {@link DirtyPageInfo#getRecoveryLsn() recoveryLsn}. The recoveryLsn is
+     * the LSN of the oldest log record that may have modified the page since it
+     * was last written to disk.
+     * 
+     * @return An array of {@link DirtyPageInfo} objects containing information
+     *         about dirty pages.
+     */
     public DirtyPageInfo[] getDirtyPages();
 
     /**
-	 * Synchronizes recoveryLsns of pages in the buffer pool with the
-	 * {@link org.simpledbm.rss.api.tx.TransactionManager TransactionManager}.
-	 * Typically this is called at system restart after recovery has been
-	 * completed.
-	 * <p>
-	 * The Buffer Manager must maintain for each page in the Buffer Pool a
-	 * recoveryLsn, which should point to the earliest log record that made
-	 * changes to the page since it was last written to disk.
-	 * <p>
-	 * This method is intended for use by the Transaction Manager. Since this
-	 * method is called during restart recovery only, there is no need to make
-	 * it thread safe.
-	 * 
-	 * @param dirty_pages
-	 *            List of dirty pages as determined by Transaction Manager
-	 */
-	public void updateRecoveryLsns(DirtyPageInfo[] dirty_pages);
+     * Synchronizes recoveryLsns of pages in the buffer pool with the
+     * {@link org.simpledbm.rss.api.tx.TransactionManager TransactionManager}.
+     * Typically this is called at system restart after recovery has been
+     * completed.
+     * <p>
+     * The Buffer Manager must maintain for each page in the Buffer Pool a
+     * recoveryLsn, which should point to the earliest log record that made
+     * changes to the page since it was last written to disk.
+     * <p>
+     * This method is intended for use by the Transaction Manager. Since this
+     * method is called during restart recovery only, there is no need to make
+     * it thread safe.
+     * 
+     * @param dirty_pages
+     *            List of dirty pages as determined by Transaction Manager
+     */
+    public void updateRecoveryLsns(DirtyPageInfo[] dirty_pages);
 
     /**
-	 * Marks all pages of specified container as invalid. Usually this means
-	 * that the container has been dropped.
-	 * 
-	 * @param containerId
-	 *            ID of the container that is to be invalidated
-	 */
+     * Marks all pages of specified container as invalid. Usually this means
+     * that the container has been dropped.
+     * 
+     * @param containerId
+     *            ID of the container that is to be invalidated
+     */
     void invalidateContainer(int containerId);
-    
+
     /**
      * Requests that buffers be flushed to disk. Note that this is a hint only;
      * the buffer manager is not required to honour this request.

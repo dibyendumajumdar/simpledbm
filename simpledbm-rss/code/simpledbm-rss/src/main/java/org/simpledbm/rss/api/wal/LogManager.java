@@ -19,7 +19,6 @@
  */
 package org.simpledbm.rss.api.wal;
 
-
 /**
  * The Log interface provides a mechanism for creating and reading Log Records.
  * The permitted operations are:
@@ -65,11 +64,11 @@ package org.simpledbm.rss.api.wal;
  */
 public interface LogManager {
 
-	/**
-	 * Start the LogMgr instance. This may initiate background threads.
-	 */
-	void start();
-	
+    /**
+     * Start the LogMgr instance. This may initiate background threads.
+     */
+    void start();
+
     /**
      * Inserts a new Log Record and returns the Lsn assigned to the new record.
      * The new Log Record may or may not be flushed to disk - if the caller
@@ -98,34 +97,34 @@ public interface LogManager {
     /**
      * Returns the LSN of the last Checkpoint log record.
      */
-	Lsn getCheckpointLsn();
-	
-	/**
-	 * Get the LSN of the oldest log record that may be of
-	 * interest for recovery purposes.
-	 */
-	Lsn getOldestInterestingLsn();
-	
-	/**
-	 * Sets the LSN of the latest Checkpoint log record. Log Manager must ensure 
-	 * that this is reliably recorded on disk.
-	 * @param lsn LSN of the Checkpoint log record.
-	 */
-	void setCheckpointLsn(Lsn lsn, Lsn oldestInterestingLsn);
-	
-	/**
-	 * Reads the specified LogRecord, from log buffers if possible, otherwise
-	 * from disk. Must handle the situation where a log record has been archived.
-	 * Must be thread safe.
-	 * 
-	 * @param lsn
-	 *            Lsn of the LogRecord to be read
-	 * @return LogRecord read
-	 * @throws LogException.StorageException
-	 * @throws LogException
-	 */	
-	LogRecord read(Lsn lsn);
-	
+    Lsn getCheckpointLsn();
+
+    /**
+     * Get the LSN of the oldest log record that may be of
+     * interest for recovery purposes.
+     */
+    Lsn getOldestInterestingLsn();
+
+    /**
+     * Sets the LSN of the latest Checkpoint log record. Log Manager must ensure 
+     * that this is reliably recorded on disk.
+     * @param lsn LSN of the Checkpoint log record.
+     */
+    void setCheckpointLsn(Lsn lsn, Lsn oldestInterestingLsn);
+
+    /**
+     * Reads the specified LogRecord, from log buffers if possible, otherwise
+     * from disk. Must handle the situation where a log record has been archived.
+     * Must be thread safe.
+     * 
+     * @param lsn
+     *            Lsn of the LogRecord to be read
+     * @return LogRecord read
+     * @throws LogException.StorageException
+     * @throws LogException
+     */
+    LogRecord read(Lsn lsn);
+
     /**
      * Forces all the Log Records to disk upto the specified Lsn. Will block the
      * caller until the flush is completed. Note that depending upon the
@@ -170,7 +169,7 @@ public interface LogManager {
      * @param startLsn
      */
     LogReader getBackwardScanningReader(Lsn startLsn);
-    
+
     /**
      * Closes the Log and releases any resources allocated by the Log.
      */

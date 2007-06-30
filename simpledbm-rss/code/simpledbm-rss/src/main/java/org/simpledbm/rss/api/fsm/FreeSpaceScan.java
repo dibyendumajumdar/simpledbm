@@ -29,26 +29,26 @@ package org.simpledbm.rss.api.fsm;
  * @since 09-Feb-2006
  */
 public interface FreeSpaceScan {
-	
-	/**
-	 * Determines the next page within the container that satisfies the 
-	 * search criteria. Note that the returned page may not be a data page; 
-	 * the caller must check that the page is of the appropriate type.
-	 */
-	boolean fetchNext();
 
-	/**
-	 * If fetchNext() was successful, return the page number.
-	 */
-	int getCurrentPage();
+    /**
+     * Determines the next page within the container that satisfies the 
+     * search criteria. Note that the returned page may not be a data page; 
+     * the caller must check that the page is of the appropriate type.
+     */
+    boolean fetchNext();
 
-	/**
-	 * Returns the EOF status of the scan.
-	 */
-	boolean isEof();
+    /**
+     * If fetchNext() was successful, return the page number.
+     */
+    int getCurrentPage();
 
-	/**
-	 * Closes the scan and releases any resources occupied by the scan.
-	 */
-	void close();
+    /**
+     * Returns the EOF status of the scan.
+     */
+    boolean isEof();
+
+    /**
+     * Closes the scan and releases any resources occupied by the scan.
+     */
+    void close();
 }

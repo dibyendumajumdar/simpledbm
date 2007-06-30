@@ -24,12 +24,12 @@ package org.simpledbm.rss.util;
  */
 public interface TypeSize {
 
-	final int BYTE = 1;
-	final int CHARACTER = Character.SIZE/Byte.SIZE;
-	final int SHORT = Short.SIZE/Byte.SIZE;
-	final int INTEGER = Integer.SIZE/Byte.SIZE;
-	final int LONG = Long.SIZE/Byte.SIZE;
-	final int FLOAT = Float.SIZE/Byte.SIZE;
-	final int DOUBLE = Double.SIZE/Byte.SIZE;
-	
+    final int BYTE = 1;
+    final int CHARACTER = Character.SIZE / Byte.SIZE;
+    final int SHORT = Short.SIZE / Byte.SIZE;
+    final int INTEGER = Integer.SIZE / Byte.SIZE;
+    final int LONG = Long.SIZE / Byte.SIZE;
+    final int FLOAT = Float.SIZE / Byte.SIZE;
+    final int DOUBLE = Double.SIZE / Byte.SIZE;
+
 }

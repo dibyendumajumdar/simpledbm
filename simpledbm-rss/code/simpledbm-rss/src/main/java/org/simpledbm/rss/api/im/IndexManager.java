@@ -29,39 +29,40 @@ import org.simpledbm.rss.api.tx.Transaction;
  */
 public interface IndexManager {
 
-	/**
-	 * Creates a new index with specified container name and ID. Prior to calling this
-	 * method, an exclusive lock should be obtained on the container ID to ensure that no other
-	 * transaction is simultaneously attempting to access the same container. If successful, by the
-	 * end of this call, the container should have been created and registered with the StorageManager,
-	 * and an empty instance of the index created within the container.
-	 * 
-	 * @param trx Transaction managing the creation of the index
-	 * @param name Name of the container
-	 * @param containerId ID of the new container, must be unused
-	 * @param extentSize Number of pages in each extent of the container
-	 * @param keyFactoryType Identifies the factory for creating IndexKey objects
-	 * @param locationFactoryType Identifies the factory for creating Location objects
-	 * @param unique If true, the new index will not allow duplicates keys
-	 */
-	void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique);
-	
-	/**
-	 * Obtains an existing index with specified container ID. Prior to calling this
-	 * method, a Shared lock should be obtained on the container ID to ensure that no other
-	 * transaction is simultaneously attempting to create/delete the same container. 
-	 * 
-	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
-	 */
-	// Index getIndex(int containerId);	
-	
-	/**
-	 * Obtains an existing index with specified container ID. A Shared lock is obtained on 
-	 * the container ID to ensure that no other transaction is simultaneously attempting to 
-	 * create/delete the same container. 
-	 * 
-	 * @param containerId ID of the container, must have been initialized as an Index prior to this call
-	 */
-	IndexContainer getIndex(Transaction trx, int containerId);
+    /**
+     * Creates a new index with specified container name and ID. Prior to calling this
+     * method, an exclusive lock should be obtained on the container ID to ensure that no other
+     * transaction is simultaneously attempting to access the same container. If successful, by the
+     * end of this call, the container should have been created and registered with the StorageManager,
+     * and an empty instance of the index created within the container.
+     * 
+     * @param trx Transaction managing the creation of the index
+     * @param name Name of the container
+     * @param containerId ID of the new container, must be unused
+     * @param extentSize Number of pages in each extent of the container
+     * @param keyFactoryType Identifies the factory for creating IndexKey objects
+     * @param locationFactoryType Identifies the factory for creating Location objects
+     * @param unique If true, the new index will not allow duplicates keys
+     */
+    void createIndex(Transaction trx, String name, int containerId,
+            int extentSize, int keyFactoryType, int locationFactoryType,
+            boolean unique);
+
+    /**
+     * Obtains an existing index with specified container ID. Prior to calling this
+     * method, a Shared lock should be obtained on the container ID to ensure that no other
+     * transaction is simultaneously attempting to create/delete the same container. 
+     * 
+     * @param containerId ID of the container, must have been initialized as an Index prior to this call
+     */
+    // Index getIndex(int containerId);	
+    /**
+     * Obtains an existing index with specified container ID. A Shared lock is obtained on 
+     * the container ID to ensure that no other transaction is simultaneously attempting to 
+     * create/delete the same container. 
+     * 
+     * @param containerId ID of the container, must have been initialized as an Index prior to this call
+     */
+    IndexContainer getIndex(Transaction trx, int containerId);
 
 }

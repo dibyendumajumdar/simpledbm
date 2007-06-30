@@ -33,38 +33,38 @@ import org.simpledbm.rss.api.st.Storable;
  * @since 26-Jun-2005
  */
 public final class ByteString implements Storable, Comparable<ByteString> {
-    
+
     private byte[] bytes;
-    
+
     public ByteString() {
-    	bytes = new byte[0];
+        bytes = new byte[0];
     }
 
     public ByteString(String s) {
         try {
-			bytes = s.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new RSSException(e);
-		}
+            bytes = s.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RSSException(e);
+        }
     }
-    
+
     public ByteString(byte[] bytes) {
         this.bytes = bytes.clone();
     }
-    
+
     @Override
-	public String toString() {
+    public String toString() {
         try {
-			return new String(bytes, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new RSSException(e);
-		}
+            return new String(bytes, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RSSException(e);
+        }
     }
-    
+
     public int getStoredLength() {
         return bytes.length + TypeSize.SHORT;
     }
-    
+
     public void store(ByteBuffer bb) {
         short n = 0;
         if (bytes != null) {
@@ -75,54 +75,56 @@ public final class ByteString implements Storable, Comparable<ByteString> {
             bb.put(bytes, 0, n);
         }
     }
-    
+
     public void retrieve(ByteBuffer bb) {
         short n = bb.getShort();
         if (n > 0) {
             bytes = new byte[n];
             bb.get(bytes);
-        }
-        else {
+        } else {
             bytes = new byte[0];
         }
     }
 
-	public int compareTo(ByteString o) {
-		int len = (bytes.length <= o.bytes.length) ? bytes.length : o.bytes.length;
-		for (int i = 0; i < len; i++) {
-			int result = bytes[i] - o.bytes[i];
-			if (result != 0) {
-				return result;
-			}
-		}
-		return bytes.length - o.bytes.length;
-	}
-	
-	public int length() {
-		return bytes.length;
-	}
-	
-	public byte get(int offset) {
-		return bytes[offset];
-	}
+    public int compareTo(ByteString o) {
+        int len = (bytes.length <= o.bytes.length) ? bytes.length
+                : o.bytes.length;
+        for (int i = 0; i < len; i++) {
+            int result = bytes[i] - o.bytes[i];
+            if (result != 0) {
+                return result;
+            }
+        }
+        return bytes.length - o.bytes.length;
+    }
 
-	public int hashCode() {
-		final int PRIME = 31;
-		int result = 1;
-		result = PRIME * result + Arrays.hashCode(bytes);
-		return result;
-	}
+    public int length() {
+        return bytes.length;
+    }
 
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final ByteString other = (ByteString) obj;
-		if (!Arrays.equals(bytes, other.bytes))
-			return false;
-		return true;
-	}
+    public byte get(int offset) {
+        return bytes[offset];
+    }
+
+    @Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + Arrays.hashCode(bytes);
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final ByteString other = (ByteString) obj;
+        if (!Arrays.equals(bytes, other.bytes))
+            return false;
+        return true;
+    }
 }

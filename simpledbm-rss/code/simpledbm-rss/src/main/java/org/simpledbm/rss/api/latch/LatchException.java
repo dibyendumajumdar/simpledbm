@@ -30,22 +30,22 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class LatchException extends RSSException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public LatchException() {
-		super();
-	}
+    public LatchException() {
+        super();
+    }
 
-	public LatchException(String arg0) {
-		super(arg0);
-	}
+    public LatchException(String arg0) {
+        super(arg0);
+    }
 
-	public LatchException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
+    public LatchException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
 
-	public LatchException(Throwable arg0) {
-		super(arg0);
-	}
+    public LatchException(Throwable arg0) {
+        super(arg0);
+    }
 
 }

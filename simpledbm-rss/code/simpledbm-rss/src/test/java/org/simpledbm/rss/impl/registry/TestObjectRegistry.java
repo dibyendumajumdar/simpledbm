@@ -32,49 +32,46 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
  */
 public class TestObjectRegistry extends TestCase {
 
-	public TestObjectRegistry(String arg0) {
-		super(arg0);
-	}
+    public TestObjectRegistry(String arg0) {
+        super(arg0);
+    }
 
-	public void testRegistry() throws Exception {
-		ObjectRegistry factory = new ObjectRegistryImpl();
-		Integer i = new Integer(55);
+    public void testRegistry() throws Exception {
+        ObjectRegistry factory = new ObjectRegistryImpl();
+        Integer i = new Integer(55);
         factory.registerType(1, String.class.getName());
         factory.registerSingleton(2, i);
         factory.registerSingleton(2, i);
         assertTrue(i == factory.getInstance(2));
         assertTrue(i == factory.getInstance(2));
-		Object s = factory.getInstance(1);
-		assertFalse(s == null);
-		assertTrue(s instanceof String);
-		Object s1 = factory.getInstance(1);
-		assertFalse(s1 == null);
-		assertTrue(s1 instanceof String);
-		assertFalse(s == s1);
-		try {
-			s = factory.getInstance(5);
-			fail();
-		}
-		catch (ObjectCreationException e) {
-			assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0006"));
-		}	
-		Integer x = new Integer(10);
-		try {
-			factory.registerSingleton(2, x);
-			fail();
-		}
-		catch (ObjectCreationException e) {
-			assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
-		}
+        Object s = factory.getInstance(1);
+        assertFalse(s == null);
+        assertTrue(s instanceof String);
+        Object s1 = factory.getInstance(1);
+        assertFalse(s1 == null);
+        assertTrue(s1 instanceof String);
+        assertFalse(s == s1);
+        try {
+            s = factory.getInstance(5);
+            fail();
+        } catch (ObjectCreationException e) {
+            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0006"));
+        }
+        Integer x = new Integer(10);
+        try {
+            factory.registerSingleton(2, x);
+            fail();
+        } catch (ObjectCreationException e) {
+            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
+        }
         assertTrue(i == factory.getInstance(2));
         factory.registerType(1, String.class.getName());
         try {
-        	factory.registerType(1, Integer.class.getName());
-        	fail();
+            factory.registerType(1, Integer.class.getName());
+            fail();
+        } catch (ObjectCreationException e) {
+            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
         }
-   		catch (ObjectCreationException e) {
-   			assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
-   		}
-	}
-	
+    }
+
 }

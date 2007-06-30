@@ -30,46 +30,46 @@ import org.simpledbm.rss.util.Dumpable;
  */
 public abstract class BaseLockable implements Lockable, Dumpable {
 
-	/**
-	 * Locks are divided into separate namespaces. For instance,
-	 * container locks and tuple locks are in different namespaces.
-	 * Locks in different namespaces can never conflict with each other.
-	 */
-	final byte namespace;
-	
-	protected BaseLockable(byte namespace) {
-		this.namespace = namespace;
-	}
-	
-	protected byte getNameSpace() {
-		return namespace;
-	}
+    /**
+     * Locks are divided into separate namespaces. For instance,
+     * container locks and tuple locks are in different namespaces.
+     * Locks in different namespaces can never conflict with each other.
+     */
+    final byte namespace;
 
-	@Override
-	public int hashCode() {
-		final int PRIME = 31;
-		int result = 1;
-		result = PRIME * result + namespace;
-		return result;
-	}
+    protected BaseLockable(byte namespace) {
+        this.namespace = namespace;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final BaseLockable other = (BaseLockable) obj;
-		if (namespace != other.namespace)
-			return false;
-		return true;
-	}
-	
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("ns=").append(namespace);
-		return sb;
-	}
-	
+    protected byte getNameSpace() {
+        return namespace;
+    }
+
+    @Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + namespace;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final BaseLockable other = (BaseLockable) obj;
+        if (namespace != other.namespace)
+            return false;
+        return true;
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append("ns=").append(namespace);
+        return sb;
+    }
+
 }

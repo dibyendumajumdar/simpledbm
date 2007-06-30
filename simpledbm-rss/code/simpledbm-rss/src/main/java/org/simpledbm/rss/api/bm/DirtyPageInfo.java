@@ -33,85 +33,85 @@ import org.simpledbm.rss.util.Dumpable;
  * @since 18-Aug-2005
  */
 public final class DirtyPageInfo implements Storable, Dumpable {
-   
-	private static final int SIZE = PageId.SIZE + Lsn.SIZE;
-	
-	private PageId pageId;
 
-	private Lsn recoveryLsn;
+    private static final int SIZE = PageId.SIZE + Lsn.SIZE;
 
-	private Lsn realRecoveryLsn;
+    private PageId pageId;
 
-	public DirtyPageInfo() {
-	}
-	
-	public DirtyPageInfo(PageId pageId, Lsn recoveryLsn, Lsn realRecoveryLsn) {
-		this.pageId = pageId;
-		this.recoveryLsn = recoveryLsn;
-		this.realRecoveryLsn = realRecoveryLsn;
-	}
+    private Lsn recoveryLsn;
 
-	/**
-	 * Returns the pageId of the dirty page.
-	 */
-	public PageId getPageId() {
-		return pageId;
-	}
-	
-	public void setPageId(PageId pageId) {
-		this.pageId = pageId;
-	}
+    private Lsn realRecoveryLsn;
 
-	/**
-	 * Returns the recoveryLsn assigned to the page. RecoveryLsn is
-	 * the LSN of the oldest log record that could contain changes made to
-	 * the page since it was last written out.
-	 * @return Recovery LSN
-	 */
-	public Lsn getRecoveryLsn() {
-		return recoveryLsn;
-	}
+    public DirtyPageInfo() {
+    }
 
-	public void setRecoveryLsn(Lsn lsn) {
-		recoveryLsn = lsn;
-	}
-	
-	public void setRealRecoveryLsn(Lsn lsn) {
-		realRecoveryLsn = lsn;
-	}
+    public DirtyPageInfo(PageId pageId, Lsn recoveryLsn, Lsn realRecoveryLsn) {
+        this.pageId = pageId;
+        this.recoveryLsn = recoveryLsn;
+        this.realRecoveryLsn = realRecoveryLsn;
+    }
 
-	public Lsn getRealRecoveryLsn() {
-		return realRecoveryLsn;
-	}
+    /**
+     * Returns the pageId of the dirty page.
+     */
+    public PageId getPageId() {
+        return pageId;
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("DirtyPageInfo(pageId=");
-		pageId.appendTo(sb).append(", recoLsn=");
-		recoveryLsn.appendTo(sb).append(", realRecoLsn=");
-		realRecoveryLsn.appendTo(sb).append(")");
-		return sb;
-	}
-	
-	@Override
-	public String toString() {
-		return appendTo(new StringBuilder()).toString();
-	}
+    public void setPageId(PageId pageId) {
+        this.pageId = pageId;
+    }
 
-	public void retrieve(ByteBuffer bb) {
-		pageId = new PageId();
-		pageId.retrieve(bb);
-		recoveryLsn = new Lsn();
-		recoveryLsn.retrieve(bb);
-		realRecoveryLsn = new Lsn();
-		realRecoveryLsn = recoveryLsn;
-	}
+    /**
+     * Returns the recoveryLsn assigned to the page. RecoveryLsn is
+     * the LSN of the oldest log record that could contain changes made to
+     * the page since it was last written out.
+     * @return Recovery LSN
+     */
+    public Lsn getRecoveryLsn() {
+        return recoveryLsn;
+    }
 
-	public void store(ByteBuffer bb) {
-		pageId.store(bb);
-		recoveryLsn.store(bb);
-	}
+    public void setRecoveryLsn(Lsn lsn) {
+        recoveryLsn = lsn;
+    }
 
-	public int getStoredLength() {
-		return SIZE;
-	}    
+    public void setRealRecoveryLsn(Lsn lsn) {
+        realRecoveryLsn = lsn;
+    }
+
+    public Lsn getRealRecoveryLsn() {
+        return realRecoveryLsn;
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append("DirtyPageInfo(pageId=");
+        pageId.appendTo(sb).append(", recoLsn=");
+        recoveryLsn.appendTo(sb).append(", realRecoLsn=");
+        realRecoveryLsn.appendTo(sb).append(")");
+        return sb;
+    }
+
+    @Override
+    public String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
+
+    public void retrieve(ByteBuffer bb) {
+        pageId = new PageId();
+        pageId.retrieve(bb);
+        recoveryLsn = new Lsn();
+        recoveryLsn.retrieve(bb);
+        realRecoveryLsn = new Lsn();
+        realRecoveryLsn = recoveryLsn;
+    }
+
+    public void store(ByteBuffer bb) {
+        pageId.store(bb);
+        recoveryLsn.store(bb);
+    }
+
+    public int getStoredLength() {
+        return SIZE;
+    }
 }

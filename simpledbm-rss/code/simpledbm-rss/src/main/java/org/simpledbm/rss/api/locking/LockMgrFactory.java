@@ -10,11 +10,11 @@ import java.util.Properties;
  */
 public interface LockMgrFactory {
 
-	/**
-	 * Create a new LockMgr object using specified parameters.
-	 * @param props Properties that specify parameters for the Lock Manager.
-	 * @return A LockMgr object.
-	 */
-	LockManager create(Properties props);
-	
+    /**
+     * Create a new LockMgr object using specified parameters.
+     * @param props Properties that specify parameters for the Lock Manager.
+     * @return A LockMgr object.
+     */
+    LockManager create(Properties props);
+
 }

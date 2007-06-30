@@ -28,15 +28,18 @@ public final class UniqueConstraintViolationException extends IndexException {
     private static final long serialVersionUID = 3412075595754021391L;
 
     public UniqueConstraintViolationException() {
-		super();
-	}
-	public UniqueConstraintViolationException(String message) {
-		super(message);
-	}
-	public UniqueConstraintViolationException(String message, Throwable cause) {
-		super(message, cause);
-	}
-	public UniqueConstraintViolationException(Throwable cause) {
-		super(cause);
-	}
+        super();
+    }
+
+    public UniqueConstraintViolationException(String message) {
+        super(message);
+    }
+
+    public UniqueConstraintViolationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public UniqueConstraintViolationException(Throwable cause) {
+        super(cause);
+    }
 }

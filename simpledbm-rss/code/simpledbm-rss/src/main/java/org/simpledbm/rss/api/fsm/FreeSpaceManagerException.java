@@ -26,30 +26,28 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class FreeSpaceManagerException extends RSSException {
 
-	public static class TestException extends FreeSpaceManagerException {
+    public static class TestException extends FreeSpaceManagerException {
 
-		private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
-	}
+    }
 
-	private static final long serialVersionUID = 5065727917034813269L;
+    private static final long serialVersionUID = 5065727917034813269L;
 
-	public FreeSpaceManagerException() {
-		super();
-	}
+    public FreeSpaceManagerException() {
+        super();
+    }
 
-	public FreeSpaceManagerException(String message) {
-		super(message);
-	}
+    public FreeSpaceManagerException(String message) {
+        super(message);
+    }
 
-	public FreeSpaceManagerException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public FreeSpaceManagerException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public FreeSpaceManagerException(Throwable cause) {
-		super(cause);
-	}
+    public FreeSpaceManagerException(Throwable cause) {
+        super(cause);
+    }
 
 }
-
-

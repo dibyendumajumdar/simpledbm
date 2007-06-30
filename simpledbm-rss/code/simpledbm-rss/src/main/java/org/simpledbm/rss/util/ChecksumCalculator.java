@@ -28,7 +28,7 @@ import java.util.zip.Checksum;
  * @author Dibyendu Majumdar
  */
 public final class ChecksumCalculator {
-    
+
     public static long compute(byte[] data, int start, int length) {
         Checksum checksum = new Adler32();
         checksum.update(data, start, length);

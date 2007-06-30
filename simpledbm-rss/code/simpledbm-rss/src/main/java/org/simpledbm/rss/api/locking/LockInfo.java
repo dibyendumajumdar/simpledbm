@@ -25,7 +25,7 @@ public interface LockInfo {
      * Sets the previously held lock mode.
      */
     void setPreviousMode(LockMode mode);
-    
+
     /**
      * Sets a boolean value to indicate whether this lock is also held by other transactions.
      */

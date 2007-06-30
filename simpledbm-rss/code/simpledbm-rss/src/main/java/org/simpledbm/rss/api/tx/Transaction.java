@@ -35,58 +35,60 @@ import org.simpledbm.rss.api.wal.Lsn;
  * @since 23-Aug-2005
  */
 public interface Transaction {
-	
-	/**
-	 * Returns the LSN of the most recent log record generated
-	 * for this transaction.
-	 */
-	public Lsn getLastLsn();
-	
-	/**
-	 * Generates a transaction related log record. The new log record is linked to the
-	 * transaction's list of log records.
-	 * <p>
-	 * Transaction related log records must always be associated with specific disk pages.
-	 */
-	public Lsn logInsert(Page page, Loggable logrec);
 
-	/**
-	 * Acquires a lock in specified mode, and adds it to the transaction's list of locks.
-	 * If the lock is not available, waits until the lock is granted or the lock
-	 * timeout expires. 
-	 * <p>
-	 * If the Lock Manager does not support deadlock detection, the lock timeout is
-	 * used to detect possible deadlocks.
-	 * @see TransactionManager#setLockWaitTimeout(int)
-	 * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
-	 */		
-	public void acquireLock(Lockable lockable, LockMode mode, LockDuration duration);	
+    /**
+     * Returns the LSN of the most recent log record generated
+     * for this transaction.
+     */
+    public Lsn getLastLsn();
 
-	/**
-	 * Same as {@link #acquireLock(Object, LockMode, LockDuration) acquireLock} but does not wait
-	 * for lock to be available.
-	 * @see #acquireLock(Object, LockMode, LockDuration) 
-	 */		
-	public void acquireLockNowait(Lockable lockable, LockMode mode, LockDuration duration);	
-	
-	/**
-	 * Attempts to release a lock, and if this succeeds, the lock is removed from
-	 * the transaction's list of locks. Each lock has a reference count which indicates 
-	 * how many times the lock was acquired by a transaction. This method will
-	 * decrement the reference count, and the lock will be released only when
-	 * reference count is 0.
-	 * <p>
-	 * Only SHARED or UPDATE mode locks may be released early. It is an error
-	 * to try to release lock held in any other mode.
-	 */
-	public boolean releaseLock(Lockable lockable);
-    
+    /**
+     * Generates a transaction related log record. The new log record is linked to the
+     * transaction's list of log records.
+     * <p>
+     * Transaction related log records must always be associated with specific disk pages.
+     */
+    public Lsn logInsert(Page page, Loggable logrec);
+
+    /**
+     * Acquires a lock in specified mode, and adds it to the transaction's list of locks.
+     * If the lock is not available, waits until the lock is granted or the lock
+     * timeout expires. 
+     * <p>
+     * If the Lock Manager does not support deadlock detection, the lock timeout is
+     * used to detect possible deadlocks.
+     * @see TransactionManager#setLockWaitTimeout(int)
+     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
+     */
+    public void acquireLock(Lockable lockable, LockMode mode,
+            LockDuration duration);
+
+    /**
+     * Same as {@link #acquireLock(Object, LockMode, LockDuration) acquireLock} but does not wait
+     * for lock to be available.
+     * @see #acquireLock(Object, LockMode, LockDuration) 
+     */
+    public void acquireLockNowait(Lockable lockable, LockMode mode,
+            LockDuration duration);
+
+    /**
+     * Attempts to release a lock, and if this succeeds, the lock is removed from
+     * the transaction's list of locks. Each lock has a reference count which indicates 
+     * how many times the lock was acquired by a transaction. This method will
+     * decrement the reference count, and the lock will be released only when
+     * reference count is 0.
+     * <p>
+     * Only SHARED or UPDATE mode locks may be released early. It is an error
+     * to try to release lock held in any other mode.
+     */
+    public boolean releaseLock(Lockable lockable);
+
     /**
      * Checks if the specified object is locked by this transaction.
      * @return Current Lockmode or {@link LockMode#NONE} if lock is not held by this transaction.
      */
     public LockMode hasLock(Lockable lockable);
-	
+
     /**
      * Downgrades a currently held lock to specified mode. If the downgrade
      * request is invalid, an Exception will be thrown.
@@ -95,78 +97,78 @@ public interface Transaction {
      * @param downgradeTo The target lock mode
      */
     public void downgradeLock(Lockable lockable, LockMode downgradeTo);
-    
-	/**
-	 * Schedules a post commit action. Post commit actions are used to deal with
-	 * operations that should be deferred until it is certain that the transaction 
-	 * is definitely committing. For example, dropping a Container. 
-	 * <p>
-	 * PostCommitActions are recorded in the transaction's prepare log record.
-	 * <p>
-	 * Once the transaction is committed, the pending post commit actions are
-	 * performed. It is the responsibility of the Transactional Modul to
-	 * ensure that each post commit action is logged appropriately. The
-	 * Transaction Manager must ensure that these actions are performed despite
-	 * system failures. 
-	 */
-	public void schedulePostCommitAction(PostCommitAction action);
-	
-	/**
-	 * Creates a transaction savepoint.
-	 */
-	public Savepoint createSavepoint(boolean saveCursors);
 
-	/**
-	 * Commits the transaction. All locks held by the
-	 * transaction are released.
-	 */
-	public void commit();	
+    /**
+     * Schedules a post commit action. Post commit actions are used to deal with
+     * operations that should be deferred until it is certain that the transaction 
+     * is definitely committing. For example, dropping a Container. 
+     * <p>
+     * PostCommitActions are recorded in the transaction's prepare log record.
+     * <p>
+     * Once the transaction is committed, the pending post commit actions are
+     * performed. It is the responsibility of the Transactional Modul to
+     * ensure that each post commit action is logged appropriately. The
+     * Transaction Manager must ensure that these actions are performed despite
+     * system failures. 
+     */
+    public void schedulePostCommitAction(PostCommitAction action);
 
-	/**
-	 * Rolls back a transaction upto a savepoint. Locks acquired
-	 * since the Savepoint are released. PostCommitActions queued
-	 * after the Savepoint was created are discarded.
-	 */
-	public void rollback(Savepoint sp);	
+    /**
+     * Creates a transaction savepoint.
+     */
+    public Savepoint createSavepoint(boolean saveCursors);
 
-	/**
-	 * Aborts the transaction, undoing all changes and releasing locks.
-	 */
-	public void abort();	
+    /**
+     * Commits the transaction. All locks held by the
+     * transaction are released.
+     */
+    public void commit();
 
-	/**
-	 * Starts a Nested Top Action. Will throw an exception if a nested top action is already in scope.
-	 */
-	public void startNestedTopAction();
+    /**
+     * Rolls back a transaction upto a savepoint. Locks acquired
+     * since the Savepoint are released. PostCommitActions queued
+     * after the Savepoint was created are discarded.
+     */
+    public void rollback(Savepoint sp);
 
-	/**
-	 * Completes a nested top action. Will throw an exception if there isn't a nested top action in scope.
-	 */
-	public void completeNestedTopAction();
+    /**
+     * Aborts the transaction, undoing all changes and releasing locks.
+     */
+    public void abort();
 
-	/**
-	 * Abandons a nested top action.
-	 */
-	public void resetNestedTopAction();
-	
-	/**
-	 * Returns the isolation mode set for the transaction.
-	 */
-	public IsolationMode getIsolationMode();
-	
-	/**
-	 * Sets the lock timeout value.
-	 */
-	public void setLockTimeout(int seconds);
-	
-	/**
-	 * Informs the transaction about a transactional cursor that needs to participate
-	 * in rollbacks.
-	 */
-	public void registerTransactionalCursor(TransactionalCursor cursor);
-	
-	/**
-	 * Removes a transactional cursor from this transactions set.
-	 */
-	public void unregisterTransactionalCursor(TransactionalCursor cursor);
+    /**
+     * Starts a Nested Top Action. Will throw an exception if a nested top action is already in scope.
+     */
+    public void startNestedTopAction();
+
+    /**
+     * Completes a nested top action. Will throw an exception if there isn't a nested top action in scope.
+     */
+    public void completeNestedTopAction();
+
+    /**
+     * Abandons a nested top action.
+     */
+    public void resetNestedTopAction();
+
+    /**
+     * Returns the isolation mode set for the transaction.
+     */
+    public IsolationMode getIsolationMode();
+
+    /**
+     * Sets the lock timeout value.
+     */
+    public void setLockTimeout(int seconds);
+
+    /**
+     * Informs the transaction about a transactional cursor that needs to participate
+     * in rollbacks.
+     */
+    public void registerTransactionalCursor(TransactionalCursor cursor);
+
+    /**
+     * Removes a transactional cursor from this transactions set.
+     */
+    public void unregisterTransactionalCursor(TransactionalCursor cursor);
 }

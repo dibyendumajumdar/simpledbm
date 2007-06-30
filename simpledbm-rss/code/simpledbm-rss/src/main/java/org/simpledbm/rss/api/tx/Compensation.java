@@ -35,14 +35,14 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public interface Compensation extends Redoable {
 
-	/**
-	 * Sets pointer to the next record that should be undone. 
-	 */
-	public Lsn getUndoNextLsn();
+    /**
+     * Sets pointer to the next record that should be undone. 
+     */
+    public Lsn getUndoNextLsn();
 
-	/**
-	 * Gets pointer to the next record that should be undone. 
-	 */
-	public void setUndoNextLsn(Lsn undoNextLsn);
-	
+    /**
+     * Gets pointer to the next record that should be undone. 
+     */
+    public void setUndoNextLsn(Lsn undoNextLsn);
+
 }

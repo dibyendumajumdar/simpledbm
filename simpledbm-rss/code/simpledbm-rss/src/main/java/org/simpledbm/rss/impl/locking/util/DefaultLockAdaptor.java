@@ -25,12 +25,12 @@ import org.simpledbm.rss.api.tx.Lockable;
 
 public class DefaultLockAdaptor implements LockAdaptor {
 
-	public Lockable getLockableContainerId(int containerId) {
-		return new ContainerId(containerId);
-	}
+    public Lockable getLockableContainerId(int containerId) {
+        return new ContainerId(containerId);
+    }
 
-	public Lockable getLockableContainerId(Location location) {
-		return new ContainerId(location.getContainerId());
-	}
+    public Lockable getLockableContainerId(Location location) {
+        return new ContainerId(location.getContainerId());
+    }
 
 }

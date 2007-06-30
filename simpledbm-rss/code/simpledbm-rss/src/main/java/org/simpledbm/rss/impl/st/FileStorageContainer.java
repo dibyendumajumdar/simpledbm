@@ -39,154 +39,180 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class FileStorageContainer implements StorageContainer, Dumpable {
 
-    private static final Logger log = Logger.getLogger(FileStorageContainer.class.getPackage().getName());
+    private static final Logger log = Logger
+        .getLogger(FileStorageContainer.class.getPackage().getName());
 
     private static final MessageCatalog mcat = new MessageCatalog();
-    
-	/**
-	 * The underlying file object.
-	 */
+
+    /**
+     * The underlying file object.
+     */
     private final RandomAccessFile file;
 
     private final String name;
 
     private FileLock lock;
-    
-	/**
-	 * Creates a new FileStorageContainer from an existing
-	 * file object.
-	 * @param file Existing file object.
-	 */
-	FileStorageContainer(String name, RandomAccessFile file) {
+
+    /**
+     * Creates a new FileStorageContainer from an existing
+     * file object.
+     * @param file Existing file object.
+     */
+    FileStorageContainer(String name, RandomAccessFile file) {
         this.name = name;
-		this.file = file;
-	}
+        this.file = file;
+    }
 
-	/**
-	 * Checks if the file is available for reading and writing.
-	 * @throws StorageException Thrown if the file has been closed.
-	 */
-	private void isValid() throws StorageException {
-		if (file == null || !file.getChannel().isOpen()) {
-			log.error(this.getClass().getName(), "isValid", mcat.getMessage("ES0001", name));
-			throw new StorageException(mcat.getMessage("ES0001", name));
-		}
-	}
+    /**
+     * Checks if the file is available for reading and writing.
+     * @throws StorageException Thrown if the file has been closed.
+     */
+    private void isValid() throws StorageException {
+        if (file == null || !file.getChannel().isOpen()) {
+            log.error(this.getClass().getName(), "isValid", mcat.getMessage(
+                "ES0001",
+                name));
+            throw new StorageException(mcat.getMessage("ES0001", name));
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.simpledbm.io.StorageContainer#write(long, byte[], int, int)
-	 */
-	public final synchronized void write(long position, byte[] data, int offset, int length) throws StorageException {
-		isValid();
-		try {
-			file.seek(position);
-			file.write(data, offset, length);
-		} catch (IOException e) {
-			log.error(this.getClass().getName(), "write", mcat.getMessage("ES0003", name), e);
-			throw new StorageException(mcat.getMessage("ES0003", name), e);
-		}
-	}
+    /*
+     * (non-Javadoc)
+     * @see org.simpledbm.io.StorageContainer#write(long, byte[], int, int)
+     */
+    public final synchronized void write(long position, byte[] data,
+            int offset, int length) throws StorageException {
+        isValid();
+        try {
+            file.seek(position);
+            file.write(data, offset, length);
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "write", mcat.getMessage(
+                "ES0003",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0003", name), e);
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.simpledbm.io.StorageContainer#read(long, byte[], int, int)
-	 */
-	public final synchronized int read(long position, byte[] data, int offset, int length) throws StorageException {
-		isValid();
-		int n = 0;
-		try {
-			file.seek(position);
-			n = file.read(data, offset, length);
-		} catch (IOException e) {
-			log.error(this.getClass().getName(), "read", mcat.getMessage("ES0004", name), e);
-			throw new StorageException(mcat.getMessage("ES0004", name), e);
-		}
-		return n;
-	}
+    /*
+     * (non-Javadoc)
+     * @see org.simpledbm.io.StorageContainer#read(long, byte[], int, int)
+     */
+    public final synchronized int read(long position, byte[] data, int offset,
+            int length) throws StorageException {
+        isValid();
+        int n = 0;
+        try {
+            file.seek(position);
+            n = file.read(data, offset, length);
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "read", mcat.getMessage(
+                "ES0004",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0004", name), e);
+        }
+        return n;
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.simpledbm.io.StorageContainer#flush()
-	 */
-	public final synchronized void flush() throws StorageException {
-		isValid();
-		try {
-			file.getChannel().force(true);
-		} catch (IOException e) {
-			log.error(this.getClass().getName(), "flush", mcat.getMessage("ES0005", name), e);
-			throw new StorageException(mcat.getMessage("ES0005", name), e);
-		}
-	}
+    /*
+     * (non-Javadoc)
+     * @see org.simpledbm.io.StorageContainer#flush()
+     */
+    public final synchronized void flush() throws StorageException {
+        isValid();
+        try {
+            file.getChannel().force(true);
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "flush", mcat.getMessage(
+                "ES0005",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0005", name), e);
+        }
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * @see org.simpledbm.io.StorageContainer#close()
-	 */
-	public final synchronized void close() throws StorageException {
-		isValid();
-		try {
-			file.close();
-		} catch (IOException e) {
-			log.error(this.getClass().getName(), "close", mcat.getMessage("ES0006", name), e);
-			throw new StorageException(mcat.getMessage("ES0006", name), e);
-		}
-	}
-    
-	public final synchronized void lock() {
-		isValid();
-		if (lock != null) {
-			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0007", name));
-			throw new StorageException(mcat.getMessage("ES0007", name));
-		}
-		try {
-			FileChannel channel = file.getChannel();
-			try {
-				lock = channel.tryLock();
-			}
-			catch (OverlappingFileLockException e) {
-				// ignore this error
-			}
-			if (lock == null) {
-				log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0008", name));
-				throw new StorageException(mcat.getMessage("ES0008", name));
-			}
-		}
-		catch (IOException e) {
-			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0008", name), e);
-			throw new StorageException(mcat.getMessage("ES0008", name), e);
-		}
-	}
+    /*
+     * (non-Javadoc)
+     * @see org.simpledbm.io.StorageContainer#close()
+     */
+    public final synchronized void close() throws StorageException {
+        isValid();
+        try {
+            file.close();
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "close", mcat.getMessage(
+                "ES0006",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0006", name), e);
+        }
+    }
 
-	public final synchronized void unlock() {
-		isValid();
-		if (lock == null) {
-			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0009", name));
-			throw new StorageException(mcat.getMessage("ES0009", name));
-		}
-		try {
-			lock.release();
-			lock = null;
-		}
-		catch (IOException e) {
-			log.error(this.getClass().getName(), "lock", mcat.getMessage("ES0010", name), e);
-			throw new StorageException(mcat.getMessage("ES0010", name), e);
-		}
-	}
-	
+    public final synchronized void lock() {
+        isValid();
+        if (lock != null) {
+            log.error(this.getClass().getName(), "lock", mcat.getMessage(
+                "ES0007",
+                name));
+            throw new StorageException(mcat.getMessage("ES0007", name));
+        }
+        try {
+            FileChannel channel = file.getChannel();
+            try {
+                lock = channel.tryLock();
+            } catch (OverlappingFileLockException e) {
+                // ignore this error
+            }
+            if (lock == null) {
+                log.error(this.getClass().getName(), "lock", mcat.getMessage(
+                    "ES0008",
+                    name));
+                throw new StorageException(mcat.getMessage("ES0008", name));
+            }
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "lock", mcat.getMessage(
+                "ES0008",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0008", name), e);
+        }
+    }
+
+    public final synchronized void unlock() {
+        isValid();
+        if (lock == null) {
+            log.error(this.getClass().getName(), "lock", mcat.getMessage(
+                "ES0009",
+                name));
+            throw new StorageException(mcat.getMessage("ES0009", name));
+        }
+        try {
+            lock.release();
+            lock = null;
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "lock", mcat.getMessage(
+                "ES0010",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0010", name), e);
+        }
+    }
+
     public final String getName() {
         return name;
     }
-    
+
     public final StringBuilder appendTo(StringBuilder sb) {
-    	sb.append("FileStorageContainer(name=").append(name).append(", file=").append(file).append(")");
-    	return sb;
+        sb
+            .append("FileStorageContainer(name=")
+            .append(name)
+            .append(", file=")
+            .append(file)
+            .append(")");
+        return sb;
     }
-    
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
+    @Override
     public final String toString() {
-    	return appendTo(new StringBuilder()).toString();
+        return appendTo(new StringBuilder()).toString();
     }
 }

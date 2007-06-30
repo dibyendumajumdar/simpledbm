@@ -19,7 +19,6 @@
  */
 package org.simpledbm.rss.api.loc;
 
-
 /**
  * A Factory for creating Location objects.
  * 
@@ -28,9 +27,9 @@ package org.simpledbm.rss.api.loc;
  */
 public interface LocationFactory {
 
-	/**
-	 * Creates a new Location object.
-	 */
-	Location newLocation();
-	
+    /**
+     * Creates a new Location object.
+     */
+    Location newLocation();
+
 }

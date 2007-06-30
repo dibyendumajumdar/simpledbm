@@ -33,117 +33,118 @@ import org.simpledbm.rss.api.st.Storable;
  */
 public abstract class SlottedPage extends Page {
 
-	/**
-	 * Returns the total space available for slot data, including the 
-	 * slot table.
-	 * @see #getFreeSpace()
-	 */
-	public abstract int getSpace();	
+    /**
+     * Returns the total space available for slot data, including the 
+     * slot table.
+     * @see #getFreeSpace()
+     */
+    public abstract int getSpace();
 
-	/**
-	 * Get the total length or size of a slot.
-	 * This includes the data as well as the space taken by
-	 * the entry in the slot table.
-	 */
-	public abstract int getSlotLength(int slotNo);	
-	
-	/**
-	 * Get the length of the data contained inside a slot.
-	 */
-	public abstract int getDataLength(int slotNo);	
+    /**
+     * Get the total length or size of a slot.
+     * This includes the data as well as the space taken by
+     * the entry in the slot table.
+     */
+    public abstract int getSlotLength(int slotNo);
 
-	/**
-	 * Check if a particular slot has been deleted.
-	 * @see #delete(int)
-	 */
-	public abstract boolean isSlotDeleted(int slotNo);	
-	
-	/**
-	 * Inserts a new slot at first available position. The new slot will 
-	 * be inserted into the first available deleted slot, or if there are not any
-	 * deleted slots, it will be added to the end.
-	 */
-	public abstract boolean insert(Storable item);	
-	
-	/**
-	 * Inserts slot at specific position. If replaceMode is false,
-	 * existing slots will be shifted to the right. If replaceMode is 
-	 * false, the new slot will replace existing slot.
-	 */
-	public abstract boolean insertAt(int slotNumber, Storable item, boolean replaceMode);
-	
-	/**
-	 * Marks a slot as deleted and release data occupied by the slot. 
-	 * This frees up space but does not remove the slot entry in the slot table.
-	 * A deleted slot can be reused when inserting new slots.
-	 */
-	public abstract void delete(int slotNumber);
-	
-	/**
-	 * Removes a slot physically from the page. Both data and the slot entry in
-	 * the slot table are removed. The number of slots in the page is decreased by one.
-	 * Note that existing slots may be shifted as a result.
-	 */
-	public abstract void purge(int slotNumber);
-	
-	/**
-	 * Returns slot data. The client must supply the correct type of
-	 * Storable item.
-	 */
-	public abstract Storable get(int slotNumber, Storable item); 
-	
-	/**
-	 * Sets slot specific flags.
-	 */
-	public abstract void setFlags(int slotNumber, short flags);
-	
-	/**
-	 * Gets slot specific flags.
-	 */
-	public abstract int getFlags(int slotNumber);
+    /**
+     * Get the length of the data contained inside a slot.
+     */
+    public abstract int getDataLength(int slotNo);
 
-	/**
-	 * Gets page level flags.
-	 */
-	public abstract short getFlags();
+    /**
+     * Check if a particular slot has been deleted.
+     * @see #delete(int)
+     */
+    public abstract boolean isSlotDeleted(int slotNo);
 
-	/**
-	 * Sets page level flags.
-	 */
-	public abstract void setFlags(short flags);	
+    /**
+     * Inserts a new slot at first available position. The new slot will 
+     * be inserted into the first available deleted slot, or if there are not any
+     * deleted slots, it will be added to the end.
+     */
+    public abstract boolean insert(Storable item);
 
-	/**
-	 * Gets the amount of free space available in the page for inserting
-	 * new slots.
-	 */
-	public abstract int getFreeSpace();	
+    /**
+     * Inserts slot at specific position. If replaceMode is false,
+     * existing slots will be shifted to the right. If replaceMode is 
+     * false, the new slot will replace existing slot.
+     */
+    public abstract boolean insertAt(int slotNumber, Storable item,
+            boolean replaceMode);
 
-	/**
-	 * Gets the number of slots present in the page. Note that this
-	 * includes deleted slots as well.
-	 */
-	public abstract int getNumberOfSlots();
+    /**
+     * Marks a slot as deleted and release data occupied by the slot. 
+     * This frees up space but does not remove the slot entry in the slot table.
+     * A deleted slot can be reused when inserting new slots.
+     */
+    public abstract void delete(int slotNumber);
 
-	/**
-	 * Gets the space map page responsible for maintaining space allocation
-	 * data for this page.
-	 */
-	public abstract int getSpaceMapPageNumber();
-	
-	/**
-	 * Sets the space map page responsible for maintaining space allocation
-	 * data for this page.
-	 */
-	public abstract void setSpaceMapPageNumber(int spaceMapPageNumber);	
+    /**
+     * Removes a slot physically from the page. Both data and the slot entry in
+     * the slot table are removed. The number of slots in the page is decreased by one.
+     * Note that existing slots may be shifted as a result.
+     */
+    public abstract void purge(int slotNumber);
 
-	/**
-	 * Dumps contents of the page.
-	 */
-	public abstract void dump();
+    /**
+     * Returns slot data. The client must supply the correct type of
+     * Storable item.
+     */
+    public abstract Storable get(int slotNumber, Storable item);
+
+    /**
+     * Sets slot specific flags.
+     */
+    public abstract void setFlags(int slotNumber, short flags);
+
+    /**
+     * Gets slot specific flags.
+     */
+    public abstract int getFlags(int slotNumber);
+
+    /**
+     * Gets page level flags.
+     */
+    public abstract short getFlags();
+
+    /**
+     * Sets page level flags.
+     */
+    public abstract void setFlags(short flags);
+
+    /**
+     * Gets the amount of free space available in the page for inserting
+     * new slots.
+     */
+    public abstract int getFreeSpace();
+
+    /**
+     * Gets the number of slots present in the page. Note that this
+     * includes deleted slots as well.
+     */
+    public abstract int getNumberOfSlots();
+
+    /**
+     * Gets the space map page responsible for maintaining space allocation
+     * data for this page.
+     */
+    public abstract int getSpaceMapPageNumber();
+
+    /**
+     * Sets the space map page responsible for maintaining space allocation
+     * data for this page.
+     */
+    public abstract void setSpaceMapPageNumber(int spaceMapPageNumber);
+
+    /**
+     * Dumps contents of the page.
+     */
+    public abstract void dump();
 
     /**
      * Returns the overhead of a single slot.
      */
     public abstract int getSlotOverhead();
-    
+
 }

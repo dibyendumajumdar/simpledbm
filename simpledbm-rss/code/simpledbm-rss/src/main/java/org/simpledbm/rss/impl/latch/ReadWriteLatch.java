@@ -33,88 +33,88 @@ import org.simpledbm.rss.api.latch.Latch;
  */
 public final class ReadWriteLatch implements Latch {
 
-	private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-	private final ReadLock rlock = lock.readLock();
-	private final WriteLock wlock = lock.writeLock();
-	
-	public ReadWriteLatch() {
-	}
-	
-	public boolean tryExclusiveLock() {
-		return wlock.tryLock();
-	}
+    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReadLock rlock = lock.readLock();
+    private final WriteLock wlock = lock.writeLock();
 
-	public void exclusiveLock() {
-		wlock.lock();
-	}
+    public ReadWriteLatch() {
+    }
 
-	public void exclusiveLockInterruptibly() throws InterruptedException {
-		wlock.lockInterruptibly();
-	}
+    public boolean tryExclusiveLock() {
+        return wlock.tryLock();
+    }
 
-	public void unlockExclusive() {
-		wlock.unlock();
-	}
+    public void exclusiveLock() {
+        wlock.lock();
+    }
 
-	public boolean tryUpdateLock() {
-		return wlock.tryLock();
-	}
+    public void exclusiveLockInterruptibly() throws InterruptedException {
+        wlock.lockInterruptibly();
+    }
 
-	public void updateLock() {
-		wlock.lock();
-	}
+    public void unlockExclusive() {
+        wlock.unlock();
+    }
 
-	public void updateLockInterruptibly() throws InterruptedException {
-		wlock.lockInterruptibly();
-	}
+    public boolean tryUpdateLock() {
+        return wlock.tryLock();
+    }
 
-	public void unlockUpdate() {
-		wlock.unlock();
-	}
+    public void updateLock() {
+        wlock.lock();
+    }
 
-	public boolean trySharedLock() {
-		return rlock.tryLock();
-	}
+    public void updateLockInterruptibly() throws InterruptedException {
+        wlock.lockInterruptibly();
+    }
 
-	public void sharedLock() {
-		rlock.lock();
-	}
+    public void unlockUpdate() {
+        wlock.unlock();
+    }
 
-	public void sharedLockInterruptibly() throws InterruptedException {
-		rlock.lockInterruptibly();
-	}
+    public boolean trySharedLock() {
+        return rlock.tryLock();
+    }
 
-	public void unlockShared() {
-		rlock.unlock();
-	}
+    public void sharedLock() {
+        rlock.lock();
+    }
 
-	public boolean tryUpgradeUpdateLock() {
-		assert lock.isWriteLocked();
-		return true;
-	}
+    public void sharedLockInterruptibly() throws InterruptedException {
+        rlock.lockInterruptibly();
+    }
 
-	public void upgradeUpdateLock() {
-		assert lock.isWriteLocked();
-	}
+    public void unlockShared() {
+        rlock.unlock();
+    }
 
-	public void upgradeUpdateLockInterruptibly() {
-		assert lock.isWriteLocked();
-	}
+    public boolean tryUpgradeUpdateLock() {
+        assert lock.isWriteLocked();
+        return true;
+    }
 
-	public void downgradeExclusiveLock() {
-		assert lock.isWriteLocked();
-	}
+    public void upgradeUpdateLock() {
+        assert lock.isWriteLocked();
+    }
 
-	public void downgradeUpdateLock() {
-		rlock.lock();
-		wlock.unlock();
-	}
+    public void upgradeUpdateLockInterruptibly() {
+        assert lock.isWriteLocked();
+    }
 
-	public boolean isLatchedExclusively() {
-		return lock.isWriteLocked();
-	}
-	
-	public boolean isLatchedForUpdate() {
-		return lock.isWriteLocked();
-	}
+    public void downgradeExclusiveLock() {
+        assert lock.isWriteLocked();
+    }
+
+    public void downgradeUpdateLock() {
+        rlock.lock();
+        wlock.unlock();
+    }
+
+    public boolean isLatchedExclusively() {
+        return lock.isWriteLocked();
+    }
+
+    public boolean isLatchedForUpdate() {
+        return lock.isWriteLocked();
+    }
 }

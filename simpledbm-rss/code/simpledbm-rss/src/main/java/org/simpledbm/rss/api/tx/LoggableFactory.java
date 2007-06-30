@@ -31,12 +31,12 @@ import org.simpledbm.rss.api.wal.LogRecord;
  */
 public interface LoggableFactory {
 
-	/**
-	 * Instantiate a Loggable object using type information stored in the
-	 * ByteBuffer. The typecode must be present in the first two bytes (as a short)
+    /**
+     * Instantiate a Loggable object using type information stored in the
+     * ByteBuffer. The typecode must be present in the first two bytes (as a short)
      * of the buffer.
-	 */
-	public Loggable getInstance(ByteBuffer bb);
+     */
+    public Loggable getInstance(ByteBuffer bb);
 
     /**
      * Create a new Loggable object of the specified type. The Loggable
@@ -45,10 +45,10 @@ public interface LoggableFactory {
     public Loggable getInstance(int moduleId, int typecode);
 
     /**
-	 * Create an instance of Loggable object from the raw log data.
-	 * The first two bytes in the data must contain the typecode
+     * Create an instance of Loggable object from the raw log data.
+     * The first two bytes in the data must contain the typecode
      * of the Loggable object.
-	 */
-	public Loggable getInstance(LogRecord logRec);
-	
+     */
+    public Loggable getInstance(LogRecord logRec);
+
 }

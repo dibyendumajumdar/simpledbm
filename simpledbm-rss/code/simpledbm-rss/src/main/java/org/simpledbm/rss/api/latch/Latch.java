@@ -51,101 +51,100 @@ package org.simpledbm.rss.api.latch;
  */
 public interface Latch {
 
-	/**
-	 * Conditional request for exclusive latch.
-	 * @return false if latch cannot be acquired.
-	 */
-	public boolean tryExclusiveLock();
+    /**
+     * Conditional request for exclusive latch.
+     * @return false if latch cannot be acquired.
+     */
+    public boolean tryExclusiveLock();
 
-	/**
-	 * Unconditional request for exclusive latch.
-	 */
-	public void exclusiveLock();
+    /**
+     * Unconditional request for exclusive latch.
+     */
+    public void exclusiveLock();
 
-	/**
-	 * Unconditional request for exclusive latch.
-	 * Allows interruptions.
-	 */
-	public void exclusiveLockInterruptibly() throws InterruptedException;
-	
-	/**
-	 * Unlock an exclusive lock request.
-	 */
-	public void unlockExclusive();
-	
-	/**
-	 * Conditional request for Update latch. 
-	 * @return false if latch cannot be acquired.
-	 */
-	public boolean tryUpdateLock();
+    /**
+     * Unconditional request for exclusive latch.
+     * Allows interruptions.
+     */
+    public void exclusiveLockInterruptibly() throws InterruptedException;
 
-	/**
-	 * Unconditional request for Update latch. 
-	 */
-	public void updateLock();
+    /**
+     * Unlock an exclusive lock request.
+     */
+    public void unlockExclusive();
 
-	/**
-	 * Unconditional request for Update latch.
-	 * Allows interruptions.
-	 */
-	public void updateLockInterruptibly() throws InterruptedException;
+    /**
+     * Conditional request for Update latch. 
+     * @return false if latch cannot be acquired.
+     */
+    public boolean tryUpdateLock();
 
-	/**
-	 * Unlock an update lock.
-	 */
-	public void unlockUpdate();
-	
-	/**
-	 * Conditional request for Shared latch.
-	 * @return  false if latch cannot be acquired.
-	 */
-	public boolean trySharedLock();
+    /**
+     * Unconditional request for Update latch. 
+     */
+    public void updateLock();
 
-	/**
-	 * Unconditional request for Shared latch.
-	 */
-	public void sharedLock();
+    /**
+     * Unconditional request for Update latch.
+     * Allows interruptions.
+     */
+    public void updateLockInterruptibly() throws InterruptedException;
 
-	/**
-	 * Unconditional request for Shared latch.
-	 * Allows interruptions.
-	 */
-	public void sharedLockInterruptibly() throws InterruptedException;
+    /**
+     * Unlock an update lock.
+     */
+    public void unlockUpdate();
 
-	/**
-	 * Unlock shared lock.
-	 */
-	public void unlockShared();
-	
-	/**
-	 * Conditional attempt to upgrade an Update latch to Exclusive latch.
-	 * @return false if latch cannot be upgraded.
-	 */
-	public boolean tryUpgradeUpdateLock();
+    /**
+     * Conditional request for Shared latch.
+     * @return  false if latch cannot be acquired.
+     */
+    public boolean trySharedLock();
 
-	/**
-	 * Unconditional attempt to upgrade an Update latch to Exclusive latch.
-	 */
-	public void upgradeUpdateLock();
+    /**
+     * Unconditional request for Shared latch.
+     */
+    public void sharedLock();
 
-	/**
-	 * Unconditional attempt to upgrade an Update latch to Exclusive latch.
-	 * Allows interruptions.
-	 */
-	public void upgradeUpdateLockInterruptibly() throws InterruptedException;
-	
-	/**
-	 * Downgrade Exclusive latch to Update latch.
-	 */
-	public void downgradeExclusiveLock();
+    /**
+     * Unconditional request for Shared latch.
+     * Allows interruptions.
+     */
+    public void sharedLockInterruptibly() throws InterruptedException;
 
-	/**
-	 * Downgrade Update latch to Shared latch.
-	 */
-	public void downgradeUpdateLock();
+    /**
+     * Unlock shared lock.
+     */
+    public void unlockShared();
 
-	
-	public boolean isLatchedExclusively();
-	
-	public boolean isLatchedForUpdate();
+    /**
+     * Conditional attempt to upgrade an Update latch to Exclusive latch.
+     * @return false if latch cannot be upgraded.
+     */
+    public boolean tryUpgradeUpdateLock();
+
+    /**
+     * Unconditional attempt to upgrade an Update latch to Exclusive latch.
+     */
+    public void upgradeUpdateLock();
+
+    /**
+     * Unconditional attempt to upgrade an Update latch to Exclusive latch.
+     * Allows interruptions.
+     */
+    public void upgradeUpdateLockInterruptibly() throws InterruptedException;
+
+    /**
+     * Downgrade Exclusive latch to Update latch.
+     */
+    public void downgradeExclusiveLock();
+
+    /**
+     * Downgrade Update latch to Shared latch.
+     */
+    public void downgradeUpdateLock();
+
+    public boolean isLatchedExclusively();
+
+    public boolean isLatchedForUpdate();
 }

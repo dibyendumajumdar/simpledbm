@@ -22,16 +22,16 @@ package org.simpledbm.rss.impl.locking.util;
 import org.simpledbm.rss.api.tx.BaseLockable;
 
 class ContainerId extends BaseLockable {
-	
-	final int containerId;
-	
-	public ContainerId(int containerId) {
-		super((byte)'C');
-		this.containerId = containerId;
-	}
 
-	public int getContainerId() {
-		return containerId;
-	}
-	
+    final int containerId;
+
+    public ContainerId(int containerId) {
+        super((byte) 'C');
+        this.containerId = containerId;
+    }
+
+    public int getContainerId() {
+        return containerId;
+    }
+
 }

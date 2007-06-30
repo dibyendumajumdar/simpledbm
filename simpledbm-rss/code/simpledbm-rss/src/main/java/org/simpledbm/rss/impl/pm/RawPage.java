@@ -29,13 +29,13 @@ import org.simpledbm.rss.api.pm.Page;
  */
 public final class RawPage extends Page {
 
-	public RawPage() {
-		super();
-	}
+    public RawPage() {
+        super();
+    }
 
-	@Override
-	public final void init() {
-		// does nothing
-	}
+    @Override
+    public final void init() {
+        // does nothing
+    }
 
 }

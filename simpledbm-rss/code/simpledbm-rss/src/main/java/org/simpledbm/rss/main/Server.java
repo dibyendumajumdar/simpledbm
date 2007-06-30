@@ -79,13 +79,15 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public class Server {
 
-	private static String LOG_CLASS_NAME = Server.class.getName();
-	private static Logger log = Logger.getLogger(Server.class.getPackage().getName());
-	
-	private static final String VIRTUAL_TABLE = "_internal/dual";
-	private static final String LOCK_TABLE = "_internal/lock";
-	private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
-	
+    private static String LOG_CLASS_NAME = Server.class.getName();
+    private static Logger log = Logger.getLogger(Server.class
+        .getPackage()
+        .getName());
+
+    private static final String VIRTUAL_TABLE = "_internal/dual";
+    private static final String LOCK_TABLE = "_internal/lock";
+    private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
+
     final private ObjectRegistry objectRegistry;
     final private StorageContainerFactory storageFactory;
     final private StorageManager storageManager;
@@ -97,250 +99,285 @@ public class Server {
     final private BufferManager bufferManager;
     final private LoggableFactory loggableFactory;
     final private TransactionalModuleRegistry moduleRegistry;
-	final private TransactionManager transactionManager;
+    final private TransactionManager transactionManager;
     final private FreeSpaceManager spaceManager;
     final private IndexManager indexManager;
     final private TupleManager tupleManager;
-    
+
     final private static MessageCatalog mcat = new MessageCatalog();
     private StorageContainer lock;
-    
+
     private boolean started = false;
-	
+
     private void assertNotStarted() {
-    	if (started) {
-    		throw new RSSException(mcat.getMessage("EV0003"));
-    	}
+        if (started) {
+            throw new RSSException(mcat.getMessage("EV0003"));
+        }
     }
 
     private void assertStarted() {
-    	if (!started) {
-    		throw new RSSException(mcat.getMessage("EV0004"));
-    	}
+        if (!started) {
+            throw new RSSException(mcat.getMessage("EV0004"));
+        }
     }
- 
-	/**
-	 * Creates a new RSS Server instance. An RSS Server instance contains at least a 
-	 * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
-	 * any existing database on the same path, hence caller needs to be sure that the
-	 * intention is to create a new database.  
-	 * @see LogFactory#createLog(Properties)
-	 * @see LogFactory
-	 */
-	public static void create(Properties props) {
-		// TODO Need to ensure that we do not overwrite an existing database without warning
-		Server server = new Server(props);
-		final LogFactory logFactory = new LogFactoryImpl();
-		logFactory.createLog(server.storageFactory, props);
-		// SimpleDBM components expect a virtual container to exist with
-		// a container ID of 0. This container must have at least one page.
-		server.storageFactory.create(LOCK_TABLE).close();
-		StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
-		server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
-		Page page = server.pageFactory.getInstance(server.pageFactory.getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
-		server.pageFactory.store(page);
-		// We start the server so that a checkpoint can be taken which will
-		// ensure that the VIRTUAL_TABLE is automatically opened at system startup.
-		server.start();
-		server.shutdown();
-	}
 
-	/**
-	 * Initializes a new RSS Server instance.
-	 * @see #start()
-	 * @see #shutdown()
-	 * @param props Properties that define various parameters for the system
-	 */
-	public Server(Properties props) {
+    /**
+     * Creates a new RSS Server instance. An RSS Server instance contains at least a 
+     * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
+     * any existing database on the same path, hence caller needs to be sure that the
+     * intention is to create a new database.  
+     * @see LogFactory#createLog(Properties)
+     * @see LogFactory
+     */
+    public static void create(Properties props) {
+        // TODO Need to ensure that we do not overwrite an existing database without warning
+        Server server = new Server(props);
+        final LogFactory logFactory = new LogFactoryImpl();
+        logFactory.createLog(server.storageFactory, props);
+        // SimpleDBM components expect a virtual container to exist with
+        // a container ID of 0. This container must have at least one page.
+        server.storageFactory.create(LOCK_TABLE).close();
+        StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
+        server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
+        Page page = server.pageFactory.getInstance(server.pageFactory
+            .getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
+        server.pageFactory.store(page);
+        // We start the server so that a checkpoint can be taken which will
+        // ensure that the VIRTUAL_TABLE is automatically opened at system startup.
+        server.start();
+        server.shutdown();
+    }
 
-		String logProperties = props.getProperty("logging.properties.file", "classpath:logging.properties");
-		Logger.configure(logProperties);
-		
-		final LogFactory logFactory = new LogFactoryImpl();
-		final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
-		
-		objectRegistry = new ObjectRegistryImpl();
-		storageFactory = new FileStorageContainerFactory(props);
-		storageManager = new StorageManagerImpl();
-		latchFactory = new LatchFactoryImpl();
-		pageFactory = new PageFactoryImpl(objectRegistry, storageManager, latchFactory);
-		slottedPageManager = new SlottedPageManagerImpl(objectRegistry);
-		loggableFactory = new LoggableFactoryImpl(objectRegistry);
-		moduleRegistry = new TransactionalModuleRegistryImpl();
-		lockManager = lockMgrFactory.create(props);
-		logManager = logFactory.getLog(storageFactory, props);
-		bufferManager = new BufferManagerImpl(logManager, pageFactory, props);
-		transactionManager = new TransactionManagerImpl(logManager, storageFactory, storageManager, bufferManager, lockManager, loggableFactory, latchFactory, objectRegistry, moduleRegistry);
-		spaceManager = new FreeSpaceManagerImpl(objectRegistry, pageFactory, logManager, bufferManager, storageManager, storageFactory, loggableFactory, transactionManager, moduleRegistry);
-		indexManager = new BTreeIndexManagerImpl(objectRegistry, loggableFactory, spaceManager, bufferManager, slottedPageManager, moduleRegistry);
-        tupleManager = new TupleManagerImpl(objectRegistry, loggableFactory, spaceManager, bufferManager, slottedPageManager, moduleRegistry, pageFactory);
-	}
+    /**
+     * Initializes a new RSS Server instance.
+     * @see #start()
+     * @see #shutdown()
+     * @param props Properties that define various parameters for the system
+     */
+    public Server(Properties props) {
 
-	/**
-	 * Starts the Server instance. This results in following actions:
-	 * <ol>
-	 * <li>The Lock Manager is started. This enables background thread for deadlock detection.</li>
-	 * <li>The Log instance is opened. This starts the background threads that manage log writes and log archiving.</li>
-	 * <li>The Buffer Manager instance is started. This starts up the background Buffer Writer thread.</li>
-	 * <li>The Transaction Manager is started. This initiates restart recovery, and also starts the
-	 *     Checkpoint thread.</li>
-	 * </ol>
-	 * <p>
-	 * To prevent two server instances running concurrently on the same path, a lock file is used.
-	 * If a server is already running on the specified path, the start() will fail with an exception.
-	 * 
-	 * @see LockManager#start()
-	 * @see LogManager#start()
-	 * @see BufferManager#start()
-	 * @see TransactionManager#start()
-	 */
-	public synchronized void start() {
-		assertNotStarted();
-		boolean lockObtained = false;
-		/*
-		 * We have to carefully handle locks - so that
-		 * a) We do not overwrite the exiting lock object in case server has been erroneously started second time
-		 * b) We do not leave file handle open if the lock fails
-		 */
-		StorageContainer lock = null;
-		try {
-			lock = storageFactory.open(LOCK_TABLE);
-			lock.lock();
-			lockObtained = true;
-		} catch (StorageException e) {
-			log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e.getMessage());
-			throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
-		}
-		finally {
-			if (!lockObtained) {
-				if (lock != null) {
-					lock.close();
-				}
-			}
-			else {
-				this.lock = lock;
-			}
-		}
-		lockManager.start();
-		logManager.start();
-		bufferManager.start();
-		transactionManager.start();
-		log.info(LOG_CLASS_NAME, "start", mcat.getMessage("IV0001"));
-		started = true;
-	}
-	
-	/**
-	 * Shuts down the RSS Server instance. This results in following actions.
-	 * <ol>
-	 * <li>The Transaction Manager is shutdown.</li>
-	 * <li>The Buffer Manager is shutdown.</li>
-	 * <li>The Log instance is shutdown.</li>
-	 * <li>The Storage Manager instance is shutdown.</li>
-	 * <li>The Lock Manager is shutdown.</li>
-	 * </ol>
-	 * 
-	 * @see TransactionManager#shutdown()
-	 * @see BufferManager#shutdown()
-	 * @see LogManager#shutdown()
-	 * @see StorageManager#shutdown()
-	 */
-	public synchronized void shutdown() {
-		assertStarted();
-		transactionManager.shutdown();
-		bufferManager.shutdown();
-		logManager.shutdown();
-		storageManager.shutdown();
-		lockManager.shutdown();
-		lock.unlock();
-		lock.close();
-		log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
-	}
+        String logProperties = props.getProperty(
+            "logging.properties.file",
+            "classpath:logging.properties");
+        Logger.configure(logProperties);
 
-	public synchronized  final IndexManager getIndexManager() {
-		assertStarted();
-		return indexManager;
-	}
+        final LogFactory logFactory = new LogFactoryImpl();
+        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
 
-	public synchronized  final BufferManager getBufferManager() {
-		assertStarted();
-		return bufferManager;
-	}
+        objectRegistry = new ObjectRegistryImpl();
+        storageFactory = new FileStorageContainerFactory(props);
+        storageManager = new StorageManagerImpl();
+        latchFactory = new LatchFactoryImpl();
+        pageFactory = new PageFactoryImpl(
+            objectRegistry,
+            storageManager,
+            latchFactory);
+        slottedPageManager = new SlottedPageManagerImpl(objectRegistry);
+        loggableFactory = new LoggableFactoryImpl(objectRegistry);
+        moduleRegistry = new TransactionalModuleRegistryImpl();
+        lockManager = lockMgrFactory.create(props);
+        logManager = logFactory.getLog(storageFactory, props);
+        bufferManager = new BufferManagerImpl(logManager, pageFactory, props);
+        transactionManager = new TransactionManagerImpl(
+            logManager,
+            storageFactory,
+            storageManager,
+            bufferManager,
+            lockManager,
+            loggableFactory,
+            latchFactory,
+            objectRegistry,
+            moduleRegistry);
+        spaceManager = new FreeSpaceManagerImpl(
+            objectRegistry,
+            pageFactory,
+            logManager,
+            bufferManager,
+            storageManager,
+            storageFactory,
+            loggableFactory,
+            transactionManager,
+            moduleRegistry);
+        indexManager = new BTreeIndexManagerImpl(
+            objectRegistry,
+            loggableFactory,
+            spaceManager,
+            bufferManager,
+            slottedPageManager,
+            moduleRegistry);
+        tupleManager = new TupleManagerImpl(
+            objectRegistry,
+            loggableFactory,
+            spaceManager,
+            bufferManager,
+            slottedPageManager,
+            moduleRegistry,
+            pageFactory);
+    }
 
-	public synchronized  final LatchFactory getLatchFactory() {
-		assertStarted();
-		return latchFactory;
-	}
+    /**
+     * Starts the Server instance. This results in following actions:
+     * <ol>
+     * <li>The Lock Manager is started. This enables background thread for deadlock detection.</li>
+     * <li>The Log instance is opened. This starts the background threads that manage log writes and log archiving.</li>
+     * <li>The Buffer Manager instance is started. This starts up the background Buffer Writer thread.</li>
+     * <li>The Transaction Manager is started. This initiates restart recovery, and also starts the
+     *     Checkpoint thread.</li>
+     * </ol>
+     * <p>
+     * To prevent two server instances running concurrently on the same path, a lock file is used.
+     * If a server is already running on the specified path, the start() will fail with an exception.
+     * 
+     * @see LockManager#start()
+     * @see LogManager#start()
+     * @see BufferManager#start()
+     * @see TransactionManager#start()
+     */
+    public synchronized void start() {
+        assertNotStarted();
+        boolean lockObtained = false;
+        /*
+         * We have to carefully handle locks - so that
+         * a) We do not overwrite the exiting lock object in case server has been erroneously started second time
+         * b) We do not leave file handle open if the lock fails
+         */
+        StorageContainer lock = null;
+        try {
+            lock = storageFactory.open(LOCK_TABLE);
+            lock.lock();
+            lockObtained = true;
+        } catch (StorageException e) {
+            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e
+                .getMessage());
+            throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
+        } finally {
+            if (!lockObtained) {
+                if (lock != null) {
+                    lock.close();
+                }
+            } else {
+                this.lock = lock;
+            }
+        }
+        lockManager.start();
+        logManager.start();
+        bufferManager.start();
+        transactionManager.start();
+        log.info(LOG_CLASS_NAME, "start", mcat.getMessage("IV0001"));
+        started = true;
+    }
 
-	public synchronized  final LockManager getLockManager() {
-		assertStarted();
-		return lockManager;
-	}
+    /**
+     * Shuts down the RSS Server instance. This results in following actions.
+     * <ol>
+     * <li>The Transaction Manager is shutdown.</li>
+     * <li>The Buffer Manager is shutdown.</li>
+     * <li>The Log instance is shutdown.</li>
+     * <li>The Storage Manager instance is shutdown.</li>
+     * <li>The Lock Manager is shutdown.</li>
+     * </ol>
+     * 
+     * @see TransactionManager#shutdown()
+     * @see BufferManager#shutdown()
+     * @see LogManager#shutdown()
+     * @see StorageManager#shutdown()
+     */
+    public synchronized void shutdown() {
+        assertStarted();
+        transactionManager.shutdown();
+        bufferManager.shutdown();
+        logManager.shutdown();
+        storageManager.shutdown();
+        lockManager.shutdown();
+        lock.unlock();
+        lock.close();
+        log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
+    }
 
-	public synchronized  final LoggableFactory getLoggableFactory() {
-		assertStarted();
-		return loggableFactory;
-	}
+    public synchronized final IndexManager getIndexManager() {
+        assertStarted();
+        return indexManager;
+    }
 
-	public synchronized  final LogManager getLogManager() {
-		assertStarted();
-		return logManager;
-	}
+    public synchronized final BufferManager getBufferManager() {
+        assertStarted();
+        return bufferManager;
+    }
 
-	public synchronized  final TransactionalModuleRegistry getModuleRegistry() {
-		assertStarted();
-		return moduleRegistry;
-	}
+    public synchronized final LatchFactory getLatchFactory() {
+        assertStarted();
+        return latchFactory;
+    }
 
-	public synchronized  final ObjectRegistry getObjectRegistry() {
-		// assertStarted();
-	    // Because there are valid reasons for accessing the registry prior
-	    // starting the server
-		return objectRegistry;
-	}
+    public synchronized final LockManager getLockManager() {
+        assertStarted();
+        return lockManager;
+    }
 
-	public synchronized  final PageFactory getPageFactory() {
-		assertStarted();
-		return pageFactory;
-	}
+    public synchronized final LoggableFactory getLoggableFactory() {
+        assertStarted();
+        return loggableFactory;
+    }
 
-	public synchronized  final FreeSpaceManager getSpaceManager() {
-		assertStarted();
-		return spaceManager;
-	}
+    public synchronized final LogManager getLogManager() {
+        assertStarted();
+        return logManager;
+    }
 
-	public synchronized  final SlottedPageManager getSlottedPageManager() {
-		assertStarted();
-		return slottedPageManager;
-	}
+    public synchronized final TransactionalModuleRegistry getModuleRegistry() {
+        assertStarted();
+        return moduleRegistry;
+    }
 
-	public synchronized  final StorageContainerFactory getStorageFactory() {
-		assertStarted();
-		return storageFactory;
-	}
+    public synchronized final ObjectRegistry getObjectRegistry() {
+        // assertStarted();
+        // Because there are valid reasons for accessing the registry prior
+        // starting the server
+        return objectRegistry;
+    }
 
-	public synchronized final StorageManager getStorageManager() {
-		assertStarted();
-		return storageManager;
-	}
+    public synchronized final PageFactory getPageFactory() {
+        assertStarted();
+        return pageFactory;
+    }
 
-	public synchronized  final TransactionManager getTransactionManager() {
-		assertStarted();
-		return transactionManager;
-	}
+    public synchronized final FreeSpaceManager getSpaceManager() {
+        assertStarted();
+        return spaceManager;
+    }
 
-	public synchronized final TupleManager getTupleManager() {
-		assertStarted();
-		return tupleManager;
-	}
-	
-	public synchronized final LocationFactory getLocationFactory() {
-	    return getTupleManager().getLocationFactory();
-	}
-	
+    public synchronized final SlottedPageManager getSlottedPageManager() {
+        assertStarted();
+        return slottedPageManager;
+    }
+
+    public synchronized final StorageContainerFactory getStorageFactory() {
+        assertStarted();
+        return storageFactory;
+    }
+
+    public synchronized final StorageManager getStorageManager() {
+        assertStarted();
+        return storageManager;
+    }
+
+    public synchronized final TransactionManager getTransactionManager() {
+        assertStarted();
+        return transactionManager;
+    }
+
+    public synchronized final TupleManager getTupleManager() {
+        assertStarted();
+        return tupleManager;
+    }
+
+    public synchronized final LocationFactory getLocationFactory() {
+        return getTupleManager().getLocationFactory();
+    }
+
     public synchronized final int getLocationFactoryType() {
         return getTupleManager().getLocationFactoryType();
     }
-	
 
     /**
      * Creates a new index with specified container name and ID. Prior to calling this
@@ -358,8 +395,14 @@ public class Server {
      */
     public void createIndex(Transaction trx, String name, int containerId,
             int extentSize, int keyFactoryType, boolean unique) {
-        getIndexManager().createIndex(trx, name, containerId, extentSize,
-                keyFactoryType, getTupleManager().getLocationFactoryType(), unique);
+        getIndexManager().createIndex(
+            trx,
+            name,
+            containerId,
+            extentSize,
+            keyFactoryType,
+            getTupleManager().getLocationFactoryType(),
+            unique);
     }
 
     /**
@@ -380,8 +423,14 @@ public class Server {
     public void createIndex(Transaction trx, String name, int containerId,
             int extentSize, int keyFactoryType, int locationFactoryType,
             boolean unique) {
-        indexManager.createIndex(trx, name, containerId, extentSize,
-                keyFactoryType, locationFactoryType, unique);
+        indexManager.createIndex(
+            trx,
+            name,
+            containerId,
+            extentSize,
+            keyFactoryType,
+            locationFactoryType,
+            unique);
     }
 
     /**
@@ -420,7 +469,7 @@ public class Server {
 
     /** 
      * Begins a new transaction.
-     */     
+     */
     public Transaction begin(IsolationMode isolationMode) {
         return getTransactionManager().begin(isolationMode);
     }
@@ -435,7 +484,11 @@ public class Server {
      */
     public void createTupleContainer(Transaction trx, String name,
             int containerId, int extentSize) {
-        getTupleManager().createTupleContainer(trx, name, containerId, extentSize);
+        getTupleManager().createTupleContainer(
+            trx,
+            name,
+            containerId,
+            extentSize);
     }
 
     /**

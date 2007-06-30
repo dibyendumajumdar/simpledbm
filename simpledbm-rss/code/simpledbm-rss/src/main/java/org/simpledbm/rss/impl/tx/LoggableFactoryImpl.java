@@ -35,42 +35,44 @@ import org.simpledbm.rss.api.wal.LogRecord;
  * @since 23-Aug-2005
  */
 public final class LoggableFactoryImpl implements LoggableFactory {
-	
-	private final ObjectRegistry objectFactory;
-	
-	public LoggableFactoryImpl(ObjectRegistry objectFactory) {
-		this.objectFactory = objectFactory;
-	}
-	
-	public final Loggable getInstance(ByteBuffer bb) {
-		bb.mark();
-		short typecode = bb.getShort();
-		bb.reset();
-		BaseLoggable loggable = (BaseLoggable) objectFactory.getInstance(typecode);
-		if (loggable instanceof LoggableFactoryAware) {
-			((LoggableFactoryAware)loggable).setLoggableFactory(this);
-		}
-		loggable.init();
-		loggable.retrieve(bb);
-		return loggable;
-	}
-	
-	public final Loggable getInstance(LogRecord logRec) {
-		byte[] data = logRec.getData();
-		ByteBuffer bb = ByteBuffer.wrap(data);
-		Loggable loggable = getInstance(bb);
-		loggable.setLsn(logRec.getLsn());
-		// TODO loggable.setPrevLsn();
-		return loggable;
-	}
+
+    private final ObjectRegistry objectFactory;
+
+    public LoggableFactoryImpl(ObjectRegistry objectFactory) {
+        this.objectFactory = objectFactory;
+    }
+
+    public final Loggable getInstance(ByteBuffer bb) {
+        bb.mark();
+        short typecode = bb.getShort();
+        bb.reset();
+        BaseLoggable loggable = (BaseLoggable) objectFactory
+            .getInstance(typecode);
+        if (loggable instanceof LoggableFactoryAware) {
+            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
+        }
+        loggable.init();
+        loggable.retrieve(bb);
+        return loggable;
+    }
+
+    public final Loggable getInstance(LogRecord logRec) {
+        byte[] data = logRec.getData();
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        Loggable loggable = getInstance(bb);
+        loggable.setLsn(logRec.getLsn());
+        // TODO loggable.setPrevLsn();
+        return loggable;
+    }
 
     public final Loggable getInstance(int moduleId, int typecode) {
-        BaseLoggable loggable = (BaseLoggable) objectFactory.getInstance(typecode);
+        BaseLoggable loggable = (BaseLoggable) objectFactory
+            .getInstance(typecode);
         loggable.setTypecode(typecode);
         loggable.setModuleId(moduleId);
-		if (loggable instanceof LoggableFactoryAware) {
-			((LoggableFactoryAware)loggable).setLoggableFactory(this);
-		}
+        if (loggable instanceof LoggableFactoryAware) {
+            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
+        }
         loggable.init();
         return loggable;
     }

@@ -41,7 +41,7 @@ public interface TupleInserter {
      * Returns the Location allocated to the current insert.
      */
     Location getLocation();
-    
+
     /**
      * Completes the insert, by inserting the tuple data in
      * one or more pages. The insert process is not complete until

@@ -27,18 +27,21 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class IndexException extends RSSException {
 
-	private static final long serialVersionUID = 2680497332718941694L;
+    private static final long serialVersionUID = 2680497332718941694L;
 
-	public IndexException() {
-		super();
-	}
-	public IndexException(String message) {
-		super(message);
-	}
-	public IndexException(String message, Throwable cause) {
-		super(message, cause);
-	}
-	public IndexException(Throwable cause) {
-		super(cause);
-	}
+    public IndexException() {
+        super();
+    }
+
+    public IndexException(String message) {
+        super(message);
+    }
+
+    public IndexException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public IndexException(Throwable cause) {
+        super(cause);
+    }
 }

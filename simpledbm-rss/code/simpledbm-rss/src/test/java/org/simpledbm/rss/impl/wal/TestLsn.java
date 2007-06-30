@@ -26,34 +26,34 @@ import junit.framework.TestCase;
 import org.simpledbm.rss.api.wal.Lsn;
 
 public class TestLsn extends TestCase {
-	
-	public TestLsn(String name) {
-		super(name);
-	}
 
-	public void testLsn() throws Exception {
-		Lsn lsn = new Lsn();
-		assertTrue(lsn.isNull());
-		Lsn lsn1 = new Lsn(1,1);
-		Lsn lsn2 = new Lsn(1,0);
-		Lsn lsn3 = new Lsn(1,2);
-		Lsn lsn4 = new Lsn(1,1);
-		Lsn lsn5 = new Lsn(0,50);
-		Lsn lsn6 = new Lsn(50,0);
-		assertTrue(lsn1.compareTo(lsn2) > 0);
-		assertTrue(lsn1.compareTo(lsn3) < 0);
-		assertTrue(lsn1.compareTo(lsn4) == 0);
-		assertTrue(lsn1.compareTo(lsn5) > 0);
-		assertTrue(lsn1.compareTo(lsn6) < 0);
-		ByteBuffer bb = ByteBuffer.allocate(Lsn.SIZE);
-		bb.rewind();
-		lsn3.store(bb);
-		assertFalse(bb.hasRemaining());
-		bb.flip();
-		lsn.retrieve(bb);
-		assertTrue(lsn.compareTo(lsn3) == 0);
-		System.out.println("Lsn = " + lsn);
-		System.out.println("sizeof Lsn = " + lsn.getStoredLength());
-	}
+    public TestLsn(String name) {
+        super(name);
+    }
+
+    public void testLsn() throws Exception {
+        Lsn lsn = new Lsn();
+        assertTrue(lsn.isNull());
+        Lsn lsn1 = new Lsn(1, 1);
+        Lsn lsn2 = new Lsn(1, 0);
+        Lsn lsn3 = new Lsn(1, 2);
+        Lsn lsn4 = new Lsn(1, 1);
+        Lsn lsn5 = new Lsn(0, 50);
+        Lsn lsn6 = new Lsn(50, 0);
+        assertTrue(lsn1.compareTo(lsn2) > 0);
+        assertTrue(lsn1.compareTo(lsn3) < 0);
+        assertTrue(lsn1.compareTo(lsn4) == 0);
+        assertTrue(lsn1.compareTo(lsn5) > 0);
+        assertTrue(lsn1.compareTo(lsn6) < 0);
+        ByteBuffer bb = ByteBuffer.allocate(Lsn.SIZE);
+        bb.rewind();
+        lsn3.store(bb);
+        assertFalse(bb.hasRemaining());
+        bb.flip();
+        lsn.retrieve(bb);
+        assertTrue(lsn.compareTo(lsn3) == 0);
+        System.out.println("Lsn = " + lsn);
+        System.out.println("sizeof Lsn = " + lsn.getStoredLength());
+    }
 
 }

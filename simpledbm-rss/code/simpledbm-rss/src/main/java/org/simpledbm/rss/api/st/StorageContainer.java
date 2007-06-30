@@ -34,7 +34,7 @@ public interface StorageContainer {
      * Returns the name of the storage container.
      */
     String getName();
-    
+
     /**
      * Writes length number of bytes from byte array, beginning at offset,
      * to the specified position within the container. Thread safe.
@@ -46,7 +46,7 @@ public interface StorageContainer {
      * @throws StorageException Thrown if there was an error when writing the data.
      */
     void write(long position, byte[] buffer, int bufferOffset, int length);
-    
+
     /**
      * Reads upto length bytes from the container into the byte array beginning at offset,
      * from the specified position within the container. Thread safe.
@@ -58,15 +58,15 @@ public interface StorageContainer {
      * @throws StorageException Thrown if there was an error when reading the data.
      * @return Number of bytes read, or <=0 if no more data available.
      */
-    int  read(long position, byte[] buffer, int bufferOffset, int length);
-    
+    int read(long position, byte[] buffer, int bufferOffset, int length);
+
     /**
      * Ensures that all data written to the container is flushed to secondary
      * storage.
      * @throws StorageException Thrown if there is an error while flushing the data.
      */
     void flush();
-    
+
     /**
      * Locks the container exclusively. Must not wait if lock is unavailable - 
      * instead should throw a StorageException.
@@ -79,11 +79,11 @@ public interface StorageContainer {
      * @throws StorageException Thrown if there is an error releasing the lock.
      */
     void unlock();
-    
+
     /**
      * Closes the container. A container cannot be used after it has been closed.
      * @throws StorageException Thrown if there is an error while closing the container.
      */
     void close();
-    
+
 }

@@ -31,42 +31,43 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class ObjectCreationException extends RSSException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	ObjectCreationException() {
-		super();
-	}
+    ObjectCreationException() {
+        super();
+    }
 
-	public ObjectCreationException(String message) {
-		super(message);
-	}
+    public ObjectCreationException(String message) {
+        super(message);
+    }
 
-	public ObjectCreationException(String message, Throwable cause) {
-		super(message, cause);
-	}
+    public ObjectCreationException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-	public ObjectCreationException(Throwable cause) {
-		super(cause);
-	}
+    public ObjectCreationException(Throwable cause) {
+        super(cause);
+    }
 
-	public static final class UnknownTypeException extends ObjectCreationException {
+    public static final class UnknownTypeException extends
+            ObjectCreationException {
 
-		private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
-		public UnknownTypeException() {
-			super();
-		}
+        public UnknownTypeException() {
+            super();
+        }
 
-		public UnknownTypeException(String message) {
-			super(message);
-		}
+        public UnknownTypeException(String message) {
+            super(message);
+        }
 
-		public UnknownTypeException(String message, Throwable cause) {
-			super(message, cause);
-		}
+        public UnknownTypeException(String message, Throwable cause) {
+            super(message, cause);
+        }
 
-		public UnknownTypeException(Throwable cause) {
-			super(cause);
-		}
-	}	
+        public UnknownTypeException(Throwable cause) {
+            super(cause);
+        }
+    }
 }

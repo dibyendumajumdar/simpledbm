@@ -43,261 +43,267 @@ import org.simpledbm.rss.impl.wal.LogManagerImpl;
  */
 public class TestLogManager extends TestCase {
 
-	public TestLogManager(String name) {
-		super(name);
-	}
+    public TestLogManager(String name) {
+        super(name);
+    }
 
-	public void testCreate() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		factory.createLog(properties);
-	}
+    public void testCreate() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        factory.createLog(properties);
+    }
 
-	public void testCreate2() throws Exception {
-		LogFactory factory = new LogFactoryImpl();
-		Properties properties = new Properties();
-		properties.setProperty("log.ctl.1", "ctl.a");
-		properties.setProperty("log.ctl.2", "ctl.b");
-		properties.setProperty("log.groups.1.path", ".");
-		properties.setProperty("log.archive.path", ".");
-		properties.setProperty("log.group.files", "3");
-		properties.setProperty("log.file.size", "16384");
-		properties.setProperty("log.buffer.size", "16384");
-		properties.setProperty("log.buffer.limit", "4");
-		properties.setProperty("log.flush.interval", "30");
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		factory.createLog(properties);
-	}
-	
-	
-	public void testOpen() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		log.shutdown();
-	}
+    public void testCreate2() throws Exception {
+        LogFactory factory = new LogFactoryImpl();
+        Properties properties = new Properties();
+        properties.setProperty("log.ctl.1", "ctl.a");
+        properties.setProperty("log.ctl.2", "ctl.b");
+        properties.setProperty("log.groups.1.path", ".");
+        properties.setProperty("log.archive.path", ".");
+        properties.setProperty("log.group.files", "3");
+        properties.setProperty("log.file.size", "16384");
+        properties.setProperty("log.buffer.size", "16384");
+        properties.setProperty("log.buffer.limit", "4");
+        properties.setProperty("log.flush.interval", "30");
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        factory.createLog(properties);
+    }
 
-	public void testInsertOne() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		try {
-			String s = "hello world!";
-			byte[] b = s.getBytes();
-			Lsn lsn = log.insert(b, b.length);
-			System.out.println("Lsn of new record = " + lsn);
-		} finally {
-			if (log != null)
-				log.shutdown();
-		}
-	}
+    public void testOpen() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        log.shutdown();
+    }
 
-	public void testReadOne() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		try {
-			LogReader reader = log.getForwardScanningReader(null);
-			LogRecord rec = reader.getNext();
-			byte[] b = rec.getData();
-			String s = "hello world!";
-			String s2 = new String(b);
-			assertTrue(s.equals(s2));
-			System.out.println("Record = {" + s2 + "}");
-		} finally {
-			if (log != null)
-				log.shutdown();
-		}
-	}
+    public void testInsertOne() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        try {
+            String s = "hello world!";
+            byte[] b = s.getBytes();
+            Lsn lsn = log.insert(b, b.length);
+            System.out.println("Lsn of new record = " + lsn);
+        } finally {
+            if (log != null)
+                log.shutdown();
+        }
+    }
 
-	public void testLogSwitch() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		int n = ((2048 / 50) * 2) + 2; // just enough to go beyond two log
-		// files
-		try {
-			for (int i = 0; i < n; i++) {
-				String s = ("Record #" + i + "                                                 ")
-						.substring(0, 22);
-				byte[] b = s.getBytes();
-				Lsn lsn = log.insert(b, b.length);
-				System.out.println("Lsn of new record = " + lsn);
-			}
-		} finally {
-			if (log != null)
-				log.shutdown();
-		}
+    public void testReadOne() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        try {
+            LogReader reader = log.getForwardScanningReader(null);
+            LogRecord rec = reader.getNext();
+            byte[] b = rec.getData();
+            String s = "hello world!";
+            String s2 = new String(b);
+            assertTrue(s.equals(s2));
+            System.out.println("Record = {" + s2 + "}");
+        } finally {
+            if (log != null)
+                log.shutdown();
+        }
+    }
 
-	}
+    public void testLogSwitch() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        int n = ((2048 / 50) * 2) + 2; // just enough to go beyond two log
+        // files
+        try {
+            for (int i = 0; i < n; i++) {
+                String s = ("Record #" + i + "                                                 ")
+                    .substring(0, 22);
+                byte[] b = s.getBytes();
+                Lsn lsn = log.insert(b, b.length);
+                System.out.println("Lsn of new record = " + lsn);
+            }
+        } finally {
+            if (log != null)
+                log.shutdown();
+        }
 
-	public void testReadAfterLogSwitch() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		try {
-			LogReader reader = log.getForwardScanningReader(null);
-			int n = ((2048 / 50) * 2) + 2 + 1; // just enough to go beyond two
-			// log
-			// files
-			for (int i = 0; i < n; i++) {
-				LogRecord rec = reader.getNext();
-				byte[] b = rec.getData();
-				String s;
-				if (i == 0) {
-					s = "hello world!";
-				} else {
-					s = ("Record #" + (i - 1) + "                     ")
-							.substring(0, 22);
-				}
-				String s2 = new String(b);
-				assertTrue(s.equals(s2));
-				System.out.println("Record = {" + s2 + "}");
-			}
-		} finally {
-			if (log != null)
-				log.shutdown();
-		}
-	}
+    }
 
-	void printRecord(LogRecord rec) {
-		if (rec != null) {
-			byte[] data = rec.getData();
-			ByteBuffer bb = ByteBuffer.wrap(data);
-			MyRecord trec = new MyRecord(0);
-			trec.retrieve(bb);
-			//System.out.println(Thread.currentThread().getName() + ":" + trec);
-		}
-		try {
-			Thread.sleep(1);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+    public void testReadAfterLogSwitch() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        try {
+            LogReader reader = log.getForwardScanningReader(null);
+            int n = ((2048 / 50) * 2) + 2 + 1; // just enough to go beyond two
+            // log
+            // files
+            for (int i = 0; i < n; i++) {
+                LogRecord rec = reader.getNext();
+                byte[] b = rec.getData();
+                String s;
+                if (i == 0) {
+                    s = "hello world!";
+                } else {
+                    s = ("Record #" + (i - 1) + "                     ")
+                        .substring(0, 22);
+                }
+                String s2 = new String(b);
+                assertTrue(s.equals(s2));
+                System.out.println("Record = {" + s2 + "}");
+            }
+        } finally {
+            if (log != null)
+                log.shutdown();
+        }
+    }
 
-	void readLastRecord(LogManager log) throws Exception {
-		Lsn lsn = log.getMaxLsn();
-		LogReader reader = log.getForwardScanningReader(lsn);
-		LogRecord rec = reader.getNext();
-		reader.close();
-		printRecord(rec);
-	}
+    void printRecord(LogRecord rec) {
+        if (rec != null) {
+            byte[] data = rec.getData();
+            ByteBuffer bb = ByteBuffer.wrap(data);
+            MyRecord trec = new MyRecord(0);
+            trec.retrieve(bb);
+            //System.out.println(Thread.currentThread().getName() + ":" + trec);
+        }
+        try {
+            Thread.sleep(1);
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+    }
 
-	void readLastFile(LogManager log) throws Exception {
-		Lsn lsn = log.getMaxLsn();
-		if (lsn.isNull()) {
-			return;
-		}
-		Lsn startLsn = new Lsn(lsn.getIndex(), LogManagerImpl.FIRST_LSN.getOffset());
-		//System.out.println("Starting last file scan from " + startLsn);
-		LogReader reader = log.getForwardScanningReader(startLsn);
-		for (;;) {
-			LogRecord rec = reader.getNext();
-			if (rec == null) {
-				break;
-			}
-			printRecord(rec);
-			if (rec.getLsn().getIndex() > startLsn.getIndex()) {
-				break;
-			}
-		}
-		reader.close();
-	}
+    void readLastRecord(LogManager log) throws Exception {
+        Lsn lsn = log.getMaxLsn();
+        LogReader reader = log.getForwardScanningReader(lsn);
+        LogRecord rec = reader.getNext();
+        reader.close();
+        printRecord(rec);
+    }
 
-	void readAllRecords(LogManager log) throws Exception {
-		LogReader reader = log.getForwardScanningReader(null);
-		for (;;) {
-			LogRecord rec = reader.getNext();
-			if (rec == null) {
-				break;
-			}
-			printRecord(rec);
-		}
-		reader.close();
-	}
+    void readLastFile(LogManager log) throws Exception {
+        Lsn lsn = log.getMaxLsn();
+        if (lsn.isNull()) {
+            return;
+        }
+        Lsn startLsn = new Lsn(lsn.getIndex(), LogManagerImpl.FIRST_LSN
+            .getOffset());
+        //System.out.println("Starting last file scan from " + startLsn);
+        LogReader reader = log.getForwardScanningReader(startLsn);
+        for (;;) {
+            LogRecord rec = reader.getNext();
+            if (rec == null) {
+                break;
+            }
+            printRecord(rec);
+            if (rec.getLsn().getIndex() > startLsn.getIndex()) {
+                break;
+            }
+        }
+        reader.close();
+    }
 
-	void insertRecords(LogManager log, int startNo, int endNo) throws Exception {
-		byte[] data = new byte[22];
-		ByteBuffer bb = ByteBuffer.wrap(data);
-		MyRecord trec = new MyRecord(0);
-		for (int i = startNo; i < endNo; i++) {
-			bb.clear();
-			trec.id = i;
-			trec.store(bb);
-			Lsn lsn = log.insert(data, data.length);
-			System.out.println(Thread.currentThread().getName() + ":inserted "
-					+ trec + ", lsn = " + lsn);
-			// Thread.sleep(10);
-		}
-	}
+    void readAllRecords(LogManager log) throws Exception {
+        LogReader reader = log.getForwardScanningReader(null);
+        for (;;) {
+            LogRecord rec = reader.getNext();
+            if (rec == null) {
+                break;
+            }
+            printRecord(rec);
+        }
+        reader.close();
+    }
 
-	public void testMultipleThreads() throws Exception {
-		testCreate(); // create a fresh log.
+    void insertRecords(LogManager log, int startNo, int endNo) throws Exception {
+        byte[] data = new byte[22];
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        MyRecord trec = new MyRecord(0);
+        for (int i = startNo; i < endNo; i++) {
+            bb.clear();
+            trec.id = i;
+            trec.store(bb);
+            Lsn lsn = log.insert(data, data.length);
+            System.out.println(Thread.currentThread().getName() + ":inserted "
+                    + trec + ", lsn = " + lsn);
+            // Thread.sleep(10);
+        }
+    }
 
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestLogManager");
-		LogFactory factory = new LogFactoryImpl();
-		LogManager log = factory.getLog(properties);
-		log.start();
-		try {
-			LastRecordReader reader1 = new LastRecordReader(log, this);
-			LastFileReader reader2 = new LastFileReader(log, this);
-			AllRecordsReader reader3 = new AllRecordsReader(log, this);
-			Thread threadInserter1 = new Thread(new RecordInserter(log, this,
-					1, 10000), "Inserter10000");
-			Thread threadInserter2 = new Thread(new RecordInserter(log, this,
-					10001, 10000), "Inserter20000");
-			Thread threadReader1 = new Thread(reader1, "LastRecordReader");
-			Thread threadReader2 = new Thread(reader2, "LastFileReader");
-			Thread threadReader3 = new Thread(reader3, "AllRecordsReader");
+    public void testMultipleThreads() throws Exception {
+        testCreate(); // create a fresh log.
 
-			threadInserter1.start();
-			threadReader1.start();
-			threadReader2.start();
-			threadReader3.start();
-			threadInserter2.start();
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestLogManager");
+        LogFactory factory = new LogFactoryImpl();
+        LogManager log = factory.getLog(properties);
+        log.start();
+        try {
+            LastRecordReader reader1 = new LastRecordReader(log, this);
+            LastFileReader reader2 = new LastFileReader(log, this);
+            AllRecordsReader reader3 = new AllRecordsReader(log, this);
+            Thread threadInserter1 = new Thread(new RecordInserter(
+                log,
+                this,
+                1,
+                10000), "Inserter10000");
+            Thread threadInserter2 = new Thread(new RecordInserter(
+                log,
+                this,
+                10001,
+                10000), "Inserter20000");
+            Thread threadReader1 = new Thread(reader1, "LastRecordReader");
+            Thread threadReader2 = new Thread(reader2, "LastFileReader");
+            Thread threadReader3 = new Thread(reader3, "AllRecordsReader");
 
-			threadInserter1.join();
-			threadInserter2.join();
+            threadInserter1.start();
+            threadReader1.start();
+            threadReader2.start();
+            threadReader3.start();
+            threadInserter2.start();
 
-			reader1.stop();
-			reader2.stop();
-			reader3.stop();
+            threadInserter1.join();
+            threadInserter2.join();
 
-			threadReader1.join();
-			threadReader2.join();
-			threadReader3.join();
+            reader1.stop();
+            reader2.stop();
+            reader3.stop();
 
-		} finally {
-			if (log != null)
-				log.shutdown();
-		}
-	}
+            threadReader1.join();
+            threadReader2.join();
+            threadReader3.join();
 
-	public static Test suite() {
-		TestSuite suite = new TestSuite();
-		suite.addTest(new TestLogManager("testCreate2"));
-		suite.addTest(new TestLogManager("testCreate"));
-		suite.addTest(new TestLogManager("testOpen"));
-		suite.addTest(new TestLogManager("testInsertOne"));
-		suite.addTest(new TestLogManager("testReadOne"));
-		suite.addTest(new TestLogManager("testLogSwitch"));
-		suite.addTest(new TestLogManager("testReadAfterLogSwitch"));
+        } finally {
+            if (log != null)
+                log.shutdown();
+        }
+    }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestLogManager("testCreate2"));
+        suite.addTest(new TestLogManager("testCreate"));
+        suite.addTest(new TestLogManager("testOpen"));
+        suite.addTest(new TestLogManager("testInsertOne"));
+        suite.addTest(new TestLogManager("testReadOne"));
+        suite.addTest(new TestLogManager("testLogSwitch"));
+        suite.addTest(new TestLogManager("testReadAfterLogSwitch"));
 //		suite.addTest(new LogTests("testMultipleThreads"));
-		return suite;
-	}
+        return suite;
+    }
 
 }
 
@@ -309,33 +315,33 @@ public class TestLogManager extends TestCase {
  */
 abstract class ActionReader implements Runnable {
 
-	TestLogManager tester;
+    TestLogManager tester;
 
-	LogManager log;
+    LogManager log;
 
-	volatile boolean stopped = false;
+    volatile boolean stopped = false;
 
-	public ActionReader(LogManager log, TestLogManager tester) {
-		this.log = log;
-		this.tester = tester;
-	}
+    public ActionReader(LogManager log, TestLogManager tester) {
+        this.log = log;
+        this.tester = tester;
+    }
 
-	public abstract void execute() throws Exception;
+    public abstract void execute() throws Exception;
 
-	public void run() {
-		while (!stopped) {
-			try {
-				execute();
-			} catch (Exception e) {
-				e.printStackTrace();
-				stopped = true;
-			}
-		}
-	}
+    public void run() {
+        while (!stopped) {
+            try {
+                execute();
+            } catch (Exception e) {
+                e.printStackTrace();
+                stopped = true;
+            }
+        }
+    }
 
-	public void stop() {
-		stopped = true;
-	}
+    public void stop() {
+        stopped = true;
+    }
 }
 
 /**
@@ -346,99 +352,100 @@ abstract class ActionReader implements Runnable {
  */
 class LastRecordReader extends ActionReader {
 
-	public LastRecordReader(LogManager log, TestLogManager tester) {
-		super(log, tester);
-	}
+    public LastRecordReader(LogManager log, TestLogManager tester) {
+        super(log, tester);
+    }
 
-	@Override
-	public void execute() throws Exception {
-		tester.readLastRecord(log);
-	}
+    @Override
+    public void execute() throws Exception {
+        tester.readLastRecord(log);
+    }
 
 }
 
 class LastFileReader extends ActionReader {
 
-	public LastFileReader(LogManager log, TestLogManager tester) {
-		super(log, tester);
-	}
+    public LastFileReader(LogManager log, TestLogManager tester) {
+        super(log, tester);
+    }
 
-	@Override
-	public void execute() throws Exception {
-		tester.readLastFile(log);
-	}
+    @Override
+    public void execute() throws Exception {
+        tester.readLastFile(log);
+    }
 
 }
 
 class AllRecordsReader extends ActionReader {
 
-	public AllRecordsReader(LogManager log, TestLogManager tester) {
-		super(log, tester);
-	}
+    public AllRecordsReader(LogManager log, TestLogManager tester) {
+        super(log, tester);
+    }
 
-	@Override
-	public void execute() throws Exception {
-		tester.readAllRecords(log);
-	}
+    @Override
+    public void execute() throws Exception {
+        tester.readAllRecords(log);
+    }
 
 }
 
 class RecordInserter extends ActionReader {
 
-	int n;
+    int n;
 
-	int startNo;
+    int startNo;
 
-	public RecordInserter(LogManager log, TestLogManager tester, int startNo, int n) {
-		super(log, tester);
-		this.n = n;
-		this.startNo = startNo;
-	}
+    public RecordInserter(LogManager log, TestLogManager tester, int startNo,
+            int n) {
+        super(log, tester);
+        this.n = n;
+        this.startNo = startNo;
+    }
 
-	@Override
-	public void execute() throws Exception {
-		tester.insertRecords(log, startNo, startNo + n);
-		this.stop(); // Execute only once
-	}
+    @Override
+    public void execute() throws Exception {
+        tester.insertRecords(log, startNo, startNo + n);
+        this.stop(); // Execute only once
+    }
 
 }
 
 class MyRecord implements Storable {
-	int id;
+    int id;
 
-	public MyRecord(int id) {
-		this.id = id;
-	}
+    public MyRecord(int id) {
+        this.id = id;
+    }
 
-	public int getStoredLength() {
-		return 22;
-	}
+    public int getStoredLength() {
+        return 22;
+    }
 
-	public void retrieve(ByteBuffer bb) {
-		id = bb.getInt();
-		for (int i = 0; i < 18; i++) {
-			bb.get();
-		}
-	}
+    public void retrieve(ByteBuffer bb) {
+        id = bb.getInt();
+        for (int i = 0; i < 18; i++) {
+            bb.get();
+        }
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(id);
-		for (int i = 0; i < 18; i++) {
-			bb.put((byte) 0);
-		}
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(id);
+        for (int i = 0; i < 18; i++) {
+            bb.put((byte) 0);
+        }
+    }
 
-	@Override
-	public boolean equals(Object arg0) {
-		if (!(arg0 instanceof MyRecord))
-			return false;
-		MyRecord other = (MyRecord) arg0;
-		return other.id == id;
-	}
+    @Override
+    public boolean equals(Object arg0) {
+        if (!(arg0 instanceof MyRecord))
+            return false;
+        MyRecord other = (MyRecord) arg0;
+        return other.id == id;
+    }
 
-	@Override
-	public String toString() {
-		return "TestRecord(" + id + ")";
-	}
+    @Override
+    public String toString() {
+        return "TestRecord(" + id + ")";
+    }
 
 }

@@ -38,13 +38,15 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class StorageManagerImpl implements StorageManager {
 
-	private static final Logger log = Logger.getLogger(StorageManagerImpl.class.getPackage().getName());
+    private static final Logger log = Logger.getLogger(StorageManagerImpl.class
+        .getPackage()
+        .getName());
 
-	private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
+    private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
 
-	private static final MessageCatalog mcat = new MessageCatalog();
+    private static final MessageCatalog mcat = new MessageCatalog();
 
-	public final void register(int id, StorageContainer container) {
+    public final void register(int id, StorageContainer container) {
         synchronized (map) {
             map.put(id, new StorageContainerHolder(id, container));
         }
@@ -52,7 +54,7 @@ public final class StorageManagerImpl implements StorageManager {
 
     public final StorageContainer getInstance(int id) {
         StorageContainerHolder containerHolder = null;
-        synchronized(map) {
+        synchronized (map) {
             containerHolder = map.get(id);
         }
 //        if (container == null) {
@@ -72,7 +74,7 @@ public final class StorageManagerImpl implements StorageManager {
      */
     public final void remove(int id) throws StorageException {
         StorageContainerHolder containerHolder = null;
-        synchronized(map) {
+        synchronized (map) {
             containerHolder = map.remove(id);
         }
         if (containerHolder != null) {
@@ -84,26 +86,29 @@ public final class StorageManagerImpl implements StorageManager {
      * @see org.simpledbm.rss.api.st.StorageManager#shutdown()
      */
     public final void shutdown() {
-    	synchronized(map) {
+        synchronized (map) {
             StorageContainerInfo[] activeContainers = getActiveContainers();
-    		for (StorageContainerInfo sc: activeContainers) {
-    			try {
-    				remove(sc.getContainerId());
-    			}
-    			catch (StorageException e) {
-    				log.error(this.getClass().getName(), "shutdown", mcat.getMessage("ES0023", sc), e);
-    				throw new StorageException(mcat.getMessage("ES0023", sc), e);
-    			}
-    		}
-    	}
-    	log.info(this.getClass().getName(), "shutdown", mcat.getMessage("IS0022"));
+            for (StorageContainerInfo sc : activeContainers) {
+                try {
+                    remove(sc.getContainerId());
+                } catch (StorageException e) {
+                    log.error(this.getClass().getName(), "shutdown", mcat
+                        .getMessage("ES0023", sc), e);
+                    throw new StorageException(mcat.getMessage("ES0023", sc), e);
+                }
+            }
+        }
+        log.info(this.getClass().getName(), "shutdown", mcat
+            .getMessage("IS0022"));
     }
 
     public StorageContainerInfo[] getActiveContainers() {
         ArrayList<StorageContainerInfo> list = new ArrayList<StorageContainerInfo>();
-        synchronized(map) {
-            for (StorageContainerHolder sc: map.values()) {
-                list.add(new StorageContainerInfoImpl(sc.getContainer().getName(), sc.getContainerId()));
+        synchronized (map) {
+            for (StorageContainerHolder sc : map.values()) {
+                list.add(new StorageContainerInfoImpl(sc
+                    .getContainer()
+                    .getName(), sc.getContainerId()));
             }
         }
         return list.toArray(new StorageContainerInfo[0]);
@@ -112,14 +117,14 @@ public final class StorageManagerImpl implements StorageManager {
     static class StorageContainerInfoImpl implements StorageContainerInfo {
 
         final int containerId;
-        
+
         final String name;
 
         public StorageContainerInfoImpl(String name, int containerId) {
             this.name = name;
             this.containerId = containerId;
         }
-        
+
         public int getContainerId() {
             return containerId;
         }
@@ -127,24 +132,27 @@ public final class StorageManagerImpl implements StorageManager {
         public String getName() {
             return name;
         }
-        
+
         public final StringBuilder appendTo(StringBuilder sb) {
-        	sb.append("StorageContainerInfoImpl(name=").append(name).append(", id=").append(containerId).append(")");
-        	return sb;
+            sb.append("StorageContainerInfoImpl(name=").append(name).append(
+                ", id=").append(containerId).append(")");
+            return sb;
         }
-        
+
+        @Override
         public final String toString() {
-        	return appendTo(new StringBuilder()).toString();
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
     static class StorageContainerHolder implements Dumpable {
-        
+
         final int containerId;
-        
+
         final StorageContainer container;
-        
-        public StorageContainerHolder(int containerId, StorageContainer container) {
+
+        public StorageContainerHolder(int containerId,
+                StorageContainer container) {
             this.containerId = containerId;
             this.container = container;
         }
@@ -156,15 +164,21 @@ public final class StorageManagerImpl implements StorageManager {
         final int getContainerId() {
             return containerId;
         }
-        
+
         public final StringBuilder appendTo(StringBuilder sb) {
-        	sb.append("StorageContainerHolder(containerId=").append(containerId).append(", container=").append(container).append(")");
-        	return sb;
+            sb
+                .append("StorageContainerHolder(containerId=")
+                .append(containerId)
+                .append(", container=")
+                .append(container)
+                .append(")");
+            return sb;
         }
-        
+
+        @Override
         public final String toString() {
-        	return appendTo(new StringBuilder()).toString();
+            return appendTo(new StringBuilder()).toString();
         }
     }
-    
+
 }

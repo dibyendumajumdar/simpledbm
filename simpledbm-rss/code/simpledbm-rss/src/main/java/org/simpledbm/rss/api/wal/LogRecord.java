@@ -26,6 +26,8 @@ package org.simpledbm.rss.api.wal;
  */
 public interface LogRecord {
     byte[] getData();
+
     int getDataLength();
+
     Lsn getLsn();
 }

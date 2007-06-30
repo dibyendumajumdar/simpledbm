@@ -23,19 +23,19 @@
  */
 package org.simpledbm.rss.impl.sp;
 
-
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 
 public class SlottedPageManagerImpl implements SlottedPageManager {
 
     static final short MODULE_ID = 3;
-    
+
     static final short TYPE_BASE = MODULE_ID * 100;
     static final short TYPE_SLOTTEDPAGE = TYPE_BASE + 1;
-    
+
     public SlottedPageManagerImpl(ObjectRegistry objectFactory) {
-        objectFactory.registerType(TYPE_SLOTTEDPAGE, SlottedPageImpl.class.getName());
+        objectFactory.registerType(TYPE_SLOTTEDPAGE, SlottedPageImpl.class
+            .getName());
     }
 
     public int getPageType() {

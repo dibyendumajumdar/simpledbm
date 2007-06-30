@@ -47,65 +47,65 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public interface BufferAccessBlock {
 
-	/**
-	 * Marks the page as dirty. Only applicable if the page was obtained with
-	 * exclusive access.
-	 * 
-	 * @param lsn
-	 *            Lsn of the log record that represents the modifications made
-	 *            to the page.
-	 * @throws IllegalStateException
-	 *             If page is not held in exclusive latch mode
-	 */
+    /**
+     * Marks the page as dirty. Only applicable if the page was obtained with
+     * exclusive access.
+     * 
+     * @param lsn
+     *            Lsn of the log record that represents the modifications made
+     *            to the page.
+     * @throws IllegalStateException
+     *             If page is not held in exclusive latch mode
+     */
     public void setDirty(Lsn lsn);
 
     /**
-	 * Gets the page being accessed. It is assumed that the caller will cast the
-	 * page to appropriate type.
-	 * 
-	 * @return Page object which must be cast to the required type by the caller.
-	 */
+     * Gets the page being accessed. It is assumed that the caller will cast the
+     * page to appropriate type.
+     * 
+     * @return Page object which must be cast to the required type by the caller.
+     */
     public Page getPage();
-    
-	/**
-	 * Upgrades page latch from UPDATE to EXCLUSIVE. Latch must be held in
-	 * UPDATE mode, else an Exception will be thrown.
-	 * 
-	 * @throws IllegalStateException
-	 *             If latch is not held in update mode
-	 */
-    public void upgradeUpdateLatch();
-    
-	/**
-	 * Downgrades page latch from EXCLUSIVE to UPDATE. Latch must be held in
-	 * EXCLUSIVE mode, else an Exception will be thrown.
-	 * 
-	 * @throws IllegalStateException
-	 *             If latch is not held exclusively
-	 */
-    public void downgradeExclusiveLatch();
-    
+
     /**
-	 * Unfixes and releases latch on the page. It is important that this is
-	 * called for every fix. Failure to do so will cause pages to get stuck in
-	 * the buffer pool, eventually causing the system to run of slots in the
-	 * buffer pool.
-	 */
+     * Upgrades page latch from UPDATE to EXCLUSIVE. Latch must be held in
+     * UPDATE mode, else an Exception will be thrown.
+     * 
+     * @throws IllegalStateException
+     *             If latch is not held in update mode
+     */
+    public void upgradeUpdateLatch();
+
+    /**
+     * Downgrades page latch from EXCLUSIVE to UPDATE. Latch must be held in
+     * EXCLUSIVE mode, else an Exception will be thrown.
+     * 
+     * @throws IllegalStateException
+     *             If latch is not held exclusively
+     */
+    public void downgradeExclusiveLatch();
+
+    /**
+     * Unfixes and releases latch on the page. It is important that this is
+     * called for every fix. Failure to do so will cause pages to get stuck in
+     * the buffer pool, eventually causing the system to run of slots in the
+     * buffer pool.
+     */
     public void unfix();
 
     /**
-	 * Tests whether the page is currently latched in EXCLUSIVE mode.
-	 */
+     * Tests whether the page is currently latched in EXCLUSIVE mode.
+     */
     public boolean isLatchedExclusively();
-	
+
     /**
-	 * Tests whether the page is currently latched in UPDATE mode.
-	 */
-	public boolean isLatchedForUpdate();
-	
+     * Tests whether the page is currently latched in UPDATE mode.
+     */
+    public boolean isLatchedForUpdate();
+
     /**
-	 * Tests whether the page is currently latched in SHARED mode.
-	 */
-	public boolean isLatchedShared();
+     * Tests whether the page is currently latched in SHARED mode.
+     */
+    public boolean isLatchedShared();
 
 }

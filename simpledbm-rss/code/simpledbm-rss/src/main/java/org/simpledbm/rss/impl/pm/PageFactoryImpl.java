@@ -42,118 +42,135 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class PageFactoryImpl implements PageFactory {
 
     static final int MODULE_ID = 5;
-    
+
     static final int TYPE_BASE = 5 * 100;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
-    
-	private static Logger log = Logger.getLogger(PageFactoryImpl.class.getPackage().getName());
-    
-	/**
-	 * Default page size is 8 KB.
-	 */
-	private static final int DEFAULT_PAGE_SIZE = 8 * 1024;
-	
-	private final int pageSize;	// default page size is 8K
 
-	/**
-	 * An ObjectFactory instance is required for instantiating various page types.
-	 */
-	private final ObjectRegistry objectFactory;
-	
-	private final StorageManager storageManager;
-	
-	private final LatchFactory latchFactory;
+    private static Logger log = Logger.getLogger(PageFactoryImpl.class
+        .getPackage()
+        .getName());
 
-	private final MessageCatalog mcat = new MessageCatalog();
-	
-	public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory, StorageManager storageManager, LatchFactory latchFactory) {
-		this.pageSize = pageSize;
-		this.objectFactory = objectFactory;
-		this.storageManager = storageManager;
-		this.latchFactory = latchFactory;
+    /**
+     * Default page size is 8 KB.
+     */
+    private static final int DEFAULT_PAGE_SIZE = 8 * 1024;
+
+    private final int pageSize; // default page size is 8K
+
+    /**
+     * An ObjectFactory instance is required for instantiating various page types.
+     */
+    private final ObjectRegistry objectFactory;
+
+    private final StorageManager storageManager;
+
+    private final LatchFactory latchFactory;
+
+    private final MessageCatalog mcat = new MessageCatalog();
+
+    public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory,
+            StorageManager storageManager, LatchFactory latchFactory) {
+        this.pageSize = pageSize;
+        this.objectFactory = objectFactory;
+        this.storageManager = storageManager;
+        this.latchFactory = latchFactory;
         objectFactory.registerType(TYPE_RAW_PAGE, RawPage.class.getName());
-	}
+    }
 
-	public PageFactoryImpl(ObjectRegistry objectFactory, StorageManager storageManager, LatchFactory latchFactory) {
+    public PageFactoryImpl(ObjectRegistry objectFactory,
+            StorageManager storageManager, LatchFactory latchFactory) {
         this(DEFAULT_PAGE_SIZE, objectFactory, storageManager, latchFactory);
-	}
-	
-	public final int getPageSize() {
-		return pageSize;
-	}
+    }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
-	 */
-	public final Page getInstance(int pagetype, PageId pageId) {
-		Page page = (Page) objectFactory.getInstance(pagetype);
-		page.setType(pagetype);
+    public final int getPageSize() {
+        return pageSize;
+    }
+
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
+     */
+    public final Page getInstance(int pagetype, PageId pageId) {
+        Page page = (Page) objectFactory.getInstance(pagetype);
+        page.setType(pagetype);
         page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
-		page.setPageId(pageId);
-		page.init();
-		return page;
-	}
+        page.setPageId(pageId);
+        page.init();
+        return page;
+    }
 
-	/**
-	 * Converts a byte stream to a page. First two bytes must contain the type
-	 * information for the page. This is used to obtain the correct Page implementation
-	 * from the Object Registry. 
-	 * @param bb The ByteBuffer that provides access to the byte stream
-	 * @return Page instance initialized with the contents of the byte stream
-	 */
-	private Page getInstance(ByteBuffer bb) {
-		bb.mark();
-		short pagetype = bb.getShort();
-		bb.reset();
-		Page page = (Page) objectFactory.getInstance(pagetype);
+    /**
+     * Converts a byte stream to a page. First two bytes must contain the type
+     * information for the page. This is used to obtain the correct Page implementation
+     * from the Object Registry. 
+     * @param bb The ByteBuffer that provides access to the byte stream
+     * @return Page instance initialized with the contents of the byte stream
+     */
+    private Page getInstance(ByteBuffer bb) {
+        bb.mark();
+        short pagetype = bb.getShort();
+        bb.reset();
+        Page page = (Page) objectFactory.getInstance(pagetype);
         page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
         page.init();
-		page.retrieve(bb);
-		return page;
-	}
+        page.retrieve(bb);
+        return page;
+    }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.pm.PageFactory#retrieve(org.simpledbm.rss.api.pm.PageId)
-	 */
-	public final Page retrieve(PageId pageId) {
-		StorageContainer container = storageManager.getInstance(pageId
-				.getContainerId());
-		if (container == null) {
-			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0002", pageId));
-			throw new PageException(mcat.getMessage("EP0002", pageId));
-		}
-		long offset = pageId.getPageNumber() * pageSize;
-		byte[] data = new byte[pageSize];
-		int n = container.read(offset, data, 0, pageSize);
-		if (n != pageSize) {
-			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0001", pageId, n, pageSize));
-			throw new PageReadException(mcat.getMessage("EP0001", pageId, n, pageSize));
-		}
-		ByteBuffer bb = ByteBuffer.wrap(data);
-		return getInstance(bb);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.pm.PageFactory#store(org.simpledbm.rss.api.pm.Page)
-	 */
-	public final void store(Page page) {
-		StorageContainer container = storageManager.getInstance(page
-				.getPageId().getContainerId());
-		if (container == null) {
-			log.error(this.getClass().getName(), "retrieve", mcat.getMessage("EP0003", page.getPageId()));
-			throw new PageException(mcat.getMessage("EP0003", page.getPageId()));
-		}
-		long offset = page.getPageId().getPageNumber() * pageSize;
-		byte[] data = new byte[pageSize];
-		ByteBuffer bb = ByteBuffer.wrap(data);
-		page.store(bb);
-		container.write(offset, data, 0, pageSize);
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.pm.PageFactory#retrieve(org.simpledbm.rss.api.pm.PageId)
+     */
+    public final Page retrieve(PageId pageId) {
+        StorageContainer container = storageManager.getInstance(pageId
+            .getContainerId());
+        if (container == null) {
+            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
+                "EP0002",
+                pageId));
+            throw new PageException(mcat.getMessage("EP0002", pageId));
+        }
+        long offset = pageId.getPageNumber() * pageSize;
+        byte[] data = new byte[pageSize];
+        int n = container.read(offset, data, 0, pageSize);
+        if (n != pageSize) {
+            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
+                "EP0001",
+                pageId,
+                n,
+                pageSize));
+            throw new PageReadException(mcat.getMessage(
+                "EP0001",
+                pageId,
+                n,
+                pageSize));
+        }
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        return getInstance(bb);
+    }
+
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.pm.PageFactory#store(org.simpledbm.rss.api.pm.Page)
+     */
+    public final void store(Page page) {
+        StorageContainer container = storageManager.getInstance(page
+            .getPageId()
+            .getContainerId());
+        if (container == null) {
+            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
+                "EP0003",
+                page.getPageId()));
+            throw new PageException(mcat.getMessage("EP0003", page.getPageId()));
+        }
+        long offset = page.getPageId().getPageNumber() * pageSize;
+        byte[] data = new byte[pageSize];
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        page.store(bb);
+        container.write(offset, data, 0, pageSize);
+    }
 
     public int getRawPageType() {
         return TYPE_RAW_PAGE;
     }
-    
+
 }

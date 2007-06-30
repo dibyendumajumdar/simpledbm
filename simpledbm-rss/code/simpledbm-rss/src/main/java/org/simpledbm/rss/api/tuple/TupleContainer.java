@@ -54,18 +54,18 @@ public interface TupleContainer {
      * is achieved by invoking {@link TupleInserter#completeInsert()}.</p>
      */
     TupleInserter insert(Transaction trx, Storable tuple);
-    
+
     /**
      * Updates the tuple at specified location replacing old contents with the
      * new tuple. Location is locked in exclusive mode.
      */
-    void update(Transaction trx, Location location, Storable newTuple);    
-    
+    void update(Transaction trx, Location location, Storable newTuple);
+
     /**
      * Deletes the tuple at specified location.
      * Locks the location in exclusive mode.
      */
-	void delete(Transaction trx, Location location);
+    void delete(Transaction trx, Location location);
 
     /**
      * Reads a tuple and returns the contents of the tuple as a byte array.
@@ -76,7 +76,7 @@ public interface TupleContainer {
      * has already locked the Location in either Shared or Update mode.
      */
     byte[] read(Location location);
-    
+
     /**
      * Opens a tuple scan that reads all used pages within the container
      * and returns tuples sequentially. Each tuple is locked in UPDATE mode if

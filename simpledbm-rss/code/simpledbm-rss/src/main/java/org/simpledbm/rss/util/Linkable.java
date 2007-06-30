@@ -25,36 +25,34 @@ package org.simpledbm.rss.util;
  */
 public abstract class Linkable {
 
-	Linkable next;
+    Linkable next;
 
-	Linkable prev;
+    Linkable prev;
 
-	boolean member;
-	
-	Linkable getNext() {
-		return next;
-	}
+    boolean member;
 
-	void setNext(Linkable link) {
-		next = link;
-	}
+    Linkable getNext() {
+        return next;
+    }
 
-	Linkable getPrev() {
-		return prev;
-	}
+    void setNext(Linkable link) {
+        next = link;
+    }
 
-	void setPrev(Linkable link) {
-		prev = link;
-	}
+    Linkable getPrev() {
+        return prev;
+    }
 
-	public final boolean isMember() {
-		return member;
-	}
+    void setPrev(Linkable link) {
+        prev = link;
+    }
 
-	final void setMember(boolean member) {
-		this.member = member;
-	}
+    public final boolean isMember() {
+        return member;
+    }
 
-	
-	
+    final void setMember(boolean member) {
+        this.member = member;
+    }
+
 }

@@ -27,21 +27,21 @@ package org.simpledbm.rss.api.exception;
  */
 public class RSSException extends RuntimeException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public RSSException() {
-		super();
-	}
+    public RSSException() {
+        super();
+    }
 
-	public RSSException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
+    public RSSException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
 
-	public RSSException(String arg0) {
-		super(arg0);
-	}
+    public RSSException(String arg0) {
+        super(arg0);
+    }
 
-	public RSSException(Throwable arg0) {
-		super(arg0);
-	}
+    public RSSException(Throwable arg0) {
+        super(arg0);
+    }
 }

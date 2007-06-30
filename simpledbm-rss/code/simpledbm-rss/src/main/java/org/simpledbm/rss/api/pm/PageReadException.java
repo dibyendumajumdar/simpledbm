@@ -19,25 +19,24 @@
  */
 package org.simpledbm.rss.api.pm;
 
-
 public final class PageReadException extends PageException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public PageReadException() {
-		super();
-	}
+    public PageReadException() {
+        super();
+    }
 
-	public PageReadException(String arg0) {
-		super(arg0);
-	}
+    public PageReadException(String arg0) {
+        super(arg0);
+    }
 
-	public PageReadException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
+    public PageReadException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
 
-	public PageReadException(Throwable arg0) {
-		super(arg0);
-	}
+    public PageReadException(Throwable arg0) {
+        super(arg0);
+    }
 
 }

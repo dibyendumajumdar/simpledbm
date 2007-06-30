@@ -32,8 +32,8 @@ package org.simpledbm.rss.api.tx;
  * @since 26-Aug-2005
  */
 public interface ContainerDeleteOperation extends Loggable {
-	/**
-	 * Returns the ID of the container that is to be deleted. 
-	 */
-	int getContainerId();
+    /**
+     * Returns the ID of the container that is to be deleted. 
+     */
+    int getContainerId();
 }

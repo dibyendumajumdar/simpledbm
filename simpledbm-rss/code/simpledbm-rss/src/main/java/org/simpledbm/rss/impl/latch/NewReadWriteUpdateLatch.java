@@ -35,64 +35,66 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class NewReadWriteUpdateLatch implements Latch {
 
-	/*
-	 * This implementation of latch is based upon the lock manager implementation.
-	 * The differences are:
-	 * Firstly, there is no hash table of locks because each instance of this
-	 * class _is_ the lock. Clients have a reference to the latch itself so there
-	 * is no need for dynamic lookup.
-	 * There is no support for various lock durations as these do not make
-	 * sense here.
-	 * Apart from lock conversions and downgrades, we also support lock upgrades.
-	 * An upgrade is like a conversion except that it is explicitly requested and does
-	 * not cause the reference count to go up. Hence the difference is primarily in the way
-	 * clients use locks. For normal lock conversions, clients are expected to treat
-	 * each request as a separate request, and therefore release the lock as many
-	 * times as requested. Upgrade (and downgrade) requests do not modify the reference
-	 * count.
-	 * Unlike Lock Manager, the owner for latches is predefined - it is always the
-	 * requesting thread. Hence there is no need to supply an owner.
-	 * Latches do not support deadlock detection, unlike locks.
-	 * A benefit of this implementation is that lock attempts timeout in 10 seconds
-	 * which is a simple way of detecting latch deadlocks.
-	 * 
-	 * The reason for creating this new implementation was the realisation that
-	 * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
-	 * properly. This is because in both implementation details of shared requests
-	 * are not kept. This implementation naturally is less efficient compared to the
-	 * other two, but does support recursion of shared lock requests.
-	 */
-	
-	private static final String LOG_CLASS_NAME = NewReadWriteUpdateLatch.class.getName();
+    /*
+     * This implementation of latch is based upon the lock manager implementation.
+     * The differences are:
+     * Firstly, there is no hash table of locks because each instance of this
+     * class _is_ the lock. Clients have a reference to the latch itself so there
+     * is no need for dynamic lookup.
+     * There is no support for various lock durations as these do not make
+     * sense here.
+     * Apart from lock conversions and downgrades, we also support lock upgrades.
+     * An upgrade is like a conversion except that it is explicitly requested and does
+     * not cause the reference count to go up. Hence the difference is primarily in the way
+     * clients use locks. For normal lock conversions, clients are expected to treat
+     * each request as a separate request, and therefore release the lock as many
+     * times as requested. Upgrade (and downgrade) requests do not modify the reference
+     * count.
+     * Unlike Lock Manager, the owner for latches is predefined - it is always the
+     * requesting thread. Hence there is no need to supply an owner.
+     * Latches do not support deadlock detection, unlike locks.
+     * A benefit of this implementation is that lock attempts timeout in 10 seconds
+     * which is a simple way of detecting latch deadlocks.
+     * 
+     * The reason for creating this new implementation was the realisation that
+     * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
+     * properly. This is because in both implementation details of shared requests
+     * are not kept. This implementation naturally is less efficient compared to the
+     * other two, but does support recursion of shared lock requests.
+     */
 
-    private static final Logger log = Logger.getLogger(NewReadWriteUpdateLatch.class.getPackage().getName());
+    private static final String LOG_CLASS_NAME = NewReadWriteUpdateLatch.class
+        .getName();
+
+    private static final Logger log = Logger
+        .getLogger(NewReadWriteUpdateLatch.class.getPackage().getName());
 
     /**
      * Queue of latch requests, contains granted or conversion requests followed
      * by waiting requests.
      */
-	final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
+    final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
 
-	/**
-	 * Current mode of the latch.
-	 */
-	LockMode grantedMode = LockMode.NONE;
+    /**
+     * Current mode of the latch.
+     */
+    LockMode grantedMode = LockMode.NONE;
 
-	/**
-	 * Flags that there are threads waiting to be granted latch requests.
-	 */
-	boolean waiting = false;
-	
-	MessageCatalog mcat = new MessageCatalog();
+    /**
+     * Flags that there are threads waiting to be granted latch requests.
+     */
+    boolean waiting = false;
 
-	/**
-	 * Defines the various lock release methods.
-	 * 
-	 * @author Dibyendu Majumdar
-	 */
-	enum ReleaseAction {
-		RELEASE, DOWNGRADE;
-	}
+    MessageCatalog mcat = new MessageCatalog();
+
+    /**
+     * Defines the various lock release methods.
+     * 
+     * @author Dibyendu Majumdar
+     */
+    enum ReleaseAction {
+        RELEASE, DOWNGRADE;
+    }
 
     /**
      * Describe the status of a latch acquistion request.
@@ -103,872 +105,962 @@ public final class NewReadWriteUpdateLatch implements Latch {
         GRANTED, TIMEOUT, DEADLOCK
     }
 
-	static enum LockRequestStatus {
-		GRANTED, CONVERTING, WAITING, DENIED;
-	}
+    static enum LockRequestStatus {
+        GRANTED, CONVERTING, WAITING, DENIED;
+    }
 
     /**
-	 * Holds parameters supplied to aquire, release or find APIs. 
-	 */
-	static final class LockParams {
-		Object owner;
-		LockMode mode;
-		int timeout;
-		ReleaseAction action;
-		LockMode downgradeMode;
-		boolean upgrade;
-		
-		public String toString() {
-			return "LockRequestParams(owner=" + owner +
-				", mode=" + mode + ", timeout=" + timeout + 
-				", releaseAction=" + action + ", downgradeMode=" + downgradeMode + 
-				", upgrade=" + upgrade + ")";
-		}
-	}
+     * Holds parameters supplied to aquire, release or find APIs. 
+     */
+    static final class LockParams {
+        Object owner;
+        LockMode mode;
+        int timeout;
+        ReleaseAction action;
+        LockMode downgradeMode;
+        boolean upgrade;
 
-	static final class LockState {
-		final LockParams parms;
-		LockRequest lockRequest;
-		boolean converting;
-		Thread prevThread;
-	
-		public LockState(LockParams parms) {
-			this.parms = parms;
-		}
-	}
+        @Override
+        public String toString() {
+            return "LockRequestParams(owner=" + owner + ", mode=" + mode
+                    + ", timeout=" + timeout + ", releaseAction=" + action
+                    + ", downgradeMode=" + downgradeMode + ", upgrade="
+                    + upgrade + ")";
+        }
+    }
 
-    
-	/**
-	 * Creates a new LockMgrImpl, ready for use.
-	 * 
-	 * @param hashTableSize
-	 *            The size of the lock hash table.
-	 */
-	public NewReadWriteUpdateLatch() {
-	}
+    static final class LockState {
+        final LockParams parms;
+        LockRequest lockRequest;
+        boolean converting;
+        Thread prevThread;
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.simpledbm.locking.LockMgr#acquire(java.lang.Object,
-	 *      java.lang.Object, org.simpledbm.locking.LockMode,
-	 *      org.simpledbm.locking.LockDuration, int)
-	 */
-	private final void acquire(LockMode mode, int timeout, boolean upgrade) {
+        public LockState(LockParams parms) {
+            this.parms = parms;
+        }
+    }
 
-		LockParams parms = new LockParams();
-		parms.owner = Thread.currentThread();
-		parms.mode = mode;
-		parms.timeout = timeout;
-		parms.upgrade = upgrade;
-		
-		LockState lockState = new LockState(parms);
-		
-		doAcquire(lockState);
-	}
-	
-	public synchronized String toString() {
-		return "Latch(grantedMode=" + grantedMode + ", waiting=" + waiting + ", queue=" + queue + ")";
-	}
+    /**
+     * Creates a new LockMgrImpl, ready for use.
+     * 
+     * @param hashTableSize
+     *            The size of the lock hash table.
+     */
+    public NewReadWriteUpdateLatch() {
+    }
 
-	/**
-	 * Acquires a lock in the specified mode. Handles most of the cases except
-	 * the case where an INSTANT_DURATION lock needs to be waited for. This case
-	 * requires the lock to be released after it has been granted; the lock
-	 * release is handled by {@link #acquire acquire}.
-	 * 
-	 * <p>
-	 * Algorithm:
-	 * 
-	 * <ol>
-	 * <li>Search for the lock. </li>
-	 * <li>If not found, this is a new lock and therefore grant the lock, and
-	 * return success. </li>
-	 * <li>Else check if requesting transaction already has a lock request.
-	 * </li>
-	 * <li>If not, this is the first request by the transaction. If yes, goto
-	 * 11.</li>
-	 * <li>Check if lock can be granted. This is true if there are no waiting
-	 * requests and the new request is compatible with existing grant mode.
-	 * </li>
-	 * <li>If yes, grant the lock and return success. </li>
-	 * <li>Otherwise, if nowait was specified, return failure. </li>
-	 * <li>Otherwise, wait for the lock to be available/compatible. </li>
-	 * <li>If after the wait, the lock has been granted, then return success.
-	 * </li>
-	 * <li> Else return failure.
-	 * 
-	 * </li>
-	 * <li>If calling transaction already has a granted lock request then this
-	 * must be a conversion request. </li>
-	 * <li> Check whether the new request lock is same mode as previously held
-	 * lock. </li>
-	 * <li>If so, grant lock and return. </li>
-	 * <li>Otherwise, check if requested lock is compatible with granted group.
-	 * </li>
-	 * <li>If so, grant lock and return. </li>
-	 * <li>If not, and nowait specified, return failure. </li>
-	 * <li>Goto 8. </li>
-	 * </ol>
-	 * </p>
-	 */
-	private void doAcquire(LockState lockState) {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.simpledbm.locking.LockMgr#acquire(java.lang.Object,
+     *      java.lang.Object, org.simpledbm.locking.LockMode,
+     *      org.simpledbm.locking.LockDuration, int)
+     */
+    private final void acquire(LockMode mode, int timeout, boolean upgrade) {
 
-		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "doAcquire", "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
-					+ " for " + this + ", mode=" + lockState.parms.mode);
-		}
+        LockParams parms = new LockParams();
+        parms.owner = Thread.currentThread();
+        parms.mode = mode;
+        parms.timeout = timeout;
+        parms.upgrade = upgrade;
 
-		lockState.converting = false;
-		lockState.prevThread = Thread.currentThread();
+        LockState lockState = new LockState(parms);
 
-		synchronized (this) {
-			/*
-			 * 3. Else check if requesting thread already has a lock request.
-			 */
-			lockState.lockRequest = find(lockState.parms.owner);
+        doAcquire(lockState);
+    }
 
-			if (lockState.lockRequest == null) {
-				if (handleNewRequest(lockState)) {
-					return;
-				}
-			} else {
-				if (handleConversionRequest(lockState)) {
-					return;
-				}
-			}
+    @Override
+    public synchronized String toString() {
+        return "Latch(grantedMode=" + grantedMode + ", waiting=" + waiting
+                + ", queue=" + queue + ")";
+    }
 
-			/* 8. Wait for the lock to be available/compatible. */
-			prepareToWait(lockState);
-		}
-		long then = System.nanoTime();
-		long timeToWait = lockState.parms.timeout;
-		if (timeToWait != -1) {
-			timeToWait = TimeUnit.NANOSECONDS.convert(
-					lockState.parms.timeout, TimeUnit.SECONDS);
-		}
-		for (;;) {
-			if (lockState.parms.timeout == -1) {
-				LockSupport.park();
-			} else {
-				LockSupport.parkNanos(timeToWait);
-			}
-			long now = System.nanoTime();
-			if (timeToWait > 0) {
-				timeToWait -= (now - then);
-				then = now;
-			}
-			synchronized (this) {
-				/*
-				 * As the hash table may have been resized while we were
-				 * waiting, we need to recalculate the bucket.
-				 */
-				if (lockState.lockRequest.status == LockRequestStatus.WAITING
-						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
-					if (timeToWait > 0 || lockState.parms.timeout == -1) {
-						continue;
-					}
-				}
-				handleWaitResult(lockState);
-				return;
-			}
-		}
-	}
+    /**
+     * Acquires a lock in the specified mode. Handles most of the cases except
+     * the case where an INSTANT_DURATION lock needs to be waited for. This case
+     * requires the lock to be released after it has been granted; the lock
+     * release is handled by {@link #acquire acquire}.
+     * 
+     * <p>
+     * Algorithm:
+     * 
+     * <ol>
+     * <li>Search for the lock. </li>
+     * <li>If not found, this is a new lock and therefore grant the lock, and
+     * return success. </li>
+     * <li>Else check if requesting transaction already has a lock request.
+     * </li>
+     * <li>If not, this is the first request by the transaction. If yes, goto
+     * 11.</li>
+     * <li>Check if lock can be granted. This is true if there are no waiting
+     * requests and the new request is compatible with existing grant mode.
+     * </li>
+     * <li>If yes, grant the lock and return success. </li>
+     * <li>Otherwise, if nowait was specified, return failure. </li>
+     * <li>Otherwise, wait for the lock to be available/compatible. </li>
+     * <li>If after the wait, the lock has been granted, then return success.
+     * </li>
+     * <li> Else return failure.
+     * 
+     * </li>
+     * <li>If calling transaction already has a granted lock request then this
+     * must be a conversion request. </li>
+     * <li> Check whether the new request lock is same mode as previously held
+     * lock. </li>
+     * <li>If so, grant lock and return. </li>
+     * <li>Otherwise, check if requested lock is compatible with granted group.
+     * </li>
+     * <li>If so, grant lock and return. </li>
+     * <li>If not, and nowait specified, return failure. </li>
+     * <li>Goto 8. </li>
+     * </ol>
+     * </p>
+     */
+    private void doAcquire(LockState lockState) {
 
-	/**
-	 * Finds the lock request belonging to the specified owner
-	 */
-	private LockRequest find(Object owner) {
-		for (LockRequest req : queue) {
-			if (req.owner == owner || req.owner.equals(owner)) {
-				return req;
-			}
-		}
-		return null;
-	}
+        if (log.isDebugEnabled()) {
+            log.debug(
+                LOG_CLASS_NAME,
+                "doAcquire",
+                "SIMPLEDBM-DEBUG: Lock requested by " + lockState.parms.owner
+                        + " for " + this + ", mode=" + lockState.parms.mode);
+        }
 
-	/**
-	 * Handles a new lock request by a thread.
-	 * @return true if the lock request was processed, else false to indicate that the requester must 
-	 * 		wait
-	 */
-	private boolean handleNewRequest(LockState lockState) {
-		/* 4. If not, this is the first request by the transaction. */
-		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "handleNewRequest",
-					"SIMPLEDBM-DEBUG: New request by thread " + lockState.parms.owner);
-		}
+        lockState.converting = false;
+        lockState.prevThread = Thread.currentThread();
 
-		if (lockState.parms.upgrade) {
-			/*
-			 * An upgrade request without a prior lock request is an error.
-			 */
-			log.error(this.getClass().getName(), "handleNewRequest", mcat.getMessage("EH0001", lockState.parms));
-			throw new LatchException(mcat.getMessage("EH0001", lockState.parms));
-		}
-		
-		/*
-		 * 5. Check if lock can be granted. This is true if there are no
-		 * waiting requests and the new request is compatible with
-		 * existing grant mode.
-		 */
-		boolean can_grant = (!waiting && lockState.parms.mode
-				.isCompatible(grantedMode));
+        synchronized (this) {
+            /*
+             * 3. Else check if requesting thread already has a lock request.
+             */
+            lockState.lockRequest = find(lockState.parms.owner);
 
-		if (!can_grant && lockState.parms.timeout == 0) {
-			/* 7. Otherwise, if nowait was specified, return failure. */
-			log.warn(
-					LOG_CLASS_NAME,	"handleNewRequest", mcat.getMessage("WH0002", this, lockState.parms.mode));
-			throw new LatchException(mcat.getMessage("WH0002", this, lockState.parms.mode));
-		}
+            if (lockState.lockRequest == null) {
+                if (handleNewRequest(lockState)) {
+                    return;
+                }
+            } else {
+                if (handleConversionRequest(lockState)) {
+                    return;
+                }
+            }
 
-		/* Allocate new lock request */
-		lockState.lockRequest = new LockRequest(this, lockState.parms.owner, lockState.parms.mode);
-		queueAppend(lockState.lockRequest);
-		if (can_grant) {
-			/* 6. If yes, grant the lock and return success. */
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "handleNewRequest",
-						"SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
-								+ this
-								+ ", therefore granting lock");
-			}
-			grantedMode = lockState.parms.mode.maximumOf(grantedMode);
-			return true;
-		} else {
-			lockState.converting = false;
-			return false;
-		}
-	}
+            /* 8. Wait for the lock to be available/compatible. */
+            prepareToWait(lockState);
+        }
+        long then = System.nanoTime();
+        long timeToWait = lockState.parms.timeout;
+        if (timeToWait != -1) {
+            timeToWait = TimeUnit.NANOSECONDS.convert(
+                lockState.parms.timeout,
+                TimeUnit.SECONDS);
+        }
+        for (;;) {
+            if (lockState.parms.timeout == -1) {
+                LockSupport.park();
+            } else {
+                LockSupport.parkNanos(timeToWait);
+            }
+            long now = System.nanoTime();
+            if (timeToWait > 0) {
+                timeToWait -= (now - then);
+                then = now;
+            }
+            synchronized (this) {
+                /*
+                 * As the hash table may have been resized while we were
+                 * waiting, we need to recalculate the bucket.
+                 */
+                if (lockState.lockRequest.status == LockRequestStatus.WAITING
+                        || lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
+                    if (timeToWait > 0 || lockState.parms.timeout == -1) {
+                        continue;
+                    }
+                }
+                handleWaitResult(lockState);
+                return;
+            }
+        }
+    }
 
-	/**
-	 * Handles a conversion request in the nowait situation. 
-	 * @return true if conversion request was handled else false to indicate that requester must enter wait.
-	 */
-	private boolean handleConversionRequest(LockState lockState) {
-		/*
-		 * 11. If calling transaction already has a granted lock request
-		 * then this must be a conversion request.
-		 */
-		if (log.isTraceEnabled()) {
-			log.trace(LOG_CLASS_NAME, "handleConversionRequest",
-					"SIMPLEDBM-DEBUG: Lock conversion request by thread " + lockState.parms.owner);
-		}
+    /**
+     * Finds the lock request belonging to the specified owner
+     */
+    private LockRequest find(Object owner) {
+        for (LockRequest req : queue) {
+            if (req.owner == owner || req.owner.equals(owner)) {
+                return req;
+            }
+        }
+        return null;
+    }
 
-		/*
-		 * Limitation: a transaction cannot attempt to lock an object
-		 * for which it is already waiting.
-		 */
-		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
-				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
-			log.error(this.getClass().getName(), "handleConversionRequest",
-					mcat.getMessage("EH0003", this, lockState.parms.owner));
-			throw new LatchException(mcat.getMessage("EH0003", this, lockState.parms.owner));
-		}
+    /**
+     * Handles a new lock request by a thread.
+     * @return true if the lock request was processed, else false to indicate that the requester must 
+     * 		wait
+     */
+    private boolean handleNewRequest(LockState lockState) {
+        /* 4. If not, this is the first request by the transaction. */
+        if (log.isDebugEnabled()) {
+            log.debug(
+                LOG_CLASS_NAME,
+                "handleNewRequest",
+                "SIMPLEDBM-DEBUG: New request by thread "
+                        + lockState.parms.owner);
+        }
 
-		else if (lockState.lockRequest.status == LockRequestStatus.GRANTED) {
-			/*
-			 * 12. Check whether the new request lock has the same mode as
-			 * previously held lock.
-			 */
-			if (lockState.parms.mode == lockState.lockRequest.mode) {
-				/* 13. If so, grant lock and return. */
-				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-					"SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
-				}
-				if (!lockState.parms.upgrade) {
-					lockState.lockRequest.count++;
-				}
-				return true;
-			}
+        if (lockState.parms.upgrade) {
+            /*
+             * An upgrade request without a prior lock request is an error.
+             */
+            log.error(this.getClass().getName(), "handleNewRequest", mcat
+                .getMessage("EH0001", lockState.parms));
+            throw new LatchException(mcat.getMessage("EH0001", lockState.parms));
+        }
 
-			else {
-				/*
-				 * 14. Otherwise, check if requested lock is compatible
-				 * with granted group
-				 */
-				boolean can_grant = checkCompatible(lockState.lockRequest, lockState.parms.mode);
+        /*
+         * 5. Check if lock can be granted. This is true if there are no
+         * waiting requests and the new request is compatible with
+         * existing grant mode.
+         */
+        boolean can_grant = (!waiting && lockState.parms.mode
+            .isCompatible(grantedMode));
 
-				if (can_grant) {
-					/* 13. If so, grant lock and return. */
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "handleConversionRequest",
-							"SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
-							+ this + ", therefore granting");
-					}
-					lockState.lockRequest.mode = lockState.parms.mode.maximumOf(lockState.lockRequest.mode);
-					if (!lockState.parms.upgrade) {
-						lockState.lockRequest.count++;
-					}
-					grantedMode = lockState.lockRequest.mode
-								.maximumOf(grantedMode);
-					return true;
-				}
+        if (!can_grant && lockState.parms.timeout == 0) {
+            /* 7. Otherwise, if nowait was specified, return failure. */
+            log.warn(LOG_CLASS_NAME, "handleNewRequest", mcat.getMessage(
+                "WH0002",
+                this,
+                lockState.parms.mode));
+            throw new LatchException(mcat.getMessage(
+                "WH0002",
+                this,
+                lockState.parms.mode));
+        }
 
-				else if (!can_grant && lockState.parms.timeout == 0) {
-					/* 15. If not, and nowait specified, return failure. */
-					log.warn(this.getClass().getName(), "handleConversionRequest",
-							mcat.getMessage("EH0004", lockState.parms, this));
-					throw new LatchException(mcat.getMessage("EH0004", lockState.parms, this));
-				}
+        /* Allocate new lock request */
+        lockState.lockRequest = new LockRequest(
+            this,
+            lockState.parms.owner,
+            lockState.parms.mode);
+        queueAppend(lockState.lockRequest);
+        if (can_grant) {
+            /* 6. If yes, grant the lock and return success. */
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "handleNewRequest",
+                    "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
+                            + this + ", therefore granting lock");
+            }
+            grantedMode = lockState.parms.mode.maximumOf(grantedMode);
+            return true;
+        } else {
+            lockState.converting = false;
+            return false;
+        }
+    }
 
-				else {
-					lockState.converting = true;
-					return false;
-				}
-			}
-		}
-		else {
-			log.error(this.getClass().getName(), "handleConversionRequest", mcat.getMessage("EH0005"));
-			throw new LatchException(mcat.getMessage("EH0005"));
-		}
-	}
+    /**
+     * Handles a conversion request in the nowait situation. 
+     * @return true if conversion request was handled else false to indicate that requester must enter wait.
+     */
+    private boolean handleConversionRequest(LockState lockState) {
+        /*
+         * 11. If calling transaction already has a granted lock request
+         * then this must be a conversion request.
+         */
+        if (log.isTraceEnabled()) {
+            log.trace(
+                LOG_CLASS_NAME,
+                "handleConversionRequest",
+                "SIMPLEDBM-DEBUG: Lock conversion request by thread "
+                        + lockState.parms.owner);
+        }
 
-	
-	/**
+        /*
+         * Limitation: a transaction cannot attempt to lock an object
+         * for which it is already waiting.
+         */
+        if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
+                || lockState.lockRequest.status == LockRequestStatus.WAITING) {
+            log.error(
+                this.getClass().getName(),
+                "handleConversionRequest",
+                mcat.getMessage("EH0003", this, lockState.parms.owner));
+            throw new LatchException(mcat.getMessage(
+                "EH0003",
+                this,
+                lockState.parms.owner));
+        }
+
+        else if (lockState.lockRequest.status == LockRequestStatus.GRANTED) {
+            /*
+             * 12. Check whether the new request lock has the same mode as
+             * previously held lock.
+             */
+            if (lockState.parms.mode == lockState.lockRequest.mode) {
+                /* 13. If so, grant lock and return. */
+                if (log.isDebugEnabled()) {
+                    log
+                        .debug(
+                            LOG_CLASS_NAME,
+                            "handleConversionRequest",
+                            "SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
+                }
+                if (!lockState.parms.upgrade) {
+                    lockState.lockRequest.count++;
+                }
+                return true;
+            }
+
+            else {
+                /*
+                 * 14. Otherwise, check if requested lock is compatible
+                 * with granted group
+                 */
+                boolean can_grant = checkCompatible(
+                    lockState.lockRequest,
+                    lockState.parms.mode);
+
+                if (can_grant) {
+                    /* 13. If so, grant lock and return. */
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            LOG_CLASS_NAME,
+                            "handleConversionRequest",
+                            "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
+                                    + this + ", therefore granting");
+                    }
+                    lockState.lockRequest.mode = lockState.parms.mode
+                        .maximumOf(lockState.lockRequest.mode);
+                    if (!lockState.parms.upgrade) {
+                        lockState.lockRequest.count++;
+                    }
+                    grantedMode = lockState.lockRequest.mode
+                        .maximumOf(grantedMode);
+                    return true;
+                }
+
+                else if (!can_grant && lockState.parms.timeout == 0) {
+                    /* 15. If not, and nowait specified, return failure. */
+                    log.warn(
+                        this.getClass().getName(),
+                        "handleConversionRequest",
+                        mcat.getMessage("EH0004", lockState.parms, this));
+                    throw new LatchException(mcat.getMessage(
+                        "EH0004",
+                        lockState.parms,
+                        this));
+                }
+
+                else {
+                    lockState.converting = true;
+                    return false;
+                }
+            }
+        } else {
+            log.error(
+                this.getClass().getName(),
+                "handleConversionRequest",
+                mcat.getMessage("EH0005"));
+            throw new LatchException(mcat.getMessage("EH0005"));
+        }
+    }
+
+    /**
      * Checks whether the specified lock request is compatible with the granted group.
      * Also sets the otherHolders flag if the granted group contains other requests.
      */
-	private boolean checkCompatible(LockRequest request, LockMode mode) {
+    private boolean checkCompatible(LockRequest request, LockMode mode) {
 
-		boolean iscompatible = true;
+        boolean iscompatible = true;
 
-		/* Check if there are other holders */
-		for (LockRequest other : getQueue()) {
+        /* Check if there are other holders */
+        for (LockRequest other : getQueue()) {
 
-			if (other == request)
-				continue;
-			else if (other.status == LockRequestStatus.WAITING)
-				break;
-			else {
-				if (!mode.isCompatible(other.mode)) {
-					iscompatible = false;
-					break;
-				}
-			}
-		}
-		return iscompatible;
-	}
-	
-	/**
-	 * Prepare the lock request for waiting.
-	 */
-	private void prepareToWait(LockState lockState) {
-		waiting = true;
-		if (!lockState.converting) {
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "prepareToWait",
-						"SIMPLEDBM-DEBUG: Waiting for lock to be free");
-			}
-			lockState.lockRequest.status = LockRequestStatus.WAITING;
-		} else {
-			if (log.isDebugEnabled()) {
-				log
-						.debug(LOG_CLASS_NAME, "prepareToWait",
-								"SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
-			}
-			lockState.lockRequest.convertMode = lockState.parms.mode;
-			lockState.lockRequest.status = LockRequestStatus.CONVERTING;
-			lockState.lockRequest.upgrading = lockState.parms.upgrade;
-			lockState.prevThread = lockState.lockRequest.waitingThread;
-			lockState.lockRequest.waitingThread = Thread.currentThread();
-		}
-	}
+            if (other == request)
+                continue;
+            else if (other.status == LockRequestStatus.WAITING)
+                break;
+            else {
+                if (!mode.isCompatible(other.mode)) {
+                    iscompatible = false;
+                    break;
+                }
+            }
+        }
+        return iscompatible;
+    }
 
-	/**
-	 * Handles the result of a lock wait. 
-	 */
-	private void handleWaitResult(LockState lockState) {
-		LockRequestStatus lockRequestStatus = lockState.lockRequest.status;
-		if (lockRequestStatus == LockRequestStatus.GRANTED) {
-			/*
-			 * 9. If after the wait, the lock has been granted, then return
-			 * success.
-			 */
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "handleWaitResult",
-						"SIMPLEDBM-DEBUG: Woken up, and lock granted");
-			}
-			return;
-		}
+    /**
+     * Prepare the lock request for waiting.
+     */
+    private void prepareToWait(LockState lockState) {
+        waiting = true;
+        if (!lockState.converting) {
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "prepareToWait",
+                    "SIMPLEDBM-DEBUG: Waiting for lock to be free");
+            }
+            lockState.lockRequest.status = LockRequestStatus.WAITING;
+        } else {
+            if (log.isDebugEnabled()) {
+                log
+                    .debug(
+                        LOG_CLASS_NAME,
+                        "prepareToWait",
+                        "SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
+            }
+            lockState.lockRequest.convertMode = lockState.parms.mode;
+            lockState.lockRequest.status = LockRequestStatus.CONVERTING;
+            lockState.lockRequest.upgrading = lockState.parms.upgrade;
+            lockState.prevThread = lockState.lockRequest.waitingThread;
+            lockState.lockRequest.waitingThread = Thread.currentThread();
+        }
+    }
 
-		/* 10. Else return failure. */
-		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "handleWaitResult",
-					"SIMPLEDBM-DEBUG: Woken up, and lock failed");
-		}
+    /**
+     * Handles the result of a lock wait. 
+     */
+    private void handleWaitResult(LockState lockState) {
+        LockRequestStatus lockRequestStatus = lockState.lockRequest.status;
+        if (lockRequestStatus == LockRequestStatus.GRANTED) {
+            /*
+             * 9. If after the wait, the lock has been granted, then return
+             * success.
+             */
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "handleWaitResult",
+                    "SIMPLEDBM-DEBUG: Woken up, and lock granted");
+            }
+            return;
+        }
 
-		if (!lockState.converting) {
-			/* If not converting the delete the newly created request. */
-			queueRemove(lockState.lockRequest);
-			if (queueIsEmpty()) {
-				grantedMode = LockMode.NONE;
-			}
-		} else {
-			/* If converting, then restore old status */
-			lockState.lockRequest.status = LockRequestStatus.GRANTED;
-			lockState.lockRequest.convertMode = lockState.lockRequest.mode;
-			lockState.lockRequest.waitingThread = lockState.prevThread;
-		}
-		log.warn(this.getClass().getName(), "handleWaitResult", mcat.getMessage("EH0006", lockState.parms));
-		throw new LatchException(mcat.getMessage("EH0006", lockState.parms));
-	}
+        /* 10. Else return failure. */
+        if (log.isDebugEnabled()) {
+            log.debug(
+                LOG_CLASS_NAME,
+                "handleWaitResult",
+                "SIMPLEDBM-DEBUG: Woken up, and lock failed");
+        }
 
-	private void grantWaiters(ReleaseAction action, LockRequest r) {
-		/*
-		 * 9. Recalculate granted mode by calculating max mode amongst all
-		 * granted (including conversion) requests. If a conversion request
-		 * is compatible with all other granted requests, then grant the
-		 * conversion, recalculating granted mode. If a waiting request is
-		 * compatible with granted mode, and there are no pending conversion
-		 * requests, then grant the request, and recalculate granted mode.
-		 * Otherwise, we are done. Note that this means that FIFO is
-		 * respected for waiting requests, but conversion requests are
-		 * granted as soon as they become compatible. Also, note that if a
-		 * conversion request is pending, waiting requests cannot be
-		 * granted.
-		 */
-		boolean converting;
-		grantedMode = LockMode.NONE;
-		waiting = false;
-		converting = false;
-		for (LockRequest req : getQueue()) {
+        if (!lockState.converting) {
+            /* If not converting the delete the newly created request. */
+            queueRemove(lockState.lockRequest);
+            if (queueIsEmpty()) {
+                grantedMode = LockMode.NONE;
+            }
+        } else {
+            /* If converting, then restore old status */
+            lockState.lockRequest.status = LockRequestStatus.GRANTED;
+            lockState.lockRequest.convertMode = lockState.lockRequest.mode;
+            lockState.lockRequest.waitingThread = lockState.prevThread;
+        }
+        log.warn(this.getClass().getName(), "handleWaitResult", mcat
+            .getMessage("EH0006", lockState.parms));
+        throw new LatchException(mcat.getMessage("EH0006", lockState.parms));
+    }
 
-			r = req;
-			if (r.status == LockRequestStatus.GRANTED) {
-				grantedMode = r.mode.maximumOf(grantedMode);
-			}
+    private void grantWaiters(ReleaseAction action, LockRequest r) {
+        /*
+         * 9. Recalculate granted mode by calculating max mode amongst all
+         * granted (including conversion) requests. If a conversion request
+         * is compatible with all other granted requests, then grant the
+         * conversion, recalculating granted mode. If a waiting request is
+         * compatible with granted mode, and there are no pending conversion
+         * requests, then grant the request, and recalculate granted mode.
+         * Otherwise, we are done. Note that this means that FIFO is
+         * respected for waiting requests, but conversion requests are
+         * granted as soon as they become compatible. Also, note that if a
+         * conversion request is pending, waiting requests cannot be
+         * granted.
+         */
+        boolean converting;
+        grantedMode = LockMode.NONE;
+        waiting = false;
+        converting = false;
+        for (LockRequest req : getQueue()) {
 
-			else if (r.status == LockRequestStatus.CONVERTING) {
-				boolean can_grant;
+            r = req;
+            if (r.status == LockRequestStatus.GRANTED) {
+                grantedMode = r.mode.maximumOf(grantedMode);
+            }
 
-				assert (!converting || waiting);
+            else if (r.status == LockRequestStatus.CONVERTING) {
+                boolean can_grant;
 
-				can_grant = checkCompatible(r, r.convertMode);
-				if (can_grant) {
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Granting conversion request " + r + " because request is compatible with " + this);
-					}
-	                r.mode = r.convertMode.maximumOf(r.mode);
-	                r.convertMode = r.mode;
-	                grantedMode = r.mode.maximumOf(grantedMode);
-		            /*
-		             * Treat conversions as lock recursion unless upgrading.
-		             */
-	                if (!r.upgrading) {
-	                	r.count++;
-	                }
-					r.status = LockRequestStatus.GRANTED;
-					LockSupport.unpark(r.waitingThread);
-				} else {
-					grantedMode = r.mode.maximumOf(grantedMode);
-					converting = true;
-					waiting = true;
-				}
-			}
+                assert (!converting || waiting);
 
-			else if (r.status == LockRequestStatus.WAITING) {
-				if (!converting && r.mode.isCompatible(grantedMode)) {
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Granting waiting request " + r + " because not converting and request is compatible with " + this);
-					}
-					r.status = LockRequestStatus.GRANTED;
-		            grantedMode = r.mode.maximumOf(grantedMode);
-					LockSupport.unpark(r.waitingThread);
-				} else {
-					if (log.isDebugEnabled() && converting) {
-						log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Cannot grant waiting request " + r + " because conversion request pending");
-					}
-					waiting = true;
-					break;
-				}
-			}
-		}
-	}
+                can_grant = checkCompatible(r, r.convertMode);
+                if (can_grant) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            LOG_CLASS_NAME,
+                            "release",
+                            "SIMPLEDBM-DEBUG: Granting conversion request " + r
+                                    + " because request is compatible with "
+                                    + this);
+                    }
+                    r.mode = r.convertMode.maximumOf(r.mode);
+                    r.convertMode = r.mode;
+                    grantedMode = r.mode.maximumOf(grantedMode);
+                    /*
+                     * Treat conversions as lock recursion unless upgrading.
+                     */
+                    if (!r.upgrading) {
+                        r.count++;
+                    }
+                    r.status = LockRequestStatus.GRANTED;
+                    LockSupport.unpark(r.waitingThread);
+                } else {
+                    grantedMode = r.mode.maximumOf(grantedMode);
+                    converting = true;
+                    waiting = true;
+                }
+            }
 
-	public synchronized final LockMode getMode() {
+            else if (r.status == LockRequestStatus.WAITING) {
+                if (!converting && r.mode.isCompatible(grantedMode)) {
+                    if (log.isDebugEnabled()) {
+                        log
+                            .debug(
+                                LOG_CLASS_NAME,
+                                "release",
+                                "SIMPLEDBM-DEBUG: Granting waiting request "
+                                        + r
+                                        + " because not converting and request is compatible with "
+                                        + this);
+                    }
+                    r.status = LockRequestStatus.GRANTED;
+                    grantedMode = r.mode.maximumOf(grantedMode);
+                    LockSupport.unpark(r.waitingThread);
+                } else {
+                    if (log.isDebugEnabled() && converting) {
+                        log
+                            .debug(
+                                LOG_CLASS_NAME,
+                                "release",
+                                "SIMPLEDBM-DEBUG: Cannot grant waiting request "
+                                        + r
+                                        + " because conversion request pending");
+                    }
+                    waiting = true;
+                    break;
+                }
+            }
+        }
+    }
 
-		LockRequest lockRequest = find(Thread.currentThread());
-		if (lockRequest != null) {
-			return lockRequest.mode;
-		}
-		return LockMode.NONE;
-	}
+    public synchronized final LockMode getMode() {
 
-	
-	/**
-	 * Release or downgrade a specified lock.
-	 * 
-	 * <p>
-	 * Algorithm:
-	 * <ol>
-	 * <li>1. Search for the lock. </li>
-	 * <li>2. If not found, return Ok. </li>
-	 * <li>3. If found, look for the transaction's lock request. </li>
-	 * <li>4. If not found, return Ok. </li>
-	 * <li>5. If lock request is in invalid state, return error. </li>
-	 * <li>6. If noforce and not downgrading, and reference count greater than
-	 * 0, then do not release the lock request. Decrement reference count and
-	 * return Ok. </li>
-	 * <li>7. If sole lock request and not downgrading, then release the lock
-	 * and return Ok. </li>
-	 * <li>8. If not downgrading, delete the lock request from the queue.
-	 * Otherwise, downgrade the mode assigned to the lock request.
-	 * 
-	 * </li>
-	 * <li>9. Recalculate granted mode by calculating max mode amongst all
-	 * granted (including conversion) requests. 
-	 * If a conversion request is compatible with all other granted requests,
-	 * then grant the conversion, recalculating granted mode. If a waiting
-	 * request is compatible with granted mode, and there are no pending
-	 * conversion requests, then grant the request, and recalculate granted
-	 * mode. Otherwise, we are done. </li>
-	 * </ol>
-	 * </p>
-	 * <p>
-	 * Note that this means that FIFO is respected
-	 * for waiting requests, but conversion requests are granted as soon as they
-	 * become compatible. Also, note that if a conversion request is pending,
-	 * waiting requests cannot be granted.
-	 * </p>
-	 * </p>
-	 */	
-	private boolean releaseLock(LockState lockState) {
-		boolean released;
-		/* 3. If lock found, look for the transaction's lock request. */
-		lockState.lockRequest = find(lockState.parms.owner);
+        LockRequest lockRequest = find(Thread.currentThread());
+        if (lockRequest != null) {
+            return lockRequest.mode;
+        }
+        return LockMode.NONE;
+    }
 
-		if (lockState.lockRequest == null) {
-			/* 4. If not found, throw exception. */
-			log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0007", this));
-			throw new LatchException(mcat.getMessage("EH0007", this));
-		}
+    /**
+     * Release or downgrade a specified lock.
+     * 
+     * <p>
+     * Algorithm:
+     * <ol>
+     * <li>1. Search for the lock. </li>
+     * <li>2. If not found, return Ok. </li>
+     * <li>3. If found, look for the transaction's lock request. </li>
+     * <li>4. If not found, return Ok. </li>
+     * <li>5. If lock request is in invalid state, return error. </li>
+     * <li>6. If noforce and not downgrading, and reference count greater than
+     * 0, then do not release the lock request. Decrement reference count and
+     * return Ok. </li>
+     * <li>7. If sole lock request and not downgrading, then release the lock
+     * and return Ok. </li>
+     * <li>8. If not downgrading, delete the lock request from the queue.
+     * Otherwise, downgrade the mode assigned to the lock request.
+     * 
+     * </li>
+     * <li>9. Recalculate granted mode by calculating max mode amongst all
+     * granted (including conversion) requests. 
+     * If a conversion request is compatible with all other granted requests,
+     * then grant the conversion, recalculating granted mode. If a waiting
+     * request is compatible with granted mode, and there are no pending
+     * conversion requests, then grant the request, and recalculate granted
+     * mode. Otherwise, we are done. </li>
+     * </ol>
+     * </p>
+     * <p>
+     * Note that this means that FIFO is respected
+     * for waiting requests, but conversion requests are granted as soon as they
+     * become compatible. Also, note that if a conversion request is pending,
+     * waiting requests cannot be granted.
+     * </p>
+     * </p>
+     */
+    private boolean releaseLock(LockState lockState) {
+        boolean released;
+        /* 3. If lock found, look for the transaction's lock request. */
+        lockState.lockRequest = find(lockState.parms.owner);
 
-		if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
-				|| lockState.lockRequest.status == LockRequestStatus.WAITING) {
-			/* 5. If lock in invalid state, return error. */
-			log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0008", this));
-			throw new LatchException(mcat.getMessage("EH0008", this));
-		}
+        if (lockState.lockRequest == null) {
+            /* 4. If not found, throw exception. */
+            log.error(this.getClass().getName(), "releaseLock", mcat
+                .getMessage("EH0007", this));
+            throw new LatchException(mcat.getMessage("EH0007", this));
+        }
 
-		if (lockState.parms.action == ReleaseAction.DOWNGRADE && lockState.lockRequest.mode == lockState.parms.downgradeMode) {
-			/*
-			 * If downgrade request and lock is already in target mode,
-			 * return success.
-			 */
-			return true;
-		}
+        if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
+                || lockState.lockRequest.status == LockRequestStatus.WAITING) {
+            /* 5. If lock in invalid state, return error. */
+            log.error(this.getClass().getName(), "releaseLock", mcat
+                .getMessage("EH0008", this));
+            throw new LatchException(mcat.getMessage("EH0008", this));
+        }
 
-		if (lockState.parms.action == ReleaseAction.RELEASE && lockState.lockRequest.count > 1) {
-			/*
-			 * 6. If noforce, and reference count greater than 0, then do
-			 * not release the lock request. Decrement reference count if
-			 * greater than 0, and, return Ok.
-			 */
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "release",
-						"SIMPLEDBM-DEBUG: Count decremented but lock not released");
-			}
-			lockState.lockRequest.count--;
-			return false;
-		}
+        if (lockState.parms.action == ReleaseAction.DOWNGRADE
+                && lockState.lockRequest.mode == lockState.parms.downgradeMode) {
+            /*
+             * If downgrade request and lock is already in target mode,
+             * return success.
+             */
+            return true;
+        }
 
-		/*
-		 * Either the lock is being downgraded or it is being released and
-		 * its reference count == 0 or it is being forcibly released.
-		 */
+        if (lockState.parms.action == ReleaseAction.RELEASE
+                && lockState.lockRequest.count > 1) {
+            /*
+             * 6. If noforce, and reference count greater than 0, then do
+             * not release the lock request. Decrement reference count if
+             * greater than 0, and, return Ok.
+             */
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "release",
+                    "SIMPLEDBM-DEBUG: Count decremented but lock not released");
+            }
+            lockState.lockRequest.count--;
+            return false;
+        }
 
-		if (lockState.lockRequest == queueHead() && lockState.lockRequest == queueTail()
-				&& lockState.parms.action != ReleaseAction.DOWNGRADE) {
-			/* 7. If sole lock request, then release the lock and return Ok. */
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "release",
-						"SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
-			}
-			queueRemove(lockState.lockRequest);
-			grantedMode = LockMode.NONE;
-			return true;
-		}
+        /*
+         * Either the lock is being downgraded or it is being released and
+         * its reference count == 0 or it is being forcibly released.
+         */
 
-		/*
-		 * 8. If not downgrading, delete the lock request from the queue.
-		 * Otherwise, downgrade the mode assigned to the lock request.
-		 */
-		if (lockState.parms.action != ReleaseAction.DOWNGRADE) {
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "release",
-						"SIMPLEDBM-DEBUG: Removing lock request " + lockState.lockRequest
-								+ " and re-adjusting granted mode");
-			}
-			queueRemove(lockState.lockRequest);
-			released = true;
-		} else {
-			/*
-			 * We need to determine whether is a valid downgrade request. To
-			 * do so, we do a reverse check - ie, if the new mode could have
-			 * been upgraded to current mode, then it is okay to downgrade.
-			 */
-			LockMode mode = lockState.parms.downgradeMode.maximumOf(lockState.lockRequest.mode);
-			if (mode == lockState.lockRequest.mode) {
-				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "release", "SIMPLEDBM-DEBUG: Downgrading " + lockState.lockRequest
-							+ " to " + lockState.parms.downgradeMode
-							+ " and re-adjusting granted mode");
-				}
-				lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
-			} else {
-				log.error(this.getClass().getName(), "releaseLock", mcat.getMessage("EH0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
-				throw new LatchException(mcat.getMessage("EH0009", lockState.lockRequest.mode, lockState.parms.downgradeMode));
-			}
-			released = false;
-		}
-		/*
-		 * 9. Recalculate granted mode by calculating max mode amongst all
-		 * granted (including conversion) requests. If a conversion request
-		 * is compatible with all other granted requests, then grant the
-		 * conversion, recalculating granted mode. If a waiting request is
-		 * compatible with granted mode, and there are no pending conversion
-		 * requests, then grant the request, and recalculate granted mode.
-		 * Otherwise, we are done. Note that this means that FIFO is
-		 * respected for waiting requests, but conversion requests are
-		 * granted as soon as they become compatible. Also, note that if a
-		 * conversion request is pending, waiting requests cannot be
-		 * granted.
-		 */
-		grantWaiters(lockState.parms.action, lockState.lockRequest);
-		return released;
-	}
+        if (lockState.lockRequest == queueHead()
+                && lockState.lockRequest == queueTail()
+                && lockState.parms.action != ReleaseAction.DOWNGRADE) {
+            /* 7. If sole lock request, then release the lock and return Ok. */
+            if (log.isDebugEnabled()) {
+                log
+                    .debug(
+                        LOG_CLASS_NAME,
+                        "release",
+                        "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
+            }
+            queueRemove(lockState.lockRequest);
+            grantedMode = LockMode.NONE;
+            return true;
+        }
 
-	/**
-	 * Release or downgrade a specified lock.
-	 * 
-	 * <p>
-	 * Algorithm:
-	 * <ol>
-	 * <li>1. Search for the lock. </li>
-	 * <li>2. If not found, return Ok. </li>
-	 * <li>3. If found, look for the transaction's lock request. </li>
-	 * <li>4. If not found, return Ok. </li>
-	 * <li>5. If lock request is in invalid state, return error. </li>
-	 * <li>6. If noforce and not downgrading, and reference count greater than
-	 * 0, then do not release the lock request. Decrement reference count and
-	 * return Ok. </li>
-	 * <li>7. If sole lock request and not downgrading, then release the lock
-	 * and return Ok. </li>
-	 * <li>8. If not downgrading, delete the lock request from the queue.
-	 * Otherwise, downgrade the mode assigned to the lock request.
-	 * 
-	 * </li>
-	 * <li>9. Recalculate granted mode by calculating max mode amongst all
-	 * granted (including conversion) requests. 
-	 * If a conversion request is compatible with all other granted requests,
-	 * then grant the conversion, recalculating granted mode. If a waiting
-	 * request is compatible with granted mode, and there are no pending
-	 * conversion requests, then grant the request, and recalculate granted
-	 * mode. Otherwise, we are done. </li>
-	 * </ol>
-	 * </p>
-	 * <p>
-	 * Note that this means that FIFO is respected
-	 * for waiting requests, but conversion requests are granted as soon as they
-	 * become compatible. Also, note that if a conversion request is pending,
-	 * waiting requests cannot be granted.
-	 * </p>
-	 * </p>
-	 */
-	public synchronized boolean release(ReleaseAction action,
-			LockMode downgradeMode) {
+        /*
+         * 8. If not downgrading, delete the lock request from the queue.
+         * Otherwise, downgrade the mode assigned to the lock request.
+         */
+        if (lockState.parms.action != ReleaseAction.DOWNGRADE) {
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "release",
+                    "SIMPLEDBM-DEBUG: Removing lock request "
+                            + lockState.lockRequest
+                            + " and re-adjusting granted mode");
+            }
+            queueRemove(lockState.lockRequest);
+            released = true;
+        } else {
+            /*
+             * We need to determine whether is a valid downgrade request. To
+             * do so, we do a reverse check - ie, if the new mode could have
+             * been upgraded to current mode, then it is okay to downgrade.
+             */
+            LockMode mode = lockState.parms.downgradeMode
+                .maximumOf(lockState.lockRequest.mode);
+            if (mode == lockState.lockRequest.mode) {
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        LOG_CLASS_NAME,
+                        "release",
+                        "SIMPLEDBM-DEBUG: Downgrading " + lockState.lockRequest
+                                + " to " + lockState.parms.downgradeMode
+                                + " and re-adjusting granted mode");
+                }
+                lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
+            } else {
+                log.error(this.getClass().getName(), "releaseLock", mcat
+                    .getMessage(
+                        "EH0009",
+                        lockState.lockRequest.mode,
+                        lockState.parms.downgradeMode));
+                throw new LatchException(mcat.getMessage(
+                    "EH0009",
+                    lockState.lockRequest.mode,
+                    lockState.parms.downgradeMode));
+            }
+            released = false;
+        }
+        /*
+         * 9. Recalculate granted mode by calculating max mode amongst all
+         * granted (including conversion) requests. If a conversion request
+         * is compatible with all other granted requests, then grant the
+         * conversion, recalculating granted mode. If a waiting request is
+         * compatible with granted mode, and there are no pending conversion
+         * requests, then grant the request, and recalculate granted mode.
+         * Otherwise, we are done. Note that this means that FIFO is
+         * respected for waiting requests, but conversion requests are
+         * granted as soon as they become compatible. Also, note that if a
+         * conversion request is pending, waiting requests cannot be
+         * granted.
+         */
+        grantWaiters(lockState.parms.action, lockState.lockRequest);
+        return released;
+    }
 
-		LockParams parms = new LockParams();
-		parms.owner = Thread.currentThread();
-		parms.action = action;
-		parms.downgradeMode = downgradeMode;
+    /**
+     * Release or downgrade a specified lock.
+     * 
+     * <p>
+     * Algorithm:
+     * <ol>
+     * <li>1. Search for the lock. </li>
+     * <li>2. If not found, return Ok. </li>
+     * <li>3. If found, look for the transaction's lock request. </li>
+     * <li>4. If not found, return Ok. </li>
+     * <li>5. If lock request is in invalid state, return error. </li>
+     * <li>6. If noforce and not downgrading, and reference count greater than
+     * 0, then do not release the lock request. Decrement reference count and
+     * return Ok. </li>
+     * <li>7. If sole lock request and not downgrading, then release the lock
+     * and return Ok. </li>
+     * <li>8. If not downgrading, delete the lock request from the queue.
+     * Otherwise, downgrade the mode assigned to the lock request.
+     * 
+     * </li>
+     * <li>9. Recalculate granted mode by calculating max mode amongst all
+     * granted (including conversion) requests. 
+     * If a conversion request is compatible with all other granted requests,
+     * then grant the conversion, recalculating granted mode. If a waiting
+     * request is compatible with granted mode, and there are no pending
+     * conversion requests, then grant the request, and recalculate granted
+     * mode. Otherwise, we are done. </li>
+     * </ol>
+     * </p>
+     * <p>
+     * Note that this means that FIFO is respected
+     * for waiting requests, but conversion requests are granted as soon as they
+     * become compatible. Also, note that if a conversion request is pending,
+     * waiting requests cannot be granted.
+     * </p>
+     * </p>
+     */
+    public synchronized boolean release(ReleaseAction action,
+            LockMode downgradeMode) {
 
-		LockState lockState = new LockState(parms);
+        LockParams parms = new LockParams();
+        parms.owner = Thread.currentThread();
+        parms.action = action;
+        parms.downgradeMode = downgradeMode;
 
-		return releaseLock(lockState);
-	}
+        LockState lockState = new LockState(parms);
 
-	void setLockMode(LockMode mode) {
-		this.grantedMode = mode;
-	}
+        return releaseLock(lockState);
+    }
 
-	LockMode getLockMode() {
-		return grantedMode;
-	}
+    void setLockMode(LockMode mode) {
+        this.grantedMode = mode;
+    }
 
-	boolean isWaiting() {
-		return waiting;
-	}
+    LockMode getLockMode() {
+        return grantedMode;
+    }
 
-	void setWaiting(boolean waiting) {
-		this.waiting = waiting;
-	}
+    boolean isWaiting() {
+        return waiting;
+    }
 
-	void queueAppend(LockRequest request) {
-		queue.add(request);
-	}
+    void setWaiting(boolean waiting) {
+        this.waiting = waiting;
+    }
 
-	void queueRemove(LockRequest request) {
-		queue.remove(request);
-	}
+    void queueAppend(LockRequest request) {
+        queue.add(request);
+    }
 
-	LockRequest queueHead() {
-		return queue.getFirst();
-	}
+    void queueRemove(LockRequest request) {
+        queue.remove(request);
+    }
 
-	LockRequest queueTail() {
-		return queue.getLast();
-	}
+    LockRequest queueHead() {
+        return queue.getFirst();
+    }
 
-	boolean queueIsEmpty() {
-		return queue.isEmpty();
-	}
+    LockRequest queueTail() {
+        return queue.getLast();
+    }
 
-	LinkedList<LockRequest> getQueue() {
-		return queue;
-	}
+    boolean queueIsEmpty() {
+        return queue.isEmpty();
+    }
 
-	/**
-	 * A LockRequest represents the request by a transaction for a lock.
-	 * 
-	 * @author Dibyendu Majumdar
-	 * 
-	 */
-	static final class LockRequest {
+    LinkedList<LockRequest> getQueue() {
+        return queue;
+    }
 
-		volatile LockRequestStatus status = LockRequestStatus.GRANTED;
+    /**
+     * A LockRequest represents the request by a transaction for a lock.
+     * 
+     * @author Dibyendu Majumdar
+     * 
+     */
+    static final class LockRequest {
 
-		volatile LockMode mode;
+        volatile LockRequestStatus status = LockRequestStatus.GRANTED;
 
-		volatile LockMode convertMode;
-        
-		volatile short count = 1;
+        volatile LockMode mode;
 
-		final Object owner;
-		
-		volatile Thread waitingThread;
-		
-		NewReadWriteUpdateLatch lockItem;
-		
-		volatile boolean upgrading;
+        volatile LockMode convertMode;
 
-		LockRequest(NewReadWriteUpdateLatch lockItem, Object owner, LockMode mode) {
-			this.lockItem = lockItem;
-			this.mode = mode;
-			this.convertMode = mode;
-			this.waitingThread = Thread.currentThread();
-			this.owner = owner;
-		}
+        volatile short count = 1;
 
-		Object getOwner() {
-			return owner;
-		}
+        final Object owner;
 
-		@Override
-		public String toString() {
-			return "LockRequest(mode=" + mode + ", convertMode=" + convertMode + ", status=" + status + ", count=" + count + ", owner=" + owner + ", waitingThread=" + waitingThread + ")";
-		}
-	}
+        volatile Thread waitingThread;
 
-	public void downgradeExclusiveLock() {
-		release(ReleaseAction.DOWNGRADE, LockMode.UPDATE);
-	}
+        NewReadWriteUpdateLatch lockItem;
 
-	public void downgradeUpdateLock() {
-		release(ReleaseAction.DOWNGRADE, LockMode.SHARED);
-	}
+        volatile boolean upgrading;
 
-	public void exclusiveLock() {
-		acquire(LockMode.EXCLUSIVE, 10, false);
-	}
+        LockRequest(NewReadWriteUpdateLatch lockItem, Object owner,
+                LockMode mode) {
+            this.lockItem = lockItem;
+            this.mode = mode;
+            this.convertMode = mode;
+            this.waitingThread = Thread.currentThread();
+            this.owner = owner;
+        }
 
-	public void exclusiveLockInterruptibly() throws InterruptedException {
-		acquire(LockMode.EXCLUSIVE, 10, false);
-	}
+        Object getOwner() {
+            return owner;
+        }
 
-	public boolean isLatchedExclusively() {
-		return getMode() == LockMode.EXCLUSIVE;
-	}
+        @Override
+        public String toString() {
+            return "LockRequest(mode=" + mode + ", convertMode=" + convertMode
+                    + ", status=" + status + ", count=" + count + ", owner="
+                    + owner + ", waitingThread=" + waitingThread + ")";
+        }
+    }
 
-	public boolean isLatchedForUpdate() {
-		return getMode() == LockMode.UPDATE;
-	}
+    public void downgradeExclusiveLock() {
+        release(ReleaseAction.DOWNGRADE, LockMode.UPDATE);
+    }
 
-	public void sharedLock() {
-		acquire(LockMode.SHARED, 10, false);
-	}
+    public void downgradeUpdateLock() {
+        release(ReleaseAction.DOWNGRADE, LockMode.SHARED);
+    }
 
-	public void sharedLockInterruptibly() throws InterruptedException {
-		acquire(LockMode.SHARED, 10, false);
-	}
+    public void exclusiveLock() {
+        acquire(LockMode.EXCLUSIVE, 10, false);
+    }
 
-	public boolean tryExclusiveLock() {
-		try {
-			acquire(LockMode.EXCLUSIVE, 0, false);
-		}
-		catch (LatchException e) {
-			return false;
-		}
-		return true;
-	}
+    public void exclusiveLockInterruptibly() throws InterruptedException {
+        acquire(LockMode.EXCLUSIVE, 10, false);
+    }
 
-	public boolean trySharedLock() {
-		try {
-			acquire(LockMode.SHARED, 0, false);
-		}
-		catch (LatchException e) {
-			return false;
-		}
-		return true;
-	}
+    public boolean isLatchedExclusively() {
+        return getMode() == LockMode.EXCLUSIVE;
+    }
 
-	public boolean tryUpdateLock() {
-		try {
-			acquire(LockMode.UPDATE, 0, false);
-		}
-		catch (LatchException e) {
-			return false;
-		}
-		return true;
-	}
+    public boolean isLatchedForUpdate() {
+        return getMode() == LockMode.UPDATE;
+    }
 
-	public boolean tryUpgradeUpdateLock() {
-		try {
-			acquire(LockMode.EXCLUSIVE, 0, true);
-		}
-		catch (LatchException e) {
-			return false;
-		}
-		return true;
-	}
+    public void sharedLock() {
+        acquire(LockMode.SHARED, 10, false);
+    }
 
-	public void unlockExclusive() {
-		release(ReleaseAction.RELEASE, null);
-	}
+    public void sharedLockInterruptibly() throws InterruptedException {
+        acquire(LockMode.SHARED, 10, false);
+    }
 
-	public void unlockShared() {
-		release(ReleaseAction.RELEASE, null);
-	}
+    public boolean tryExclusiveLock() {
+        try {
+            acquire(LockMode.EXCLUSIVE, 0, false);
+        } catch (LatchException e) {
+            return false;
+        }
+        return true;
+    }
 
-	public void unlockUpdate() {
-		release(ReleaseAction.RELEASE, null);
-	}
+    public boolean trySharedLock() {
+        try {
+            acquire(LockMode.SHARED, 0, false);
+        } catch (LatchException e) {
+            return false;
+        }
+        return true;
+    }
 
-	public void updateLock() {
-		acquire(LockMode.UPDATE, 10, false);
-	}
+    public boolean tryUpdateLock() {
+        try {
+            acquire(LockMode.UPDATE, 0, false);
+        } catch (LatchException e) {
+            return false;
+        }
+        return true;
+    }
 
-	public void updateLockInterruptibly() throws InterruptedException {
-		acquire(LockMode.UPDATE, 10, false);
-	}
+    public boolean tryUpgradeUpdateLock() {
+        try {
+            acquire(LockMode.EXCLUSIVE, 0, true);
+        } catch (LatchException e) {
+            return false;
+        }
+        return true;
+    }
 
-	public void upgradeUpdateLock() {
-		acquire(LockMode.EXCLUSIVE, 10, true);
-	}
+    public void unlockExclusive() {
+        release(ReleaseAction.RELEASE, null);
+    }
 
-	public void upgradeUpdateLockInterruptibly() throws InterruptedException {
-		upgradeUpdateLock();
-	}
+    public void unlockShared() {
+        release(ReleaseAction.RELEASE, null);
+    }
+
+    public void unlockUpdate() {
+        release(ReleaseAction.RELEASE, null);
+    }
+
+    public void updateLock() {
+        acquire(LockMode.UPDATE, 10, false);
+    }
+
+    public void updateLockInterruptibly() throws InterruptedException {
+        acquire(LockMode.UPDATE, 10, false);
+    }
+
+    public void upgradeUpdateLock() {
+        acquire(LockMode.EXCLUSIVE, 10, true);
+    }
+
+    public void upgradeUpdateLockInterruptibly() throws InterruptedException {
+        upgradeUpdateLock();
+    }
 }

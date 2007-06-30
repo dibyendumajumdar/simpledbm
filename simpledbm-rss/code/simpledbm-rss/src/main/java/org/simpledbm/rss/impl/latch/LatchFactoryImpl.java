@@ -27,25 +27,25 @@ import org.simpledbm.rss.api.latch.LatchFactory;
  */
 public final class LatchFactoryImpl implements LatchFactory {
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.common.latch.LatchFactory#newReadWriteLatch()
-	 */
-	public Latch newReadWriteLatch() {
-		return new ReadWriteLatch();
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.common.latch.LatchFactory#newReadWriteLatch()
+     */
+    public Latch newReadWriteLatch() {
+        return new ReadWriteLatch();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.common.latch.LatchFactory#newReadWriteUpdateLatch()
-	 */
-	public Latch newReadWriteUpdateLatch() {
-		return new NewReadWriteUpdateLatch();
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.common.latch.LatchFactory#newReadWriteUpdateLatch()
+     */
+    public Latch newReadWriteUpdateLatch() {
+        return new NewReadWriteUpdateLatch();
+    }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.common.latch.LatchFactory#newLatch()
-	 */
-	public Latch newLatch() {
-		return new NewReadWriteUpdateLatch();
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.common.latch.LatchFactory#newLatch()
+     */
+    public Latch newLatch() {
+        return new NewReadWriteUpdateLatch();
+    }
 
 }

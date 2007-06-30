@@ -19,7 +19,6 @@
  */
 package org.simpledbm.rss.api.wal;
 
-
 /**
  * Specifies access method for log records.
  * 
@@ -28,6 +27,7 @@ package org.simpledbm.rss.api.wal;
  */
 public interface LogReader {
 
-	LogRecord getNext();
+    LogRecord getNext();
+
     void close();
 }

@@ -32,18 +32,18 @@ import org.simpledbm.rss.api.st.Storable;
  * @since Oct-2005
  */
 public interface IndexKey extends Storable, Comparable<IndexKey> {
-	
-	/*
-	 * TODO: Rather than specifying the Key Comparison function as part of this
-	 * interface, a possibly better approach will be to specify it as part of
-	 * the IndexKeyFactory interface.
-	 */
-	
-	/**
-	 * Parses a string representation of the key and initializes 
-	 * its internal data; used primarily in test cases. The contents 
-	 * of the string is expected to match the toString() output from the
-	 * key.
-	 */
-	void parseString(String string);
+
+    /*
+     * TODO: Rather than specifying the Key Comparison function as part of this
+     * interface, a possibly better approach will be to specify it as part of
+     * the IndexKeyFactory interface.
+     */
+
+    /**
+     * Parses a string representation of the key and initializes 
+     * its internal data; used primarily in test cases. The contents 
+     * of the string is expected to match the toString() output from the
+     * key.
+     */
+    void parseString(String string);
 }

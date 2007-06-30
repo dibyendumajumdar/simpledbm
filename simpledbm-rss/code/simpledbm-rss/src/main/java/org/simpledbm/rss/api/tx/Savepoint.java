@@ -28,14 +28,14 @@ package org.simpledbm.rss.api.tx;
  */
 public interface Savepoint {
 
-	/**
-	 * Saves a specified keyed value in the savepoint object. 
-	 */
-	void saveValue(Object key, Object value);
-	
-	/**
-	 * Retrieves a previously saved keyed value.
-	 */
-	Object getValue(Object key);
-	
+    /**
+     * Saves a specified keyed value in the savepoint object. 
+     */
+    void saveValue(Object key, Object value);
+
+    /**
+     * Retrieves a previously saved keyed value.
+     */
+    Object getValue(Object key);
+
 }

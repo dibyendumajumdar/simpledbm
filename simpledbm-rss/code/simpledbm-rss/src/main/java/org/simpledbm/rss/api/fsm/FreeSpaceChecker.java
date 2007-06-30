@@ -30,12 +30,12 @@ package org.simpledbm.rss.api.fsm;
  */
 public interface FreeSpaceChecker {
 
-	/**
-	 * Checks whether the space in the page meets the requirements of the
-	 * caller.
-	 * 
-	 * @param value The current space value
-	 * @return true if the page would meet the requirements.
-	 */
-	boolean hasSpace(int value);
+    /**
+     * Checks whether the space in the page meets the requirements of the
+     * caller.
+     * 
+     * @param value The current space value
+     * @return true if the page would meet the requirements.
+     */
+    boolean hasSpace(int value);
 }

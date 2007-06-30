@@ -27,58 +27,59 @@ import org.simpledbm.rss.api.tx.Transaction;
  */
 public interface FreeSpaceManager {
 
-	/**
-	 * Creates a new Container with the specified name and registers it with the specified id.
-	 * The new container will have space map pages containing <code>spaceBits</code> bits
-	 * per page. The container space is managed in groups of pages called extents - an extent is the
-	 * minimum unit of space allocation. Note that a container can have only one type of data page.
-	 * <p>
-	 * Pre-condition 1: caller must have acquired exclusive lock on the container id.
-	 * <p>
+    /**
+     * Creates a new Container with the specified name and registers it with the specified id.
+     * The new container will have space map pages containing <code>spaceBits</code> bits
+     * per page. The container space is managed in groups of pages called extents - an extent is the
+     * minimum unit of space allocation. Note that a container can have only one type of data page.
+     * <p>
+     * Pre-condition 1: caller must have acquired exclusive lock on the container id.
+     * <p>
      * Pre-condition 2: There must exist an open container with ID = 0. This container must contain at
      * least 1 page. 
-	 * 
-	 * @param trx The transaction that will manage this operation
-	 * @param containerName Name of the new container - mst be unused
-	 * @param containerId The ID to be allocated to the new container - must not be in use.
-	 * @param spaceBits The number of bits to be used to represent free space data for an individual page.
-	 * @param extentSize Allocation unit - number of pages in the extent.
-	 * @param dataPageType The type of data pages this container will hold.
-	 */
-	public void createContainer(Transaction trx, String containerName, int containerid, int spaceBits, int extentSize, int dataPageType);
-	
-	/**
-	 * Adds a new extent to the container. New free space map pages will be added if necessary.
-	 * <p>
-	 * Precondition: caller must have a shared lock on the container.
-	 *
-	 * @param trx Transaction that will manage this action.
-	 * @param containerId ID of the container that will be extended.
-	 */
-	public void extendContainer(Transaction trx, int containerId);
-	
-	/**
-	 * Drop an existing container. To avoid having to log the entire contents of the
+     * 
+     * @param trx The transaction that will manage this operation
+     * @param containerName Name of the new container - mst be unused
+     * @param containerId The ID to be allocated to the new container - must not be in use.
+     * @param spaceBits The number of bits to be used to represent free space data for an individual page.
+     * @param extentSize Allocation unit - number of pages in the extent.
+     * @param dataPageType The type of data pages this container will hold.
+     */
+    public void createContainer(Transaction trx, String containerName,
+            int containerid, int spaceBits, int extentSize, int dataPageType);
+
+    /**
+     * Adds a new extent to the container. New free space map pages will be added if necessary.
+     * <p>
+     * Precondition: caller must have a shared lock on the container.
+     *
+     * @param trx Transaction that will manage this action.
+     * @param containerId ID of the container that will be extended.
+     */
+    public void extendContainer(Transaction trx, int containerId);
+
+    /**
+     * Drop an existing container. To avoid having to log the entire contents of the
      * container in case the transaction is aborted, the actual
-	 * action of dropping the container is deferred until it is known that the transaction is
-	 * definitely committing.
-	 *
-	 * @param trx Transaction that will manage this action.
-	 * @param containerId ID of the container that will be dropped.
-	 */
-	public void dropContainer(Transaction trx, int containerId);
-	
-	/**
-	 * Get a cursor for traversing free space information within the container.
-	 */
-	public FreeSpaceCursor getSpaceCursor(int containerId);
-	
-	/**
-	 * Opens a scan of all the pages within the container that are marked
-	 * non-empty. Scan will return pages in order from the beginning of the
-	 * container. Note that the scan may return non data pages; the caller must
-	 * check the page type before attempting to modify or access a page's 
-	 * content.
-	 */
-	public FreeSpaceScan openScan(int containerId);
+     * action of dropping the container is deferred until it is known that the transaction is
+     * definitely committing.
+     *
+     * @param trx Transaction that will manage this action.
+     * @param containerId ID of the container that will be dropped.
+     */
+    public void dropContainer(Transaction trx, int containerId);
+
+    /**
+     * Get a cursor for traversing free space information within the container.
+     */
+    public FreeSpaceCursor getSpaceCursor(int containerId);
+
+    /**
+     * Opens a scan of all the pages within the container that are marked
+     * non-empty. Scan will return pages in order from the beginning of the
+     * container. Note that the scan may return non data pages; the caller must
+     * check the page type before attempting to modify or access a page's 
+     * content.
+     */
+    public FreeSpaceScan openScan(int containerId);
 }

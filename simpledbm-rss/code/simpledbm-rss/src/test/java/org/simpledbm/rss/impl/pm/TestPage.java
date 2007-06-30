@@ -47,27 +47,32 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
  */
 public class TestPage extends TestCase {
 
-	static final short TYPE_MYPAGE = 25000;
-	
+    static final short TYPE_MYPAGE = 25000;
+
     public TestPage(String arg0) {
         super(arg0);
     }
 
     public void testCase1() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestPage");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestPage");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
-        PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
+        PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
 
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
 
-        Page page = pageFactory.getInstance(pageFactory.getRawPageType(), new PageId(1, 0));
+        Page page = pageFactory.getInstance(
+            pageFactory.getRawPageType(),
+            new PageId(1, 0));
         page.setPageLsn(new Lsn(91, 33));
         pageFactory.store(page);
         page = pageFactory.retrieve(new PageId(1, 0));
@@ -109,28 +114,32 @@ public class TestPage extends TestCase {
         }
 
         @Override
-		public String toString() {
+        public String toString() {
             return super.toString() + ".MyPage(i = " + i + ")";
         }
     }
 
     public void testCase2() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestPage");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestPage");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
-        PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
+        PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
 
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
-        MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(1,
-                0));
+        MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
+            1,
+            0));
         page.i = 9745;
         page.setPageLsn(new Lsn(97, 45));
         pageFactory.store(page);

@@ -27,50 +27,51 @@ import org.simpledbm.rss.util.logging.Logger;
 
 public abstract class BaseTestCase extends TestCase {
 
-	Vector<ThreadFailure> threadFailureExceptions;
-	
-	public BaseTestCase() {
-	}
+    Vector<ThreadFailure> threadFailureExceptions;
 
-	public BaseTestCase(String arg0) {
-		super(arg0);
-	}
+    public BaseTestCase() {
+    }
 
-	public final void setThreadFailed(Thread thread, Exception exception) {
-		threadFailureExceptions.add(new ThreadFailure(thread, exception));
-	}
+    public BaseTestCase(String arg0) {
+        super(arg0);
+    }
 
-	@Override
-	protected void setUp() throws Exception {
-		super.setUp();
-		threadFailureExceptions = new Vector<ThreadFailure>();
-		Logger.configure("classpath:logging.properties");
-	}
+    public final void setThreadFailed(Thread thread, Exception exception) {
+        threadFailureExceptions.add(new ThreadFailure(thread, exception));
+    }
 
-	@Override
-	protected void tearDown() throws Exception {
-		threadFailureExceptions = null;
-		super.tearDown();
-	}
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        threadFailureExceptions = new Vector<ThreadFailure>();
+        Logger.configure("classpath:logging.properties");
+    }
 
-	public final void checkThreadFailures() throws Exception {
-		for (ThreadFailure tf: threadFailureExceptions) {
-			System.err.println("Thread [" + tf.threadName + " failed");
-			tf.exception.printStackTrace();
-		}
-		if (threadFailureExceptions.size() > 0) {
-			fail(threadFailureExceptions.size() + " number of threads have failed the test");
-		}
-	}
-	
-	final static class ThreadFailure {
-		Exception exception;
-		String threadName;
-		
-		public ThreadFailure(Thread thread, Exception exception) {
-			this.threadName = thread.getName();
-			this.exception = exception;
-		}
-	}
-	
+    @Override
+    protected void tearDown() throws Exception {
+        threadFailureExceptions = null;
+        super.tearDown();
+    }
+
+    public final void checkThreadFailures() throws Exception {
+        for (ThreadFailure tf : threadFailureExceptions) {
+            System.err.println("Thread [" + tf.threadName + " failed");
+            tf.exception.printStackTrace();
+        }
+        if (threadFailureExceptions.size() > 0) {
+            fail(threadFailureExceptions.size()
+                    + " number of threads have failed the test");
+        }
+    }
+
+    final static class ThreadFailure {
+        Exception exception;
+        String threadName;
+
+        public ThreadFailure(Thread thread, Exception exception) {
+            this.threadName = thread.getName();
+            this.exception = exception;
+        }
+    }
+
 }

@@ -42,8 +42,8 @@ public interface ObjectRegistry {
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-    public void registerType(int typecode, String classname);    
-    
+    public void registerType(int typecode, String classname);
+
     /**
      * Registers a Singleton object to the registry.
      * 
@@ -52,14 +52,14 @@ public interface ObjectRegistry {
      */
     public void registerSingleton(int typecode, Object object);
 
-	/**
-	 * Creates an instance of the specified type. If the
-	 * type refers to a class, then a new Object instance 
-	 * will be created. If the type referes to a Singleton, 
-	 * the Singleton will be returned.
-	 * 
-	 * @param typecode The code for the type
-	 * @return Object of the specified type.
-	 */
-	Object getInstance(int typecode);
+    /**
+     * Creates an instance of the specified type. If the
+     * type refers to a class, then a new Object instance 
+     * will be created. If the type referes to a Singleton, 
+     * the Singleton will be returned.
+     * 
+     * @param typecode The code for the type
+     * @return Object of the specified type.
+     */
+    Object getInstance(int typecode);
 }

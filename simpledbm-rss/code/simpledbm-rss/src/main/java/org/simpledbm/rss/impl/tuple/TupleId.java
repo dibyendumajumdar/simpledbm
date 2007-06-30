@@ -41,131 +41,145 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * @since 08-Dec-2005
  */
 public final class TupleId extends BaseLockable implements Location, Dumpable {
-	
-	private static final Logger log = Logger.getLogger(TupleId.class.getPackage().getName());
-	private static final MessageCatalog mcat = new MessageCatalog();
-	
-	PageId pageId;
-	int slotNumber;
 
-	public TupleId() {
-		super((byte)'T');
-		pageId = new PageId();
-		slotNumber = -1;
-	}
+    private static final Logger log = Logger.getLogger(TupleId.class
+        .getPackage()
+        .getName());
+    private static final MessageCatalog mcat = new MessageCatalog();
 
-	public TupleId(TupleId other) {
-		super((byte)'T');
-		pageId = new PageId(other.pageId);
-		slotNumber = other.slotNumber;
-	}
+    PageId pageId;
+    int slotNumber;
 
-	public TupleId(PageId pageId, int slotNumber) {
-		super((byte)'T');
-		setPageId(pageId);
-		setSlotNumber(slotNumber);
-	}
+    public TupleId() {
+        super((byte) 'T');
+        pageId = new PageId();
+        slotNumber = -1;
+    }
 
-	public final boolean isNull() {
-		return pageId.isNull() || slotNumber == -1;
-	}
+    public TupleId(TupleId other) {
+        super((byte) 'T');
+        pageId = new PageId(other.pageId);
+        slotNumber = other.slotNumber;
+    }
 
-	public void parseString(String string) {
-		log.error(this.getClass().getName(), "parseString", mcat.getMessage("ET0001"));
-		throw new TupleException(mcat.getMessage("ET0001"));
-	}
+    public TupleId(PageId pageId, int slotNumber) {
+        super((byte) 'T');
+        setPageId(pageId);
+        setSlotNumber(slotNumber);
+    }
 
-	public final void retrieve(ByteBuffer bb) {
-		pageId = new PageId();
-		pageId.retrieve(bb);
-		slotNumber = bb.getShort();
-	}
+    public final boolean isNull() {
+        return pageId.isNull() || slotNumber == -1;
+    }
 
-	public final void store(ByteBuffer bb) {
-		pageId.store(bb);
-		bb.putShort((short) slotNumber);
-	}
+    public void parseString(String string) {
+        log.error(this.getClass().getName(), "parseString", mcat
+            .getMessage("ET0001"));
+        throw new TupleException(mcat.getMessage("ET0001"));
+    }
 
-	public final int getStoredLength() {
-		return pageId.getStoredLength() + TypeSize.SHORT;
-	}
+    public final void retrieve(ByteBuffer bb) {
+        pageId = new PageId();
+        pageId.retrieve(bb);
+        slotNumber = bb.getShort();
+    }
 
-	public final int compareTo(Location location) {
-		if (location == this) {
-			return 0;
-		}
-		if (getClass() != location.getClass()) {
-			log.error(this.getClass().getName(), "compareTo", mcat.getMessage("ET0002", location, getClass().getName()));
-			throw new TupleException(mcat.getMessage("ET0002", location, getClass().getName()));
-		}
-		TupleId other = (TupleId) location;
-		int comp = pageId.compareTo(other.pageId);
-		if (comp == 0) {
-			comp = slotNumber - other.slotNumber;
-		}
-		return comp;
-	}
+    public final void store(ByteBuffer bb) {
+        pageId.store(bb);
+        bb.putShort((short) slotNumber);
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("TupleId(");
-		super.appendTo(sb).append(", pageId=");
-		pageId.appendTo(sb);
-		sb.append(", slot=").append(slotNumber).append(")");
-		return sb;
-	}
+    public final int getStoredLength() {
+        return pageId.getStoredLength() + TypeSize.SHORT;
+    }
 
-	public final String toString() {
-		return appendTo(new StringBuilder()).toString();
-	}
+    public final int compareTo(Location location) {
+        if (location == this) {
+            return 0;
+        }
+        if (getClass() != location.getClass()) {
+            log.error(this.getClass().getName(), "compareTo", mcat.getMessage(
+                "ET0002",
+                location,
+                getClass().getName()));
+            throw new TupleException(mcat.getMessage(
+                "ET0002",
+                location,
+                getClass().getName()));
+        }
+        TupleId other = (TupleId) location;
+        int comp = pageId.compareTo(other.pageId);
+        if (comp == 0) {
+            comp = slotNumber - other.slotNumber;
+        }
+        return comp;
+    }
 
-	private final void setPageId(PageId pageId) {
-		this.pageId = new PageId(pageId);
-	}
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append("TupleId(");
+        super.appendTo(sb).append(", pageId=");
+        pageId.appendTo(sb);
+        sb.append(", slot=").append(slotNumber).append(")");
+        return sb;
+    }
 
-	public final PageId getPageId() {
-		return pageId;
-	}
+    @Override
+    public final String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
 
-	private final void setSlotNumber(int slotNumber) {
-		this.slotNumber = slotNumber;
-	}
+    private final void setPageId(PageId pageId) {
+        this.pageId = new PageId(pageId);
+    }
 
-	public final int getSlotNumber() {
-		return slotNumber;
-	}
+    public final PageId getPageId() {
+        return pageId;
+    }
 
-	public int getContainerId() {
-		if (pageId == null) {
-			log.error(this.getClass().getName(), "getContainerId", mcat.getMessage("ET0003", this));
-			throw new TupleException(mcat.getMessage("ET0003", this));
-		}
-		return pageId.getContainerId();
-	}
+    private final void setSlotNumber(int slotNumber) {
+        this.slotNumber = slotNumber;
+    }
 
-	public int hashCode() {
-		final int PRIME = 31;
-		int result = super.hashCode();
-		result = PRIME * result + ((pageId == null) ? 0 : pageId.hashCode());
-		result = PRIME * result + slotNumber;
-		return result;
-	}
+    public final int getSlotNumber() {
+        return slotNumber;
+    }
 
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (!super.equals(obj))
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final TupleId other = (TupleId) obj;
-		if (pageId == null) {
-			if (other.pageId != null)
-				return false;
-		} else if (!pageId.equals(other.pageId))
-			return false;
-		if (slotNumber != other.slotNumber)
-			return false;
-		return true;
-	}
+    public int getContainerId() {
+        if (pageId == null) {
+            log.error(this.getClass().getName(), "getContainerId", mcat
+                .getMessage("ET0003", this));
+            throw new TupleException(mcat.getMessage("ET0003", this));
+        }
+        return pageId.getContainerId();
+    }
+
+    @Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = super.hashCode();
+        result = PRIME * result + ((pageId == null) ? 0 : pageId.hashCode());
+        result = PRIME * result + slotNumber;
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!super.equals(obj))
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final TupleId other = (TupleId) obj;
+        if (pageId == null) {
+            if (other.pageId != null)
+                return false;
+        } else if (!pageId.equals(other.pageId))
+            return false;
+        if (slotNumber != other.slotNumber)
+            return false;
+        return true;
+    }
 
 }

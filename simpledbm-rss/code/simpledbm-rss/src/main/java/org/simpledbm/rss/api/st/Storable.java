@@ -32,27 +32,27 @@ import java.nio.ByteBuffer;
  * @since 10-June-2005
  */
 public interface Storable {
-	
+
     /**
      * Retrieve the object from the supplied ByteBuffer. ByteBuffer is assumed
      * to be setup correctly for reading.
      * @param bb ByteBuffer that contains a stored representation of the object.
      */
-	void retrieve(ByteBuffer bb);
-    
+    void retrieve(ByteBuffer bb);
+
     /**
      * Store this object into the supplied ByteBuffer in a format that can 
      * be subsequenly retrieved using {@link #retrieve}. ByteBuffer is assumed
      * to be setup correctly for writing.
      * @param bb ByteBuffer that will a stored representation of the object.
      */
-	void store(ByteBuffer bb);
-    
+    void store(ByteBuffer bb);
+
     /**
      * Predict the length of this object in bytes when it will be stored
      * in a ByteBuffer.
      * @return The length of this object when stored in a ByteBuffer.
      */
-	int getStoredLength();
+    int getStoredLength();
 
 }

@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.sp;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
@@ -57,745 +58,771 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
-	static final Logger log = Logger.getLogger(SlottedPageImpl.class.getPackage().getName());
-	
-	static final MessageCatalog mcat = new MessageCatalog();
+    static final Logger log = Logger.getLogger(SlottedPageImpl.class
+        .getPackage()
+        .getName());
 
-	/**
-	 * This is the length of fixed length header in each page. 
-	 */
-	private static final int FIXED_OVERHEAD = SlottedPage.SIZE + TypeSize.SHORT * 3 + TypeSize.INTEGER * 3;
+    static final MessageCatalog mcat = new MessageCatalog();
 
-	/**
-	 * If TESTING is set to true, page space is artificially restricted to 200 bytes.
-	 */
-	public static boolean TESTING = false;
-	
-	/**
-	 * Page level flags, not used by SlottedPageImpl itself.
-	 */
-	private short flags = 0;
+    /**
+     * This is the length of fixed length header in each page. 
+     */
+    private static final int FIXED_OVERHEAD = Page.SIZE + TypeSize.SHORT
+            * 3 + TypeSize.INTEGER * 3;
 
-	/**
-	 * Number of slots in the page, including deleted slots.
-	 */
-	private short numberOfSlots = 0;
+    /**
+     * If TESTING is set to true, page space is artificially restricted to 200 bytes.
+     */
+    public static boolean TESTING = false;
 
-	/**
-	 * Number of deleted slots in the page.
-	 */
-	private short deletedSlots = 0;
+    /**
+     * Page level flags, not used by SlottedPageImpl itself.
+     */
+    private short flags = 0;
 
-	/**
-	 * Amount of freespace in the page.
-	 */
-	private int freeSpace;
+    /**
+     * Number of slots in the page, including deleted slots.
+     */
+    private short numberOfSlots = 0;
 
-	/**
-	 * Position where the next slot must end.
-	 */
-	private int highWaterMark;
+    /**
+     * Number of deleted slots in the page.
+     */
+    private short deletedSlots = 0;
 
-	/**
-	 * Space map page that manages the space information in this page.
-	 * Not used by SlottedPageImpl itself.
-	 */
-	private int spaceMapPageNumber = -1;
-	
-	/**
-	 * The slots and the slot data are stored in this byte array. The size of this
-	 * depends on the page size.
-	 */
-	private byte[] data;
+    /**
+     * Amount of freespace in the page.
+     */
+    private int freeSpace;
 
-	/**
-	 * The slot table is maintained in memory for efficiency.
-	 */
-	private transient ArrayList<Slot> slotTable = new ArrayList<Slot>();
-	
-	/**
-	 * A Slot entry in the slot table.  
-	 */
-	public static final class Slot implements Storable, Dumpable {
+    /**
+     * Position where the next slot must end.
+     */
+    private int highWaterMark;
 
-		/**
-		 * Persistent data size.
-		 */
-		static public final int SIZE = TypeSize.SHORT * 3;
+    /**
+     * Space map page that manages the space information in this page.
+     * Not used by SlottedPageImpl itself.
+     */
+    private int spaceMapPageNumber = -1;
 
-		/**
-		 * Offset within the data array where the slot's data is stored.
-		 */
-		private short offset = 0;
+    /**
+     * The slots and the slot data are stored in this byte array. The size of this
+     * depends on the page size.
+     */
+    private byte[] data;
 
-		/**
-		 * Flags for the slot. Unused by SlottedPageImpl.
-		 */
-		private short flags = 0;
+    /**
+     * The slot table is maintained in memory for efficiency.
+     */
+    private transient ArrayList<Slot> slotTable = new ArrayList<Slot>();
 
-		/**
-		 * Length of the slot's data. If length == 0, it means that
-		 * the slot is deleted.
-		 */
-		private short length = 0;
+    /**
+     * A Slot entry in the slot table.  
+     */
+    public static final class Slot implements Storable, Dumpable {
 
-		/**
-		 * Default constructor
-		 */
-		public Slot() {
-		}
+        /**
+         * Persistent data size.
+         */
+        static public final int SIZE = TypeSize.SHORT * 3;
 
-		/**
-		 * Copy constructor.
-		 */
-		public Slot(Slot slot) {
-			offset = slot.offset;
-			flags = slot.flags;
-			length = slot.length;
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-		 */
-		public final void retrieve(ByteBuffer bb) {
-			offset = bb.getShort();
-			flags = bb.getShort();
-			length = bb.getShort();
-		}
+        /**
+         * Offset within the data array where the slot's data is stored.
+         */
+        private short offset = 0;
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
-		 */
-		public final void store(ByteBuffer bb) {
-			bb.putShort(offset);
-			bb.putShort(flags);
-			bb.putShort(length);
-		}
+        /**
+         * Flags for the slot. Unused by SlottedPageImpl.
+         */
+        private short flags = 0;
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.io.Storable#getStoredLength()
-		 */
-		public final int getStoredLength() {
-			return SIZE;
-		}
+        /**
+         * Length of the slot's data. If length == 0, it means that
+         * the slot is deleted.
+         */
+        private short length = 0;
 
-		final short getFlags() {
-			return flags;
-		}
+        /**
+         * Default constructor
+         */
+        public Slot() {
+        }
 
-		final void setFlags(int flags) {
-			this.flags = (short) flags;
-		}
+        /**
+         * Copy constructor.
+         */
+        public Slot(Slot slot) {
+            offset = slot.offset;
+            flags = slot.flags;
+            length = slot.length;
+        }
 
-		final int getLength() {
-			return length;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
+         */
+        public final void retrieve(ByteBuffer bb) {
+            offset = bb.getShort();
+            flags = bb.getShort();
+            length = bb.getShort();
+        }
 
-		final void setLength(int length) {
-			this.length = (short) length;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
+         */
+        public final void store(ByteBuffer bb) {
+            bb.putShort(offset);
+            bb.putShort(flags);
+            bb.putShort(length);
+        }
 
-		final int getOffset() {
-			return offset;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.io.Storable#getStoredLength()
+         */
+        public final int getStoredLength() {
+            return SIZE;
+        }
 
-		final void setOffset(int offset) {
-			this.offset = (short) offset;
-		}
-		
-		public final StringBuilder appendTo(StringBuilder sb) {
-			sb.append("slot(offset=").append(offset).append(", length=").append(length)
-				.append(", flags=").append(flags).append(")");
-			return sb;
-		}
-		
-		@Override
-		public final String toString() {
-			return appendTo(new StringBuilder()).toString();
-		}
-	}
+        final short getFlags() {
+            return flags;
+        }
 
-	@Override
-	public final void retrieve(ByteBuffer bb) {
-		super.retrieve(bb);
-		flags = bb.getShort();
-		numberOfSlots = bb.getShort();
-		deletedSlots = bb.getShort();
-		freeSpace = bb.getInt();
-		highWaterMark = bb.getInt();
-		spaceMapPageNumber = bb.getInt();
-		validatePageHeader();
-		data = new byte[getSpace()];
-		bb.get(data);
-		slotTable.clear();
-		slotTable.ensureCapacity(numberOfSlots);
-		ByteBuffer bb1 = ByteBuffer.wrap(data);
-		for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-			Slot slot = new Slot();
-			slot.retrieve(bb1);
-			slotTable.add(slotNumber, slot);
-		}
-		validatePageSize();
-	}
+        final void setFlags(int flags) {
+            this.flags = (short) flags;
+        }
 
-	@Override
-	public final void store(ByteBuffer bb) {
-		super.store(bb);
-		bb.putShort(flags);
-		bb.putShort(numberOfSlots);
-		bb.putShort(deletedSlots);
-		bb.putInt(freeSpace);
-		bb.putInt(highWaterMark);
-		bb.putInt(spaceMapPageNumber);
-		ByteBuffer bb1 = ByteBuffer.wrap(data);
-		for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-			Slot slot = slotTable.get(slotNumber);
-			slot.store(bb1);
-		}
-		bb.put(data);
-	}
+        final int getLength() {
+            return length;
+        }
 
-	private void validatePageHeader() {
-		if (numberOfSlots < 0 || numberOfSlots > getMaximumSlots() || 
-				freeSpace < 0 || freeSpace > getSpace() || 
-				highWaterMark < 0 || highWaterMark > getSpace()) {
-			log.error(this.getClass().getName(), "validate", mcat.getMessage("EO0005"));
-			throw new PageException(mcat.getMessage("EO0005") + this);
-		}
-	}
+        final void setLength(int length) {
+            this.length = (short) length;
+        }
 
-	private void validatePageSize() {
-		int length = 0;
-		for (int i = 0; i < getNumberOfSlots(); i++) {
-			length += getSlotLength(i);
-		}
-		length += freeSpace;
-		if (length != getSpace()) {
-			log.error(this.getClass().getName(), "validatePageSize", mcat.getMessage("EO0005"));
-			throw new PageException(mcat.getMessage("EO0005") + this);
-		}
-	}
-	
-	
-	/**
-	 * Returns the theoretical maximum number of slots that can be accomodated in a page.
-	 */
-	private final int getMaximumSlots() {
-		return getSpace() / Slot.SIZE;
-	}
+        final int getOffset() {
+            return offset;
+        }
 
-	/**
-	 * Returns the total space available for page data, including the 
-	 * slot table.
-	 */
-	@Override
-	public final int getSpace() {
-		if (!TESTING) {
-			return super.getStoredLength() - FIXED_OVERHEAD;
-		}
-		// During testing it is useful to artificially restrict the usable space
-		return 200;
-	}
+        final void setOffset(int offset) {
+            this.offset = (short) offset;
+        }
 
-	/**
-	 * Default constructor.
-	 */
-	public SlottedPageImpl() {
-		super();
-	}
+        public final StringBuilder appendTo(StringBuilder sb) {
+            sb
+                .append("slot(offset=")
+                .append(offset)
+                .append(", length=")
+                .append(length)
+                .append(", flags=")
+                .append(flags)
+                .append(")");
+            return sb;
+        }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.pm.Page#init()
-	 */
-	@Override
-	public final void init() {
-		flags = 0;
-		numberOfSlots = 0;
-		deletedSlots = 0;
-		freeSpace = getSpace();
-		highWaterMark = freeSpace;
-		spaceMapPageNumber = -1;
-		data = new byte[getSpace()];
-		slotTable = new ArrayList<Slot>();
-	}
+        @Override
+        public final String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+    }
 
-	/**
-	 * Calculates the total size of a slot with a given
-	 * data length.
-	 */
-	private int calculateSlotLength(int dataLen) {
-		return dataLen + Slot.SIZE;
-	}
+    @Override
+    public final void retrieve(ByteBuffer bb) {
+        super.retrieve(bb);
+        flags = bb.getShort();
+        numberOfSlots = bb.getShort();
+        deletedSlots = bb.getShort();
+        freeSpace = bb.getInt();
+        highWaterMark = bb.getInt();
+        spaceMapPageNumber = bb.getInt();
+        validatePageHeader();
+        data = new byte[getSpace()];
+        bb.get(data);
+        slotTable.clear();
+        slotTable.ensureCapacity(numberOfSlots);
+        ByteBuffer bb1 = ByteBuffer.wrap(data);
+        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+            Slot slot = new Slot();
+            slot.retrieve(bb1);
+            slotTable.add(slotNumber, slot);
+        }
+        validatePageSize();
+    }
 
-	/**
-	 * Gets the total length or size of a slot.
-	 * This includes the data as well as the space taken by
-	 * the entry in the slot table.
-	 */
-	@Override
-	public final int getSlotLength(int slotNo) {
-		validateSlotNumber(slotNo, false);
-		return slotTable.get(slotNo).getLength() + Slot.SIZE;
-	}
+    @Override
+    public final void store(ByteBuffer bb) {
+        super.store(bb);
+        bb.putShort(flags);
+        bb.putShort(numberOfSlots);
+        bb.putShort(deletedSlots);
+        bb.putInt(freeSpace);
+        bb.putInt(highWaterMark);
+        bb.putInt(spaceMapPageNumber);
+        ByteBuffer bb1 = ByteBuffer.wrap(data);
+        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+            Slot slot = slotTable.get(slotNumber);
+            slot.store(bb1);
+        }
+        bb.put(data);
+    }
 
-	/**
-	 * Gets the length of the data contained inside a slot.
-	 */
-	@Override
-	public final int getDataLength(int slotNo) {
-		validateSlotNumber(slotNo, false);
-		return slotTable.get(slotNo).getLength();
-	}
+    private void validatePageHeader() {
+        if (numberOfSlots < 0 || numberOfSlots > getMaximumSlots()
+                || freeSpace < 0 || freeSpace > getSpace() || highWaterMark < 0
+                || highWaterMark > getSpace()) {
+            log.error(this.getClass().getName(), "validate", mcat
+                .getMessage("EO0005"));
+            throw new PageException(mcat.getMessage("EO0005") + this);
+        }
+    }
 
-	/**
-	 * Checks whether specified slot is deleted.
-	 * A deleted slot's length is set to zero. 
-	 * @see #delete(int)
-	 */
-	@Override
-	public final boolean isSlotDeleted(int slotNo) {
-		validateSlotNumber(slotNo, false);
-		return slotTable.get(slotNo).getLength() == 0;
-	}
+    private void validatePageSize() {
+        int length = 0;
+        for (int i = 0; i < getNumberOfSlots(); i++) {
+            length += getSlotLength(i);
+        }
+        length += freeSpace;
+        if (length != getSpace()) {
+            log.error(this.getClass().getName(), "validatePageSize", mcat
+                .getMessage("EO0005"));
+            throw new PageException(mcat.getMessage("EO0005") + this);
+        }
+    }
 
-	/**
-	 * Returns the slot number where the next insert should take place.
-	 */
-	private int findInsertionPoint()
-	{
-		int slotNumber = -1;
-		if (deletedSlots > 0) {
-			for (slotNumber = 0; slotNumber < numberOfSlots; slotNumber++ ) {
-				// Deleted tuples are identifiable by their length which is set to 0.
-				if (isSlotDeleted(slotNumber)) {
-					break;
-				}
-			}
-			if (slotNumber != numberOfSlots) {
-				log.error(this.getClass().getName(), "findInsertionPoint", mcat.getMessage("EO0006"));
-				throw new PageException(mcat.getMessage("EO0006"));
-			}
-		}
-		else {
-			slotNumber = numberOfSlots;
-		}
-		return slotNumber;
-	}	
-	
-	
-	/**
-	 * Find the insertion point for a slot of specified length.
-	 * If we have enough space, return a slot object, else, return null.
-	 * Set slot.offset to the start of the space.
-	 * Note that this method is called when we already know that there 
-	 * is enough space for the slot, but we do not know whether there is
-	 * enough contiguous space.
-	 * @return Null if there is not enough contiguous space, a Slot object otherwise.
-	 */
-	private Slot findSpace(int slotNumber, int length) {
-		/* To find space between slots we would have to carry out some
-		 * expensive computation. First, we would have to sort the slots in
-		 * the order of slot.offset, and then scan for the largest chunk.
-		 * To avoid doing this, we can take the space unused after the last
-		 * slot, but this means that we will not use any "holes" between slots
-		 * until the entire page is reorganised.
-		 */
+    /**
+     * Returns the theoretical maximum number of slots that can be accomodated in a page.
+     */
+    private final int getMaximumSlots() {
+        return getSpace() / Slot.SIZE;
+    }
 
-		int start_pos = 0;
-		int first_avail_pos = 0;
+    /**
+     * Returns the total space available for page data, including the 
+     * slot table.
+     */
+    @Override
+    public final int getSpace() {
+        if (!TESTING) {
+            return super.getStoredLength() - FIXED_OVERHEAD;
+        }
+        // During testing it is useful to artificially restrict the usable space
+        return 200;
+    }
 
-		/* start_pos denotes where the tuple will start. */
-		start_pos = highWaterMark - length;
+    /**
+     * Default constructor.
+     */
+    public SlottedPageImpl() {
+        super();
+    }
 
-		if (slotNumber == numberOfSlots || !isSlotDeleted(slotNumber)) {
-			/* We have to allow for an extra offset */
-			first_avail_pos = Slot.SIZE * (numberOfSlots + 1);
-		}
-		else {
-			first_avail_pos = Slot.SIZE * numberOfSlots;
-		}
-		
-		//		if (debug > 2) {
-		//			debugout << Thread::getCurrentThread()->getName() <<
-		//				": TupleMgr.findContiguousSpace: First available pos = " << first_avail_pos <<
-		//				", tuple start pos = " << start_pos << "\n";
-		//		}
-		
-		if (start_pos < first_avail_pos) {
-			/* Not enough contiguous space */
-			return null;
-		}
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.pm.Page#init()
+     */
+    @Override
+    public final void init() {
+        flags = 0;
+        numberOfSlots = 0;
+        deletedSlots = 0;
+        freeSpace = getSpace();
+        highWaterMark = freeSpace;
+        spaceMapPageNumber = -1;
+        data = new byte[getSpace()];
+        slotTable = new ArrayList<Slot>();
+    }
 
-		Slot slot = new Slot();
-		slot.setOffset(start_pos);
-		slot.setFlags(0);
-		slot.setLength(length);
-		return slot;
-	}
+    /**
+     * Calculates the total size of a slot with a given
+     * data length.
+     */
+    private int calculateSlotLength(int dataLen) {
+        return dataLen + Slot.SIZE;
+    }
 
-	/**
-	 * Add the slot to the specified slotnumber.
-	 * Handles following cases:
-	 * <ol>
-	 * <li>A new slot to be added at the end.</li>
-	 * <li>A deleted slot being reused.</li>
-	 * <li>A new slot being inserted into the middle of the slot table. This causes existing slots to move right.</li>
-	 * </ol>
-	 */
-	private void addSlot(int slotNumber, Storable item, Slot slot) {
-		if (slotNumber == numberOfSlots) {
-			numberOfSlots++;
-			slotTable.ensureCapacity(numberOfSlots);
-			slotTable.add(slotNumber, slot);
-			freeSpace -= calculateSlotLength(slot.getLength());
-		}
-		else {
-			if (isSlotDeleted(slotNumber)) {
-				// deleted slot being reused
-				deletedSlots--;
-				slotTable.set(slotNumber, slot);
-				freeSpace -= slot.getLength();
-			}			
-			else {
-				// if in insert mode, shift existing tuples to the right
-				numberOfSlots++;
-				slotTable.ensureCapacity(numberOfSlots);
-				slotTable.add(slotNumber, slot);
-				freeSpace -= calculateSlotLength(slot.getLength());
-			}
-		}
-		highWaterMark -= slot.getLength();
-		ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot.getLength());
-		item.store(bb);
-	}
+    /**
+     * Gets the total length or size of a slot.
+     * This includes the data as well as the space taken by
+     * the entry in the slot table.
+     */
+    @Override
+    public final int getSlotLength(int slotNo) {
+        validateSlotNumber(slotNo, false);
+        return slotTable.get(slotNo).getLength() + Slot.SIZE;
+    }
 
-	/**
-	 * Get rid of holes.
-	 */
-	private void defragment() {
-		byte[] newdata = new byte[getSpace()];
-		highWaterMark = freeSpace = getSpace();
-		freeSpace -= (Slot.SIZE * numberOfSlots);
-		for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-			if (isSlotDeleted(slotNumber)) {
-				continue;
-			}
-			Slot slot = slotTable.get(slotNumber);
-			int startPos = highWaterMark - slot.getLength();
-			System.arraycopy(data, slot.getOffset(), newdata, startPos, slot.getLength());
-			slot.setOffset(startPos);
-			highWaterMark -= slot.getLength();
-			freeSpace -= slot.getLength();
-		}
-		data = newdata;
-	}
+    /**
+     * Gets the length of the data contained inside a slot.
+     */
+    @Override
+    public final int getDataLength(int slotNo) {
+        validateSlotNumber(slotNo, false);
+        return slotTable.get(slotNo).getLength();
+    }
 
-	private boolean hasSpace(int slotNumber, int len) {
-		if (slotNumber == numberOfSlots) {
-			return freeSpace >= calculateSlotLength(len);
-		}
-		else {
-			return freeSpace >= len;
-		}
-	}
-	
-	/**
-	 * Inserts tuple. If there are any deleted tuples, we will reuse them,
-	 * otherwise we will stick this tuple at the end.
-	 */
-	@Override
-	public final boolean insert(Storable item)
-	{
-		validateLatchHeldExclusively();
-		int len = item.getStoredLength();
-		int slotNumber = findInsertionPoint();
-		if (!hasSpace(slotNumber, len)) {
-			log.error(this.getClass().getName(), "insert", mcat.getMessage("EO0001", item, this));
-			throw new PageException(mcat.getMessage("EO0001", item, this));
-		}
-		/* find contiguous space */
-		Slot slot = findSpace(slotNumber, len);
-		if (slot == null) {
-			defragment();
-			slot = findSpace(slotNumber, len);
-		}
+    /**
+     * Checks whether specified slot is deleted.
+     * A deleted slot's length is set to zero. 
+     * @see #delete(int)
+     */
+    @Override
+    public final boolean isSlotDeleted(int slotNo) {
+        validateSlotNumber(slotNo, false);
+        return slotTable.get(slotNo).getLength() == 0;
+    }
 
-		addSlot(slotNumber, item, slot);
+    /**
+     * Returns the slot number where the next insert should take place.
+     */
+    private int findInsertionPoint() {
+        int slotNumber = -1;
+        if (deletedSlots > 0) {
+            for (slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+                // Deleted tuples are identifiable by their length which is set to 0.
+                if (isSlotDeleted(slotNumber)) {
+                    break;
+                }
+            }
+            if (slotNumber != numberOfSlots) {
+                log.error(this.getClass().getName(), "findInsertionPoint", mcat
+                    .getMessage("EO0006"));
+                throw new PageException(mcat.getMessage("EO0006"));
+            }
+        } else {
+            slotNumber = numberOfSlots;
+        }
+        return slotNumber;
+    }
+
+    /**
+     * Find the insertion point for a slot of specified length.
+     * If we have enough space, return a slot object, else, return null.
+     * Set slot.offset to the start of the space.
+     * Note that this method is called when we already know that there 
+     * is enough space for the slot, but we do not know whether there is
+     * enough contiguous space.
+     * @return Null if there is not enough contiguous space, a Slot object otherwise.
+     */
+    private Slot findSpace(int slotNumber, int length) {
+        /* To find space between slots we would have to carry out some
+         * expensive computation. First, we would have to sort the slots in
+         * the order of slot.offset, and then scan for the largest chunk.
+         * To avoid doing this, we can take the space unused after the last
+         * slot, but this means that we will not use any "holes" between slots
+         * until the entire page is reorganised.
+         */
+
+        int start_pos = 0;
+        int first_avail_pos = 0;
+
+        /* start_pos denotes where the tuple will start. */
+        start_pos = highWaterMark - length;
+
+        if (slotNumber == numberOfSlots || !isSlotDeleted(slotNumber)) {
+            /* We have to allow for an extra offset */
+            first_avail_pos = Slot.SIZE * (numberOfSlots + 1);
+        } else {
+            first_avail_pos = Slot.SIZE * numberOfSlots;
+        }
+
+        //		if (debug > 2) {
+        //			debugout << Thread::getCurrentThread()->getName() <<
+        //				": TupleMgr.findContiguousSpace: First available pos = " << first_avail_pos <<
+        //				", tuple start pos = " << start_pos << "\n";
+        //		}
+
+        if (start_pos < first_avail_pos) {
+            /* Not enough contiguous space */
+            return null;
+        }
+
+        Slot slot = new Slot();
+        slot.setOffset(start_pos);
+        slot.setFlags(0);
+        slot.setLength(length);
+        return slot;
+    }
+
+    /**
+     * Add the slot to the specified slotnumber.
+     * Handles following cases:
+     * <ol>
+     * <li>A new slot to be added at the end.</li>
+     * <li>A deleted slot being reused.</li>
+     * <li>A new slot being inserted into the middle of the slot table. This causes existing slots to move right.</li>
+     * </ol>
+     */
+    private void addSlot(int slotNumber, Storable item, Slot slot) {
+        if (slotNumber == numberOfSlots) {
+            numberOfSlots++;
+            slotTable.ensureCapacity(numberOfSlots);
+            slotTable.add(slotNumber, slot);
+            freeSpace -= calculateSlotLength(slot.getLength());
+        } else {
+            if (isSlotDeleted(slotNumber)) {
+                // deleted slot being reused
+                deletedSlots--;
+                slotTable.set(slotNumber, slot);
+                freeSpace -= slot.getLength();
+            } else {
+                // if in insert mode, shift existing tuples to the right
+                numberOfSlots++;
+                slotTable.ensureCapacity(numberOfSlots);
+                slotTable.add(slotNumber, slot);
+                freeSpace -= calculateSlotLength(slot.getLength());
+            }
+        }
+        highWaterMark -= slot.getLength();
+        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
+            .getLength());
+        item.store(bb);
+    }
+
+    /**
+     * Get rid of holes.
+     */
+    private void defragment() {
+        byte[] newdata = new byte[getSpace()];
+        highWaterMark = freeSpace = getSpace();
+        freeSpace -= (Slot.SIZE * numberOfSlots);
+        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+            if (isSlotDeleted(slotNumber)) {
+                continue;
+            }
+            Slot slot = slotTable.get(slotNumber);
+            int startPos = highWaterMark - slot.getLength();
+            System.arraycopy(data, slot.getOffset(), newdata, startPos, slot
+                .getLength());
+            slot.setOffset(startPos);
+            highWaterMark -= slot.getLength();
+            freeSpace -= slot.getLength();
+        }
+        data = newdata;
+    }
+
+    private boolean hasSpace(int slotNumber, int len) {
+        if (slotNumber == numberOfSlots) {
+            return freeSpace >= calculateSlotLength(len);
+        } else {
+            return freeSpace >= len;
+        }
+    }
+
+    /**
+     * Inserts tuple. If there are any deleted tuples, we will reuse them,
+     * otherwise we will stick this tuple at the end.
+     */
+    @Override
+    public final boolean insert(Storable item) {
+        validateLatchHeldExclusively();
+        int len = item.getStoredLength();
+        int slotNumber = findInsertionPoint();
+        if (!hasSpace(slotNumber, len)) {
+            log.error(this.getClass().getName(), "insert", mcat.getMessage(
+                "EO0001",
+                item,
+                this));
+            throw new PageException(mcat.getMessage("EO0001", item, this));
+        }
+        /* find contiguous space */
+        Slot slot = findSpace(slotNumber, len);
+        if (slot == null) {
+            defragment();
+            slot = findSpace(slotNumber, len);
+        }
+
+        addSlot(slotNumber, item, slot);
 //		if (debug > 0) {
 //			debugout << Thread::getCurrentThread()->getName() <<
 //				": TupleMgr.insertTuple: Inserting tuple [" <<
 //				tno << "] of length " << offset.length <<
 //				" at offset " << offset.offset << "\n";
 //		}
-		return true;
-	}
-	
-	/**
-	 * Insert new tuple at specific position.
-	 * Note that this will shift existing tuples to the right - hence
-	 * this function is not suitable if an allocated tupleid is immutable (such
-	 * as for table data). It is more for index pages where tupleid is immaterial.
-	 */
-	@Override
-	public final boolean insertAt(int slotNumber, Storable item, boolean replaceMode)
-	{
-		validateLatchHeldExclusively();
-		validateSlotNumber(slotNumber, true);
-		int len = item.getStoredLength();
-		// Calculate required space.
-		// If the tuple being inserted is beyond the last tuple, then
-		// we may need to fill the gap with deleted tuples.
-		int requiredSpace = 0;
-		if (slotNumber == numberOfSlots) {
-			requiredSpace = calculateSlotLength(len);
-		}
-		else {
-			if (isSlotDeleted(slotNumber)) {
-				requiredSpace = len;
-			}
-			else if (replaceMode) {
-				int currentLen = getDataLength(slotNumber);
-				requiredSpace = len - currentLen;
-			}
-			else {
-				requiredSpace = calculateSlotLength(len);
-			}
-		}
-		// Do we have enough space in the page?
-		// TODO: Maybe we should also reserve some free space
-		if (freeSpace < requiredSpace) {
-			log.error(this.getClass().getName(), "insertAt", mcat.getMessage("EO0002", item, this, slotNumber));
-			throw new PageException(mcat.getMessage("EO0002", item, this, slotNumber));
-		}
-		
-		int savedFlags = 0;
-		boolean restoreFlags = false;
-		if (replaceMode) {
-			// If we are in replaceMode,
-			// we may need to delete an existing tuple
-			if (slotNumber < numberOfSlots && !isSlotDeleted(slotNumber)) {
-				savedFlags = slotTable.get(slotNumber).getFlags();
-				restoreFlags = true;
-				delete(slotNumber);
-			}
-		}
+        return true;
+    }
 
-		/* find contiguous space */
-		Slot slot = findSpace(slotNumber, len);
-		if (slot == null) {
-			defragment();
-			slot = findSpace(slotNumber, len);
-		}
+    /**
+     * Insert new tuple at specific position.
+     * Note that this will shift existing tuples to the right - hence
+     * this function is not suitable if an allocated tupleid is immutable (such
+     * as for table data). It is more for index pages where tupleid is immaterial.
+     */
+    @Override
+    public final boolean insertAt(int slotNumber, Storable item,
+            boolean replaceMode) {
+        validateLatchHeldExclusively();
+        validateSlotNumber(slotNumber, true);
+        int len = item.getStoredLength();
+        // Calculate required space.
+        // If the tuple being inserted is beyond the last tuple, then
+        // we may need to fill the gap with deleted tuples.
+        int requiredSpace = 0;
+        if (slotNumber == numberOfSlots) {
+            requiredSpace = calculateSlotLength(len);
+        } else {
+            if (isSlotDeleted(slotNumber)) {
+                requiredSpace = len;
+            } else if (replaceMode) {
+                int currentLen = getDataLength(slotNumber);
+                requiredSpace = len - currentLen;
+            } else {
+                requiredSpace = calculateSlotLength(len);
+            }
+        }
+        // Do we have enough space in the page?
+        // TODO: Maybe we should also reserve some free space
+        if (freeSpace < requiredSpace) {
+            log.error(this.getClass().getName(), "insertAt", mcat.getMessage(
+                "EO0002",
+                item,
+                this,
+                slotNumber));
+            throw new PageException(mcat.getMessage(
+                "EO0002",
+                item,
+                this,
+                slotNumber));
+        }
 
-		addSlot(slotNumber, item, slot);
-		if (restoreFlags) {
-			slotTable.get(slotNumber).setFlags(savedFlags);
-		}
+        int savedFlags = 0;
+        boolean restoreFlags = false;
+        if (replaceMode) {
+            // If we are in replaceMode,
+            // we may need to delete an existing tuple
+            if (slotNumber < numberOfSlots && !isSlotDeleted(slotNumber)) {
+                savedFlags = slotTable.get(slotNumber).getFlags();
+                restoreFlags = true;
+                delete(slotNumber);
+            }
+        }
+
+        /* find contiguous space */
+        Slot slot = findSpace(slotNumber, len);
+        if (slot == null) {
+            defragment();
+            slot = findSpace(slotNumber, len);
+        }
+
+        addSlot(slotNumber, item, slot);
+        if (restoreFlags) {
+            slotTable.get(slotNumber).setFlags(savedFlags);
+        }
 //		if (debug > 0) {
 //			debugout << Thread::getCurrentThread()->getName() <<
 //				": TupleMgr.insertTupleAt: Inserting tuple [" <<
 //				tno << "] of length " << p->offsets[tno].length <<
 //				" at offset " << p->offsets[tno].offset << "\n";
 //		}
-		return true;
-	}
+        return true;
+    }
 
-	/**
-	 * Delete a tuple. This frees up space but does not meddle with tuplids.
-	 * Space allocated to the tuple remains unused until
-	 * the page is reorganized.
-	 */
-	@Override
-	public final void delete(int slotNumber) {
-		validateLatchHeldExclusively();
-		validateSlotNumber(slotNumber, false);
-		if (isSlotDeleted(slotNumber)) {
-			return;
-		}
-		freeSpace += getDataLength(slotNumber);
-		deletedSlots++;
-		slotTable.get(slotNumber).setLength(0);
-		slotTable.get(slotNumber).setFlags(0);
-	}
-	
-	/**
-	 * Remove a tuple physically from the page.
-	 * Descreases tuple count.
-	 * Space allocated to the tuple remains unused until
-	 * the page is reorganized.
-	 * Note that this function shifts existing tuples, hence it
-	 * cannot be used if there is a need to make tupleids immutable (as in
-	 * table data). This is more for manipulating index pages where
-	 * tuplid is immaterial.
-	 */
-	@Override
-	public final void purge(int slotNumber)
-	{
-		validateLatchHeldExclusively();
-		validateSlotNumber(slotNumber, false);
-		if (isSlotDeleted(slotNumber)) {
-			deletedSlots--;
-		}
-		freeSpace += getSlotLength(slotNumber);
-		slotTable.remove(slotNumber);
-		numberOfSlots -= 1;
-	}	
-	
-	/**
-	 * Validates the slot number.
-	 * @param slotNumber Slot number to be validated
-	 * @param adding Boolean flag to indcate whether to allow last+1 position
-	 */
-	private final void validateSlotNumber(int slotNumber, boolean adding) {
-		if (slotNumber < 0 || slotNumber > (numberOfSlots - (adding ? 0 : 1))) {
-			log.error(this.getClass().getName(), "validateSlotNumber", mcat.getMessage("EO0003", slotNumber, numberOfSlots));
-			throw new PageException(mcat.getMessage("EO0003", slotNumber, numberOfSlots));
-		}
-	}
-	
-	/**
-	 * Validates that the page latch has been acquired in exclusive mode.
-	 */
-	private final void validateLatchHeldExclusively() {
-		if (!lock.isLatchedExclusively()) {
-			log.error(this.getClass().getName(), "validateLatchMode", mcat.getMessage("EO0004"));
-			throw new PageException(mcat.getMessage("EO0004"));
-		}
-	}
-	
-	/**
-	 * Return a pointer to tuple's data, as well as its length.
-	 */
-	@Override
-	public final Storable get(int slotNumber, Storable item)
-	{
-		validateSlotNumber(slotNumber, false);
-		Slot slot = slotTable.get(slotNumber);
-		ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot.getLength());
-		item.retrieve(bb);
-		return item;
-	}	
-	
-	
-	/**
-	 * Set flags for a particular slot.
-	 * @param slotNumber
-	 * @param flags
-	 */
-	@Override
-	public final void setFlags(int slotNumber, short flags) {
-		validateLatchHeldExclusively();
-		validateSlotNumber(slotNumber, false);
-		Slot slot = slotTable.get(slotNumber);
-		slot.setFlags(flags);
-	}
-	
-	/**
-	 * Get flags.
-	 * @param slotNumber
-	 */
-	@Override
-	public final int getFlags(int slotNumber) {
-		validateSlotNumber(slotNumber, false);
-		Slot slot = slotTable.get(slotNumber);
-		return slot.getFlags();
-	}
+    /**
+     * Delete a tuple. This frees up space but does not meddle with tuplids.
+     * Space allocated to the tuple remains unused until
+     * the page is reorganized.
+     */
+    @Override
+    public final void delete(int slotNumber) {
+        validateLatchHeldExclusively();
+        validateSlotNumber(slotNumber, false);
+        if (isSlotDeleted(slotNumber)) {
+            return;
+        }
+        freeSpace += getDataLength(slotNumber);
+        deletedSlots++;
+        slotTable.get(slotNumber).setLength(0);
+        slotTable.get(slotNumber).setFlags(0);
+    }
 
-	public final short getDeletedSlots() {
-		return deletedSlots;
-	}
+    /**
+     * Remove a tuple physically from the page.
+     * Descreases tuple count.
+     * Space allocated to the tuple remains unused until
+     * the page is reorganized.
+     * Note that this function shifts existing tuples, hence it
+     * cannot be used if there is a need to make tupleids immutable (as in
+     * table data). This is more for manipulating index pages where
+     * tuplid is immaterial.
+     */
+    @Override
+    public final void purge(int slotNumber) {
+        validateLatchHeldExclusively();
+        validateSlotNumber(slotNumber, false);
+        if (isSlotDeleted(slotNumber)) {
+            deletedSlots--;
+        }
+        freeSpace += getSlotLength(slotNumber);
+        slotTable.remove(slotNumber);
+        numberOfSlots -= 1;
+    }
 
-	@Override
-	public final short getFlags() {
-		return flags;
-	}
+    /**
+     * Validates the slot number.
+     * @param slotNumber Slot number to be validated
+     * @param adding Boolean flag to indcate whether to allow last+1 position
+     */
+    private final void validateSlotNumber(int slotNumber, boolean adding) {
+        if (slotNumber < 0 || slotNumber > (numberOfSlots - (adding ? 0 : 1))) {
+            log.error(this.getClass().getName(), "validateSlotNumber", mcat
+                .getMessage("EO0003", slotNumber, numberOfSlots));
+            throw new PageException(mcat.getMessage(
+                "EO0003",
+                slotNumber,
+                numberOfSlots));
+        }
+    }
 
-	@Override
-	public final void setFlags(short flags) {
-		validateLatchHeldExclusively();
-		this.flags = flags;
-	}
-	
-	@Override
-	public final int getFreeSpace() {
-		return freeSpace;
-	}
+    /**
+     * Validates that the page latch has been acquired in exclusive mode.
+     */
+    private final void validateLatchHeldExclusively() {
+        if (!lock.isLatchedExclusively()) {
+            log.error(this.getClass().getName(), "validateLatchMode", mcat
+                .getMessage("EO0004"));
+            throw new PageException(mcat.getMessage("EO0004"));
+        }
+    }
 
-	public final int getHighWaterMark() {
-		return highWaterMark;
-	}
+    /**
+     * Return a pointer to tuple's data, as well as its length.
+     */
+    @Override
+    public final Storable get(int slotNumber, Storable item) {
+        validateSlotNumber(slotNumber, false);
+        Slot slot = slotTable.get(slotNumber);
+        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
+            .getLength());
+        item.retrieve(bb);
+        return item;
+    }
 
-	@Override
-	public final int getNumberOfSlots() {
-		return numberOfSlots;
-	}
+    /**
+     * Set flags for a particular slot.
+     * @param slotNumber
+     * @param flags
+     */
+    @Override
+    public final void setFlags(int slotNumber, short flags) {
+        validateLatchHeldExclusively();
+        validateSlotNumber(slotNumber, false);
+        Slot slot = slotTable.get(slotNumber);
+        slot.setFlags(flags);
+    }
 
-	@Override
-	public final int getSpaceMapPageNumber() {
-		return spaceMapPageNumber;
-	}
+    /**
+     * Get flags.
+     * @param slotNumber
+     */
+    @Override
+    public final int getFlags(int slotNumber) {
+        validateSlotNumber(slotNumber, false);
+        Slot slot = slotTable.get(slotNumber);
+        return slot.getFlags();
+    }
 
-	@Override
-	public final void setSpaceMapPageNumber(int spaceMapPageNumber) {
-		validateLatchHeldExclusively();
-		this.spaceMapPageNumber = spaceMapPageNumber;
-	}
-	
-	@Override
+    public final short getDeletedSlots() {
+        return deletedSlots;
+    }
+
+    @Override
+    public final short getFlags() {
+        return flags;
+    }
+
+    @Override
+    public final void setFlags(short flags) {
+        validateLatchHeldExclusively();
+        this.flags = flags;
+    }
+
+    @Override
+    public final int getFreeSpace() {
+        return freeSpace;
+    }
+
+    public final int getHighWaterMark() {
+        return highWaterMark;
+    }
+
+    @Override
+    public final int getNumberOfSlots() {
+        return numberOfSlots;
+    }
+
+    @Override
+    public final int getSpaceMapPageNumber() {
+        return spaceMapPageNumber;
+    }
+
+    @Override
+    public final void setSpaceMapPageNumber(int spaceMapPageNumber) {
+        validateLatchHeldExclusively();
+        this.spaceMapPageNumber = spaceMapPageNumber;
+    }
+
+    @Override
     public int getSlotOverhead() {
         return Slot.SIZE;
     }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		
-		sb.append("\n");
-		sb.append("=========================================================================").append("\n");
-		sb.append("PAGE DUMP : ");
-		super.appendTo(sb).append("\n");
-		sb.append("PageSize=").append(getStoredLength()).append("\n");
-		sb.append("FIXED OVERHEAD=").append(SlottedPageImpl.FIXED_OVERHEAD).append("\n");
-		sb.append("UsableSpace=").append(getSpace()).append("\n");
-		// DiagnosticLogger.log("PageLsn=" + getPageLsn());
-		sb.append("PageFlags=").append(getFlags()).append("\n");
-		sb.append("#Slots=").append(getNumberOfSlots()).append("\n");
-		sb.append("#DeletedSlots=").append(getDeletedSlots()).append("\n");
-		sb.append("HighWaterMark=").append(highWaterMark).append("\n");
-		sb.append("FreeSpace=").append(getFreeSpace()).append("\n");
-		sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append("\n");
-		int length = 0;
-		for (int i = 0; i < getNumberOfSlots(); i++) {
-			sb.append("Slot#").append(i).append("=");
-			slotTable.get(i).appendTo(sb).append("\n");
-			length += getSlotLength(i);
-		}
-		length += FIXED_OVERHEAD;
-		length += freeSpace;
-		sb.append("Calculated PageSize=").append(length).append("\n");
-		return sb;
-	}
-	
-	public String toString() {
-		return appendTo(new StringBuilder()).toString();
-	}
-	
     @Override
-	public final void dump() {
-		DiagnosticLogger.log("=========================================================================");
-		DiagnosticLogger.log("PAGE DUMP : " + getPageId());
-		DiagnosticLogger.log("PageSize=" + getStoredLength());
-		DiagnosticLogger.log("FIXED OVERHEAD=" + SlottedPageImpl.FIXED_OVERHEAD);
-		DiagnosticLogger.log("UsableSpace=" + getSpace());
-		// DiagnosticLogger.log("PageLsn=" + getPageLsn());
-		DiagnosticLogger.log("PageType=" + getType());
-		DiagnosticLogger.log("PageFlags=" + getFlags());
-		DiagnosticLogger.log("#Slots=" + getNumberOfSlots());
-		DiagnosticLogger.log("#DeletedSlots=" + getDeletedSlots());
-		DiagnosticLogger.log("HighWaterMark=" + highWaterMark);
-		DiagnosticLogger.log("FreeSpace=" + getFreeSpace());
-		DiagnosticLogger.log("SpaceMapPage=" + getSpaceMapPageNumber());
-		for (int i = 0; i < getNumberOfSlots(); i++) {
-			DiagnosticLogger.log("Slot#" + i + "=" + slotTable.get(i));
-		}
-	}
-	
+    public StringBuilder appendTo(StringBuilder sb) {
+
+        sb.append("\n");
+        sb
+            .append(
+                "=========================================================================")
+            .append("\n");
+        sb.append("PAGE DUMP : ");
+        super.appendTo(sb).append("\n");
+        sb.append("PageSize=").append(getStoredLength()).append("\n");
+        sb
+            .append("FIXED OVERHEAD=")
+            .append(SlottedPageImpl.FIXED_OVERHEAD)
+            .append("\n");
+        sb.append("UsableSpace=").append(getSpace()).append("\n");
+        // DiagnosticLogger.log("PageLsn=" + getPageLsn());
+        sb.append("PageFlags=").append(getFlags()).append("\n");
+        sb.append("#Slots=").append(getNumberOfSlots()).append("\n");
+        sb.append("#DeletedSlots=").append(getDeletedSlots()).append("\n");
+        sb.append("HighWaterMark=").append(highWaterMark).append("\n");
+        sb.append("FreeSpace=").append(getFreeSpace()).append("\n");
+        sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append("\n");
+        int length = 0;
+        for (int i = 0; i < getNumberOfSlots(); i++) {
+            sb.append("Slot#").append(i).append("=");
+            slotTable.get(i).appendTo(sb).append("\n");
+            length += getSlotLength(i);
+        }
+        length += FIXED_OVERHEAD;
+        length += freeSpace;
+        sb.append("Calculated PageSize=").append(length).append("\n");
+        return sb;
+    }
+
+    @Override
+    public String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
+
+    @Override
+    public final void dump() {
+        DiagnosticLogger
+            .log("=========================================================================");
+        DiagnosticLogger.log("PAGE DUMP : " + getPageId());
+        DiagnosticLogger.log("PageSize=" + getStoredLength());
+        DiagnosticLogger
+            .log("FIXED OVERHEAD=" + SlottedPageImpl.FIXED_OVERHEAD);
+        DiagnosticLogger.log("UsableSpace=" + getSpace());
+        // DiagnosticLogger.log("PageLsn=" + getPageLsn());
+        DiagnosticLogger.log("PageType=" + getType());
+        DiagnosticLogger.log("PageFlags=" + getFlags());
+        DiagnosticLogger.log("#Slots=" + getNumberOfSlots());
+        DiagnosticLogger.log("#DeletedSlots=" + getDeletedSlots());
+        DiagnosticLogger.log("HighWaterMark=" + highWaterMark);
+        DiagnosticLogger.log("FreeSpace=" + getFreeSpace());
+        DiagnosticLogger.log("SpaceMapPage=" + getSpaceMapPageNumber());
+        for (int i = 0; i < getNumberOfSlots(); i++) {
+            DiagnosticLogger.log("Slot#" + i + "=" + slotTable.get(i));
+        }
+    }
+
 }

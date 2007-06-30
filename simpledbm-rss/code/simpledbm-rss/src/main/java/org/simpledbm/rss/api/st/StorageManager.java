@@ -37,7 +37,7 @@ public interface StorageManager {
      * @param container The StorageContainer object 
      */
     void register(int id, StorageContainer container);
-    
+
     /**
      * Retrieve an instance of a StorageContainer based upon its
      * integer id.
@@ -46,19 +46,19 @@ public interface StorageManager {
      * @throws StorageException Thrown if the specified StorageContainer instance is not found.
      */
     StorageContainer getInstance(int id);
-    
+
     /**
      * Closes and removes the specified StorageContainer.
      * @param id
      * @throws StorageException 
      */
     void remove(int id);
-    
+
     /**
      * Closes all StorageContainers.
      */
     void shutdown();
-    
+
     /**
      * Returns a list of the active storage containers
      * in the system.

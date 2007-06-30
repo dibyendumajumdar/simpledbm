@@ -40,120 +40,148 @@ import org.simpledbm.rss.util.ByteString;
 
 public class TestSlottedPage extends TestCase {
 
-	public TestSlottedPage(String arg0) {
-		super(arg0);
-	}
+    public TestSlottedPage(String arg0) {
+        super(arg0);
+    }
 
-	public void testCtor() throws Exception {
-		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+    public void testCtor() throws Exception {
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 // 		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
-		final StorageManager storageManager = new StorageManagerImpl();
+        final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(objectFactory);
-		SlottedPageImpl page = new SlottedPageImpl();
-		page.setPageFactory(pageFactory);
-		page.init();
-	}
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+            objectFactory);
+        SlottedPageImpl page = new SlottedPageImpl();
+        page.setPageFactory(pageFactory);
+        page.init();
+    }
 
-	public static class StringItem implements Storable {
+    public static class StringItem implements Storable {
 
-		ByteString string = new ByteString();
-		
-		public void setString(String s) {
-			string = new ByteString(s);
-		}
-	
-		@Override
-		public String toString() {
-			return string.toString();
-		}
-		
-		public int getStoredLength() {
-			return string.getStoredLength();
-		}
+        ByteString string = new ByteString();
 
-		public void retrieve(ByteBuffer bb) {
-			string = new ByteString();
-			string.retrieve(bb);
-		}
+        public void setString(String s) {
+            string = new ByteString(s);
+        }
 
-		public void store(ByteBuffer bb) {
-			string.store(bb);
-		}
-	}
-	
-	void printItems(SlottedPageImpl page) {
-		page.dump();
-		for (int i = 0; i < page.getNumberOfSlots(); i++) {
-			if (!page.isSlotDeleted(i)) {
-				System.err.println("Item=[" + i + "]={" + page.get(i, new StringItem()) + "}");
-			}
-			else {
-				System.err.println("Item=[" + i + "]=*deleted*");
-			}
-		}
-	}
-	
-	public void testInsertItems() throws Exception {
-		SlottedPageImpl.TESTING = true;
-		final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        @Override
+        public String toString() {
+            return string.toString();
+        }
+
+        public int getStoredLength() {
+            return string.getStoredLength();
+        }
+
+        public void retrieve(ByteBuffer bb) {
+            string = new ByteString();
+            string.retrieve(bb);
+        }
+
+        public void store(ByteBuffer bb) {
+            string.store(bb);
+        }
+    }
+
+    void printItems(SlottedPageImpl page) {
+        page.dump();
+        for (int i = 0; i < page.getNumberOfSlots(); i++) {
+            if (!page.isSlotDeleted(i)) {
+                System.err.println("Item=[" + i + "]={"
+                        + page.get(i, new StringItem()) + "}");
+            } else {
+                System.err.println("Item=[" + i + "]=*deleted*");
+            }
+        }
+    }
+
+    public void testInsertItems() throws Exception {
+        SlottedPageImpl.TESTING = true;
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
 //		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
-		final StorageManager storageManager = new StorageManagerImpl();
+        final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(objectFactory);
-		SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr.getPageType(), new PageId());
-		page.latchExclusive();
-		StringItem item = new StringItem();
-		item.setString("Dibyendu Majumdar, This is pretty cool");
-		assertEquals(page.getFreeSpace(), page.getSpace());
-		page.insert(item);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item.getStoredLength() + SlottedPageImpl.Slot.SIZE));
-		assertEquals(page.getNumberOfSlots(), 1);
-		assertEquals(page.getDeletedSlots(), 0);
-		printItems(page);
-		StringItem item2 = new StringItem();
-		item2.setString("Dibyendu Majumdar, This is pretty foolish");
-		page.insertAt(1, item2, false);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item.getStoredLength() + item2.getStoredLength() + SlottedPageImpl.Slot.SIZE * 2));
-		assertEquals(page.getNumberOfSlots(), 2);
-		assertEquals(page.getDeletedSlots(), 0);
-		printItems(page);
-		page.delete(0);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item2.getStoredLength() + SlottedPageImpl.Slot.SIZE * 2));
-		assertEquals(page.getNumberOfSlots(), 2);
-		assertEquals(page.getDeletedSlots(), 1);
-		printItems(page);
-		StringItem item3 = new StringItem();  
-		item3.setString("Dibyendu Majumdar, SimpleDBM will succeed");
-		page.insertAt(2, item3, false);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item2.getStoredLength() + item3.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
-		assertEquals(page.getNumberOfSlots(), 3);
-		assertEquals(page.getDeletedSlots(), 1);
-		printItems(page);
-		StringItem item4 = new StringItem();
-		item4.setString("This is a long item, and should force the page to be compacted - by removing holes");
-		page.insertAt(3, item4, false);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item2.getStoredLength() + item3.getStoredLength() + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 4));
-		assertEquals(page.getNumberOfSlots(), 4);
-		assertEquals(page.getDeletedSlots(), 1);
-		printItems(page);
-		page.purge(0);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item2.getStoredLength() + item3.getStoredLength() + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
-		assertEquals(page.getNumberOfSlots(), 3);
-		assertEquals(page.getDeletedSlots(), 0);
-		printItems(page);
-		page.setFlags(2, (short) 6);
-		page.insertAt(2, item4, true);
-		assertEquals(page.getFreeSpace(), page.getSpace() - (item2.getStoredLength() + item3.getStoredLength() + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
-		assertEquals(page.getNumberOfSlots(), 3);
-		assertEquals(page.getDeletedSlots(), 0);
-		assertEquals(page.getFlags(2), 6);
-		printItems(page);
-		System.out.println(page.toString());
-		SlottedPageImpl.TESTING = false;
-	}
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+            objectFactory);
+        SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
+            .getPageType(), new PageId());
+        page.latchExclusive();
+        StringItem item = new StringItem();
+        item.setString("Dibyendu Majumdar, This is pretty cool");
+        assertEquals(page.getFreeSpace(), page.getSpace());
+        page.insert(item);
+        assertEquals(page.getFreeSpace(), page.getSpace()
+                - (item.getStoredLength() + SlottedPageImpl.Slot.SIZE));
+        assertEquals(page.getNumberOfSlots(), 1);
+        assertEquals(page.getDeletedSlots(), 0);
+        printItems(page);
+        StringItem item2 = new StringItem();
+        item2.setString("Dibyendu Majumdar, This is pretty foolish");
+        page.insertAt(1, item2, false);
+        assertEquals(
+            page.getFreeSpace(),
+            page.getSpace()
+                    - (item.getStoredLength() + item2.getStoredLength() + SlottedPageImpl.Slot.SIZE * 2));
+        assertEquals(page.getNumberOfSlots(), 2);
+        assertEquals(page.getDeletedSlots(), 0);
+        printItems(page);
+        page.delete(0);
+        assertEquals(page.getFreeSpace(), page.getSpace()
+                - (item2.getStoredLength() + SlottedPageImpl.Slot.SIZE * 2));
+        assertEquals(page.getNumberOfSlots(), 2);
+        assertEquals(page.getDeletedSlots(), 1);
+        printItems(page);
+        StringItem item3 = new StringItem();
+        item3.setString("Dibyendu Majumdar, SimpleDBM will succeed");
+        page.insertAt(2, item3, false);
+        assertEquals(
+            page.getFreeSpace(),
+            page.getSpace()
+                    - (item2.getStoredLength() + item3.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
+        assertEquals(page.getNumberOfSlots(), 3);
+        assertEquals(page.getDeletedSlots(), 1);
+        printItems(page);
+        StringItem item4 = new StringItem();
+        item4
+            .setString("This is a long item, and should force the page to be compacted - by removing holes");
+        page.insertAt(3, item4, false);
+        assertEquals(
+            page.getFreeSpace(),
+            page.getSpace()
+                    - (item2.getStoredLength() + item3.getStoredLength()
+                            + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 4));
+        assertEquals(page.getNumberOfSlots(), 4);
+        assertEquals(page.getDeletedSlots(), 1);
+        printItems(page);
+        page.purge(0);
+        assertEquals(
+            page.getFreeSpace(),
+            page.getSpace()
+                    - (item2.getStoredLength() + item3.getStoredLength()
+                            + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
+        assertEquals(page.getNumberOfSlots(), 3);
+        assertEquals(page.getDeletedSlots(), 0);
+        printItems(page);
+        page.setFlags(2, (short) 6);
+        page.insertAt(2, item4, true);
+        assertEquals(
+            page.getFreeSpace(),
+            page.getSpace()
+                    - (item2.getStoredLength() + item3.getStoredLength()
+                            + item4.getStoredLength() + SlottedPageImpl.Slot.SIZE * 3));
+        assertEquals(page.getNumberOfSlots(), 3);
+        assertEquals(page.getDeletedSlots(), 0);
+        assertEquals(page.getFlags(2), 6);
+        printItems(page);
+        System.out.println(page.toString());
+        SlottedPageImpl.TESTING = false;
+    }
 }

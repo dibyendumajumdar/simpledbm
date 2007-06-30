@@ -31,16 +31,20 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class TupleException extends RSSException {
 
-	private static final long serialVersionUID = 1L;
-	public TupleException() {
+    private static final long serialVersionUID = 1L;
+
+    public TupleException() {
         super();
     }
+
     public TupleException(String arg0) {
         super(arg0);
     }
+
     public TupleException(String arg0, Throwable arg1) {
         super(arg0, arg1);
     }
+
     public TupleException(Throwable arg0) {
         super(arg0);
     }

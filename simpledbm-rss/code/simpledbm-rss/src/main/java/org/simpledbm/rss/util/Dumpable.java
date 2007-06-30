@@ -27,9 +27,9 @@ package org.simpledbm.rss.util;
  */
 public interface Dumpable {
 
-	/**
-	 * Appends contents to supplied StringBuilder.
-	 */
-	StringBuilder appendTo(StringBuilder sb);
-	
+    /**
+     * Appends contents to supplied StringBuilder.
+     */
+    StringBuilder appendTo(StringBuilder sb);
+
 }

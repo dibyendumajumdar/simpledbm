@@ -114,81 +114,84 @@ import org.xml.sax.SAXException;
  * @author Dibyendu Majumdar
  * @since 18-Sep-2005
  */
-public final class BTreeIndexManagerImpl extends BaseTransactionalModule implements IndexManager {
+public final class BTreeIndexManagerImpl extends BaseTransactionalModule
+        implements IndexManager {
 
-	/*
-	 * Notes: 
-	 * 1. If we want to maintain left sibling pointers in pages,
-	 * then during merge operations, we need to access the page further to the
-	 * right of right sibling, and update this page as well. 
-	 * 2. When copying
-	 * keys from one page to another it is not necessary to instantiate keys. A
-	 * more efficient way would be to copy raw data. Current method is
-	 * inefficient.
-	 */
-	
-	static final String LOG_CLASS_NAME = BTreeIndexManagerImpl.class.getName();
-	static final Logger log = Logger.getLogger(BTreeIndexManagerImpl.class.getPackage().getName());
+    /*
+     * Notes: 
+     * 1. If we want to maintain left sibling pointers in pages,
+     * then during merge operations, we need to access the page further to the
+     * right of right sibling, and update this page as well. 
+     * 2. When copying
+     * keys from one page to another it is not necessary to instantiate keys. A
+     * more efficient way would be to copy raw data. Current method is
+     * inefficient.
+     */
 
-	static final MessageCatalog mcat = new MessageCatalog();
-	
-	private static final short MODULE_ID = 4;
-	
-	private static final short TYPE_BASE = MODULE_ID * 100;
-	private static final short TYPE_SPLIT_OPERATION = TYPE_BASE + 1;
-	private static final short TYPE_MERGE_OPERATION = TYPE_BASE + 3;
-	private static final short TYPE_LINK_OPERATION = TYPE_BASE + 4;
-	private static final short TYPE_UNLINK_OPERATION = TYPE_BASE + 5;
-	private static final short TYPE_REDISTRIBUTE_OPERATION = TYPE_BASE + 6;
-	private static final short TYPE_INCREASETREEHEIGHT_OPERATION = TYPE_BASE + 7;
-	private static final short TYPE_DECREASETREEHEIGHT_OPERATION = TYPE_BASE + 8;
-	private static final short TYPE_INSERT_OPERATION = TYPE_BASE + 9;
-	private static final short TYPE_UNDOINSERT_OPERATION = TYPE_BASE + 10;
-	private static final short TYPE_DELETE_OPERATION = TYPE_BASE + 11;
-	private static final short TYPE_UNDODELETE_OPERATION = TYPE_BASE + 12;
-	private static final short TYPE_LOADPAGE_OPERATION = TYPE_BASE + 13;
-	
-	/**
-	 * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
-	 * and 0 means unused.
-	 */
-	private static final int PAGE_SPACE_UNUSED = 0;
-	
-	/**
-	 * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
-	 * and 0 means unused.
-	 */
-	private static final int PAGE_SPACE_USED = 1;
-	
-	/**
-	 * Root page is always the third page in a container.
-	 */
-	private static final int ROOT_PAGE_NUMBER = 2;
-	
-	/**
-	 * The first slot in a btree node page is occupied by a special
-	 * header record.
-	 */
-	private static final int HEADER_KEY_POS = 0;
-	
-	/**
-	 * The keys start at slot position 1, because the
-	 * first slot is occupied by a header record.
-	 */
-	private static final int FIRST_KEY_POS = 1;
-	
-	final ObjectRegistry objectFactory;
-	
-	final LoggableFactory loggableFactory;
-	
-	final FreeSpaceManager spaceMgr;
-	
-	final BufferManager bufmgr;
+    static final String LOG_CLASS_NAME = BTreeIndexManagerImpl.class.getName();
+    static final Logger log = Logger.getLogger(BTreeIndexManagerImpl.class
+        .getPackage()
+        .getName());
+
+    static final MessageCatalog mcat = new MessageCatalog();
+
+    private static final short MODULE_ID = 4;
+
+    private static final short TYPE_BASE = MODULE_ID * 100;
+    private static final short TYPE_SPLIT_OPERATION = TYPE_BASE + 1;
+    private static final short TYPE_MERGE_OPERATION = TYPE_BASE + 3;
+    private static final short TYPE_LINK_OPERATION = TYPE_BASE + 4;
+    private static final short TYPE_UNLINK_OPERATION = TYPE_BASE + 5;
+    private static final short TYPE_REDISTRIBUTE_OPERATION = TYPE_BASE + 6;
+    private static final short TYPE_INCREASETREEHEIGHT_OPERATION = TYPE_BASE + 7;
+    private static final short TYPE_DECREASETREEHEIGHT_OPERATION = TYPE_BASE + 8;
+    private static final short TYPE_INSERT_OPERATION = TYPE_BASE + 9;
+    private static final short TYPE_UNDOINSERT_OPERATION = TYPE_BASE + 10;
+    private static final short TYPE_DELETE_OPERATION = TYPE_BASE + 11;
+    private static final short TYPE_UNDODELETE_OPERATION = TYPE_BASE + 12;
+    private static final short TYPE_LOADPAGE_OPERATION = TYPE_BASE + 13;
+
+    /**
+     * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
+     * and 0 means unused.
+     */
+    private static final int PAGE_SPACE_UNUSED = 0;
+
+    /**
+     * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
+     * and 0 means unused.
+     */
+    private static final int PAGE_SPACE_USED = 1;
+
+    /**
+     * Root page is always the third page in a container.
+     */
+    private static final int ROOT_PAGE_NUMBER = 2;
+
+    /**
+     * The first slot in a btree node page is occupied by a special
+     * header record.
+     */
+    private static final int HEADER_KEY_POS = 0;
+
+    /**
+     * The keys start at slot position 1, because the
+     * first slot is occupied by a header record.
+     */
+    private static final int FIRST_KEY_POS = 1;
+
+    final ObjectRegistry objectFactory;
+
+    final LoggableFactory loggableFactory;
+
+    final FreeSpaceManager spaceMgr;
+
+    final BufferManager bufmgr;
 
     final SlottedPageManager spMgr;
-    
+
     final LockAdaptor lockAdaptor;
-    
+
     /**
      * Setting this flag to 1 artificially limits the number
      * of keys in each page. This is useful for forcing page splits etc.
@@ -198,484 +201,527 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
      * @see BTreeNode#getSplitKey()
      */
     private static int testingFlag = 0;
-    
+
     public static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
-    
+
     private static final int TEST_MODE_MAX_KEYS = 8;
-    
+
     private static final int TEST_MODE_SPLIT_KEY = 4;
-    
-	public BTreeIndexManagerImpl(ObjectRegistry objectFactory, LoggableFactory loggableFactory, FreeSpaceManager spaceMgr, BufferManager bufMgr, SlottedPageManager spMgr, TransactionalModuleRegistry moduleRegistry) {
-		this.objectFactory = objectFactory;
-		this.loggableFactory = loggableFactory;
-		this.spaceMgr = spaceMgr;
-		this.bufmgr = bufMgr;
+
+    public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
+            LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
+            BufferManager bufMgr, SlottedPageManager spMgr,
+            TransactionalModuleRegistry moduleRegistry) {
+        this.objectFactory = objectFactory;
+        this.loggableFactory = loggableFactory;
+        this.spaceMgr = spaceMgr;
+        this.bufmgr = bufMgr;
         this.spMgr = spMgr;
-		// TODO lockAdaptor should be injected rather than be hard-coded
+        // TODO lockAdaptor should be injected rather than be hard-coded
         this.lockAdaptor = new DefaultLockAdaptor();
 
-		moduleRegistry.registerModule(MODULE_ID, this);
-		
-		objectFactory.registerType(TYPE_SPLIT_OPERATION, SplitOperation.class.getName());
-		objectFactory.registerType(TYPE_MERGE_OPERATION, MergeOperation.class.getName());
-		objectFactory.registerType(TYPE_LINK_OPERATION, LinkOperation.class.getName());
-		objectFactory.registerType(TYPE_UNLINK_OPERATION, UnlinkOperation.class.getName());
-		objectFactory.registerType(TYPE_REDISTRIBUTE_OPERATION, RedistributeOperation.class.getName());
-		objectFactory.registerType(TYPE_INCREASETREEHEIGHT_OPERATION, IncreaseTreeHeightOperation.class.getName());	
-		objectFactory.registerType(TYPE_DECREASETREEHEIGHT_OPERATION, DecreaseTreeHeightOperation.class.getName());
-		objectFactory.registerType(TYPE_INSERT_OPERATION, InsertOperation.class.getName());
-		objectFactory.registerType(TYPE_UNDOINSERT_OPERATION, UndoInsertOperation.class.getName());
-		objectFactory.registerType(TYPE_DELETE_OPERATION, DeleteOperation.class.getName());
-		objectFactory.registerType(TYPE_UNDODELETE_OPERATION, UndoDeleteOperation.class.getName());
-		objectFactory.registerType(TYPE_LOADPAGE_OPERATION, LoadPageOperation.class.getName());
-	}
+        moduleRegistry.registerModule(MODULE_ID, this);
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#redo(org.simpledbm.rss.api.pm.Page, org.simpledbm.rss.api.tx.Redoable)
-	 */
-	public final void redo(Page page, Redoable loggable){
-		if (loggable instanceof SplitOperation) {
-			redoSplitOperation(page, (SplitOperation) loggable);
-		}
-		else if (loggable instanceof MergeOperation) {
-			redoMergeOperation(page, (MergeOperation) loggable);
-		}
-		else if (loggable instanceof LinkOperation) {
-			redoLinkOperation(page, (LinkOperation) loggable);
-		}
-		else if (loggable instanceof UnlinkOperation) {
-			redoUnlinkOperation(page, (UnlinkOperation) loggable);
-		}
-		else if (loggable instanceof RedistributeOperation) {
-			redoRedistributeOperation(page, (RedistributeOperation) loggable);
-		}
-		else if (loggable instanceof IncreaseTreeHeightOperation) {
-			redoIncreaseTreeHeightOperation(page, (IncreaseTreeHeightOperation) loggable);
-		}
-		else if (loggable instanceof DecreaseTreeHeightOperation) {
-			redoDecreaseTreeHeightOperation(page, (DecreaseTreeHeightOperation) loggable);
-		}
-		else if (loggable instanceof InsertOperation) {
-			redoInsertOperation(page, (InsertOperation) loggable);
-		}
-		else if (loggable instanceof UndoInsertOperation) {
-			redoUndoInsertOperation(page, (UndoInsertOperation) loggable);
-		}
-		else if (loggable instanceof DeleteOperation) {
-			redoDeleteOperation(page, (DeleteOperation) loggable);
-		}
-		else if (loggable instanceof UndoDeleteOperation) {
-			redoUndoDeleteOperation(page, (UndoDeleteOperation) loggable);
-		}
-		else if (loggable instanceof LoadPageOperation) {
-			redoLoadPageOperation(page, (LoadPageOperation) loggable);
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#undo(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.api.tx.Undoable)
-	 */
-	public final void undo(Transaction trx, Undoable undoable) {
-		if (undoable instanceof InsertOperation) {
-			undoInsertOperation(trx, (InsertOperation) undoable);
-		}
-		else if (undoable instanceof DeleteOperation) {
-			undoDeleteOperation(trx, (DeleteOperation) undoable);
-		}
-	}
+        objectFactory.registerType(TYPE_SPLIT_OPERATION, SplitOperation.class
+            .getName());
+        objectFactory.registerType(TYPE_MERGE_OPERATION, MergeOperation.class
+            .getName());
+        objectFactory.registerType(TYPE_LINK_OPERATION, LinkOperation.class
+            .getName());
+        objectFactory.registerType(TYPE_UNLINK_OPERATION, UnlinkOperation.class
+            .getName());
+        objectFactory.registerType(
+            TYPE_REDISTRIBUTE_OPERATION,
+            RedistributeOperation.class.getName());
+        objectFactory.registerType(
+            TYPE_INCREASETREEHEIGHT_OPERATION,
+            IncreaseTreeHeightOperation.class.getName());
+        objectFactory.registerType(
+            TYPE_DECREASETREEHEIGHT_OPERATION,
+            DecreaseTreeHeightOperation.class.getName());
+        objectFactory.registerType(TYPE_INSERT_OPERATION, InsertOperation.class
+            .getName());
+        objectFactory.registerType(
+            TYPE_UNDOINSERT_OPERATION,
+            UndoInsertOperation.class.getName());
+        objectFactory.registerType(TYPE_DELETE_OPERATION, DeleteOperation.class
+            .getName());
+        objectFactory.registerType(
+            TYPE_UNDODELETE_OPERATION,
+            UndoDeleteOperation.class.getName());
+        objectFactory.registerType(
+            TYPE_LOADPAGE_OPERATION,
+            LoadPageOperation.class.getName());
+    }
 
-	/**
-	 * Redo a LoadPageOperation. A LoadPageOperation is used to log the actions of
-	 * the XMLLoader which reads an XML file and generates a B-Tree. It is also used when 
-	 * initializing a new BTree.
-	 * 
-	 * @see #createIndex(Transaction, String, int, int, int, int, boolean)
-	 * @see XMLLoader 
-	 */
-	private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
-		/*
-		 * A LoadPageOperation is applied to two pages: the BTree page being initialised
-		 * and the Space Map page that contains the used/unused status for the BTree page.
-		 */
-		if (page.getPageId().getPageNumber() == loadPageOp.getSpaceMapPageNumber()) {
-			/*
-			 * Log record is being applied to space map page.
-			 */
-			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
-			// update space allocation data
-			smp.setSpaceBits(loadPageOp.getPageId().getPageNumber(), PAGE_SPACE_USED);
-		} else if (page.getPageId().getPageNumber() == loadPageOp.getPageId().getPageNumber()) {
-			/*
-			 * Log record is being applied to BTree page.
-			 */
-			SlottedPage r = (SlottedPage) page;
-			r.init();
-			formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp.getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp.isUnique());
-			r.setSpaceMapPageNumber(loadPageOp.getSpaceMapPageNumber());
-			BTreeNode node = new BTreeNode(loadPageOp);
-			node.wrap(r);
-			int k = FIRST_KEY_POS; // 0 is position of header item
-			for (IndexItem item : loadPageOp.items) {
-				node.replace(k++, item);
-			}
-			node.header.keyCount = loadPageOp.items.size();
-			node.header.leftSibling = loadPageOp.leftSibling;
-			node.header.rightSibling = loadPageOp.rightSibling;
-			node.updateHeader();
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#redo(org.simpledbm.rss.api.pm.Page, org.simpledbm.rss.api.tx.Redoable)
+     */
+    public final void redo(Page page, Redoable loggable) {
+        if (loggable instanceof SplitOperation) {
+            redoSplitOperation(page, (SplitOperation) loggable);
+        } else if (loggable instanceof MergeOperation) {
+            redoMergeOperation(page, (MergeOperation) loggable);
+        } else if (loggable instanceof LinkOperation) {
+            redoLinkOperation(page, (LinkOperation) loggable);
+        } else if (loggable instanceof UnlinkOperation) {
+            redoUnlinkOperation(page, (UnlinkOperation) loggable);
+        } else if (loggable instanceof RedistributeOperation) {
+            redoRedistributeOperation(page, (RedistributeOperation) loggable);
+        } else if (loggable instanceof IncreaseTreeHeightOperation) {
+            redoIncreaseTreeHeightOperation(
+                page,
+                (IncreaseTreeHeightOperation) loggable);
+        } else if (loggable instanceof DecreaseTreeHeightOperation) {
+            redoDecreaseTreeHeightOperation(
+                page,
+                (DecreaseTreeHeightOperation) loggable);
+        } else if (loggable instanceof InsertOperation) {
+            redoInsertOperation(page, (InsertOperation) loggable);
+        } else if (loggable instanceof UndoInsertOperation) {
+            redoUndoInsertOperation(page, (UndoInsertOperation) loggable);
+        } else if (loggable instanceof DeleteOperation) {
+            redoDeleteOperation(page, (DeleteOperation) loggable);
+        } else if (loggable instanceof UndoDeleteOperation) {
+            redoUndoDeleteOperation(page, (UndoDeleteOperation) loggable);
+        } else if (loggable instanceof LoadPageOperation) {
+            redoLoadPageOperation(page, (LoadPageOperation) loggable);
+        }
+    }
 
-			node.dump();
-		}
-	}
-	
-	/**
-	 * Redo a page split operation. 
-	 * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
-	 * @see SplitOperation
-	 */
-	private void redoSplitOperation(Page page, SplitOperation splitOperation) {
-		if (page.getPageId().equals(splitOperation.getPageId())) {
-			// q is the page to be split
-			SlottedPage q = (SlottedPage) page;
-			BTreeNode leftSibling = new BTreeNode(splitOperation);
-			leftSibling.wrap(q);
-			leftSibling.header.rightSibling = splitOperation.newSiblingPageNumber;
-			leftSibling.header.keyCount = splitOperation.newKeyCount;
-			// get rid of the keys that will move to the
-			// sibling page prior to updating the high key
-			while (q.getNumberOfSlots() > leftSibling.header.keyCount+1) {
-				q.purge(q.getNumberOfSlots()-1);
-			}
-			if (splitOperation.isLeaf()) {
-				// update the high key
-				leftSibling.replace(splitOperation.newKeyCount, splitOperation.highKey);
-				assert leftSibling.getItem(splitOperation.newKeyCount).compareTo(splitOperation.highKey) == 0;
-			}
-			leftSibling.updateHeader();
-			
-			leftSibling.dump();
-		}
-		else {
-			// r is the newly allocated right sibling of q
-			SlottedPage r = (SlottedPage) page;
-			r.init();
-			formatPage(r, splitOperation.getKeyFactoryType(), splitOperation.getLocationFactoryType(), splitOperation.isLeaf(), splitOperation.isUnique());
-			r.setSpaceMapPageNumber(splitOperation.spaceMapPageNumber);
-			BTreeNode newSiblingNode = new BTreeNode(splitOperation);
-			newSiblingNode.wrap(r);
-			newSiblingNode.header.leftSibling = splitOperation.getPageId().getPageNumber();
-			newSiblingNode.header.rightSibling = splitOperation.rightSibling;
-			int k = FIRST_KEY_POS;		// 0 is position of header item
-			for (IndexItem item: splitOperation.items) {
-				newSiblingNode.replace(k++, item);
-			}
-			newSiblingNode.header.keyCount = splitOperation.items.size();
-			newSiblingNode.updateHeader();
-			
-			newSiblingNode.dump();
-		}
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#undo(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.api.tx.Undoable)
+     */
+    public final void undo(Transaction trx, Undoable undoable) {
+        if (undoable instanceof InsertOperation) {
+            undoInsertOperation(trx, (InsertOperation) undoable);
+        } else if (undoable instanceof DeleteOperation) {
+            undoDeleteOperation(trx, (DeleteOperation) undoable);
+        }
+    }
 
-	/**
-	 * Redo a merge operation.
-	 * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor) 
-	 * @see MergeOperation
-	 */
-	private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
-		if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
-			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
-			// deallocate page by marking it unused
-			smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
-		}
-		else if (page.getPageId().getPageNumber() == mergeOperation.getPageId().getPageNumber()) {
-			// left sibling - this page will aborb contents of right sibling.
-			SlottedPage q = (SlottedPage) page;
-			BTreeNode leftSibling = new BTreeNode(mergeOperation);
-			leftSibling.wrap(q);
-			int k;
-			if (leftSibling.isLeaf()) {
-				// delete the high key
-				k = leftSibling.header.keyCount;
-				q.delete(leftSibling.header.keyCount);
-			}
-			else {
-				k = leftSibling.header.keyCount+1;
-			}
-			for (IndexItem item: mergeOperation.items) {
-				q.insertAt(k++, item, true);
-			}
-			leftSibling.header.keyCount += mergeOperation.items.size() - (leftSibling.isLeaf() ? 1 : 0);
-			leftSibling.header.rightSibling = mergeOperation.rightRightSibling;
-			leftSibling.updateHeader();
-			
-			leftSibling.dump();
-		}
-		else if (page.getPageId().getPageNumber() == mergeOperation.rightSibling) {
-			// mark right sibling as deallocated
-			SlottedPage p = (SlottedPage) page;
-			short flags = p.getFlags();
-			p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
-		}
-	}
+    /**
+     * Redo a LoadPageOperation. A LoadPageOperation is used to log the actions of
+     * the XMLLoader which reads an XML file and generates a B-Tree. It is also used when 
+     * initializing a new BTree.
+     * 
+     * @see #createIndex(Transaction, String, int, int, int, int, boolean)
+     * @see XMLLoader 
+     */
+    private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
+        /*
+         * A LoadPageOperation is applied to two pages: the BTree page being initialised
+         * and the Space Map page that contains the used/unused status for the BTree page.
+         */
+        if (page.getPageId().getPageNumber() == loadPageOp
+            .getSpaceMapPageNumber()) {
+            /*
+             * Log record is being applied to space map page.
+             */
+            FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
+            // update space allocation data
+            smp.setSpaceBits(
+                loadPageOp.getPageId().getPageNumber(),
+                PAGE_SPACE_USED);
+        } else if (page.getPageId().getPageNumber() == loadPageOp
+            .getPageId()
+            .getPageNumber()) {
+            /*
+             * Log record is being applied to BTree page.
+             */
+            SlottedPage r = (SlottedPage) page;
+            r.init();
+            formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp
+                .getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp
+                .isUnique());
+            r.setSpaceMapPageNumber(loadPageOp.getSpaceMapPageNumber());
+            BTreeNode node = new BTreeNode(loadPageOp);
+            node.wrap(r);
+            int k = FIRST_KEY_POS; // 0 is position of header item
+            for (IndexItem item : loadPageOp.items) {
+                node.replace(k++, item);
+            }
+            node.header.keyCount = loadPageOp.items.size();
+            node.header.leftSibling = loadPageOp.leftSibling;
+            node.header.rightSibling = loadPageOp.rightSibling;
+            node.updateHeader();
 
-	/**
-	 * Redo a link operation
-	 * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
-	 * @see LinkOperation
-	 */
-	private void redoLinkOperation(Page page, LinkOperation linkOperation) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode parent = new BTreeNode(linkOperation);
-		parent.wrap(p);
-		int k = 0;
-		for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
-			IndexItem item = parent.getItem(k);
-			// Change the index entry of left child to point to right child
-			if (item.getChildPageNumber() == linkOperation.leftSibling) {
-				item.setChildPageNumber(linkOperation.rightSibling);
-				p.insertAt(k, item, true);
-				break;
-			}
-		}
-		if (k > parent.header.keyCount) {
-			// child pointer not found - corrupt b-tree?
-			log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0001"));
-			throw new IndexException(mcat.getMessage("EB0001"));
-		}
-		// Insert new entry for left child
-		IndexItem u = linkOperation.leftChildHighKey;
-		p.insertAt(k, u, false);
-		parent.header.keyCount = parent.header.keyCount + 1;
-		parent.updateHeader();
+            node.dump();
+        }
+    }
 
-		parent.dump();
-	}
+    /**
+     * Redo a page split operation. 
+     * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see SplitOperation
+     */
+    private void redoSplitOperation(Page page, SplitOperation splitOperation) {
+        if (page.getPageId().equals(splitOperation.getPageId())) {
+            // q is the page to be split
+            SlottedPage q = (SlottedPage) page;
+            BTreeNode leftSibling = new BTreeNode(splitOperation);
+            leftSibling.wrap(q);
+            leftSibling.header.rightSibling = splitOperation.newSiblingPageNumber;
+            leftSibling.header.keyCount = splitOperation.newKeyCount;
+            // get rid of the keys that will move to the
+            // sibling page prior to updating the high key
+            while (q.getNumberOfSlots() > leftSibling.header.keyCount + 1) {
+                q.purge(q.getNumberOfSlots() - 1);
+            }
+            if (splitOperation.isLeaf()) {
+                // update the high key
+                leftSibling.replace(
+                    splitOperation.newKeyCount,
+                    splitOperation.highKey);
+                assert leftSibling
+                    .getItem(splitOperation.newKeyCount)
+                    .compareTo(splitOperation.highKey) == 0;
+            }
+            leftSibling.updateHeader();
 
-	/**
-	 * Redo an unlink operation.
-	 * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
-	 * @see UnlinkOperation 
-	 */
-	private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode parent = new BTreeNode(unlinkOperation);
-		parent.wrap(p);
-		int k = 0;
-		for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
-			IndexItem item = parent.getItem(k);
-			if (item.getChildPageNumber() == unlinkOperation.leftSibling) {
-				break;
-			}
-		}
-		if (k > parent.header.keyCount) {
-			log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat.getMessage("EB0001"));
-			throw new IndexException(mcat.getMessage("EB0001"));
-		}
-		p.purge(k);
-		IndexItem item = parent.getItem(k);
-		if (item.getChildPageNumber() == unlinkOperation.rightSibling) {
-			item.setChildPageNumber(unlinkOperation.leftSibling);
-			p.insertAt(k, item, true);
-		}
-		else {
-			log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat.getMessage("EB0001"));
-			throw new IndexException(mcat.getMessage("EB0001"));
-		}
-		parent.header.keyCount = parent.header.keyCount - 1;
-		parent.updateHeader();
+            leftSibling.dump();
+        } else {
+            // r is the newly allocated right sibling of q
+            SlottedPage r = (SlottedPage) page;
+            r.init();
+            formatPage(
+                r,
+                splitOperation.getKeyFactoryType(),
+                splitOperation.getLocationFactoryType(),
+                splitOperation.isLeaf(),
+                splitOperation.isUnique());
+            r.setSpaceMapPageNumber(splitOperation.spaceMapPageNumber);
+            BTreeNode newSiblingNode = new BTreeNode(splitOperation);
+            newSiblingNode.wrap(r);
+            newSiblingNode.header.leftSibling = splitOperation
+                .getPageId()
+                .getPageNumber();
+            newSiblingNode.header.rightSibling = splitOperation.rightSibling;
+            int k = FIRST_KEY_POS; // 0 is position of header item
+            for (IndexItem item : splitOperation.items) {
+                newSiblingNode.replace(k++, item);
+            }
+            newSiblingNode.header.keyCount = splitOperation.items.size();
+            newSiblingNode.updateHeader();
 
-		parent.dump();
-	}
-	
-	/**
-	 * Redo a distribute operation. 
-	 * @see BTreeImpl#doRedistribute(Transaction, BTreeCursor)
-	 * @see RedistributeOperation
-	 */
-	private void redoRedistributeOperation(Page page, RedistributeOperation redistributeOperation) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(redistributeOperation);
-		node.wrap(p);
-		if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
-			// processing Q
-			if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
-				// moving key left
-				// the new key will become the high key
-				// FIXME Test case
-				node.header.keyCount = node.header.keyCount + 1;
-				node.updateHeader();
-				p.insertAt(node.header.keyCount, redistributeOperation.key, true);
-				if (redistributeOperation.isLeaf()) {
-					p.insertAt(node.header.keyCount-1, redistributeOperation.key, true);
-				}
-			}
-			else {
-				// moving key right
-				// delete current high key
-				p.purge(node.header.keyCount);
-				node.header.keyCount = node.header.keyCount - 1;
-				node.updateHeader();
-				if (redistributeOperation.isLeaf()) {
-					// previous key becomes new high key
-					IndexItem prevKey = node.getItem(node.header.keyCount - 1);
-					p.insertAt(node.header.keyCount, prevKey, true);
-				}
-			}
-		}
-		else {
-			// processing R
-			if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
-				// moving key left
-				// delete key from position 1
-				// FIXME Test case
-				p.purge(FIRST_KEY_POS);
-				node.header.keyCount = node.header.keyCount - 1;
-				node.updateHeader();
-			}
-			else {
-				// moving key right
-				// insert new key at position 1
-				p.insertAt(FIRST_KEY_POS, redistributeOperation.key, false);
-				node.header.keyCount = node.header.keyCount + 1;
-				node.updateHeader();
-			}
-		}
-		
-		node.dump();
-	}
+            newSiblingNode.dump();
+        }
+    }
 
-	/**
-	 * Redo an increase tree height operation.
-	 * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
-	 * @see IncreaseTreeHeightOperation 
-	 */
-	private void redoIncreaseTreeHeightOperation(Page page, IncreaseTreeHeightOperation ithOperation) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(ithOperation);
-		if (p.getPageId().equals(ithOperation.getPageId())) {
-			// root page
-			// get rid of existing entries by reinitializing page
-			int savedPageNumber = p.getSpaceMapPageNumber();
-			p.init();
-			p.setSpaceMapPageNumber(savedPageNumber);
-			formatPage(p, ithOperation.getKeyFactoryType(), ithOperation.getLocationFactoryType(), false, ithOperation.isUnique());
-			node.wrap(p);
-			node.insert(1, ithOperation.rootItems.get(0));
-			node.insert(2, ithOperation.rootItems.get(1));
-			node.header.keyCount = 2;
-			node.updateHeader();
-		}
-		else if (p.getPageId().getPageNumber() == ithOperation.leftSibling) {
-			// new left sibling
-			p.init();
-			formatPage(p, ithOperation.getKeyFactoryType(), ithOperation.getLocationFactoryType(), ithOperation.isLeaf(), ithOperation.isUnique());
-			p.setSpaceMapPageNumber(ithOperation.spaceMapPageNumber);
-			node.wrap(p);
-			int k = FIRST_KEY_POS;		// 0 is position of header item
-			for (IndexItem item: ithOperation.items) {
-				node.replace(k++, item);
-			}
-			node.header.rightSibling = ithOperation.rightSibling;
-			node.header.keyCount = ithOperation.items.size();
-			node.updateHeader();
-		}
-		node.dump();
-	}
+    /**
+     * Redo a merge operation.
+     * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor) 
+     * @see MergeOperation
+     */
+    private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
+        if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
+            FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
+            // deallocate page by marking it unused
+            smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
+        } else if (page.getPageId().getPageNumber() == mergeOperation
+            .getPageId()
+            .getPageNumber()) {
+            // left sibling - this page will aborb contents of right sibling.
+            SlottedPage q = (SlottedPage) page;
+            BTreeNode leftSibling = new BTreeNode(mergeOperation);
+            leftSibling.wrap(q);
+            int k;
+            if (leftSibling.isLeaf()) {
+                // delete the high key
+                k = leftSibling.header.keyCount;
+                q.delete(leftSibling.header.keyCount);
+            } else {
+                k = leftSibling.header.keyCount + 1;
+            }
+            for (IndexItem item : mergeOperation.items) {
+                q.insertAt(k++, item, true);
+            }
+            leftSibling.header.keyCount += mergeOperation.items.size()
+                    - (leftSibling.isLeaf() ? 1 : 0);
+            leftSibling.header.rightSibling = mergeOperation.rightRightSibling;
+            leftSibling.updateHeader();
 
-	/**
-	 * Decrease tree height when root page has only one child and that child does not
-	 * have a sibling.
-	 * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
-	 * @see DecreaseTreeHeightOperation
-	 */
-	private void redoDecreaseTreeHeightOperation(Page page, DecreaseTreeHeightOperation dthOperation) {
-		if (page.getPageId().getPageNumber() == dthOperation.childPageSpaceMap) {
-			// This is not executed if the space map is updated
-			// as a separate action. But we leave this code here in case we 
-			// wish to update the space map as part of the same action.
-			// FIXME TEST case
-			FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
-			// deallocate
-			smp.setSpaceBits(dthOperation.childPageNumber, PAGE_SPACE_UNUSED);
-		}
-		else if (page.getPageId().getPageNumber() == dthOperation.getPageId().getPageNumber()) {
-			// root page 
-			// delete contents and absorb contents of only child
-			SlottedPage p = (SlottedPage) page;
-			BTreeNode node = new BTreeNode(dthOperation);
-			int savedPageNumber = p.getSpaceMapPageNumber();
-			p.init();
-			p.setSpaceMapPageNumber(savedPageNumber);
-			// Leaf page status must be replicated from child page
-			formatPage(p, dthOperation.getKeyFactoryType(), dthOperation.getLocationFactoryType(), dthOperation.isLeaf(), dthOperation.isUnique());
-			node.wrap(p);
-			int k = FIRST_KEY_POS;
-			// add the keys from child page
-			for (IndexItem item: dthOperation.items) {
-				p.insertAt(k++, item, true);
-			}
-			node.header.keyCount = dthOperation.items.size();
-			node.updateHeader();
-			
-			node.dump();
-		}
-		else if (page.getPageId().getPageNumber() == dthOperation.childPageNumber) {
-			// mark child page as deallocated. 
-			SlottedPage p = (SlottedPage) page;
-			short flags = p.getFlags();
-			p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
-		}	
-	}
+            leftSibling.dump();
+        } else if (page.getPageId().getPageNumber() == mergeOperation.rightSibling) {
+            // mark right sibling as deallocated
+            SlottedPage p = (SlottedPage) page;
+            short flags = p.getFlags();
+            p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
+        }
+    }
 
-	/**
-	 * Performs an insert operation on the leaf page. 
-	 * @param page Page where the insert should take place
-	 * @param insertOp The log record containing details of the insert operation
-	 * @see BTreeImpl#doInsert(Transaction, IndexKey, Location)
-	 * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
-	 */
-	private void redoInsertOperation(Page page, InsertOperation insertOp) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(insertOp);
-		node.wrap(p);
-		SearchResult sr = node.search(insertOp.getItem());
-		assert !sr.exactMatch;
-		if (sr.k == -1) {
-			// The new key is greater than all keys in the node
-			// Must still be <= highkey
-			assert node.getHighKey().compareTo(insertOp.getItem()) >= 0;
-			sr.k = node.header.keyCount;
-		}
-		node.insert(sr.k, insertOp.getItem());
-		node.header.keyCount = node.header.keyCount + 1;
-		node.updateHeader();
-		
-		node.dump();
-	}
-	
-	/**
-	 * Undo an insert operation on a leaf page. The insert key will be deleted.
-	 * @param page The page where the insert should be undone.
-	 * @param undoInsertOp The log record containing information on the undo operation.
-	 */
-	private void redoUndoInsertOperation(Page page, UndoInsertOperation undoInsertOp) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(undoInsertOp);
-		node.wrap(p);
-		node.page.purge(undoInsertOp.getPosition());
-		node.header.keyCount = node.header.keyCount - 1;
-		node.updateHeader();
+    /**
+     * Redo a link operation
+     * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see LinkOperation
+     */
+    private void redoLinkOperation(Page page, LinkOperation linkOperation) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode parent = new BTreeNode(linkOperation);
+        parent.wrap(p);
+        int k = 0;
+        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
+            IndexItem item = parent.getItem(k);
+            // Change the index entry of left child to point to right child
+            if (item.getChildPageNumber() == linkOperation.leftSibling) {
+                item.setChildPageNumber(linkOperation.rightSibling);
+                p.insertAt(k, item, true);
+                break;
+            }
+        }
+        if (k > parent.header.keyCount) {
+            // child pointer not found - corrupt b-tree?
+            log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat
+                .getMessage("EB0001"));
+            throw new IndexException(mcat.getMessage("EB0001"));
+        }
+        // Insert new entry for left child
+        IndexItem u = linkOperation.leftChildHighKey;
+        p.insertAt(k, u, false);
+        parent.header.keyCount = parent.header.keyCount + 1;
+        parent.updateHeader();
 
-		node.dump();
-	}
+        parent.dump();
+    }
 
-	/**
-	 * Performs a logical undo of a key insert. Checks if the page
-	 * that originally contained the key is still the right page. If not,
-	 * traverses the tree to find the correct page.
-	 * @param trx The transaction handling this operation
-	 * @param insertOp The insert operation that will be undone.
-	 */
-	private void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
+    /**
+     * Redo an unlink operation.
+     * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
+     * @see UnlinkOperation 
+     */
+    private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode parent = new BTreeNode(unlinkOperation);
+        parent.wrap(p);
+        int k = 0;
+        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
+            IndexItem item = parent.getItem(k);
+            if (item.getChildPageNumber() == unlinkOperation.leftSibling) {
+                break;
+            }
+        }
+        if (k > parent.header.keyCount) {
+            log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat
+                .getMessage("EB0001"));
+            throw new IndexException(mcat.getMessage("EB0001"));
+        }
+        p.purge(k);
+        IndexItem item = parent.getItem(k);
+        if (item.getChildPageNumber() == unlinkOperation.rightSibling) {
+            item.setChildPageNumber(unlinkOperation.leftSibling);
+            p.insertAt(k, item, true);
+        } else {
+            log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat
+                .getMessage("EB0001"));
+            throw new IndexException(mcat.getMessage("EB0001"));
+        }
+        parent.header.keyCount = parent.header.keyCount - 1;
+        parent.updateHeader();
+
+        parent.dump();
+    }
+
+    /**
+     * Redo a distribute operation. 
+     * @see BTreeImpl#doRedistribute(Transaction, BTreeCursor)
+     * @see RedistributeOperation
+     */
+    private void redoRedistributeOperation(Page page,
+            RedistributeOperation redistributeOperation) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(redistributeOperation);
+        node.wrap(p);
+        if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
+            // processing Q
+            if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
+                // moving key left
+                // the new key will become the high key
+                // FIXME Test case
+                node.header.keyCount = node.header.keyCount + 1;
+                node.updateHeader();
+                p.insertAt(
+                    node.header.keyCount,
+                    redistributeOperation.key,
+                    true);
+                if (redistributeOperation.isLeaf()) {
+                    p.insertAt(
+                        node.header.keyCount - 1,
+                        redistributeOperation.key,
+                        true);
+                }
+            } else {
+                // moving key right
+                // delete current high key
+                p.purge(node.header.keyCount);
+                node.header.keyCount = node.header.keyCount - 1;
+                node.updateHeader();
+                if (redistributeOperation.isLeaf()) {
+                    // previous key becomes new high key
+                    IndexItem prevKey = node.getItem(node.header.keyCount - 1);
+                    p.insertAt(node.header.keyCount, prevKey, true);
+                }
+            }
+        } else {
+            // processing R
+            if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
+                // moving key left
+                // delete key from position 1
+                // FIXME Test case
+                p.purge(FIRST_KEY_POS);
+                node.header.keyCount = node.header.keyCount - 1;
+                node.updateHeader();
+            } else {
+                // moving key right
+                // insert new key at position 1
+                p.insertAt(FIRST_KEY_POS, redistributeOperation.key, false);
+                node.header.keyCount = node.header.keyCount + 1;
+                node.updateHeader();
+            }
+        }
+
+        node.dump();
+    }
+
+    /**
+     * Redo an increase tree height operation.
+     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
+     * @see IncreaseTreeHeightOperation 
+     */
+    private void redoIncreaseTreeHeightOperation(Page page,
+            IncreaseTreeHeightOperation ithOperation) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(ithOperation);
+        if (p.getPageId().equals(ithOperation.getPageId())) {
+            // root page
+            // get rid of existing entries by reinitializing page
+            int savedPageNumber = p.getSpaceMapPageNumber();
+            p.init();
+            p.setSpaceMapPageNumber(savedPageNumber);
+            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+                .getLocationFactoryType(), false, ithOperation.isUnique());
+            node.wrap(p);
+            node.insert(1, ithOperation.rootItems.get(0));
+            node.insert(2, ithOperation.rootItems.get(1));
+            node.header.keyCount = 2;
+            node.updateHeader();
+        } else if (p.getPageId().getPageNumber() == ithOperation.leftSibling) {
+            // new left sibling
+            p.init();
+            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+                .getLocationFactoryType(), ithOperation.isLeaf(), ithOperation
+                .isUnique());
+            p.setSpaceMapPageNumber(ithOperation.spaceMapPageNumber);
+            node.wrap(p);
+            int k = FIRST_KEY_POS; // 0 is position of header item
+            for (IndexItem item : ithOperation.items) {
+                node.replace(k++, item);
+            }
+            node.header.rightSibling = ithOperation.rightSibling;
+            node.header.keyCount = ithOperation.items.size();
+            node.updateHeader();
+        }
+        node.dump();
+    }
+
+    /**
+     * Decrease tree height when root page has only one child and that child does not
+     * have a sibling.
+     * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see DecreaseTreeHeightOperation
+     */
+    private void redoDecreaseTreeHeightOperation(Page page,
+            DecreaseTreeHeightOperation dthOperation) {
+        if (page.getPageId().getPageNumber() == dthOperation.childPageSpaceMap) {
+            // This is not executed if the space map is updated
+            // as a separate action. But we leave this code here in case we 
+            // wish to update the space map as part of the same action.
+            // FIXME TEST case
+            FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
+            // deallocate
+            smp.setSpaceBits(dthOperation.childPageNumber, PAGE_SPACE_UNUSED);
+        } else if (page.getPageId().getPageNumber() == dthOperation
+            .getPageId()
+            .getPageNumber()) {
+            // root page 
+            // delete contents and absorb contents of only child
+            SlottedPage p = (SlottedPage) page;
+            BTreeNode node = new BTreeNode(dthOperation);
+            int savedPageNumber = p.getSpaceMapPageNumber();
+            p.init();
+            p.setSpaceMapPageNumber(savedPageNumber);
+            // Leaf page status must be replicated from child page
+            formatPage(p, dthOperation.getKeyFactoryType(), dthOperation
+                .getLocationFactoryType(), dthOperation.isLeaf(), dthOperation
+                .isUnique());
+            node.wrap(p);
+            int k = FIRST_KEY_POS;
+            // add the keys from child page
+            for (IndexItem item : dthOperation.items) {
+                p.insertAt(k++, item, true);
+            }
+            node.header.keyCount = dthOperation.items.size();
+            node.updateHeader();
+
+            node.dump();
+        } else if (page.getPageId().getPageNumber() == dthOperation.childPageNumber) {
+            // mark child page as deallocated. 
+            SlottedPage p = (SlottedPage) page;
+            short flags = p.getFlags();
+            p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
+        }
+    }
+
+    /**
+     * Performs an insert operation on the leaf page. 
+     * @param page Page where the insert should take place
+     * @param insertOp The log record containing details of the insert operation
+     * @see BTreeImpl#doInsert(Transaction, IndexKey, Location)
+     * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     */
+    private void redoInsertOperation(Page page, InsertOperation insertOp) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(insertOp);
+        node.wrap(p);
+        SearchResult sr = node.search(insertOp.getItem());
+        assert !sr.exactMatch;
+        if (sr.k == -1) {
+            // The new key is greater than all keys in the node
+            // Must still be <= highkey
+            assert node.getHighKey().compareTo(insertOp.getItem()) >= 0;
+            sr.k = node.header.keyCount;
+        }
+        node.insert(sr.k, insertOp.getItem());
+        node.header.keyCount = node.header.keyCount + 1;
+        node.updateHeader();
+
+        node.dump();
+    }
+
+    /**
+     * Undo an insert operation on a leaf page. The insert key will be deleted.
+     * @param page The page where the insert should be undone.
+     * @param undoInsertOp The log record containing information on the undo operation.
+     */
+    private void redoUndoInsertOperation(Page page,
+            UndoInsertOperation undoInsertOp) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(undoInsertOp);
+        node.wrap(p);
+        node.page.purge(undoInsertOp.getPosition());
+        node.header.keyCount = node.header.keyCount - 1;
+        node.updateHeader();
+
+        node.dump();
+    }
+
+    /**
+     * Performs a logical undo of a key insert. Checks if the page
+     * that originally contained the key is still the right page. If not,
+     * traverses the tree to find the correct page.
+     * @param trx The transaction handling this operation
+     * @param insertOp The insert operation that will be undone.
+     */
+    private void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
 //		Undo-insert(T,P,k,m) { X-latch(P);
 //		if (P still contains r and will not underflow if r is deleted) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
@@ -684,129 +730,133 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 //		log(n, <T, undo-insert, Q, k, m>);
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
 //		}
-		
-		BTreeCursor bcursor = new BTreeCursor();
-		bcursor.setP(bufmgr.fixExclusive(insertOp.getPageId(), false, -1, 0));
-		try {
-			SlottedPage p = (SlottedPage) bcursor.getP().getPage();
-			BTreeNode node = new BTreeNode(insertOp);
-			node.wrap(p);
-			
-			SearchResult sr = null;
-			boolean doSearch = false;
-			/*
-			 * Page may have been deleted by the time the undo operation is executed.
-			 */
-			if (!node.isLeaf() || node.isDeallocated()) {
-				/*
-				 * We need to traverse the tree to find the leaf page where the key
-				 * now lives.
-				 */
-				doSearch = true;
-			}
-			else {
-				sr = node.search(insertOp.getItem());
-				if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
-					/*
-					 * Page still contains the key and will not underflow if the key
-					 * is deleted
-					 */ 
-					doSearch = false;
-				}
-				else {
-					/*
-					 * We need to traverse the tree to find the leaf page where the key
-					 * now lives.
-					 */
-					doSearch = true;
-				}
-			}
-			if (doSearch) {
-				/*
-				 * We need to traverse the tree to find the leaf page where the key
-				 * now lives.
-				 */
-				bcursor.unfixP();
-				BTreeImpl btree = getBTreeImpl(insertOp.getPageId().getContainerId(), insertOp.getKeyFactoryType(),
-						insertOp.getLocationFactoryType(), insertOp.isUnique());
-				bcursor.setSearchKey(insertOp.getItem());
-				btree.updateModeTravese(trx, bcursor);
-				/* At this point p points to the leaf page where the key is present */
-				assert bcursor.getP() != null;
-				assert bcursor.getP().isLatchedForUpdate();
-				bcursor.getP().upgradeUpdateLatch();
-				p = (SlottedPage) bcursor.getP().getPage();
-				node = new BTreeNode(insertOp);
-				node.wrap(p);
-				assert node.isLeaf();
-				assert !node.isDeallocated();
-				
-				sr = node.search(insertOp.getItem());
-			}
-			assert sr != null;
-			assert sr.exactMatch;
-			assert node.header.keyCount > node.minimumKeys();
 
-			/*
-			 * Now we can remove the key the was inserted. First generate 
-			 * a Compensation Log Record.
-			 */
-			UndoInsertOperation undoInsertOp = (UndoInsertOperation) loggableFactory.getInstance(MODULE_ID, BTreeIndexManagerImpl.TYPE_UNDOINSERT_OPERATION);
-			undoInsertOp.copyFrom(insertOp);
-			undoInsertOp.setPosition(sr.k);
-			undoInsertOp.setUndoNextLsn(insertOp.getPrevTrxLsn());
-			Lsn lsn = trx.logInsert(bcursor.getP().getPage(), undoInsertOp);
-			redo(bcursor.getP().getPage(), undoInsertOp);
-			bcursor.getP().setDirty(lsn);
-		} finally {
-			bcursor.unfixP();
-		}
+        BTreeCursor bcursor = new BTreeCursor();
+        bcursor.setP(bufmgr.fixExclusive(insertOp.getPageId(), false, -1, 0));
+        try {
+            SlottedPage p = (SlottedPage) bcursor.getP().getPage();
+            BTreeNode node = new BTreeNode(insertOp);
+            node.wrap(p);
 
-	}
+            SearchResult sr = null;
+            boolean doSearch = false;
+            /*
+             * Page may have been deleted by the time the undo operation is executed.
+             */
+            if (!node.isLeaf() || node.isDeallocated()) {
+                /*
+                 * We need to traverse the tree to find the leaf page where the key
+                 * now lives.
+                 */
+                doSearch = true;
+            } else {
+                sr = node.search(insertOp.getItem());
+                if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
+                    /*
+                     * Page still contains the key and will not underflow if the key
+                     * is deleted
+                     */
+                    doSearch = false;
+                } else {
+                    /*
+                     * We need to traverse the tree to find the leaf page where the key
+                     * now lives.
+                     */
+                    doSearch = true;
+                }
+            }
+            if (doSearch) {
+                /*
+                 * We need to traverse the tree to find the leaf page where the key
+                 * now lives.
+                 */
+                bcursor.unfixP();
+                BTreeImpl btree = getBTreeImpl(insertOp
+                    .getPageId()
+                    .getContainerId(), insertOp.getKeyFactoryType(), insertOp
+                    .getLocationFactoryType(), insertOp.isUnique());
+                bcursor.setSearchKey(insertOp.getItem());
+                btree.updateModeTravese(trx, bcursor);
+                /* At this point p points to the leaf page where the key is present */
+                assert bcursor.getP() != null;
+                assert bcursor.getP().isLatchedForUpdate();
+                bcursor.getP().upgradeUpdateLatch();
+                p = (SlottedPage) bcursor.getP().getPage();
+                node = new BTreeNode(insertOp);
+                node.wrap(p);
+                assert node.isLeaf();
+                assert !node.isDeallocated();
 
-	/**
-	 * Redo a delete operation on the leaf page.
-	 * @param page Page where the key is to be deleted from
-	 * @param deleteOp The log operation describing the delete
-	 */
-	private void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(deleteOp);
-		node.wrap(p);
-		SearchResult sr = node.search(deleteOp.getItem());
-		assert sr.exactMatch;
-		node.purge(sr.k);
-		node.header.keyCount = node.header.keyCount - 1;
-		node.updateHeader();
-		
-		node.dump();
-	}
-	
-	/**
-	 * Redo a undo operation on a key delete on the specified leaf page.
-	 * @param page Page where the deleted key will be restored
-	 * @param undoDeleteOp The log operation describing the undo operation.
-	 */
-	private void redoUndoDeleteOperation(Page page, UndoDeleteOperation undoDeleteOp) {
-		SlottedPage p = (SlottedPage) page;
-		BTreeNode node = new BTreeNode(undoDeleteOp);
-		node.wrap(p);
-		node.insert(undoDeleteOp.getPosition(), undoDeleteOp.getItem());
-		node.header.keyCount = node.header.keyCount + 1;
-		node.updateHeader();
+                sr = node.search(insertOp.getItem());
+            }
+            assert sr != null;
+            assert sr.exactMatch;
+            assert node.header.keyCount > node.minimumKeys();
 
-		node.dump();
-	}
+            /*
+             * Now we can remove the key the was inserted. First generate 
+             * a Compensation Log Record.
+             */
+            UndoInsertOperation undoInsertOp = (UndoInsertOperation) loggableFactory
+                .getInstance(
+                    MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_UNDOINSERT_OPERATION);
+            undoInsertOp.copyFrom(insertOp);
+            undoInsertOp.setPosition(sr.k);
+            undoInsertOp.setUndoNextLsn(insertOp.getPrevTrxLsn());
+            Lsn lsn = trx.logInsert(bcursor.getP().getPage(), undoInsertOp);
+            redo(bcursor.getP().getPage(), undoInsertOp);
+            bcursor.getP().setDirty(lsn);
+        } finally {
+            bcursor.unfixP();
+        }
 
-	/**
-	 * Perform a logical undo operation. If the page containing the original 
-	 * key is no longer the right page to perform an undo, then the BTree will be
-	 * traversed to locate the right page.
-	 * 
-	 * @param trx The transaction constrolling this operation
-	 * @param deleteOp The log record that describes the delete that will be undone.
-	 */
-	private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
+    }
+
+    /**
+     * Redo a delete operation on the leaf page.
+     * @param page Page where the key is to be deleted from
+     * @param deleteOp The log operation describing the delete
+     */
+    private void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(deleteOp);
+        node.wrap(p);
+        SearchResult sr = node.search(deleteOp.getItem());
+        assert sr.exactMatch;
+        node.purge(sr.k);
+        node.header.keyCount = node.header.keyCount - 1;
+        node.updateHeader();
+
+        node.dump();
+    }
+
+    /**
+     * Redo a undo operation on a key delete on the specified leaf page.
+     * @param page Page where the deleted key will be restored
+     * @param undoDeleteOp The log operation describing the undo operation.
+     */
+    private void redoUndoDeleteOperation(Page page,
+            UndoDeleteOperation undoDeleteOp) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(undoDeleteOp);
+        node.wrap(p);
+        node.insert(undoDeleteOp.getPosition(), undoDeleteOp.getItem());
+        node.header.keyCount = node.header.keyCount + 1;
+        node.updateHeader();
+
+        node.dump();
+    }
+
+    /**
+     * Perform a logical undo operation. If the page containing the original 
+     * key is no longer the right page to perform an undo, then the BTree will be
+     * traversed to locate the right page.
+     * 
+     * @param trx The transaction constrolling this operation
+     * @param deleteOp The log record that describes the delete that will be undone.
+     */
+    private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
 //		X-latch(P);
 //		if (P still covers r and there is a room for r in P) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
@@ -815,1707 +865,1915 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 //		} insert r into Q;
 //		log(n, <T, undo-delete, Q, (k, x), m>);
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
-		
-		BTreeCursor bcursor = new BTreeCursor();
-		bcursor.setP(bufmgr.fixExclusive(deleteOp.getPageId(), false, -1, 0));
-		try {
-			SlottedPage p = (SlottedPage) bcursor.getP().getPage();
-			BTreeNode node = new BTreeNode(deleteOp);
-			node.wrap(p);
-			
-			/*
-			 * There is no easy way of knowing whether a page still covers r, since pages may
-			 * have been merged and split since the key was originally deleted. We take a cautious
-			 * approach and retraverse the tree if the page has been updated since it was 
-			 * originally modified. 
-			 */
-			if ((p.getPageLsn() == deleteOp.getLsn() || (!node.isDeallocated() && node.isLeaf() && node.covers(deleteOp.getItem()))) && node.canAccomodate(deleteOp.getItem())) {
-				/*
-				 * P sill covers r and there is room for r in P. 
-				 */
-			}
-			else {
-				/*
-				 * We need to traverse the tree to find the leaf page where the key
-				 * now lives.
-				 */
-				bcursor.unfixP();
-				BTreeImpl btree = getBTreeImpl(deleteOp.getPageId().getContainerId(), deleteOp.getKeyFactoryType(),
-						deleteOp.getLocationFactoryType(), deleteOp.isUnique());
-				bcursor.setSearchKey(deleteOp.getItem());
-				btree.updateModeTravese(trx, bcursor);
-				/* At this point p points to the leaf page where the key should be inserted */
-				assert bcursor.getP() != null;
-				assert bcursor.getP().isLatchedForUpdate();
-				p = (SlottedPage) bcursor.getP().getPage();
-				node.wrap(p);
-				if (!node.canAccomodate(bcursor.searchKey)) {
-					bcursor.setQ(bcursor.removeP());
-					btree.doSplit(trx, bcursor);
-					bcursor.setP(bcursor.removeQ());
-				}
-				bcursor.getP().upgradeUpdateLatch();
-				p = (SlottedPage) bcursor.getP().getPage();
-				node.wrap(p);
-				assert node.isLeaf();
-				assert !node.isDeallocated();
-			}
-			SearchResult sr = node.search(deleteOp.getItem());
-			assert !sr.exactMatch;
-			if (sr.k == -1) {
-				// this is the rightmost key in this node
-				assert node.getHighKey().compareTo(deleteOp.getItem()) >= 0;
-				sr.k = node.header.keyCount;
-			}
-			assert sr.k != -1;
 
-			/*
-			 * Now we can reinsert the key that was deleted. First generate 
-			 * a Compensation Log Record.
-			 */
-			UndoDeleteOperation undoDeleteOp = (UndoDeleteOperation) loggableFactory.getInstance(MODULE_ID, BTreeIndexManagerImpl.TYPE_UNDODELETE_OPERATION);
-			undoDeleteOp.copyFrom(deleteOp);
-			undoDeleteOp.setPosition(sr.k);
-			undoDeleteOp.setUndoNextLsn(deleteOp.getPrevTrxLsn());
-			Lsn lsn = trx.logInsert(bcursor.getP().getPage(), undoDeleteOp);
-			redo(bcursor.getP().getPage(), undoDeleteOp);
-			bcursor.getP().setDirty(lsn);
-		} finally {
-			bcursor.unfixP();
-		}
-	}
-	
-	
-	/**
-	 * Returns a BTree implementation. 
-	 */
-	final BTreeImpl getBTreeImpl(int containerId, int keyFactoryType, int locationFactoryType, boolean unique) {
-		return new BTreeImpl(this, containerId, keyFactoryType, locationFactoryType, unique);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(int)
-	 */
-	public final IndexContainer getIndex(int containerId) {
-		/*
-		 * TODO - We could cache the index information here,
-		 * but we would need to ensure that if the index is deleted,
-		 * its information will be removed from the cache. Or maybe that
-		 * is not an issue because the system will never access a deleted
-		 * index?
-		 */
-		int keyFactoryType = -1;
-		int locationFactoryType = -1;
-		boolean unique = false;
+        BTreeCursor bcursor = new BTreeCursor();
+        bcursor.setP(bufmgr.fixExclusive(deleteOp.getPageId(), false, -1, 0));
+        try {
+            SlottedPage p = (SlottedPage) bcursor.getP().getPage();
+            BTreeNode node = new BTreeNode(deleteOp);
+            node.wrap(p);
 
-		PageId rootPageId = new PageId(containerId, ROOT_PAGE_NUMBER);
-		BufferAccessBlock bab = bufmgr.fixShared(rootPageId, 0);
-		try {
-			/*
-			 * FIXME: This method has knowledge of the BTreeNode and
-			 * BTreeNodeHeader structures. Ideally this ought to be encapsulated
-			 * in BTreeNode
-			 */
-			SlottedPage page = (SlottedPage) bab.getPage();
-			unique = (page.getFlags() & BTreeNode.NODE_TREE_UNIQUE) != 0;
-			BTreeNodeHeader header = new BTreeNodeHeader();
-			page.get(HEADER_KEY_POS, header);
-			keyFactoryType = header.getKeyFactoryType();
-			locationFactoryType = header.getLocationFactoryType();
-		} finally {
-			bab.unfix();
-		}
-		return getBTreeImpl(containerId, keyFactoryType, locationFactoryType,
-				unique);
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.im.IndexManager#getIndex(org.simpledbm.rss.api.tx.Transaction, int)
-	 */
-	public IndexContainer getIndex(Transaction trx, int containerId) {
-		trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.SHARED, LockDuration.COMMIT_DURATION);
-		return getIndex(containerId);
-	}
+            /*
+             * There is no easy way of knowing whether a page still covers r, since pages may
+             * have been merged and split since the key was originally deleted. We take a cautious
+             * approach and retraverse the tree if the page has been updated since it was 
+             * originally modified. 
+             */
+            if ((p.getPageLsn() == deleteOp.getLsn() || (!node.isDeallocated()
+                    && node.isLeaf() && node.covers(deleteOp.getItem())))
+                    && node.canAccomodate(deleteOp.getItem())) {
+                /*
+                 * P sill covers r and there is room for r in P. 
+                 */
+            } else {
+                /*
+                 * We need to traverse the tree to find the leaf page where the key
+                 * now lives.
+                 */
+                bcursor.unfixP();
+                BTreeImpl btree = getBTreeImpl(deleteOp
+                    .getPageId()
+                    .getContainerId(), deleteOp.getKeyFactoryType(), deleteOp
+                    .getLocationFactoryType(), deleteOp.isUnique());
+                bcursor.setSearchKey(deleteOp.getItem());
+                btree.updateModeTravese(trx, bcursor);
+                /* At this point p points to the leaf page where the key should be inserted */
+                assert bcursor.getP() != null;
+                assert bcursor.getP().isLatchedForUpdate();
+                p = (SlottedPage) bcursor.getP().getPage();
+                node.wrap(p);
+                if (!node.canAccomodate(bcursor.searchKey)) {
+                    bcursor.setQ(bcursor.removeP());
+                    btree.doSplit(trx, bcursor);
+                    bcursor.setP(bcursor.removeQ());
+                }
+                bcursor.getP().upgradeUpdateLatch();
+                p = (SlottedPage) bcursor.getP().getPage();
+                node.wrap(p);
+                assert node.isLeaf();
+                assert !node.isDeallocated();
+            }
+            SearchResult sr = node.search(deleteOp.getItem());
+            assert !sr.exactMatch;
+            if (sr.k == -1) {
+                // this is the rightmost key in this node
+                assert node.getHighKey().compareTo(deleteOp.getItem()) >= 0;
+                sr.k = node.header.keyCount;
+            }
+            assert sr.k != -1;
 
+            /*
+             * Now we can reinsert the key that was deleted. First generate 
+             * a Compensation Log Record.
+             */
+            UndoDeleteOperation undoDeleteOp = (UndoDeleteOperation) loggableFactory
+                .getInstance(
+                    MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_UNDODELETE_OPERATION);
+            undoDeleteOp.copyFrom(deleteOp);
+            undoDeleteOp.setPosition(sr.k);
+            undoDeleteOp.setUndoNextLsn(deleteOp.getPrevTrxLsn());
+            Lsn lsn = trx.logInsert(bcursor.getP().getPage(), undoDeleteOp);
+            redo(bcursor.getP().getPage(), undoDeleteOp);
+            bcursor.getP().setDirty(lsn);
+        } finally {
+            bcursor.unfixP();
+        }
+    }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.im.IndexManager#createIndex(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int, int, int, boolean)
-	 */
-	public final void createIndex(Transaction trx, String name, int containerId, int extentSize, int keyFactoryType, int locationFactoryType, boolean unique) {
-		
-		Savepoint sp = trx.createSavepoint(false);
-		boolean success = false;
-		try {
-			
-			trx.acquireLock(lockAdaptor.getLockableContainerId(containerId), LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
-			/*
-			 * Create the specified container
-			 */
-			spaceMgr.createContainer(trx, name, containerId, 1, extentSize, spMgr.getPageType());
+    /**
+     * Returns a BTree implementation. 
+     */
+    final BTreeImpl getBTreeImpl(int containerId, int keyFactoryType,
+            int locationFactoryType, boolean unique) {
+        return new BTreeImpl(
+            this,
+            containerId,
+            keyFactoryType,
+            locationFactoryType,
+            unique);
+    }
 
-			PageId pageid = new PageId(containerId, ROOT_PAGE_NUMBER);
-			/*
-			 * Initialize the root page, and update space map page. 
-			 */
-			LoadPageOperation loadPageOp = (LoadPageOperation) loggableFactory.getInstance(MODULE_ID, TYPE_LOADPAGE_OPERATION);
-			loadPageOp.setUnique(unique);
-			loadPageOp.setLeaf(true);
-			loadPageOp.setKeyFactoryType(keyFactoryType);
-			loadPageOp.setLocationFactoryType(locationFactoryType);
-			loadPageOp.setSpaceMapPageNumber(1);
-			loadPageOp.leftSibling = -1;
-			loadPageOp.rightSibling = -1;
-			loadPageOp.setPageId(spMgr.getPageType(), pageid);
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.im.IndexManager#getIndex(int)
+     */
+    public final IndexContainer getIndex(int containerId) {
+        /*
+         * TODO - We could cache the index information here,
+         * but we would need to ensure that if the index is deleted,
+         * its information will be removed from the cache. Or maybe that
+         * is not an issue because the system will never access a deleted
+         * index?
+         */
+        int keyFactoryType = -1;
+        int locationFactoryType = -1;
+        boolean unique = false;
 
-			IndexKey key = loadPageOp.getMaxIndexKey();
-			Location location = loadPageOp.getNewLocation();
-			loadPageOp.items.add(new IndexItem(key, location, -1, loadPageOp.isLeaf(), loadPageOp.isUnique()));
+        PageId rootPageId = new PageId(containerId, ROOT_PAGE_NUMBER);
+        BufferAccessBlock bab = bufmgr.fixShared(rootPageId, 0);
+        try {
+            /*
+             * FIXME: This method has knowledge of the BTreeNode and
+             * BTreeNodeHeader structures. Ideally this ought to be encapsulated
+             * in BTreeNode
+             */
+            SlottedPage page = (SlottedPage) bab.getPage();
+            unique = (page.getFlags() & BTreeNode.NODE_TREE_UNIQUE) != 0;
+            BTreeNodeHeader header = new BTreeNodeHeader();
+            page.get(HEADER_KEY_POS, header);
+            keyFactoryType = header.getKeyFactoryType();
+            locationFactoryType = header.getLocationFactoryType();
+        } finally {
+            bab.unfix();
+        }
+        return getBTreeImpl(
+            containerId,
+            keyFactoryType,
+            locationFactoryType,
+            unique);
+    }
 
-			BufferAccessBlock bab = bufmgr.fixExclusive(pageid, false, -1, 0);
-			try {
-				PageId spaceMapPageId = new PageId(pageid.getContainerId(), loadPageOp.getSpaceMapPageNumber());
-				BufferAccessBlock smpBab = bufmgr.fixExclusive(spaceMapPageId, false, -1, 0);
-				try {
-					Lsn lsn = trx.logInsert(bab.getPage(), loadPageOp);
-					redo(bab.getPage(), loadPageOp);
-					bab.setDirty(lsn);
-					redo(smpBab.getPage(), loadPageOp);
-					smpBab.setDirty(lsn);
-				} finally {
-					smpBab.unfix();
-				}
-			} finally {
-				bab.unfix();
-			}
-			success = true;
-		} finally {
-			if (!success) {
-				// FIXME TEST case
-				trx.rollback(sp);
-			}
-		}
-	}
-	
-	/**
-	 * Formats a new BTree page.
-	 */
-	static private void formatPage(SlottedPage page, int keyFactoryType, int locationFactoryType, boolean leaf, boolean isUnique) {
-		/*
-		 * FIXME: This method has knowledge of the BTreeNode and BTreeNodeHeader structures.
-		 * Ideally this ought to be encapsulated in BTreeNode
-		 */
-		short flags = 0;
-		if (leaf) {
-			flags |= BTreeNode.NODE_TYPE_LEAF;
-		}
-		if (isUnique) {
-			flags |= BTreeNode.NODE_TREE_UNIQUE;
-		}
-		page.setFlags(flags);
-		BTreeNodeHeader header = new BTreeNodeHeader();
-		header.setKeyFactoryType(keyFactoryType);
-		header.setLocationFactoryType(locationFactoryType);
-		page.insertAt(HEADER_KEY_POS, header, true);
-	}
-	
-	static interface IndexItemHelper {
-		public Location getNewLocation();
-		
-		public IndexKey getNewIndexKey();
-		
-		public IndexKey getMaxIndexKey();		
-	}
-	
-	public static final class BTreeImpl implements IndexItemHelper, IndexContainer {
-		public final FreeSpaceCursor spaceCursor;
-		final BTreeIndexManagerImpl btreeMgr;
-		final int containerId;
-	
-		final int keyFactoryType;
-		final int locationFactoryType;
-		
-		final IndexKeyFactory keyFactory;
-		final LocationFactory locationFactory;
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.im.IndexManager#getIndex(org.simpledbm.rss.api.tx.Transaction, int)
+     */
+    public IndexContainer getIndex(Transaction trx, int containerId) {
+        trx.acquireLock(
+            lockAdaptor.getLockableContainerId(containerId),
+            LockMode.SHARED,
+            LockDuration.COMMIT_DURATION);
+        return getIndex(containerId);
+    }
 
-		boolean unique;
-		
-		BTreeImpl(BTreeIndexManagerImpl btreeMgr, int containerId, int keyFactoryType, int locationFactoryType, boolean unique) {
-			this.btreeMgr = btreeMgr;
-			this.containerId = containerId;
-			this.keyFactoryType = keyFactoryType;
-			this.locationFactoryType = locationFactoryType;
-			this.keyFactory = (IndexKeyFactory) btreeMgr.objectFactory.getInstance(keyFactoryType);
-			this.locationFactory = (LocationFactory) btreeMgr.objectFactory.getInstance(locationFactoryType);
-			this.unique = unique;
-			spaceCursor = btreeMgr.spaceMgr.getSpaceCursor(containerId);
-		}
-		
-		public final boolean isUnique() {
-			return unique;
-		}
-		
-		public final IndexKey getNewIndexKey() {
-			return keyFactory.newIndexKey(containerId);
-		}
-		
-		public final IndexKey getMaxIndexKey() {
-			return keyFactory.maxIndexKey(containerId);
-		}
-		
-		public final Location getNewLocation() {
-			return locationFactory.newLocation();
-		}
-		
-		public final BTreeNode getBTreeNode() {
-			return new BTreeNode(this);
-		}
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.im.IndexManager#createIndex(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int, int, int, boolean)
+     */
+    public final void createIndex(Transaction trx, String name,
+            int containerId, int extentSize, int keyFactoryType,
+            int locationFactoryType, boolean unique) {
 
-		public final void setUnique(boolean unique) {
-			this.unique = unique;
-		}
-		
-		/**
-		 * Performs page split. The page to be split must be latched in UPDATE mode. After the split,
-		 * the page containing the search key will remain latched.
-		 * <p>
-		 * This differs from the published algorithm in following ways:
-		 * 1. It uses nested top action. 
-		 * 2. Page allocation is logged as redo-undo.
-		 * 3. Space map page latch is released prior to any other exclusive latch.
-		 * 4. The split is logged as Compensation record, with undoNextLsn set to the LSN prior to the page allocation log record.
-		 * 5. Information about space map page is stored in new page.
-		 * 
-		 * @see SplitOperation
-		 * @param trx Transaction managing the page split operation
-		 * @param bcursor bcursor.q must be the page that is to be split.
-		 */
-		public final void doSplit(Transaction trx, BTreeCursor bcursor) {
+        Savepoint sp = trx.createSavepoint(false);
+        boolean success = false;
+        try {
 
-			final BTreeImpl btree = this;
-			
-			Lsn undoNextLsn = trx.getLastLsn();
+            trx.acquireLock(
+                lockAdaptor.getLockableContainerId(containerId),
+                LockMode.EXCLUSIVE,
+                LockDuration.COMMIT_DURATION);
+            /*
+             * Create the specified container
+             */
+            spaceMgr.createContainer(
+                trx,
+                name,
+                containerId,
+                1,
+                extentSize,
+                spMgr.getPageType());
 
-			int newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
-			int spaceMapPageNumber = -1;
-			try {
-				if (newSiblingPageNumber == -1) {
-					
-					btree.btreeMgr.spaceMgr.extendContainer(trx, btree.containerId);
-					undoNextLsn = trx.getLastLsn();
-					newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
-					if (newSiblingPageNumber == -1) {
-						log.error(LOG_CLASS_NAME, "doSplit", mcat.getMessage("EB0002"));
-						throw new IndexException(mcat.getMessage("EB0002"));
-					}
-				}
-				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, PAGE_SPACE_USED);
-				spaceMapPageNumber = btree.spaceCursor.getCurrentSpaceMapPage().getPageId().getPageNumber(); 
-			}
-			finally {
-				if (newSiblingPageNumber != -1) {
-					btree.spaceCursor.unfixCurrentSpaceMapPage();
-				}
-			}
+            PageId pageid = new PageId(containerId, ROOT_PAGE_NUMBER);
+            /*
+             * Initialize the root page, and update space map page. 
+             */
+            LoadPageOperation loadPageOp = (LoadPageOperation) loggableFactory
+                .getInstance(MODULE_ID, TYPE_LOADPAGE_OPERATION);
+            loadPageOp.setUnique(unique);
+            loadPageOp.setLeaf(true);
+            loadPageOp.setKeyFactoryType(keyFactoryType);
+            loadPageOp.setLocationFactoryType(locationFactoryType);
+            loadPageOp.setSpaceMapPageNumber(1);
+            loadPageOp.leftSibling = -1;
+            loadPageOp.rightSibling = -1;
+            loadPageOp.setPageId(spMgr.getPageType(), pageid);
 
-			BTreeNode leftSiblingNode = btree.getBTreeNode();
-			bcursor.getQ().upgradeUpdateLatch();
-			assert bcursor.getQ().isLatchedExclusively();
-			leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
-			
-			PageId newSiblingPageId = new PageId(btree.containerId, newSiblingPageNumber);
-			SplitOperation splitOperation = (SplitOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_SPLIT_OPERATION);
-			splitOperation.setUndoNextLsn(undoNextLsn);
-			splitOperation.setKeyFactoryType(btree.keyFactoryType);
-			splitOperation.setLocationFactoryType(btree.locationFactoryType);
-			splitOperation.newSiblingPageNumber = newSiblingPageNumber;
-			splitOperation.rightSibling = leftSiblingNode.header.rightSibling;
-			splitOperation.spaceMapPageNumber = spaceMapPageNumber;
-			splitOperation.setLeaf(leftSiblingNode.isLeaf());
-			splitOperation.setUnique(btree.isUnique());
-			short medianKey = leftSiblingNode.getSplitKey();
-			for (int k = medianKey; k <= leftSiblingNode.header.keyCount; k++) {
-				splitOperation.items.add(leftSiblingNode.getItem(k));
-			}
-			splitOperation.highKey = leftSiblingNode.getItem(medianKey-1);
-			if (leftSiblingNode.isLeaf()) {
-				splitOperation.newKeyCount = medianKey;
-			}
-			else {
-				splitOperation.newKeyCount = (short) (medianKey-1);
-			}
-			
-			bcursor.setR(btree.btreeMgr.bufmgr.fixExclusive(newSiblingPageId, true, btree.btreeMgr.spMgr.getPageType(), 0));
+            IndexKey key = loadPageOp.getMaxIndexKey();
+            Location location = loadPageOp.getNewLocation();
+            loadPageOp.items.add(new IndexItem(key, location, -1, loadPageOp
+                .isLeaf(), loadPageOp.isUnique()));
 
-			try {
-				Lsn lsn = trx.logInsert(leftSiblingNode.page, splitOperation);
-				
-				btree.btreeMgr.redo(bcursor.getR().getPage(), splitOperation);
-				bcursor.getR().setDirty(lsn);
-				btree.btreeMgr.redo(leftSiblingNode.page, splitOperation);
-				bcursor.getQ().setDirty(lsn);
+            BufferAccessBlock bab = bufmgr.fixExclusive(pageid, false, -1, 0);
+            try {
+                PageId spaceMapPageId = new PageId(
+                    pageid.getContainerId(),
+                    loadPageOp.getSpaceMapPageNumber());
+                BufferAccessBlock smpBab = bufmgr.fixExclusive(
+                    spaceMapPageId,
+                    false,
+                    -1,
+                    0);
+                try {
+                    Lsn lsn = trx.logInsert(bab.getPage(), loadPageOp);
+                    redo(bab.getPage(), loadPageOp);
+                    bab.setDirty(lsn);
+                    redo(smpBab.getPage(), loadPageOp);
+                    smpBab.setDirty(lsn);
+                } finally {
+                    smpBab.unfix();
+                }
+            } finally {
+                bab.unfix();
+            }
+            success = true;
+        } finally {
+            if (!success) {
+                // FIXME TEST case
+                trx.rollback(sp);
+            }
+        }
+    }
 
-				/* Check if Q covers the current search key value */
-				int comp = splitOperation.highKey.compareTo(bcursor.searchKey);
-				if (comp >= 0) {
-					// new key will stay in current page
-					bcursor.getQ().downgradeExclusiveLatch();
-					bcursor.unfixR();
-				}
-				else {
-					// new key will be in the right sibling
-					bcursor.getR().downgradeExclusiveLatch();
-					bcursor.unfixQ();
-					bcursor.setQ(bcursor.removeR());
-				}
-			}
-			finally {
-				bcursor.unfixR();
-			}
-		}
-		
-		/**
-		 * Merges right sibling into left sibling. Right sibling must be an indirect child.
-		 * Both pages must be latched in UPDATE mode prior to this call.
-		 * After the merge, left sibling will remain latched. 
-		 * <p>
-		 * This algorithm differs from published algorithm in its management of space map
-		 * update. In the interests of high concurrency, the space map page update is
-		 * handled as a separate redo only action. 
-		 */
-		public final void doMerge(Transaction trx, BTreeCursor bcursor) {
-			
-			final BTreeImpl btree = this;
+    /**
+     * Formats a new BTree page.
+     */
+    static private void formatPage(SlottedPage page, int keyFactoryType,
+            int locationFactoryType, boolean leaf, boolean isUnique) {
+        /*
+         * FIXME: This method has knowledge of the BTreeNode and BTreeNodeHeader structures.
+         * Ideally this ought to be encapsulated in BTreeNode
+         */
+        short flags = 0;
+        if (leaf) {
+            flags |= BTreeNode.NODE_TYPE_LEAF;
+        }
+        if (isUnique) {
+            flags |= BTreeNode.NODE_TREE_UNIQUE;
+        }
+        page.setFlags(flags);
+        BTreeNodeHeader header = new BTreeNodeHeader();
+        header.setKeyFactoryType(keyFactoryType);
+        header.setLocationFactoryType(locationFactoryType);
+        page.insertAt(HEADER_KEY_POS, header, true);
+    }
 
-			assert bcursor.getR() != null;
-			assert bcursor.getR().isLatchedForUpdate();
+    static interface IndexItemHelper {
+        public Location getNewLocation();
 
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
+        public IndexKey getNewIndexKey();
 
-			BTreeNode leftSiblingNode = btree.getBTreeNode();
-			bcursor.getQ().upgradeUpdateLatch();
-			leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+        public IndexKey getMaxIndexKey();
+    }
 
-			bcursor.getR().upgradeUpdateLatch();
-			BTreeNode rnode = btree.getBTreeNode();
-			rnode.wrap((SlottedPage) bcursor.getR().getPage());
-			
-			assert leftSiblingNode.header.rightSibling == rnode.page.getPageId().getPageNumber();
-			
+    public static final class BTreeImpl implements IndexItemHelper,
+            IndexContainer {
+        public final FreeSpaceCursor spaceCursor;
+        final BTreeIndexManagerImpl btreeMgr;
+        final int containerId;
+
+        final int keyFactoryType;
+        final int locationFactoryType;
+
+        final IndexKeyFactory keyFactory;
+        final LocationFactory locationFactory;
+
+        boolean unique;
+
+        BTreeImpl(BTreeIndexManagerImpl btreeMgr, int containerId,
+                int keyFactoryType, int locationFactoryType, boolean unique) {
+            this.btreeMgr = btreeMgr;
+            this.containerId = containerId;
+            this.keyFactoryType = keyFactoryType;
+            this.locationFactoryType = locationFactoryType;
+            this.keyFactory = (IndexKeyFactory) btreeMgr.objectFactory
+                .getInstance(keyFactoryType);
+            this.locationFactory = (LocationFactory) btreeMgr.objectFactory
+                .getInstance(locationFactoryType);
+            this.unique = unique;
+            spaceCursor = btreeMgr.spaceMgr.getSpaceCursor(containerId);
+        }
+
+        public final boolean isUnique() {
+            return unique;
+        }
+
+        public final IndexKey getNewIndexKey() {
+            return keyFactory.newIndexKey(containerId);
+        }
+
+        public final IndexKey getMaxIndexKey() {
+            return keyFactory.maxIndexKey(containerId);
+        }
+
+        public final Location getNewLocation() {
+            return locationFactory.newLocation();
+        }
+
+        public final BTreeNode getBTreeNode() {
+            return new BTreeNode(this);
+        }
+
+        public final void setUnique(boolean unique) {
+            this.unique = unique;
+        }
+
+        /**
+         * Performs page split. The page to be split must be latched in UPDATE mode. After the split,
+         * the page containing the search key will remain latched.
+         * <p>
+         * This differs from the published algorithm in following ways:
+         * 1. It uses nested top action. 
+         * 2. Page allocation is logged as redo-undo.
+         * 3. Space map page latch is released prior to any other exclusive latch.
+         * 4. The split is logged as Compensation record, with undoNextLsn set to the LSN prior to the page allocation log record.
+         * 5. Information about space map page is stored in new page.
+         * 
+         * @see SplitOperation
+         * @param trx Transaction managing the page split operation
+         * @param bcursor bcursor.q must be the page that is to be split.
+         */
+        public final void doSplit(Transaction trx, BTreeCursor bcursor) {
+
+            final BTreeImpl btree = this;
+
+            Lsn undoNextLsn = trx.getLastLsn();
+
+            int newSiblingPageNumber = btree.spaceCursor
+                .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
+            int spaceMapPageNumber = -1;
+            try {
+                if (newSiblingPageNumber == -1) {
+
+                    btree.btreeMgr.spaceMgr.extendContainer(
+                        trx,
+                        btree.containerId);
+                    undoNextLsn = trx.getLastLsn();
+                    newSiblingPageNumber = btree.spaceCursor
+                        .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
+                    if (newSiblingPageNumber == -1) {
+                        log.error(LOG_CLASS_NAME, "doSplit", mcat
+                            .getMessage("EB0002"));
+                        throw new IndexException(mcat.getMessage("EB0002"));
+                    }
+                }
+                btree.spaceCursor.updateAndLogUndoably(
+                    trx,
+                    newSiblingPageNumber,
+                    PAGE_SPACE_USED);
+                spaceMapPageNumber = btree.spaceCursor
+                    .getCurrentSpaceMapPage()
+                    .getPageId()
+                    .getPageNumber();
+            } finally {
+                if (newSiblingPageNumber != -1) {
+                    btree.spaceCursor.unfixCurrentSpaceMapPage();
+                }
+            }
+
+            BTreeNode leftSiblingNode = btree.getBTreeNode();
+            bcursor.getQ().upgradeUpdateLatch();
+            assert bcursor.getQ().isLatchedExclusively();
+            leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+
+            PageId newSiblingPageId = new PageId(
+                btree.containerId,
+                newSiblingPageNumber);
+            SplitOperation splitOperation = (SplitOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_SPLIT_OPERATION);
+            splitOperation.setUndoNextLsn(undoNextLsn);
+            splitOperation.setKeyFactoryType(btree.keyFactoryType);
+            splitOperation.setLocationFactoryType(btree.locationFactoryType);
+            splitOperation.newSiblingPageNumber = newSiblingPageNumber;
+            splitOperation.rightSibling = leftSiblingNode.header.rightSibling;
+            splitOperation.spaceMapPageNumber = spaceMapPageNumber;
+            splitOperation.setLeaf(leftSiblingNode.isLeaf());
+            splitOperation.setUnique(btree.isUnique());
+            short medianKey = leftSiblingNode.getSplitKey();
+            for (int k = medianKey; k <= leftSiblingNode.header.keyCount; k++) {
+                splitOperation.items.add(leftSiblingNode.getItem(k));
+            }
+            splitOperation.highKey = leftSiblingNode.getItem(medianKey - 1);
+            if (leftSiblingNode.isLeaf()) {
+                splitOperation.newKeyCount = medianKey;
+            } else {
+                splitOperation.newKeyCount = (short) (medianKey - 1);
+            }
+
+            bcursor.setR(btree.btreeMgr.bufmgr.fixExclusive(
+                newSiblingPageId,
+                true,
+                btree.btreeMgr.spMgr.getPageType(),
+                0));
+
+            try {
+                Lsn lsn = trx.logInsert(leftSiblingNode.page, splitOperation);
+
+                btree.btreeMgr.redo(bcursor.getR().getPage(), splitOperation);
+                bcursor.getR().setDirty(lsn);
+                btree.btreeMgr.redo(leftSiblingNode.page, splitOperation);
+                bcursor.getQ().setDirty(lsn);
+
+                /* Check if Q covers the current search key value */
+                int comp = splitOperation.highKey.compareTo(bcursor.searchKey);
+                if (comp >= 0) {
+                    // new key will stay in current page
+                    bcursor.getQ().downgradeExclusiveLatch();
+                    bcursor.unfixR();
+                } else {
+                    // new key will be in the right sibling
+                    bcursor.getR().downgradeExclusiveLatch();
+                    bcursor.unfixQ();
+                    bcursor.setQ(bcursor.removeR());
+                }
+            } finally {
+                bcursor.unfixR();
+            }
+        }
+
+        /**
+         * Merges right sibling into left sibling. Right sibling must be an indirect child.
+         * Both pages must be latched in UPDATE mode prior to this call.
+         * After the merge, left sibling will remain latched. 
+         * <p>
+         * This algorithm differs from published algorithm in its management of space map
+         * update. In the interests of high concurrency, the space map page update is
+         * handled as a separate redo only action. 
+         */
+        public final void doMerge(Transaction trx, BTreeCursor bcursor) {
+
+            final BTreeImpl btree = this;
+
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
+
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
+
+            BTreeNode leftSiblingNode = btree.getBTreeNode();
+            bcursor.getQ().upgradeUpdateLatch();
+            leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+
+            bcursor.getR().upgradeUpdateLatch();
+            BTreeNode rnode = btree.getBTreeNode();
+            rnode.wrap((SlottedPage) bcursor.getR().getPage());
+
+            assert leftSiblingNode.header.rightSibling == rnode.page
+                .getPageId()
+                .getPageNumber();
+
 //			SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
 //			PageId spaceMapPageId = new PageId(btree.containerId, rpage.getSpaceMapPageNumber()); 
-			
+
 //			BufferAccessBlock smpBab = btree.btreeMgr.bufmgr.fixExclusive(spaceMapPageId, false, "", 0);
-			
-			MergeOperation mergeOperation = (MergeOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_MERGE_OPERATION);
-			
-			mergeOperation.setLeaf(leftSiblingNode.isLeaf());
-			mergeOperation.setUnique(btree.isUnique());
-			mergeOperation.setKeyFactoryType(btree.keyFactoryType);
-			mergeOperation.setLocationFactoryType(btree.locationFactoryType);
-			mergeOperation.rightSibling = leftSiblingNode.header.rightSibling;
-			mergeOperation.rightRightSibling = rnode.header.rightSibling;
-			for (int k = FIRST_KEY_POS; k <= rnode.header.keyCount; k++) {
-				mergeOperation.items.add(rnode.getItem(k));
-			}
-			mergeOperation.rightSiblingSpaceMapPage = rnode.page.getSpaceMapPageNumber();
-		
-			try {
-				Lsn lsn = trx.logInsert(leftSiblingNode.page, mergeOperation);
-				btree.btreeMgr.redo(leftSiblingNode.page, mergeOperation);
-				bcursor.getQ().setDirty(lsn);
-				
-				btree.btreeMgr.redo(rnode.page, mergeOperation);
-				bcursor.getR().setDirty(lsn);
-				
+
+            MergeOperation mergeOperation = (MergeOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_MERGE_OPERATION);
+
+            mergeOperation.setLeaf(leftSiblingNode.isLeaf());
+            mergeOperation.setUnique(btree.isUnique());
+            mergeOperation.setKeyFactoryType(btree.keyFactoryType);
+            mergeOperation.setLocationFactoryType(btree.locationFactoryType);
+            mergeOperation.rightSibling = leftSiblingNode.header.rightSibling;
+            mergeOperation.rightRightSibling = rnode.header.rightSibling;
+            for (int k = FIRST_KEY_POS; k <= rnode.header.keyCount; k++) {
+                mergeOperation.items.add(rnode.getItem(k));
+            }
+            mergeOperation.rightSiblingSpaceMapPage = rnode.page
+                .getSpaceMapPageNumber();
+
+            try {
+                Lsn lsn = trx.logInsert(leftSiblingNode.page, mergeOperation);
+                btree.btreeMgr.redo(leftSiblingNode.page, mergeOperation);
+                bcursor.getQ().setDirty(lsn);
+
+                btree.btreeMgr.redo(rnode.page, mergeOperation);
+                bcursor.getR().setDirty(lsn);
+
 //				btree.btreeMgr.redo(smpBab.getPage(), mergeOperation);
 //				smpBab.setDirty(lsn);
-			}
-			finally {
+            } finally {
 //				smpBab.unfix();
-				
-				bcursor.unfixR();
-				
-				bcursor.getQ().downgradeExclusiveLatch();
-			}
 
-			/*
-			 * We log the space map operation as a separate discrete action.
-			 * If this log record does not survive a system crash, then the page
-			 * will end up appearing allocated. However the actual page will be
-			 * marked as deallocated, and hence can be reclaimed later on.
-			 */
-			btree.spaceCursor.fixSpaceMapPageExclusively(mergeOperation.rightSiblingSpaceMapPage, mergeOperation.rightSibling);
-			try {
-				btree.spaceCursor.updateAndLogRedoOnly(trx, mergeOperation.rightSibling, 0);
-			}
-			finally {
-				btree.spaceCursor.unfixCurrentSpaceMapPage();
-			}
-		}
+                bcursor.unfixR();
 
-		/**
-		 * Link the right sibling to the parent, when the right sibling is an 
-		 * indirect child. Parent and left child must be latched in UPDATE
-		 * mode prior to invoking this method. Both will remain latched at the
-		 * end of the operation. 
-		 * <p>Note that this differs from published algorithm slightly:
-		 * <pre>
-		 * v = highkey of R
-		 * u = highkey of Q
-		 * Link(P, Q, R) {
-		 * 	upgrade-latch(P);
-		 * 	change the index record (v, Q.pageno) to (v, R.pageno);
-		 * 	insert the index record (u, Q.pageno) before (v, R.pageno);
-		 * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
-		 * 	P.pageLsn = lsn;
-		 * 	downgrade-latch(P);
-		 * }
-		 * </pre>
-		 */
-		public final void doLink(Transaction trx, BTreeCursor bcursor) {
+                bcursor.getQ().downgradeExclusiveLatch();
+            }
 
-			final BTreeImpl btree = this;
+            /*
+             * We log the space map operation as a separate discrete action.
+             * If this log record does not survive a system crash, then the page
+             * will end up appearing allocated. However the actual page will be
+             * marked as deallocated, and hence can be reclaimed later on.
+             */
+            btree.spaceCursor.fixSpaceMapPageExclusively(
+                mergeOperation.rightSiblingSpaceMapPage,
+                mergeOperation.rightSibling);
+            try {
+                btree.spaceCursor.updateAndLogRedoOnly(
+                    trx,
+                    mergeOperation.rightSibling,
+                    0);
+            } finally {
+                btree.spaceCursor.unfixCurrentSpaceMapPage();
+            }
+        }
 
-			assert bcursor.getP() != null;
-			assert bcursor.getP().isLatchedForUpdate();
+        /**
+         * Link the right sibling to the parent, when the right sibling is an 
+         * indirect child. Parent and left child must be latched in UPDATE
+         * mode prior to invoking this method. Both will remain latched at the
+         * end of the operation. 
+         * <p>Note that this differs from published algorithm slightly:
+         * <pre>
+         * v = highkey of R
+         * u = highkey of Q
+         * Link(P, Q, R) {
+         * 	upgrade-latch(P);
+         * 	change the index record (v, Q.pageno) to (v, R.pageno);
+         * 	insert the index record (u, Q.pageno) before (v, R.pageno);
+         * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
+         * 	P.pageLsn = lsn;
+         * 	downgrade-latch(P);
+         * }
+         * </pre>
+         */
+        public final void doLink(Transaction trx, BTreeCursor bcursor) {
 
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
+            final BTreeImpl btree = this;
 
-			bcursor.getP().upgradeUpdateLatch();
-			BTreeNode parentNode = btree.getBTreeNode();
-			parentNode.wrap((SlottedPage) bcursor.getP().getPage());
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
 
-			BTreeNode lnode = btree.getBTreeNode();
-			lnode.wrap((SlottedPage) bcursor.getQ().getPage());
-			SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
-			
-			LinkOperation linkOperation = (LinkOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_LINK_OPERATION);
-			linkOperation.setLeaf(parentNode.isLeaf());	// should be false 
-			linkOperation.setUnique(btree.isUnique());
-			linkOperation.setKeyFactoryType(btree.keyFactoryType);
-			linkOperation.setLocationFactoryType(btree.locationFactoryType);
-			linkOperation.leftSibling = lpage.getPageId().getPageNumber();
-			linkOperation.rightSibling = lnode.header.rightSibling;
-			IndexItem u = lnode.getHighKey();
-			u.setChildPageNumber(linkOperation.leftSibling);
-			u.setLeaf(false);
-			linkOperation.leftChildHighKey = u;
-			
-			try {
-				Lsn lsn = trx.logInsert(parentNode.page, linkOperation);
-				btree.btreeMgr.redo(parentNode.page, linkOperation);
-				bcursor.getP().setDirty(lsn);
-			}
-			finally {
-				bcursor.getP().downgradeExclusiveLatch();
-			}
-		}
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
 
-		/**
-		 * Unlink the right child from the parent. The page to the right of the
-		 * right child must not be an indirect child. This operation requires
-		 * parent, and the two child nodes to be latched in UPDATE mode prior to
-		 * invocation. At the end of the operation the parent is released.  
-		 * <p>Note that this differs from published algorithm slightly:
-		 * <pre>
-		 * v = highkey of R
-		 * u = highkey of Q
-		 * Unlink(P, Q, R) {
-		 * 	upgrade-latch(P);
-		 * 	delete the index record (u, Q.pageno);
-		 * 	change the index record (v, R.pageno) to (v, Q.pageno);
-		 * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
-		 * 	P.pageLsn = lsn;
-		 * 	unfix(P);
-		 * }
-		 * </pre>
-		 */
-		public final void doUnlink(Transaction trx, BTreeCursor bcursor) {
+            bcursor.getP().upgradeUpdateLatch();
+            BTreeNode parentNode = btree.getBTreeNode();
+            parentNode.wrap((SlottedPage) bcursor.getP().getPage());
 
-			final BTreeImpl btree = this;
+            BTreeNode lnode = btree.getBTreeNode();
+            lnode.wrap((SlottedPage) bcursor.getQ().getPage());
+            SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
 
-			assert bcursor.getP() != null;
-			assert bcursor.getP().isLatchedForUpdate();
+            LinkOperation linkOperation = (LinkOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_LINK_OPERATION);
+            linkOperation.setLeaf(parentNode.isLeaf()); // should be false 
+            linkOperation.setUnique(btree.isUnique());
+            linkOperation.setKeyFactoryType(btree.keyFactoryType);
+            linkOperation.setLocationFactoryType(btree.locationFactoryType);
+            linkOperation.leftSibling = lpage.getPageId().getPageNumber();
+            linkOperation.rightSibling = lnode.header.rightSibling;
+            IndexItem u = lnode.getHighKey();
+            u.setChildPageNumber(linkOperation.leftSibling);
+            u.setLeaf(false);
+            linkOperation.leftChildHighKey = u;
 
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
-			
-			assert bcursor.getR() != null;
-			assert bcursor.getR().isLatchedForUpdate();
+            try {
+                Lsn lsn = trx.logInsert(parentNode.page, linkOperation);
+                btree.btreeMgr.redo(parentNode.page, linkOperation);
+                bcursor.getP().setDirty(lsn);
+            } finally {
+                bcursor.getP().downgradeExclusiveLatch();
+            }
+        }
 
-			bcursor.getP().upgradeUpdateLatch();
-			BTreeNode parentNode = btree.getBTreeNode();
-			parentNode.wrap((SlottedPage) bcursor.getP().getPage());
+        /**
+         * Unlink the right child from the parent. The page to the right of the
+         * right child must not be an indirect child. This operation requires
+         * parent, and the two child nodes to be latched in UPDATE mode prior to
+         * invocation. At the end of the operation the parent is released.  
+         * <p>Note that this differs from published algorithm slightly:
+         * <pre>
+         * v = highkey of R
+         * u = highkey of Q
+         * Unlink(P, Q, R) {
+         * 	upgrade-latch(P);
+         * 	delete the index record (u, Q.pageno);
+         * 	change the index record (v, R.pageno) to (v, Q.pageno);
+         * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
+         * 	P.pageLsn = lsn;
+         * 	unfix(P);
+         * }
+         * </pre>
+         */
+        public final void doUnlink(Transaction trx, BTreeCursor bcursor) {
 
-			UnlinkOperation unlinkOperation = (UnlinkOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_UNLINK_OPERATION);
-			unlinkOperation.setLeaf(parentNode.isLeaf());	// should be false
-			unlinkOperation.setUnique(btree.isUnique());
-			unlinkOperation.setKeyFactoryType(btree.keyFactoryType);
-			unlinkOperation.setLocationFactoryType(btree.locationFactoryType);
-			unlinkOperation.leftSibling = bcursor.getQ().getPage().getPageId().getPageNumber();
-			unlinkOperation.rightSibling = bcursor.getR().getPage().getPageId().getPageNumber();
-			try {
-				Lsn lsn = trx.logInsert(parentNode.page, unlinkOperation);
-				btree.btreeMgr.redo(parentNode.page, unlinkOperation);
-				bcursor.getP().setDirty(lsn);
-			}
-			finally {
-				bcursor.unfixP();
-			}
-		}
-		
-		/**
-		 * Redistribute the keys between sibling nodes when the right child is an
-		 * indirect child of parent page. Both pages must be latched in UPDATE
-		 * mode prior to calling this method. At the end of this operation,
-		 * the child page that covers the search key will remain latched in
-		 * UPDATE mode. 
-		 * <p>
-		 * Unlike the published algorithm we simply transfer one key from the more 
-		 * densely populated page to the less populated page.
-		 * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
-		 */
-		public final void doRedistribute(Transaction trx, BTreeCursor bcursor) {
+            final BTreeImpl btree = this;
 
-			final BTreeImpl btree = this;
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
 
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
-			
-			assert bcursor.getR() != null;
-			assert bcursor.getR().isLatchedForUpdate();
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
 
-			assert bcursor.searchKey != null;
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
 
-			bcursor.getQ().upgradeUpdateLatch();
-			BTreeNode leftSiblingNode = btree.getBTreeNode();
-			leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+            bcursor.getP().upgradeUpdateLatch();
+            BTreeNode parentNode = btree.getBTreeNode();
+            parentNode.wrap((SlottedPage) bcursor.getP().getPage());
 
-			bcursor.getR().upgradeUpdateLatch();
-			BTreeNode rightSiblingNode = btree.getBTreeNode();
-			rightSiblingNode.wrap((SlottedPage) bcursor.getR().getPage());
-			SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
+            UnlinkOperation unlinkOperation = (UnlinkOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_UNLINK_OPERATION);
+            unlinkOperation.setLeaf(parentNode.isLeaf()); // should be false
+            unlinkOperation.setUnique(btree.isUnique());
+            unlinkOperation.setKeyFactoryType(btree.keyFactoryType);
+            unlinkOperation.setLocationFactoryType(btree.locationFactoryType);
+            unlinkOperation.leftSibling = bcursor
+                .getQ()
+                .getPage()
+                .getPageId()
+                .getPageNumber();
+            unlinkOperation.rightSibling = bcursor
+                .getR()
+                .getPage()
+                .getPageId()
+                .getPageNumber();
+            try {
+                Lsn lsn = trx.logInsert(parentNode.page, unlinkOperation);
+                btree.btreeMgr.redo(parentNode.page, unlinkOperation);
+                bcursor.getP().setDirty(lsn);
+            } finally {
+                bcursor.unfixP();
+            }
+        }
 
-			RedistributeOperation redistributeOperation = (RedistributeOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_REDISTRIBUTE_OPERATION);
-			redistributeOperation.setLeaf(leftSiblingNode.isLeaf());
-			redistributeOperation.setUnique(btree.isUnique());
-			redistributeOperation.setKeyFactoryType(btree.keyFactoryType);
-			redistributeOperation.setLocationFactoryType(btree.locationFactoryType);
-			redistributeOperation.leftSibling = leftSiblingNode.page.getPageId().getPageNumber();
-			redistributeOperation.rightSibling = rpage.getPageId().getPageNumber();
-			if (leftSiblingNode.page.getFreeSpace() > rpage.getFreeSpace()) {
-				// key moving left
-				// FIXME Test case
-				redistributeOperation.key = rightSiblingNode.getLastKey();
-				redistributeOperation.targetSibling = redistributeOperation.leftSibling;
-			}
-			else {
-				// key moving right
-				redistributeOperation.key = leftSiblingNode.getLastKey();
-				redistributeOperation.targetSibling = redistributeOperation.rightSibling;
-			}
-			
-			try {
-				Lsn lsn = trx.logInsert(leftSiblingNode.page, redistributeOperation);
+        /**
+         * Redistribute the keys between sibling nodes when the right child is an
+         * indirect child of parent page. Both pages must be latched in UPDATE
+         * mode prior to calling this method. At the end of this operation,
+         * the child page that covers the search key will remain latched in
+         * UPDATE mode. 
+         * <p>
+         * Unlike the published algorithm we simply transfer one key from the more 
+         * densely populated page to the less populated page.
+         * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
+         */
+        public final void doRedistribute(Transaction trx, BTreeCursor bcursor) {
 
-				btree.btreeMgr.redo(leftSiblingNode.page, redistributeOperation);
-				bcursor.getQ().setDirty(lsn);
-				
-				btree.btreeMgr.redo(rpage, redistributeOperation);
-				bcursor.getR().setDirty(lsn);
-				
-				leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
-				/* Check if Q covers the current search key value */
-				int comp = leftSiblingNode.getHighKey().compareTo(bcursor.searchKey);
-				if (comp >= 0) {
-					// new key will stay in current page
-					// FIXME TEST case
-					bcursor.getQ().downgradeExclusiveLatch();
-					bcursor.unfixR();
-				}
-				else {
-					// new key will be in the right sibling
-					bcursor.getR().downgradeExclusiveLatch();
-					bcursor.unfixQ();
-					bcursor.setQ(bcursor.removeR());
-				}
-			}
-			finally {
-				bcursor.unfixR();
-			}
-		}
+            final BTreeImpl btree = this;
 
-		/**
-		 * Increase tree height when root page as a sibling page. The root page and its
-		 * sibling must be latched in UPDATE mode prior to calling this method. After the
-		 * operation is complete, the latch on the root page is released, but one of the child
-		 * pages (the one that covers the search key) will be left latched in UPDATE mode.
-		 * <p>
-		 * The implementation differs from the published algorithm as follows:
-		 * <ol>
-		 * <li>
-		 * No need to format the new page, as this is taken care of in the space
-		 * management module. New pages are formatted as soon as they are created.
-		 * </li>
-		 * <li>
-		 * We use a nested top action to manage the entire action. This is to improve
-		 * concurrency, as it allows the space map page update to be completed before
-		 * any other page is latched exclusively. The SMO is logged as a Compensation
-		 * record and linked to the log record prior to the space map update. This makes the
-		 * SMO redoable, but the space map update will be undone if the SMO log does
-		 * not survive.
-		 * </li>
-		 * </ol>
-		 * @param bcursor bcursor.q must point to root page, and bcursor.r to its right sibling
-		 */
-		public final void doIncreaseTreeHeight(Transaction trx, BTreeCursor bcursor) {
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
 
-			final BTreeImpl btree = this;
-			
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
-			
-			assert bcursor.getR() != null;
-			assert bcursor.getR().isLatchedForUpdate();
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
 
-			assert bcursor.getP() == null;
+            assert bcursor.searchKey != null;
 
-			assert bcursor.searchKey != null;
-			
-			Lsn undoNextLsn;
+            bcursor.getQ().upgradeUpdateLatch();
+            BTreeNode leftSiblingNode = btree.getBTreeNode();
+            leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 
-			// Allocate new page. 
-			int newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
-			int spaceMapPageNumber = -1;
-			try {
-				if (newSiblingPageNumber == -1) {
-					// FIXME Test case
-					btree.btreeMgr.spaceMgr.extendContainer(trx, btree.containerId);
-					newSiblingPageNumber = btree.spaceCursor.findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
-					if (newSiblingPageNumber == -1) {
-						log.error(LOG_CLASS_NAME, "doIncreaseTreeHeight", mcat.getMessage("EB0002"));
-						throw new IndexException(mcat.getMessage("EB0002"));
-					}
-				}
-				// Make a note of current lsn so that we can link the Compensation record to it.
-				undoNextLsn = trx.getLastLsn();
-				btree.spaceCursor.updateAndLogUndoably(trx, newSiblingPageNumber, PAGE_SPACE_USED);
-				spaceMapPageNumber = btree.spaceCursor.getCurrentSpaceMapPage().getPageId().getPageNumber(); 
-			}
-			finally {
-				if (newSiblingPageNumber != -1) {
-					btree.spaceCursor.unfixCurrentSpaceMapPage();
-				}
-			}
+            bcursor.getR().upgradeUpdateLatch();
+            BTreeNode rightSiblingNode = btree.getBTreeNode();
+            rightSiblingNode.wrap((SlottedPage) bcursor.getR().getPage());
+            SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
 
-			bcursor.setP(bcursor.removeQ());
-			BTreeNode rootNode = btree.getBTreeNode();
-			bcursor.getP().upgradeUpdateLatch();
-			rootNode.wrap((SlottedPage) bcursor.getP().getPage());
-			
-			IncreaseTreeHeightOperation ithOperation = (IncreaseTreeHeightOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_INCREASETREEHEIGHT_OPERATION);
-			ithOperation.setUndoNextLsn(undoNextLsn);
-			ithOperation.setKeyFactoryType(btree.keyFactoryType);
-			ithOperation.setLocationFactoryType(btree.locationFactoryType);
-			ithOperation.rightSibling = rootNode.header.rightSibling;
-			ithOperation.leftSibling = newSiblingPageNumber;
-			ithOperation.spaceMapPageNumber = spaceMapPageNumber;
-			// New child page will inherit the root page leaf attribute
-			ithOperation.setLeaf(rootNode.isLeaf());
-			ithOperation.setUnique(btree.isUnique());
-			for (int k = FIRST_KEY_POS; k <= rootNode.header.keyCount; k++) {
-				ithOperation.items.add(rootNode.getItem(k));
-			}
-			IndexItem leftChildHighKey = rootNode.getItem(rootNode.header.keyCount);
-			leftChildHighKey.setLeaf(false);
-			leftChildHighKey.setChildPageNumber(ithOperation.leftSibling);
-			IndexItem rightChildHighKey = rootNode.getInfiniteKey();
-			rightChildHighKey.setLeaf(false);
-			rightChildHighKey.setChildPageNumber(ithOperation.rightSibling); 
-			ithOperation.rootItems.add(leftChildHighKey);
-			ithOperation.rootItems.add(rightChildHighKey);
+            RedistributeOperation redistributeOperation = (RedistributeOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_REDISTRIBUTE_OPERATION);
+            redistributeOperation.setLeaf(leftSiblingNode.isLeaf());
+            redistributeOperation.setUnique(btree.isUnique());
+            redistributeOperation.setKeyFactoryType(btree.keyFactoryType);
+            redistributeOperation
+                .setLocationFactoryType(btree.locationFactoryType);
+            redistributeOperation.leftSibling = leftSiblingNode.page
+                .getPageId()
+                .getPageNumber();
+            redistributeOperation.rightSibling = rpage
+                .getPageId()
+                .getPageNumber();
+            if (leftSiblingNode.page.getFreeSpace() > rpage.getFreeSpace()) {
+                // key moving left
+                // FIXME Test case
+                redistributeOperation.key = rightSiblingNode.getLastKey();
+                redistributeOperation.targetSibling = redistributeOperation.leftSibling;
+            } else {
+                // key moving right
+                redistributeOperation.key = leftSiblingNode.getLastKey();
+                redistributeOperation.targetSibling = redistributeOperation.rightSibling;
+            }
 
-			// Latch the new page exclusively
-			bcursor.setQ(btree.btreeMgr.bufmgr.fixExclusive(new PageId(btree.containerId, ithOperation.leftSibling), true, btree.btreeMgr.spMgr.getPageType(), 0));
-			try {
-				Lsn lsn = trx.logInsert(rootNode.page, ithOperation);
-				
-				btree.btreeMgr.redo(rootNode.page, ithOperation);
-				bcursor.getP().setDirty(lsn);
+            try {
+                Lsn lsn = trx.logInsert(
+                    leftSiblingNode.page,
+                    redistributeOperation);
 
-				btree.btreeMgr.redo(bcursor.getQ().getPage(), ithOperation);
-				bcursor.getQ().setDirty(lsn);
+                btree.btreeMgr
+                    .redo(leftSiblingNode.page, redistributeOperation);
+                bcursor.getQ().setDirty(lsn);
 
-				bcursor.unfixP();
-			
-				/*
-				 * Check that Q covers the current search key.
-				 */
-				int comp = leftChildHighKey.compareTo(bcursor.searchKey);
-				if (comp >= 0) {
-					// new key will stay in left child page
-					bcursor.getQ().downgradeExclusiveLatch();
-					bcursor.unfixR();
-				}
-				else {
-					// new key will be in the right child page
-					bcursor.unfixQ();
-					bcursor.setQ(bcursor.removeR());
-				}
-			}
-			finally {
-				// TODO is this robust enough?
-				bcursor.unfixP();
-				bcursor.unfixR();
-			}
-		}
+                btree.btreeMgr.redo(rpage, redistributeOperation);
+                bcursor.getR().setDirty(lsn);
 
-		/**
-		 * Decrease tree height when root page has only one child and that child does not have 
-		 * a right sibling. The root page and its child must be latched in UPDATE mode prior
-		 * to calling this method. At the end of this operation, the root will remain latched in
-		 * UPDATE mode.
-		 * <p>
-		 * Important note:
-		 * To increase concurrency, we update the space map page after the SMO as a separate
-		 * redo only action. This improves concurrency because we do not hold the space map
-		 * page exclusively during the SMO. However, it has the disadvantage that if the SMO 
-		 * survives a system crash, and the log for the space map page updates does not survive,
-		 * then the page will remain allocated on the space map, even though it is no longer
-		 * in use. It is posible to identify deallocated pages by checking the page flags for the
-		 * bit BTreeNode.
-		 * @param bcursor bcursor.p must point to root page, and bcursor.q to only child
-		 */
-		public final void doDecreaseTreeHeight(Transaction trx, BTreeCursor bcursor) {
+                leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
+                /* Check if Q covers the current search key value */
+                int comp = leftSiblingNode.getHighKey().compareTo(
+                    bcursor.searchKey);
+                if (comp >= 0) {
+                    // new key will stay in current page
+                    // FIXME TEST case
+                    bcursor.getQ().downgradeExclusiveLatch();
+                    bcursor.unfixR();
+                } else {
+                    // new key will be in the right sibling
+                    bcursor.getR().downgradeExclusiveLatch();
+                    bcursor.unfixQ();
+                    bcursor.setQ(bcursor.removeR());
+                }
+            } finally {
+                bcursor.unfixR();
+            }
+        }
 
-			final BTreeImpl btree = this;
-			
-			assert bcursor.getP() != null;
-			assert bcursor.getP().isLatchedForUpdate();
-			
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
-			
-			// root page
-			bcursor.getP().upgradeUpdateLatch();
-			BTreeNode rootNode = btree.getBTreeNode();
-			rootNode.wrap((SlottedPage) bcursor.getP().getPage());
-			
-			// child page
-			bcursor.getQ().upgradeUpdateLatch();
-			BTreeNode childNode = btree.getBTreeNode();
-			childNode.wrap((SlottedPage) bcursor.getQ().getPage());
-			
-			DecreaseTreeHeightOperation dthOperation = (DecreaseTreeHeightOperation) btree.btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_DECREASETREEHEIGHT_OPERATION);
-			dthOperation.setKeyFactoryType(btree.keyFactoryType);
-			dthOperation.setLocationFactoryType(btree.locationFactoryType);
-			// root will inherit the leaf status of child node
-			dthOperation.setLeaf(childNode.isLeaf());
-			dthOperation.setUnique(dthOperation.isUnique());
-			for (int k = FIRST_KEY_POS; k <= childNode.header.keyCount; k++) {
-				dthOperation.items.add(childNode.getItem(k));
-			}
-			dthOperation.childPageSpaceMap = childNode.page.getSpaceMapPageNumber();
-			dthOperation.childPageNumber = childNode.page.getPageId().getPageNumber();
-			
-			try {
-				Lsn lsn = trx.logInsert(rootNode.page, dthOperation);
+        /**
+         * Increase tree height when root page as a sibling page. The root page and its
+         * sibling must be latched in UPDATE mode prior to calling this method. After the
+         * operation is complete, the latch on the root page is released, but one of the child
+         * pages (the one that covers the search key) will be left latched in UPDATE mode.
+         * <p>
+         * The implementation differs from the published algorithm as follows:
+         * <ol>
+         * <li>
+         * No need to format the new page, as this is taken care of in the space
+         * management module. New pages are formatted as soon as they are created.
+         * </li>
+         * <li>
+         * We use a nested top action to manage the entire action. This is to improve
+         * concurrency, as it allows the space map page update to be completed before
+         * any other page is latched exclusively. The SMO is logged as a Compensation
+         * record and linked to the log record prior to the space map update. This makes the
+         * SMO redoable, but the space map update will be undone if the SMO log does
+         * not survive.
+         * </li>
+         * </ol>
+         * @param bcursor bcursor.q must point to root page, and bcursor.r to its right sibling
+         */
+        public final void doIncreaseTreeHeight(Transaction trx,
+                BTreeCursor bcursor) {
 
-				btree.btreeMgr.redo(rootNode.page, dthOperation);
-				bcursor.getP().setDirty(lsn);
+            final BTreeImpl btree = this;
 
-				btree.btreeMgr.redo(bcursor.getQ().getPage(), dthOperation);
-				bcursor.getQ().setDirty(lsn);
-			}
-			finally {
-				// TODO Is this robust enough?
-				bcursor.unfixQ();
-				bcursor.getP().downgradeExclusiveLatch();
-			}
-		
-			/*
-			 * We log the space map operation as a separate discrete action.
-			 * If this log record does not survive a system crash, then the page
-			 * will end up appearing allocated. However the actual page will be
-			 * marked as deallocated, and hence can be reclaimed later on.
-			 */
-			btree.spaceCursor.fixSpaceMapPageExclusively(dthOperation.childPageSpaceMap, dthOperation.childPageNumber);
-			try {
-				btree.spaceCursor.updateAndLogRedoOnly(trx, dthOperation.childPageNumber, 0);
-			}
-			finally {
-				btree.spaceCursor.unfixCurrentSpaceMapPage();
-			}
-		}
-		
-		/**
-		 * Splits the parent node of current node Q. Parent must be latched in 
-		 * UPDATE mode prior to the call. After the split is complete, the
-		 * parent node or its new sibling node, whichever covers the search key,
-		 * will be left latched as bcursor.p. Latches on child nodes will remain
-		 * unchanged.  
-		 */
-		final void doSplitParent(Transaction trx, BTreeCursor bcursor) {
-			/*
-			 * doSplit requires Q to point to page that is to be
-			 * split, so we need to point Q to P temporarily.
-			 */
-			BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
-			BufferAccessBlock savedR = bcursor.removeR(); // Save R
-			bcursor.setQ(bcursor.removeP()); // Now Q is P
-			try {
-				doSplit(trx, bcursor);
-			} finally {
-				bcursor.setP(bcursor.removeQ());
-				bcursor.setQ(savedQ);
-				bcursor.setR(savedR);
-			}
-		}
-		
-		/**
-		 * Repairs underflow when an about-to-underflow child is encountered during update
-		 * mode traversal. Both the parent page (bcursor.p) and its child page (bcursor.q) must
-		 * be latched in UPDATE mode prior to calling this method. When this method returns,
-		 * the latch on the parent page will have been released, and the child page that covers the
-		 * search key will remain latched in bcursor.q. 
-		 * <p>
-		 * For this algorithm to work, an index page needs to have at least two children who
-		 * are linked the index page.
-		 */
-		public final boolean doRepairPageUnderflow(Transaction trx, BTreeCursor bcursor) {
-			
-			assert bcursor.getP() != null;
-			assert bcursor.getP().isLatchedForUpdate();
-			
-			assert bcursor.getQ() != null;
-			assert bcursor.getQ().isLatchedForUpdate();
-			
-			BTreeNode q = getBTreeNode();
-			q.wrap((SlottedPage) bcursor.getQ().getPage());
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
 
-			BTreeNode p = getBTreeNode();
-			p.wrap((SlottedPage) bcursor.getP().getPage());
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
 
-			BTreeNode r = getBTreeNode();
-			
-			int Q = q.page.getPageId().getPageNumber();
-			
-			IndexItem u = q.getHighKey();
-			IndexItem highkeyP = p.getHighKey();
-			/*
-			 * If the high key of Q is less than the high key of
-			 * P then Q is not the rightmost child of P.
-			 */
-			if (u.compareTo(highkeyP) < 0) {
-				/* Q is not the rightmost child of its parent P 
-				 *
-				 * There are three possibilities:
-				 * a) R is an indirect child of P.
-				 * b) R is a direct child of P, and has a sibling S that is an indirect child of P.
-				 * c) R is a direct child of P and has a sibling S that is also a direct child of P.
-				 */
-				/* v = index record associated with Q in P */
-				IndexItem v = p.findIndexItem(Q);
-				/* R = rightsibling of Q */
-				int R = q.header.rightSibling;
-				assert R != -1;
-				
-				bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, R), 0));
-				r.wrap((SlottedPage) bcursor.getR().getPage());
-				/*
-				 * If the high key of Q is than the index key in P associated with Q,
-				 * then R must be an indirect child of Q.
-				 */
-				if (u.compareTo(v) < 0) {
-					/* a) R is an indirect child of P (case 13 in paper)
-					 * This means that we can merge with R.
-					 *                    P[v|w]
-					 *           +----------+ +--------+
-					 *           |                     |
-					 *          Q[u]------>R[v]------>S[w]
-					 */
-					bcursor.unfixP();
-					if (q.canMergeWith(r)) {
-						doMerge(trx, bcursor);
-					} else {
-						// FIXME TEST case
-						doRedistribute(trx, bcursor);
-					}
-				} else {
-					/* b) or c) R is a direct child of P */
-					/* w = index record associated with R in P */
-					IndexItem w = p.findIndexItem(R);
-					v = r.getHighKey();
-					/*
-					 * If highkey of R is less than the index key in P associated with R,
-					 * then R must have a right sibling S that is an indirect child of
-					 * P. 
-					 */
-					if (v.compareTo(w) < 0) {
-						/* b) R has a right sibling S that is indirect child of P (fig 14)
-						 * 
-						 *                    P[u|w]
-						 *           +----------+ +
-						 *           |            |
-						 *          Q[u]-------->R[v]------>S[w]
-						 * 
-						 * We cannot unlink R from P until we have S linked to P.
-						 * Therefore, we need to link S to P first.
-						 * 
-						 * If P cannot accomodate the index key v then it will need to be 
-						 * split.
-						 */
-						if (!p.canAccomodate(v)) {
-							doSplitParent(trx, bcursor);
-							/*
-							 * After the split, Q should still be a child of P, but
-							 * R may have moved to the sibling of P.
-							 */
-							assert p.findIndexItem(Q) != null;
-							if (p.findIndexItem(R) == null) {
-								/* R is not a child of P anymore.
-								 * We need to restart the algorithm
-								 */
-								// FIXME TEST case
-								bcursor.unfixR();
-								return true;
-							}
-						}
-						/*
-						 * We need to link S to P. Since our cursor is currently
-						 * positioned Q, we need to temporarily move right to R,
-						 * in order to do the link.
-						 */
-						BufferAccessBlock savedQ = bcursor.removeQ();	// Save Q
-						bcursor.setQ(bcursor.removeR());					// Now Q is R
-						try {
-							doLink(trx, bcursor); 				// Link S to P
-						} finally {
-							bcursor.setR(bcursor.removeQ()); 				// Restore R
-							bcursor.setQ(savedQ); 				// Restore Q
-						}
-					}
-					/*
-					 * At this point any sibling of R (ie, S) is
-					 * guaranteed to be linked to parent P. So we can now
-					 * unlink R from P to allow merging of Q and R.
-					 */
-					doUnlink(trx, bcursor); // Now we can unlink R from P
-					/*
-					 * Merge Q and R
-					 */
-					q.wrap((SlottedPage) bcursor.getQ().getPage());
-					r.wrap((SlottedPage) bcursor.getR().getPage());
-					if (q.canMergeWith(r)) {
-						doMerge(trx, bcursor);
-					} else {
-						// FIXME TEST case
-						doRedistribute(trx, bcursor);
-					}
-				}
-			} else {
-				/* Q is the rightmost child of its parent P
-				 * There are two possibilities.
-				 * The leftsibling L of Q is 
-				 * a) a direct child of P
-				 * b) an indirect child of P.
-				 */
-				/* Find node L to the left of Q
-				 * Note that since every page must have at least 2 items,
-				 * we are guaranteed to find L.
-				 */
-				IndexItem v = p.findPrevIndexItem(Q);
-				assert v != null;
-				int L = v.getChildPageNumber();
-				/*
-				 * Since our cursor is positioned on Q, we need to move left.
-				 * But to do that we need to unlatch Q first. 
-				 */
-				bcursor.unfixQ();
-				/* Now L becomes Q */
-				bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, L), 0));
-				q.wrap((SlottedPage) bcursor.getQ().getPage());
-				/* The node to the right of L is N */
-				/* This may or may not be Q depending upon whether N is
-				 * an indirect child of P.
-				 */
-				int N = q.header.rightSibling;
-				assert N != -1;
-				bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, N), 0));
-				r.wrap((SlottedPage) bcursor.getR().getPage());
-				
-				/*
-				 * Get highkey of L and compare with the index key associated with L in
-				 * page P. 
-				 */
-				u = q.getHighKey();
-				if (u.compareTo(v) == 0) {
-					/* 
-					 * Fig 17.
-					 * L is direct child of P 
-					 * and the right sibling of L is Q
-					 * 
-					 *                   P[u|v|w]
-					 *           +---------+ + +--------+
-					 *           |           |          |
-					 *         ?[u]------->L[v]------->Q[w]
-					 *  
-					 */
-					assert q.header.rightSibling == Q;
-					if (!r.isAboutToUnderflow()) {
-						/* Q is no longer about to overflow (remember R is Q!) */
-						// FIXME Test case
-						bcursor.unfixP();
-						bcursor.unfixQ(); 
-						bcursor.setQ(bcursor.removeR());
-					}
-					else {
-						/* In order to merge Q with its left sibling L, we need
-						 * to unlink Q from its parent first.
-						 * Remember that bcursor.q is positioned on L.
-						 */
-						/* unlink Q from P */
-						doUnlink(trx, bcursor);
-						q.wrap((SlottedPage) bcursor.getQ().getPage());
-						r.wrap((SlottedPage) bcursor.getR().getPage());
-						if (q.canMergeWith(r)) {
-							doMerge(trx, bcursor);
-						}
-						else {
-							// FIXME Test case
-							doRedistribute(trx, bcursor);
-						}
-					}
-				}
-				else {
-					/*
-					 *  Fig 19 in paper.
-					 * The left sibling L of Q has a right sibling N
-					 * that is an indirect child of P. Q is the right
-					 * sibling of N. 
-					 * 
-					 *                    P[v|w]
-					 *           +----------+ +--------+
-					 *           |                     |
-					 *          L[u]------>N[v]------>Q[w]
-					 * 
-					 * 
-					 * To merge Q with N, we first need to link
-					 * N to parent page P, then unlink Q from P.
-					 */
-					if (!p.canAccomodate(u)) {
-						doSplitParent(trx, bcursor);
-						/*
-						 * Since Q was the rightmost child of P,
-						 * even after the split Q and its left sibling L must 
-						 * belong to P (because a minimum of 2 items must be
-						 * present in a page).
-						 */
-						p.wrap((SlottedPage) bcursor.getP().getPage());
-						assert p.findIndexItem(Q) != null;
-						assert p.findIndexItem(L) != null;
-					}
-					/* link N to parent P */
-					doLink(trx, bcursor);
-					/* unlatch L */
-					bcursor.unfixQ();
-					/* N becomes bcursor.q */
-					bcursor.setQ(bcursor.removeR());
-					q.wrap((SlottedPage) bcursor.getQ().getPage());
-					/* latch Q again, which now becomes bcursor.r */
-					assert Q == q.header.rightSibling;
-					bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, Q), 0));
-					r.wrap((SlottedPage) bcursor.getR().getPage());
-					if (!r.isAboutToUnderflow()) {
-						/* Q is no longer about to underflow */
-						// FIXME Test case
-						bcursor.unfixP();
-						bcursor.unfixQ(); 
-						bcursor.setQ(bcursor.removeR());
-					}
-					else {
-						/* unlink Q from parent P */
-						doUnlink(trx, bcursor);
-						q.wrap((SlottedPage) bcursor.getQ().getPage());
-						r.wrap((SlottedPage) bcursor.getR().getPage());
-						if (q.canMergeWith(r)) {
-							/* merge N and Q */
-							doMerge(trx, bcursor);
-						}
-						else {
-							doRedistribute(trx, bcursor);
-						}
-					}
-				}
-			}
-			return false;
-		}
+            assert bcursor.getP() == null;
 
-		/**
-		 * Repairs underflow when an about-to-underflow child is encountered during update
-		 * mode traversal. Both the parent page (bcursor.p) and its child page (bcursor.q) must
-		 * be latched in UPDATE mode prior to calling this method. When this method returns,
-		 * the latch on the parent page will have been released, and the child page that covers the
-		 * search key will remain latched in bcursor.q. 
-		 * <p>
-		 * For this algorithm to work, an index page needs to have at least two children who
-		 * are linked the index page.
-		 */
-		public final void repairPageUnderflow(Transaction trx, BTreeCursor bcursor) {
-			boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
-			while (tryAgain) {
-				// FIXME Test case
-				tryAgain = doRepairPageUnderflow(trx, bcursor);
-			}
-		}
+            assert bcursor.searchKey != null;
 
-		/**
-		 * Walks down the tree using UPDATE mode latching. On the way down, pages may be
-		 * split or merged to ensure that the tree maintains its balance. 
-		 * bcursor.searchKey represents the key being searched for.
-		 * When this returns bcursor.p will point to the page that contains or should
-		 * contain the search key. This page will be latched in UPDATE mode.
-		 * <p>This traversal mode is used for inserts and deletes.
-		 * Corresponds to Update-mode-traverse in btree paper.
-		 */
-		public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) {
-			/*
-			 * Fix root page
-			 */
-			bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
-			BTreeNode p = getBTreeNode();
-			p.wrap((SlottedPage) bcursor.getP().getPage());
-			if (p.header.rightSibling != -1) {
-				/* 
-				 * Root page has a right sibling. This means that the root page
-				 * was split at some point, but the parent has not yet been
-				 * created.
-				 * A new child page will be allocated and the root will become
-				 * the parent of this new child, and its right sibling. 
-				 */
-				bcursor.setQ(bcursor.removeP());
-				bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, p.header.rightSibling), 0));
-				doIncreaseTreeHeight(trx, bcursor);
-				bcursor.setP(bcursor.removeQ());
-				p.wrap((SlottedPage) bcursor.getP().getPage());
-			}
-			if (p.isLeaf()) {
-				return;
-			}
-			int childPageNumber = p.findChildPage(bcursor.searchKey);
-			bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, childPageNumber), 0));
-			BTreeNode q = getBTreeNode();
-			q.wrap((SlottedPage) bcursor.getQ().getPage());
-			boolean childPageLatched = true;
-			if (p.isRoot() && p.header.keyCount == 1 && q.header.rightSibling == -1) {
-				/* Q is only child of P and Q has no right sibling */
-				/*
-				 * Root is underflown as it has only one child and this child does not
-				 * have a right sibling. Decrease the height of the tree by
-				 * merging the child page into the root.
-				 */
-				
-				doDecreaseTreeHeight(trx, bcursor);
-				childPageLatched = false;
-			}
-			p.wrap((SlottedPage) bcursor.getP().getPage());
-			while (!p.isLeaf()) {
-				if (!childPageLatched) {
-					/*
-					 * BUG in published algorithm - need to avoid latching
-					 * Q if already latched.
-					 */
-					
-					childPageNumber = p.findChildPage(bcursor.searchKey);
-					bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, childPageNumber), 0));
-					q.wrap((SlottedPage) bcursor.getQ().getPage());
-				}
-				else {
-					childPageLatched = false;
-				}
-				if (q.isAboutToUnderflow()) {
-					repairPageUnderflow(trx, bcursor);
-					bcursor.setP(bcursor.removeQ());
-				}
-				else {
-					IndexItem v = p.findIndexItem(q.page.getPageId().getPageNumber());
-					IndexItem u = q.getHighKey();
-					if (u.compareTo(v) < 0) {
-						/* Q has a right sibling page R which is an
-						 * indirect child of P. Also handles the case where R is
-						 * the right most page.
-						 * Fig 5 in the paper.
-						 *                    P[v|w]
-						 *           +----------+ +--------+
-						 *           |                     |
-						 *          Q[u]------>R[v]------>S[w]
-						 */
-						if (!p.canAccomodate(u)) {
-							doSplitParent(trx, bcursor);
-						}
-						doLink(trx, bcursor);
-					}
-					q.wrap((SlottedPage) bcursor.getQ().getPage());
-					if (q.getHighKey().compareTo(bcursor.searchKey) >= 0) {
-						/* Q covers search key */
-						
-						bcursor.unfixP();
-						bcursor.setP(bcursor.removeQ());
-					}
-					else {
-						/* move right */
-						int rightsibling = q.header.rightSibling;
-						bcursor.unfixP();
-						assert q.header.rightSibling != -1;
-						bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, rightsibling), 0));
-						bcursor.unfixQ(); 
-					}
-				}
-				p.wrap((SlottedPage) bcursor.getP().getPage());
-			}
-		}
+            Lsn undoNextLsn;
 
-		/**
-		 * Walks down the tree acquiring shared latches on the way.
-		 * bcursor.searchKey represents the key being searched for.
-		 * When this returns bcursor.p will point to the leaf page that should
-		 * contain the search key. bcursor.p will be left in shared latch.
-		 * Corresponds to read-mode-traverse() in btree paper. 
-		 */
-		public final void readModeTraverse(BTreeCursor bcursor) {
+            // Allocate new page. 
+            int newSiblingPageNumber = btree.spaceCursor
+                .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
+            int spaceMapPageNumber = -1;
+            try {
+                if (newSiblingPageNumber == -1) {
+                    // FIXME Test case
+                    btree.btreeMgr.spaceMgr.extendContainer(
+                        trx,
+                        btree.containerId);
+                    newSiblingPageNumber = btree.spaceCursor
+                        .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
+                    if (newSiblingPageNumber == -1) {
+                        log.error(LOG_CLASS_NAME, "doIncreaseTreeHeight", mcat
+                            .getMessage("EB0002"));
+                        throw new IndexException(mcat.getMessage("EB0002"));
+                    }
+                }
+                // Make a note of current lsn so that we can link the Compensation record to it.
+                undoNextLsn = trx.getLastLsn();
+                btree.spaceCursor.updateAndLogUndoably(
+                    trx,
+                    newSiblingPageNumber,
+                    PAGE_SPACE_USED);
+                spaceMapPageNumber = btree.spaceCursor
+                    .getCurrentSpaceMapPage()
+                    .getPageId()
+                    .getPageNumber();
+            } finally {
+                if (newSiblingPageNumber != -1) {
+                    btree.spaceCursor.unfixCurrentSpaceMapPage();
+                }
+            }
 
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, "readModeTraverse", "SIMPLEDBM-DEBUG: Read mode traverse for search key = " + bcursor.getSearchKey());
-			}
-			
-			/*
-			 * Fix root page
-			 */
-			bcursor.setP(btreeMgr.bufmgr.fixShared(new PageId(containerId, BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
-			BTreeNode p = getBTreeNode();
-			p.wrap((SlottedPage) bcursor.getP().getPage());
-			// p.dump();
-			
-			do {
-				IndexItem v = p.getHighKey();
-				if (v.compareTo(bcursor.getSearchKey()) < 0) {
-					// Move right as the search key is greater than the highkey
-					// FIXME TEST case
-					int rightsibling = p.header.rightSibling;
-					bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(containerId, rightsibling), 0));
-					bcursor.unfixP(); 
-					bcursor.setP(bcursor.removeQ());
-					p.wrap((SlottedPage) bcursor.getP().getPage());
-					// p.dump();
-				}
-				if (!p.isLeaf()) {
-					// find the child page and move down
-					int childPageNumber = p.findChildPage(bcursor.searchKey);
-					bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(containerId, childPageNumber), 0));
-					bcursor.unfixP();
-					bcursor.setP(bcursor.removeQ());
-					p.wrap((SlottedPage) bcursor.getP().getPage());
-					// p.dump();
-				}
-			} while (!p.isLeaf());
-		}
-		
-		/**
-		 * Traverses a BTree down to the leaf level, and prepares the leaf page
-		 * for inserting the new key. bcursor.p must hold the root node
-		 * in update mode latch when this is called. When this returns
-		 * bcursor.p will point to the page where the insert should take place.
-		 * @return SearchResult containing information about where to insert the new key
-		 */
-		public final SearchResult doInsertTraverse(Transaction trx, BTreeCursor bcursor) {
-			updateModeTravese(trx, bcursor);
-			/* At this point p points to the leaf page where the key is to be inserted */
-			assert bcursor.getP() != null;
-			assert bcursor.getP().isLatchedForUpdate();
-			BTreeNode node = getBTreeNode();
-			node.wrap((SlottedPage) bcursor.getP().getPage());
-			assert node.isLeaf();
-			assert !node.isDeallocated();
-			assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
-			if (!node.canAccomodate(bcursor.searchKey)) {
-				bcursor.setQ(bcursor.removeP());
-				doSplit(trx, bcursor);
-				bcursor.setP(bcursor.removeQ());
-			}
-			bcursor.getP().upgradeUpdateLatch();
-			node.wrap((SlottedPage) bcursor.getP().getPage());
-			SearchResult sr = node.search(bcursor.searchKey);
-			return sr;
-		}
-		
-		/**
-		 * Obtain a lock on the next key. Mode and duration are specified by the caller.
-		 * @return True if insert can proceed, false if lock could not be obtained on next key.
-		 */
-		public final boolean doNextKeyLock(Transaction trx, BTreeCursor bcursor, int nextPageNumber, int nextk, LockMode mode,
-				LockDuration duration) {
-			SlottedPage nextPage = null;
-			IndexItem nextItem = null;
-			Lsn nextPageLsn = null;
-			// Make a note of current page and page Lsn
-			int currentPageNumber = bcursor.getP().getPage().getPageId().getPageNumber();
-			Lsn currentPageLsn = bcursor.getP().getPage().getPageLsn();
-			bcursor.setNextKeyLocation(null);
-			if (nextPageNumber != -1) {
-				// next key is in the right sibling page
-				bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(containerId, nextPageNumber), 0));
-				nextPage = (SlottedPage) bcursor.getR().getPage();
-				BTreeNode nextNode = getBTreeNode();
-				nextNode.wrap(nextPage);
-				nextItem = nextNode.getItem(nextk);
-				nextPageLsn = nextPage.getPageLsn();
-			} else {
-				// next key is in the current page
-				BTreeNode nextNode = getBTreeNode();
-				nextNode.wrap((SlottedPage) bcursor.getP().getPage());
-				nextPageLsn = bcursor.getP().getPage().getPageLsn();
-				if (nextk == -1) {
-					nextItem = nextNode.getHighKey(); // represents infinity
-				} else {
-					nextItem = nextNode.getItem(nextk);
-				}
-			}
-			try {
-				// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
-				trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
-				bcursor.setNextKeyLocation(nextItem.getLocation());
-				/*
-				 * Instant duration lock succeeded. We can proceed with the insert.
-				 */
-				return true;
-			} catch (LockException e) {
-				
-				if (log.isDebugEnabled()) {
-					log.debug(LOG_CLASS_NAME, "doNextKeyLock", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + mode + " lock on " + nextItem.getLocation());
-				}
+            bcursor.setP(bcursor.removeQ());
+            BTreeNode rootNode = btree.getBTreeNode();
+            bcursor.getP().upgradeUpdateLatch();
+            rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 
-				/*
-				 * Someone else has inserted or deleted a key in the same key range.
-				 * We need to unlatch all pages and unconditionally wait for a lock on
-				 * the next key.
-				 */
-				bcursor.unfixP();
-				bcursor.unfixR();
-				
-				// Delay for testing
-				// FIXME At present we use a crude mechanism to decide whether to introduce an artificial delay
-				if (Thread.currentThread().getName().equals("TestingInsertRestartDueToKeyRangeModification")) {
-					try {
-						Thread.sleep(2 * 1000);
-					} catch (InterruptedException e1) {
-						// TODO Auto-generated catch block
-						e1.printStackTrace();
-					}
-				}
-				
-				/*
-				 * Wait unconditionally for the other transaction to finish
-				 */
-				// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
-				// trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
-				// Above looks like an error as lock duration is hard coded???
-				// FIXME What if this lock attempt fails due to deadlock - must ensure proper cleanup.
-				trx.acquireLock(nextItem.getLocation(), mode, duration);
-				bcursor.setNextKeyLocation(nextItem.getLocation());
-				/*
-				 * Now we have obtained the lock.
-				 * We can continue from where we were if nothing has changed in the meantime
-				 */
-				bcursor.setP(btreeMgr.bufmgr.fixExclusive(new PageId(containerId, currentPageNumber), false, -1, 0));
-				if (nextPageNumber != -1) {
-					bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(containerId, nextPageNumber), 0));
-				}
-				if (currentPageLsn.compareTo(bcursor.getP().getPage().getPageLsn()) == 0) {
-					if (nextPageNumber == -1 || nextPageLsn.compareTo(bcursor.getR().getPage().getPageLsn()) == 0) {
-						/*
-						 * Nothing has changed, so we can carry on as before.
-						 */
-						return true;
-					}
-				} else {
-					
-					/*
-					 * We could avoid a rescan of the tree by checking that the next key
-					 * previously identified hasn't changed. For now, we just give up and restart
-					 * the insert.
-					 */
-					bcursor.unfixR();
-					bcursor.unfixP();
-				}
-			}
-			/*
-			 * Restart insert
-			 */
-			// System.out.println(Thread.currentThread().getName() + ":Restarting insert");
-			//boolean result = 
-			trx.releaseLock(bcursor.getNextKeyLocation());
-			// System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
-			bcursor.setNextKeyLocation(null);
-			return false;
-		}
-		
-		/**
-		 * @see #insert(Transaction, IndexKey, Location) 
-		 */
-		public final boolean doInsert(Transaction trx, IndexKey key, Location location) {
+            IncreaseTreeHeightOperation ithOperation = (IncreaseTreeHeightOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_INCREASETREEHEIGHT_OPERATION);
+            ithOperation.setUndoNextLsn(undoNextLsn);
+            ithOperation.setKeyFactoryType(btree.keyFactoryType);
+            ithOperation.setLocationFactoryType(btree.locationFactoryType);
+            ithOperation.rightSibling = rootNode.header.rightSibling;
+            ithOperation.leftSibling = newSiblingPageNumber;
+            ithOperation.spaceMapPageNumber = spaceMapPageNumber;
+            // New child page will inherit the root page leaf attribute
+            ithOperation.setLeaf(rootNode.isLeaf());
+            ithOperation.setUnique(btree.isUnique());
+            for (int k = FIRST_KEY_POS; k <= rootNode.header.keyCount; k++) {
+                ithOperation.items.add(rootNode.getItem(k));
+            }
+            IndexItem leftChildHighKey = rootNode
+                .getItem(rootNode.header.keyCount);
+            leftChildHighKey.setLeaf(false);
+            leftChildHighKey.setChildPageNumber(ithOperation.leftSibling);
+            IndexItem rightChildHighKey = rootNode.getInfiniteKey();
+            rightChildHighKey.setLeaf(false);
+            rightChildHighKey.setChildPageNumber(ithOperation.rightSibling);
+            ithOperation.rootItems.add(leftChildHighKey);
+            ithOperation.rootItems.add(rightChildHighKey);
 
-			BTreeCursor bcursor = new BTreeCursor();
-			bcursor.searchKey = new IndexItem(key, location, -1, true, isUnique());
+            // Latch the new page exclusively
+            bcursor.setQ(btree.btreeMgr.bufmgr.fixExclusive(new PageId(
+                btree.containerId,
+                ithOperation.leftSibling), true, btree.btreeMgr.spMgr
+                .getPageType(), 0));
+            try {
+                Lsn lsn = trx.logInsert(rootNode.page, ithOperation);
 
-			try {
-				/*
-				 * Traverse to leaf page
-				 */
-				SearchResult sr = doInsertTraverse(trx, bcursor);
+                btree.btreeMgr.redo(rootNode.page, ithOperation);
+                bcursor.getP().setDirty(lsn);
 
-				int nextKeyPage = -1;
-				int nextk = -1;
+                btree.btreeMgr.redo(bcursor.getQ().getPage(), ithOperation);
+                bcursor.getQ().setDirty(lsn);
 
-				if (sr.k == -1) {
-					/* next key is in the next page or it is
-					 * INFINITY if this is the rightmost page.
-					 */
-					BTreeNode node = getBTreeNode();
-					node.wrap((SlottedPage) bcursor.getP().getPage());
-					nextKeyPage = node.header.rightSibling;
-					if (nextKeyPage != -1) {
-						nextk = FIRST_KEY_POS; // first key of next page
-					}
-				} else {
-					/*
-					 * We are positioned on a key that is either equal to
-					 * searchkey or greater.
-					 */
-					if (sr.exactMatch) {
-						Savepoint sp = trx.createSavepoint(false);
-						boolean needRollback = false;
-						Location loc = sr.item.getLocation();
-						LockDuration duration = (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ||
-								trx.getIsolationMode() == IsolationMode.READ_COMMITTED) ? LockDuration.MANUAL_DURATION :
-									LockDuration.COMMIT_DURATION;
-						/*
-						 * Oops - possibly a unique constraint violation
-						 */
-						try {
-							try {
-								// System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-								trx.acquireLockNowait(loc, LockMode.SHARED, duration);
-							} catch (LockException e) {
-								// FIXME Test case
-								if (log.isDebugEnabled()) {
-									log.debug(LOG_CLASS_NAME, "doInsert", "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + LockMode.SHARED + " lock on " + loc);
-								}
-								/*
-								 * Failed to acquire conditional lock. 
-								 * Need to unlatch page and retry unconditionally. 
-								 */
-								bcursor.unfixP();
-								// System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
-								trx.acquireLock(loc, LockMode.SHARED, duration);
-								/*
-								 * We have obtained the lock. We need to double check that the key
-								 * still exists.
-								 */
-								bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(containerId, BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
-								sr = doInsertTraverse(trx, bcursor);
-							}
-							if (sr.exactMatch && sr.item.getLocation().equals(loc)) {
-								/*
-								 * Mohan says that for RR we need a commit duration lock, but
-								 * for CS, maybe we should release the lock here??
-								 */
-								if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY ||
-										trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
-									trx.releaseLock(loc);
-								}
-								log.warn(LOG_CLASS_NAME, "doInsert", mcat.getMessage("WB0003", key, location));
-								throw new UniqueConstraintViolationException(mcat.getMessage("WB0003", key, location));
-							}
-							/*
-							 * Key has been deleted or has been rolled back in the meantime
-							 */
-							needRollback = true;
-							/*
-							 * Start again from the beginning
-							 */
-							return false;
-						} finally {
-							if (needRollback) {
-								trx.rollback(sp);
-							}
-						}
-					} else {
-						/*
-						 * We are positioned on a key greater than the search key.
-						 */
-						nextk = sr.k;
-					}
-				}
-				/*
-				 * Try to obtain instant lock on next key.
-				 */
-				// if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION)) {
-				/* 
-				 * It seems erroneous to obtain an instant_duration lock on next key,
-				 * as until the key has been inserted, it does not safeguard the key range.
-				 * We need to obtain the lock and then release it after the key has been inserted into the
-				 * page.
-				 * A potential optimisation would be to request conditional instant duration lock while the
-				 * pages are latched, but manual duration lock if the pages are unlatched due to
-				 * conditional lock not being available. Assumption is that while the page is latched,
-				 * another transaction cannot obtain a lock on next key. I think however that this
-				 * won't work because of data locking - therefore for now we take a conservative approach.
-				 */
-				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION)) {
-					return false;
-				}
-				/*
-				 * We can finally insert the key and be done with!
-				 */
-				InsertOperation insertOp = (InsertOperation) btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_INSERT_OPERATION);
-				insertOp.setKeyFactoryType(keyFactoryType);
-				insertOp.setLocationFactoryType(locationFactoryType);
-				insertOp.setItem(bcursor.searchKey);
-				insertOp.setUnique(isUnique());
+                bcursor.unfixP();
 
-				try {
-					Lsn lsn = trx.logInsert(bcursor.getP().getPage(), insertOp);
-					btreeMgr.redo(bcursor.getP().getPage(), insertOp);
-					bcursor.getP().setDirty(lsn);
-				} finally {
-					bcursor.unfixP();
-				}
-			
-				/*
-				 * We can now release the lock on the next key.
-				 */
-				//boolean result = 
-				trx.releaseLock(bcursor.getNextKeyLocation());
-				// System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
-			} finally {
-				bcursor.setNextKeyLocation(null);
-				bcursor.unfixAll();
-			}
-			
-			return true;
-		}
+                /*
+                 * Check that Q covers the current search key.
+                 */
+                int comp = leftChildHighKey.compareTo(bcursor.searchKey);
+                if (comp >= 0) {
+                    // new key will stay in left child page
+                    bcursor.getQ().downgradeExclusiveLatch();
+                    bcursor.unfixR();
+                } else {
+                    // new key will be in the right child page
+                    bcursor.unfixQ();
+                    bcursor.setQ(bcursor.removeR());
+                }
+            } finally {
+                // TODO is this robust enough?
+                bcursor.unfixP();
+                bcursor.unfixR();
+            }
+        }
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.bt.BTree#insert(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.bt.IndexKey, org.simpledbm.rss.bt.Location)
-		 */
-		public final void insert(Transaction trx, IndexKey key,
-				Location location) {
-		    Savepoint savepoint = trx.createSavepoint(false);
-		    boolean success = false;
-		    try {
-		        success = doInsert(trx, key, location);
-		        while (!success) {
-		            success = doInsert(trx, key, location);
-		        }
-		    }
-		    finally {
-		        if (!success) {
-		            trx.rollback(savepoint);
-		        }
-		    }
-		}
+        /**
+         * Decrease tree height when root page has only one child and that child does not have 
+         * a right sibling. The root page and its child must be latched in UPDATE mode prior
+         * to calling this method. At the end of this operation, the root will remain latched in
+         * UPDATE mode.
+         * <p>
+         * Important note:
+         * To increase concurrency, we update the space map page after the SMO as a separate
+         * redo only action. This improves concurrency because we do not hold the space map
+         * page exclusively during the SMO. However, it has the disadvantage that if the SMO 
+         * survives a system crash, and the log for the space map page updates does not survive,
+         * then the page will remain allocated on the space map, even though it is no longer
+         * in use. It is posible to identify deallocated pages by checking the page flags for the
+         * bit BTreeNode.
+         * @param bcursor bcursor.p must point to root page, and bcursor.q to only child
+         */
+        public final void doDecreaseTreeHeight(Transaction trx,
+                BTreeCursor bcursor) {
 
-		/**
-		 * @see #delete(Transaction, IndexKey, Location)
-		 */
-		public final boolean doDelete(Transaction trx, IndexKey key, Location location) {
+            final BTreeImpl btree = this;
 
-			BTreeCursor bcursor = new BTreeCursor();
-			bcursor.searchKey = new IndexItem(key, location, -1, true, isUnique());
-			
-			try {
-				/*
-				 * Traverse to leaf page
-				 */
-				updateModeTravese(trx, bcursor);
-				assert bcursor.getP() != null;
-				assert bcursor.getP().isLatchedForUpdate();
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
 
-				/* 
-				 * At this point p points to the leaf page where the key is to be deleted 
-				 */
-				bcursor.getP().upgradeUpdateLatch();
-				BTreeNode node = getBTreeNode();
-				node.wrap((SlottedPage) bcursor.getP().getPage());
-				assert node.isLeaf();
-				assert !node.isDeallocated();
-				assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
 
-				SearchResult sr = node.search(bcursor.searchKey);
-				if (!sr.exactMatch) {
-					// key not found?? something is wrong
-					log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage("EB0004", bcursor.searchKey.toString()));
-					throw new IndexException(mcat.getMessage("EB0004", bcursor.searchKey.toString())); 
-				}
+            // root page
+            bcursor.getP().upgradeUpdateLatch();
+            BTreeNode rootNode = btree.getBTreeNode();
+            rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 
-				int nextKeyPage = -1;
-				int nextk = -1;
-				
-				if (sr.k == node.getKeyCount()) {
-					// this is the last key on the page
-					nextKeyPage = node.header.rightSibling;
-					if (nextKeyPage != -1) {
-						nextk = FIRST_KEY_POS;
-					}
-				}
-				else {
-					nextk = sr.k + 1;
-				}
-				
-				/*
-				 * Try to obtain commit duration lock on next key.
-				 */
-				if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION)) {
-					return false;
-				}
-				/*
-				 * Now we can delete the key and be done with!
-				 */
-				DeleteOperation deleteOp = (DeleteOperation) btreeMgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_DELETE_OPERATION);
-				deleteOp.setKeyFactoryType(keyFactoryType);
-				deleteOp.setLocationFactoryType(locationFactoryType);
-				deleteOp.setItem(bcursor.searchKey);
-				deleteOp.setUnique(isUnique());
-				
-				try {
-					Lsn lsn = trx.logInsert(bcursor.getP().getPage(), deleteOp);
-					btreeMgr.redo(bcursor.getP().getPage(), deleteOp);
-					bcursor.getP().setDirty(lsn);
-				}
-				finally {
-					bcursor.unfixP();
-				}
-			}
-			finally {
-				bcursor.unfixAll();
-			}
-			
-			return true;
-		}
+            // child page
+            bcursor.getQ().upgradeUpdateLatch();
+            BTreeNode childNode = btree.getBTreeNode();
+            childNode.wrap((SlottedPage) bcursor.getQ().getPage());
 
-		/**
-		 * Delete specified key and location combination. It is an error if the key is not found.
-		 * It is assumed that location is already locked in exclusive mode. At the end of this
-		 * operation, the next key will be locked in exclusive mode, and the lock on location may be
-		 * released.
-		 */
-		public final void delete(Transaction trx, IndexKey key,
-				Location location) {
-		    Savepoint savepoint = trx.createSavepoint(false);
-		    boolean success = false;
-		    try {
+            DecreaseTreeHeightOperation dthOperation = (DecreaseTreeHeightOperation) btree.btreeMgr.loggableFactory
+                .getInstance(
+                    BTreeIndexManagerImpl.MODULE_ID,
+                    BTreeIndexManagerImpl.TYPE_DECREASETREEHEIGHT_OPERATION);
+            dthOperation.setKeyFactoryType(btree.keyFactoryType);
+            dthOperation.setLocationFactoryType(btree.locationFactoryType);
+            // root will inherit the leaf status of child node
+            dthOperation.setLeaf(childNode.isLeaf());
+            dthOperation.setUnique(dthOperation.isUnique());
+            for (int k = FIRST_KEY_POS; k <= childNode.header.keyCount; k++) {
+                dthOperation.items.add(childNode.getItem(k));
+            }
+            dthOperation.childPageSpaceMap = childNode.page
+                .getSpaceMapPageNumber();
+            dthOperation.childPageNumber = childNode.page
+                .getPageId()
+                .getPageNumber();
+
+            try {
+                Lsn lsn = trx.logInsert(rootNode.page, dthOperation);
+
+                btree.btreeMgr.redo(rootNode.page, dthOperation);
+                bcursor.getP().setDirty(lsn);
+
+                btree.btreeMgr.redo(bcursor.getQ().getPage(), dthOperation);
+                bcursor.getQ().setDirty(lsn);
+            } finally {
+                // TODO Is this robust enough?
+                bcursor.unfixQ();
+                bcursor.getP().downgradeExclusiveLatch();
+            }
+
+            /*
+             * We log the space map operation as a separate discrete action.
+             * If this log record does not survive a system crash, then the page
+             * will end up appearing allocated. However the actual page will be
+             * marked as deallocated, and hence can be reclaimed later on.
+             */
+            btree.spaceCursor.fixSpaceMapPageExclusively(
+                dthOperation.childPageSpaceMap,
+                dthOperation.childPageNumber);
+            try {
+                btree.spaceCursor.updateAndLogRedoOnly(
+                    trx,
+                    dthOperation.childPageNumber,
+                    0);
+            } finally {
+                btree.spaceCursor.unfixCurrentSpaceMapPage();
+            }
+        }
+
+        /**
+         * Splits the parent node of current node Q. Parent must be latched in 
+         * UPDATE mode prior to the call. After the split is complete, the
+         * parent node or its new sibling node, whichever covers the search key,
+         * will be left latched as bcursor.p. Latches on child nodes will remain
+         * unchanged.  
+         */
+        final void doSplitParent(Transaction trx, BTreeCursor bcursor) {
+            /*
+             * doSplit requires Q to point to page that is to be
+             * split, so we need to point Q to P temporarily.
+             */
+            BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
+            BufferAccessBlock savedR = bcursor.removeR(); // Save R
+            bcursor.setQ(bcursor.removeP()); // Now Q is P
+            try {
+                doSplit(trx, bcursor);
+            } finally {
+                bcursor.setP(bcursor.removeQ());
+                bcursor.setQ(savedQ);
+                bcursor.setR(savedR);
+            }
+        }
+
+        /**
+         * Repairs underflow when an about-to-underflow child is encountered during update
+         * mode traversal. Both the parent page (bcursor.p) and its child page (bcursor.q) must
+         * be latched in UPDATE mode prior to calling this method. When this method returns,
+         * the latch on the parent page will have been released, and the child page that covers the
+         * search key will remain latched in bcursor.q. 
+         * <p>
+         * For this algorithm to work, an index page needs to have at least two children who
+         * are linked the index page.
+         */
+        public final boolean doRepairPageUnderflow(Transaction trx,
+                BTreeCursor bcursor) {
+
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
+
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
+
+            BTreeNode q = getBTreeNode();
+            q.wrap((SlottedPage) bcursor.getQ().getPage());
+
+            BTreeNode p = getBTreeNode();
+            p.wrap((SlottedPage) bcursor.getP().getPage());
+
+            BTreeNode r = getBTreeNode();
+
+            int Q = q.page.getPageId().getPageNumber();
+
+            IndexItem u = q.getHighKey();
+            IndexItem highkeyP = p.getHighKey();
+            /*
+             * If the high key of Q is less than the high key of
+             * P then Q is not the rightmost child of P.
+             */
+            if (u.compareTo(highkeyP) < 0) {
+                /* Q is not the rightmost child of its parent P 
+                 *
+                 * There are three possibilities:
+                 * a) R is an indirect child of P.
+                 * b) R is a direct child of P, and has a sibling S that is an indirect child of P.
+                 * c) R is a direct child of P and has a sibling S that is also a direct child of P.
+                 */
+                /* v = index record associated with Q in P */
+                IndexItem v = p.findIndexItem(Q);
+                /* R = rightsibling of Q */
+                int R = q.header.rightSibling;
+                assert R != -1;
+
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                    containerId,
+                    R), 0));
+                r.wrap((SlottedPage) bcursor.getR().getPage());
+                /*
+                 * If the high key of Q is than the index key in P associated with Q,
+                 * then R must be an indirect child of Q.
+                 */
+                if (u.compareTo(v) < 0) {
+                    /* a) R is an indirect child of P (case 13 in paper)
+                     * This means that we can merge with R.
+                     *                    P[v|w]
+                     *           +----------+ +--------+
+                     *           |                     |
+                     *          Q[u]------>R[v]------>S[w]
+                     */
+                    bcursor.unfixP();
+                    if (q.canMergeWith(r)) {
+                        doMerge(trx, bcursor);
+                    } else {
+                        // FIXME TEST case
+                        doRedistribute(trx, bcursor);
+                    }
+                } else {
+                    /* b) or c) R is a direct child of P */
+                    /* w = index record associated with R in P */
+                    IndexItem w = p.findIndexItem(R);
+                    v = r.getHighKey();
+                    /*
+                     * If highkey of R is less than the index key in P associated with R,
+                     * then R must have a right sibling S that is an indirect child of
+                     * P. 
+                     */
+                    if (v.compareTo(w) < 0) {
+                        /* b) R has a right sibling S that is indirect child of P (fig 14)
+                         * 
+                         *                    P[u|w]
+                         *           +----------+ +
+                         *           |            |
+                         *          Q[u]-------->R[v]------>S[w]
+                         * 
+                         * We cannot unlink R from P until we have S linked to P.
+                         * Therefore, we need to link S to P first.
+                         * 
+                         * If P cannot accomodate the index key v then it will need to be 
+                         * split.
+                         */
+                        if (!p.canAccomodate(v)) {
+                            doSplitParent(trx, bcursor);
+                            /*
+                             * After the split, Q should still be a child of P, but
+                             * R may have moved to the sibling of P.
+                             */
+                            assert p.findIndexItem(Q) != null;
+                            if (p.findIndexItem(R) == null) {
+                                /* R is not a child of P anymore.
+                                 * We need to restart the algorithm
+                                 */
+                                // FIXME TEST case
+                                bcursor.unfixR();
+                                return true;
+                            }
+                        }
+                        /*
+                         * We need to link S to P. Since our cursor is currently
+                         * positioned Q, we need to temporarily move right to R,
+                         * in order to do the link.
+                         */
+                        BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
+                        bcursor.setQ(bcursor.removeR()); // Now Q is R
+                        try {
+                            doLink(trx, bcursor); // Link S to P
+                        } finally {
+                            bcursor.setR(bcursor.removeQ()); // Restore R
+                            bcursor.setQ(savedQ); // Restore Q
+                        }
+                    }
+                    /*
+                     * At this point any sibling of R (ie, S) is
+                     * guaranteed to be linked to parent P. So we can now
+                     * unlink R from P to allow merging of Q and R.
+                     */
+                    doUnlink(trx, bcursor); // Now we can unlink R from P
+                    /*
+                     * Merge Q and R
+                     */
+                    q.wrap((SlottedPage) bcursor.getQ().getPage());
+                    r.wrap((SlottedPage) bcursor.getR().getPage());
+                    if (q.canMergeWith(r)) {
+                        doMerge(trx, bcursor);
+                    } else {
+                        // FIXME TEST case
+                        doRedistribute(trx, bcursor);
+                    }
+                }
+            } else {
+                /* Q is the rightmost child of its parent P
+                 * There are two possibilities.
+                 * The leftsibling L of Q is 
+                 * a) a direct child of P
+                 * b) an indirect child of P.
+                 */
+                /* Find node L to the left of Q
+                 * Note that since every page must have at least 2 items,
+                 * we are guaranteed to find L.
+                 */
+                IndexItem v = p.findPrevIndexItem(Q);
+                assert v != null;
+                int L = v.getChildPageNumber();
+                /*
+                 * Since our cursor is positioned on Q, we need to move left.
+                 * But to do that we need to unlatch Q first. 
+                 */
+                bcursor.unfixQ();
+                /* Now L becomes Q */
+                bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                    containerId,
+                    L), 0));
+                q.wrap((SlottedPage) bcursor.getQ().getPage());
+                /* The node to the right of L is N */
+                /* This may or may not be Q depending upon whether N is
+                 * an indirect child of P.
+                 */
+                int N = q.header.rightSibling;
+                assert N != -1;
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                    containerId,
+                    N), 0));
+                r.wrap((SlottedPage) bcursor.getR().getPage());
+
+                /*
+                 * Get highkey of L and compare with the index key associated with L in
+                 * page P. 
+                 */
+                u = q.getHighKey();
+                if (u.compareTo(v) == 0) {
+                    /* 
+                     * Fig 17.
+                     * L is direct child of P 
+                     * and the right sibling of L is Q
+                     * 
+                     *                   P[u|v|w]
+                     *           +---------+ + +--------+
+                     *           |           |          |
+                     *         ?[u]------->L[v]------->Q[w]
+                     *  
+                     */
+                    assert q.header.rightSibling == Q;
+                    if (!r.isAboutToUnderflow()) {
+                        /* Q is no longer about to overflow (remember R is Q!) */
+                        // FIXME Test case
+                        bcursor.unfixP();
+                        bcursor.unfixQ();
+                        bcursor.setQ(bcursor.removeR());
+                    } else {
+                        /* In order to merge Q with its left sibling L, we need
+                         * to unlink Q from its parent first.
+                         * Remember that bcursor.q is positioned on L.
+                         */
+                        /* unlink Q from P */
+                        doUnlink(trx, bcursor);
+                        q.wrap((SlottedPage) bcursor.getQ().getPage());
+                        r.wrap((SlottedPage) bcursor.getR().getPage());
+                        if (q.canMergeWith(r)) {
+                            doMerge(trx, bcursor);
+                        } else {
+                            // FIXME Test case
+                            doRedistribute(trx, bcursor);
+                        }
+                    }
+                } else {
+                    /*
+                     *  Fig 19 in paper.
+                     * The left sibling L of Q has a right sibling N
+                     * that is an indirect child of P. Q is the right
+                     * sibling of N. 
+                     * 
+                     *                    P[v|w]
+                     *           +----------+ +--------+
+                     *           |                     |
+                     *          L[u]------>N[v]------>Q[w]
+                     * 
+                     * 
+                     * To merge Q with N, we first need to link
+                     * N to parent page P, then unlink Q from P.
+                     */
+                    if (!p.canAccomodate(u)) {
+                        doSplitParent(trx, bcursor);
+                        /*
+                         * Since Q was the rightmost child of P,
+                         * even after the split Q and its left sibling L must 
+                         * belong to P (because a minimum of 2 items must be
+                         * present in a page).
+                         */
+                        p.wrap((SlottedPage) bcursor.getP().getPage());
+                        assert p.findIndexItem(Q) != null;
+                        assert p.findIndexItem(L) != null;
+                    }
+                    /* link N to parent P */
+                    doLink(trx, bcursor);
+                    /* unlatch L */
+                    bcursor.unfixQ();
+                    /* N becomes bcursor.q */
+                    bcursor.setQ(bcursor.removeR());
+                    q.wrap((SlottedPage) bcursor.getQ().getPage());
+                    /* latch Q again, which now becomes bcursor.r */
+                    assert Q == q.header.rightSibling;
+                    bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                        containerId,
+                        Q), 0));
+                    r.wrap((SlottedPage) bcursor.getR().getPage());
+                    if (!r.isAboutToUnderflow()) {
+                        /* Q is no longer about to underflow */
+                        // FIXME Test case
+                        bcursor.unfixP();
+                        bcursor.unfixQ();
+                        bcursor.setQ(bcursor.removeR());
+                    } else {
+                        /* unlink Q from parent P */
+                        doUnlink(trx, bcursor);
+                        q.wrap((SlottedPage) bcursor.getQ().getPage());
+                        r.wrap((SlottedPage) bcursor.getR().getPage());
+                        if (q.canMergeWith(r)) {
+                            /* merge N and Q */
+                            doMerge(trx, bcursor);
+                        } else {
+                            doRedistribute(trx, bcursor);
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Repairs underflow when an about-to-underflow child is encountered during update
+         * mode traversal. Both the parent page (bcursor.p) and its child page (bcursor.q) must
+         * be latched in UPDATE mode prior to calling this method. When this method returns,
+         * the latch on the parent page will have been released, and the child page that covers the
+         * search key will remain latched in bcursor.q. 
+         * <p>
+         * For this algorithm to work, an index page needs to have at least two children who
+         * are linked the index page.
+         */
+        public final void repairPageUnderflow(Transaction trx,
+                BTreeCursor bcursor) {
+            boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
+            while (tryAgain) {
+                // FIXME Test case
+                tryAgain = doRepairPageUnderflow(trx, bcursor);
+            }
+        }
+
+        /**
+         * Walks down the tree using UPDATE mode latching. On the way down, pages may be
+         * split or merged to ensure that the tree maintains its balance. 
+         * bcursor.searchKey represents the key being searched for.
+         * When this returns bcursor.p will point to the page that contains or should
+         * contain the search key. This page will be latched in UPDATE mode.
+         * <p>This traversal mode is used for inserts and deletes.
+         * Corresponds to Update-mode-traverse in btree paper.
+         */
+        public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) {
+            /*
+             * Fix root page
+             */
+            bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                containerId,
+                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
+            BTreeNode p = getBTreeNode();
+            p.wrap((SlottedPage) bcursor.getP().getPage());
+            if (p.header.rightSibling != -1) {
+                /* 
+                 * Root page has a right sibling. This means that the root page
+                 * was split at some point, but the parent has not yet been
+                 * created.
+                 * A new child page will be allocated and the root will become
+                 * the parent of this new child, and its right sibling. 
+                 */
+                bcursor.setQ(bcursor.removeP());
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                    containerId,
+                    p.header.rightSibling), 0));
+                doIncreaseTreeHeight(trx, bcursor);
+                bcursor.setP(bcursor.removeQ());
+                p.wrap((SlottedPage) bcursor.getP().getPage());
+            }
+            if (p.isLeaf()) {
+                return;
+            }
+            int childPageNumber = p.findChildPage(bcursor.searchKey);
+            bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                containerId,
+                childPageNumber), 0));
+            BTreeNode q = getBTreeNode();
+            q.wrap((SlottedPage) bcursor.getQ().getPage());
+            boolean childPageLatched = true;
+            if (p.isRoot() && p.header.keyCount == 1
+                    && q.header.rightSibling == -1) {
+                /* Q is only child of P and Q has no right sibling */
+                /*
+                 * Root is underflown as it has only one child and this child does not
+                 * have a right sibling. Decrease the height of the tree by
+                 * merging the child page into the root.
+                 */
+
+                doDecreaseTreeHeight(trx, bcursor);
+                childPageLatched = false;
+            }
+            p.wrap((SlottedPage) bcursor.getP().getPage());
+            while (!p.isLeaf()) {
+                if (!childPageLatched) {
+                    /*
+                     * BUG in published algorithm - need to avoid latching
+                     * Q if already latched.
+                     */
+
+                    childPageNumber = p.findChildPage(bcursor.searchKey);
+                    bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                        containerId,
+                        childPageNumber), 0));
+                    q.wrap((SlottedPage) bcursor.getQ().getPage());
+                } else {
+                    childPageLatched = false;
+                }
+                if (q.isAboutToUnderflow()) {
+                    repairPageUnderflow(trx, bcursor);
+                    bcursor.setP(bcursor.removeQ());
+                } else {
+                    IndexItem v = p.findIndexItem(q.page
+                        .getPageId()
+                        .getPageNumber());
+                    IndexItem u = q.getHighKey();
+                    if (u.compareTo(v) < 0) {
+                        /* Q has a right sibling page R which is an
+                         * indirect child of P. Also handles the case where R is
+                         * the right most page.
+                         * Fig 5 in the paper.
+                         *                    P[v|w]
+                         *           +----------+ +--------+
+                         *           |                     |
+                         *          Q[u]------>R[v]------>S[w]
+                         */
+                        if (!p.canAccomodate(u)) {
+                            doSplitParent(trx, bcursor);
+                        }
+                        doLink(trx, bcursor);
+                    }
+                    q.wrap((SlottedPage) bcursor.getQ().getPage());
+                    if (q.getHighKey().compareTo(bcursor.searchKey) >= 0) {
+                        /* Q covers search key */
+
+                        bcursor.unfixP();
+                        bcursor.setP(bcursor.removeQ());
+                    } else {
+                        /* move right */
+                        int rightsibling = q.header.rightSibling;
+                        bcursor.unfixP();
+                        assert q.header.rightSibling != -1;
+                        bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(
+                            containerId,
+                            rightsibling), 0));
+                        bcursor.unfixQ();
+                    }
+                }
+                p.wrap((SlottedPage) bcursor.getP().getPage());
+            }
+        }
+
+        /**
+         * Walks down the tree acquiring shared latches on the way.
+         * bcursor.searchKey represents the key being searched for.
+         * When this returns bcursor.p will point to the leaf page that should
+         * contain the search key. bcursor.p will be left in shared latch.
+         * Corresponds to read-mode-traverse() in btree paper. 
+         */
+        public final void readModeTraverse(BTreeCursor bcursor) {
+
+            if (log.isDebugEnabled()) {
+                log.debug(
+                    LOG_CLASS_NAME,
+                    "readModeTraverse",
+                    "SIMPLEDBM-DEBUG: Read mode traverse for search key = "
+                            + bcursor.getSearchKey());
+            }
+
+            /*
+             * Fix root page
+             */
+            bcursor.setP(btreeMgr.bufmgr.fixShared(new PageId(
+                containerId,
+                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
+            BTreeNode p = getBTreeNode();
+            p.wrap((SlottedPage) bcursor.getP().getPage());
+            // p.dump();
+
+            do {
+                IndexItem v = p.getHighKey();
+                if (v.compareTo(bcursor.getSearchKey()) < 0) {
+                    // Move right as the search key is greater than the highkey
+                    // FIXME TEST case
+                    int rightsibling = p.header.rightSibling;
+                    bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(
+                        containerId,
+                        rightsibling), 0));
+                    bcursor.unfixP();
+                    bcursor.setP(bcursor.removeQ());
+                    p.wrap((SlottedPage) bcursor.getP().getPage());
+                    // p.dump();
+                }
+                if (!p.isLeaf()) {
+                    // find the child page and move down
+                    int childPageNumber = p.findChildPage(bcursor.searchKey);
+                    bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(
+                        containerId,
+                        childPageNumber), 0));
+                    bcursor.unfixP();
+                    bcursor.setP(bcursor.removeQ());
+                    p.wrap((SlottedPage) bcursor.getP().getPage());
+                    // p.dump();
+                }
+            } while (!p.isLeaf());
+        }
+
+        /**
+         * Traverses a BTree down to the leaf level, and prepares the leaf page
+         * for inserting the new key. bcursor.p must hold the root node
+         * in update mode latch when this is called. When this returns
+         * bcursor.p will point to the page where the insert should take place.
+         * @return SearchResult containing information about where to insert the new key
+         */
+        public final SearchResult doInsertTraverse(Transaction trx,
+                BTreeCursor bcursor) {
+            updateModeTravese(trx, bcursor);
+            /* At this point p points to the leaf page where the key is to be inserted */
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
+            BTreeNode node = getBTreeNode();
+            node.wrap((SlottedPage) bcursor.getP().getPage());
+            assert node.isLeaf();
+            assert !node.isDeallocated();
+            assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
+            if (!node.canAccomodate(bcursor.searchKey)) {
+                bcursor.setQ(bcursor.removeP());
+                doSplit(trx, bcursor);
+                bcursor.setP(bcursor.removeQ());
+            }
+            bcursor.getP().upgradeUpdateLatch();
+            node.wrap((SlottedPage) bcursor.getP().getPage());
+            SearchResult sr = node.search(bcursor.searchKey);
+            return sr;
+        }
+
+        /**
+         * Obtain a lock on the next key. Mode and duration are specified by the caller.
+         * @return True if insert can proceed, false if lock could not be obtained on next key.
+         */
+        public final boolean doNextKeyLock(Transaction trx,
+                BTreeCursor bcursor, int nextPageNumber, int nextk,
+                LockMode mode, LockDuration duration) {
+            SlottedPage nextPage = null;
+            IndexItem nextItem = null;
+            Lsn nextPageLsn = null;
+            // Make a note of current page and page Lsn
+            int currentPageNumber = bcursor
+                .getP()
+                .getPage()
+                .getPageId()
+                .getPageNumber();
+            Lsn currentPageLsn = bcursor.getP().getPage().getPageLsn();
+            bcursor.setNextKeyLocation(null);
+            if (nextPageNumber != -1) {
+                // next key is in the right sibling page
+                bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(
+                    containerId,
+                    nextPageNumber), 0));
+                nextPage = (SlottedPage) bcursor.getR().getPage();
+                BTreeNode nextNode = getBTreeNode();
+                nextNode.wrap(nextPage);
+                nextItem = nextNode.getItem(nextk);
+                nextPageLsn = nextPage.getPageLsn();
+            } else {
+                // next key is in the current page
+                BTreeNode nextNode = getBTreeNode();
+                nextNode.wrap((SlottedPage) bcursor.getP().getPage());
+                nextPageLsn = bcursor.getP().getPage().getPageLsn();
+                if (nextk == -1) {
+                    nextItem = nextNode.getHighKey(); // represents infinity
+                } else {
+                    nextItem = nextNode.getItem(nextk);
+                }
+            }
+            try {
+                // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
+                trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
+                bcursor.setNextKeyLocation(nextItem.getLocation());
+                /*
+                 * Instant duration lock succeeded. We can proceed with the insert.
+                 */
+                return true;
+            } catch (LockException e) {
+
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        LOG_CLASS_NAME,
+                        "doNextKeyLock",
+                        "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + mode
+                                + " lock on " + nextItem.getLocation());
+                }
+
+                /*
+                 * Someone else has inserted or deleted a key in the same key range.
+                 * We need to unlatch all pages and unconditionally wait for a lock on
+                 * the next key.
+                 */
+                bcursor.unfixP();
+                bcursor.unfixR();
+
+                // Delay for testing
+                // FIXME At present we use a crude mechanism to decide whether to introduce an artificial delay
+                if (Thread.currentThread().getName().equals(
+                    "TestingInsertRestartDueToKeyRangeModification")) {
+                    try {
+                        Thread.sleep(2 * 1000);
+                    } catch (InterruptedException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                }
+
+                /*
+                 * Wait unconditionally for the other transaction to finish
+                 */
+                // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
+                // trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
+                // Above looks like an error as lock duration is hard coded???
+                // FIXME What if this lock attempt fails due to deadlock - must ensure proper cleanup.
+                trx.acquireLock(nextItem.getLocation(), mode, duration);
+                bcursor.setNextKeyLocation(nextItem.getLocation());
+                /*
+                 * Now we have obtained the lock.
+                 * We can continue from where we were if nothing has changed in the meantime
+                 */
+                bcursor.setP(btreeMgr.bufmgr.fixExclusive(new PageId(
+                    containerId,
+                    currentPageNumber), false, -1, 0));
+                if (nextPageNumber != -1) {
+                    bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(
+                        containerId,
+                        nextPageNumber), 0));
+                }
+                if (currentPageLsn.compareTo(bcursor
+                    .getP()
+                    .getPage()
+                    .getPageLsn()) == 0) {
+                    if (nextPageNumber == -1
+                            || nextPageLsn.compareTo(bcursor
+                                .getR()
+                                .getPage()
+                                .getPageLsn()) == 0) {
+                        /*
+                         * Nothing has changed, so we can carry on as before.
+                         */
+                        return true;
+                    }
+                } else {
+
+                    /*
+                     * We could avoid a rescan of the tree by checking that the next key
+                     * previously identified hasn't changed. For now, we just give up and restart
+                     * the insert.
+                     */
+                    bcursor.unfixR();
+                    bcursor.unfixP();
+                }
+            }
+            /*
+             * Restart insert
+             */
+            // System.out.println(Thread.currentThread().getName() + ":Restarting insert");
+            //boolean result = 
+            trx.releaseLock(bcursor.getNextKeyLocation());
+            // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
+            bcursor.setNextKeyLocation(null);
+            return false;
+        }
+
+        /**
+         * @see #insert(Transaction, IndexKey, Location) 
+         */
+        public final boolean doInsert(Transaction trx, IndexKey key,
+                Location location) {
+
+            BTreeCursor bcursor = new BTreeCursor();
+            bcursor.searchKey = new IndexItem(
+                key,
+                location,
+                -1,
+                true,
+                isUnique());
+
+            try {
+                /*
+                 * Traverse to leaf page
+                 */
+                SearchResult sr = doInsertTraverse(trx, bcursor);
+
+                int nextKeyPage = -1;
+                int nextk = -1;
+
+                if (sr.k == -1) {
+                    /* next key is in the next page or it is
+                     * INFINITY if this is the rightmost page.
+                     */
+                    BTreeNode node = getBTreeNode();
+                    node.wrap((SlottedPage) bcursor.getP().getPage());
+                    nextKeyPage = node.header.rightSibling;
+                    if (nextKeyPage != -1) {
+                        nextk = FIRST_KEY_POS; // first key of next page
+                    }
+                } else {
+                    /*
+                     * We are positioned on a key that is either equal to
+                     * searchkey or greater.
+                     */
+                    if (sr.exactMatch) {
+                        Savepoint sp = trx.createSavepoint(false);
+                        boolean needRollback = false;
+                        Location loc = sr.item.getLocation();
+                        LockDuration duration = (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx
+                            .getIsolationMode() == IsolationMode.READ_COMMITTED) ? LockDuration.MANUAL_DURATION
+                                : LockDuration.COMMIT_DURATION;
+                        /*
+                         * Oops - possibly a unique constraint violation
+                         */
+                        try {
+                            try {
+                                // System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+                                trx.acquireLockNowait(
+                                    loc,
+                                    LockMode.SHARED,
+                                    duration);
+                            } catch (LockException e) {
+                                // FIXME Test case
+                                if (log.isDebugEnabled()) {
+                                    log.debug(
+                                        LOG_CLASS_NAME,
+                                        "doInsert",
+                                        "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT "
+                                                + LockMode.SHARED + " lock on "
+                                                + loc);
+                                }
+                                /*
+                                 * Failed to acquire conditional lock. 
+                                 * Need to unlatch page and retry unconditionally. 
+                                 */
+                                bcursor.unfixP();
+                                // System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+                                trx.acquireLock(loc, LockMode.SHARED, duration);
+                                /*
+                                 * We have obtained the lock. We need to double check that the key
+                                 * still exists.
+                                 */
+                                bcursor
+                                    .setP(btreeMgr.bufmgr
+                                        .fixForUpdate(
+                                            new PageId(
+                                                containerId,
+                                                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER),
+                                            0));
+                                sr = doInsertTraverse(trx, bcursor);
+                            }
+                            if (sr.exactMatch
+                                    && sr.item.getLocation().equals(loc)) {
+                                /*
+                                 * Mohan says that for RR we need a commit duration lock, but
+                                 * for CS, maybe we should release the lock here??
+                                 */
+                                if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
+                                        || trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+                                    trx.releaseLock(loc);
+                                }
+                                log.warn(LOG_CLASS_NAME, "doInsert", mcat
+                                    .getMessage("WB0003", key, location));
+                                throw new UniqueConstraintViolationException(
+                                    mcat.getMessage("WB0003", key, location));
+                            }
+                            /*
+                             * Key has been deleted or has been rolled back in the meantime
+                             */
+                            needRollback = true;
+                            /*
+                             * Start again from the beginning
+                             */
+                            return false;
+                        } finally {
+                            if (needRollback) {
+                                trx.rollback(sp);
+                            }
+                        }
+                    } else {
+                        /*
+                         * We are positioned on a key greater than the search key.
+                         */
+                        nextk = sr.k;
+                    }
+                }
+                /*
+                 * Try to obtain instant lock on next key.
+                 */
+                // if (!doNextKeyLock(trx, bcursor, nextKeyPage, nextk, LockMode.EXCLUSIVE, LockDuration.INSTANT_DURATION)) {
+                /* 
+                 * It seems erroneous to obtain an instant_duration lock on next key,
+                 * as until the key has been inserted, it does not safeguard the key range.
+                 * We need to obtain the lock and then release it after the key has been inserted into the
+                 * page.
+                 * A potential optimisation would be to request conditional instant duration lock while the
+                 * pages are latched, but manual duration lock if the pages are unlatched due to
+                 * conditional lock not being available. Assumption is that while the page is latched,
+                 * another transaction cannot obtain a lock on next key. I think however that this
+                 * won't work because of data locking - therefore for now we take a conservative approach.
+                 */
+                if (!doNextKeyLock(
+                    trx,
+                    bcursor,
+                    nextKeyPage,
+                    nextk,
+                    LockMode.EXCLUSIVE,
+                    LockDuration.MANUAL_DURATION)) {
+                    return false;
+                }
+                /*
+                 * We can finally insert the key and be done with!
+                 */
+                InsertOperation insertOp = (InsertOperation) btreeMgr.loggableFactory
+                    .getInstance(
+                        BTreeIndexManagerImpl.MODULE_ID,
+                        BTreeIndexManagerImpl.TYPE_INSERT_OPERATION);
+                insertOp.setKeyFactoryType(keyFactoryType);
+                insertOp.setLocationFactoryType(locationFactoryType);
+                insertOp.setItem(bcursor.searchKey);
+                insertOp.setUnique(isUnique());
+
+                try {
+                    Lsn lsn = trx.logInsert(bcursor.getP().getPage(), insertOp);
+                    btreeMgr.redo(bcursor.getP().getPage(), insertOp);
+                    bcursor.getP().setDirty(lsn);
+                } finally {
+                    bcursor.unfixP();
+                }
+
+                /*
+                 * We can now release the lock on the next key.
+                 */
+                //boolean result = 
+                trx.releaseLock(bcursor.getNextKeyLocation());
+                // System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
+            } finally {
+                bcursor.setNextKeyLocation(null);
+                bcursor.unfixAll();
+            }
+
+            return true;
+        }
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.bt.BTree#insert(org.simpledbm.rss.tm.Transaction, org.simpledbm.rss.bt.IndexKey, org.simpledbm.rss.bt.Location)
+         */
+        public final void insert(Transaction trx, IndexKey key,
+                Location location) {
+            Savepoint savepoint = trx.createSavepoint(false);
+            boolean success = false;
+            try {
+                success = doInsert(trx, key, location);
+                while (!success) {
+                    success = doInsert(trx, key, location);
+                }
+            } finally {
+                if (!success) {
+                    trx.rollback(savepoint);
+                }
+            }
+        }
+
+        /**
+         * @see #delete(Transaction, IndexKey, Location)
+         */
+        public final boolean doDelete(Transaction trx, IndexKey key,
+                Location location) {
+
+            BTreeCursor bcursor = new BTreeCursor();
+            bcursor.searchKey = new IndexItem(
+                key,
+                location,
+                -1,
+                true,
+                isUnique());
+
+            try {
+                /*
+                 * Traverse to leaf page
+                 */
+                updateModeTravese(trx, bcursor);
+                assert bcursor.getP() != null;
+                assert bcursor.getP().isLatchedForUpdate();
+
+                /* 
+                 * At this point p points to the leaf page where the key is to be deleted 
+                 */
+                bcursor.getP().upgradeUpdateLatch();
+                BTreeNode node = getBTreeNode();
+                node.wrap((SlottedPage) bcursor.getP().getPage());
+                assert node.isLeaf();
+                assert !node.isDeallocated();
+                assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
+
+                SearchResult sr = node.search(bcursor.searchKey);
+                if (!sr.exactMatch) {
+                    // key not found?? something is wrong
+                    log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage(
+                        "EB0004",
+                        bcursor.searchKey.toString()));
+                    throw new IndexException(mcat.getMessage(
+                        "EB0004",
+                        bcursor.searchKey.toString()));
+                }
+
+                int nextKeyPage = -1;
+                int nextk = -1;
+
+                if (sr.k == node.getKeyCount()) {
+                    // this is the last key on the page
+                    nextKeyPage = node.header.rightSibling;
+                    if (nextKeyPage != -1) {
+                        nextk = FIRST_KEY_POS;
+                    }
+                } else {
+                    nextk = sr.k + 1;
+                }
+
+                /*
+                 * Try to obtain commit duration lock on next key.
+                 */
+                if (!doNextKeyLock(
+                    trx,
+                    bcursor,
+                    nextKeyPage,
+                    nextk,
+                    LockMode.EXCLUSIVE,
+                    LockDuration.COMMIT_DURATION)) {
+                    return false;
+                }
+                /*
+                 * Now we can delete the key and be done with!
+                 */
+                DeleteOperation deleteOp = (DeleteOperation) btreeMgr.loggableFactory
+                    .getInstance(
+                        BTreeIndexManagerImpl.MODULE_ID,
+                        BTreeIndexManagerImpl.TYPE_DELETE_OPERATION);
+                deleteOp.setKeyFactoryType(keyFactoryType);
+                deleteOp.setLocationFactoryType(locationFactoryType);
+                deleteOp.setItem(bcursor.searchKey);
+                deleteOp.setUnique(isUnique());
+
+                try {
+                    Lsn lsn = trx.logInsert(bcursor.getP().getPage(), deleteOp);
+                    btreeMgr.redo(bcursor.getP().getPage(), deleteOp);
+                    bcursor.getP().setDirty(lsn);
+                } finally {
+                    bcursor.unfixP();
+                }
+            } finally {
+                bcursor.unfixAll();
+            }
+
+            return true;
+        }
+
+        /**
+         * Delete specified key and location combination. It is an error if the key is not found.
+         * It is assumed that location is already locked in exclusive mode. At the end of this
+         * operation, the next key will be locked in exclusive mode, and the lock on location may be
+         * released.
+         */
+        public final void delete(Transaction trx, IndexKey key,
+                Location location) {
+            Savepoint savepoint = trx.createSavepoint(false);
+            boolean success = false;
+            try {
                 success = doDelete(trx, key, location);
                 while (!success) {
                     success = doDelete(trx, key, location);
@@ -2525,1027 +2783,1122 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
                     trx.rollback(savepoint);
                 }
             }
-		}
+        }
 
-		/**
-		 * Searches for {@link IndexCursorImpl#currentKey} in the leaf node, and
-		 * positions the cursor on the current key or the next higher key.
-		 * Handles both fetch() and fetchNext() calls.
-		 */
-		final SearchResult doSearch(IndexCursorImpl icursor) {
-			BTreeNode node = getBTreeNode();
-			node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
-			// node.dump();
-			icursor.setEof(false);
-			SearchResult sr = null;
-			if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
-					&& node.getPage().getPageLsn().equals(icursor.pageLsn)) {
-				// If this is a call to fetchNext, check if we can avoid searching the node
-				// If page LSN hasn't changed we can used cached values.
-				sr = new SearchResult();
-				sr.item = icursor.currentKey;
-				sr.k = icursor.k;
-				sr.exactMatch = true;
-				if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-					log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat.getMessage("EB0005", node.getItem(sr.k), icursor.currentKey));
-					throw new IndexException(mcat.getMessage("EB0005", node.getItem(sr.k), icursor.currentKey));
-				}
-			}
-			else {
-				sr = node.search(icursor.currentKey);
-			}
-				
-			// if (sr.exactMatch && icursor.fetchCount > 0) {
-			if (sr.exactMatch && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
-				/*
-				 * If we have an exact match, there are two possibilities.
-				 * If this is the first call to fetch (fetchCount == 0), then
-				 * we are done. Else, we need to move to the next key.
-				 */
-				if (sr.k == node.getKeyCount()) {
-					/*
-					 * Current key is the last key on this node. Therefore,
-					 * move to the node to the right.
-					 */
-					return moveToNextNode(icursor, node, sr);
-				} else {
-					/*
-					 * Move to the next key in the same node
-					 */
-					sr.k = sr.k + 1;
-					sr.exactMatch = false;
-					sr.item = node.getItem(sr.k);
-				}
-			}
-			else if (sr.k == -1) {
-				/*
-				 * The current key is greater than all keys in this node,
-				 * therefore we need to move to the node to our right.
-				 */
-				return moveToNextNode(icursor, node, sr);
-			}
-			else if (node.header.keyCount == 1) {
-				/*
-				 * Only one key, which by definition is the high key,
-				 * so we are at EOF.
-				 */
-				icursor.setEof(true);
-				sr.k = FIRST_KEY_POS;
-				sr.exactMatch = false;
-				sr.item = node.getItem(sr.k);
-				return sr;
-			}
-			return sr;
-			
-		}
+        /**
+         * Searches for {@link IndexCursorImpl#currentKey} in the leaf node, and
+         * positions the cursor on the current key or the next higher key.
+         * Handles both fetch() and fetchNext() calls.
+         */
+        final SearchResult doSearch(IndexCursorImpl icursor) {
+            BTreeNode node = getBTreeNode();
+            node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
+            // node.dump();
+            icursor.setEof(false);
+            SearchResult sr = null;
+            if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
+                    && node.getPage().getPageLsn().equals(icursor.pageLsn)) {
+                // If this is a call to fetchNext, check if we can avoid searching the node
+                // If page LSN hasn't changed we can used cached values.
+                sr = new SearchResult();
+                sr.item = icursor.currentKey;
+                sr.k = icursor.k;
+                sr.exactMatch = true;
+                if (!node.getItem(sr.k).equals(icursor.currentKey)) {
+                    log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat
+                        .getMessage(
+                            "EB0005",
+                            node.getItem(sr.k),
+                            icursor.currentKey));
+                    throw new IndexException(mcat.getMessage("EB0005", node
+                        .getItem(sr.k), icursor.currentKey));
+                }
+            } else {
+                sr = node.search(icursor.currentKey);
+            }
 
-		/**
-		 * Moves to the node to the right if possible or sets EOF status.
-		 * Leaves current page latched in SHARED mode.
-		 */
-		private SearchResult moveToNextNode(IndexCursorImpl icursor, BTreeNode node, SearchResult sr) {
-			// Key to be fetched is in the next page
-			int nextPage = node.header.rightSibling;
-			if (nextPage == -1) {
-				/*
-				 * There isn't a node to our right, so we are at EOF.
-				 */
-				icursor.setEof(true);
-				sr.k = node.header.keyCount;
-				sr.exactMatch = false;
-				sr.item = node.getItem(sr.k);
-			} else {
-				PageId nextPageId = new PageId(containerId, nextPage);
-				icursor.bcursor.setQ(icursor.bcursor.removeP());
-				icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(
-						nextPageId, 0));
-				node.wrap((SlottedPage) icursor.bcursor.getP()
-						.getPage());
-				icursor.bcursor.unfixQ();
-				sr = node.search(icursor.currentKey);
-			}
-			return sr;
-		}
-		
-		/**
-		 * Fetches the next available key, after locking the corresponding Location in the
-		 * specified mode. Handles the situation where the current key has been deleted.
-		 * 
-		 * @param trx Transaction that is managing this fetch
-		 * @param cursor The BTreeScan cursor
-		 * @return True if successful, fals if operation needs to be tried again 
-		 */
-		private final boolean doFetch(Transaction trx, IndexScan cursor) {
-			IndexCursorImpl icursor = (IndexCursorImpl) cursor;
-			try {
-				boolean doSearch = false;
-				BTreeNode node = getBTreeNode();
-				// if (icursor.fetchCount > 0) {
-				if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
-					// This is not the first call to fetch
-					// Check to see if the BTree should be scanned to locate the key
-					icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(icursor.pageId, 0));
-					node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
-					if (node.isDeallocated() || !node.isLeaf()) {
-						// The node that contained current key is no longer part of the tree, hence scan is necessary
-						doSearch = true;
-						icursor.bcursor.unfixP();
-					} else {
-						// The node still exists, so we need to check whether the previously returned key is bound to the 
-						// node.
-						if (!node.getPage().getPageLsn().equals(icursor.pageLsn) && !node.covers(icursor.currentKey)) {
-							// The previous key is no longer bound to the node
-							doSearch = true;
-							icursor.bcursor.unfixP();
-						}
-					}
-				} else {
-					// First call to fetch, hence tree must be scanned.
-					doSearch = true;
-				}
+            // if (sr.exactMatch && icursor.fetchCount > 0) {
+            if (sr.exactMatch
+                    && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
+                /*
+                 * If we have an exact match, there are two possibilities.
+                 * If this is the first call to fetch (fetchCount == 0), then
+                 * we are done. Else, we need to move to the next key.
+                 */
+                if (sr.k == node.getKeyCount()) {
+                    /*
+                     * Current key is the last key on this node. Therefore,
+                     * move to the node to the right.
+                     */
+                    return moveToNextNode(icursor, node, sr);
+                } else {
+                    /*
+                     * Move to the next key in the same node
+                     */
+                    sr.k = sr.k + 1;
+                    sr.exactMatch = false;
+                    sr.item = node.getItem(sr.k);
+                }
+            } else if (sr.k == -1) {
+                /*
+                 * The current key is greater than all keys in this node,
+                 * therefore we need to move to the node to our right.
+                 */
+                return moveToNextNode(icursor, node, sr);
+            } else if (node.header.keyCount == 1) {
+                /*
+                 * Only one key, which by definition is the high key,
+                 * so we are at EOF.
+                 */
+                icursor.setEof(true);
+                sr.k = FIRST_KEY_POS;
+                sr.exactMatch = false;
+                sr.item = node.getItem(sr.k);
+                return sr;
+            }
+            return sr;
 
-				if (doSearch) {
-					icursor.bcursor.setSearchKey(icursor.currentKey);
-					readModeTraverse(icursor.bcursor);
-				}
+        }
 
-				SearchResult sr = doSearch(icursor);
+        /**
+         * Moves to the node to the right if possible or sets EOF status.
+         * Leaves current page latched in SHARED mode.
+         */
+        private SearchResult moveToNextNode(IndexCursorImpl icursor,
+                BTreeNode node, SearchResult sr) {
+            // Key to be fetched is in the next page
+            int nextPage = node.header.rightSibling;
+            if (nextPage == -1) {
+                /*
+                 * There isn't a node to our right, so we are at EOF.
+                 */
+                icursor.setEof(true);
+                sr.k = node.header.keyCount;
+                sr.exactMatch = false;
+                sr.item = node.getItem(sr.k);
+            } else {
+                PageId nextPageId = new PageId(containerId, nextPage);
+                icursor.bcursor.setQ(icursor.bcursor.removeP());
+                icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(nextPageId, 0));
+                node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
+                icursor.bcursor.unfixQ();
+                sr = node.search(icursor.currentKey);
+            }
+            return sr;
+        }
 
-				Savepoint sp = trx.createSavepoint(false);
-				try {
-					if (sr.item == null) {
-						log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage("EB0006", icursor.currentKey.toString()));
-						throw new IndexException(mcat.getMessage("EB0006", icursor.currentKey.toString()));
-					}
-					trx.acquireLockNowait(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
-					icursor.currentKey = sr.item;
-					icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
-					icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
-					icursor.k = sr.k;
-					icursor.bcursor.unfixP();
-					icursor.fetchCount++;
-					icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
-					return true;
-				} catch (LockException e) {
-					
-					if (log.isDebugEnabled()) {
-						log.debug(LOG_CLASS_NAME, "doFetch", "SIMPLEDBM-DEBUG: Failed to acquire conditional " + icursor.lockMode + " lock on " + sr.item.getLocation());
-					}
-					/*
-					 * Failed to acquire conditional lock. 
-					 * Need to unlatch page and retry unconditionally. 
-					 */
-					icursor.bcursor.unfixP();
-					// System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
-					trx.acquireLock(sr.item.getLocation(), icursor.lockMode, LockDuration.MANUAL_DURATION);
-					/*
-					 * We have obtained the lock. We need to double check that the searched key
-					 * still exists.
-					 */
-					// TODO - could avoid the tree traverse here by checking the old page
-					
-					icursor.bcursor.setSearchKey(icursor.currentKey);
-					readModeTraverse(icursor.bcursor);
-					SearchResult sr1 = doSearch(icursor);
-					if (sr1.item.equals(sr.item)) {
-						// we found the same key again
-						icursor.currentKey = sr1.item;
-						icursor.pageId = icursor.bcursor.getP().getPage().getPageId();
-						icursor.pageLsn = icursor.bcursor.getP().getPage().getPageLsn();
-						icursor.k = sr.k;
-						icursor.bcursor.unfixP();
-						icursor.fetchCount++;
-						icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
-						return true;
-					}
-					trx.rollback(sp);
-				}
-			} finally {
-				icursor.bcursor.unfixAll();
-			}
-			return false;
-		}
+        /**
+         * Fetches the next available key, after locking the corresponding Location in the
+         * specified mode. Handles the situation where the current key has been deleted.
+         * 
+         * @param trx Transaction that is managing this fetch
+         * @param cursor The BTreeScan cursor
+         * @return True if successful, fals if operation needs to be tried again 
+         */
+        private final boolean doFetch(Transaction trx, IndexScan cursor) {
+            IndexCursorImpl icursor = (IndexCursorImpl) cursor;
+            try {
+                boolean doSearch = false;
+                BTreeNode node = getBTreeNode();
+                // if (icursor.fetchCount > 0) {
+                if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
+                    // This is not the first call to fetch
+                    // Check to see if the BTree should be scanned to locate the key
+                    icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(
+                        icursor.pageId,
+                        0));
+                    node.wrap((SlottedPage) icursor.bcursor.getP().getPage());
+                    if (node.isDeallocated() || !node.isLeaf()) {
+                        // The node that contained current key is no longer part of the tree, hence scan is necessary
+                        doSearch = true;
+                        icursor.bcursor.unfixP();
+                    } else {
+                        // The node still exists, so we need to check whether the previously returned key is bound to the 
+                        // node.
+                        if (!node
+                            .getPage()
+                            .getPageLsn()
+                            .equals(icursor.pageLsn)
+                                && !node.covers(icursor.currentKey)) {
+                            // The previous key is no longer bound to the node
+                            doSearch = true;
+                            icursor.bcursor.unfixP();
+                        }
+                    }
+                } else {
+                    // First call to fetch, hence tree must be scanned.
+                    doSearch = true;
+                }
 
-		public final void fetch(Transaction trx, IndexScan cursor) {
-			boolean success = doFetch(trx, cursor);
-			while (!success) {
-				success = doFetch(trx, cursor);
-			}
-		}
-		
-		public final IndexScan openScan(Transaction trx, IndexKey key, Location location, boolean forUpdate) {
-		    if (key == null) {
-		        // Use minimum key
-		        key = keyFactory.minIndexKey(containerId);
-		    }
+                if (doSearch) {
+                    icursor.bcursor.setSearchKey(icursor.currentKey);
+                    readModeTraverse(icursor.bcursor);
+                }
+
+                SearchResult sr = doSearch(icursor);
+
+                Savepoint sp = trx.createSavepoint(false);
+                try {
+                    if (sr.item == null) {
+                        log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage(
+                            "EB0006",
+                            icursor.currentKey.toString()));
+                        throw new IndexException(mcat.getMessage(
+                            "EB0006",
+                            icursor.currentKey.toString()));
+                    }
+                    trx.acquireLockNowait(
+                        sr.item.getLocation(),
+                        icursor.lockMode,
+                        LockDuration.MANUAL_DURATION);
+                    icursor.currentKey = sr.item;
+                    icursor.pageId = icursor.bcursor
+                        .getP()
+                        .getPage()
+                        .getPageId();
+                    icursor.pageLsn = icursor.bcursor
+                        .getP()
+                        .getPage()
+                        .getPageLsn();
+                    icursor.k = sr.k;
+                    icursor.bcursor.unfixP();
+                    icursor.fetchCount++;
+                    icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+                    return true;
+                } catch (LockException e) {
+
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            LOG_CLASS_NAME,
+                            "doFetch",
+                            "SIMPLEDBM-DEBUG: Failed to acquire conditional "
+                                    + icursor.lockMode + " lock on "
+                                    + sr.item.getLocation());
+                    }
+                    /*
+                     * Failed to acquire conditional lock. 
+                     * Need to unlatch page and retry unconditionally. 
+                     */
+                    icursor.bcursor.unfixP();
+                    // System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
+                    trx.acquireLock(
+                        sr.item.getLocation(),
+                        icursor.lockMode,
+                        LockDuration.MANUAL_DURATION);
+                    /*
+                     * We have obtained the lock. We need to double check that the searched key
+                     * still exists.
+                     */
+                    // TODO - could avoid the tree traverse here by checking the old page
+                    icursor.bcursor.setSearchKey(icursor.currentKey);
+                    readModeTraverse(icursor.bcursor);
+                    SearchResult sr1 = doSearch(icursor);
+                    if (sr1.item.equals(sr.item)) {
+                        // we found the same key again
+                        icursor.currentKey = sr1.item;
+                        icursor.pageId = icursor.bcursor
+                            .getP()
+                            .getPage()
+                            .getPageId();
+                        icursor.pageLsn = icursor.bcursor
+                            .getP()
+                            .getPage()
+                            .getPageLsn();
+                        icursor.k = sr.k;
+                        icursor.bcursor.unfixP();
+                        icursor.fetchCount++;
+                        icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+                        return true;
+                    }
+                    trx.rollback(sp);
+                }
+            } finally {
+                icursor.bcursor.unfixAll();
+            }
+            return false;
+        }
+
+        public final void fetch(Transaction trx, IndexScan cursor) {
+            boolean success = doFetch(trx, cursor);
+            while (!success) {
+                success = doFetch(trx, cursor);
+            }
+        }
+
+        public final IndexScan openScan(Transaction trx, IndexKey key,
+                Location location, boolean forUpdate) {
+            if (key == null) {
+                // Use minimum key
+                key = keyFactory.minIndexKey(containerId);
+            }
             if (location == null) {
                 // Use null location
                 location = locationFactory.newLocation();
             }
-			IndexCursorImpl icursor = new IndexCursorImpl(trx, this, new IndexItem(key, location, -1, true, isUnique()), forUpdate ? LockMode.UPDATE : LockMode.SHARED);
-			return icursor;
-		}
-	}
-	
-	public static final class IndexCursorImpl implements IndexScan, TransactionalCursor {
-		
-		/**
-		 * The page that we were at last time fetch was called.
-		 */
-		PageId pageId;
-		
-		/**
-		 * The LSN of the page we were at last. Saved so that we can detect
-		 * whether the page has since changed.
-		 */
-		Lsn pageLsn;
-		
-		/**
-		 * The start key for the scan. Only recorded for information.
-		 */
-		IndexItem startKey;
-		
-		/**
-		 * Used by fetch routines. Initially set to the user supplied search key. As the scan
-		 * moves, tracks the current key the cursor is positioned on.
-		 * The associated location must always be locked.
-		 */
-		IndexItem currentKey;
-		
-		/**
-		 * Saved reference to previous key - used to release
-		 * lock on previous key in certain Isolation modes.
-		 */
-		IndexItem previousKey;
-		
-		/**
-		 * Cached value of {@link SearchResult#k}. If the last page we 
-		 * were at hasn't changed, then we can use the cached value to avoid
-		 * searching the page.
-		 */
-		int k = 0;
-		
-		/**
-		 * Keeps a count of the number of keys fetched so far.
-		 */
-		int fetchCount = 0;
-		
-		/**
-		 * Internal use
-		 */
-		final BTreeCursor bcursor = new BTreeCursor();
-		
-		/**
-		 * The lock mode to be used for locking locations retrieved by the scan.
-		 */
-		LockMode lockMode;
-		
-		/**
-		 * The BTree that we are scanning.
-		 */
-		final BTreeImpl btree;
-		
-		/**
-		 * Indicates whether we have reached end of file. Also set when {@link #fetchCompleted(boolean)}
-		 * is invoked with an argument of false.
-		 */
-		private boolean eof = false;
-		
-		/**
-		 * Transaction that is managing this scan. 
-		 */
-		final Transaction trx;
-		
-		/**
-		 * Initially set to {@link #SCAN_FETCH_GREATER_OR_EQUAL}, and after the first
-		 * fetch, set to {@link #SCAN_FETCH_GREATER}. The scan mode determines how the fetch
-		 * will operate.
-		 */
-		int scanMode = 0;
-		
-		int stateFetchCompleted = 0;
-		
-		static final int SCAN_FETCH_GREATER_OR_EQUAL = 1;
-		
-		static final int SCAN_FETCH_GREATER = 2;
+            IndexCursorImpl icursor = new IndexCursorImpl(
+                trx,
+                this,
+                new IndexItem(key, location, -1, true, isUnique()),
+                forUpdate ? LockMode.UPDATE : LockMode.SHARED);
+            return icursor;
+        }
+    }
 
-		IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem startKey, LockMode lockMode) {
-			this.btree = btree;
-			this.trx = trx;
-			this.startKey = startKey;		
-			this.currentKey = startKey;			// initial search key
-			this.previousKey = null;
-			this.fetchCount = 0;
-			this.lockMode = lockMode;
-			this.scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
-			trx.registerTransactionalCursor(this);
-		}
-		
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.api.im.IndexScan#fetchNext()
-		 */
-		public final boolean fetchNext() {
-			if (stateFetchCompleted != 0) {
-				log.warn(LOG_CLASS_NAME, "close", "fetchCompleted() has not been called after fetchNext()");
-			}
-			if (!isEof()) {
-				if (scanMode == SCAN_FETCH_GREATER) {
-					/*
-					 * scanMode == SCAN_FETCH_GREATER_OR_EQUAL is set initially before the
-					 * first fetch. It is also set when the cursor has been restored and a
-					 * rescan is needed to set the current key. In both these cases, previousKey is
-					 * not meaningful.
-					 */
-					previousKey = currentKey;
-				}
-				if (previousKey != null) {
-					if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
-						LockMode lockMode = trx.hasLock(previousKey
-								.getLocation());
-						if (lockMode == LockMode.SHARED
-								|| lockMode == LockMode.UPDATE) {
-							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "SIMPLEDBM-DEBUG: Releasing lock on previous row "
-											+ previousKey.getLocation());
-							}
-							trx.releaseLock(previousKey.getLocation());
-						}
-					} else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
-							.getIsolationMode() == IsolationMode.SERIALIZABLE)
-							&& lockMode == LockMode.UPDATE) {
-						/*
-						 * This is an update mode cursor.
-						 * In RR/SR mode, we need to downgrade UPDATE mode lock to SHARED lock when the cursor moves
-						 * to the next row.
-						 */
-						LockMode lockMode = trx.hasLock(previousKey
-								.getLocation());
-						if (lockMode == LockMode.UPDATE) {
-							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, IndexCursorImpl.class.getName() + ".fetchNext", "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
-										+ previousKey.getLocation() + " to " + LockMode.SHARED);
-							}
-							trx.downgradeLock(previousKey.getLocation(),
-									LockMode.SHARED);
-						}
-					}
-				}
-				btree.fetch(trx, this);
-				if (!isEof()) {
-					stateFetchCompleted = 1;
-				}
-				return !isEof();
-			}
-			return false;
-		}
-		
-		public final void fetchCompleted(boolean matched) {
-			/*
-			 * This method is invoked after the data from tuple container has been
-			 * read. Its main purpose is to release locks in read committed or cursor stability mode.
-			 */
-			stateFetchCompleted = 0;
-			if (!matched && !isEof()) {
-				setEof(true);
-			}
-			if (currentKey != null) {
-				boolean releaseLock = false;
-				if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
-					if (isEof()) {
-						releaseLock = true;
-					}
-				} else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
-					releaseLock = true;
-				}
-				if (releaseLock) {
-					LockMode lockMode = trx.hasLock(currentKey
-							.getLocation());
-					if (lockMode == LockMode.SHARED || lockMode == LockMode.UPDATE) {
-						trx.releaseLock(currentKey.getLocation());
-					}
-				}
-				else if (isEof()) {
-					LockMode lockMode = trx.hasLock(currentKey
-							.getLocation());
-					if (lockMode == LockMode.UPDATE) {
-						trx.downgradeLock(currentKey.getLocation(), LockMode.SHARED);
-					}
-				}
-			}	
-		}
-		
-		public final void close() {
-			trx.unregisterTransactionalCursor(this);
-			RSSException ex = null;
-			
-			// Following should be redundant because of fetchCompleted().
-			try {
-				if (currentKey != null) {
-					if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
-							|| trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
-							|| (isEof() && trx.getIsolationMode() == IsolationMode.REPEATABLE_READ)) {
-						LockMode lockMode = trx.hasLock(currentKey
-								.getLocation());
-						if (lockMode == LockMode.SHARED
-								|| lockMode == LockMode.UPDATE) {
-							if (log.isDebugEnabled()) {
-								log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".close", "SIMPLEDBM-DEBUG: Releasing lock on current row "
-										+ currentKey.getLocation() + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
-							}
-							trx.releaseLock(currentKey.getLocation());
-						}
-					}
-				}
-			} catch (RSSException e) {
-				ex = e;
-			}
-			
-			try {
-				bcursor.unfixAll();
-			} catch (RSSException e) {
-				if (ex == null) {
-					ex = e;
-				}
-			}
-			if (ex != null) {
-				throw ex;
-			}
-			if (stateFetchCompleted != 0) {
-				log.warn(LOG_CLASS_NAME, "close", mcat.getMessage("WB0011"));
-			}
-		}
-		
-		public final IndexKey getCurrentKey() {
-			if (currentKey == null) {
-				return null;
-			}
-			return currentKey.getKey();
-		}
-		
-		public final Location getCurrentLocation() {
-			if (currentKey == null) {
-				return null;
-			}
-			return currentKey.getLocation();
-		}
-		
-		public void restoreState(Transaction txn, Savepoint sp) {
-			CursorState cs = (CursorState) sp.getValue(this);
-			
-			if (log.isDebugEnabled()) {
-				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "SIMPLEDBM-DEBUG: Current position is set to " + currentKey);
-				log.debug(LOG_CLASS_NAME, this.getClass().getName() + ".restoreState", "SIMPLEDBM-DEBUG: Rollback to savepoint is restoring state to " + cs);
-			}
-			currentKey = cs.currentKey;
-			previousKey = cs.previousKey;
-			startKey = cs.searchKey;
-			pageId = cs.pageId;
-			pageLsn = cs.pageLsn;
-			fetchCount = cs.fetchCount-1;
-			setEof(cs.eof);
-			scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
-			fetchNext();
-		}
+    public static final class IndexCursorImpl implements IndexScan,
+            TransactionalCursor {
 
-		public void saveState(Savepoint sp) {
-			CursorState cs = new CursorState(this);
-			sp.saveValue(this, cs);
-		}
+        /**
+         * The page that we were at last time fetch was called.
+         */
+        PageId pageId;
 
-		void setEof(boolean eof) {
-			this.eof = eof;
-		}
+        /**
+         * The LSN of the page we were at last. Saved so that we can detect
+         * whether the page has since changed.
+         */
+        Lsn pageLsn;
 
-		public final boolean isEof() {
-			return eof;
-		}
+        /**
+         * The start key for the scan. Only recorded for information.
+         */
+        IndexItem startKey;
 
-		static final class CursorState {
-			IndexCursorImpl scan;
-			IndexItem currentKey;
-			IndexItem previousKey;
-			IndexItem searchKey;
-			PageId pageId;
-			Lsn pageLsn;
-			boolean eof;
-			int fetchCount;
-			int scanMode;
-			
-			CursorState(IndexCursorImpl scan) {
-				this.scan = scan;
-				this.currentKey = scan.currentKey;
-				this.previousKey = scan.previousKey;
-				this.searchKey = scan.startKey;
-				this.pageId = scan.pageId;
-				this.pageLsn = scan.pageLsn;
-				this.eof = scan.isEof();
-				this.fetchCount = scan.fetchCount;
-				this.scanMode = scan.scanMode;
-			}
-			
-			public String toString() {
-				return "CursorState(savedCurrentKey = " + currentKey + ")";
-			}
-		}
-	}
-	
-	public static final class BTreeCursor {
-		
-		private BufferAccessBlock q = null;
-		
-		private BufferAccessBlock r = null;
-		
-		private BufferAccessBlock p = null;
-		
-		/**
-		 * Search key - this is used internally by the various BTree routines.
-		 */
-		public IndexItem searchKey = null;
-		
-		/**
-		 * Used to save the next key location during inserts
-		 * so that the lock can be released subsequent to the
-		 * insert.
-		 */
-		private Location nextKeyLocation = null;
-		
-		public BTreeCursor() {
-		}
+        /**
+         * Used by fetch routines. Initially set to the user supplied search key. As the scan
+         * moves, tracks the current key the cursor is positioned on.
+         * The associated location must always be locked.
+         */
+        IndexItem currentKey;
 
-		public final BufferAccessBlock getP() {
-			return p;
-		}
+        /**
+         * Saved reference to previous key - used to release
+         * lock on previous key in certain Isolation modes.
+         */
+        IndexItem previousKey;
 
-		public final BufferAccessBlock removeP() {
-			BufferAccessBlock bab = p;
-			p = null;
-			return bab;
-		}
-		
-		public final void setP(BufferAccessBlock p) {
-			assert this.p == null;
-			this.p = p;
-		}
-		
-		public final BufferAccessBlock getQ() {
-			return q;
-		}
+        /**
+         * Cached value of {@link SearchResult#k}. If the last page we 
+         * were at hasn't changed, then we can use the cached value to avoid
+         * searching the page.
+         */
+        int k = 0;
 
-		public final BufferAccessBlock removeQ() {
-			BufferAccessBlock bab = q;
-			q = null;
-			return bab;
-		}
-		
-		public final void setQ(BufferAccessBlock q) {
-			assert this.q == null;
-			this.q = q;
-		}
+        /**
+         * Keeps a count of the number of keys fetched so far.
+         */
+        int fetchCount = 0;
 
-		public final BufferAccessBlock getR() {
-			return r;
-		}
+        /**
+         * Internal use
+         */
+        final BTreeCursor bcursor = new BTreeCursor();
 
-		public final BufferAccessBlock removeR() {
-			BufferAccessBlock bab = r;
-			r = null;
-			return bab;
-		}
+        /**
+         * The lock mode to be used for locking locations retrieved by the scan.
+         */
+        LockMode lockMode;
 
-		public final void setR(BufferAccessBlock r) {
-			assert this.r == null;
-			this.r = r;
-		}
+        /**
+         * The BTree that we are scanning.
+         */
+        final BTreeImpl btree;
 
-		public final IndexItem getSearchKey() {
-			return searchKey;
-		}
+        /**
+         * Indicates whether we have reached end of file. Also set when {@link #fetchCompleted(boolean)}
+         * is invoked with an argument of false.
+         */
+        private boolean eof = false;
 
-		public final void setSearchKey(IndexItem searchKey) {
-			this.searchKey = searchKey;
-		}
-	
-		public final void unfixP() {
-			if (p != null) {
-				p.unfix();
-				p = null;
-			}
-		}
+        /**
+         * Transaction that is managing this scan. 
+         */
+        final Transaction trx;
 
-		public final void unfixQ() {
-			if (q != null) {
-				q.unfix();
-				q = null;
-			}
-		}
+        /**
+         * Initially set to {@link #SCAN_FETCH_GREATER_OR_EQUAL}, and after the first
+         * fetch, set to {@link #SCAN_FETCH_GREATER}. The scan mode determines how the fetch
+         * will operate.
+         */
+        int scanMode = 0;
 
-		public final void unfixR() {
-			if (r != null) {
-				r.unfix();
-				r = null;
-			}
-		}
-		
-		public final void unfixAll() {
-			RSSException e = null;
-			try {
-				unfixP();
-			}
-			catch (RSSException e1) {
-				e = e1;
-			}
-			try {
-				unfixQ();
-			}
-			catch (RSSException e1) {
-				if (e == null)
-					e = e1;
-			}
-			try {
-				unfixR();
-			}
-			catch (RSSException e1) {
-				if (e == null)
-					e = e1;
-			}
-			if (e != null) {
-				throw e;
-			}
-		}
+        int stateFetchCompleted = 0;
 
-		public Location getNextKeyLocation() {
-			return nextKeyLocation;
-		}
+        static final int SCAN_FETCH_GREATER_OR_EQUAL = 1;
 
-		public void setNextKeyLocation(Location nextKeyLocation) {
-			this.nextKeyLocation = nextKeyLocation;
-		}
-	}
-	
-	public static final class SearchResult {
-		/**
-		 * The key number can range from {@link BTreeIndexManagerImpl#FIRST_KEY_POS}
-		 * to {@link BTreeNode#getKeyCount()}. A value of -1 indicates that the
-		 * search key is greater than all keys in the node.
-		 */
-		int k = -1;
-		IndexItem item = null;
-		boolean exactMatch = false;
-	}
-	
+        static final int SCAN_FETCH_GREATER = 2;
 
-	/**
-	 * Manages the contents of a B-link tree node. Handles the differences between
-	 * leaf nodes and index nodes.
-	 * <pre>
-	 * Leaf nodes have following structure:
-	 * [header] [item1] [item2] ... [itemN] [highkey]
-	 * item[0] = header 
-	 * item[1,header.KeyCount-1] = keys
-	 * item[header.keyCount] = high key 
-	 * The highkey in a leaf node is an extra item, and may or may not be  
-	 * the same as the last key [itemN] in the page. Operations that change the
-	 * highkey in leaf pages are Split, Merge and Redistribute. All keys in the
-	 * page are guaranteed to be &lt;= highkey. 
-	 * 
-	 * Index nodes have following structure:
-	 * [header] [item1] [item2] ... [itemN]
-	 * item[0] = header 
-	 * item[1,header.KeyCount] = keys
-	 * The last key is also the highkey.
-	 * Note that the rightmost index page at any level has a special
-	 * key as the highkey - this key has a value of INFINITY. 
-	 * Each item in an index key contains a pointer to a child page.
-	 * The child page contains keys that are &lt;= than the item key.
-	 * </pre>
-	 * @author Dibyendu Majumdar
-	 * @since 19-Sep-2005
-	 */
-	public static final class BTreeNode {
-		
-		static final short NODE_TYPE_LEAF = 1;
-		static final short NODE_TREE_UNIQUE = 2;
-		static final short NODE_TREE_DEALLOCATED = 4;
-		
-		/**
-		 * Page being managed.
-		 */
-		SlottedPage page;
-		
-		final IndexItemHelper btree;
+        IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem startKey,
+                LockMode lockMode) {
+            this.btree = btree;
+            this.trx = trx;
+            this.startKey = startKey;
+            this.currentKey = startKey; // initial search key
+            this.previousKey = null;
+            this.fetchCount = 0;
+            this.lockMode = lockMode;
+            this.scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
+            trx.registerTransactionalCursor(this);
+        }
 
-		/**
-		 * Cached header.
-		 */
-		BTreeNodeHeader header;
-		
-		BTreeNode(IndexItemHelper btree) {
-			this.btree = btree;
-		}
-		
-		public final void dumpAsXml() {
-			System.out.println("<page containerId=\"" + page.getPageId().getContainerId() + "\" pageNumber=\"" +
-					page.getPageId().getPageNumber() + "\">");
-			System.out.println("	<header>");
-			System.out.println("		<locationfactory>" + header.locationFactoryType + "</locationfactory>");
-			System.out.println("		<keyfactory>" + header.keyFactoryType + "</keyfactory>");
-			System.out.println("		<unique>" + (isUnique() ? "yes" : "false") + "</unique>");
-			System.out.println("		<leaf>" + (isLeaf() ? "yes" : "false") + "</leaf>");
-			System.out.println("		<leftsibling>" + header.leftSibling + "</leftsibling>");
-			System.out.println("		<rightsibling>" + header.rightSibling + "</rightsibling>");
-			System.out.println("		<smppagenumber>" + page.getSpaceMapPageNumber() + "</smppagenumber>");
-			System.out.println("		<keycount>" + header.keyCount + "</keycount>");
-			System.out.println("	</header>");
-			System.out.println("	<items>");
-			for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
-				if (page.isSlotDeleted(k)) {
-					continue;
-				}
-				IndexItem item = getItem(k);
-				System.out.println("		<item pos=\"" + k + "\">");
-				System.out.println("			<childpagenumber>" + item.childPageNumber + "</childpagenumber>");
-				System.out.println("			<location>" + item.getLocation() + "</location>");
-				System.out.println("			<key>" + item.getKey().toString() + "</key>");
-				System.out.println("		</item>");
-			}
-			System.out.println("	</items>");
-			System.out.println("</page>");
-		}
-		
-		/**
-		 * Dumps contents of the BTree node.
-		 */
-		public final void dump() {
-			
-			// dumpAsXml();
-			if (DiagnosticLogger.getDiagnosticsLevel() == 0) {
-				return;
-			}
-			page.dump();
-			assert page.getSpaceMapPageNumber() != -1;
-			if (page.getNumberOfSlots() > 0) {
-				BTreeNodeHeader header = (BTreeNodeHeader) page.get(HEADER_KEY_POS, new BTreeNodeHeader());
-				DiagnosticLogger.log("BTreeNodeHeader=" + header);
-				for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
-					if (page.isSlotDeleted(k)) {
-						continue;
-					}
-					IndexItem item = (IndexItem) page.get(k, getNewIndexItem());
-					if (k == header.keyCount) {
-						DiagnosticLogger.log("IndexItem[" + k + "] (HIGHKEY) = " + item);
-					}
-					else {
-						DiagnosticLogger.log("IndexItem[" + k + "] = " + item);
-					}
-				}
-			}
-		}
-		
-		public final void wrap(SlottedPage page) {
-			this.page = page;
-			header = (BTreeNodeHeader) page.get(HEADER_KEY_POS, new BTreeNodeHeader());
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.api.im.IndexScan#fetchNext()
+         */
+        public final boolean fetchNext() {
+            if (stateFetchCompleted != 0) {
+                log.warn(
+                    LOG_CLASS_NAME,
+                    "close",
+                    "fetchCompleted() has not been called after fetchNext()");
+            }
+            if (!isEof()) {
+                if (scanMode == SCAN_FETCH_GREATER) {
+                    /*
+                     * scanMode == SCAN_FETCH_GREATER_OR_EQUAL is set initially before the
+                     * first fetch. It is also set when the cursor has been restored and a
+                     * rescan is needed to set the current key. In both these cases, previousKey is
+                     * not meaningful.
+                     */
+                    previousKey = currentKey;
+                }
+                if (previousKey != null) {
+                    if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY) {
+                        LockMode lockMode = trx.hasLock(previousKey
+                            .getLocation());
+                        if (lockMode == LockMode.SHARED
+                                || lockMode == LockMode.UPDATE) {
+                            if (log.isDebugEnabled()) {
+                                log.debug(
+                                    LOG_CLASS_NAME,
+                                    IndexCursorImpl.class.getName()
+                                            + ".fetchNext",
+                                    "SIMPLEDBM-DEBUG: Releasing lock on previous row "
+                                            + previousKey.getLocation());
+                            }
+                            trx.releaseLock(previousKey.getLocation());
+                        }
+                    } else if ((trx.getIsolationMode() == IsolationMode.REPEATABLE_READ || trx
+                        .getIsolationMode() == IsolationMode.SERIALIZABLE)
+                            && lockMode == LockMode.UPDATE) {
+                        /*
+                         * This is an update mode cursor.
+                         * In RR/SR mode, we need to downgrade UPDATE mode lock to SHARED lock when the cursor moves
+                         * to the next row.
+                         */
+                        LockMode lockMode = trx.hasLock(previousKey
+                            .getLocation());
+                        if (lockMode == LockMode.UPDATE) {
+                            if (log.isDebugEnabled()) {
+                                log.debug(
+                                    LOG_CLASS_NAME,
+                                    IndexCursorImpl.class.getName()
+                                            + ".fetchNext",
+                                    "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
+                                            + previousKey.getLocation()
+                                            + " to " + LockMode.SHARED);
+                            }
+                            trx.downgradeLock(
+                                previousKey.getLocation(),
+                                LockMode.SHARED);
+                        }
+                    }
+                }
+                btree.fetch(trx, this);
+                if (!isEof()) {
+                    stateFetchCompleted = 1;
+                }
+                return !isEof();
+            }
+            return false;
+        }
 
-		final BTreeNodeHeader getHeader() {
-			return header;
-		}
-		
-		public final IndexItem getNewIndexItem() {
-			return new IndexItem(btree.getNewIndexKey(),
-					btree.getNewLocation(), -1, isLeaf(), isUnique());
-		}
-		
-		/**
-		 * Returns the high key. High key is always the last physical key on the page.
-		 */
-		final IndexItem getHighKey() {
-			return getItem(header.keyCount);
-		}
+        public final void fetchCompleted(boolean matched) {
+            /*
+             * This method is invoked after the data from tuple container has been
+             * read. Its main purpose is to release locks in read committed or cursor stability mode.
+             */
+            stateFetchCompleted = 0;
+            if (!matched && !isEof()) {
+                setEof(true);
+            }
+            if (currentKey != null) {
+                boolean releaseLock = false;
+                if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
+                        || trx.getIsolationMode() == IsolationMode.REPEATABLE_READ) {
+                    if (isEof()) {
+                        releaseLock = true;
+                    }
+                } else if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+                    releaseLock = true;
+                }
+                if (releaseLock) {
+                    LockMode lockMode = trx.hasLock(currentKey.getLocation());
+                    if (lockMode == LockMode.SHARED
+                            || lockMode == LockMode.UPDATE) {
+                        trx.releaseLock(currentKey.getLocation());
+                    }
+                } else if (isEof()) {
+                    LockMode lockMode = trx.hasLock(currentKey.getLocation());
+                    if (lockMode == LockMode.UPDATE) {
+                        trx.downgradeLock(
+                            currentKey.getLocation(),
+                            LockMode.SHARED);
+                    }
+                }
+            }
+        }
 
-		/**
-		 * Returns the largest key on the page.
-		 */
-		public final IndexItem getLastKey() {
-			return getItem(getKeyCount());
-		}
-		
-		/**
-		 * Returns specified item. 
-		 */
-		public final IndexItem getItem(int slotNumber) {
-			return (IndexItem) page.get(slotNumber, getNewIndexItem());
-		}
-		
-		public final IndexItem getInfiniteKey() {
-			return new IndexItem(btree.getMaxIndexKey(),
-					btree.getNewLocation(), -1, isLeaf(), isUnique());
-		}
-		
-		/**
-		 * Inserts item at specified position. Existing items are shifted
-		 * to the right if necessary.  
-		 */
-		public final void insert(int slotNumber, IndexItem item) {
-			page.insertAt(slotNumber, item, false);
-		}
-		
-		public final void purge(int slotNumber) {
-			page.purge(slotNumber);
-		}
-		
-		/**
-		 * Replaces the item at specified position. 
-		 */
-		public final void replace(int slotNumber, IndexItem item) {
-			page.insertAt(slotNumber, item, true);
-		}
-		
-		/**
-		 * Tests whether the page is part of a unique index.
-		 */
-		public final boolean isUnique() {
-			int flags = page.getFlags();
-			return (flags & NODE_TREE_UNIQUE) != 0;
-		}
+        public final void close() {
+            trx.unregisterTransactionalCursor(this);
+            RSSException ex = null;
 
-		/**
-		 * Sets the unique flag.
-		 */
-		public final void setUnique() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags | NODE_TREE_UNIQUE));
-		}
+            // Following should be redundant because of fetchCompleted().
+            try {
+                if (currentKey != null) {
+                    if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
+                            || trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
+                            || (isEof() && trx.getIsolationMode() == IsolationMode.REPEATABLE_READ)) {
+                        LockMode lockMode = trx.hasLock(currentKey
+                            .getLocation());
+                        if (lockMode == LockMode.SHARED
+                                || lockMode == LockMode.UPDATE) {
+                            if (log.isDebugEnabled()) {
+                                log
+                                    .debug(
+                                        LOG_CLASS_NAME,
+                                        this.getClass().getName() + ".close",
+                                        "SIMPLEDBM-DEBUG: Releasing lock on current row "
+                                                + currentKey.getLocation()
+                                                + " because isolation mode = CS or RC or (RR and EOF) and mode = SHARED or UPDATE");
+                            }
+                            trx.releaseLock(currentKey.getLocation());
+                        }
+                    }
+                }
+            } catch (RSSException e) {
+                ex = e;
+            }
 
-		/**
-		 * Resets the unique flag.
-		 */
-		public final void unsetUnique() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags & ~NODE_TREE_UNIQUE));
-		}
-		
-		/**
-		 * Tests whether this is a leaf page.
-		 */
-		public final boolean isLeaf() {
-			int flags = page.getFlags();
-			return (flags & NODE_TYPE_LEAF) != 0;
-		}
+            try {
+                bcursor.unfixAll();
+            } catch (RSSException e) {
+                if (ex == null) {
+                    ex = e;
+                }
+            }
+            if (ex != null) {
+                throw ex;
+            }
+            if (stateFetchCompleted != 0) {
+                log.warn(LOG_CLASS_NAME, "close", mcat.getMessage("WB0011"));
+            }
+        }
 
-		/**
-		 * Sets the leaf flag.
-		 */
-		public final void setLeaf() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags | NODE_TYPE_LEAF));
-		}
+        public final IndexKey getCurrentKey() {
+            if (currentKey == null) {
+                return null;
+            }
+            return currentKey.getKey();
+        }
 
-		/**
-		 * Clears the leaf flag.
-		 */
-		public final void unsetLeaf() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags & ~NODE_TYPE_LEAF));
-		}
+        public final Location getCurrentLocation() {
+            if (currentKey == null) {
+                return null;
+            }
+            return currentKey.getLocation();
+        }
 
-		/**
-		 * Is this the root page?
-		 */
-		public final boolean isRoot() {
-			return page.getPageId().getPageNumber() == BTreeIndexManagerImpl.ROOT_PAGE_NUMBER; 
-		}
-		
-		/**
-		 * Tests whether this page has been marked as deallocated.
-		 */
-		public final boolean isDeallocated() {
-			int flags = page.getFlags();
-			return (flags & NODE_TREE_DEALLOCATED) != 0;
-		}
+        public void restoreState(Transaction txn, Savepoint sp) {
+            CursorState cs = (CursorState) sp.getValue(this);
 
-		/**
-		 * Sets the deallocated flag.
-		 */
-		public final void setDeallocated() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags | NODE_TREE_DEALLOCATED));
-		}
+            if (log.isDebugEnabled()) {
+                log
+                    .debug(
+                        LOG_CLASS_NAME,
+                        this.getClass().getName() + ".restoreState",
+                        "SIMPLEDBM-DEBUG: Current position is set to "
+                                + currentKey);
+                log.debug(
+                    LOG_CLASS_NAME,
+                    this.getClass().getName() + ".restoreState",
+                    "SIMPLEDBM-DEBUG: Rollback to savepoint is restoring state to "
+                            + cs);
+            }
+            currentKey = cs.currentKey;
+            previousKey = cs.previousKey;
+            startKey = cs.searchKey;
+            pageId = cs.pageId;
+            pageLsn = cs.pageLsn;
+            fetchCount = cs.fetchCount - 1;
+            setEof(cs.eof);
+            scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
+            fetchNext();
+        }
 
-		/**
-		 * Clears the deallocated flag.
-		 */
-		public final void unsetDeallocated() {
-			int flags = page.getFlags();
-			page.setFlags((short) (flags & ~NODE_TREE_DEALLOCATED));
-		}
-		
-		/**
-		 * Returns number of keys stored in the page. For leaf pages, the high key is
-		 * excluded.
-		 */
-		final int getKeyCount() {
-			if (isLeaf()) {
-				return header.keyCount-1;
-			}
-			return header.keyCount;
-		}
-		
-		/**
-		 * Returns the number of physical keys in the page, including the extra
-		 * high key in leaf pages.
-		 */
-		public final int getNumberOfKeys() {
-			return header.keyCount;
-		}
-		
-		final Page getPage() {
-			return page;
-		}
-		
-		/**
-		 * Finds the key that should be used as the median key when
-		 * splitting a page. 
-		 */
-		final short getSplitKey() {
-			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
-				/*
-				 * We are in test mode and therefore artificially limit the
-				 * number of keys to a small value.
-				 */
-				return TEST_MODE_SPLIT_KEY;
-			}
-			int halfSpace = page.getSpace()/2;
-			int space = 0;
-			for (short k = FIRST_KEY_POS; k <= header.keyCount; k++) {
-				space += page.getSlotLength(k);
-				if (space > halfSpace) {
-					return k;
-				}
-			}
-			log.error(LOG_CLASS_NAME, "getSplitKey", mcat.getMessage("EB0007", page));
-			throw new IndexException(mcat.getMessage("EB0007", page));
-		}
+        public void saveState(Savepoint sp) {
+            CursorState cs = new CursorState(this);
+            sp.saveValue(this, cs);
+        }
 
-		/**
-		 * Sets the keycount in the header record.  
-		 */
-		public final void setNumberOfKeys(int keyCount) {
-			header.keyCount = keyCount;
-		}
-		
-		/**
-		 * Updates the header stored within the page.
-		 */
-		public final void updateHeader() {
-			page.insertAt(HEADER_KEY_POS, header, true);
-		}
-		
-		/**
-		 * Searches for the supplied key. If there is an
-		 * exact match, SearchResult.exactMatch will be set.
-		 * If a key is found &gt;= 0 the supplied key,
-		 * SearchResult.k and SearchResult.item will be set to it.
-		 * If all keys in the page are &lt; search key then, 
-		 * SearchResult.k will be set to -1 and SearchResult.item will
-		 * be null. 
-		 */
-		public final SearchResult search(IndexItem key) {
-			SearchResult result = new SearchResult();
-			/*
-			 * Binary search algorithm
-			 */
-			int low = FIRST_KEY_POS;
-			int high = getKeyCount();
-			while (low <= high) {
-				int mid = (low + high) >>> 1;
-				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-					log.error(LOG_CLASS_NAME, "search", mcat.getMessage("EB0008", key.toString()));
-					throw new IndexException(mcat.getMessage("EB0008", key.toString()));
-				}
-				IndexItem item = getItem(mid);
-				int comp = item.compareTo(key);
-				if (comp < 0)
-					low = mid + 1;
-				else if (comp > 0)
-					high = mid - 1;
-				else {
-					result.k = mid;
-					result.exactMatch = true;
-					result.item = item;
-					return result;
-				}
-			}
-			/*
-			 * If the result is not equal, we need to return the
-			 * next key if available or -1 if the search key is greater than
-			 * all keys in this node.
-			 */
-			if (low <= getKeyCount()) {
-				result.k = low;
-				result.item = getItem(low);
-			}
-			return result;
-		}
+        void setEof(boolean eof) {
+            this.eof = eof;
+        }
+
+        public final boolean isEof() {
+            return eof;
+        }
+
+        static final class CursorState {
+            IndexCursorImpl scan;
+            IndexItem currentKey;
+            IndexItem previousKey;
+            IndexItem searchKey;
+            PageId pageId;
+            Lsn pageLsn;
+            boolean eof;
+            int fetchCount;
+            int scanMode;
+
+            CursorState(IndexCursorImpl scan) {
+                this.scan = scan;
+                this.currentKey = scan.currentKey;
+                this.previousKey = scan.previousKey;
+                this.searchKey = scan.startKey;
+                this.pageId = scan.pageId;
+                this.pageLsn = scan.pageLsn;
+                this.eof = scan.isEof();
+                this.fetchCount = scan.fetchCount;
+                this.scanMode = scan.scanMode;
+            }
+
+            public String toString() {
+                return "CursorState(savedCurrentKey = " + currentKey + ")";
+            }
+        }
+    }
+
+    public static final class BTreeCursor {
+
+        private BufferAccessBlock q = null;
+
+        private BufferAccessBlock r = null;
+
+        private BufferAccessBlock p = null;
+
+        /**
+         * Search key - this is used internally by the various BTree routines.
+         */
+        public IndexItem searchKey = null;
+
+        /**
+         * Used to save the next key location during inserts
+         * so that the lock can be released subsequent to the
+         * insert.
+         */
+        private Location nextKeyLocation = null;
+
+        public BTreeCursor() {
+        }
+
+        public final BufferAccessBlock getP() {
+            return p;
+        }
+
+        public final BufferAccessBlock removeP() {
+            BufferAccessBlock bab = p;
+            p = null;
+            return bab;
+        }
+
+        public final void setP(BufferAccessBlock p) {
+            assert this.p == null;
+            this.p = p;
+        }
+
+        public final BufferAccessBlock getQ() {
+            return q;
+        }
+
+        public final BufferAccessBlock removeQ() {
+            BufferAccessBlock bab = q;
+            q = null;
+            return bab;
+        }
+
+        public final void setQ(BufferAccessBlock q) {
+            assert this.q == null;
+            this.q = q;
+        }
+
+        public final BufferAccessBlock getR() {
+            return r;
+        }
+
+        public final BufferAccessBlock removeR() {
+            BufferAccessBlock bab = r;
+            r = null;
+            return bab;
+        }
+
+        public final void setR(BufferAccessBlock r) {
+            assert this.r == null;
+            this.r = r;
+        }
+
+        public final IndexItem getSearchKey() {
+            return searchKey;
+        }
+
+        public final void setSearchKey(IndexItem searchKey) {
+            this.searchKey = searchKey;
+        }
+
+        public final void unfixP() {
+            if (p != null) {
+                p.unfix();
+                p = null;
+            }
+        }
+
+        public final void unfixQ() {
+            if (q != null) {
+                q.unfix();
+                q = null;
+            }
+        }
+
+        public final void unfixR() {
+            if (r != null) {
+                r.unfix();
+                r = null;
+            }
+        }
+
+        public final void unfixAll() {
+            RSSException e = null;
+            try {
+                unfixP();
+            } catch (RSSException e1) {
+                e = e1;
+            }
+            try {
+                unfixQ();
+            } catch (RSSException e1) {
+                if (e == null)
+                    e = e1;
+            }
+            try {
+                unfixR();
+            } catch (RSSException e1) {
+                if (e == null)
+                    e = e1;
+            }
+            if (e != null) {
+                throw e;
+            }
+        }
+
+        public Location getNextKeyLocation() {
+            return nextKeyLocation;
+        }
+
+        public void setNextKeyLocation(Location nextKeyLocation) {
+            this.nextKeyLocation = nextKeyLocation;
+        }
+    }
+
+    public static final class SearchResult {
+        /**
+         * The key number can range from {@link BTreeIndexManagerImpl#FIRST_KEY_POS}
+         * to {@link BTreeNode#getKeyCount()}. A value of -1 indicates that the
+         * search key is greater than all keys in the node.
+         */
+        int k = -1;
+        IndexItem item = null;
+        boolean exactMatch = false;
+    }
+
+    /**
+     * Manages the contents of a B-link tree node. Handles the differences between
+     * leaf nodes and index nodes.
+     * <pre>
+     * Leaf nodes have following structure:
+     * [header] [item1] [item2] ... [itemN] [highkey]
+     * item[0] = header 
+     * item[1,header.KeyCount-1] = keys
+     * item[header.keyCount] = high key 
+     * The highkey in a leaf node is an extra item, and may or may not be  
+     * the same as the last key [itemN] in the page. Operations that change the
+     * highkey in leaf pages are Split, Merge and Redistribute. All keys in the
+     * page are guaranteed to be &lt;= highkey. 
+     * 
+     * Index nodes have following structure:
+     * [header] [item1] [item2] ... [itemN]
+     * item[0] = header 
+     * item[1,header.KeyCount] = keys
+     * The last key is also the highkey.
+     * Note that the rightmost index page at any level has a special
+     * key as the highkey - this key has a value of INFINITY. 
+     * Each item in an index key contains a pointer to a child page.
+     * The child page contains keys that are &lt;= than the item key.
+     * </pre>
+     * @author Dibyendu Majumdar
+     * @since 19-Sep-2005
+     */
+    public static final class BTreeNode {
+
+        static final short NODE_TYPE_LEAF = 1;
+        static final short NODE_TREE_UNIQUE = 2;
+        static final short NODE_TREE_DEALLOCATED = 4;
+
+        /**
+         * Page being managed.
+         */
+        SlottedPage page;
+
+        final IndexItemHelper btree;
+
+        /**
+         * Cached header.
+         */
+        BTreeNodeHeader header;
+
+        BTreeNode(IndexItemHelper btree) {
+            this.btree = btree;
+        }
+
+        public final void dumpAsXml() {
+            System.out.println("<page containerId=\""
+                    + page.getPageId().getContainerId() + "\" pageNumber=\""
+                    + page.getPageId().getPageNumber() + "\">");
+            System.out.println("	<header>");
+            System.out.println("		<locationfactory>"
+                    + header.locationFactoryType + "</locationfactory>");
+            System.out.println("		<keyfactory>" + header.keyFactoryType
+                    + "</keyfactory>");
+            System.out.println("		<unique>" + (isUnique() ? "yes" : "false")
+                    + "</unique>");
+            System.out.println("		<leaf>" + (isLeaf() ? "yes" : "false")
+                    + "</leaf>");
+            System.out.println("		<leftsibling>" + header.leftSibling
+                    + "</leftsibling>");
+            System.out.println("		<rightsibling>" + header.rightSibling
+                    + "</rightsibling>");
+            System.out.println("		<smppagenumber>"
+                    + page.getSpaceMapPageNumber() + "</smppagenumber>");
+            System.out
+                .println("		<keycount>" + header.keyCount + "</keycount>");
+            System.out.println("	</header>");
+            System.out.println("	<items>");
+            for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
+                if (page.isSlotDeleted(k)) {
+                    continue;
+                }
+                IndexItem item = getItem(k);
+                System.out.println("		<item pos=\"" + k + "\">");
+                System.out.println("			<childpagenumber>"
+                        + item.childPageNumber + "</childpagenumber>");
+                System.out.println("			<location>" + item.getLocation()
+                        + "</location>");
+                System.out.println("			<key>" + item.getKey().toString()
+                        + "</key>");
+                System.out.println("		</item>");
+            }
+            System.out.println("	</items>");
+            System.out.println("</page>");
+        }
+
+        /**
+         * Dumps contents of the BTree node.
+         */
+        public final void dump() {
+
+            // dumpAsXml();
+            if (DiagnosticLogger.getDiagnosticsLevel() == 0) {
+                return;
+            }
+            page.dump();
+            assert page.getSpaceMapPageNumber() != -1;
+            if (page.getNumberOfSlots() > 0) {
+                BTreeNodeHeader header = (BTreeNodeHeader) page.get(
+                    HEADER_KEY_POS,
+                    new BTreeNodeHeader());
+                DiagnosticLogger.log("BTreeNodeHeader=" + header);
+                for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
+                    if (page.isSlotDeleted(k)) {
+                        continue;
+                    }
+                    IndexItem item = (IndexItem) page.get(k, getNewIndexItem());
+                    if (k == header.keyCount) {
+                        DiagnosticLogger.log("IndexItem[" + k
+                                + "] (HIGHKEY) = " + item);
+                    } else {
+                        DiagnosticLogger.log("IndexItem[" + k + "] = " + item);
+                    }
+                }
+            }
+        }
+
+        public final void wrap(SlottedPage page) {
+            this.page = page;
+            header = (BTreeNodeHeader) page.get(
+                HEADER_KEY_POS,
+                new BTreeNodeHeader());
+        }
+
+        final BTreeNodeHeader getHeader() {
+            return header;
+        }
+
+        public final IndexItem getNewIndexItem() {
+            return new IndexItem(
+                btree.getNewIndexKey(),
+                btree.getNewLocation(),
+                -1,
+                isLeaf(),
+                isUnique());
+        }
+
+        /**
+         * Returns the high key. High key is always the last physical key on the page.
+         */
+        final IndexItem getHighKey() {
+            return getItem(header.keyCount);
+        }
+
+        /**
+         * Returns the largest key on the page.
+         */
+        public final IndexItem getLastKey() {
+            return getItem(getKeyCount());
+        }
+
+        /**
+         * Returns specified item. 
+         */
+        public final IndexItem getItem(int slotNumber) {
+            return (IndexItem) page.get(slotNumber, getNewIndexItem());
+        }
+
+        public final IndexItem getInfiniteKey() {
+            return new IndexItem(
+                btree.getMaxIndexKey(),
+                btree.getNewLocation(),
+                -1,
+                isLeaf(),
+                isUnique());
+        }
+
+        /**
+         * Inserts item at specified position. Existing items are shifted
+         * to the right if necessary.  
+         */
+        public final void insert(int slotNumber, IndexItem item) {
+            page.insertAt(slotNumber, item, false);
+        }
+
+        public final void purge(int slotNumber) {
+            page.purge(slotNumber);
+        }
+
+        /**
+         * Replaces the item at specified position. 
+         */
+        public final void replace(int slotNumber, IndexItem item) {
+            page.insertAt(slotNumber, item, true);
+        }
+
+        /**
+         * Tests whether the page is part of a unique index.
+         */
+        public final boolean isUnique() {
+            int flags = page.getFlags();
+            return (flags & NODE_TREE_UNIQUE) != 0;
+        }
+
+        /**
+         * Sets the unique flag.
+         */
+        public final void setUnique() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags | NODE_TREE_UNIQUE));
+        }
+
+        /**
+         * Resets the unique flag.
+         */
+        public final void unsetUnique() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags & ~NODE_TREE_UNIQUE));
+        }
+
+        /**
+         * Tests whether this is a leaf page.
+         */
+        public final boolean isLeaf() {
+            int flags = page.getFlags();
+            return (flags & NODE_TYPE_LEAF) != 0;
+        }
+
+        /**
+         * Sets the leaf flag.
+         */
+        public final void setLeaf() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags | NODE_TYPE_LEAF));
+        }
+
+        /**
+         * Clears the leaf flag.
+         */
+        public final void unsetLeaf() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags & ~NODE_TYPE_LEAF));
+        }
+
+        /**
+         * Is this the root page?
+         */
+        public final boolean isRoot() {
+            return page.getPageId().getPageNumber() == BTreeIndexManagerImpl.ROOT_PAGE_NUMBER;
+        }
+
+        /**
+         * Tests whether this page has been marked as deallocated.
+         */
+        public final boolean isDeallocated() {
+            int flags = page.getFlags();
+            return (flags & NODE_TREE_DEALLOCATED) != 0;
+        }
+
+        /**
+         * Sets the deallocated flag.
+         */
+        public final void setDeallocated() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags | NODE_TREE_DEALLOCATED));
+        }
+
+        /**
+         * Clears the deallocated flag.
+         */
+        public final void unsetDeallocated() {
+            int flags = page.getFlags();
+            page.setFlags((short) (flags & ~NODE_TREE_DEALLOCATED));
+        }
+
+        /**
+         * Returns number of keys stored in the page. For leaf pages, the high key is
+         * excluded.
+         */
+        final int getKeyCount() {
+            if (isLeaf()) {
+                return header.keyCount - 1;
+            }
+            return header.keyCount;
+        }
+
+        /**
+         * Returns the number of physical keys in the page, including the extra
+         * high key in leaf pages.
+         */
+        public final int getNumberOfKeys() {
+            return header.keyCount;
+        }
+
+        final Page getPage() {
+            return page;
+        }
+
+        /**
+         * Finds the key that should be used as the median key when
+         * splitting a page. 
+         */
+        final short getSplitKey() {
+            if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+                /*
+                 * We are in test mode and therefore artificially limit the
+                 * number of keys to a small value.
+                 */
+                return TEST_MODE_SPLIT_KEY;
+            }
+            int halfSpace = page.getSpace() / 2;
+            int space = 0;
+            for (short k = FIRST_KEY_POS; k <= header.keyCount; k++) {
+                space += page.getSlotLength(k);
+                if (space > halfSpace) {
+                    return k;
+                }
+            }
+            log.error(LOG_CLASS_NAME, "getSplitKey", mcat.getMessage(
+                "EB0007",
+                page));
+            throw new IndexException(mcat.getMessage("EB0007", page));
+        }
+
+        /**
+         * Sets the keycount in the header record.  
+         */
+        public final void setNumberOfKeys(int keyCount) {
+            header.keyCount = keyCount;
+        }
+
+        /**
+         * Updates the header stored within the page.
+         */
+        public final void updateHeader() {
+            page.insertAt(HEADER_KEY_POS, header, true);
+        }
+
+        /**
+         * Searches for the supplied key. If there is an
+         * exact match, SearchResult.exactMatch will be set.
+         * If a key is found &gt;= 0 the supplied key,
+         * SearchResult.k and SearchResult.item will be set to it.
+         * If all keys in the page are &lt; search key then, 
+         * SearchResult.k will be set to -1 and SearchResult.item will
+         * be null. 
+         */
+        public final SearchResult search(IndexItem key) {
+            SearchResult result = new SearchResult();
+            /*
+             * Binary search algorithm
+             */
+            int low = FIRST_KEY_POS;
+            int high = getKeyCount();
+            while (low <= high) {
+                int mid = (low + high) >>> 1;
+                if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
+                    log.error(LOG_CLASS_NAME, "search", mcat.getMessage(
+                        "EB0008",
+                        key.toString()));
+                    throw new IndexException(mcat.getMessage("EB0008", key
+                        .toString()));
+                }
+                IndexItem item = getItem(mid);
+                int comp = item.compareTo(key);
+                if (comp < 0)
+                    low = mid + 1;
+                else if (comp > 0)
+                    high = mid - 1;
+                else {
+                    result.k = mid;
+                    result.exactMatch = true;
+                    result.item = item;
+                    return result;
+                }
+            }
+            /*
+             * If the result is not equal, we need to return the
+             * next key if available or -1 if the search key is greater than
+             * all keys in this node.
+             */
+            if (low <= getKeyCount()) {
+                result.k = low;
+                result.item = getItem(low);
+            }
+            return result;
+        }
+
 //		public final SearchResult search_(IndexItem key) {
 //			SearchResult result = new SearchResult();
 //			int k = 1;
@@ -3629,1508 +3982,1600 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule impleme
 //		
 //			return result;
 //		}
-		
-		/**
-		 * Finds the child page associated with an index item.
-		 */
-		public final int findChildPage(IndexItem key) {
-			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findChildPage", mcat.getMessage("EB0009", page));
-				throw new IndexException(mcat.getMessage("EB0009", page));
-			}
-			int k = 1;
-			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
-				if (item.compareTo(key) >= 0) {
-					/* Item covers key */
-					return item.getChildPageNumber();
-				}
-			}
-			return -1;
-		}
-		
-		/**
-		 * Finds the index item associated with a child page.
-		 */
-		public final IndexItem findIndexItem(int childPageNumber) {
-			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findIndexItem", mcat.getMessage("EB0009", page));
-				throw new IndexException(mcat.getMessage("EB0009", page));
-			}
-			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
-				if (item.getChildPageNumber() == childPageNumber) {
-					return item;
-				}
-			}
-			return null;
-		}
 
-		/**
-		 * Finds the index item for left sibling of the
-		 * specified child page.
-		 */
-		public final IndexItem findPrevIndexItem(int childPageNumber) {
-			if (isLeaf()) {
-				log.error(LOG_CLASS_NAME, "findPrevIndexItem", mcat.getMessage("EB0009", page));
-				throw new IndexException(mcat.getMessage("EB0009", page));
-			}
-			IndexItem prev = null;
-			for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-				IndexItem item = getItem(k);
-				if (item.getChildPageNumber() == childPageNumber) {
-					break;
-				}
-				prev = item;
-			}
-			return prev;
-		}
+        /**
+         * Finds the child page associated with an index item.
+         */
+        public final int findChildPage(IndexItem key) {
+            if (isLeaf()) {
+                log.error(LOG_CLASS_NAME, "findChildPage", mcat.getMessage(
+                    "EB0009",
+                    page));
+                throw new IndexException(mcat.getMessage("EB0009", page));
+            }
+            int k = 1;
+            for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+                IndexItem item = getItem(k);
+                if (item.compareTo(key) >= 0) {
+                    /* Item covers key */
+                    return item.getChildPageNumber();
+                }
+            }
+            return -1;
+        }
 
-		/**
-		 * Tests if the current page can be merged with its right sibling. 
-		 */
-		public final boolean canMergeWith(BTreeNode rightSibling) {
-			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
-				/*
-				 * We are in test mode and therefore artificially limit the
-				 * number of keys to a small value.
-				 */
-				int n = getNumberOfKeys() - (isLeaf() ? 1 : 0) +
-					rightSibling.getNumberOfKeys();
-				return n <= TEST_MODE_MAX_KEYS;
-			}
-			int requiredSpace = 0;
-			if (isLeaf()) {
-				// delete the high key
-				requiredSpace -= page.getSlotLength(header.keyCount);
-			}
-			for (int k = FIRST_KEY_POS; k <= rightSibling.getNumberOfKeys(); k++) {
-				// add all keys from the right sibling
-				requiredSpace += rightSibling.page.getSlotLength(k);
-			}
-			// TODO should we leave some slack here?
+        /**
+         * Finds the index item associated with a child page.
+         */
+        public final IndexItem findIndexItem(int childPageNumber) {
+            if (isLeaf()) {
+                log.error(LOG_CLASS_NAME, "findIndexItem", mcat.getMessage(
+                    "EB0009",
+                    page));
+                throw new IndexException(mcat.getMessage("EB0009", page));
+            }
+            for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+                IndexItem item = getItem(k);
+                if (item.getChildPageNumber() == childPageNumber) {
+                    return item;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Finds the index item for left sibling of the
+         * specified child page.
+         */
+        public final IndexItem findPrevIndexItem(int childPageNumber) {
+            if (isLeaf()) {
+                log.error(LOG_CLASS_NAME, "findPrevIndexItem", mcat.getMessage(
+                    "EB0009",
+                    page));
+                throw new IndexException(mcat.getMessage("EB0009", page));
+            }
+            IndexItem prev = null;
+            for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+                IndexItem item = getItem(k);
+                if (item.getChildPageNumber() == childPageNumber) {
+                    break;
+                }
+                prev = item;
+            }
+            return prev;
+        }
+
+        /**
+         * Tests if the current page can be merged with its right sibling. 
+         */
+        public final boolean canMergeWith(BTreeNode rightSibling) {
+            if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+                /*
+                 * We are in test mode and therefore artificially limit the
+                 * number of keys to a small value.
+                 */
+                int n = getNumberOfKeys() - (isLeaf() ? 1 : 0)
+                        + rightSibling.getNumberOfKeys();
+                return n <= TEST_MODE_MAX_KEYS;
+            }
+            int requiredSpace = 0;
+            if (isLeaf()) {
+                // delete the high key
+                requiredSpace -= page.getSlotLength(header.keyCount);
+            }
+            for (int k = FIRST_KEY_POS; k <= rightSibling.getNumberOfKeys(); k++) {
+                // add all keys from the right sibling
+                requiredSpace += rightSibling.page.getSlotLength(k);
+            }
+            // TODO should we leave some slack here?
             return requiredSpace < page.getFreeSpace();
         }
-		
-		public final boolean canAccomodate(IndexItem v) {
-			if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
-				/*
-				 * We are in test mode and therefore artificially limit the
-				 * number of keys to a small value.
-				 */
-				return getNumberOfKeys() < TEST_MODE_MAX_KEYS;
-			}
-			// FIXME call a method in slottedpage
-			// int requiredSpace = v.getStoredLength() + 6;
+
+        public final boolean canAccomodate(IndexItem v) {
+            if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+                /*
+                 * We are in test mode and therefore artificially limit the
+                 * number of keys to a small value.
+                 */
+                return getNumberOfKeys() < TEST_MODE_MAX_KEYS;
+            }
+            // FIXME call a method in slottedpage
+            // int requiredSpace = v.getStoredLength() + 6;
             int requiredSpace = v.getStoredLength() + page.getSlotOverhead();
-			// TODO should we leave some slack here?
+            // TODO should we leave some slack here?
             return requiredSpace <= page.getFreeSpace();
         }
-		
-		/**
-		 * Determines if the specified key "bound" to this page.
-		 */
-		public final boolean covers(IndexItem v) {
-			IndexItem first = getItem(FIRST_KEY_POS);
-			IndexItem last = getItem(getKeyCount());
-			return first.compareTo(v) <= 0 && last.compareTo(v) >= 0;
-		}
-		
-		public final int minimumKeys() {
-			return (2 - (isRoot() ? 1 : 0));
-		}
-		
-		/**
-		 * Tests whether this page is about to underflow. 
-		 * This will be true if it is a root page with only one
-		 * child or any other page with only two children/keys. 
-		 * <p>
-		 */
-		public final boolean isAboutToUnderflow() {
-			return getKeyCount() == minimumKeys();
-		}
-		
-	}
-	
-	/**
-	 * Callback for checking whether a page qualifies for reuse.
-	 * 
-	 * @author Dibyendu Majumdar
-	 */
-	public static final class SpaceCheckerImpl implements FreeSpaceChecker {
-
-		public final boolean hasSpace(int value) {
-			return value == PAGE_SPACE_UNUSED;
-		}
-		
-	}
-
-	/**
-	 * Every page in the BTree has a header item at slot 0.   
-	 */
-	public static final class BTreeNodeHeader implements Storable {
-		
-		static final int SIZE = TypeSize.INTEGER * 5;
-
-		/**
-		 * Pointer to left sibling page. Note that although we have this,
-		 * this is not kept fully up-to-date because to do so would require extra
-		 * work when merging pages. FIXME
-		 */
-		int leftSibling = -1;
-		
-		/**
-		 * Pointer to right sibling page.
-		 */
-		int rightSibling = -1;
-		
-		/**
-		 * Total number of keys present in the page. Includes the high key
-		 * in leaf pages.
-		 */
-		int keyCount = 0;
-
-		/**
-		 * Type code for the key factory to be used to manipulate index keys.
-		 */
-		int keyFactoryType = -1;
-		
-		/**
-		 * Typecode of the location factory to be used for generating Location objects.
-		 */
-		int locationFactoryType = -1;
-		
-		
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#getStoredLength()
-		 */
-		public final int getStoredLength() {
-			return SIZE;
-		}
-
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
-		 */
-		public final void retrieve(ByteBuffer bb) {
-			keyFactoryType = bb.getInt();
-			locationFactoryType = bb.getInt();
-			leftSibling = bb.getInt();
-			rightSibling = bb.getInt();
-			keyCount = bb.getInt();
-		}
-
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
-		 */
-		public final void store(ByteBuffer bb) {
-			bb.putInt(keyFactoryType);
-			bb.putInt(locationFactoryType);
-			bb.putInt(leftSibling);
-			bb.putInt(rightSibling);
-			bb.putInt(keyCount);
-		}
-		
-		@Override
-		public final String toString() {
-			return "BTreeNodeHeader(keyFactory=" + keyFactoryType + ", locationFactory=" + locationFactoryType + 
-				", leftSibling=" + leftSibling + ", rightSibling=" + rightSibling + 
-				", keyCount=" + keyCount + ")";
-		}
-
-		final int getKeyCount() {
-			return keyCount;
-		}
-
-		final void setKeyCount(int keyCount) {
-			this.keyCount = keyCount;
-		}
-
-		final int getLeftSibling() {
-			return leftSibling;
-		}
-
-		final void setLeftSibling(int leftSibling) {
-			this.leftSibling = leftSibling;
-		}
-
-		final int getRightSibling() {
-			return rightSibling;
-		}
-
-		final void setRightSibling(int rightSibling) {
-			this.rightSibling = rightSibling;
-		}
-
-		final int getKeyFactoryType() {
-			return keyFactoryType;
-		}
-
-		final void setKeyFactoryType(int keyFactoryType) {
-			this.keyFactoryType = keyFactoryType;
-		}
-
-		final int getLocationFactoryType() {
-			return locationFactoryType;
-		}
-
-		final void setLocationFactoryType(int locationFactoryType) {
-			this.locationFactoryType = locationFactoryType;
-		}
-		
-	}
-
-	/**
-	 * Base class for all log operations for BTree. A key feature is that
-	 * all log operations have access to information that allows them to generate
-	 * keys, locations and index items. Log operations also _know_ whether
-	 * they are to be applied to leaf pages, or to unique indexes.  
-	 * <p>
-	 * Having all the relevant information to hand is useful specially during restart
-	 * recovery and debugging.
-	 * The downside is that this information is repeated in all log records.
-	 * <p>
-	 * It is possible to avoid storing the index data in log records if we can ensure
-	 * that the information can be obtained some other way. For example, the
-	 * Index manager could cache information about indexes, perhaps keyed
-	 * by container id, and log records could obtain this information by 
-	 * querying the index manager. However, there is the issue that during 
-	 * restart recovery, the index may not exist, and therefore at least one
-	 * log record (the one that creates the index) needs to contain information
-	 * about the index. 
-	 * 
-	 * @author Dibyendu Majumdar
-	 */
-	public static abstract class BTreeLogOperation extends BaseLoggable implements ObjectRegistryAware, IndexItemHelper {
-
-		/**
-		 * Is this a leaf level operation.
-		 */
-		private boolean leaf;
-
-		/**
-		 * Is this part of a unique index?
-		 */
-		private boolean unique;
-
-		/**
-		 * Type code for the key factory to be used to manipulate index keys.
-		 */
-		private int keyFactoryType;
-		
-		/**
-		 * Typecode of the location factory to be used for generating Location objects.
-		 */
-		private int locationFactoryType;
-		
-		private transient ObjectRegistry objectFactory;
-		
-		private transient IndexKeyFactory keyFactory;
-		
-		private transient LocationFactory locationFactory;
-
-		@Override
-		public int getStoredLength() {
-			int n = super.getStoredLength();
-			n += 2;
-			n += TypeSize.INTEGER * 2;
-			return n;
-		}
-
-		@Override
-		public void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			keyFactoryType = bb.getInt();
-			locationFactoryType = bb.getInt();
-			keyFactory = (IndexKeyFactory) objectFactory.getInstance(keyFactoryType);
-			locationFactory = (LocationFactory) objectFactory.getInstance(locationFactoryType);
-			leaf = bb.get() == 1;
-			unique = bb.get() == 1;
-		}
-
-		@Override
-		public void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putInt(keyFactoryType);
-			bb.putInt(locationFactoryType);
-			bb.put(leaf ? (byte)1 : (byte)0);
-			bb.put(unique ? (byte)1 : (byte)0);
-		}
-		
-		public final void setObjectFactory(ObjectRegistry objectFactory) {
-			this.objectFactory = objectFactory;
-		}
-
-		public final IndexKey getNewIndexKey() {
-			return keyFactory.newIndexKey(getPageId().getContainerId());
-		}
-		
-		public final Location getNewLocation() {
-			return locationFactory.newLocation();
-		}
-
-		public final IndexKey getMaxIndexKey() {
-			return keyFactory.maxIndexKey(getPageId().getContainerId());
-		}
-
-		public final IndexItem makeNewItem() {
-			return new IndexItem(keyFactory.newIndexKey(getPageId().getContainerId()), locationFactory.newLocation(), -1, leaf, unique); 
-		}
-		
-		public final void setKeyFactoryType(int keyFactoryType) {
-			this.keyFactoryType = keyFactoryType;
-			keyFactory = (IndexKeyFactory) objectFactory.getInstance(keyFactoryType);
-		}
-
-		public final void setLocationFactoryType(int locationFactoryType) {
-			this.locationFactoryType = locationFactoryType;
-			locationFactory = (LocationFactory) objectFactory.getInstance(locationFactoryType);
-		}
-
-		public final int getKeyFactoryType() {
-			return keyFactoryType;
-		}
-
-		public final int getLocationFactoryType() {
-			return locationFactoryType;
-		}
-
-		public final boolean isUnique() {
-			return unique;
-		}
-
-		public final void setUnique(boolean unique) {
-			this.unique = unique;
-		}
-
-		public final boolean isLeaf() {
-			return leaf;
-		}
-
-		public final void setLeaf(boolean leaf) {
-			this.leaf = leaf;
-		}
-
-		final IndexKeyFactory getKeyFactory() {
-			return keyFactory;
-		}
-
-		final LocationFactory getLocationFactory() {
-			return locationFactory;
-		}
-
-		protected final ObjectRegistry getObjectFactory() {
-			return objectFactory;
-		}
-
-		public void copyFrom(BTreeLogOperation other) {
-			this.keyFactory = other.keyFactory;
-			this.keyFactoryType = other.keyFactoryType;
-			this.leaf = other.leaf;
-			this.locationFactory = other.locationFactory;
-			this.locationFactoryType = other.locationFactoryType;
-			this.objectFactory = other.objectFactory;
-			this.unique = other.unique;
-		}
-		
-		@Override
-		public String toString() {
-			return super.toString() + ", isLeaf=" + (isLeaf() ? "true" : "false") +
-				", isUnique=" + (isUnique() ? "true": "false") +
-				", keyFactoryType=" + getKeyFactoryType() + 
-				", locationFactoryType=" + getLocationFactoryType();
-		}
-	}
-	
-	/**
-	 * Base class for operations that require a positional update of 
-	 * a key.
-	 * 
-	 * @author Dibyendu Majumdar
-	 */
-	public static abstract class KeyUpdateOperation extends BTreeLogOperation {
-
-		/**
-		 * Item to be updated
-		 */
-		private IndexItem item;
-
-		/**
-		 * Position of the item within the BTree node
-		 */
-		private int position = -1;
-		
-		public final int getPosition() {
-			return position;
-		}
-
-		public final void setPosition(int position) {
-			this.position = position;
-		}
-
-		public final IndexItem getItem() {
-			return item;
-		}
-
-		public final void setItem(IndexItem item) {
-			this.item = item;
-			if (!item.isLeaf()) {
-				log.error(LOG_CLASS_NAME, "setItem", mcat.getMessage("EB0010", item));
-				throw new IndexException(mcat.getMessage("EB0010", item));
-			}
-		}
-
-		@Override
-		public final void copyFrom(BTreeLogOperation other) {
-			super.copyFrom(other);
-			KeyUpdateOperation o = (KeyUpdateOperation) other;
-			this.item = o.item;
-			this.position = o.position;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			position = bb.getInt();
-			item = new IndexItem(getKeyFactory().newIndexKey(getPageId().getContainerId()), getLocationFactory().newLocation(), -1, true, isUnique()); 
-			item.retrieve(bb);
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putInt(position);
-			item.store(bb);
-		}
-
-		@Override
-		public final int getStoredLength() {
-			return super.getStoredLength() + TypeSize.INTEGER + item.getStoredLength();
-		}
-
-		@Override
-		public final void init() {
-		}
-	}
-	
-	/**
-	 * Log record data for inserting a key into the BTree.
-	 */
-	public static final class InsertOperation extends KeyUpdateOperation implements LogicalUndo {
-	}
-	
-	public static final class UndoInsertOperation extends KeyUpdateOperation implements Compensation {
-	}
-
-	public static final class DeleteOperation extends KeyUpdateOperation implements LogicalUndo {
-	}
-	
-	public static final class UndoDeleteOperation extends KeyUpdateOperation implements Compensation {
-	}
-	
-	/**
-	 * Split operation log record.
-	 */
-	public static final class SplitOperation extends BTreeLogOperation implements Compensation, MultiPageRedo {
-
-		/**
-		 * Page Id of new sibling page.
-		 */
-		int newSiblingPageNumber;
-		
-		/**
-		 * The items that will become part of the new sibling page.
-		 * Includes the highkey in leaf pages.
-		 */
-		LinkedList<IndexItem> items;
-		
-		/**
-		 * The new sibling page will point to current page's right sibling.
-		 */
-		int rightSibling;
-		
-		/**
-		 * Space map page that owns the new page.
-		 */
-		int spaceMapPageNumber;
-		
-		/**
-		 * The value of the high key - used only in leaf pages.
-		 */
-		IndexItem highKey;
-		
-		/**
-		 * After splitting, this is the new keycount of the page.
-		 * Includes highkey if this is a leaf page.
-		 */
-		short newKeyCount;
-		
-		@Override
-		public final void init() {
-			items = new LinkedList<IndexItem>();
-		}
-
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.SHORT;
-			for (IndexItem item: items) {
-				n += item.getStoredLength();
-			}
-			if (isLeaf()) {
-				n += highKey.getStoredLength();
-			}
-			n += TypeSize.INTEGER * 3;
-			n += TypeSize.SHORT;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			short numberOfItems = bb.getShort();
-			items = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = new IndexItem(getKeyFactory().newIndexKey(getPageId().getContainerId()), getLocationFactory().newLocation(), -1, isLeaf(), isUnique()); 
-				item.retrieve(bb);
-				items.add(item);
-			}
-			if (isLeaf()) {
-				highKey = new IndexItem(getKeyFactory().newIndexKey(getPageId().getContainerId()), getLocationFactory().newLocation(), -1, isLeaf(), isUnique());
-				highKey.retrieve(bb);
-			}
-			newSiblingPageNumber = bb.getInt();
-			rightSibling = bb.getInt();
-			spaceMapPageNumber = bb.getInt();
-			newKeyCount = bb.getShort();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putShort((short) items.size());
-			for (IndexItem item: items) {
-				item.store(bb);
-			}
-			if (isLeaf()) {
-				highKey.store(bb);
-			}
-			bb.putInt(newSiblingPageNumber);
-			bb.putInt(rightSibling);
-			bb.putInt(spaceMapPageNumber);
-			bb.putShort(newKeyCount);
-		}
-
-		@Override
-		public final String toString() {
-			return super.toString();
-		}
-
-		/**
-		 * Returns pages that are affected by this log.
-		 * Included are the page that is being split, and the newly allocated page.
-		 */
-		public final PageId[] getPageIds() {
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), newSiblingPageNumber) };
-		}
-	}
-
-	public static final class MergeOperation extends BTreeLogOperation implements Redoable, MultiPageRedo {
-
-		/**
-		 * The items that will become part of the new sibling page.
-		 * Includes the highkey in leaf pages.
-		 */
-		LinkedList<IndexItem> items;
-		
-		/**
-		 * The new sibling page will point to current page's right sibling.
-		 */
-		int rightSibling;
-		
-		int rightSiblingSpaceMapPage;
-		
-		int rightRightSibling;
-		
-		@Override
-		public final void init() {
-			items = new LinkedList<IndexItem>();
-		}
-
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.SHORT;
-			for (IndexItem item: items) {
-				n += item.getStoredLength();
-			}
-			n += TypeSize.INTEGER * 3;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			short numberOfItems = bb.getShort();
-			items = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = new IndexItem(getKeyFactory().newIndexKey(getPageId().getContainerId()), getLocationFactory().newLocation(), -1, isLeaf(), isUnique()); 
-				item.retrieve(bb);
-				items.add(item);
-			}
-			rightSibling = bb.getInt();
-			rightSiblingSpaceMapPage = bb.getInt();
-			rightRightSibling = bb.getInt();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putShort((short) items.size());
-			for (IndexItem item: items) {
-				item.store(bb);
-			}
-			bb.putInt(rightSibling);
-			bb.putInt(rightSiblingSpaceMapPage);
-			bb.putInt(rightRightSibling);
-		}
-
-		public final PageId[] getPageIds() {
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), rightSibling),
-						new PageId(getPageId().getContainerId(), rightSiblingSpaceMapPage) };
-		}		
-
-		@Override
-		public final String toString() {
-			return "MergeOperation(" + super.toString() + ", rightSibling=" + rightSibling + ")";
-		}
-
-	}
-	
-	public static final class LinkOperation extends BTreeLogOperation implements Redoable {
-
-		int leftSibling;
-		
-		int rightSibling;
-		
-		IndexItem leftChildHighKey;
-		
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += leftChildHighKey.getStoredLength();
-			n += TypeSize.INTEGER * 2;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			leftChildHighKey = makeNewItem(); 
-			leftChildHighKey.retrieve(bb);
-			rightSibling = bb.getInt();
-			leftSibling = bb.getInt();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			leftChildHighKey.store(bb);
-			bb.putInt(rightSibling);
-			bb.putInt(leftSibling);
-		}
-
-		@Override
-		public final void init() {
-		}
-
-		@Override
-		public final String toString() {
-			return "LinkOperation(" + super.toString() + ", leftSibling=" + leftSibling +
-				", rightSibling=" + rightSibling + ")";
-		}
-	
-	}
-	
-	/**
-	 * Log record for the Unlink operation. It is applied to the parent page.
-	 * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
-	 * @see BTreeIndexManagerImpl#redoUnlinkOperation(Page, UnlinkOperation) 
-	 */
-	public static final class UnlinkOperation extends BTreeLogOperation implements Redoable {
-
-		/**
-		 * Pointer to right child.
-		 */
-		int leftSibling;
-		
-		/**
-		 * Pointer to left child.
-		 */
-		int rightSibling;
-		
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.INTEGER * 2;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			rightSibling = bb.getInt();
-			leftSibling = bb.getInt();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putInt(rightSibling);
-			bb.putInt(leftSibling);
-		}
-
-		@Override
-		public final void init() {
-		}
-
-		@Override
-		public final String toString() {
-			return "UnlinkOperation(" + super.toString() + ", leftSibling=" + leftSibling +
-				", rightSibling=" + rightSibling + ")";
-		}
-	
-	}
-	
-	/**
-	 * Unlike the published algorithm we simply transfer one key from the more populated
-	 * page to the less populated page. 
-	 * 
-	 * @author Dibyendu Majumdar
-	 * @since 06-Oct-2005
-	 */
-	public static final class RedistributeOperation extends BTreeLogOperation implements Redoable, MultiPageRedo {
-
-		/**
-		 * Pointer to the left sibling.
-		 */
-		int leftSibling;
-		
-		/**
-		 * Pointer to the right sibling.
-		 */
-		int rightSibling;
-		
-		/**
-		 * The key that will be moved.
-		 */
-		IndexItem key;
-		
-		/**
-		 * Pointer to the recipient of the key.
-		 */
-		int targetSibling;
-		
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.INTEGER * 3;
-			n += key.getStoredLength();
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			rightSibling = bb.getInt();
-			leftSibling = bb.getInt();
-			targetSibling = bb.getInt();
-			key = makeNewItem(); 
-			key.retrieve(bb);
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putInt(rightSibling);
-			bb.putInt(leftSibling);
-			bb.putInt(targetSibling);
-			key.store(bb);
-		}
-
-		@Override
-		public final void init() {
-		}
-
-		public final PageId[] getPageIds() {
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), rightSibling) };
-		}
-		
-		@Override
-		public final String toString() {
-			return "RedistributeOperation(" + super.toString() + ", leftSibling=" + leftSibling +
-				", rightSibling=" + rightSibling + ", targetSibling=" + targetSibling + ")";
-		}
-		
-	}
-
-	/**
-	 * Log record for IncreaseTreeHeight operation.
-	 * Must be logged as part of the root page update. The log is applied to the
-	 * root page and the new child page. It is defined as a Compensation record so that it
-	 * can be linked back in such a way that if this operation completes, it is treated as 
-	 * a nested top action.
-	 * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
-	 * @see BTreeIndexManagerImpl#redoIncreaseTreeHeightOperation(Page, IncreaseTreeHeightOperation)
-	 */
-	public static final class IncreaseTreeHeightOperation extends BTreeLogOperation implements Compensation, MultiPageRedo {
-
-		/**
-		 * These items that will become part of the new left child page.
-		 * Includes the highkey in leaf pages.
-		 */
-		LinkedList<IndexItem> items;
-		
-		/**
-		 * Root page will contain 2 index entries. First will point to left child,
-		 * while the second will point to right child.
-		 */
-		LinkedList<IndexItem> rootItems;
-
-		/**
-		 * New left child page.
-		 */
-		int leftSibling;
-
-		/**
-		 * Right child page.
-		 */
-		int rightSibling;
-		
-		/**
-		 * Owner of the newly allocated left sibling (left child) page.
-		 */
-		int spaceMapPageNumber;
-		
-		@Override
-		public final void init() {
-			items = new LinkedList<IndexItem>();
-			rootItems = new LinkedList<IndexItem>();
-		}
-
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.SHORT;
-			for (IndexItem item: items) {
-				n += item.getStoredLength();
-			}
-			n += TypeSize.SHORT;
-			for (IndexItem item: rootItems) {
-				n += item.getStoredLength();
-			}
-			n += TypeSize.INTEGER * 3;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			short numberOfItems = bb.getShort();
-			items = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = makeNewItem(); 
-				item.retrieve(bb);
-				items.add(item);
-			}
-			numberOfItems = bb.getShort();
-			rootItems = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = new IndexItem(getKeyFactory().newIndexKey(getPageId().getContainerId()), getLocationFactory().newLocation(), -1, false, isUnique()); 
-				item.retrieve(bb);
-				rootItems.add(item);
-			}
-			leftSibling = bb.getInt();
-			rightSibling = bb.getInt();
-			spaceMapPageNumber = bb.getInt();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putShort((short) items.size());
-			for (IndexItem item: items) {
-				item.store(bb);
-			}
-			bb.putShort((short) rootItems.size());
-			for (IndexItem item: rootItems) {
-				item.store(bb);
-			}
-			bb.putInt(leftSibling);
-			bb.putInt(rightSibling);
-			bb.putInt(spaceMapPageNumber);
-		}
-
-		/**
-		 * This log record will be applioed to the root page and its newly allocated left
-		 * child.
-		 */
-		public final PageId[] getPageIds() {
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), leftSibling) };
-		}
-		
-		@Override
-		public final String toString() {
-			return "IncreaseTreeHeightOperation(" + super.toString() + ", leftChild=" + leftSibling +
-				", rightChild=" + rightSibling + ")";
-		}
-	}
-
-	/**
-	 * Decrease of the height of the tree when root page has only one child.
-	 * Must be logged as part of the root page update.
-	 * @see BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeCursor)
-	 * @see BTreeIndexManagerImpl#redoDecreaseTreeHeightOperation(Page, DecreaseTreeHeightOperation)
-	 */
-	public static final class DecreaseTreeHeightOperation extends BTreeLogOperation implements Redoable, MultiPageRedo {
-
-		/**
-		 * The items that will become part of the new root page - copied over from child page.
-		 * Includes the highkey in leaf pages.
-		 */
-		LinkedList<IndexItem> items;
-		
-		/**
-		 * Child page to be deallocated
-		 */
-		int childPageNumber;
-		
-		/**
-		 * Space map page that owns the child page data
-		 */
-		int childPageSpaceMap;
-		
-		@Override
-		public final void init() {
-			items = new LinkedList<IndexItem>();
-		}
-
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.SHORT;
-			for (IndexItem item: items) {
-				n += item.getStoredLength();
-			}
-			n += TypeSize.INTEGER * 2;
-			return n;
-		}
-
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			short numberOfItems = bb.getShort();
-			items = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = makeNewItem(); 
-				item.retrieve(bb);
-				items.add(item);
-			}
-			childPageNumber = bb.getInt();
-			childPageSpaceMap = bb.getInt();
-		}
-
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putShort((short) items.size());
-			for (IndexItem item: items) {
-				item.store(bb);
-			}
-			bb.putInt(childPageNumber);
-			bb.putInt(childPageSpaceMap);
-		}
-
-		/**
-		 * This log record will be applied to the root page, and the child page that is to be
-		 * deallocated. It can also be applied to the space map page, but we handle the
-		 * space map page update separately in the interest of high concurrency.
-		 */
-		public final PageId[] getPageIds() {
+
+        /**
+         * Determines if the specified key "bound" to this page.
+         */
+        public final boolean covers(IndexItem v) {
+            IndexItem first = getItem(FIRST_KEY_POS);
+            IndexItem last = getItem(getKeyCount());
+            return first.compareTo(v) <= 0 && last.compareTo(v) >= 0;
+        }
+
+        public final int minimumKeys() {
+            return (2 - (isRoot() ? 1 : 0));
+        }
+
+        /**
+         * Tests whether this page is about to underflow. 
+         * This will be true if it is a root page with only one
+         * child or any other page with only two children/keys. 
+         * <p>
+         */
+        public final boolean isAboutToUnderflow() {
+            return getKeyCount() == minimumKeys();
+        }
+
+    }
+
+    /**
+     * Callback for checking whether a page qualifies for reuse.
+     * 
+     * @author Dibyendu Majumdar
+     */
+    public static final class SpaceCheckerImpl implements FreeSpaceChecker {
+
+        public final boolean hasSpace(int value) {
+            return value == PAGE_SPACE_UNUSED;
+        }
+
+    }
+
+    /**
+     * Every page in the BTree has a header item at slot 0.   
+     */
+    public static final class BTreeNodeHeader implements Storable {
+
+        static final int SIZE = TypeSize.INTEGER * 5;
+
+        /**
+         * Pointer to left sibling page. Note that although we have this,
+         * this is not kept fully up-to-date because to do so would require extra
+         * work when merging pages. FIXME
+         */
+        int leftSibling = -1;
+
+        /**
+         * Pointer to right sibling page.
+         */
+        int rightSibling = -1;
+
+        /**
+         * Total number of keys present in the page. Includes the high key
+         * in leaf pages.
+         */
+        int keyCount = 0;
+
+        /**
+         * Type code for the key factory to be used to manipulate index keys.
+         */
+        int keyFactoryType = -1;
+
+        /**
+         * Typecode of the location factory to be used for generating Location objects.
+         */
+        int locationFactoryType = -1;
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#getStoredLength()
+         */
+        public final int getStoredLength() {
+            return SIZE;
+        }
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
+         */
+        public final void retrieve(ByteBuffer bb) {
+            keyFactoryType = bb.getInt();
+            locationFactoryType = bb.getInt();
+            leftSibling = bb.getInt();
+            rightSibling = bb.getInt();
+            keyCount = bb.getInt();
+        }
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
+         */
+        public final void store(ByteBuffer bb) {
+            bb.putInt(keyFactoryType);
+            bb.putInt(locationFactoryType);
+            bb.putInt(leftSibling);
+            bb.putInt(rightSibling);
+            bb.putInt(keyCount);
+        }
+
+        @Override
+        public final String toString() {
+            return "BTreeNodeHeader(keyFactory=" + keyFactoryType
+                    + ", locationFactory=" + locationFactoryType
+                    + ", leftSibling=" + leftSibling + ", rightSibling="
+                    + rightSibling + ", keyCount=" + keyCount + ")";
+        }
+
+        final int getKeyCount() {
+            return keyCount;
+        }
+
+        final void setKeyCount(int keyCount) {
+            this.keyCount = keyCount;
+        }
+
+        final int getLeftSibling() {
+            return leftSibling;
+        }
+
+        final void setLeftSibling(int leftSibling) {
+            this.leftSibling = leftSibling;
+        }
+
+        final int getRightSibling() {
+            return rightSibling;
+        }
+
+        final void setRightSibling(int rightSibling) {
+            this.rightSibling = rightSibling;
+        }
+
+        final int getKeyFactoryType() {
+            return keyFactoryType;
+        }
+
+        final void setKeyFactoryType(int keyFactoryType) {
+            this.keyFactoryType = keyFactoryType;
+        }
+
+        final int getLocationFactoryType() {
+            return locationFactoryType;
+        }
+
+        final void setLocationFactoryType(int locationFactoryType) {
+            this.locationFactoryType = locationFactoryType;
+        }
+
+    }
+
+    /**
+     * Base class for all log operations for BTree. A key feature is that
+     * all log operations have access to information that allows them to generate
+     * keys, locations and index items. Log operations also _know_ whether
+     * they are to be applied to leaf pages, or to unique indexes.  
+     * <p>
+     * Having all the relevant information to hand is useful specially during restart
+     * recovery and debugging.
+     * The downside is that this information is repeated in all log records.
+     * <p>
+     * It is possible to avoid storing the index data in log records if we can ensure
+     * that the information can be obtained some other way. For example, the
+     * Index manager could cache information about indexes, perhaps keyed
+     * by container id, and log records could obtain this information by 
+     * querying the index manager. However, there is the issue that during 
+     * restart recovery, the index may not exist, and therefore at least one
+     * log record (the one that creates the index) needs to contain information
+     * about the index. 
+     * 
+     * @author Dibyendu Majumdar
+     */
+    public static abstract class BTreeLogOperation extends BaseLoggable
+            implements ObjectRegistryAware, IndexItemHelper {
+
+        /**
+         * Is this a leaf level operation.
+         */
+        private boolean leaf;
+
+        /**
+         * Is this part of a unique index?
+         */
+        private boolean unique;
+
+        /**
+         * Type code for the key factory to be used to manipulate index keys.
+         */
+        private int keyFactoryType;
+
+        /**
+         * Typecode of the location factory to be used for generating Location objects.
+         */
+        private int locationFactoryType;
+
+        private transient ObjectRegistry objectFactory;
+
+        private transient IndexKeyFactory keyFactory;
+
+        private transient LocationFactory locationFactory;
+
+        @Override
+        public int getStoredLength() {
+            int n = super.getStoredLength();
+            n += 2;
+            n += TypeSize.INTEGER * 2;
+            return n;
+        }
+
+        @Override
+        public void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            keyFactoryType = bb.getInt();
+            locationFactoryType = bb.getInt();
+            keyFactory = (IndexKeyFactory) objectFactory
+                .getInstance(keyFactoryType);
+            locationFactory = (LocationFactory) objectFactory
+                .getInstance(locationFactoryType);
+            leaf = bb.get() == 1;
+            unique = bb.get() == 1;
+        }
+
+        @Override
+        public void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(keyFactoryType);
+            bb.putInt(locationFactoryType);
+            bb.put(leaf ? (byte) 1 : (byte) 0);
+            bb.put(unique ? (byte) 1 : (byte) 0);
+        }
+
+        public final void setObjectFactory(ObjectRegistry objectFactory) {
+            this.objectFactory = objectFactory;
+        }
+
+        public final IndexKey getNewIndexKey() {
+            return keyFactory.newIndexKey(getPageId().getContainerId());
+        }
+
+        public final Location getNewLocation() {
+            return locationFactory.newLocation();
+        }
+
+        public final IndexKey getMaxIndexKey() {
+            return keyFactory.maxIndexKey(getPageId().getContainerId());
+        }
+
+        public final IndexItem makeNewItem() {
+            return new IndexItem(
+                keyFactory.newIndexKey(getPageId().getContainerId()),
+                locationFactory.newLocation(),
+                -1,
+                leaf,
+                unique);
+        }
+
+        public final void setKeyFactoryType(int keyFactoryType) {
+            this.keyFactoryType = keyFactoryType;
+            keyFactory = (IndexKeyFactory) objectFactory
+                .getInstance(keyFactoryType);
+        }
+
+        public final void setLocationFactoryType(int locationFactoryType) {
+            this.locationFactoryType = locationFactoryType;
+            locationFactory = (LocationFactory) objectFactory
+                .getInstance(locationFactoryType);
+        }
+
+        public final int getKeyFactoryType() {
+            return keyFactoryType;
+        }
+
+        public final int getLocationFactoryType() {
+            return locationFactoryType;
+        }
+
+        public final boolean isUnique() {
+            return unique;
+        }
+
+        public final void setUnique(boolean unique) {
+            this.unique = unique;
+        }
+
+        public final boolean isLeaf() {
+            return leaf;
+        }
+
+        public final void setLeaf(boolean leaf) {
+            this.leaf = leaf;
+        }
+
+        final IndexKeyFactory getKeyFactory() {
+            return keyFactory;
+        }
+
+        final LocationFactory getLocationFactory() {
+            return locationFactory;
+        }
+
+        protected final ObjectRegistry getObjectFactory() {
+            return objectFactory;
+        }
+
+        public void copyFrom(BTreeLogOperation other) {
+            this.keyFactory = other.keyFactory;
+            this.keyFactoryType = other.keyFactoryType;
+            this.leaf = other.leaf;
+            this.locationFactory = other.locationFactory;
+            this.locationFactoryType = other.locationFactoryType;
+            this.objectFactory = other.objectFactory;
+            this.unique = other.unique;
+        }
+
+        @Override
+        public String toString() {
+            return super.toString() + ", isLeaf="
+                    + (isLeaf() ? "true" : "false") + ", isUnique="
+                    + (isUnique() ? "true" : "false") + ", keyFactoryType="
+                    + getKeyFactoryType() + ", locationFactoryType="
+                    + getLocationFactoryType();
+        }
+    }
+
+    /**
+     * Base class for operations that require a positional update of 
+     * a key.
+     * 
+     * @author Dibyendu Majumdar
+     */
+    public static abstract class KeyUpdateOperation extends BTreeLogOperation {
+
+        /**
+         * Item to be updated
+         */
+        private IndexItem item;
+
+        /**
+         * Position of the item within the BTree node
+         */
+        private int position = -1;
+
+        public final int getPosition() {
+            return position;
+        }
+
+        public final void setPosition(int position) {
+            this.position = position;
+        }
+
+        public final IndexItem getItem() {
+            return item;
+        }
+
+        public final void setItem(IndexItem item) {
+            this.item = item;
+            if (!item.isLeaf()) {
+                log.error(LOG_CLASS_NAME, "setItem", mcat.getMessage(
+                    "EB0010",
+                    item));
+                throw new IndexException(mcat.getMessage("EB0010", item));
+            }
+        }
+
+        @Override
+        public final void copyFrom(BTreeLogOperation other) {
+            super.copyFrom(other);
+            KeyUpdateOperation o = (KeyUpdateOperation) other;
+            this.item = o.item;
+            this.position = o.position;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            position = bb.getInt();
+            item = new IndexItem(getKeyFactory().newIndexKey(
+                getPageId().getContainerId()), getLocationFactory()
+                .newLocation(), -1, true, isUnique());
+            item.retrieve(bb);
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(position);
+            item.store(bb);
+        }
+
+        @Override
+        public final int getStoredLength() {
+            return super.getStoredLength() + TypeSize.INTEGER
+                    + item.getStoredLength();
+        }
+
+        @Override
+        public final void init() {
+        }
+    }
+
+    /**
+     * Log record data for inserting a key into the BTree.
+     */
+    public static final class InsertOperation extends KeyUpdateOperation
+            implements LogicalUndo {
+    }
+
+    public static final class UndoInsertOperation extends KeyUpdateOperation
+            implements Compensation {
+    }
+
+    public static final class DeleteOperation extends KeyUpdateOperation
+            implements LogicalUndo {
+    }
+
+    public static final class UndoDeleteOperation extends KeyUpdateOperation
+            implements Compensation {
+    }
+
+    /**
+     * Split operation log record.
+     */
+    public static final class SplitOperation extends BTreeLogOperation
+            implements Compensation, MultiPageRedo {
+
+        /**
+         * Page Id of new sibling page.
+         */
+        int newSiblingPageNumber;
+
+        /**
+         * The items that will become part of the new sibling page.
+         * Includes the highkey in leaf pages.
+         */
+        LinkedList<IndexItem> items;
+
+        /**
+         * The new sibling page will point to current page's right sibling.
+         */
+        int rightSibling;
+
+        /**
+         * Space map page that owns the new page.
+         */
+        int spaceMapPageNumber;
+
+        /**
+         * The value of the high key - used only in leaf pages.
+         */
+        IndexItem highKey;
+
+        /**
+         * After splitting, this is the new keycount of the page.
+         * Includes highkey if this is a leaf page.
+         */
+        short newKeyCount;
+
+        @Override
+        public final void init() {
+            items = new LinkedList<IndexItem>();
+        }
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            if (isLeaf()) {
+                n += highKey.getStoredLength();
+            }
+            n += TypeSize.INTEGER * 3;
+            n += TypeSize.SHORT;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = new IndexItem(getKeyFactory().newIndexKey(
+                    getPageId().getContainerId()), getLocationFactory()
+                    .newLocation(), -1, isLeaf(), isUnique());
+                item.retrieve(bb);
+                items.add(item);
+            }
+            if (isLeaf()) {
+                highKey = new IndexItem(getKeyFactory().newIndexKey(
+                    getPageId().getContainerId()), getLocationFactory()
+                    .newLocation(), -1, isLeaf(), isUnique());
+                highKey.retrieve(bb);
+            }
+            newSiblingPageNumber = bb.getInt();
+            rightSibling = bb.getInt();
+            spaceMapPageNumber = bb.getInt();
+            newKeyCount = bb.getShort();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+            if (isLeaf()) {
+                highKey.store(bb);
+            }
+            bb.putInt(newSiblingPageNumber);
+            bb.putInt(rightSibling);
+            bb.putInt(spaceMapPageNumber);
+            bb.putShort(newKeyCount);
+        }
+
+        @Override
+        public final String toString() {
+            return super.toString();
+        }
+
+        /**
+         * Returns pages that are affected by this log.
+         * Included are the page that is being split, and the newly allocated page.
+         */
+        public final PageId[] getPageIds() {
+            return new PageId[] {
+                    getPageId(),
+                    new PageId(
+                        getPageId().getContainerId(),
+                        newSiblingPageNumber) };
+        }
+    }
+
+    public static final class MergeOperation extends BTreeLogOperation
+            implements Redoable, MultiPageRedo {
+
+        /**
+         * The items that will become part of the new sibling page.
+         * Includes the highkey in leaf pages.
+         */
+        LinkedList<IndexItem> items;
+
+        /**
+         * The new sibling page will point to current page's right sibling.
+         */
+        int rightSibling;
+
+        int rightSiblingSpaceMapPage;
+
+        int rightRightSibling;
+
+        @Override
+        public final void init() {
+            items = new LinkedList<IndexItem>();
+        }
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            n += TypeSize.INTEGER * 3;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = new IndexItem(getKeyFactory().newIndexKey(
+                    getPageId().getContainerId()), getLocationFactory()
+                    .newLocation(), -1, isLeaf(), isUnique());
+                item.retrieve(bb);
+                items.add(item);
+            }
+            rightSibling = bb.getInt();
+            rightSiblingSpaceMapPage = bb.getInt();
+            rightRightSibling = bb.getInt();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+            bb.putInt(rightSibling);
+            bb.putInt(rightSiblingSpaceMapPage);
+            bb.putInt(rightRightSibling);
+        }
+
+        public final PageId[] getPageIds() {
+            return new PageId[] {
+                    getPageId(),
+                    new PageId(getPageId().getContainerId(), rightSibling),
+                    new PageId(
+                        getPageId().getContainerId(),
+                        rightSiblingSpaceMapPage) };
+        }
+
+        @Override
+        public final String toString() {
+            return "MergeOperation(" + super.toString() + ", rightSibling="
+                    + rightSibling + ")";
+        }
+
+    }
+
+    public static final class LinkOperation extends BTreeLogOperation implements
+            Redoable {
+
+        int leftSibling;
+
+        int rightSibling;
+
+        IndexItem leftChildHighKey;
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += leftChildHighKey.getStoredLength();
+            n += TypeSize.INTEGER * 2;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            leftChildHighKey = makeNewItem();
+            leftChildHighKey.retrieve(bb);
+            rightSibling = bb.getInt();
+            leftSibling = bb.getInt();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            leftChildHighKey.store(bb);
+            bb.putInt(rightSibling);
+            bb.putInt(leftSibling);
+        }
+
+        @Override
+        public final void init() {
+        }
+
+        @Override
+        public final String toString() {
+            return "LinkOperation(" + super.toString() + ", leftSibling="
+                    + leftSibling + ", rightSibling=" + rightSibling + ")";
+        }
+
+    }
+
+    /**
+     * Log record for the Unlink operation. It is applied to the parent page.
+     * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
+     * @see BTreeIndexManagerImpl#redoUnlinkOperation(Page, UnlinkOperation) 
+     */
+    public static final class UnlinkOperation extends BTreeLogOperation
+            implements Redoable {
+
+        /**
+         * Pointer to right child.
+         */
+        int leftSibling;
+
+        /**
+         * Pointer to left child.
+         */
+        int rightSibling;
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.INTEGER * 2;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            rightSibling = bb.getInt();
+            leftSibling = bb.getInt();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(rightSibling);
+            bb.putInt(leftSibling);
+        }
+
+        @Override
+        public final void init() {
+        }
+
+        @Override
+        public final String toString() {
+            return "UnlinkOperation(" + super.toString() + ", leftSibling="
+                    + leftSibling + ", rightSibling=" + rightSibling + ")";
+        }
+
+    }
+
+    /**
+     * Unlike the published algorithm we simply transfer one key from the more populated
+     * page to the less populated page. 
+     * 
+     * @author Dibyendu Majumdar
+     * @since 06-Oct-2005
+     */
+    public static final class RedistributeOperation extends BTreeLogOperation
+            implements Redoable, MultiPageRedo {
+
+        /**
+         * Pointer to the left sibling.
+         */
+        int leftSibling;
+
+        /**
+         * Pointer to the right sibling.
+         */
+        int rightSibling;
+
+        /**
+         * The key that will be moved.
+         */
+        IndexItem key;
+
+        /**
+         * Pointer to the recipient of the key.
+         */
+        int targetSibling;
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.INTEGER * 3;
+            n += key.getStoredLength();
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            rightSibling = bb.getInt();
+            leftSibling = bb.getInt();
+            targetSibling = bb.getInt();
+            key = makeNewItem();
+            key.retrieve(bb);
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(rightSibling);
+            bb.putInt(leftSibling);
+            bb.putInt(targetSibling);
+            key.store(bb);
+        }
+
+        @Override
+        public final void init() {
+        }
+
+        public final PageId[] getPageIds() {
+            return new PageId[] { getPageId(),
+                    new PageId(getPageId().getContainerId(), rightSibling) };
+        }
+
+        @Override
+        public final String toString() {
+            return "RedistributeOperation(" + super.toString()
+                    + ", leftSibling=" + leftSibling + ", rightSibling="
+                    + rightSibling + ", targetSibling=" + targetSibling + ")";
+        }
+
+    }
+
+    /**
+     * Log record for IncreaseTreeHeight operation.
+     * Must be logged as part of the root page update. The log is applied to the
+     * root page and the new child page. It is defined as a Compensation record so that it
+     * can be linked back in such a way that if this operation completes, it is treated as 
+     * a nested top action.
+     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeIndexManagerImpl#redoIncreaseTreeHeightOperation(Page, IncreaseTreeHeightOperation)
+     */
+    public static final class IncreaseTreeHeightOperation extends
+            BTreeLogOperation implements Compensation, MultiPageRedo {
+
+        /**
+         * These items that will become part of the new left child page.
+         * Includes the highkey in leaf pages.
+         */
+        LinkedList<IndexItem> items;
+
+        /**
+         * Root page will contain 2 index entries. First will point to left child,
+         * while the second will point to right child.
+         */
+        LinkedList<IndexItem> rootItems;
+
+        /**
+         * New left child page.
+         */
+        int leftSibling;
+
+        /**
+         * Right child page.
+         */
+        int rightSibling;
+
+        /**
+         * Owner of the newly allocated left sibling (left child) page.
+         */
+        int spaceMapPageNumber;
+
+        @Override
+        public final void init() {
+            items = new LinkedList<IndexItem>();
+            rootItems = new LinkedList<IndexItem>();
+        }
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            n += TypeSize.SHORT;
+            for (IndexItem item : rootItems) {
+                n += item.getStoredLength();
+            }
+            n += TypeSize.INTEGER * 3;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = makeNewItem();
+                item.retrieve(bb);
+                items.add(item);
+            }
+            numberOfItems = bb.getShort();
+            rootItems = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = new IndexItem(getKeyFactory().newIndexKey(
+                    getPageId().getContainerId()), getLocationFactory()
+                    .newLocation(), -1, false, isUnique());
+                item.retrieve(bb);
+                rootItems.add(item);
+            }
+            leftSibling = bb.getInt();
+            rightSibling = bb.getInt();
+            spaceMapPageNumber = bb.getInt();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+            bb.putShort((short) rootItems.size());
+            for (IndexItem item : rootItems) {
+                item.store(bb);
+            }
+            bb.putInt(leftSibling);
+            bb.putInt(rightSibling);
+            bb.putInt(spaceMapPageNumber);
+        }
+
+        /**
+         * This log record will be applioed to the root page and its newly allocated left
+         * child.
+         */
+        public final PageId[] getPageIds() {
+            return new PageId[] { getPageId(),
+                    new PageId(getPageId().getContainerId(), leftSibling) };
+        }
+
+        @Override
+        public final String toString() {
+            return "IncreaseTreeHeightOperation(" + super.toString()
+                    + ", leftChild=" + leftSibling + ", rightChild="
+                    + rightSibling + ")";
+        }
+    }
+
+    /**
+     * Decrease of the height of the tree when root page has only one child.
+     * Must be logged as part of the root page update.
+     * @see BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeIndexManagerImpl#redoDecreaseTreeHeightOperation(Page, DecreaseTreeHeightOperation)
+     */
+    public static final class DecreaseTreeHeightOperation extends
+            BTreeLogOperation implements Redoable, MultiPageRedo {
+
+        /**
+         * The items that will become part of the new root page - copied over from child page.
+         * Includes the highkey in leaf pages.
+         */
+        LinkedList<IndexItem> items;
+
+        /**
+         * Child page to be deallocated
+         */
+        int childPageNumber;
+
+        /**
+         * Space map page that owns the child page data
+         */
+        int childPageSpaceMap;
+
+        @Override
+        public final void init() {
+            items = new LinkedList<IndexItem>();
+        }
+
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            n += TypeSize.INTEGER * 2;
+            return n;
+        }
+
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = makeNewItem();
+                item.retrieve(bb);
+                items.add(item);
+            }
+            childPageNumber = bb.getInt();
+            childPageSpaceMap = bb.getInt();
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+            bb.putInt(childPageNumber);
+            bb.putInt(childPageSpaceMap);
+        }
+
+        /**
+         * This log record will be applied to the root page, and the child page that is to be
+         * deallocated. It can also be applied to the space map page, but we handle the
+         * space map page update separately in the interest of high concurrency.
+         */
+        public final PageId[] getPageIds() {
 //			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), childPageNumber),
 //					new PageId(getPageId().getContainerId(), childPageSpaceMap) };
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), childPageNumber) };
-		}		
-		
-		@Override
-		public final String toString() {
-			return "DecreaseTreeHeightOperation(" + super.toString() + ", nItems=" + items.size() +
-				", childPage=" + childPageNumber + ")";
-		}
-	}
-	
-	/**
-	 * IndexItem represents an item within a BTree Page. Both Index pages and
-	 * Leaf pages contain IndexItems. However, the content of IndexItem is somewhat
-	 * different in Index pages than the content in Leaf pages.
-	 * <p>
-	 * In Index pages, an item contains a key, and a child page pointer, plus
-	 * a location, if the index is non-unique.
-	 * <p>
-	 * In leaf pages, an item contains a key and a location.
-	 * 
-	 * @author Dibyendu Majumdar
-	 * @since 18-Sep-2005
-	 */
-	public static final class IndexItem implements Storable, Comparable<IndexItem> {
+            return new PageId[] { getPageId(),
+                    new PageId(getPageId().getContainerId(), childPageNumber) };
+        }
 
-		/**
-		 * Sortable key
-		 */
-		private IndexKey key;
-		
-		/**
-		 * Location is an optional field; only present in leaf pages and 
-		 * in non-unique index pages.
-		 */
-		private Location location;
-		
-		/**
-		 * Pointer to child node that has keys <= this key. This is an
-		 * optional field; only present in index pages. 
-		 */
-		private int childPageNumber;
-		
-		/**
-		 * A non-persistent flag.
-		 */
-		private boolean isLeaf;
-		
-		/**
-		 * A non-persistent flag.
-		 */
-		private boolean isUnique;
-		
-		/**
-		 * Location is an optional field; used if the item is part of a 
-		 * non-unique index or if the item belongs to a leaf page. 
-		 */
-		private boolean isLocationRequired() {
-			return !isUnique || isLeaf;
-		}
-		
-		public IndexItem(IndexKey key, Location loc, int childPageNumber, boolean isLeaf, boolean isUnique) {
-			this.key = key;
-			this.location = loc;
-			this.childPageNumber = childPageNumber;
-			this.isLeaf = isLeaf;
-			this.isUnique = isUnique;
-		}
+        @Override
+        public final String toString() {
+            return "DecreaseTreeHeightOperation(" + super.toString()
+                    + ", nItems=" + items.size() + ", childPage="
+                    + childPageNumber + ")";
+        }
+    }
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
-		 */
-		public final void retrieve(ByteBuffer bb) {
-			key.retrieve(bb);
-			if (isLocationRequired()) {
-				location.retrieve(bb);
-			}
-			if (!isLeaf) {
-				childPageNumber = bb.getInt();
-			}
-		}
+    /**
+     * IndexItem represents an item within a BTree Page. Both Index pages and
+     * Leaf pages contain IndexItems. However, the content of IndexItem is somewhat
+     * different in Index pages than the content in Leaf pages.
+     * <p>
+     * In Index pages, an item contains a key, and a child page pointer, plus
+     * a location, if the index is non-unique.
+     * <p>
+     * In leaf pages, an item contains a key and a location.
+     * 
+     * @author Dibyendu Majumdar
+     * @since 18-Sep-2005
+     */
+    public static final class IndexItem implements Storable,
+            Comparable<IndexItem> {
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
-		 */
-		public final void store(ByteBuffer bb) {
-			key.store(bb);
-			if (isLocationRequired()) {
-				location.store(bb);
-			}
-			if (!isLeaf) {
-				bb.putInt(childPageNumber);
-			}
-		}
+        /**
+         * Sortable key
+         */
+        private IndexKey key;
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.io.Storable#getStoredLength()
-		 */
-		public final int getStoredLength() {
-			int len = key.getStoredLength();
-			if (isLocationRequired()) {
-				len += location.getStoredLength();
-			}
-			if (!isLeaf) {
-				len += TypeSize.INTEGER;
-			}
-			return len;
-		}
+        /**
+         * Location is an optional field; only present in leaf pages and 
+         * in non-unique index pages.
+         */
+        private Location location;
 
-		public final int compareTo(org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
-			int comp = key.compareTo(o.key);
-			if (comp == 0 && (isLocationRequired())) {
-				return location.compareTo(o.location);
-			}
-			return comp;
-		}
+        /**
+         * Pointer to child node that has keys <= this key. This is an
+         * optional field; only present in index pages. 
+         */
+        private int childPageNumber;
 
-		public final int compareToIgnoreLocation(org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
-			return key.compareTo(o.key);
-		}
-		
-		public final int getChildPageNumber() {
-			return childPageNumber;
-		}
+        /**
+         * A non-persistent flag.
+         */
+        private boolean isLeaf;
 
-		public final void setChildPageNumber(int childPageNumber) {
-			this.childPageNumber = childPageNumber;
-		}
+        /**
+         * A non-persistent flag.
+         */
+        private boolean isUnique;
 
-		public final boolean isLeaf() {
-			return isLeaf;
-		}
+        /**
+         * Location is an optional field; used if the item is part of a 
+         * non-unique index or if the item belongs to a leaf page. 
+         */
+        private boolean isLocationRequired() {
+            return !isUnique || isLeaf;
+        }
 
-		public final void setLeaf(boolean isLeaf) {
-			this.isLeaf = isLeaf;
-		}
+        public IndexItem(IndexKey key, Location loc, int childPageNumber,
+                boolean isLeaf, boolean isUnique) {
+            this.key = key;
+            this.location = loc;
+            this.childPageNumber = childPageNumber;
+            this.isLeaf = isLeaf;
+            this.isUnique = isUnique;
+        }
 
-		public final boolean isUnique() {
-			return isUnique;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
+         */
+        public final void retrieve(ByteBuffer bb) {
+            key.retrieve(bb);
+            if (isLocationRequired()) {
+                location.retrieve(bb);
+            }
+            if (!isLeaf) {
+                childPageNumber = bb.getInt();
+            }
+        }
 
-		public final void setUnique(boolean isUnique) {
-			this.isUnique = isUnique;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
+         */
+        public final void store(ByteBuffer bb) {
+            key.store(bb);
+            if (isLocationRequired()) {
+                location.store(bb);
+            }
+            if (!isLeaf) {
+                bb.putInt(childPageNumber);
+            }
+        }
 
-		public final IndexKey getKey() {
-			return key;
-		}
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#getStoredLength()
+         */
+        public final int getStoredLength() {
+            int len = key.getStoredLength();
+            if (isLocationRequired()) {
+                len += location.getStoredLength();
+            }
+            if (!isLeaf) {
+                len += TypeSize.INTEGER;
+            }
+            return len;
+        }
 
-		public final void setKey(IndexKey key) {
-			this.key = key;
-		}
+        public final int compareTo(
+                org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
+            int comp = key.compareTo(o.key);
+            if (comp == 0 && (isLocationRequired())) {
+                return location.compareTo(o.location);
+            }
+            return comp;
+        }
 
-		public final Location getLocation() {
-			return location;
-		}
+        public final int compareToIgnoreLocation(
+                org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
+            return key.compareTo(o.key);
+        }
 
-		public final void setLocation(Location location) {
-			this.location = location;
-		}
+        public final int getChildPageNumber() {
+            return childPageNumber;
+        }
 
-		@Override
-		public int hashCode() {
-			final int PRIME = 31;
-			int result = 1;
-			result = PRIME * result + childPageNumber;
-			result = PRIME * result + (isLeaf ? 1231 : 1237);
-			result = PRIME * result + (isUnique ? 1231 : 1237);
-			result = PRIME * result + ((key == null) ? 0 : key.hashCode());
-			result = PRIME * result + ((location == null) ? 0 : location.hashCode());
-			return result;
-		}
+        public final void setChildPageNumber(int childPageNumber) {
+            this.childPageNumber = childPageNumber;
+        }
 
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			final IndexItem other = (IndexItem) obj;
-			if (childPageNumber != other.childPageNumber)
-				return false;
-			if (isLeaf != other.isLeaf)
-				return false;
-			if (isUnique != other.isUnique)
-				return false;
-			if (key == null) {
-				if (other.key != null)
-					return false;
-			} else if (!key.equals(other.key))
-				return false;
-			if (location == null) {
-				if (other.location != null)
-					return false;
-			} else if (!location.equals(other.location))
-				return false;
-			return true;
-		}
+        public final boolean isLeaf() {
+            return isLeaf;
+        }
 
-		@Override
-		public final String toString() {
-			StringBuilder sb = new StringBuilder();
-			sb.append("IndexItem(key=[").append(key)
-				.append("], isLeaf=").append(isLeaf)
-				.append(", isUnique=").append(isUnique);
-			if (isLocationRequired()) {
-				sb.append(", Location=").append(location);
-			}
-			if (!isLeaf()) {
-				sb.append(", ChildPage=").append(childPageNumber);
-			}
-			sb.append(")");
-			return sb.toString();
+        public final void setLeaf(boolean isLeaf) {
+            this.isLeaf = isLeaf;
+        }
+
+        public final boolean isUnique() {
+            return isUnique;
+        }
+
+        public final void setUnique(boolean isUnique) {
+            this.isUnique = isUnique;
+        }
+
+        public final IndexKey getKey() {
+            return key;
+        }
+
+        public final void setKey(IndexKey key) {
+            this.key = key;
+        }
+
+        public final Location getLocation() {
+            return location;
+        }
+
+        public final void setLocation(Location location) {
+            this.location = location;
+        }
+
+        @Override
+        public int hashCode() {
+            final int PRIME = 31;
+            int result = 1;
+            result = PRIME * result + childPageNumber;
+            result = PRIME * result + (isLeaf ? 1231 : 1237);
+            result = PRIME * result + (isUnique ? 1231 : 1237);
+            result = PRIME * result + ((key == null) ? 0 : key.hashCode());
+            result = PRIME * result
+                    + ((location == null) ? 0 : location.hashCode());
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            final IndexItem other = (IndexItem) obj;
+            if (childPageNumber != other.childPageNumber)
+                return false;
+            if (isLeaf != other.isLeaf)
+                return false;
+            if (isUnique != other.isUnique)
+                return false;
+            if (key == null) {
+                if (other.key != null)
+                    return false;
+            } else if (!key.equals(other.key))
+                return false;
+            if (location == null) {
+                if (other.location != null)
+                    return false;
+            } else if (!location.equals(other.location))
+                return false;
+            return true;
+        }
+
+        @Override
+        public final String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb
+                .append("IndexItem(key=[")
+                .append(key)
+                .append("], isLeaf=")
+                .append(isLeaf)
+                .append(", isUnique=")
+                .append(isUnique);
+            if (isLocationRequired()) {
+                sb.append(", Location=").append(location);
+            }
+            if (!isLeaf()) {
+                sb.append(", ChildPage=").append(childPageNumber);
+            }
+            sb.append(")");
+            return sb.toString();
 //			return "IndexItem(key=[" + key + "], isLeaf=" + isLeaf + ", isUnique=" + isUnique + 
 //				(isLocationRequired() ? (", Location=" + location) : "") + (isLeaf ? "" : (", ChildPage=" + String.valueOf(childPageNumber))) + ")";
-		}
-	}
+        }
+    }
 
-	/**
-	 * Represents the redo log data for initializing a single BTree node (page) and the corresponding space map page.
-	 * @see BTreeIndexManagerImpl#redoLoadPageOperation(Page, LoadPageOperation)
-	 * @see XMLLoader
-	 */
-	public static final class LoadPageOperation extends BTreeLogOperation implements Redoable, MultiPageRedo {
+    /**
+     * Represents the redo log data for initializing a single BTree node (page) and the corresponding space map page.
+     * @see BTreeIndexManagerImpl#redoLoadPageOperation(Page, LoadPageOperation)
+     * @see XMLLoader
+     */
+    public static final class LoadPageOperation extends BTreeLogOperation
+            implements Redoable, MultiPageRedo {
 
-		/**
-		 * The IndexItems that will become part of the new page.
-		 */
-		LinkedList<IndexItem> items;
-		
-		/**
-		 * Pointer to the sibling node to the left.
-		 */
-		int leftSibling;
-		
-		/**
-		 * Pointer to the sibling node to the right.
-		 */
-		int rightSibling;
-		
-		/**
-		 * Space Map page that should be updated to reflect the allocated status of the
-		 * new page.
-		 */
-		private int spaceMapPageNumber;
-		
-		@Override
-		public final void init() {
-			items = new LinkedList<IndexItem>();
-		}
+        /**
+         * The IndexItems that will become part of the new page.
+         */
+        LinkedList<IndexItem> items;
 
-		@Override
-		public final int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.SHORT;
-			for (IndexItem item: items) {
-				n += item.getStoredLength();
-			}
-			n += TypeSize.INTEGER * 3;
-			return n;
-		}
+        /**
+         * Pointer to the sibling node to the left.
+         */
+        int leftSibling;
 
-		@Override
-		public final void retrieve(ByteBuffer bb) {
-			super.retrieve(bb);
-			short numberOfItems = bb.getShort();
-			items = new LinkedList<IndexItem>();
-			for (int i = 0; i < numberOfItems; i++) {
-				IndexItem item = makeNewItem(); 
-				item.retrieve(bb);
-				items.add(item);
-			}
-			leftSibling = bb.getInt();
-			rightSibling = bb.getInt();
-			setSpaceMapPageNumber(bb.getInt());
-		}
+        /**
+         * Pointer to the sibling node to the right.
+         */
+        int rightSibling;
 
-		@Override
-		public final void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putShort((short) items.size());
-			for (IndexItem item: items) {
-				item.store(bb);
-			}
-			bb.putInt(leftSibling);
-			bb.putInt(rightSibling);
-			bb.putInt(getSpaceMapPageNumber());
-		}
+        /**
+         * Space Map page that should be updated to reflect the allocated status of the
+         * new page.
+         */
+        private int spaceMapPageNumber;
 
-		public final PageId[] getPageIds() {
-			return new PageId[] { getPageId(), new PageId(getPageId().getContainerId(), getSpaceMapPageNumber()) };
-		}
-		
-		void setSpaceMapPageNumber(int spaceMapPageNumber) {
-			this.spaceMapPageNumber = spaceMapPageNumber;
-		}
+        @Override
+        public final void init() {
+            items = new LinkedList<IndexItem>();
+        }
 
-		int getSpaceMapPageNumber() {
-			return spaceMapPageNumber;
-		}
+        @Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            n += TypeSize.INTEGER * 3;
+            return n;
+        }
 
-		@Override
-		public final String toString() {
-			return "LoadPageOperation(" + super.toString() + "leftSibling=" + leftSibling + 
-				", rightSibling=" + rightSibling + "spaceMapPageNumber=" + getSpaceMapPageNumber() + 
-				", numberOfItems=" + items.size() + ")";  
-		}
-		
-	}
-	
-	/**
-	 * Helper class that reads an XML document and creates LoadPageOperation records using the
-	 * data in the document. Primary purspose is to help with testing of the
-	 * BTree algorithms by preparing trees with specific characteristics.
-	 */
-	public static final class XMLLoader {
-		
-		final BTreeIndexManagerImpl btreemgr;
-		
-		ArrayList<LoadPageOperation> records = new ArrayList<LoadPageOperation>();
+        @Override
+        public final void retrieve(ByteBuffer bb) {
+            super.retrieve(bb);
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = makeNewItem();
+                item.retrieve(bb);
+                items.add(item);
+            }
+            leftSibling = bb.getInt();
+            rightSibling = bb.getInt();
+            setSpaceMapPageNumber(bb.getInt());
+        }
 
-		public XMLLoader(BTreeIndexManagerImpl btreemgr) {
-			this.btreemgr = btreemgr;
-		}
-		
-		public final void parseResource(String filename) throws Exception {
-			DocumentBuilderFactory factory =
-	            DocumentBuilderFactory.newInstance();
-	        try {
-	           DocumentBuilder builder = factory.newDocumentBuilder();
-	           Document document = builder.parse( ClassUtils.getResourceAsStream(filename) );
-	           loadDocument(document);
-	        } catch (SAXException sxe) {
-	           Exception x = sxe;
-	           if (sxe.getException() != null)
-	               x = sxe.getException();
-	           throw x;
-	        }			
-		}
-		
-		public final ArrayList<LoadPageOperation> getPageOperations() {
-			return records;
-		}
-		
-		private void loadDocument(Document document) throws Exception {
-			NodeList nodelist = document.getChildNodes();
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+            bb.putInt(leftSibling);
+            bb.putInt(rightSibling);
+            bb.putInt(getSpaceMapPageNumber());
+        }
 
-			for (int x = 0; x < nodelist.getLength(); x++) {
-				Node rootnode = nodelist.item(x);
-				if (rootnode.getNodeType() != Node.ELEMENT_NODE || !rootnode.getNodeName().equals("tree")) {
-					continue;
-				}
-				NodeList nodes = rootnode.getChildNodes();
+        public final PageId[] getPageIds() {
+            return new PageId[] {
+                    getPageId(),
+                    new PageId(
+                        getPageId().getContainerId(),
+                        getSpaceMapPageNumber()) };
+        }
 
-				for (int i = 0; i < nodes.getLength(); i++) {
-					Node node = nodes.item(i);
-					if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("page")) {
-						LoadPageOperation loadPageOp;
-						loadPageOp = (LoadPageOperation) btreemgr.loggableFactory.getInstance(BTreeIndexManagerImpl.MODULE_ID, BTreeIndexManagerImpl.TYPE_LOADPAGE_OPERATION);
-						loadPage(loadPageOp, node);
-						records.add(loadPageOp);
-					}
-				}
-				break;
-			}
-		}
+        void setSpaceMapPageNumber(int spaceMapPageNumber) {
+            this.spaceMapPageNumber = spaceMapPageNumber;
+        }
 
-		private void loadPage(LoadPageOperation loadPageOp, Node page) throws Exception {
-			int containerId = -1;
-			int pageNumber = -1;
-			NamedNodeMap attrs = page.getAttributes();
-			if (attrs != null) {
-				Node n = attrs.getNamedItem("containerId");
-				if (n != null) {
-					containerId = Integer.parseInt(n.getTextContent());
-				}
-				n = attrs.getNamedItem("pageNumber");
-				if (n != null) {
-					pageNumber = Integer.parseInt(n.getTextContent());
-				}
-			}
-			if (containerId == -1 || pageNumber == -1) {
-				throw new Exception("page element must have containerId and pageNumber attributes");
-			}
-			loadPageOp.setPageId(btreemgr.spMgr.getPageType(), new PageId(containerId, pageNumber));
-			NodeList nodes = page.getChildNodes();
-			for (int i = 0; i < nodes.getLength(); i++) {
-				Node node = nodes.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("header")) {
-					loadHeader(loadPageOp, node);
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("items")) {
-					NodeList itemsList = node.getChildNodes();
-					for (int j = 0; j < itemsList.getLength(); j++) {
-						Node itemNode = itemsList.item(j);
-						if (itemNode.getNodeType() == Node.ELEMENT_NODE && itemNode.getNodeName().equals("item")) {
-							loadItem(loadPageOp, itemNode);
-						}
-					}
-				}
-			}
-		}
-		
-		private void loadItem(LoadPageOperation loadPageOp, Node item) throws Exception {
-			String keyValue = null;
-			int childPageNumber = -1;
-			String locationValue = null;
-			
-			NodeList nodes = item.getChildNodes();
-			for (int i = 0; i < nodes.getLength(); i++) {
-				Node node = nodes.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("childpagenumber")) {
-					childPageNumber = Integer.parseInt(node.getTextContent());
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("location")) {
-					locationValue = node.getTextContent();
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("key")) {
-					keyValue = node.getTextContent();
-				}
-			}
-			
-			IndexKey key = loadPageOp.getNewIndexKey();
-			key.parseString(keyValue);
-			
-			Location location = loadPageOp.getLocationFactory().newLocation();
-			location.parseString(locationValue);
-			
-			loadPageOp.items.add(new IndexItem(key, location, childPageNumber, loadPageOp.isLeaf(), loadPageOp.isUnique()));
-		}
-		
-		private void loadHeader(LoadPageOperation loadPageOp, Node header) throws Exception {
-			NodeList nodes = header.getChildNodes();
-			for (int i = 0; i < nodes.getLength(); i++) {
-				Node node = nodes.item(i);
-				if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("unique")) {
-					String value = node.getTextContent();
-					loadPageOp.setUnique(value.equals("yes"));
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("leaf")) {
-					String value = node.getTextContent();
-					loadPageOp.setLeaf(value.equals("yes"));
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("leftsibling")) {
-					String value = node.getTextContent();
-					loadPageOp.leftSibling = Integer.parseInt(value);
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("rightsibling")) {
-					String value = node.getTextContent();
-					loadPageOp.rightSibling = Integer.parseInt(value);
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("smppagenumber")) {
-					String value = node.getTextContent();
-					loadPageOp.setSpaceMapPageNumber(Integer.parseInt(value));
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("locationfactory")) {
-					String value = node.getTextContent();
-					loadPageOp.setLocationFactoryType(Short.parseShort(value));
-				}
-				else if (node.getNodeType() == Node.ELEMENT_NODE && node.getNodeName().equals("keyfactory")) {
-					String value = node.getTextContent();
-					loadPageOp.setKeyFactoryType(Short.parseShort(value));
-				}
-			}
-		}
-	}
+        int getSpaceMapPageNumber() {
+            return spaceMapPageNumber;
+        }
 
-	public static final int getTestingFlag() {
-		return testingFlag;
-	}
+        @Override
+        public final String toString() {
+            return "LoadPageOperation(" + super.toString() + "leftSibling="
+                    + leftSibling + ", rightSibling=" + rightSibling
+                    + "spaceMapPageNumber=" + getSpaceMapPageNumber()
+                    + ", numberOfItems=" + items.size() + ")";
+        }
 
-	public static final void setTestingFlag(int testingFlag) {
-		BTreeIndexManagerImpl.testingFlag = testingFlag;
-	}
+    }
+
+    /**
+     * Helper class that reads an XML document and creates LoadPageOperation records using the
+     * data in the document. Primary purspose is to help with testing of the
+     * BTree algorithms by preparing trees with specific characteristics.
+     */
+    public static final class XMLLoader {
+
+        final BTreeIndexManagerImpl btreemgr;
+
+        ArrayList<LoadPageOperation> records = new ArrayList<LoadPageOperation>();
+
+        public XMLLoader(BTreeIndexManagerImpl btreemgr) {
+            this.btreemgr = btreemgr;
+        }
+
+        public final void parseResource(String filename) throws Exception {
+            DocumentBuilderFactory factory = DocumentBuilderFactory
+                .newInstance();
+            try {
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document document = builder.parse(ClassUtils
+                    .getResourceAsStream(filename));
+                loadDocument(document);
+            } catch (SAXException sxe) {
+                Exception x = sxe;
+                if (sxe.getException() != null)
+                    x = sxe.getException();
+                throw x;
+            }
+        }
+
+        public final ArrayList<LoadPageOperation> getPageOperations() {
+            return records;
+        }
+
+        private void loadDocument(Document document) throws Exception {
+            NodeList nodelist = document.getChildNodes();
+
+            for (int x = 0; x < nodelist.getLength(); x++) {
+                Node rootnode = nodelist.item(x);
+                if (rootnode.getNodeType() != Node.ELEMENT_NODE
+                        || !rootnode.getNodeName().equals("tree")) {
+                    continue;
+                }
+                NodeList nodes = rootnode.getChildNodes();
+
+                for (int i = 0; i < nodes.getLength(); i++) {
+                    Node node = nodes.item(i);
+                    if (node.getNodeType() == Node.ELEMENT_NODE
+                            && node.getNodeName().equals("page")) {
+                        LoadPageOperation loadPageOp;
+                        loadPageOp = (LoadPageOperation) btreemgr.loggableFactory
+                            .getInstance(
+                                BTreeIndexManagerImpl.MODULE_ID,
+                                BTreeIndexManagerImpl.TYPE_LOADPAGE_OPERATION);
+                        loadPage(loadPageOp, node);
+                        records.add(loadPageOp);
+                    }
+                }
+                break;
+            }
+        }
+
+        private void loadPage(LoadPageOperation loadPageOp, Node page)
+                throws Exception {
+            int containerId = -1;
+            int pageNumber = -1;
+            NamedNodeMap attrs = page.getAttributes();
+            if (attrs != null) {
+                Node n = attrs.getNamedItem("containerId");
+                if (n != null) {
+                    containerId = Integer.parseInt(n.getTextContent());
+                }
+                n = attrs.getNamedItem("pageNumber");
+                if (n != null) {
+                    pageNumber = Integer.parseInt(n.getTextContent());
+                }
+            }
+            if (containerId == -1 || pageNumber == -1) {
+                throw new Exception(
+                    "page element must have containerId and pageNumber attributes");
+            }
+            loadPageOp.setPageId(btreemgr.spMgr.getPageType(), new PageId(
+                containerId,
+                pageNumber));
+            NodeList nodes = page.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("header")) {
+                    loadHeader(loadPageOp, node);
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("items")) {
+                    NodeList itemsList = node.getChildNodes();
+                    for (int j = 0; j < itemsList.getLength(); j++) {
+                        Node itemNode = itemsList.item(j);
+                        if (itemNode.getNodeType() == Node.ELEMENT_NODE
+                                && itemNode.getNodeName().equals("item")) {
+                            loadItem(loadPageOp, itemNode);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void loadItem(LoadPageOperation loadPageOp, Node item)
+                throws Exception {
+            String keyValue = null;
+            int childPageNumber = -1;
+            String locationValue = null;
+
+            NodeList nodes = item.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("childpagenumber")) {
+                    childPageNumber = Integer.parseInt(node.getTextContent());
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("location")) {
+                    locationValue = node.getTextContent();
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("key")) {
+                    keyValue = node.getTextContent();
+                }
+            }
+
+            IndexKey key = loadPageOp.getNewIndexKey();
+            key.parseString(keyValue);
+
+            Location location = loadPageOp.getLocationFactory().newLocation();
+            location.parseString(locationValue);
+
+            loadPageOp.items.add(new IndexItem(
+                key,
+                location,
+                childPageNumber,
+                loadPageOp.isLeaf(),
+                loadPageOp.isUnique()));
+        }
+
+        private void loadHeader(LoadPageOperation loadPageOp, Node header)
+                throws Exception {
+            NodeList nodes = header.getChildNodes();
+            for (int i = 0; i < nodes.getLength(); i++) {
+                Node node = nodes.item(i);
+                if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("unique")) {
+                    String value = node.getTextContent();
+                    loadPageOp.setUnique(value.equals("yes"));
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("leaf")) {
+                    String value = node.getTextContent();
+                    loadPageOp.setLeaf(value.equals("yes"));
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("leftsibling")) {
+                    String value = node.getTextContent();
+                    loadPageOp.leftSibling = Integer.parseInt(value);
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("rightsibling")) {
+                    String value = node.getTextContent();
+                    loadPageOp.rightSibling = Integer.parseInt(value);
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("smppagenumber")) {
+                    String value = node.getTextContent();
+                    loadPageOp.setSpaceMapPageNumber(Integer.parseInt(value));
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("locationfactory")) {
+                    String value = node.getTextContent();
+                    loadPageOp.setLocationFactoryType(Short.parseShort(value));
+                } else if (node.getNodeType() == Node.ELEMENT_NODE
+                        && node.getNodeName().equals("keyfactory")) {
+                    String value = node.getTextContent();
+                    loadPageOp.setKeyFactoryType(Short.parseShort(value));
+                }
+            }
+        }
+    }
+
+    public static final int getTestingFlag() {
+        return testingFlag;
+    }
+
+    public static final void setTestingFlag(int testingFlag) {
+        BTreeIndexManagerImpl.testingFlag = testingFlag;
+    }
 }

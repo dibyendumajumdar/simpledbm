@@ -30,44 +30,44 @@ import org.simpledbm.rss.api.st.StorageException;
  */
 public interface PageFactory {
 
-	/**
-	 * Gets the page size of all pages managed by this factory. Page sizes can be
-	 * upto 32K. 
-	 */
-	int getPageSize();
-	
-	/**
-	 * Instantiate a Page of the specified type, and initialize it with the 
-	 * PageID.
-	 *  
-	 * @param typecode The Page type code as registered in the Object Registry
-	 * @param pageId The ID of the Page
-	 */
-	Page getInstance(int typecode, PageId pageId);
+    /**
+     * Gets the page size of all pages managed by this factory. Page sizes can be
+     * upto 32K. 
+     */
+    int getPageSize();
 
-	/**
-	 * Retrieves specified Page from the Storage Container. Note that the correct
-	 * page type will be automatically created as long as the type has been registered with
-	 * the Object Registry. The appropriate Storage Container should have been opened
-	 * and registered with the Storage Manager prior to calling this method.
-	 *  
-	 * @param pageId ID of the Page to be retrieved
-	 * @throws StorageException Thrown if there is an error while retrieving the Page
-	 */
-	Page retrieve(PageId pageId);
-	
-	/**
-	 * Saves the specified Page to the appropriate Storage Container. The appropriate
-	 * Storage Container must be open and registered with the Storage Manager.
-	 * 
-	 * @param page Page to be saved
-	 * @throws StorageException Thrown if there is an error while writing the page.
-	 */
-	void store(Page page);
+    /**
+     * Instantiate a Page of the specified type, and initialize it with the 
+     * PageID.
+     *  
+     * @param typecode The Page type code as registered in the Object Registry
+     * @param pageId The ID of the Page
+     */
+    Page getInstance(int typecode, PageId pageId);
 
-	/**
-	 * Gets the type code for a raw page which is just a blob of bytes.
-	 */
+    /**
+     * Retrieves specified Page from the Storage Container. Note that the correct
+     * page type will be automatically created as long as the type has been registered with
+     * the Object Registry. The appropriate Storage Container should have been opened
+     * and registered with the Storage Manager prior to calling this method.
+     *  
+     * @param pageId ID of the Page to be retrieved
+     * @throws StorageException Thrown if there is an error while retrieving the Page
+     */
+    Page retrieve(PageId pageId);
+
+    /**
+     * Saves the specified Page to the appropriate Storage Container. The appropriate
+     * Storage Container must be open and registered with the Storage Manager.
+     * 
+     * @param page Page to be saved
+     * @throws StorageException Thrown if there is an error while writing the page.
+     */
+    void store(Page page);
+
+    /**
+     * Gets the type code for a raw page which is just a blob of bytes.
+     */
     int getRawPageType();
-    
+
 }

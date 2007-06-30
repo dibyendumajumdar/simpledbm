@@ -29,22 +29,22 @@ package org.simpledbm.rss.api.locking;
  */
 public final class LockDeadlockException extends LockException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public LockDeadlockException() {
-		super();
-	}
+    public LockDeadlockException() {
+        super();
+    }
 
-	public LockDeadlockException(String arg0) {
-		super(arg0);
-	}
+    public LockDeadlockException(String arg0) {
+        super(arg0);
+    }
 
-	public LockDeadlockException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
+    public LockDeadlockException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
 
-	public LockDeadlockException(Throwable arg0) {
-		super(arg0);
-	}
+    public LockDeadlockException(Throwable arg0) {
+        super(arg0);
+    }
 
 }

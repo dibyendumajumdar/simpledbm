@@ -48,9 +48,12 @@ public class TestStorageContainer extends TestCase {
         File file = new File("testdata/TestStorageContainer/" + name);
         file.delete();
         assertTrue(!file.exists());
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
-        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties.setProperty(
+            "storage.basePath",
+            "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+            properties);
         StorageContainer sc = factory.create(name);
         sc.write(0, new byte[10], 0, 10);
         sc.flush();
@@ -72,8 +75,7 @@ public class TestStorageContainer extends TestCase {
         try {
             sc = factory.open(name);
             sc.close();
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // e.printStackTrace();
             caughtException = true;
         }
@@ -81,15 +83,19 @@ public class TestStorageContainer extends TestCase {
     }
 
     public void testCase2() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
-        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties.setProperty(
+            "storage.basePath",
+            "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+            properties);
         StorageManager storageManager = new StorageManagerImpl();
         String name = "testfile";
         File file = new File("testdata/TestStorageContainer/" + name);
         file.delete();
         assertTrue(!file.exists());
-        StorageContainerInfo[] activeContainers = storageManager.getActiveContainers();
+        StorageContainerInfo[] activeContainers = storageManager
+            .getActiveContainers();
         assertEquals(activeContainers.length, 0);
         StorageContainer sc = factory.create(name);
         storageManager.register(1, sc);
@@ -99,16 +105,19 @@ public class TestStorageContainer extends TestCase {
         assertEquals(activeContainers[0].getName(), "testfile");
         storageManager.shutdown();
         activeContainers = storageManager.getActiveContainers();
-        assertEquals(activeContainers.length, 0);        
+        assertEquals(activeContainers.length, 0);
         assertTrue(file.exists());
         factory.delete("testfile");
         assertFalse(file.exists());
     }
 
     public void testCase3() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestStorageContainer");
-        final StorageContainerFactory factory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties.setProperty(
+            "storage.basePath",
+            "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+            properties);
         factory.create("testfile1").close();
         factory.create("./testfile2").close();
         factory.create("./mypath/testfile2").close();
@@ -116,5 +125,5 @@ public class TestStorageContainer extends TestCase {
         factory.delete("./testfile2");
         factory.delete("testfile1");
     }
-    
+
 }

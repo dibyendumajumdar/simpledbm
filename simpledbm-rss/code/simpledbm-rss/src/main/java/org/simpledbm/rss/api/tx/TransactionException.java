@@ -27,22 +27,22 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class TransactionException extends RSSException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public TransactionException() {
-		super();
-	}
+    public TransactionException() {
+        super();
+    }
 
-	public TransactionException(String arg0) {
-		super(arg0);
-	}
+    public TransactionException(String arg0) {
+        super(arg0);
+    }
 
-	public TransactionException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
+    public TransactionException(String arg0, Throwable arg1) {
+        super(arg0, arg1);
+    }
 
-	public TransactionException(Throwable arg0) {
-		super(arg0);
-	}
+    public TransactionException(Throwable arg0) {
+        super(arg0);
+    }
 
 }

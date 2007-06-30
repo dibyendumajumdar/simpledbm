@@ -34,5 +34,5 @@ package org.simpledbm.rss.api.tx;
  * @author Dibyendu Majumdar
  */
 public interface LoggableFactoryAware {
-	void setLoggableFactory(LoggableFactory factory);
+    void setLoggableFactory(LoggableFactory factory);
 }

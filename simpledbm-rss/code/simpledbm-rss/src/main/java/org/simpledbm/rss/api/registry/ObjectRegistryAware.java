@@ -28,5 +28,5 @@ package org.simpledbm.rss.api.registry;
  */
 public interface ObjectRegistryAware {
 
-	void setObjectFactory(ObjectRegistry objectFactory);
+    void setObjectFactory(ObjectRegistry objectFactory);
 }

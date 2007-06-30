@@ -30,11 +30,11 @@ import org.simpledbm.rss.api.pm.PageId;
  * @since 08-Dec-2005
  */
 public class TupleIdFactory implements LocationFactory {
-	public Location newLocation() {
-		return new TupleId();
-	}
+    public Location newLocation() {
+        return new TupleId();
+    }
 
-	public TupleId newTupleId(PageId pageId, int slotNumber) {
-		return new TupleId(pageId, slotNumber);
-	}
+    public TupleId newTupleId(PageId pageId, int slotNumber) {
+        return new TupleId(pageId, slotNumber);
+    }
 }

@@ -63,8 +63,8 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
  */
 public class TestBufferManager extends TestCase {
 
-	static final short TYPE_MYPAGE = 25000;
-	
+    static final short TYPE_MYPAGE = 25000;
+
     public TestBufferManager(String arg0) {
         super(arg0);
     }
@@ -102,27 +102,39 @@ public class TestBufferManager extends TestCase {
     }
 
     public void testCase1() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl();
         StorageManager storageManager = new StorageManagerImpl();
         LatchFactory latchFactory = new LatchFactoryImpl();
-        PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        BufferManagerImpl bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        BufferManagerImpl bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
 
         String name = "testfile.dat";
         File file = new File(name);
         file.delete();
-        
+
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
-        
-        BufferAccessBlock bab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
+
+        BufferAccessBlock bab = bufmgr.fixExclusive(
+            new PageId(1, 0),
+            true,
+            TYPE_MYPAGE,
+            0);
         MyPage page = (MyPage) bab.getPage();
         page.i = 534;
         bab.setDirty(new Lsn(97, 45));
@@ -156,17 +168,24 @@ public class TestBufferManager extends TestCase {
         storageFactory.delete("testfile.dat");
     }
 
-
     public void testCase2() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final BufferManager bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final BufferManager bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
         final AtomicInteger errCount = new AtomicInteger(0);
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
@@ -174,7 +193,7 @@ public class TestBufferManager extends TestCase {
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
-        
+
         Runnable r1 = new Runnable() {
             public void run() {
                 PageId pageId = new PageId(1, 1);
@@ -257,15 +276,23 @@ public class TestBufferManager extends TestCase {
      */
     public void runtests(int scenario) throws Exception {
 
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final BufferManager bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final BufferManager bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
         final AtomicInteger errCount = new AtomicInteger(0);
         final int testing = scenario;
         final int ITERATIONS = 10;
@@ -279,18 +306,18 @@ public class TestBufferManager extends TestCase {
                 TOTAL_UPDATES / page_count[3] };
 
         final AtomicInteger calculated_values[] = new AtomicInteger[6];
-        
+
         for (int i = 0; i < calculated_values.length; i++) {
-        	calculated_values[i] = new AtomicInteger(0);
+            calculated_values[i] = new AtomicInteger(0);
         }
-        
+
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
-        
+
         Runnable r3 = new Runnable() {
             public void run() {
                 int pageno = 1;
@@ -299,7 +326,11 @@ public class TestBufferManager extends TestCase {
                         for (int z = 1; z <= UPDATES_PER_ITERATION; z++) {
                             PageId pageId = new PageId(1, pageno);
                             BufferAccessBlock bab = null;
-                            bab = bufmgr.fixExclusive(pageId, false, TYPE_MYPAGE, 0);
+                            bab = bufmgr.fixExclusive(
+                                pageId,
+                                false,
+                                TYPE_MYPAGE,
+                                0);
                             MyPage page = (MyPage) bab.getPage();
                             int i = page.i;
                             i = i + 1;
@@ -330,7 +361,7 @@ public class TestBufferManager extends TestCase {
             bufab.setDirty(new Lsn());
             bufab.unfix();
         }
-        
+
         /* Run the test scenario */
         Thread threads[] = new Thread[NUM_THREADS];
         for (int i = 0; i < threads.length; i++) {
@@ -354,15 +385,15 @@ public class TestBufferManager extends TestCase {
 //            System.err.println("Calculated value = " + calculated_values[z]);
             assertEquals(expected_values[testing], i);
             System.err.println(Thread.currentThread().getName()
-                    + ": Validated that value of i in page " + pageId
-                    + " is " + expected_values[testing]);
+                    + ": Validated that value of i in page " + pageId + " is "
+                    + expected_values[testing]);
         }
 
         bufmgr.shutdown();
         storageManager.shutdown();
         storageFactory.delete("testfile.dat");
     }
-    
+
     public void testCase3() throws Exception {
         runtests(1);
     }
@@ -374,38 +405,47 @@ public class TestBufferManager extends TestCase {
     public void testCase5() throws Exception {
         runtests(3);
     }
-    
+
     /**
      * Test that update mode latch blocks readers.
      */
     public void testCase6() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final BufferManager bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final BufferManager bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
         final AtomicInteger sync = new AtomicInteger(0);
-    	
+
         Thread t1 = new Thread() {
-        	@Override
-			public void run() {
-        		try {
-					PageId pageId = new PageId(1, 0);
-					BufferAccessBlock bab = null;
-					assertTrue(sync.compareAndSet(1, 2));
-			        System.err.println("T2 (2) Trying to obtain shared latch on page");
-					bab = bufmgr.fixShared(pageId, 0);
-					assertTrue(sync.compareAndSet(5, 6));
-			        System.err.println("T2 (6) Obtained shared latch on page");
-					bab.unfix();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-        	}
+            @Override
+            public void run() {
+                try {
+                    PageId pageId = new PageId(1, 0);
+                    BufferAccessBlock bab = null;
+                    assertTrue(sync.compareAndSet(1, 2));
+                    System.err
+                        .println("T2 (2) Trying to obtain shared latch on page");
+                    bab = bufmgr.fixShared(pageId, 0);
+                    assertTrue(sync.compareAndSet(5, 6));
+                    System.err.println("T2 (6) Obtained shared latch on page");
+                    bab.unfix();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         };
 
         String name = "testfile.dat";
@@ -414,36 +454,36 @@ public class TestBufferManager extends TestCase {
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
-        
-        try {
-			BufferAccessBlock bufab;
-			bufab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
-			bufab.setDirty(new Lsn());
-			bufab.unfix();
 
-			System.err.println("T1 (1) Locking page in UPDATE mode");
-			assertTrue(sync.compareAndSet(0, 1));
-			bufab = bufmgr.fixForUpdate(new PageId(1, 0), 0);
-			t1.start();
-			Thread.sleep(100);
-			assertTrue(sync.compareAndSet(2, 3));
-			System.err.println("T1 (3) Upgrading lock to Exclusive");
-			bufab.upgradeUpdateLatch();
-			assertTrue(bufab.isLatchedExclusively());
-			assertTrue(sync.compareAndSet(3, 4));
-			System.err.println("T1 (4) Downgrading lock to Update");
-			bufab.downgradeExclusiveLatch();
-			assertTrue(bufab.isLatchedForUpdate());
-			assertTrue(sync.compareAndSet(4, 5));
-			System.err.println("T1 (5) Releasing Update latch on page");
-			bufab.unfix();
-			t1.join(2000);
-			assertTrue(!t1.isAlive());
-		} finally {
-			bufmgr.shutdown();
-			storageManager.shutdown();
-			storageFactory.delete("testfile.dat");
-		}
+        try {
+            BufferAccessBlock bufab;
+            bufab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
+            bufab.setDirty(new Lsn());
+            bufab.unfix();
+
+            System.err.println("T1 (1) Locking page in UPDATE mode");
+            assertTrue(sync.compareAndSet(0, 1));
+            bufab = bufmgr.fixForUpdate(new PageId(1, 0), 0);
+            t1.start();
+            Thread.sleep(100);
+            assertTrue(sync.compareAndSet(2, 3));
+            System.err.println("T1 (3) Upgrading lock to Exclusive");
+            bufab.upgradeUpdateLatch();
+            assertTrue(bufab.isLatchedExclusively());
+            assertTrue(sync.compareAndSet(3, 4));
+            System.err.println("T1 (4) Downgrading lock to Update");
+            bufab.downgradeExclusiveLatch();
+            assertTrue(bufab.isLatchedForUpdate());
+            assertTrue(sync.compareAndSet(4, 5));
+            System.err.println("T1 (5) Releasing Update latch on page");
+            bufab.unfix();
+            t1.join(2000);
+            assertTrue(!t1.isAlive());
+        } finally {
+            bufmgr.shutdown();
+            storageManager.shutdown();
+            storageFactory.delete("testfile.dat");
+        }
     }
 
     /*
@@ -452,37 +492,47 @@ public class TestBufferManager extends TestCase {
      * update mode.
      */
     public void testCase7() throws Exception {
-    	    	
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(properties);
+
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl();
         final StorageManager storageManager = new StorageManagerImpl();
         final LatchFactory latchFactory = new LatchFactoryImpl();
-        final PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-                storageManager, latchFactory);
-        final BufferManager bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final BufferManager bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
         final AtomicInteger sync = new AtomicInteger(0);
-    	
+
         Thread t1 = new Thread() {
-        	@Override
-			public void run() {
-        		try {
-					PageId pageId = new PageId(1, 0);
-					BufferAccessBlock bab = null;
-					assertTrue(sync.compareAndSet(1, 2));
-			        System.err.println("T2 (2) Trying to obtain UPDATE latch on page");
-					bab = bufmgr.fixForUpdate(pageId, 0);
-					assertTrue(sync.compareAndSet(2, 3));
-			        System.err.println("T2 (3) Obtained UPDATE latch on page, waiting");
-			        Thread.sleep(1000);
-					assertTrue(sync.compareAndSet(5, 6));
-					System.err.println("T2 (6) Releasing Update latch on page");
-					bab.unfix();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-        	}
+            @Override
+            public void run() {
+                try {
+                    PageId pageId = new PageId(1, 0);
+                    BufferAccessBlock bab = null;
+                    assertTrue(sync.compareAndSet(1, 2));
+                    System.err
+                        .println("T2 (2) Trying to obtain UPDATE latch on page");
+                    bab = bufmgr.fixForUpdate(pageId, 0);
+                    assertTrue(sync.compareAndSet(2, 3));
+                    System.err
+                        .println("T2 (3) Obtained UPDATE latch on page, waiting");
+                    Thread.sleep(1000);
+                    assertTrue(sync.compareAndSet(5, 6));
+                    System.err.println("T2 (6) Releasing Update latch on page");
+                    bab.unfix();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
         };
 
         String name = "testfile.dat";
@@ -491,37 +541,37 @@ public class TestBufferManager extends TestCase {
         objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
 
         bufmgr.start();
-        
-        try {
-			BufferAccessBlock bufab;
-			bufab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
-			bufab.setDirty(new Lsn());
-			bufab.unfix();
 
-			assertTrue(sync.compareAndSet(0, 1));
-			System.err.println("T1 (1) Locking page in SHARED mode");
-			bufab = bufmgr.fixShared(new PageId(1, 0), 0);
-			t1.start();
-			Thread.sleep(100);
-			assertTrue(sync.compareAndSet(3, 4));
-			System.err.println("T1 (4) Releasing SHARED latch on page");
-			bufab.unfix();
-			assertTrue(sync.compareAndSet(4, 5));
-			System.err.println("T1 (5) Obtaining UPDATE mode latch");
-			bufab = bufmgr.fixForUpdate(new PageId(1, 0), 0);
-			assertTrue(bufab.isLatchedForUpdate());
-			assertTrue(sync.compareAndSet(6, 7));
-			System.err.println("T1 (7) Obtained Update latch");
-			assertTrue(sync.compareAndSet(7, 8));
-			System.err.println("T1 (8) Releasing Update latch on page");
-			bufab.unfix();
-			
-			t1.join(2000);
-			assertTrue(!t1.isAlive());
-		} finally {
-			bufmgr.shutdown();
-			storageManager.shutdown();
-			storageFactory.delete("testfile.dat");
-		}
+        try {
+            BufferAccessBlock bufab;
+            bufab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
+            bufab.setDirty(new Lsn());
+            bufab.unfix();
+
+            assertTrue(sync.compareAndSet(0, 1));
+            System.err.println("T1 (1) Locking page in SHARED mode");
+            bufab = bufmgr.fixShared(new PageId(1, 0), 0);
+            t1.start();
+            Thread.sleep(100);
+            assertTrue(sync.compareAndSet(3, 4));
+            System.err.println("T1 (4) Releasing SHARED latch on page");
+            bufab.unfix();
+            assertTrue(sync.compareAndSet(4, 5));
+            System.err.println("T1 (5) Obtaining UPDATE mode latch");
+            bufab = bufmgr.fixForUpdate(new PageId(1, 0), 0);
+            assertTrue(bufab.isLatchedForUpdate());
+            assertTrue(sync.compareAndSet(6, 7));
+            System.err.println("T1 (7) Obtained Update latch");
+            assertTrue(sync.compareAndSet(7, 8));
+            System.err.println("T1 (8) Releasing Update latch on page");
+            bufab.unfix();
+
+            t1.join(2000);
+            assertTrue(!t1.isAlive());
+        } finally {
+            bufmgr.shutdown();
+            storageManager.shutdown();
+            storageFactory.delete("testfile.dat");
+        }
     }
 }

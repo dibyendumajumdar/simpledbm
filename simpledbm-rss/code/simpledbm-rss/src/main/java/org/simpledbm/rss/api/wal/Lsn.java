@@ -38,99 +38,99 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
     /**
      * Size of Lsn in bytes. 
      */
-	public final static int SIZE =  TypeSize.INTEGER * 2;
-	
+    public final static int SIZE = TypeSize.INTEGER * 2;
+
     /**
      * The index identifies the log file by number.
      */
-	private int index;
+    private int index;
 
     /**
      * The offset is the position within the Log file.
      */
-	private int offset;
+    private int offset;
 
-	public Lsn() {
-		index = 0;
-		offset = 0;
-	}
+    public Lsn() {
+        index = 0;
+        offset = 0;
+    }
 
-	public Lsn(int index, int offset) {
-		this.index = index;
-		this.offset = offset;
-	}
-	
-	public Lsn(Lsn lsn) {
-		this.index = lsn.index;
-		this.offset = lsn.offset;
-	}
+    public Lsn(int index, int offset) {
+        this.index = index;
+        this.offset = offset;
+    }
 
-	public final boolean isNull() {
-		return index == 0 && offset == 0;
-	}
+    public Lsn(Lsn lsn) {
+        this.index = lsn.index;
+        this.offset = lsn.offset;
+    }
 
-	@Override
-	public final boolean equals(Object obj) {
-		if (obj instanceof Lsn) {
-			Lsn lsn = (Lsn) obj;
-			return index == lsn.index && offset == lsn.offset;
-		}
-		return false;
-	}
+    public final boolean isNull() {
+        return index == 0 && offset == 0;
+    }
 
-	public final int compareTo(Lsn lsn) {
-		if (index == lsn.index) {
-			if (offset == lsn.offset)
-				return 0;
-			else if (offset > lsn.offset)
-				return 1;
-			else
-				return -1;
-		} else if (index > lsn.index)
-			return 1;
-		else
-			return -1;
-	}
+    @Override
+    public final boolean equals(Object obj) {
+        if (obj instanceof Lsn) {
+            Lsn lsn = (Lsn) obj;
+            return index == lsn.index && offset == lsn.offset;
+        }
+        return false;
+    }
+
+    public final int compareTo(Lsn lsn) {
+        if (index == lsn.index) {
+            if (offset == lsn.offset)
+                return 0;
+            else if (offset > lsn.offset)
+                return 1;
+            else
+                return -1;
+        } else if (index > lsn.index)
+            return 1;
+        else
+            return -1;
+    }
 
     public final boolean lessThan(Lsn lsn) {
         return compareTo(lsn) < 0;
     }
-	
-	public final int getStoredLength() {
-		return SIZE;
-	}
 
-	public final int getIndex() {
-		return index;
-	}
+    public final int getStoredLength() {
+        return SIZE;
+    }
 
-	public final int getOffset() {
-		return offset;
-	}
+    public final int getIndex() {
+        return index;
+    }
 
-	public final void retrieve(ByteBuffer bb) {
-		index = bb.getInt();
-		offset = bb.getInt();
-	}
+    public final int getOffset() {
+        return offset;
+    }
 
-	public final void store(ByteBuffer bb) {
-		bb.putInt(index);
-		bb.putInt(offset);
-	}
+    public final void retrieve(ByteBuffer bb) {
+        index = bb.getInt();
+        offset = bb.getInt();
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("Lsn(").append(index).append(",").append(offset).append(")");
-		return sb;
-	}
-	
-	@Override
-	public final String toString() {
-		return appendTo(new StringBuilder()).toString();
-	}
+    public final void store(ByteBuffer bb) {
+        bb.putInt(index);
+        bb.putInt(offset);
+    }
 
-	@Override
-	public int hashCode() {
-		return index ^ offset;
-	}
-	
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append("Lsn(").append(index).append(",").append(offset).append(")");
+        return sb;
+    }
+
+    @Override
+    public final String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
+
+    @Override
+    public int hashCode() {
+        return index ^ offset;
+    }
+
 }

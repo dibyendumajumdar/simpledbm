@@ -26,7 +26,7 @@ package org.simpledbm.rss.api.st;
  * @since 18-Jun-2005
  */
 public interface StorageContainerFactory {
-    
+
     /**
      * Creates a new StorageContainer of the specified name. Note that the
      * behaviour of create is not specified here. It is expected that
@@ -38,7 +38,7 @@ public interface StorageContainerFactory {
      * @throws StorageException Thrown if the StorageContainer cannot be created.
      */
     StorageContainer create(String name);
-    
+
     /**
      * Opens an existing StorageContainer. Note that the
      * behaviour of open is not specified here. It is expected that
@@ -50,7 +50,7 @@ public interface StorageContainerFactory {
      * @throws StorageException Thrown if the StorageContainer does not exist or cannot be opened.
      */
     StorageContainer open(String name);
-    
+
     /**
      * Removes a container physically.
      * @throws StorageException 

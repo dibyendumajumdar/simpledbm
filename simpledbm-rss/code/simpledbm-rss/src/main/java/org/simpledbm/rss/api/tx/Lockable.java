@@ -32,8 +32,8 @@ package org.simpledbm.rss.api.tx;
  */
 public interface Lockable {
 
-	/**
-	 * Returns the container ID associated with this lock. 
-	 */
-	int getContainerId();
+    /**
+     * Returns the container ID associated with this lock. 
+     */
+    int getContainerId();
 }

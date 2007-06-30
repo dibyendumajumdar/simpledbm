@@ -26,5 +26,5 @@ package org.simpledbm.rss.api.sp;
 public interface SlottedPageManager {
 
     int getPageType();
-    
+
 }

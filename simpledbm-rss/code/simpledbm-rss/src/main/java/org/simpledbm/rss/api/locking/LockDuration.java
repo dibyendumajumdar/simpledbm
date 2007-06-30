@@ -32,5 +32,5 @@ package org.simpledbm.rss.api.locking;
  * @since 26-July-2005
  */
 public enum LockDuration {
-	INSTANT_DURATION, MANUAL_DURATION, COMMIT_DURATION
+    INSTANT_DURATION, MANUAL_DURATION, COMMIT_DURATION
 }

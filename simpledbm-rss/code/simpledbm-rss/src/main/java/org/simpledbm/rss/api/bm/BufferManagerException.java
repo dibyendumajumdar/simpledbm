@@ -30,18 +30,21 @@ import org.simpledbm.rss.api.exception.RSSException;
  */
 public class BufferManagerException extends RSSException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public BufferManagerException() {
-		super();
-	}
-	public BufferManagerException(String message) {
-		super(message);
-	}
-	public BufferManagerException(String message, Throwable cause) {
-		super(message, cause);
-	}
-	public BufferManagerException(Throwable cause) {
-		super(cause);
-	}
+    public BufferManagerException() {
+        super();
+    }
+
+    public BufferManagerException(String message) {
+        super(message);
+    }
+
+    public BufferManagerException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public BufferManagerException(Throwable cause) {
+        super(cause);
+    }
 }

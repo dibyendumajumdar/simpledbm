@@ -45,16 +45,17 @@ package org.simpledbm.rss.api.tx;
  * @since 27-Aug-2005
  * @see org.simpledbm.rss.api.tx.Transaction#schedulePostCommitAction(PostCommitAction)
  */
-public interface PostCommitAction extends Loggable, NonTransactionRelatedOperation {
-	
-	/**
-	 * Returns the ID assigned to this action. 
-	 */
-	public int getActionId();
+public interface PostCommitAction extends Loggable,
+        NonTransactionRelatedOperation {
 
-	/**
-	 * Sets the ID for this action.
-	 */
-	public void setActionId(int actionId);
+    /**
+     * Returns the ID assigned to this action. 
+     */
+    public int getActionId();
+
+    /**
+     * Sets the ID for this action.
+     */
+    public void setActionId(int actionId);
 
 }

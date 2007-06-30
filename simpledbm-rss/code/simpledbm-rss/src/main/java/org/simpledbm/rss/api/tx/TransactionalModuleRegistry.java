@@ -21,7 +21,7 @@ package org.simpledbm.rss.api.tx;
 
 public interface TransactionalModuleRegistry {
 
-	public void registerModule(int moduleId, TransactionalModule module);
-	
-	public TransactionalModule getModule(int moduleId);
+    public void registerModule(int moduleId, TransactionalModule module);
+
+    public TransactionalModule getModule(int moduleId);
 }

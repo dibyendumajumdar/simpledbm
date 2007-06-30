@@ -27,13 +27,13 @@ import org.simpledbm.rss.api.pm.PageId;
  * interface.  
  */
 public interface MultiPageRedo extends Redoable {
-	
-	/**
-	 * Returns the IDs of the pages that are affected by the log record.
-	 * Must include the default page return by {@link Loggable#getPageId()}.
-	 * During redo, the log record will be applied to each of the pages in this
-	 * list. Hence redo implementation must check the page the log record is
-	 * being applied and accordingly apply the changes.
-	 */
-	public PageId[] getPageIds();
+
+    /**
+     * Returns the IDs of the pages that are affected by the log record.
+     * Must include the default page return by {@link Loggable#getPageId()}.
+     * During redo, the log record will be applied to each of the pages in this
+     * list. Hence redo implementation must check the page the log record is
+     * being applied and accordingly apply the changes.
+     */
+    public PageId[] getPageIds();
 }

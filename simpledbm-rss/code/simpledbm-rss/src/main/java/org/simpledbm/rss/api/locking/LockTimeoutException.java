@@ -35,7 +35,7 @@ public final class LockTimeoutException extends LockException {
 
     public LockTimeoutException() {
         super();
-   }
+    }
 
     public LockTimeoutException(String arg0) {
         super(arg0);

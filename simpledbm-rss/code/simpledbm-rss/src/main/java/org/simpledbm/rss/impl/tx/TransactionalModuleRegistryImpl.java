@@ -27,24 +27,29 @@ import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
-public final class TransactionalModuleRegistryImpl implements TransactionalModuleRegistry {
+public final class TransactionalModuleRegistryImpl implements
+        TransactionalModuleRegistry {
 
-	static final Logger log = Logger.getLogger(TransactionalModuleRegistryImpl.class.getPackage().getName());
-	static final MessageCatalog mcat = new MessageCatalog();
-	
-	private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
-	
-	public final synchronized void registerModule(int moduleId, TransactionalModule module) {
-		moduleMap.put((short)moduleId, module);
-	}
+    static final Logger log = Logger
+        .getLogger(TransactionalModuleRegistryImpl.class.getPackage().getName());
+    static final MessageCatalog mcat = new MessageCatalog();
 
-	public final synchronized TransactionalModule getModule(int moduleId) {
-		TransactionalModule module = moduleMap.get((short)moduleId);
-		if (module == null) {
-			log.error(this.getClass().getName(), "getModule", mcat.getMessage("EX0001", moduleId));
-			throw new TransactionException(mcat.getMessage("EX0001", moduleId));
-		}
-		return module;
-	}
+    private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
+
+    public final synchronized void registerModule(int moduleId,
+            TransactionalModule module) {
+        moduleMap.put((short) moduleId, module);
+    }
+
+    public final synchronized TransactionalModule getModule(int moduleId) {
+        TransactionalModule module = moduleMap.get((short) moduleId);
+        if (module == null) {
+            log.error(this.getClass().getName(), "getModule", mcat.getMessage(
+                "EX0001",
+                moduleId));
+            throw new TransactionException(mcat.getMessage("EX0001", moduleId));
+        }
+        return module;
+    }
 
 }

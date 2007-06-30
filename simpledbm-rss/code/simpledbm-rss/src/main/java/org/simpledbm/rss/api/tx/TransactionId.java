@@ -66,7 +66,7 @@ public final class TransactionId implements Storable, Dumpable {
     @Override
     public final boolean equals(Object obj) {
         if (obj instanceof TransactionId) {
-            return id == ((TransactionId)obj).id;
+            return id == ((TransactionId) obj).id;
         }
         return false;
     }
@@ -75,19 +75,19 @@ public final class TransactionId implements Storable, Dumpable {
     public final int hashCode() {
         return (int) (id ^ (id >>> 32));
     }
-    
+
     public final boolean isNull() {
         return id == -1;
     }
 
     public final StringBuilder appendTo(StringBuilder sb) {
-    	sb.append("TrxId(").append(id).append(")");
-    	return sb;
+        sb.append("TrxId(").append(id).append(")");
+        return sb;
     }
-    
+
     @Override
     public final String toString() {
-    	return appendTo(new StringBuilder()).toString();
+        return appendTo(new StringBuilder()).toString();
     }
 
 }

@@ -84,160 +84,162 @@ import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
  */
 public final class LogFactoryImpl implements LogFactory {
 
-	public final void createLog(StorageContainerFactory storageFactory,
-			Properties props) throws LogException {
-		LogMgrParms parms = new LogMgrParms(props);
-		LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
-		logmgr.setCtlFiles(parms.ctlFiles);
-		logmgr.setArchivePath(parms.archivePath);
-		logmgr.setArchiveMode(true);
-		logmgr.setLogBufferSize(parms.logBufferSize);
-		logmgr.setLogFileSize(parms.logFileSize);
-		logmgr.setLogFiles(parms.groupPaths, parms.n_LogFiles);
-		logmgr.setMaxBuffers(parms.maxLogBuffers);
-		logmgr.setLogFlushInterval(parms.logFlushInterval);
-		logmgr.setDisableExplicitFlushRequests(parms.disableExplicitFlushRequests);
-		logmgr.create();
-	}
-	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.simpledbm.log.LogFactory#createLog(java.lang.String)
-	 */
-	public final void createLog(Properties props) throws LogException {
-		createLog(new FileStorageContainerFactory(props), props);
-	}
+    public final void createLog(StorageContainerFactory storageFactory,
+            Properties props) throws LogException {
+        LogMgrParms parms = new LogMgrParms(props);
+        LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
+        logmgr.setCtlFiles(parms.ctlFiles);
+        logmgr.setArchivePath(parms.archivePath);
+        logmgr.setArchiveMode(true);
+        logmgr.setLogBufferSize(parms.logBufferSize);
+        logmgr.setLogFileSize(parms.logFileSize);
+        logmgr.setLogFiles(parms.groupPaths, parms.n_LogFiles);
+        logmgr.setMaxBuffers(parms.maxLogBuffers);
+        logmgr.setLogFlushInterval(parms.logFlushInterval);
+        logmgr
+            .setDisableExplicitFlushRequests(parms.disableExplicitFlushRequests);
+        logmgr.create();
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
-	 */
-	public final LogManager getLog(StorageContainerFactory storageFactory, Properties props) throws LogException {
-		LogMgrParms parms = new LogMgrParms(props);
-		LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
-		logmgr.setCtlFiles(parms.ctlFiles);
-		return logmgr;
-	}
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.simpledbm.log.LogFactory#createLog(java.lang.String)
+     */
+    public final void createLog(Properties props) throws LogException {
+        createLog(new FileStorageContainerFactory(props), props);
+    }
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
-	 */
-	public final LogManager getLog(Properties props) throws LogException {
-		return getLog(new FileStorageContainerFactory(props), props);
-	}
-	
-	/**
-	 * Encapsulates the set of parameters that need to be supplied when creating
-	 * or opening a Log.
-	 * 
-	 * @author Dibyendu Majumdar
-	 */
-	static final class LogMgrParms {
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
+     */
+    public final LogManager getLog(StorageContainerFactory storageFactory,
+            Properties props) throws LogException {
+        LogMgrParms parms = new LogMgrParms(props);
+        LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
+        logmgr.setCtlFiles(parms.ctlFiles);
+        return logmgr;
+    }
 
-		String ctlFiles[];
+    /*
+     * (non-Javadoc)
+     * 
+     * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
+     */
+    public final LogManager getLog(Properties props) throws LogException {
+        return getLog(new FileStorageContainerFactory(props), props);
+    }
 
-		String groupPaths[];
+    /**
+     * Encapsulates the set of parameters that need to be supplied when creating
+     * or opening a Log.
+     * 
+     * @author Dibyendu Majumdar
+     */
+    static final class LogMgrParms {
 
-		short n_LogFiles;
+        String ctlFiles[];
 
-		String archivePath;
+        String groupPaths[];
 
-		int logBufferSize;
+        short n_LogFiles;
 
-		int logFileSize;
+        String archivePath;
 
-		int maxLogBuffers;
+        int logBufferSize;
 
-		int logFlushInterval;
-		
-		boolean disableExplicitFlushRequests;
+        int logFileSize;
 
-		final void setDefaults() {
-			ctlFiles = new String[LogManagerImpl.DEFAULT_CTL_FILES];
-			for (int i = 0; i < LogManagerImpl.DEFAULT_CTL_FILES; i++) {
-				ctlFiles[i] = "ctl." + Integer.toString(i);
-			}
-			groupPaths = new String[LogManagerImpl.DEFAULT_LOG_GROUPS];
-			for (int i = 0; i < LogManagerImpl.DEFAULT_LOG_GROUPS; i++) {
-				groupPaths[i] = LogManagerImpl.DEFAULT_GROUP_PATH;
-			}
-			n_LogFiles = LogManagerImpl.DEFAULT_LOG_FILES;
-			archivePath = LogManagerImpl.DEFAULT_ARCHIVE_PATH;
-			logBufferSize = LogManagerImpl.DEFAULT_LOG_BUFFER_SIZE;
-			logFileSize = LogManagerImpl.DEFAULT_LOG_FILE_SIZE;
-			logFlushInterval = 60000;
-			maxLogBuffers = n_LogFiles * 10;
-			disableExplicitFlushRequests = false;
-		}
-		
-		LogMgrParms(Properties props) {
-			setDefaults();
-			if (props == null) {
-				return;
-			}
-			ArrayList<String> list = new ArrayList<String>();
-			for (int i = 1; i <= LogManagerImpl.MAX_CTL_FILES; i++) {
-				String name = "log.ctl." + String.valueOf(i);
-				String value = props.getProperty(name);
-				if (value == null) {
-					break;
-				}
-				list.add(value);
-			}
-			if (list.size() > 0) {
-				ctlFiles = list.toArray(new String[1]);
-				list.clear();
-			}
-			for (int i = 1; i <= LogManagerImpl.MAX_LOG_GROUPS; i++) {
-				String name = "log.groups." + String.valueOf(i) + ".path";
-				String value = props.getProperty(name);
-				if (value == null) {
-					break;
-				}
-				list.add(value);
-			}
-			if (list.size() > 0) {
-				groupPaths = list.toArray(new String[1]);
-			}
-			String key = "log.archive.path";
-			String value = props.getProperty(key);
-			if (value != null) {
-				archivePath = value;
-			}
-			key = "log.group.files";
-			value = props.getProperty(key);
-			if (value != null) {
-				n_LogFiles = Short.parseShort(value);
-			} 
-			key = "log.file.size";
-			value = props.getProperty(key);
-			if (value != null) {
-				logFileSize = Integer.parseInt(value);
-			}
-			key = "log.buffer.size";
-			value = props.getProperty(key);
-			if (value != null) {
-				logBufferSize = Integer.parseInt(value);
-			}
-			key = "log.buffer.limit";
-			value = props.getProperty(key);
-			if (value != null) {
-				maxLogBuffers = Integer.parseInt(value);
-			} 
-			key = "log.flush.interval";
-			value = props.getProperty(key);
-			if (value != null) {
-				logFlushInterval = Integer.parseInt(value);
-			}
-			key = "log.explicitFlushRequests";
-			value = props.getProperty(key);
-			if (value != null) {
-				disableExplicitFlushRequests = Boolean.parseBoolean(value);
-			}
-		}
-	}
+        int maxLogBuffers;
+
+        int logFlushInterval;
+
+        boolean disableExplicitFlushRequests;
+
+        final void setDefaults() {
+            ctlFiles = new String[LogManagerImpl.DEFAULT_CTL_FILES];
+            for (int i = 0; i < LogManagerImpl.DEFAULT_CTL_FILES; i++) {
+                ctlFiles[i] = "ctl." + Integer.toString(i);
+            }
+            groupPaths = new String[LogManagerImpl.DEFAULT_LOG_GROUPS];
+            for (int i = 0; i < LogManagerImpl.DEFAULT_LOG_GROUPS; i++) {
+                groupPaths[i] = LogManagerImpl.DEFAULT_GROUP_PATH;
+            }
+            n_LogFiles = LogManagerImpl.DEFAULT_LOG_FILES;
+            archivePath = LogManagerImpl.DEFAULT_ARCHIVE_PATH;
+            logBufferSize = LogManagerImpl.DEFAULT_LOG_BUFFER_SIZE;
+            logFileSize = LogManagerImpl.DEFAULT_LOG_FILE_SIZE;
+            logFlushInterval = 60000;
+            maxLogBuffers = n_LogFiles * 10;
+            disableExplicitFlushRequests = false;
+        }
+
+        LogMgrParms(Properties props) {
+            setDefaults();
+            if (props == null) {
+                return;
+            }
+            ArrayList<String> list = new ArrayList<String>();
+            for (int i = 1; i <= LogManagerImpl.MAX_CTL_FILES; i++) {
+                String name = "log.ctl." + String.valueOf(i);
+                String value = props.getProperty(name);
+                if (value == null) {
+                    break;
+                }
+                list.add(value);
+            }
+            if (list.size() > 0) {
+                ctlFiles = list.toArray(new String[1]);
+                list.clear();
+            }
+            for (int i = 1; i <= LogManagerImpl.MAX_LOG_GROUPS; i++) {
+                String name = "log.groups." + String.valueOf(i) + ".path";
+                String value = props.getProperty(name);
+                if (value == null) {
+                    break;
+                }
+                list.add(value);
+            }
+            if (list.size() > 0) {
+                groupPaths = list.toArray(new String[1]);
+            }
+            String key = "log.archive.path";
+            String value = props.getProperty(key);
+            if (value != null) {
+                archivePath = value;
+            }
+            key = "log.group.files";
+            value = props.getProperty(key);
+            if (value != null) {
+                n_LogFiles = Short.parseShort(value);
+            }
+            key = "log.file.size";
+            value = props.getProperty(key);
+            if (value != null) {
+                logFileSize = Integer.parseInt(value);
+            }
+            key = "log.buffer.size";
+            value = props.getProperty(key);
+            if (value != null) {
+                logBufferSize = Integer.parseInt(value);
+            }
+            key = "log.buffer.limit";
+            value = props.getProperty(key);
+            if (value != null) {
+                maxLogBuffers = Integer.parseInt(value);
+            }
+            key = "log.flush.interval";
+            value = props.getProperty(key);
+            if (value != null) {
+                logFlushInterval = Integer.parseInt(value);
+            }
+            key = "log.explicitFlushRequests";
+            value = props.getProperty(key);
+            if (value != null) {
+                disableExplicitFlushRequests = Boolean.parseBoolean(value);
+            }
+        }
+    }
 }

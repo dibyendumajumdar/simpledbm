@@ -37,96 +37,96 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
     /**
      * Size of PageId in bytes. 
      */
-	public final static int SIZE = TypeSize.INTEGER * 2;
-	
-	private int containerId;
-	private int pageNumber;
-	
-	public PageId() {
-		containerId = -1;
-		pageNumber = -1;
-	}
-	
-	public PageId(int containerId, int pageNumber) {
-		this.containerId = containerId;
-		this.pageNumber = pageNumber;
-	}
-	
-	public PageId(PageId pageId) {
-		this.containerId = pageId.containerId;
-		this.pageNumber = pageId.pageNumber;
-	}
+    public final static int SIZE = TypeSize.INTEGER * 2;
 
-	public final int compareTo(PageId pageId) {
-		if (containerId == pageId.containerId) {
-			if (pageNumber == pageId.pageNumber)
-				return 0;
-			else if (pageNumber > pageId.pageNumber)
-				return 1;
-			else
-				return -1;
-		} else if (containerId > pageId.containerId)
-			return 1;
-		else
-			return -1;
-	}
-	
-	
-	public final void retrieve(ByteBuffer bb) {
-		containerId = bb.getInt();
-		pageNumber = bb.getInt();
-	}
+    private int containerId;
+    private int pageNumber;
 
-	public final void store(ByteBuffer bb) {
-		bb.putInt(containerId);
-		bb.putInt(pageNumber);
-	}
+    public PageId() {
+        containerId = -1;
+        pageNumber = -1;
+    }
 
-	public final int getStoredLength() {
-		return SIZE;
-	}
+    public PageId(int containerId, int pageNumber) {
+        this.containerId = containerId;
+        this.pageNumber = pageNumber;
+    }
 
-	public final int getContainerId() {
-		return containerId;
-	}
+    public PageId(PageId pageId) {
+        this.containerId = pageId.containerId;
+        this.pageNumber = pageId.pageNumber;
+    }
 
-	public final int getPageNumber() {
-		return pageNumber;
-	}
-	
-	public final boolean isNull() {
-		return containerId == -1 && pageNumber == -1;
-	}
-	
-	public final StringBuilder appendTo(StringBuilder sb) {
-		return sb.append("PageId(").append(containerId).append(",").append(pageNumber).append(")");
-	}
-	
-	public final String toString() {
-		return appendTo(new StringBuilder()).toString();
-	}
+    public final int compareTo(PageId pageId) {
+        if (containerId == pageId.containerId) {
+            if (pageNumber == pageId.pageNumber)
+                return 0;
+            else if (pageNumber > pageId.pageNumber)
+                return 1;
+            else
+                return -1;
+        } else if (containerId > pageId.containerId)
+            return 1;
+        else
+            return -1;
+    }
 
-	public int hashCode() {
-		final int PRIME = 31;
-		int result = 1;
-		result = PRIME * result + containerId;
-		result = PRIME * result + pageNumber;
-		return result;
-	}
+    public final void retrieve(ByteBuffer bb) {
+        containerId = bb.getInt();
+        pageNumber = bb.getInt();
+    }
 
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final PageId other = (PageId) obj;
-		if (containerId != other.containerId)
-			return false;
-		if (pageNumber != other.pageNumber)
-			return false;
-		return true;
-	}
+    public final void store(ByteBuffer bb) {
+        bb.putInt(containerId);
+        bb.putInt(pageNumber);
+    }
+
+    public final int getStoredLength() {
+        return SIZE;
+    }
+
+    public final int getContainerId() {
+        return containerId;
+    }
+
+    public final int getPageNumber() {
+        return pageNumber;
+    }
+
+    public final boolean isNull() {
+        return containerId == -1 && pageNumber == -1;
+    }
+
+    public final StringBuilder appendTo(StringBuilder sb) {
+        return sb.append("PageId(").append(containerId).append(",").append(
+            pageNumber).append(")");
+    }
+
+    public final String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
+
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + containerId;
+        result = PRIME * result + pageNumber;
+        return result;
+    }
+
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final PageId other = (PageId) obj;
+        if (containerId != other.containerId)
+            return false;
+        if (pageNumber != other.pageNumber)
+            return false;
+        return true;
+    }
 
 }
