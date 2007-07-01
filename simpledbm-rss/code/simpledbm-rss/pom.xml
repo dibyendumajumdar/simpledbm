@@ -90,7 +90,7 @@
         		<artifactId>maven-release-plugin</artifactId>
         			<configuration>
           				<tagBase>
-          					svn:https://simpledbm.googlecode.com/svn/tags/simpledbm-rss/code/simpledbm-rss
+          					https://simpledbm.googlecode.com/svn/tags/simpledbm-rss/code/simpledbm-rss
           				</tagBase>
 			        </configuration>
       		</plugin>			
