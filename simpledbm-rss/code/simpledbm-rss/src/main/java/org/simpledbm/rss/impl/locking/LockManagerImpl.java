@@ -1375,66 +1375,100 @@ public final class LockManagerImpl implements LockManager {
             me.visited = true;
         }
         LockWaiter him;
+        
+        assert me.cycle == null;
+        assert me.myLockRequest.status == LockRequestStatus.WAITING || me.myLockRequest.status == LockRequestStatus.CONVERTING;
 
-        LockMode mode = me.myLockRequest.mode;
         if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
-            mode = me.myLockRequest.convertMode;
-        }
-        for (LockRequest them : me.myLockRequest.lockItem.queue) {
-            if (them.status == LockRequestStatus.WAITING) {
-                break;
-            }
-            if (them.status == LockRequestStatus.DENIED) {
-                continue;
-            }
-            if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
-                /*
-                 * Need to check all holders of lock
-                 */
-                if (them.owner == me.myLockRequest.owner) {
+        	LockMode mode = me.myLockRequest.convertMode;
+        	
+        	/*
+        	 * Look at everyone that holds the lock
+        	 */
+        	for (LockRequest them : me.myLockRequest.lockItem.queue) {
+        		if (them.owner == me.myLockRequest.owner) {
                     continue;
                 }
-            } else {
-                /*
-                 * No need to check locks after me
-                 */
-                if (them.owner == me.myLockRequest.owner) {
+        		if (them.status == LockRequestStatus.DENIED) {
+                    continue;
+                }
+                if (them.status == LockRequestStatus.WAITING) {
                     break;
                 }
-            }
-            boolean incompatible;
-            if (me.myLockRequest.status == LockRequestStatus.CONVERTING) {
-                incompatible = !them.mode.isCompatible(mode);
-            } else {
-                incompatible = !them.mode.isCompatible(me.myLockRequest.mode)
-                        || them.status == LockRequestStatus.GRANTED
-                        || them.status == LockRequestStatus.CONVERTING;
-            }
-            if (incompatible) {
-                him = waiters.get(them.owner);
-                if (him == null) {
-                    return false;
-                }
-                me.cycle = him;
-                if (him.cycle != null) {
-                    log.warn(
-                        log.getClass().getName(),
-                        "findDeadlockCycle",
-                        mcat.getMessage(
-                            "WC0011",
-                            me.myLockRequest,
-                            him.myLockRequest,
-                            me.myLockRequest.lockItem,
-                            him.myLockRequest.lockItem));
-                    me.myLockRequest.status = LockRequestStatus.DENIED;
-                    LockSupport.unpark(me.thread);
-                    return true;
-                } else {
-                    return findDeadlockCycle(him);
-                }
-            }
+        		boolean incompatible = !them.mode.isCompatible(mode);
+        		if (incompatible) {
+        			him = waiters.get(them.owner);
+                    if (him == null) {
+                        return false;
+                    }
+                    me.cycle = him;
+                    if (him.cycle != null) {
+                        log.warn(
+                            log.getClass().getName(),
+                            "findDeadlockCycle",
+                            mcat.getMessage(
+                                "WC0011",
+                                me.myLockRequest,
+                                him.myLockRequest,
+                                me.myLockRequest.lockItem,
+                                him.myLockRequest.lockItem));
+                        me.myLockRequest.status = LockRequestStatus.DENIED;
+                        LockSupport.unpark(me.thread);
+                        return true;
+                    }
+                    boolean result = findDeadlockCycle(him);
+                	//me.cycle = null;
+                    if (result) {
+                    	return result;
+                    }
+        		}
+        	}
         }
-        return false;
+        else if (me.myLockRequest.status == LockRequestStatus.WAITING) {
+        	LockMode mode = me.myLockRequest.mode;
+        	
+        	/*
+        	 * Look at everyone ahead of me in the queue
+        	 */
+        	for (LockRequest them : me.myLockRequest.lockItem.queue) {
+        		if (them.owner == me.myLockRequest.owner) {
+                    break;
+                }
+        		if (them.status == LockRequestStatus.DENIED) {
+                    continue;
+                }
+        		boolean incompatible = !them.mode.isCompatible(mode);
+        		if (incompatible || them.status == LockRequestStatus.CONVERTING || them.status == LockRequestStatus.WAITING) {
+        			him = waiters.get(them.owner);
+                    if (him == null) {
+                        return false;
+                    }
+                    me.cycle = him;
+                    if (him.cycle != null) {
+                        log.warn(
+                            log.getClass().getName(),
+                            "findDeadlockCycle",
+                            mcat.getMessage(
+                                "WC0011",
+                                me.myLockRequest,
+                                him.myLockRequest,
+                                me.myLockRequest.lockItem,
+                                him.myLockRequest.lockItem));
+                        me.myLockRequest.status = LockRequestStatus.DENIED;
+                        LockSupport.unpark(me.thread);
+                        return true;
+                    }
+                    boolean result = findDeadlockCycle(him);
+                	//me.cycle = null;
+                    if (result) {
+                    	return result;
+                    }
+        		}
+        	}
+        }
+        
+        me.cycle = null;
+    	return false;
     }
 
     void detectDeadlocks() {
