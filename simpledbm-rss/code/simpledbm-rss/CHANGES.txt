@@ -1,3 +1,6 @@
+1.0.5-BETA:
+ * dm: Added distributionManagement section to the maven pom to fix release:perform.
+ 
 1.0.4-BETA:
  * dm: Rewrote the DeadlockDetector findDeadlockCycle() method.
  * dm: Disabled test case for concurrent server access to same database due to portability issues with file locking behaviour.
