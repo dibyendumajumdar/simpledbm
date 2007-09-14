@@ -1,3 +1,7 @@
+1.0.4-BETA:
+ * dm: Rewrote the DeadlockDetector findDeadlockCycle() method.
+ * dm: Disabled test case for concurrent server access to same database due to portability issues with file locking behaviour.
+
 1.0.3-BETA:
  * dm: Refactored synthronization code in Buffer Manager, in particular, handling of volatile instance variables.
  * dm: Renamed the property log.disableExplicitFlushRequests to log.explicitFlushRequests.
