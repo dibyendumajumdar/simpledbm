@@ -129,4 +129,11 @@
    </plugin>
   </plugins>
  </reporting>
+ <distributionManagement>
+    <repository>
+      <id>local</id>
+      <name>LocalRepository</name>
+      <url>file:///tmp</url>
+    </repository>
+  </distributionManagement>
 </project>
