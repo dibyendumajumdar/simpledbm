@@ -23,17 +23,15 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import junit.framework.Test;
-import junit.framework.TestCase;
 import junit.framework.TestSuite;
 
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.LogReader;
 import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.wal.LogFactoryImpl;
-import org.simpledbm.rss.impl.wal.LogManagerImpl;
 
 /**
  * Test cases for the Log Manager (Write Ahead Log) module.
@@ -41,7 +39,7 @@ import org.simpledbm.rss.impl.wal.LogManagerImpl;
  * @author Dibyendu Majumdar
  * @since 21-Aug-2005
  */
-public class TestLogManager extends TestCase {
+public class TestLogManager extends BaseTestCase {
 
     public TestLogManager(String name) {
         super(name);
