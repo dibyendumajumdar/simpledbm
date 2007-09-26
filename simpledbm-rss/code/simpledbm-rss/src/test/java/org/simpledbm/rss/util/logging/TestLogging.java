@@ -14,6 +14,7 @@ public class TestLogging extends BaseTestCase {
 
     public void testCase1() throws Exception {
         Logger logger = Logger.getLogger(getClass().getName());
+        
         assertFalse(logger.isDebugEnabled());
         logger.debug("test", "test", "This should not appear");
         logger.enableDebug();
@@ -29,12 +30,12 @@ public class TestLogging extends BaseTestCase {
             "test",
             "test",
             "This is the second message that should appear");
-        logger.info(
-            this.getClass().getName(),
-            "testCase1",
-            "This message has two arguments: [{0}] and [{1}]",
-            "one",
-            "two");
+//        logger.info(
+//            this.getClass().getName(),
+//            "testCase1",
+//            "This message has two arguments: [{0}] and [{1}]",
+//            "one",
+//            "two");
     }
 
 }
