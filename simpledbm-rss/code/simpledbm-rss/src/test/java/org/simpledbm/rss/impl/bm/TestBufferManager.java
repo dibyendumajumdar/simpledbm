@@ -24,10 +24,9 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import junit.framework.TestCase;
-
-import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
+import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
@@ -37,7 +36,6 @@ import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
@@ -61,7 +59,7 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
  */
-public class TestBufferManager extends TestCase {
+public class TestBufferManager extends BaseTestCase {
 
     static final short TYPE_MYPAGE = 25000;
 
