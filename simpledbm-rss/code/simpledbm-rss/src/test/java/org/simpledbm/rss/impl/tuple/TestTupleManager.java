@@ -10,8 +10,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
@@ -52,9 +51,8 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.util.ByteString;
-import org.simpledbm.rss.util.logging.Logger;
 
-public class TestTupleManager extends TestCase {
+public class TestTupleManager extends BaseTestCase {
 
     public TestTupleManager() {
         super();
@@ -545,7 +543,6 @@ public class TestTupleManager extends TestCase {
 
         public TupleDB(Properties props, boolean create) throws Exception {
 
-            Logger.configure("classpath:logging.properties");
             storageFactory = new FileStorageContainerFactory(props);
             logFactory = new LogFactoryImpl();
             if (create) {
