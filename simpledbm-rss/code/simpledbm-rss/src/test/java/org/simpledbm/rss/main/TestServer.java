@@ -21,8 +21,7 @@ package org.simpledbm.rss.main;
 
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
@@ -30,7 +29,7 @@ import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.util.ByteString;
 
-public class TestServer extends TestCase {
+public class TestServer extends BaseTestCase {
 
     public TestServer(String arg0) {
         super(arg0);
