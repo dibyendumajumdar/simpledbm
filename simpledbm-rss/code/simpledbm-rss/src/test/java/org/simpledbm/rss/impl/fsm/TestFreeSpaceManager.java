@@ -21,8 +21,7 @@ package org.simpledbm.rss.impl.fsm;
 
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
@@ -56,7 +55,7 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 
-public class TestFreeSpaceManager extends TestCase {
+public class TestFreeSpaceManager extends BaseTestCase {
 
     public TestFreeSpaceManager(String arg0) {
         super(arg0);
