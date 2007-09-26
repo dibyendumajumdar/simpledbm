@@ -156,10 +156,7 @@ public class Server {
      */
     public Server(Properties props) {
 
-        String logProperties = props.getProperty(
-            "logging.properties.file",
-            "classpath:logging.properties");
-        Logger.configure(logProperties);
+        Logger.configure(props);
 
         final LogFactory logFactory = new LogFactoryImpl();
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
@@ -247,8 +244,7 @@ public class Server {
             lock.lock();
             lockObtained = true;
         } catch (StorageException e) {
-            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e
-                .getMessage());
+            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e);
             throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
         } finally {
             if (!lockObtained) {

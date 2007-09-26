@@ -68,8 +68,10 @@ public class MessageCatalog {
         msgs
             .put(
                 "WL0001",
-                "SIMPLEDBM-WL0001: Failed to initialize logging system due to following error:");
-
+                "SIMPLEDBM-WL0001: Failed to initialize JDK 1.4 logging system due to following error:");
+        msgs
+				.put("WL0002",
+						"SIMPLEDBM-WL0002: Failed to initialize Log4J logging system");
         // Buffer Manager messages
         msgs
             .put(
@@ -355,7 +357,7 @@ public class MessageCatalog {
         msgs
             .put(
                 "WC0004",
-                "SIMPLEDBM-WC0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
+                "SIMPLEDBM-WC0004: Lock request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
         msgs
             .put(
                 "EC0005",

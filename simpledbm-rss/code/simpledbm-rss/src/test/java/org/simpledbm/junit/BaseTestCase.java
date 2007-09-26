@@ -19,6 +19,7 @@
  */
 package org.simpledbm.junit;
 
+import java.util.Properties;
 import java.util.Vector;
 
 import junit.framework.TestCase;
@@ -44,7 +45,10 @@ public abstract class BaseTestCase extends TestCase {
     protected void setUp() throws Exception {
         super.setUp();
         threadFailureExceptions = new Vector<ThreadFailure>();
-        Logger.configure("classpath:logging.properties");
+        Properties properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Logger.configure(properties);
     }
 
     @Override

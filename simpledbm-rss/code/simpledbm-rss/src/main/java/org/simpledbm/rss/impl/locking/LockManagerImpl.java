@@ -569,7 +569,7 @@ public final class LockManagerImpl implements LockManager {
 
                 else if (!can_grant && lockState.parms.timeout == 0) {
                     /* 15. If not, and nowait specified, return failure. */
-                    log.warn(
+                    log.debug(
                         this.getClass().getName(),
                         "handleConversionRequest",
                         mcat.getMessage(
@@ -632,7 +632,7 @@ public final class LockManagerImpl implements LockManager {
 
         else if (!can_grant && lockState.parms.timeout == 0) {
             /* 7. Otherwise, if nowait was specified, return failure. */
-            log.warn(this.getClass().getName(), "handleNewRequest", mcat
+            log.debug(this.getClass().getName(), "handleNewRequest", mcat
                 .getMessage("WC0004", lockState.parms, lockState.lockitem));
             throw new LockTimeoutException(mcat.getMessage(
                 "WC0004",
