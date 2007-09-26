@@ -21,8 +21,7 @@ package org.simpledbm.rss.impl.sp;
 
 import java.nio.ByteBuffer;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -33,12 +32,10 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
-import org.simpledbm.rss.impl.sp.SlottedPageImpl;
-import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
 import org.simpledbm.rss.util.ByteString;
 
-public class TestSlottedPage extends TestCase {
+public class TestSlottedPage extends BaseTestCase {
 
     public TestSlottedPage(String arg0) {
         super(arg0);
