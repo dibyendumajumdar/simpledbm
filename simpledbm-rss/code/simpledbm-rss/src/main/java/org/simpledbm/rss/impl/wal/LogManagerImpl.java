@@ -151,9 +151,7 @@ public final class LogManagerImpl implements LogManager {
 
     private static final String LOG_CLASS_NAME = LogManagerImpl.class.getName();
 
-    static final Logger logger = new Logger(LogManagerImpl.class
-        .getPackage()
-        .getName());
+    static final Logger logger = Logger.getLogger(LogManagerImpl.class.getPackage().getName());
 
     static final String DEFAULT_GROUP_PATH = ".";
 
