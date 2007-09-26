@@ -40,6 +40,11 @@
    <version>3.8.1</version>
    <scope>test</scope>
   </dependency>
+  <dependency>
+   <groupId>log4j</groupId>
+   <artifactId>log4j</artifactId>
+   <version>1.2.12</version>
+  </dependency>
  </dependencies>
  <build>
   <defaultGoal>package</defaultGoal>
@@ -55,7 +60,7 @@
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
-     <argLine>-Xmx512m -Xms128m</argLine>
+     <argLine>-Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
     </configuration>
    </plugin>
    <plugin>
