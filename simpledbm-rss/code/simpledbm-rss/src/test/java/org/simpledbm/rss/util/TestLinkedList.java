@@ -2,9 +2,9 @@ package org.simpledbm.rss.util;
 
 import java.util.Iterator;
 
-import junit.framework.TestCase;
+import org.simpledbm.junit.BaseTestCase;
 
-public class TestLinkedList extends TestCase {
+public class TestLinkedList extends BaseTestCase {
 
     static final class Element extends Linkable {
         int i;
