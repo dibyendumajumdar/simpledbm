@@ -19,8 +19,7 @@
  */
 package org.simpledbm.rss.impl.registry;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 
@@ -30,7 +29,7 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
  * @author Dibyendu Majumdar
  * @since 21-Aug-2005
  */
-public class TestObjectRegistry extends TestCase {
+public class TestObjectRegistry extends BaseTestCase {
 
     public TestObjectRegistry(String arg0) {
         super(arg0);
