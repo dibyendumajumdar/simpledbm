@@ -484,16 +484,18 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     Lsn doLogInsert(Loggable logrec) {
         validateLoggableHierarchy(logrec);
+        byte[] data = new byte[logrec.getStoredLength()];
+        ByteBuffer bb = ByteBuffer.wrap(data);
+        logrec.store(bb);
+        Lsn lsn = logmgr.insert(data, data.length);
+        logrec.setLsn(lsn);
         if (log.isTraceEnabled()) {
             log.trace(
                 this.getClass().getName(),
                 "doLogInsert",
-                "SIMPLEDBM-TRACE: Inserting log record " + logrec);
+                "SIMPLEDBM-TRACE: Inserted log record " + logrec);
         }
-        byte[] data = new byte[logrec.getStoredLength()];
-        ByteBuffer bb = ByteBuffer.wrap(data);
-        logrec.store(bb);
-        return logmgr.insert(data, data.length);
+        return lsn;
     }
 
     /**
@@ -1605,13 +1607,6 @@ public final class TransactionManagerImpl implements TransactionManager {
          * the trx structure.
          */
         private final Lsn registerLsn(Loggable logrec, Lsn newLsn) {
-            if (log.isTraceEnabled()) {
-                log.trace(
-                    this.getClass().getName(),
-                    "registerLsn",
-                    "SIMPLEDBM-TRACE: Adding log record " + logrec
-                            + " to transaction " + this);
-            }
             logrec.setLsn(newLsn);
             lastLsn = newLsn;
             if (firstLsn.isNull()) {
@@ -1621,6 +1616,13 @@ public final class TransactionManagerImpl implements TransactionManager {
                 this.undoNextLsn = ((Compensation) logrec).getUndoNextLsn();
             } else if (logrec instanceof Undoable) {
                 this.undoNextLsn = newLsn;
+            }
+            if (log.isTraceEnabled()) {
+                log.trace(
+                    this.getClass().getName(),
+                    "registerLsn",
+                    "SIMPLEDBM-TRACE: Added log record " + logrec.getLsn()
+                            + " to transaction " + this);
             }
 
             return logrec.getPrevTrxLsn();
