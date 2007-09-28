@@ -1,5 +1,6 @@
 1.0.6-BETA:
  * dm: Added support for log4j. 
+ * dm: Various improvements to toString() implementations.
 
 1.0.5-BETA:
  * dm: Added distributionManagement section to the maven pom to fix release:perform.
