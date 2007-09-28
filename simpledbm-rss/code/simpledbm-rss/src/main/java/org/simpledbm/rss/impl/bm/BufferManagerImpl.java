@@ -40,6 +40,7 @@ import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.Linkable;
 import org.simpledbm.rss.util.SimpleLinkedList;
 import org.simpledbm.rss.util.logging.Logger;
@@ -1154,7 +1155,7 @@ public final class BufferManagerImpl implements BufferManager {
      * @author Dibyendu Majumdar
      * @since 20-Aug-2005
      */
-    static final class BufferControlBlock extends Linkable {
+    static final class BufferControlBlock extends Linkable implements Dumpable {
 
         /**
          * Id of the page that this BCB holds information about.
@@ -1210,11 +1211,28 @@ public final class BufferManagerImpl implements BufferManager {
 
         @Override
         public final String toString() {
-            return "BCB(pageid=" + getPageId() + ", frame=" + getFrameIndex()
-                    + ", isDirty=" + dirty + ", fixcount=" + fixcount
-                    + ", isBeingWritten=" + writeInProgress + ")";
+            StringBuilder sb = new StringBuilder();
+            return appendTo(sb).toString();
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("BCB(pageid=");
+            getPageId().appendTo(sb);
+            sb.append(", frame=").append(getFrameIndex());
+            sb.append(", isDirty=").append(dirty).append(", fixcount=").append(fixcount);
+            sb.append(", isBeingWritten=").append(writeInProgress);
+            sb.append(", recoveryLsn=");
+            if (recoveryLsn == null) {
+                sb.append("null");
+            }
+            else {
+                recoveryLsn.appendTo(sb);
+            }
+            sb.append(", invalid=" + invalid);
+            sb.append(")");
+            return sb;
+        }
+        
         final boolean isInUse() {
             return fixcount > 0;
         }
