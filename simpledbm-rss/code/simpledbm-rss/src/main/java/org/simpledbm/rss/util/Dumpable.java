@@ -27,6 +27,8 @@ package org.simpledbm.rss.util;
  */
 public interface Dumpable {
 
+    String newline = System.getProperty("line.separator");
+    
     /**
      * Appends contents to supplied StringBuilder.
      */
