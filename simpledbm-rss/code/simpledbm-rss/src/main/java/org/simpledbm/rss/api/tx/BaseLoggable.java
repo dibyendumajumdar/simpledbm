@@ -190,7 +190,8 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     public abstract void init();
 
     public StringBuilder appendTo(StringBuilder sb) {
-        sb.append("typecode=").append(typecode).append(", prevTrxLsn=");
+        sb.append("Lsn=").append(lsn);
+        sb.append(", typeCode=").append(typecode).append(", prevTrxLsn=");
         prevTrxLsn.appendTo(sb).append(", undoNextLsn=");
         undoNextLsn.appendTo(sb).append(", trxId=");
         trxId.appendTo(sb).append(", pageType=").append(pageType).append(
