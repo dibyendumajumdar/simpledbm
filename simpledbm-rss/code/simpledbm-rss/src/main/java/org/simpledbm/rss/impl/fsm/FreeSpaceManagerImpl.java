@@ -740,10 +740,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             name.store(bb);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("containerId=").append(containerId).append(", name=").append(name.toString())
+                    .append(",");
+            super.appendTo(sb);
+            return sb;
+        }
+        
         @Override
         public String toString() {
-            return "containerId=" + containerId + ", name=" + name.toString()
-                    + "," + super.toString();
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -754,9 +760,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class CreateContainer extends ContainerOperation
             implements Undoable {
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("CreateContainer(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+
         @Override
         public String toString() {
-            return "CreateContainer(" + super.toString() + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -767,9 +781,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //	public static final class UndoCreateContainer extends ContainerOperation implements Compensation {
     public static final class UndoCreateContainer extends ContainerOperation
             implements Compensation, ContainerDeleteOperation {
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoCreateContainer(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public String toString() {
-            return "UndoCreateContainer(" + super.toString() + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -779,9 +801,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class OpenContainer extends ContainerOperation
             implements NonTransactionRelatedOperation {
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("OpenContainer(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public String toString() {
-            return "OpenContainer(" + super.toString() + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -827,9 +857,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
 
         @Override
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("DropContainer(actionId=").append(actionId).append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+      
+        @Override
         public String toString() {
-            return "DropContainer(actionId=" + actionId + ", "
-                    + super.toString() + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
     }
@@ -871,6 +908,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(dataPageType);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("FormatRawPage(dataPageType=").append(dataPageType).append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+        
     }
 
     /**
@@ -1005,13 +1054,21 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(dataPageType);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+
+            sb.append("FormatHeaderPage(numberOfExtents=").append(numberOfExtents)
+                    .append(", extentSize=").append(extentSize)
+                    .append(", numberOfSpaceMapPages=").append(numberOfSpaceMapPages)
+                    .append(", lastSpaceMapPage=").append(lastSpaceMapPage)
+                    .append(", firstSpaceMapPage=").append(firstSpaceMapPage);
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
-        public final String toString() {
-            return super.toString() + ".FormatHeaderPage(numberOfExtents="
-                    + numberOfExtents + ", extentSize=" + extentSize
-                    + ", numberOfSMP=" + numberOfSpaceMapPages + ", lastSMP="
-                    + lastSpaceMapPage + ", firstSMP=" + firstSpaceMapPage
-                    + ")";
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -1070,10 +1127,23 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(newLastSpaceMapPage);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UpdateHeaderPage(oldNumberOfExtents=").append(oldNumberOfExtents);
+            sb.append(", newNumberOfExtents=").append(newNumberOfExtents);
+            sb.append(", oldNumberOfSpaceMapPages=").append(oldNumberOfSpaceMapPages);
+            sb.append(", newNumberOfSpaceMapPages=").append(newNumberOfSpaceMapPages);
+            sb.append(", oldLastSpaceMapPage=").append(oldLastSpaceMapPage);
+            sb.append(", newLastSpaceMapPage=").append(newLastSpaceMapPage);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        
         @Override
         public final String toString() {
-            // TODO
-            return super.toString();
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -1120,10 +1190,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(oldLastSpaceMapPage);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoUpdateHeaderPage(oldNumberOfExtents=").append(oldNumberOfExtents);
+            sb.append(", oldNumberOfSpaceMapPages=").append(oldNumberOfSpaceMapPages);
+            sb.append(", oldLastSpaceMapPage=").append(oldLastSpaceMapPage);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        
         @Override
         public final String toString() {
-            // TODO
-            return super.toString();
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -1178,10 +1258,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return super.getStoredLength() + TypeSize.INTEGER * 2;
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("FormatSpaceMapPage(firstPageNumber=").append(firstPageNumber);
+            sb.append(", nextSpaceMapPage=").append(nextSpaceMapPage);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return super.toString() + ".FormatSMP(firstPageNumber = "
-                    + firstPageNumber + ", nextSMP=" + nextSpaceMapPage + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
         @Override
@@ -1232,6 +1320,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(pageNumber);
             bb.putInt(spaceValue);
         }
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("pageNumber=").append(pageNumber);
+            sb.append(", spaceValue=").append(spaceValue);
+            sb.append(", ");
+            super.appendTo(sb);
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
     }
 
     static abstract class BaseUndoableUpdateSpaceMapPage extends
@@ -1260,6 +1362,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             super.store(bb);
             bb.putInt(oldSpaceValue);
         }
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("oldSpaceValue=").append(oldSpaceValue).append(", ");
+            super.appendTo(sb);
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
     }
 
     /**
@@ -1267,6 +1381,19 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class UpdateSpaceMapPage extends BaseUpdateSpaceMapPage
             implements Redoable {
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UpdateSpaceMapPage(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
     }
 
     /**
@@ -1274,6 +1401,19 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class UndoableUpdateSpaceMapPage extends
             BaseUndoableUpdateSpaceMapPage implements Undoable {
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoableUpdateSpaceMapPage(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
     }
 
     /**
@@ -1281,6 +1421,19 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class UndoSpaceMapPageUpdate extends
             BaseUpdateSpaceMapPage implements Compensation {
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoSpaceMapPageUpdate(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
     }
 
     /**
@@ -1319,11 +1472,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(newNextSpaceMapPage);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("LinkSpaceMapPage(oldNirstPageNumber = ").append(oldNextSpaceMapPage);
+            sb.append(", newNextSpaceMapPage=").append(newNextSpaceMapPage);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return super.toString() + ".LinkSpaceMapPage(oldNirstPageNumber = "
-                    + oldNextSpaceMapPage + ", newNextSpaceMapPage="
-                    + newNextSpaceMapPage + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
         @Override
@@ -1360,11 +1520,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(oldNextSpaceMapPage);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoLinkSpaceMapPage(oldNextSpaceMapPage=").append(oldNextSpaceMapPage);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return super.toString()
-                    + ".LinkSpaceMapPageCLR(oldNirstPageNumber = "
-                    + oldNextSpaceMapPage + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
         @Override
@@ -1505,13 +1671,24 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.putInt(dataPageType);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("HeaderPage(numberOfExtents=").append(numberOfExtents);
+            sb.append(", extentSize=").append(extentSize);
+            sb.append(", numberOfSpaceMapPages=").append(numberOfSpaceMapPages);
+            sb.append(", lastSpaceMapPage=").append(lastSpaceMapPage);
+            sb.append(", firstSpaceMapPage=").append(firstSpaceMapPage);
+            sb.append(", spaceMapPageType=").append(spaceMapPageType);
+            sb.append(", dataPageType=").append(dataPageType);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        
         @Override
         public final String toString() {
-            return super.toString() + ".HeaderPage(numberOfExtents="
-                    + numberOfExtents + ", extentSize=" + extentSize
-                    + ", numberOfSMP=" + numberOfSpaceMapPages + ", lastSMP="
-                    + lastSpaceMapPage + ", firstSMP=" + firstSpaceMapPage
-                    + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -1640,11 +1817,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bb.put(bits);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("SpaceMapPageImpl(firstPageNumber=").append(firstPageNumber);
+            sb.append(", nextSpaceMapPage=").append(nextSpaceMapPage);
+            sb.append(", pageCount=").append(getCount());
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        
         @Override
         public final String toString() {
-            return "SpaceMapPageImpl(super=" + super.toString()
-                    + ", firstPageNumber = " + firstPageNumber + ", nextSMP="
-                    + nextSpaceMapPage + ", pageCount=" + getCount() + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
