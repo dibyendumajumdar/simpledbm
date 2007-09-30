@@ -69,6 +69,7 @@ import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.util.ClassUtils;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.util.logging.Logger;
@@ -4127,7 +4128,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     /**
      * Every page in the BTree has a header item at slot 0.   
      */
-    public static final class BTreeNodeHeader implements Storable {
+    public static final class BTreeNodeHeader implements Storable, Dumpable {
 
         static final int SIZE = TypeSize.INTEGER * 5;
 
@@ -4188,12 +4189,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             bb.putInt(keyCount);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("BTreeNodeHeader(keyFactory=").append(keyFactoryType);
+            sb.append(", locationFactory=").append(locationFactoryType);
+            sb.append(", leftSibling=").append(leftSibling);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", keyCount=").append(keyCount);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "BTreeNodeHeader(keyFactory=" + keyFactoryType
-                    + ", locationFactory=" + locationFactoryType
-                    + ", leftSibling=" + leftSibling + ", rightSibling="
-                    + rightSibling + ", keyCount=" + keyCount + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
         final int getKeyCount() {
@@ -4401,14 +4409,22 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.unique = other.unique;
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            
+            sb.append("isLeaf=").append(isLeaf() ? "true" : "false");
+            sb.append(", isUnique=").append(isUnique() ? "true" : "false");
+            sb.append(", keyFactoryType=").append(getKeyFactoryType());
+            sb.append(", locationFactoryType=").append(getLocationFactoryType());
+            sb.append(", ");
+            super.appendTo(sb);
+            return sb;
+        }
+        
         @Override
         public String toString() {
-            return super.toString() + ", isLeaf="
-                    + (isLeaf() ? "true" : "false") + ", isUnique="
-                    + (isUnique() ? "true" : "false") + ", keyFactoryType="
-                    + getKeyFactoryType() + ", locationFactoryType="
-                    + getLocationFactoryType();
+            return appendTo(new StringBuilder()).toString();
         }
+        
     }
 
     /**
@@ -4485,6 +4501,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         @Override
         public final void init() {
         }
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("position=").append(position);
+            sb.append(", item=[").append(item.toString());
+            sb.append("], ");
+            super.appendTo(sb);
+            return sb;
+        }
+        
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
     }
 
     /**
@@ -4492,18 +4520,65 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     public static final class InsertOperation extends KeyUpdateOperation
             implements LogicalUndo {
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("InsertOperation(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+        
     }
 
     public static final class UndoInsertOperation extends KeyUpdateOperation
             implements Compensation {
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoInsertOperation(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+        
     }
 
     public static final class DeleteOperation extends KeyUpdateOperation
             implements LogicalUndo {
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("DeleteOperation(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+        
     }
 
     public static final class UndoDeleteOperation extends KeyUpdateOperation
             implements Compensation {
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoDeleteOperation(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
     }
 
     /**
@@ -4604,9 +4679,37 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             bb.putShort(newKeyCount);
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("SplitOperation(");
+            sb.append("Number of items=").append(items.size()).append(newline);
+            for (IndexItem item : items) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            if (isLeaf()) {
+                sb.append("  highKey=");
+                highKey.appendTo(sb);
+                sb.append(newline);
+            }
+            sb.append(", newSiblingPageNumber=").append(newSiblingPageNumber);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", spaceMapPageNumber=").append(spaceMapPageNumber);
+            sb.append(", newKeyCount=").append(newKeyCount);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return super.toString();
+            return appendTo(new StringBuilder()).toString();
         }
 
         /**
@@ -4694,10 +4797,30 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         rightSiblingSpaceMapPage) };
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("MergeOperation(Number of items=").append(items.size()).append(newline);
+            for (IndexItem item : items) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", rightSiblingSpaceMapPage=").append(rightSiblingSpaceMapPage);
+            sb.append(", rightRightSibling=").append(rightRightSibling);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "MergeOperation(" + super.toString() + ", rightSibling="
-                    + rightSibling + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
     }
@@ -4741,9 +4864,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         @Override
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("LinkOperation(leftChildHighKey=");
+            leftChildHighKey.appendTo(sb);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", leftSibling=").append(leftSibling);
+            sb.append(")");
+            return sb;
+        }
+        
+        @Override
         public final String toString() {
-            return "LinkOperation(" + super.toString() + ", leftSibling="
-                    + leftSibling + ", rightSibling=" + rightSibling + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
     }
@@ -4791,10 +4923,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void init() {
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UnlinkOperation(leftSibling=");
+            sb.append(leftSibling);
+            sb.append(", rightSibling=");
+            sb.append(rightSibling);
+            sb.append(", ");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "UnlinkOperation(" + super.toString() + ", leftSibling="
-                    + leftSibling + ", rightSibling=" + rightSibling + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
     }
@@ -4865,11 +5007,25 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     new PageId(getPageId().getContainerId(), rightSibling) };
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("RedistributeOperation(leftSibling=").append(leftSibling);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", targetSibling=").append(targetSibling);
+            sb.append(", key=[");
+            key.appendTo(sb);
+            sb.append("]");
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "RedistributeOperation(" + super.toString()
-                    + ", leftSibling=" + leftSibling + ", rightSibling="
-                    + rightSibling + ", targetSibling=" + targetSibling + ")";
+            return appendTo(new StringBuilder()).toString();
         }
 
     }
@@ -4983,11 +5139,37 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     new PageId(getPageId().getContainerId(), leftSibling) };
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("IncreaseTreeHeightOperation(");
+            sb.append(newline).append("New leaf node:").append(newline);
+            sb.append("No of items=").append(items.size()).append(newline);
+            for (IndexItem item : items) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            sb.append("New root node:").append(newline);
+            sb.append("No of items=").append(rootItems.size()).append(newline);
+            for (IndexItem item : rootItems) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            sb.append(", leftSibling=").append(leftSibling);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", spaceMapPageNumber=").append(spaceMapPageNumber);
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "IncreaseTreeHeightOperation(" + super.toString()
-                    + ", leftChild=" + leftSibling + ", rightChild="
-                    + rightSibling + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -5069,11 +5251,29 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     new PageId(getPageId().getContainerId(), childPageNumber) };
         }
 
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("DecreaseTreeHeightOperation(");
+            sb.append(newline);
+            sb.append("No of items=").append(items.size()).append(newline);
+            for (IndexItem item : items) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            sb.append(", childPageNumber=").append(childPageNumber);
+            sb.append(", childPageSpaceMap=").append(childPageSpaceMap);
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
         @Override
         public final String toString() {
-            return "DecreaseTreeHeightOperation(" + super.toString()
-                    + ", nItems=" + items.size() + ", childPage="
-                    + childPageNumber + ")";
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
@@ -5091,7 +5291,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @since 18-Sep-2005
      */
     public static final class IndexItem implements Storable,
-            Comparable<IndexItem> {
+            Comparable<IndexItem>, Dumpable {
 
         /**
          * Sortable key
@@ -5272,11 +5472,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return true;
         }
 
-        @Override
-        public final String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb
-                .append("IndexItem(key=[")
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("IndexItem(key=[")
                 .append(key)
                 .append("], isLeaf=")
                 .append(isLeaf)
@@ -5289,9 +5486,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sb.append(", ChildPage=").append(childPageNumber);
             }
             sb.append(")");
-            return sb.toString();
-//			return "IndexItem(key=[" + key + "], isLeaf=" + isLeaf + ", isUnique=" + isUnique + 
-//				(isLocationRequired() ? (", Location=" + location) : "") + (isLeaf ? "" : (", ChildPage=" + String.valueOf(childPageNumber))) + ")";
+            return sb;
+        }
+        
+        @Override
+        public final String toString() {
+            return appendTo(new StringBuilder()).toString();
         }
     }
 
