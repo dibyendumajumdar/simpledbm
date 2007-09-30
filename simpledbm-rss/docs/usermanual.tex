@@ -14,10 +14,9 @@ Copyright \copyright 2007}
 \chapter{Introduction}
 
 \section{Overview}
-SimpleDBM is a transactional storage engine, written in Java. It has a
+SimpleDBM is a transactional database engine, written in Java. It has a
 very small footprint and can be embedded in the address space of an
-application. It provides a simple programming API, which can be
-learned very quickly.
+application. It provides a simple Java application programming interface (API), which can be learned very quickly.
 
 \section{Features}
 SimpleDBM has the following features:
@@ -34,10 +33,13 @@ SimpleDBM has the following features:
 \end{enumerate}
 
 \section{Non-Features}
-SimpleDBM is not an SQL engine. 
+\begin{enumerate}
+\item SimpleDBM is not an SQL engine. 
+\item There is no support for distributed transactions (XA) yet.
+\end{enumerate}
 
 \section{Status}
-SimpleDBM is currently in early BETA and not suitable for use in Production systems. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
+SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
 
 The latest builds can be downloaded from:
 
@@ -271,6 +273,13 @@ types, table row types, etc. can be registered in SimpleDBM's
 Object Registry and thereby made available to SimpleDBM. You will
 see how this is done when we discuss Tables (\ref{sec:tables}) and 
 Indexes (\ref{sec:indexes}).
+
+A limitation in current design is that the type registrations are
+not held in persistent storage. Since all types must be available
+to SimpleDBM server when it is starting up, as these may be involved
+in recovery, you need to ensure that custom types are registered
+to SimpleDBM immediately after the server instance is created, but 
+before the server is started.
 
 \section{Registering a type}
 To allow SimpleDBM to access a particular type, you must assign a
