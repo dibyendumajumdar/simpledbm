@@ -24,6 +24,7 @@
 package org.simpledbm.typesystem.impl;
 
 import java.nio.ByteBuffer;
+import java.util.Date;
 
 import junit.framework.TestCase;
 
@@ -113,9 +114,19 @@ public class TypeSystemTest extends TestCase {
         FieldFactory fieldFactory = new DefaultFieldFactory();
         TypeDescriptor type = fieldFactory.getDateTimeType();
         DateTimeField f1 = (DateTimeField) fieldFactory.getInstance(type);
-        System.out.println(f1);
+        assertTrue(f1.isNull());
         f1.setString("14-Dec-1989 00:00:00 +0000");
-        System.out.println(f1);
+        assertEquals(f1.getString(), "14-Dec-1989 00:00:00 +0000");
+        Date d = new Date();
+        f1.setDate(d);
+        assertEquals(d.getTime(), f1.getLong());
+        ByteBuffer bb = ByteBuffer.allocate(f1.getStoredLength());
+        f1.store(bb);
+        bb.flip();
+        DateTimeField f2 = (DateTimeField) fieldFactory.getInstance(type);
+        f2.retrieve(bb);
+        assertEquals(f1, f2);
+        assertEquals(f2.getLong(), d.getTime());
     }
     
     public void testVarchar() {
