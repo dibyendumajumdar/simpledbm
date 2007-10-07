@@ -7,6 +7,7 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.Row;
@@ -46,21 +47,25 @@ public class Table {
 		return rowFactory.newRow(containerId);
 	}
 
-	public Location addRow(Row tableRow) {
+	public Location addRow(Transaction trx, Row tableRow) {
 
 		Location location = null;
-		// Start a new transaction
-		Transaction trx = database.server.begin(IsolationMode.READ_COMMITTED);
+		// Create a savepoint so that we can rollback to a consistent
+		// state in case there is a problem.
+		Savepoint savepoint = trx.createSavepoint(false);
 		boolean success = false;
 		try {
+			// Get a handle to the table container.
+			// Note - will be locked in shared mode.
 			TupleContainer table = database.server.getTupleContainer(trx,
 					containerId);
 
-			// First lets create a new row and lock the location
+			// Lets create the new row and lock the location
 			TupleInserter inserter = table.insert(trx, tableRow);
-			// Insert the primary key - may fail with unique constraint
-			// violation
 
+			// Insert the keys. The first key should be the primary key.
+			// Insertion of primary key may fail with unique constraint
+			// violation
 			for (Index idx : indexes) {
 				IndexContainer index = database.server.getIndex(trx,
 						idx.containerId);
@@ -71,20 +76,20 @@ public class Table {
 				}
 				index.insert(trx, indexRow, inserter.getLocation());
 			}
+			// All keys inserted successfully, so now complete the insert
 			inserter.completeInsert();
 			location = inserter.getLocation();
 			success = true;
 		} finally {
-			if (success) {
-				trx.commit();
-			} else {
-				trx.abort();
+			if (!success) {
+				// Oops - need to rollback to the savepoint
+				trx.rollback(savepoint);
 			}
 		}
 		return location;
 	}
 
-	public void updateRow(Location location, Row newRow) {
+	public void updateRow(Transaction trx, Row newRow) {
 
 	}
 
