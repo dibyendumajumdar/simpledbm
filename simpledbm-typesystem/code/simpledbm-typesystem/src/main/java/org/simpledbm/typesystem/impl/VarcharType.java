@@ -23,6 +23,9 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.text.DateFormat;
+import java.util.TimeZone;
+
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
@@ -46,5 +49,15 @@ public class VarcharType implements TypeDescriptor {
         return maxLength;
     }
 
-    
+	public int getScale() {
+		return -1;
+	}
+
+	public DateFormat getDateFormat() {
+		return null;
+	}
+
+	public TimeZone getTimeZone() {
+		return null;
+	}
 }

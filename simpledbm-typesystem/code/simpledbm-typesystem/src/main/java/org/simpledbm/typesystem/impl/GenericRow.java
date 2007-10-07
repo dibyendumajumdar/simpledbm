@@ -117,7 +117,7 @@ public class GenericRow implements Row, IndexKey, Cloneable {
         return row;
     }
 
-    public Row cloneMe() {
+    public final Row cloneMe() {
     	try {
     		return (Row) clone();
     	}

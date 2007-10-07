@@ -19,6 +19,9 @@
  */
 package org.simpledbm.typesystem.api;
 
+import java.text.DateFormat;
+import java.util.TimeZone;
+
 /**
  * Provides type information.
  * @author Dibyendu Majumdar
@@ -27,6 +30,10 @@ public interface TypeDescriptor {
 
     static final int TYPE_INTEGER = 1;
     static final int TYPE_VARCHAR = 2;
+    static final int TYPE_NUMBER = 3;
+    static final int TYPE_LONG_INTEGER = 4;
+    static final int TYPE_DATETIME = 5;
+    static final int TYPE_BINARY = 6;
 
     /**
      * Returns a unique integer code for the type. This is useful for 
@@ -38,5 +45,23 @@ public interface TypeDescriptor {
      * Returns the maximum length of any value of this type.
      */
     int getMaxLength();
+
+    /**
+     * Returns the scale for certain numeric types. Scale defines the 
+     * number of digits to the right of the decimal point.
+     */
+    int getScale();
+    
+    /**
+     * Returns the timezone associated with the type - only applicable for
+     * date and time types.
+     */
+    TimeZone getTimeZone();
+
+    /**
+     * Returns the date formatter object associated with the type - only
+     * applicable for date and time types. 
+     */
+	DateFormat getDateFormat();
 	
 }

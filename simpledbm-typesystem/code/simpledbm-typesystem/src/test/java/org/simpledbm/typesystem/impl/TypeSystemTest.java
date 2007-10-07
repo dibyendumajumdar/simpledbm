@@ -41,7 +41,7 @@ public class TypeSystemTest extends TestCase {
         super(arg0);
     }
 
-    public void testCase1() throws Exception {
+    public void testRowFactory() throws Exception {
         FieldFactory fieldFactory = new DefaultFieldFactory();
         RowFactory rowFactory = new GenericRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
@@ -77,7 +77,7 @@ public class TypeSystemTest extends TestCase {
         System.err.println("Comparing row3 and row1 = " + row3.compareTo(row1));
         row.parseString("300,hello world");
         assertTrue(row.get(0).getInt() == 300);
-        assertTrue(row.get(1).getString().equals("hello"));
+        assertTrue(row.get(1).getString().equals("hello worl"));
         System.err.println("Row contents after parse string = " + row);
         row.get(1).setString("a");
         row3.get(1).setString("ab");
@@ -94,4 +94,86 @@ public class TypeSystemTest extends TestCase {
         assertTrue(row.get(0).compareTo(row3.get(0)) < 0);
         assertTrue(!row.get(0).isNull());
     }
+    
+    public void testBigDecimal() {
+        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeDescriptor type = fieldFactory.getNumberType(2);
+        NumberField f1 = (NumberField) fieldFactory.getInstance(type);
+        f1.setString("780.919");
+        assertEquals("780.92", f1.toString());
+        NumberField f2 = (NumberField) fieldFactory.getInstance(type);
+        f2.setInt(781);
+        assertEquals("781.00", f2.toString());
+        assertTrue(f2.compareTo(f1) > 0);
+        NumberField f3 = (NumberField) f1.cloneMe();
+        assertEquals(f1, f3);
+    }
+    
+    public void testDateTime() {
+        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeDescriptor type = fieldFactory.getDateTimeType();
+        DateTimeField f1 = (DateTimeField) fieldFactory.getInstance(type);
+        System.out.println(f1);
+        f1.setString("14-Dec-1989 00:00:00 +0000");
+        System.out.println(f1);
+    }
+    
+    public void testVarchar() {
+        final FieldFactory fieldFactory = new DefaultFieldFactory();
+        final TypeDescriptor type = fieldFactory.getVarcharType(10);
+    	VarcharField f1 = (VarcharField) fieldFactory.getInstance(type);
+    	assertTrue(f1.isNull());
+    	assertFalse(f1.isNegativeInfinity());
+    	assertFalse(f1.isPositiveInfinity());
+    	assertFalse(f1.isValue());
+    	VarcharField f2 = (VarcharField) f1.cloneMe();
+    	assertEquals(f1, f2);
+    	assertTrue(f2.isNull());
+    	assertFalse(f2.isNegativeInfinity());
+    	assertFalse(f2.isPositiveInfinity());
+    	assertFalse(f2.isValue());
+    	f1.setString("");
+    	assertFalse(f1.isNull());
+    	assertFalse(f1.isNegativeInfinity());
+    	assertFalse(f1.isPositiveInfinity());
+    	assertTrue(f1.isValue());
+    	assertTrue(!f1.equals(f2));
+    	int n = f1.getStoredLength();
+    	assertEquals(3, n);
+    	ByteBuffer bb = ByteBuffer.allocate(n);
+    	f1.store(bb);
+    	bb.flip();
+    	f2.retrieve(bb);
+    	assertEquals(f1, f2);
+    	assertTrue("".equals(f1.toString()));
+    	assertTrue("".equals(f2.toString()));
+    	f1.setString("abcdefghijkl");
+    	assertFalse(f1.isNull());
+    	assertFalse(f1.isNegativeInfinity());
+    	assertFalse(f1.isPositiveInfinity());
+    	assertTrue(f1.isValue());
+    	assertTrue(!f1.equals(f2));
+    	assertTrue("abcdefghij".equals(f1.toString()));
+    	assertFalse("abcdefghijkl".equals(f1.toString()));
+    	f2.setString("abcdefghik");
+    	assertTrue(f1.compareTo(f2) < 0);
+    	assertTrue(f2.compareTo(f1) > 0);
+    	VarcharField f3 = (VarcharField) f1.cloneMe();
+    	f3.setPositiveInfinity();
+    	assertTrue(f1.compareTo(f3) < 0);
+    	assertTrue(f2.compareTo(f3) < 0);
+    	assertFalse(f3.isNegativeInfinity());
+    	assertFalse(f3.isNull());
+    	assertFalse(f3.isValue());
+    	assertEquals("+infinity", f3.toString());
+    	VarcharField f4 = (VarcharField) fieldFactory.getInstance(type);
+    	f4.setPositiveInfinity();
+    	assertTrue(f3.equals(f4));
+    	assertFalse(f4.isNegativeInfinity());
+    	assertFalse(f4.isNull());
+    	assertFalse(f4.isValue());
+    	assertEquals("+infinity", f4.toString());
+    	assertEquals(f3, f4);
+    }
+    
 }

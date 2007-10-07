@@ -30,4 +30,19 @@ public interface FieldFactory {
 	 * Creates a field instance of the specified type.
 	 */
 	Field getInstance(TypeDescriptor typeDesc);
+	
+ 	TypeDescriptor getVarcharType(int maxLength);
+	
+	TypeDescriptor getIntegerType();
+	
+	TypeDescriptor getDateTimeType();
+	
+	TypeDescriptor getDateTimeType(String timezone);
+	
+	TypeDescriptor getDateTimeType(String timezone, String format);
+	
+	TypeDescriptor getNumberType();
+	
+	TypeDescriptor getNumberType(int scale);
+	
 }

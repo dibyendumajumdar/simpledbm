@@ -25,13 +25,47 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 
 public class DefaultFieldFactory implements FieldFactory {
+	
+	static TypeDescriptor integerType = new IntegerType();
+	static TypeDescriptor numberType = new NumberType(0);
 
 	public Field getInstance(TypeDescriptor typeDesc) {
         switch (typeDesc.getTypeCode()) {
         case TypeDescriptor.TYPE_VARCHAR: return new VarcharField(typeDesc);
         case TypeDescriptor.TYPE_INTEGER: return new IntegerField(typeDesc);
+        case TypeDescriptor.TYPE_NUMBER: return new NumberField(typeDesc);
+        case TypeDescriptor.TYPE_DATETIME: return new DateTimeField(typeDesc);
         }
         throw new IllegalArgumentException("Unknown type: " + typeDesc);
     }
-    
+
+	public TypeDescriptor getDateTimeType() {
+		return new DateTimeType("UTC", "d-MMM-yyyy HH:mm:ss Z");
+	}
+
+	public TypeDescriptor getDateTimeType(String timezone, String format) {
+		return new DateTimeType(timezone, format);
+	}
+
+	public TypeDescriptor getDateTimeType(String timezone) {
+		return new DateTimeType(timezone, "d-MMM-yyyy HH:mm:ss Z");
+	}
+
+	public TypeDescriptor getIntegerType() {
+		return integerType;
+	}
+
+	public TypeDescriptor getNumberType() {
+		return numberType;
+	}
+
+	public TypeDescriptor getNumberType(int scale) {
+		return new NumberType(scale);
+	}
+
+	public TypeDescriptor getVarcharType(int maxLength) {
+		return new VarcharType(maxLength);
+	}
+   
+	
 }

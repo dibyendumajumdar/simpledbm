@@ -19,6 +19,8 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.util.TypeSize;
@@ -35,15 +37,14 @@ public class VarcharField extends BaseField {
 	
     @Override
 	public String toString() {
-        if (charArray == null)
-            return "";
-        return new String(charArray);
+    	return getString();
     }
     
     @Override
     public int getStoredLength() {
-    	int n = super.getStoredLength() + TypeSize.SHORT;
-    	if (charArray != null && !isNull()) {
+    	int n = super.getStoredLength();
+    	if (isValue()) {
+    		n += TypeSize.SHORT;
     		n += charArray.length * TypeSize.CHARACTER;
     	}
         return n;
@@ -53,46 +54,41 @@ public class VarcharField extends BaseField {
     public void store(ByteBuffer bb) {
     	super.store(bb);
         short n = 0;
-        if (charArray != null && !isNull()) {
-            n = (short) (charArray.length * TypeSize.CHARACTER);
-        }
-        bb.putShort(n);
-        if (charArray != null && !isNull()) {
-            for (char c: charArray) {
-                bb.putChar(c);
-            }
-        }
+        if (isValue()) {
+			n = (short) charArray.length;
+			bb.putShort(n);
+			for (char c : charArray) {
+				bb.putChar(c);
+			}
+		}
     }
     
     @Override
     public void retrieve(ByteBuffer bb) {
     	super.retrieve(bb);
-        short n = bb.getShort();
-        if (n > 0) {
-            charArray = new char[n / TypeSize.CHARACTER];
-            for (int i = 0; i < charArray.length; i++) {
-            	charArray[i] = bb.getChar();
-            }
-        }
-        else {
-            charArray = null;
-        }
+    	if (isValue()) {
+			short n = bb.getShort();
+			charArray = new char[n];
+			for (int i = 0; i < charArray.length; i++) {
+				charArray[i] = bb.getChar();
+			}
+		}
     }
 
 	@Override
 	public int getInt() {
-		if (isNull() || charArray == null) {
+		if (!isValue()) {
 			return 0;
 		}
-		return Integer.parseInt(new String(charArray));
+		return Integer.parseInt(toString());
 	}
 
 	@Override
 	public String getString() {
-		if (isNull() || charArray == null) {
-			return "";
-		}
-		return new String(charArray);
+    	if (isValue()) {
+    		return new String(charArray);
+    	}
+    	return super.toString();
 	}
 
 	@Override
@@ -101,22 +97,58 @@ public class VarcharField extends BaseField {
 	}
 
 	@Override
+	public BigDecimal getBigDecimal() {
+		if (!isValue()) {
+			return null;
+		}
+		BigDecimal d = new BigDecimal(charArray);
+		return d;
+	}
+
+	@Override
+	public BigInteger getBigInteger() {
+		if (!isValue()) {
+			return null;
+		}
+		BigInteger i = new BigInteger(toString());
+		return i;
+	}
+
+	@Override
+	public long getLong() {
+		if (!isValue()) {
+			return 0;
+		}
+		return Long.valueOf(toString());
+	}
+
+	@Override
+	public void setBigDecimal(BigDecimal d) {
+		setString(d.toString());
+	}
+
+	@Override
+	public void setBigInteger(BigInteger i) {
+		setString(i.toString());
+	}
+
+	@Override
+	public void setLong(long l) {
+		setString(Long.toString(l));
+	}
+
+	@Override
 	public void setString(String string) {
-        if ((string.length()*TypeSize.CHARACTER) > getType().getMaxLength()) {
-            string = string.substring(0, getType().getMaxLength()/TypeSize.CHARACTER);
+        if (string.length() > getType().getMaxLength()) {
+            string = string.substring(0, getType().getMaxLength());
         }
 		charArray = string.toCharArray();
 		setValue();
 	}
 
-    
-    @Override
-    public int compareTo(Field other) {
-        if (other == null || !(other instanceof VarcharField)) {
-            return -1;
-        }
-		int comp = super.compareTo(other);
-		if (comp != 0) {
+    protected int compare(VarcharField other) {
+		int comp = super.compare(other);
+		if (comp != 0 || !isValue()) {
 			return comp;
 		}
         VarcharField o = (VarcharField) other;
@@ -132,26 +164,49 @@ public class VarcharField extends BaseField {
 		return n1 - n2;
 	}
 	
-	@Override
-    public boolean equals(Object o) {
-        if (o == null || !(o instanceof VarcharField)) {
-            return false;
+    @Override
+    public int compareTo(Field other) {
+    	if (other == this) {
+    		return 0;
+    	}
+        if (other == null) {
+        	throw new IllegalArgumentException();
         }
-        return compareTo((Field) o) == 0;
+        if (!(other instanceof VarcharField)) {
+            throw new ClassCastException();
+        }
+        return compare((VarcharField) other);
+	}
+	
+	@Override
+    public boolean equals(Object other) {
+	   	if (other == this) {
+    		return true;
+    	}
+        if (other == null) {
+        	throw new IllegalArgumentException();
+        }
+        if (!(other instanceof VarcharField)) {
+            throw new ClassCastException();
+        }
+        return compare((VarcharField) other) == 0;
     }
 
     public int length() {
-		if (isNull() || charArray == null) {
-			return 0;
-		}
-		return charArray.length;
+    	if (isValue()) {
+    		return charArray.length;
+    	}
+    	return 0;
 	}
 
 	@Override
 	public Object clone() throws CloneNotSupportedException {
 		VarcharField o = (VarcharField) super.clone();
-		if (!isNull() && charArray != null) {
+		if (isValue()) {
 			o.charArray = charArray.clone();
+		}
+		else {
+			o.charArray = null;
 		}
 		return o;
 	}

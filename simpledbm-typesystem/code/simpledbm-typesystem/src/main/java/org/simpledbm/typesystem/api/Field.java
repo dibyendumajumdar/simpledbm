@@ -23,6 +23,10 @@
  */
 package org.simpledbm.typesystem.api;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.util.Date;
+
 import org.simpledbm.rss.api.st.Storable;
 
 /**
@@ -58,6 +62,28 @@ public interface Field extends Storable, Comparable<Field> {
 	 */
 	void setString(String string);
 
+	/**
+	 * Sets the value of the field to the date. 
+	 */
+	void setDate(Date date);
+	
+	/**
+	 * Gets the current value as a date.
+	 */
+	Date getDate();
+	
+	void setLong(long l);
+	
+	long getLong();
+	
+	void setBigInteger(BigInteger i);
+	
+	BigInteger getBigInteger();
+	
+	void setBigDecimal(BigDecimal d);
+	
+	BigDecimal getBigDecimal();
+	
 	/**
 	 * Checks if the field is NULL, which is a special value indicating that the field's value
 	 * has not been set.

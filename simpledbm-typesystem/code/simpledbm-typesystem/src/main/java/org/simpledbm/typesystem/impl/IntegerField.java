@@ -35,38 +35,37 @@ public class IntegerField extends BaseField {
 
     @Override
 	public String toString() {
-    	if (isNull()) {
-    		return "null";
-    	}
-    	if (isPositiveInfinity()) {
-    		return "+infinity";
-    	}
-    	if (isNegativeInfinity()) {
-    		return "-infinity";
-    	}
-    	return Integer.toString(i);
+    	return getString();
     }
     
     @Override
     public int getStoredLength() {
-    	return super.getStoredLength() + TypeSize.INTEGER;
+    	int n = super.getStoredLength();
+    	if (isValue()) {
+    		n += TypeSize.INTEGER;
+    	}
+    	return n;
     }
     
     @Override
     public void store(ByteBuffer bb) {
     	super.store(bb);
-    	bb.putInt(i);
+    	if (isValue()) {
+    		bb.putInt(i);
+    	}
     }
     
     @Override
     public void retrieve(ByteBuffer bb) {
     	super.retrieve(bb);
-    	i = bb.getInt();
+    	if (isValue()) {
+    		i = bb.getInt();
+    	}
     }
 
 	@Override
 	public int getInt() {
-		if (isNull()) {
+		if (!isValue()) {
 			return 0;
 		}
 		return i;
@@ -74,10 +73,10 @@ public class IntegerField extends BaseField {
 
 	@Override
 	public String getString() {
-		if (isNull()) {
-			return "0";
-		}
-        return Integer.toString(i);
+    	if (isValue()) {
+    		return Integer.toString(i);
+    	}
+    	return super.toString();
 	}
 
 	@Override
@@ -91,34 +90,46 @@ public class IntegerField extends BaseField {
 		setInt(Integer.parseInt(string));
 	}
 
-	@Override
-    public int compareTo(Field o) {
-        if (o == null || !(o instanceof IntegerField)) {
-            return -1;
-        }
-		int comp = super.compareTo(o);
-		if (comp != 0) {
+	protected int compare(IntegerField o) {
+		int comp = super.compare(o);
+		if (comp != 0 || !isValue()) {
 			return comp;
 		}
-		return i - ((IntegerField)o).i;
+		return i - o.i;
+		
+	}
+	
+	@Override
+    public int compareTo(Field o) {
+    	if (this == o) {
+    		return 0;
+    	}
+    	if (o == null) {
+    		throw new IllegalArgumentException();
+    	}
+    	if (!(o instanceof IntegerField)) {
+    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
+    	}
+		return compare((IntegerField)o);
 	}
 	
     @Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof IntegerField)) {
-            return false;
-        }
-        return compareTo((Field) o) == 0;
+    	if (this == o) {
+    		return true;
+    	}
+    	if (o == null) {
+    		throw new IllegalArgumentException();
+    	}
+    	if (!(o instanceof IntegerField)) {
+    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
+    	}
+		return compare((IntegerField)o) == 0;
     }
-    
-	public int length() {
-		return getStoredLength();
-	}
 
 	@Override
 	public Object clone() throws CloneNotSupportedException {
 		IntegerField o = (IntegerField) super.clone();
-		o.i = i;
 		return o;
 	}
 	

@@ -23,8 +23,12 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
+import java.util.Date;
 
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
@@ -36,8 +40,12 @@ abstract class BaseField implements Field, Cloneable {
     private static final int VALUE_FIELD = 4;
     private static final int PLUS_INFINITY_FIELD = 8;
     
+    private static final String NULL_VALUE = "null";
+    private static final String MAX_VALUE = "+infinity";
+    private static final String MIN_VALUE = "-infinity";
+    
     private byte statusByte = 0; 
-    private TypeDescriptor typeDesc;
+    private final TypeDescriptor typeDesc;
     
     protected BaseField(TypeDescriptor typeDesc) {
         statusByte = NULL_FIELD;
@@ -59,8 +67,40 @@ abstract class BaseField implements Field, Cloneable {
     public void setString(String string) {
         throw new UnsupportedOperationException();
     }
+    
+    public BigDecimal getBigDecimal() {
+        throw new UnsupportedOperationException();
+	}
 
-    public void retrieve(ByteBuffer bb) {
+	public BigInteger getBigInteger() {
+        throw new UnsupportedOperationException();
+	}
+
+	public Date getDate() {
+        throw new UnsupportedOperationException();
+	}
+
+	public long getLong() {
+        throw new UnsupportedOperationException();
+	}
+
+	public void setBigDecimal(BigDecimal d) {
+        throw new UnsupportedOperationException();
+	}
+
+	public void setBigInteger(BigInteger i) {
+        throw new UnsupportedOperationException();
+	}
+
+	public void setDate(Date date) {
+        throw new UnsupportedOperationException();
+	}
+
+	public void setLong(long l) {
+        throw new UnsupportedOperationException();
+	}
+
+	public void retrieve(ByteBuffer bb) {
         statusByte = bb.get();
     }
 
@@ -69,14 +109,24 @@ abstract class BaseField implements Field, Cloneable {
     }
 
     public int getStoredLength() {
-        return 1;
+        return TypeSize.BYTE;
     }
 
+    protected int compare(BaseField o) {
+        return statusByte - o.statusByte;
+    }
+    
     public int compareTo(Field other) {
-    	if (other == null || !(other instanceof BaseField)) {
-    		return -1;
+    	if (this == other) {
+    		return 0;
     	}
-        return statusByte - ((BaseField)other).statusByte;
+    	if (other == null) {
+    		throw new IllegalArgumentException();
+    	}
+    	if (!(other instanceof BaseField)) {
+    		throw new ClassCastException("Cannot cast " + other.getClass() + " to " + this.getClass());
+    	}
+        return compare((BaseField)other);
     }
 
     public final boolean isNull() {
@@ -113,10 +163,16 @@ abstract class BaseField implements Field, Cloneable {
 
 	@Override
     public boolean equals(Object o) {
-        if (o == null || !(o instanceof BaseField)) {
-            return false;
-        }
-        return compareTo((BaseField) o) == 0;
+    	if (this == o) {
+    		return true;
+    	}
+    	if (o == null) {
+    		throw new IllegalArgumentException();
+    	}
+    	if (!(o instanceof BaseField)) {
+    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
+    	}
+        return compare((BaseField) o) == 0;
     }
 
 	public Object clone() throws CloneNotSupportedException {
@@ -124,7 +180,7 @@ abstract class BaseField implements Field, Cloneable {
 		return o;
 	}
 
-	public Field cloneMe() {
+	public final Field cloneMe() {
 		Field o;
 		try {
 			o = (Field) clone();
@@ -136,6 +192,19 @@ abstract class BaseField implements Field, Cloneable {
 
     public final TypeDescriptor getType() {
         return typeDesc;
+    }
+    
+    public String toString() {
+    	if (isNull()) {
+    		return NULL_VALUE;
+    	}
+    	if (isPositiveInfinity()) {
+    		return MAX_VALUE;
+    	}
+    	if (isNegativeInfinity()) {
+    		return MIN_VALUE;
+    	}
+    	return "";
     }
 
 }
