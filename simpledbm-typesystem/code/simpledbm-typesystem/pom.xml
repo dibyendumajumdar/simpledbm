@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.typesystem</groupId>
 	<artifactId>simpledbm-typesystem</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.3-BETA</version>
+	<version>1.0.5</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -43,7 +43,12 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.3-BETA</version>
+			<version>1.0.5</version>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.12</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
