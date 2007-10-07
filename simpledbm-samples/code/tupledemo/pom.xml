@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.samples-tupledemo</groupId>
 	<artifactId>simpledbm-samples-tupledemo</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.3-BETA</version>
+	<version>1.0.5</version>
 	<name>SimpleDBM Tuple Demonstration</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -43,17 +43,17 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.3-BETA</version>
+			<version>1.0.5</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.3-BETA</version>
+			<version>1.0.5</version>
 		</dependency>
 		<dependency>
-			<groupId>net.java.dev.swing-layout</groupId>
-    		<artifactId>swing-layout</artifactId>
-		    <version>1.0.1</version>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<version>1.2.12</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -75,10 +75,12 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clover-plugin</artifactId>
 				<configuration>
-					<licenseLocation>${basedir}/src/test/clover/clover.license</licenseLocation>
+					<licenseLocation>
+						${basedir}/src/test/clover/clover.license
+					</licenseLocation>
 					<jdk>1.5</jdk>
 					<excludes>
-				        <exclude>**/test/java</exclude>
+						<exclude>**/test/java</exclude>
 					</excludes>
 				</configuration>
 				<executions>
