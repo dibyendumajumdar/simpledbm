@@ -1,8 +1,29 @@
+/***
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *    Project: www.simpledbm.org
+ *    Author : Dibyendu Majumdar
+ *    Email  : dibyendu@mazumdar.demon.co.uk
+ */
 package org.simpledbm.database;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.simpledbm.rss.api.im.IndexContainer;
+import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
@@ -13,6 +34,13 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
+/**
+ * Encapsulates a table definition and provides methods to work with table and
+ * indexes associated with the table.
+ * 
+ * @author dibyendumajumdar
+ * @since 7 Oct 2007
+ */
 public class Table {
 
 	Database database;
@@ -38,6 +66,12 @@ public class Table {
 
 	public void addIndex(int containerId, String name, int[] columns,
 			boolean primary, boolean unique) {
+		if (primary) {
+			if (indexes.size() == 0) {
+				throw new IllegalArgumentException(
+						"First index must be the primary");
+			}
+		}
 		new Index(this, containerId, name, columns, primary, unique);
 	}
 
@@ -68,11 +102,7 @@ public class Table {
 			for (Index idx : indexes) {
 				IndexContainer index = database.server.getIndex(trx,
 						idx.containerId);
-				Row indexRow = idx.getRow();
-				for (int i = 0; i < idx.columns.length; i++) {
-					indexRow.set(i, (Field) tableRow.get(idx.columns[i])
-							.cloneMe());
-				}
+				Row indexRow = getIndexRow(idx, tableRow);
 				index.insert(trx, indexRow, inserter.getLocation());
 			}
 			// All keys inserted successfully, so now complete the insert
@@ -88,12 +118,144 @@ public class Table {
 		return location;
 	}
 
-	public void updateRow(Transaction trx, Row newRow) {
-
+	Row getIndexRow(Index index, Row tableRow) {
+		Row indexRow = index.getRow();
+		for (int i = 0; i < index.columns.length; i++) {
+			indexRow.set(i, (Field) tableRow.get(index.columns[i]).cloneMe());
+		}
+		return indexRow;
 	}
 
-	public void deleteRow(Location location) {
+	public void updateRow(Transaction trx, Row tableRow) {
 
+		// Start a new transaction
+		Savepoint sp = trx.createSavepoint(false);
+		boolean success = false;
+		try {
+			TupleContainer table = database.server.getTupleContainer(trx,
+					containerId);
+
+			Index pkey = indexes.get(0);
+			// New primary key
+			Row primaryKeyRow = getIndexRow(pkey, tableRow);
+
+			IndexContainer primaryIndex = database.server.getIndex(trx,
+					pkey.containerId);
+
+			// Start a scan, with the primary key as argument
+			IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
+					null, true);
+			if (indexScan.fetchNext()) {
+				// Scan always return item >= search key, so let's
+				// check if we had an exact match
+				boolean matched = indexScan.getCurrentKey().equals(
+						primaryKeyRow);
+				try {
+					if (matched) {
+						// Get location of the tuple
+						Location location = indexScan.getCurrentLocation();
+						// We need the old row data to be able to delete indexes
+						// fetch tuple data
+						byte[] data = table.read(location);
+						// parse the data
+						ByteBuffer bb = ByteBuffer.wrap(data);
+						Row oldTableRow = getRow();
+						oldTableRow.retrieve(bb);
+						// Okay, now update the table row
+						table.update(trx, location, tableRow);
+						// Update secondary indexes
+						// Old secondary key
+						for (int i = 1; i < indexes.size(); i++) {
+							Index skey = indexes.get(i);
+							IndexContainer secondaryIndex = database.server
+									.getIndex(trx, skey.containerId);
+							// old secondary key
+							Row oldSecondaryKeyRow = getIndexRow(skey, tableRow);
+							// New secondary key
+							Row secondaryKeyRow = getIndexRow(skey, tableRow);
+							if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
+								// Delete old key
+								secondaryIndex.delete(trx, oldSecondaryKeyRow,
+										location);
+								// Insert new key
+								secondaryIndex.insert(trx, secondaryKeyRow,
+										location);
+							}
+						}
+					}
+				} finally {
+					indexScan.fetchCompleted(matched);
+				}
+			}
+			success = true;
+		} finally {
+			if (!success) {
+				trx.rollback(sp);
+			}
+		}
+	}
+
+	public void deleteRow(Transaction trx, Row tableRow) {
+
+		// Start a new transaction
+		Savepoint sp = trx.createSavepoint(false);
+		boolean success = false;
+		try {
+			TupleContainer table = database.server.getTupleContainer(trx,
+					containerId);
+
+			Index pkey = indexes.get(0);
+			// New primary key
+			Row primaryKeyRow = getIndexRow(pkey, tableRow);
+
+			IndexContainer primaryIndex = database.server.getIndex(trx,
+					pkey.containerId);
+
+			// Start a scan, with the primary key as argument
+			IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
+					null, true);
+			if (indexScan.fetchNext()) {
+				// Scan always return item >= search key, so let's
+				// check if we had an exact match
+				boolean matched = indexScan.getCurrentKey().equals(
+						primaryKeyRow);
+				try {
+					if (matched) {
+						// Get location of the tuple
+						Location location = indexScan.getCurrentLocation();
+						// We need the old row data to be able to delete indexes
+						// fetch tuple data
+						byte[] data = table.read(location);
+						// parse the data
+						ByteBuffer bb = ByteBuffer.wrap(data);
+						Row oldTableRow = getRow();
+						oldTableRow.retrieve(bb);
+						// Okay, now update the table row
+						table.delete(trx, location);
+						// Update secondary indexes
+						// Old secondary key
+						for (int i = 1; i < indexes.size(); i++) {
+							Index skey = indexes.get(i);
+							IndexContainer secondaryIndex = database.server
+									.getIndex(trx, skey.containerId);
+							// old secondary key
+							Row oldSecondaryKeyRow = getIndexRow(skey, tableRow);
+							// Delete old key
+							secondaryIndex.delete(trx, oldSecondaryKeyRow,
+									location);
+						}
+						primaryIndex.delete(trx, primaryKeyRow, location);
+					}
+				} finally {
+					indexScan.fetchCompleted(matched);
+				}
+			}
+			success = true;
+		} finally {
+			if (!success) {
+				trx.rollback(sp);
+			}
+		}
 	}
 
 	public Database getDatabase() {
