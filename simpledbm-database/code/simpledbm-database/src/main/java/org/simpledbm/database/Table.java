@@ -258,6 +258,10 @@ public class Table {
 		}
 	}
 
+	public TableScan openScan(Transaction trx, int indexno, Row startRow) {
+		return new TableScan(trx, this, indexno, startRow);
+	}
+	
 	public Database getDatabase() {
 		return database;
 	}
