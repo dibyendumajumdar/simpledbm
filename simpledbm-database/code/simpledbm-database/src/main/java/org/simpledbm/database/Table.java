@@ -170,7 +170,7 @@ public class Table {
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
-							Row oldSecondaryKeyRow = getIndexRow(skey, tableRow);
+							Row oldSecondaryKeyRow = getIndexRow(skey, oldTableRow);
 							// New secondary key
 							Row secondaryKeyRow = getIndexRow(skey, tableRow);
 							if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
@@ -239,7 +239,7 @@ public class Table {
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
-							Row oldSecondaryKeyRow = getIndexRow(skey, tableRow);
+							Row oldSecondaryKeyRow = getIndexRow(skey, oldTableRow);
 							// Delete old key
 							secondaryIndex.delete(trx, oldSecondaryKeyRow,
 									location);
@@ -258,8 +258,8 @@ public class Table {
 		}
 	}
 
-	public TableScan openScan(Transaction trx, int indexno, Row startRow) {
-		return new TableScan(trx, this, indexno, startRow);
+	public TableScan openScan(Transaction trx, int indexno, Row startRow, boolean forUpdate) {
+		return new TableScan(trx, this, indexno, startRow, forUpdate);
 	}
 	
 	public Database getDatabase() {
