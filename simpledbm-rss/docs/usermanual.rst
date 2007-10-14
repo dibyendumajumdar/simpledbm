@@ -240,6 +240,99 @@ Some points to bear in mind when starting SimpleDBM server instances:
    ``shutdown()``, it is an error to do any operation with the server
    object.
 
+Managing log messages
+=====================
+
+SimpleDBM has support for JDK 1.4 style logging as well as
+Log4J logging. By default, if Log4J library is available on the
+classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
+package is used.
+
+You can specify the type of logging to be used using the
+Server Property ``logging.properties.type``. If this is set to
+"log4j", SimpleDBM will use Log4J logging. Any other value causes
+SimpleDBM to use defauft JDK logging.
+
+The configuration of the logging can be specified using a 
+properties file. The name and location of the properties file
+is specified using the Server property ``logging.properties.file``.
+If the filename is prefixed with the string "classpath:", then
+SimpleDBM will search for the properties file in the classpath. 
+Otherwise, the filename is searched for in the current filesystem.
+
+A sample logging properties file is shown below. Note that this
+sample contains both JDK style and Log4J style configuration.::
+
+ ############################################################
+ #  	JDK 1.4 Logging
+ ############################################################
+ handlers= java.util.logging.FileHandler, java.util.logging.ConsoleHandler
+ .level= INFO
+
+ java.util.logging.FileHandler.pattern = simpledbm.log.%g
+ java.util.logging.FileHandler.limit = 50000
+ java.util.logging.FileHandler.count = 1
+ java.util.logging.FileHandler.formatter = java.util.logging.SimpleFormatter
+ java.util.logging.FileHandler.level = ALL
+
+ java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
+ java.util.logging.ConsoleHandler.level = ALL
+
+ org.simpledbm.rss.impl.registry.level = INFO
+ org.simpledbm.rss.impl.bm.level = INFO
+ org.simpledbm.rss.impl.im.btree.level = INFO
+ org.simpledbm.rss.impl.st.level = INFO
+ org.simpledbm.rss.impl.wal.level = INFO
+ org.simpledbm.rss.impl.locking.level = INFO
+ org.simpledbm.rss.impl.fsm.level = INFO
+ org.simpledbm.rss.impl.sp.level = INFO
+ org.simpledbm.rss.impl.tx.level = INFO
+ org.simpledbm.rss.impl.tuple.level = INFO
+ org.simpledbm.rss.impl.latch.level = INFO
+ org.simpledbm.rss.impl.pm.level = INFO
+ org.simpledbm.rss.util.level = INFO
+ org.simpledbm.rss.util.logging.level = INFO
+ org.simpledbm.rss.main.level = INFO
+
+ # Default Log4J configuration
+
+ # Console appender
+ log4j.appender.A1=org.apache.log4j.ConsoleAppender
+ log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+ log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+ # File Appender
+ log4j.appender.A2=org.apache.log4j.RollingFileAppender
+ log4j.appender.A2.MaxFileSize=10MB
+ log4j.appender.A2.MaxBackupIndex=1
+ log4j.appender.A2.File=simpledbm.log
+ log4j.appender.A2.layout=org.apache.log4j.PatternLayout
+ log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+ # Root logger set to DEBUG using the A1 and A2 appenders defined above.
+ log4j.rootLogger=DEBUG, A1, A2
+
+ # Various loggers
+ log4j.logger.org.simpledbm.rss.impl.registry=INFO
+ log4j.logger.org.simpledbm.rss.impl.bm=INFO
+ log4j.logger.org.simpledbm.rss.impl.im.btree=INFO
+ log4j.logger.org.simpledbm.rss.impl.st=INFO
+ log4j.logger.org.simpledbm.rss.impl.wal=INFO
+ log4j.logger.org.simpledbm.rss.impl.locking=INFO
+ log4j.logger.org.simpledbm.rss.impl.fsm=INFO
+ log4j.logger.org.simpledbm.rss.impl.sp=INFO
+ log4j.logger.org.simpledbm.rss.impl.tx=INFO
+ log4j.logger.org.simpledbm.rss.impl.tuple=INFO
+ log4j.logger.org.simpledbm.rss.impl.latch=INFO
+ log4j.logger.org.simpledbm.rss.impl.pm=INFO
+ log4j.logger.org.simpledbm.rss.util=INFO
+ log4j.logger.org.simpledbm.rss.util.logging=INFO
+ log4j.logger.org.simpledbm.rss.main=INFO
+
+By default, SimpleDBM looks for a logging properties file named
+"simpledbm.logging.properties".
+
+
 ---------------------
 Common Infrastructure
 ---------------------
