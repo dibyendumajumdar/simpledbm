@@ -1,3 +1,4 @@
-digraph Java {
-n1[label="Item[0] = Header|Item[1]|Item[2]|||||Item[Header.keyCount-1]|Item[Header.keyCount] = Highkey",shape=record];
+digraph LeafNode {
+    node [shape=record];
+    n1[label="Item[0] = Header|Item[1]|Item[2]|||||Item[Header.keyCount-1]|Item[Header.keyCount] = Highkey"];
 }

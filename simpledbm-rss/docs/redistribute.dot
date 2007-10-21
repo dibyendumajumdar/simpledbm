@@ -1,0 +1,9 @@
+digraph SplitLeaf2 {
+    node [shape=record]
+    {
+	rank=same;
+	n1[label="a|b|b (highkey)"];
+	n2[label="c|d|e|e (highkey)"];
+    }
+    n1 -> n2[label="right"];
+}

@@ -1,0 +1,9 @@
+digraph IncreaseHeight1 {
+    node [shape=record]
+    {
+	rank=same;
+	n1[label="{RootNode|{a|b|c|c (highkey)}}"];
+	n2[label="d|e|e (highkey)"];
+    }
+    n1 -> n2[label="right"];
+}

@@ -1,13 +1,14 @@
-digraph Java {
-n1[label="{Node|{<f0>|<f1>|<f2>|<f3>|<f4>}}",shape=record];
-{
-rank=same;
-n3[label="Direct",shape=record];
-n4[label="Indirect",shape=record];
-n5[label="Direct",shape=record];
-}
-n1:f0 -> n3[label="0",fontsize=12];
-n1:f1 -> n5[label="1",fontsize=12];
-n3 -> n4[label="right",fontsize=12];
-n4 -> n5[label="right",fontsize=12];
+digraph NodeDirectIndirect {
+    node [shape=record]
+    n1[label="{Node|{<f0>|<f1>|<f2>|<f3>|<f4>}}"];
+    {
+	rank=same;
+	n3[label="Direct"];
+	n4[label="Indirect"];
+	n5[label="Direct"];
+    }
+    n1:f0 -> n3[label="0",fontsize=12];
+    n1:f1 -> n5[label="1",fontsize=12];
+    n3 -> n4[label="right",fontsize=12];
+    n4 -> n5[label="right",fontsize=12];
 }

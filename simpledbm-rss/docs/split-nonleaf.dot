@@ -1,0 +1,5 @@
+digraph SplitLeaf1 {
+    node [shape=record]
+    n1[label="a|b|c|d|e"];
+}
+
