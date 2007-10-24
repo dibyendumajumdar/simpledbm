@@ -109,7 +109,10 @@ import org.xml.sax.SAXException;
  * <li>The rightmost key at any level is a special key containing logical INFINITY. Initially, the empty
  * tree contains this key only. As the tree grows through splitting of pages, the INFINITY key is carried
  * forward to the rightmost pages at each level of the tree. This key can never be deleted from the
- * tree.</li> 
+ * tree.</li>
+ * <li>A page is considered as safe if it is not about to underflow and is not about to overflow.
+ * A page is about to underflow if it is the root node and has 1 child or it is any other node and 
+ * has two keys. A page is about to overflow if it cannot accomodate a new key.</li>
  * </ol>
  * 
  * @author Dibyendu Majumdar
@@ -205,8 +208,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     public static final int TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE = 1;
 
+    /**
+     * During test mode, force a node to have a maximum of 8 keys.
+     * This causes more frequent page splits and merges.
+     */
     private static final int TEST_MODE_MAX_KEYS = 8;
 
+    /**
+     * During test mode, the median key is defined as the 5th key (4).
+     */
     private static final int TEST_MODE_SPLIT_KEY = 4;
 
     public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
@@ -218,7 +228,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         this.spaceMgr = spaceMgr;
         this.bufmgr = bufMgr;
         this.spMgr = spMgr;
-        // TODO lockAdaptor should be injected rather than be hard-coded
+        // FIXME lockAdaptor should be injected rather than be hard-coded
         this.lockAdaptor = new DefaultLockAdaptor();
 
         moduleRegistry.registerModule(MODULE_ID, this);
@@ -1184,7 +1194,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             final BTreeImpl btree = this;
 
-            Lsn undoNextLsn = trx.getLastLsn();
+            Lsn undoNextLsn = null;
 
             int newSiblingPageNumber = btree.spaceCursor
                 .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
@@ -1204,6 +1214,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         throw new IndexException(mcat.getMessage("EB0002"));
                     }
                 }
+                undoNextLsn = trx.getLastLsn();
                 btree.spaceCursor.updateAndLogUndoably(
                     trx,
                     newSiblingPageNumber,
@@ -1230,6 +1241,16 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 .getInstance(
                     BTreeIndexManagerImpl.MODULE_ID,
                     BTreeIndexManagerImpl.TYPE_SPLIT_OPERATION);
+            /*
+             * The SplitOperation is a Compensation log record,
+             * and its undoNextLsn is set to point to the log record
+             * prior to the space map update log record. This allows
+             * the space map update to be undone in case the system
+             * crashes and the SplitOperation is lost. But if 
+             * SplitOperation survives, the undo of the space map 
+             * update is skipped during rollback. The SplitOperation 
+             * is of course never undone.
+             */
             splitOperation.setUndoNextLsn(undoNextLsn);
             splitOperation.setKeyFactoryType(btree.keyFactoryType);
             splitOperation.setLocationFactoryType(btree.locationFactoryType);
@@ -1356,6 +1377,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
              * If this log record does not survive a system crash, then the page
              * will end up appearing allocated. However the actual page will be
              * marked as deallocated, and hence can be reclaimed later on.
+             * Note that this is different from the published algorithm but
+             * is meant to provide greater concurrency.
              */
             btree.spaceCursor.fixSpaceMapPageExclusively(
                 mergeOperation.rightSiblingSpaceMapPage,
@@ -4073,7 +4096,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final boolean canAccomodate(IndexItem v) {
-            if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
+        	/*
+        	 * Note: The published algorithm says that a node is about to
+        	 * overflow if it cannot accomodate a maximum length key.
+        	 * We do not do this - instead we check whether we can actually
+        	 * accomodate the key.
+        	 */
+        	if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
                 /*
                  * We are in test mode and therefore artificially limit the
                  * number of keys to a small value.
@@ -4107,6 +4136,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * <p>
          */
         public final boolean isAboutToUnderflow() {
+        	if (isRoot()) {
+        		if (!isLeaf()) {
+        			return getKeyCount() == minimumKeys();
+        		}
+        		else {
+        			return false;
+        		}
+        	}
             return getKeyCount() == minimumKeys();
         }
 
