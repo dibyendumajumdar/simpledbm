@@ -1543,7 +1543,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          * <p>
          * A drawback in current implementation is that existing tuple segments
          * are not resized. Therefore, when new segments are added for a tuple,
-         * these segments may end up in pages that already contain oher segments
+         * these segments may end up in pages that already contain other segments
          * of the same tuple. 
          * <p>
          * Another limitation of current implementation is that space occupied by
