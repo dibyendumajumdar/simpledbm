@@ -689,8 +689,12 @@ public class TestLockManager extends BaseTestCase {
      * This test verifies that an INSTANT_DURATION lock works correctly when it is necessary 
      * to wait for the lock to become available. Also, it tests that a lock downgrade leads 
      * to eligible waiting requests being granted locks.
+     * NOTE: This test case works when SHARED mode is not compatible with UPDATE mode.
      */
-    public void testInstantLockWait() throws Exception {
+    public void disabledTestInstantLockWait() throws Exception {
+        // This test has been disabled because of the change
+        // to lock compaibility - SHARED LOCKs are now compatible with
+        // UPDATE locks.
         final LockManager lockmgr = createLockManager();
         final Object tran1 = new Integer(1);
         final Object tran2 = new Integer(2);
@@ -722,6 +726,8 @@ public class TestLockManager extends BaseTestCase {
                 } catch (LockException e) {
                     counter.incrementAndGet();
                     e.printStackTrace();
+                } catch (Throwable e) {
+                    setThreadFailed(Thread.currentThread(), e);
                 }
             }
         });
@@ -731,11 +737,67 @@ public class TestLockManager extends BaseTestCase {
         counter.incrementAndGet();
         handle.downgrade(LockMode.SHARED);
         t1.join(1000);
+        checkThreadFailures();
         assertTrue(!t1.isAlive());
         assertTrue(counter.get() == 1);
         assertTrue(handle.release(false));
     }
 
+    /**
+     * This test verifies that an INSTANT_DURATION lock works correctly when it is necessary 
+     * to wait for the lock to become available. Also, it tests that a lock downgrade leads 
+     * to eligible waiting requests being granted locks.
+     * NOTE: This test case works when SHARED mode IS compatible with UPDATE mode.
+     */
+    public void testInstantLockWait2() throws Exception {
+        final LockManager lockmgr = createLockManager();
+        final Object tran1 = new Integer(1);
+        final Object tran2 = new Integer(2);
+        final Object lockname = new Integer(10);
+        final AtomicInteger counter = new AtomicInteger(0);
+
+        LockHandle handle = lockmgr.acquire(
+            tran1,
+            lockname,
+            LockMode.UPDATE,
+            LockDuration.MANUAL_DURATION,
+            -1,
+            null);
+
+        Thread t1 = new Thread(new Runnable() {
+            public void run() {
+                try {
+                    lockmgr.acquire(
+                        tran2,
+                        lockname,
+                        LockMode.SHARED,
+                        LockDuration.INSTANT_DURATION,
+                        -1,
+                        null);
+                    assertEquals(LockMode.NONE, lockmgr.findLock(
+                        tran2,
+                        lockname));
+                    assertTrue(counter.get() == 0);
+                } catch (LockException e) {
+                    counter.incrementAndGet();
+                    e.printStackTrace();
+                } catch (Throwable e) {
+                    setThreadFailed(Thread.currentThread(), e);
+                }
+            }
+        });
+
+        t1.start();
+        Thread.sleep(500);
+        counter.incrementAndGet();
+        handle.downgrade(LockMode.SHARED);
+        t1.join(1000);
+        checkThreadFailures();
+        assertTrue(!t1.isAlive());
+        assertTrue(counter.get() == 1);
+        assertTrue(handle.release(false));
+    }
+    
     /**
      * This test verifies that an incompatible lock request of INSTANT_DURATION
      * fails if nowait is true.

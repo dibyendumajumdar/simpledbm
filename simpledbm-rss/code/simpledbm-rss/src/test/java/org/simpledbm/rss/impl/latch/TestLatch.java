@@ -240,8 +240,11 @@ public class TestLatch extends BaseTestCase {
 
 	/**
 	 * Try read lock fails when update locked.
+         * NOTE: Works when SHARED is NOT compatible with UPDATE
 	 */
-	public void testTryReadLockFailsWhenUpdateLocked() throws Exception {
+	public void disabledTestTryReadLockFailsWhenUpdateLocked() throws Exception {
+            // Test disabled because SHARED locks are now compatible with
+            // UPDATE locks
 		final Latch latch = latchFactory.newReadWriteUpdateLatch();
 		latch.updateLock();
 		testfailed = false;
@@ -260,6 +263,31 @@ public class TestLatch extends BaseTestCase {
 		assertFalse(testfailed);
 	}
 
+	/**
+	 * Try read lock succeeds when update locked.
+         * NOTE Works when SHARED IS compaibel with UPDATE
+	 */
+	public void testTryReadLockFailsWhenUpdateLocked() throws Exception {
+		final Latch latch = latchFactory.newReadWriteUpdateLatch();
+		latch.updateLock();
+		testfailed = false;
+		Thread t = new Thread(new Runnable() {
+			public void run() {
+				if (!latch.trySharedLock()) {
+					testfailed = true;
+				}
+                                else {
+                                    latch.unlockShared();
+                                }
+			}
+		});
+		t.start();
+		t.join();
+		latch.unlockUpdate();
+
+		assertFalse(testfailed);
+	}        
+        
 	/**
 	 * Read lock delayed when update locked.
 	 */

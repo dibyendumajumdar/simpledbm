@@ -405,9 +405,97 @@ public class TestBufferManager extends BaseTestCase {
     }
 
     /**
-     * Test that update mode latch blocks readers.
+     * Test that update mode latch do not block readers.
      */
     public void testCase6() throws Exception {
+        Properties properties = new Properties();
+        properties
+            .setProperty("storage.basePath", "testdata/TestBufferManager");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final StorageManager storageManager = new StorageManagerImpl();
+        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory);
+        final BufferManager bufmgr = new BufferManagerImpl(
+            null,
+            pageFactory,
+            3,
+            11);
+        final AtomicInteger sync = new AtomicInteger(0);
+
+        Thread t1 = new Thread() {
+            @Override
+            public void run() {
+                try {
+                    PageId pageId = new PageId(1, 0);
+                    BufferAccessBlock bab = null;
+                    assertTrue(sync.compareAndSet(1, 2));
+                    System.err
+                        .println("T2 (2) Trying to obtain shared latch on page");
+                    bab = bufmgr.fixShared(pageId, 0);
+                    assertTrue(sync.compareAndSet(2, 3));
+                    System.err.println("T2 (3) Obtained shared latch on page");
+                    Thread.sleep(250);
+                    assertTrue(sync.compareAndSet(4, 5));
+                    System.err.println("T2 (5) Releasing shared latch on page");
+                    bab.unfix();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+
+        String name = "testfile.dat";
+        StorageContainer sc = storageFactory.create(name);
+        storageManager.register(1, sc);
+        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+
+        bufmgr.start();
+
+        try {
+            BufferAccessBlock bufab;
+            bufab = bufmgr.fixExclusive(new PageId(1, 0), true, TYPE_MYPAGE, 0);
+            bufab.setDirty(new Lsn());
+            bufab.unfix();
+
+            System.err.println("T1 (1) Locking page in UPDATE mode");
+            assertTrue(sync.compareAndSet(0, 1));
+            bufab = bufmgr.fixForUpdate(new PageId(1, 0), 0);
+            t1.start();
+            Thread.sleep(100);
+            assertTrue(sync.compareAndSet(3, 4));
+            System.err.println("T1 (4) Upgrading lock to Exclusive");
+            bufab.upgradeUpdateLatch();
+            assertTrue(bufab.isLatchedExclusively());
+            assertTrue(sync.compareAndSet(5, 6));
+            System.err.println("T1 (6) Lock upgraded to Exclusive");
+            System.err.println("T1 (7) Downgrading lock to Update");
+            bufab.downgradeExclusiveLatch();
+            assertTrue(bufab.isLatchedForUpdate());
+            assertTrue(sync.compareAndSet(6, 7));
+            System.err.println("T1 (8) Releasing Update latch on page");
+            bufab.unfix();
+            t1.join(2000);
+            assertTrue(!t1.isAlive());
+        } finally {
+            bufmgr.shutdown();
+            storageManager.shutdown();
+            storageFactory.delete("testfile.dat");
+        }
+    }
+
+    /**
+     * Test that update mode latch blocks readers.
+     */
+    public void disabledTestCase6() throws Exception {
+        
+        // This test has been disabled because of the change in
+        // lock mode that makes SHARED locks compatibel with
+        // UPDATE locks. 
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
@@ -484,6 +572,7 @@ public class TestBufferManager extends BaseTestCase {
         }
     }
 
+    
     /*
      * Test that Update mode access is possible when page is
      * held in shared mode. Also test that update mode conflicts with

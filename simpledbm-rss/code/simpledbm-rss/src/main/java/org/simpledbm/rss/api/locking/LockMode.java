@@ -156,7 +156,9 @@ public enum LockMode {
             { true, true, true, true, true, true, true },
             { true, true, true, true, true, false, false },
             { true, true, true, false, false, false, false },
-            { true, true, false, true, false, false, false },
+            // The commented boolean value is used to determine
+            // whether shared locks are compatible with update locks.
+            { true, true, false, true, false, true /*false*/, false },
             { true, true, false, false, false, false, false },
             { true, false, false, true, false, false, false },
             { true, false, false, false, false, false, false } };
