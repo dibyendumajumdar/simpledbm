@@ -1,0 +1,28 @@
+digraph NodeDirectIndirect {
+    node [shape=record]
+    {
+	rank=same;
+	node[shape=plaintext, fontsize=10];
+	comment1[label="Split Parent Node"];
+	comment2[label="Node where child\nlink will be inserted"]
+    }
+    {
+	rank=same;
+        n1[label="Original Parent",color=red];
+	n2[label="New Parent",color=red]
+    }
+    {
+	rank=same;
+	n3[label="Left Child",color=red];
+	n4[label="New Child\nafter page split"];
+    }
+    comment1 -> n1[arrowhead=none];
+    comment2 -> n2[arrowhead=none];
+    n1 -> n2[label="right"];
+    n1 -> n3[style=dotted];
+    n2 -> n3;
+    n2 -> n4[label="new",color=red];
+    n3 -> n4[label="right"];
+    
+}
+

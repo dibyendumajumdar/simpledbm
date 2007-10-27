@@ -1,0 +1,37 @@
+digraph SplitLeaf2 {
+    node [shape=record];
+    ranksep=1.0;
+    p2[label="<p3>|b4|<p5>|c2|<p6>|e4|<p8>|f4|<p9>|g2|<p10>|h4|<p11>|j4|<p13>|(INF)"];
+    {
+	rank=same;
+	p3[label="a1|a2|(a2)"];
+	p4[label="b1|b2|b3|b4|(b4)"];
+	p5[label="c1|c2|(c2)"];
+	p6[label="d1|d2|d3|d4|(d4)"];
+	p7[label="e1|e2|e3|e4|(e4)"];
+	p8[label="f1|f2|f3|f4|(f4)"];
+	p9[label="g1|g2|(g2)"];
+	p10[label="h1|h2|h3|h4|(h4)"];
+	p11[label="i1|i2|(i2)"];
+	p12[label="j1|j2|j3|j4|(j4)"];
+	p13[label="k1|k2|(INF)"];
+    }
+    p2:p3 -> p3[weight=2];
+    p2:p5 -> p5[weight=1];
+    p2:p6 -> p6;
+    p2:p8 -> p8;
+    p2:p9 -> p9;
+    p2:p10 ->  p10;
+    p2:p11 -> p11;
+    p2:p13 -> p13;
+    p3 -> p4;
+    p4 -> p5;
+    p5 -> p6;
+    p6 -> p7;
+    p7 -> p8;
+    p8 -> p9;
+    p9 -> p10;
+    p10 -> p11;
+    p11 -> p12;
+    p12 -> p13;
+}
