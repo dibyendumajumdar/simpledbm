@@ -37,7 +37,7 @@ public abstract class BaseTestCase extends TestCase {
         super(arg0);
     }
 
-    public final void setThreadFailed(Thread thread, Exception exception) {
+    public final void setThreadFailed(Thread thread, Throwable exception) {
         threadFailureExceptions.add(new ThreadFailure(thread, exception));
     }
 
@@ -69,10 +69,10 @@ public abstract class BaseTestCase extends TestCase {
     }
 
     final static class ThreadFailure {
-        Exception exception;
+        Throwable exception;
         String threadName;
 
-        public ThreadFailure(Thread thread, Exception exception) {
+        public ThreadFailure(Thread thread, Throwable exception) {
             this.threadName = thread.getName();
             this.exception = exception;
         }
