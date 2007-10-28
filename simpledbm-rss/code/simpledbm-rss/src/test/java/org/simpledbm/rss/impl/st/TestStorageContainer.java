@@ -26,6 +26,7 @@ import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
+import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
 
 /**
@@ -62,20 +63,27 @@ public class TestStorageContainer extends BaseTestCase {
 		sc.close();
 		assertTrue(file.exists());
 		assertTrue(file.length() == 10);
-		sc = factory.create(name);
-		sc.close();
+                try {
+                    sc = factory.createIfNotExisting(name);
+                    fail("Error: should fail to create a container if it already exists");
+                }
+                catch (StorageException e) {
+                    assertTrue(e.getMessage().contains("ES0017"));
+                }
+//		sc.close();
 		assertTrue(file.exists());
-		assertTrue(file.length() == 0);
+		assertTrue(file.length() == 10);
 		file.delete();
 		boolean caughtException = false;
 		try {
 			sc = factory.open(name);
-			sc.close();
+                        fail("Error: should fail as the container has been deleted");
+//			sc.close();
 		} catch (Exception e) {
 			// e.printStackTrace();
-			caughtException = true;
+//			caughtException = true;
 		}
-		assertTrue(caughtException);
+//		assertTrue(caughtException);
 	}
 
 	public void testCase2() throws Exception {

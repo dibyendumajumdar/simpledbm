@@ -2880,12 +2880,16 @@ public class TestBTreeManager extends BaseTestCase {
                     IndexScan scan = index.openScan(trx, key, location, false);
                     if (scan.fetchNext()) {
                         // System.out.println("new FindResult(\"" + scan.getCurrentKey() + "\", \"" + scan.getCurrentLocation() + "\"),");
-                        assertEquals(key.toString(), scan
-                            .getCurrentKey()
-                            .toString());
-                        assertEquals(location.toString(), scan
-                            .getCurrentLocation()
-                            .toString());
+                        if (!(key.toString().equals(scan.getCurrentKey().toString()) && 
+                                location.toString().equals(scan.getCurrentLocation().toString()))) {
+                            fail("Find failed for (" + key + ", " + location + ")");                            
+                        }
+//                        assertEquals(key.toString(), scan
+//                            .getCurrentKey()
+//                            .toString());
+//                        assertEquals(location.toString(), scan
+//                            .getCurrentLocation()
+//                            .toString());
                         scan.fetchCompleted(true);
                     } else {
                         fail("Find failed for (" + key + ", " + location + ")");
@@ -3376,19 +3380,19 @@ public class TestBTreeManager extends BaseTestCase {
         suite.addTest(new TestBTreeManager("testPhantomRecords2"));
         suite.addTest(new TestBTreeManager("testIsolation"));
         long i = System.currentTimeMillis() % 4;
-        if (i == 0)
-            suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
-        else if (i == 1)
-            suite
-                .addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-        else if (i == 2)
-            suite.addTest(new TestBTreeManager(
-                "testMultiThreadedInsertsDescending"));
-        else {
-//        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
-//           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-//           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
-        }
+//        if (i == 0)
+//            suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+//        else if (i == 1)
+//            suite
+//                .addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+//        else if (i == 2)
+//            suite.addTest(new TestBTreeManager(
+//                "testMultiThreadedInsertsDescending"));
+//        else {
+        	suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
+           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
+           	suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
+//        }
         return suite;
     }
 

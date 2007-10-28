@@ -21,6 +21,7 @@ package org.simpledbm.rss.impl.st;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Properties;
 
@@ -183,6 +184,42 @@ public final class FileStorageContainerFactory implements
      * of the same name already exists, it is over-written. By default
      * the container is opened in read/write mode.
      */
+    public final StorageContainer createIfNotExisting(String logicalName)
+            throws StorageException {
+        if (log.isDebugEnabled()) {
+            log.debug(
+                this.getClass().getName(),
+                "create",
+                "SIMPLEDBM-DEBUG: Creating StorageContainer " + logicalName);
+        }
+        checkBasePath(true);
+        String name = getFileName(logicalName, true);
+        RandomAccessFile rafile = null;
+        File file = new File(name);
+        try {
+            // Create the file atomically.
+            if (!file.createNewFile()) {
+                log.error(this.getClass().getName(), "create", mcat
+                        .getMessage("ES0017", name));
+                throw new StorageException(mcat.getMessage(
+                        "ES0017",
+                        name));
+            }
+            rafile = new RandomAccessFile(name, createMode);
+        } catch (IOException e) {
+            log.error(this.getClass().getName(), "create", mcat.getMessage(
+                "ES0018",
+                name), e);
+            throw new StorageException(mcat.getMessage("ES0018", name), e);
+        }
+        return new FileStorageContainer(logicalName, rafile);
+    }
+
+    /**
+     * Creates a new File based Storage Container object. If a container
+     * of the same name already exists, it is over-written. By default
+     * the container is opened in read/write mode.
+     */
     public final StorageContainer create(String logicalName)
             throws StorageException {
         if (log.isDebugEnabled()) {
@@ -212,7 +249,7 @@ public final class FileStorageContainerFactory implements
                 }
             }
             rafile = new RandomAccessFile(name, createMode);
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             log.error(this.getClass().getName(), "create", mcat.getMessage(
                 "ES0018",
                 name), e);
@@ -220,7 +257,8 @@ public final class FileStorageContainerFactory implements
         }
         return new FileStorageContainer(logicalName, rafile);
     }
-
+    
+    
     /**
      * <p>
      * Opens an existing File based Storage Container object. If a container

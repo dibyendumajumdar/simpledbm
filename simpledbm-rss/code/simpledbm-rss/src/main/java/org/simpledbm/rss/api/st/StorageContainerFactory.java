@@ -40,6 +40,12 @@ public interface StorageContainerFactory {
     StorageContainer create(String name);
 
     /**
+     * Creates a new StorageContainer of the specified name only if
+     * there isn't an existing StorageContainer of the same name.
+     */
+    StorageContainer createIfNotExisting(String name);
+    
+    /**
      * Opens an existing StorageContainer. Note that the
      * behaviour of open is not specified here. It is expected that
      * an implementation will use some form of configuration data to

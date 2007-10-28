@@ -122,6 +122,50 @@ public class Server {
     }
 
     /**
+     * Attempts to exclsively lock the Server instance.
+     */
+    private void lockServerInstance() {
+        boolean lockObtained = false;
+        /*
+         * We have to carefully handle locks - so that
+         * a) We do not overwrite the exiting lock object in case server has been erroneously started second time
+         * b) We do not leave file handle open if the lock fails
+         */
+        StorageContainer lock = null;
+        try {
+            /*
+             * Perform atomic creation of lock container.
+             */
+            lock = storageFactory.createIfNotExisting(LOCK_TABLE);
+            /*
+             * Now also lock this container.
+             */
+            lock.lock();
+            lockObtained = true;
+        } catch (StorageException e) {
+            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e);
+            throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
+        } finally {
+            if (!lockObtained) {
+                if (lock != null) {
+                    lock.close();
+                }
+            } else {
+                this.lock = lock;
+            }
+        }
+    }
+    
+    /**
+     * Unlocks the Server instance lock.
+     */
+    private void unlockServerInstance() {
+        lock.unlock();
+        lock.close();
+        storageFactory.delete(LOCK_TABLE);
+    }
+    
+    /**
      * Creates a new RSS Server instance. An RSS Server instance contains at least a 
      * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
      * any existing database on the same path, hence caller needs to be sure that the
@@ -133,15 +177,17 @@ public class Server {
         // TODO Need to ensure that we do not overwrite an existing database without warning
         Server server = new Server(props);
         final LogFactory logFactory = new LogFactoryImpl();
+        server.lockServerInstance();
         logFactory.createLog(server.storageFactory, props);
         // SimpleDBM components expect a virtual container to exist with
         // a container ID of 0. This container must have at least one page.
-        server.storageFactory.create(LOCK_TABLE).close();
+        // server.storageFactory.create(LOCK_TABLE).close();
         StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
         server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
         Page page = server.pageFactory.getInstance(server.pageFactory
             .getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
         server.pageFactory.store(page);
+        server.unlockServerInstance();
         // We start the server so that a checkpoint can be taken which will
         // ensure that the VIRTUAL_TABLE is automatically opened at system startup.
         server.start();
@@ -232,29 +278,7 @@ public class Server {
      */
     public synchronized void start() {
         assertNotStarted();
-        boolean lockObtained = false;
-        /*
-         * We have to carefully handle locks - so that
-         * a) We do not overwrite the exiting lock object in case server has been erroneously started second time
-         * b) We do not leave file handle open if the lock fails
-         */
-        StorageContainer lock = null;
-        try {
-            lock = storageFactory.open(LOCK_TABLE);
-            lock.lock();
-            lockObtained = true;
-        } catch (StorageException e) {
-            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e);
-            throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
-        } finally {
-            if (!lockObtained) {
-                if (lock != null) {
-                    lock.close();
-                }
-            } else {
-                this.lock = lock;
-            }
-        }
+        lockServerInstance();
         lockManager.start();
         logManager.start();
         bufferManager.start();
@@ -285,8 +309,7 @@ public class Server {
         logManager.shutdown();
         storageManager.shutdown();
         lockManager.shutdown();
-        lock.unlock();
-        lock.close();
+        unlockServerInstance();
         log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
     }
 
