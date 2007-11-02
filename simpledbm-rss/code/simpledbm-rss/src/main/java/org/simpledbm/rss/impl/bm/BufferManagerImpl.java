@@ -678,6 +678,22 @@ public final class BufferManagerImpl implements BufferManager {
                                 && (latchMode == LATCH_SHARED || !bcb
                                     .isBeingWritten())) {
                             nextBcb = bcb;
+ 
+                            if (nextBcb.isNewBuffer()) {
+                            	/*
+                            	 * Page has just been read, so we do not need to
+                            	 * increment fix count. Reset this flag for next 
+                            	 * time.
+                            	 */
+                            	nextBcb.setNewBuffer(false);
+                            }
+                            else {
+                            	/*
+                            	 * Increment fix count while holding the bucket
+                            	 * lock.
+                            	 */
+                            	nextBcb.incrementFixCount();
+                            }
                             /*
                              * we leave the BCB exclusively latched and
                              * bucket latched in shared mode
@@ -736,13 +752,16 @@ public final class BufferManagerImpl implements BufferManager {
         assert nextBcb.getFrameIndex() != -1;
         assert nextBcb.getPageId().equals(pageid);
         assert bucket.latch.isHeldByCurrentThread();
+        assert nextBcb.isInUse();
 
         /*
          * Now that we have got the desired page, a) increment fix count. b)
          * Make this page the most recently used one c) release all latches d)
          * Acquire user requested page latch.
          */
-        nextBcb.incrementFixCount();
+        // Following code is wrong - see comment in BufferConrolBlock.
+        // nextBcb.incrementFixCount();
+        
         /*
          * ISSUE: 17-Sep-05
          * We set the recoveryLsn if an update mode access is requested because
@@ -1194,13 +1213,28 @@ public final class BufferManagerImpl implements BufferManager {
          */
         private volatile boolean invalid = false;
 
+        /*
+         * 1-nov-07
+         * Found a race condition when a page is read in. The fixcount 
+         * was initialized to 0, which meant that after the page was read in,
+         * frameIndex set, and bucket unlocked, there was a period of time
+         * during which the page existed with fixcount = 0. This means the
+         * BufferWriter could evict the page from right under the feet of
+         * the fix() call. So we now initialize fixcount to 1. This means
+         * we have to be careful when incrementing fixcount so that we do
+         * not do it twice when the page has been just read. For this reason,
+         * we use a new flad newBuffer to track the status of the page.
+         */
+        
+        
         /**
          * Maintains count of the number of fixes. A fixed page cannot be be the
          * victim of the LRU replacement algorithm. A fixed page also cannot be
          * written out by the Buffer Writer, however, a page may be fixed in
          * shared mode after Buffer Writer has marked the page for writing.
          */
-        private volatile int fixcount = 0;
+        private volatile int fixcount = 1;
+        
 
         /**
          * LSN of the oldest log record that may have made changes to the
@@ -1215,6 +1249,12 @@ public final class BufferManagerImpl implements BufferManager {
          * is set, the page may be fixed for read access.
          */
         private volatile boolean writeInProgress = false;
+        
+        /**
+         * Indicates that the page has just been read in. This is used to
+         * determine whether to increment the fixcount or not.
+         */
+        private boolean newBuffer = true;
 
         BufferControlBlock(PageId pageId) {
             this.pageId = pageId;
@@ -1319,6 +1359,14 @@ public final class BufferManagerImpl implements BufferManager {
             }
             return null;
         }
+
+		final void setNewBuffer(boolean newBuffer) {
+			this.newBuffer = newBuffer;
+		}
+
+		final boolean isNewBuffer() {
+			return newBuffer;
+		}
     }
 
     /**
