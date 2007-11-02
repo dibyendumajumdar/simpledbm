@@ -465,6 +465,14 @@ public final class LogManagerImpl implements LogManager {
                 getMaxLogRecSize()));
         }
         bufferLock.lock();
+        /*
+         * Following code has the problem that if we run out of
+         * log buffers it will wait until the log flush kicks in.
+         * This can be a long wait depending upon how often the
+         * log writer flushes the log.
+         * An alternative is to force the log flush here.
+         */
+        /*
         if (logBuffers.size() > anchor.maxBuffers) {
             try {
                 buffersAvailable.await();
@@ -474,6 +482,20 @@ public final class LogManagerImpl implements LogManager {
                 throw new LogException(mcat.getMessage("EW0002"), e);
             }
         }
+         */
+        /*
+         * FIXME Following is a temporary workaround for this issue.
+         * Problem is that this is not optimum for performance,
+         * as we don't have to wait for a full flush to complete
+         * before resuming the insert. Ideally, we want to trigger 
+         * the Log Writer here and start waiting on buffersAvailable.
+         */
+        if (logBuffers.size() > anchor.maxBuffers) {
+            bufferLock.unlock();
+            flush();
+            bufferLock.lock();
+        }
+        
         try {
             anchorLock.lock();
             try {
