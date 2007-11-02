@@ -517,6 +517,7 @@ public final class BufferManagerImpl implements BufferManager {
                                 "SIMPLEDBM-DEBUG: Another thread is attempting to read/write page "
                                         + pageId + ", therefore retrying");
                         }
+                        // System.err.println("Page is being read by another thread");
                         return null;
                     } else {
                         if (log.isDebugEnabled()) {
@@ -650,8 +651,10 @@ public final class BufferManagerImpl implements BufferManager {
 
         search_again: for (;;) {
 
-            for (;;) {
+        	boolean busy = false;
+            do {
                 found = false;
+                busy = false;
                 bucket.lock();
                 for (BufferControlBlock bcb : bucket.chain) {
                     /*
@@ -681,16 +684,20 @@ public final class BufferManagerImpl implements BufferManager {
                              */
                             break search_again;
                         }
+                        else {
+                        	// System.err.println("BUSY");
+                        	busy = true;
+                        }
                         break;
                     }
                 }
                 bucket.unlock();
-                if (!found) {
-                    break;
-                } else {
-                    Thread.yield();
+                if (busy) {
+//                	Thread.yield();
+                	try { Thread.sleep(1, 0);
+					} catch (InterruptedException e) {}
                 }
-            }
+            } while (busy);
 
             if (!found) {
                 /*
@@ -698,9 +705,12 @@ public final class BufferManagerImpl implements BufferManager {
                  */
                 nextBcb = null;
                 while (nextBcb == null && !stop) {
-                    Thread.yield();
+//                	  System.err.println("Reading page as page not in pool");
+//                    Thread.yield();
                     nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
-                }
+                	try { Thread.sleep(1, 0);
+					} catch (InterruptedException e) {}                
+				}
                 if (stop || nextBcb == null) {
                     log.error(this.getClass().getName(), "fix", mcat
                         .getMessage("EM0006", pageid));
@@ -708,12 +718,13 @@ public final class BufferManagerImpl implements BufferManager {
                         "EM0006",
                         pageid));
                 }
-                bucket.lock();
-                if (!nextBcb.getPageId().equals(pageid)) {
-                    bucket.unlock();
-                } else {
-                    break;
-                }
+//                bucket.lock();
+//                if (!nextBcb.getPageId().equals(pageid)) {
+//                    bucket.unlock();
+//                } else {
+//                    break;
+//                }
+//                System.err.println("Search again after read");
             }
         }
 
