@@ -1,4 +1,7 @@
 1.0.6-BETA:
+ * dm: Fixed critical race condition in Buffer Manager.
+ * dm: Fixed defect in Log Manager that causes it to run out of buffer space in heavy load.
+ * dm: Changed implementation of server instance locking.
  * dm: Added support for log4j. 
  * dm: Various improvements to toString() implementations.
 
