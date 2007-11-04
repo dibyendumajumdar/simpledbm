@@ -567,7 +567,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         throw new LatchException(mcat.getMessage("EH0006", lockState.parms));
     }
 
-    private void grantWaiters(ReleaseAction action, LockRequest r) {
+    private void grantWaiters(ReleaseAction action) {
         /*
          * 9. Recalculate granted mode by calculating max mode amongst all
          * granted (including conversion) requests. If a conversion request
@@ -585,9 +585,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
         grantedMode = LockMode.NONE;
         waiting = false;
         converting = false;
-        for (LockRequest req : getQueue()) {
+        for (LockRequest r : getQueue()) {
 
-            r = req;
             if (r.status == LockRequestStatus.GRANTED) {
                 grantedMode = r.mode.maximumOf(grantedMode);
             }
@@ -829,7 +828,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          * conversion request is pending, waiting requests cannot be
          * granted.
          */
-        grantWaiters(lockState.parms.action, lockState.lockRequest);
+        grantWaiters(lockState.parms.action);
         return released;
     }
 
@@ -943,7 +942,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         volatile Thread waitingThread;
 
-        NewReadWriteUpdateLatch lockItem;
+        final NewReadWriteUpdateLatch lockItem;
 
         volatile boolean upgrading;
 
