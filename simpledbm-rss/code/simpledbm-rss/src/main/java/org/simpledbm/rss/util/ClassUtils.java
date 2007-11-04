@@ -64,9 +64,9 @@ public final class ClassUtils {
      * @param name Name of the class to be loaded
      * @throws ClassNotFoundException
      */
-    public static Class forName(String name) throws ClassNotFoundException {
+    public static Class<?> forName(String name) throws ClassNotFoundException {
         ClassLoader cl = getClassLoader();
-        Class clazz = null;
+        Class<?> clazz = null;
         if (log.isDebugEnabled()) {
             log.debug(
                 LOG_CLASS_NAME,
@@ -145,9 +145,9 @@ public final class ClassUtils {
      *            The parameter
      * @throws Throwable
      */
-    public static Object invokeMethod(Class cl, Object instance,
+    public static Object invokeMethod(Class<?> cl, Object instance,
             String methodName, Object param) throws Throwable {
-        Class paramClass;
+        Class<? extends Object> paramClass;
         if (param instanceof Integer)
             paramClass = Integer.TYPE;
         else if (param instanceof Long)
@@ -187,8 +187,8 @@ public final class ClassUtils {
      *            Class of the parameter
      * @throws Throwable
      */
-    public static Object invokeStaticMethod(Class cl, String methodName,
-            Object param, Class paramClass) throws Throwable {
+    public static Object invokeStaticMethod(Class<?> cl, String methodName,
+            Object param, Class<?> paramClass) throws Throwable {
         Method method = cl.getMethod(methodName, new Class[] { paramClass });
         try {
             return method.invoke(null, new Object[] { param });
@@ -212,12 +212,12 @@ public final class ClassUtils {
      * @throws InvocationTargetException
      */
     public static Object createObject(String className, Object param,
-            Class paramClass) throws ClassNotFoundException, SecurityException,
+            Class<?> paramClass) throws ClassNotFoundException, SecurityException,
             NoSuchMethodException, IllegalArgumentException,
             InstantiationException, IllegalAccessException,
             InvocationTargetException {
-        Class clazzImpl = ClassUtils.forName(className);
-        Constructor ctor = clazzImpl.getConstructor(new Class[] { paramClass });
+        Class<?> clazzImpl = ClassUtils.forName(className);
+        Constructor<?> ctor = clazzImpl.getConstructor(new Class[] { paramClass });
         Object instance = ctor.newInstance(new Object[] { param });
         return instance;
     }
