@@ -948,7 +948,7 @@ public final class LockManagerImpl implements LockManager {
         return released;
     }
 
-    private void grantWaiters(ReleaseAction action, LockRequest r,
+    private void grantWaiters(ReleaseAction action, LockRequest myReq,
             LockHandleImpl handleImpl, LockItem lockitem, LockInfo lockInfo) {
         /*
          * 9. Recalculate granted mode by calculating max mode amongst all
@@ -964,13 +964,11 @@ public final class LockManagerImpl implements LockManager {
          * granted.
          */
         boolean converting;
-        LockRequest myReq = r;
         lockitem.grantedMode = LockMode.NONE;
         lockitem.waiting = false;
         converting = false;
-        for (LockRequest req : lockitem.getQueue()) {
+        for (LockRequest r : lockitem.getQueue()) {
 
-            r = req;
             if (r.status == LockRequestStatus.GRANTED) {
                 lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
                 if (r != myReq && action == ReleaseAction.DOWNGRADE) {
