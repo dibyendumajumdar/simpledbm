@@ -193,7 +193,7 @@ public final class TransactionManagerImpl implements TransactionManager {
      * The LSN upto which it is known that transactions have committed; in other words
      * the LSN of the oldest known committed transaction.
      */
-    Lsn commitLsn;
+    // Lsn commitLsn;
 
     final LogManager logmgr;
 
@@ -257,7 +257,7 @@ public final class TransactionManagerImpl implements TransactionManager {
      * This sync object is used for signalling the CheckpointWriter 
      * thread.
      */
-    Object checkpointWriterSync = new Object();
+    // Object checkpointWriterSync = new Object();
 
     /**
      * This flag is used to indicate that there has been an error
