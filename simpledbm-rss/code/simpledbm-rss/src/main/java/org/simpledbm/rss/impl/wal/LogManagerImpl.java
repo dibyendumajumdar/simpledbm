@@ -635,20 +635,30 @@ public final class LogManagerImpl implements LogManager {
      */
     public final Lsn getCheckpointLsn() {
         anchorLock.lock();
-        Lsn lsn = new Lsn(anchor.checkpointLsn);
-        anchorLock.unlock();
-        return lsn;
+        Lsn lsn = null;
+		try {
+			lsn = new Lsn(anchor.checkpointLsn);
+		} finally {
+			anchorLock.unlock();
+		}
+		return lsn;
     }
 
-    /* (non-Javadoc)
-     * @see org.simpledbm.rss.api.wal.LogManager#getOldestInterestingLsn()
-     */
+    /*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.simpledbm.rss.api.wal.LogManager#getOldestInterestingLsn()
+	 */
     public final Lsn getOldestInterestingLsn() {
-        anchorLock.lock();
-        Lsn lsn = new Lsn(anchor.oldestInterestingLsn);
-        anchorLock.unlock();
-        return lsn;
-    }
+		anchorLock.lock();
+		Lsn lsn = null;
+		try {
+			lsn = new Lsn(anchor.oldestInterestingLsn);
+		} finally {
+			anchorLock.unlock();
+		}
+		return lsn;
+	}
 
     final void setCheckpointLsn(Lsn lsn) {
         anchorLock.lock();
