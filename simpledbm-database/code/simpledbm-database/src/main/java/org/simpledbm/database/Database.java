@@ -39,6 +39,8 @@ public class Database {
 	Server server;
 
 	Properties properties;
+	
+	private boolean serverStarted = false;
 
 	final FieldFactory fieldFactory = new DefaultFieldFactory();
 
@@ -51,16 +53,61 @@ public class Database {
 		return new Table(this, containerId, name, rowType);
 	}
 
-	public void create() {
+	public Database(Properties properties) {
+		validateProperties(properties);
+		this.properties = properties;
+	}
+	
+	private void validateProperties(Properties properties2) {
+		// TODO Auto-generated method stub
+		
+	}
 
+	private void createSystemTables() {
+		// TODO
+	}
+	
+	public static void create(Properties properties) {
+		Server.create(properties);
+		
+		Database db = new Database(properties);
+		db.start();
+		try {
+			db.createSystemTables();
+		}
+		finally {
+			db.shutdown();
+		}
 	}
 
 	public void start() {
+        /*
+         * We cannot start the server more than once
+         */
+        if (serverStarted) {
+            throw new RuntimeException("Server is already started");
+        }
 
+        /*
+         * We must always create a new server object.
+         */
+        server = new Server(properties);
+        registerRowFactory();
+        server.start();
+
+        serverStarted = true;
+	}
+
+	private void registerRowFactory() {
+        server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
 	}
 
 	public void shutdown() {
-
+        if (serverStarted) {
+            server.shutdown();
+            serverStarted = false;
+            server = null;
+        }
 	}
 
 	public Server getServer() {
