@@ -85,7 +85,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
                     od.getClassName(),
                     classname));
             }
-            Class clazz = ClassUtils.forName(classname);
+            Class<?> clazz = ClassUtils.forName(classname);
             typeRegistry.put(typecode, new ClassDefinition(typecode, clazz));
         } catch (ClassNotFoundException e) {
             log.error(this.getClass().getName(), "register", mcat.getMessage(
@@ -255,9 +255,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
     static class ClassDefinition extends ObjectDefinition {
 
-        final Class clazz;
+        final Class<?> clazz;
 
-        ClassDefinition(int typecode, Class klass) {
+        ClassDefinition(int typecode, Class<?> klass) {
             super(typecode);
             this.clazz = klass;
         }
