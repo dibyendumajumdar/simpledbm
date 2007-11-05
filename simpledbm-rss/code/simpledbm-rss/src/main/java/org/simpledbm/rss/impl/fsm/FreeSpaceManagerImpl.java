@@ -2243,11 +2243,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                 bab.unfix();
                 bab = null;
                 log.error(SpaceCursorImpl.class.getName(), "fixSpaceMapPageExclusively", mcat
-                    .getMessage("EF0004", pageNumber, this));
+                    .getMessage("EF0004", pageNumber, smpPage));
                 throw new FreeSpaceManagerException(mcat.getMessage(
                     "EF0004",
                     pageNumber,
-                    this));
+                    smpPage));
             }
             currentSMP = spaceMapPageNumber;
             currentPageNumber = pageNumber;
