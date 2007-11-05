@@ -94,12 +94,30 @@ public class BTreeDemo {
 		}
 
 		public int compareTo(Location o) {
+			if (o == this) {
+				return 0;
+			}
+			if (o == null) {
+				throw new IllegalArgumentException("Null argument");
+			}
+			if (!(o instanceof RowLocation)) {
+				return -1;
+			}
 			RowLocation rl = (RowLocation) o;
 			return loc - rl.loc;
 		}
 
 		@Override
 		public boolean equals(Object o) {
+			if (o == this) {
+				return true;
+			}
+			if (o == null) {
+				throw new IllegalArgumentException("Null argument");
+			}
+			if (!(o instanceof Location)) {
+				return false;
+			}
 			return compareTo((Location) o) == 0;
 		}
 
