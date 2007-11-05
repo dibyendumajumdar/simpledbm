@@ -3,7 +3,7 @@
 		<header>
 			<locationfactory>25001</locationfactory>
 			<keyfactory>25000</keyfactory>
-			<unique>false</unique>
+			<unique>yes</unique>
 			<leaf>yes</leaf>
 			<leftsibling>-1</leftsibling>
 			<rightsibling>-1</rightsibling>
