@@ -1793,7 +1793,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             dthOperation.setLocationFactoryType(btree.locationFactoryType);
             // root will inherit the leaf status of child node
             dthOperation.setLeaf(childNode.isLeaf());
-            dthOperation.setUnique(dthOperation.isUnique());
+            //dthOperation.setUnique(dthOperation.isUnique());
+            dthOperation.setUnique(btree.isUnique());
             for (int k = FIRST_KEY_POS; k <= childNode.header.keyCount; k++) {
                 dthOperation.items.add(childNode.getItem(k));
             }
@@ -5417,7 +5418,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final int compareTo(
                 org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
             int comp = key.compareTo(o.key);
-            if (comp == 0 && (isLocationRequired())) {
+            if (comp == 0 && isLocationRequired() && o.isLocationRequired()) {
                 return location.compareTo(o.location);
             }
             return comp;
