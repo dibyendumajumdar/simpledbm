@@ -1,3 +1,9 @@
+1.0.7-BETA:
+ * dm: Fixed a couple of severe defects.
+           DecreaseTreeHeight was always setting unique flag to false, due to a typo.
+           IndexItem comparison was incorrect when comparing leaf item with non-leaf item in a unique index.
+ * dm: Fixed defect in the delete and scan BTree tests, which was sometimes causing infinite synchronization waits.
+
 1.0.6-BETA:
  * dm: Fixed critical race condition in Buffer Manager.
  * dm: Fixed defect in Log Manager that causes it to run out of buffer space in heavy load.
