@@ -23,9 +23,11 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
@@ -35,7 +37,10 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class VarcharType implements TypeDescriptor {
 
-    final int maxLength;
+    int maxLength;
+    
+    public VarcharType() {
+	}
     
     public VarcharType(int maxLength) {
         this.maxLength = maxLength;
@@ -60,4 +65,40 @@ public class VarcharType implements TypeDescriptor {
 	public TimeZone getTimeZone() {
 		return null;
 	}
+
+	public int getStoredLength() {
+		return TypeSize.INTEGER;
+	}
+
+	public void retrieve(ByteBuffer bb) {
+		maxLength = bb.getInt();
+	}
+
+	public void store(ByteBuffer bb) {
+		bb.putInt(maxLength);
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + maxLength;
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final VarcharType other = (VarcharType) obj;
+		if (maxLength != other.maxLength)
+			return false;
+		return true;
+	}
+	
+	
 }

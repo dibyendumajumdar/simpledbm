@@ -46,7 +46,7 @@ public class TypeSystemTest extends TestCase {
         FieldFactory fieldFactory = new DefaultFieldFactory();
         RowFactory rowFactory = new GenericRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
-            new IntegerType(), new VarcharType(10)
+            fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
         rowFactory.registerRowType(1, rowtype1);
         Row row = rowFactory.newRow(1);
@@ -185,6 +185,27 @@ public class TypeSystemTest extends TestCase {
     	assertFalse(f4.isValue());
     	assertEquals("+infinity", f4.toString());
     	assertEquals(f3, f4);
+    }
+    
+    public void testStorage() {
+        FieldFactory fieldFactory = new DefaultFieldFactory();
+//        RowFactory rowFactory = new GenericRowFactory(fieldFactory);
+        TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
+            fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
+            fieldFactory.getDateTimeType(), fieldFactory.getNumberType()
+        };
+    	int n = fieldFactory.getStoredLength(rowtype1);
+    	ByteBuffer bb = ByteBuffer.allocate(n);
+    	fieldFactory.store(rowtype1, bb);
+    	bb.flip();
+    	TypeDescriptor[] rowtype2 = fieldFactory.retrieve(bb);
+    	assertEquals(rowtype1.length, rowtype2.length);
+    	for (int i = 0; i < rowtype1.length; i++) {
+    		assertTrue(rowtype1[i] != rowtype2[i]);
+    		assertEquals(rowtype1[i], rowtype2[i]);
+    		assertEquals(rowtype1[i].hashCode(), rowtype2[i].hashCode());
+    	}
+   	
     }
     
 }
