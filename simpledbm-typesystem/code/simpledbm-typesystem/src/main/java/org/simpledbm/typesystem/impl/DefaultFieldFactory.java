@@ -19,6 +19,9 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.nio.ByteBuffer;
+
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -65,6 +68,44 @@ public class DefaultFieldFactory implements FieldFactory {
 
 	public TypeDescriptor getVarcharType(int maxLength) {
 		return new VarcharType(maxLength);
+	}
+	
+	private TypeDescriptor getTypeDescriptor(int typecode) {
+        switch (typecode) {
+        case TypeDescriptor.TYPE_VARCHAR: return new VarcharType();
+        case TypeDescriptor.TYPE_INTEGER: return new IntegerType();
+        case TypeDescriptor.TYPE_NUMBER: return new NumberType();
+        case TypeDescriptor.TYPE_DATETIME: return new DateTimeType();
+        }
+        throw new IllegalArgumentException("Unknown type: " + typecode);
+	}
+
+	public TypeDescriptor[] retrieve(ByteBuffer bb) {
+		int numberOfFields = bb.getShort();
+		TypeDescriptor[] rowType = new TypeDescriptor[numberOfFields];
+		for (int i = 0; i < numberOfFields; i++) {
+			int typecode = bb.get();
+			TypeDescriptor fieldType = getTypeDescriptor(typecode);
+			fieldType.retrieve(bb);
+			rowType[i] = fieldType;
+		}
+		return rowType;
+	}
+
+	public void store(TypeDescriptor[] rowType, ByteBuffer bb) {
+		bb.putShort((short) rowType.length);
+		for (int i = 0; i < rowType.length; i++) {
+			bb.put((byte) rowType[i].getTypeCode());
+			rowType[i].store(bb);
+		}
+	}
+
+	public int getStoredLength(TypeDescriptor[] rowType) {
+		int len = TypeSize.SHORT + rowType.length * TypeSize.BYTE;
+		for (int i = 0; i < rowType.length; i++) {
+			len += rowType[i].getStoredLength();
+		}
+		return len;
 	}
    
 	

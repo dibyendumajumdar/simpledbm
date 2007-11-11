@@ -19,6 +19,8 @@
  */
 package org.simpledbm.typesystem.api;
 
+import java.nio.ByteBuffer;
+
 /**
  * A FieldFactory is responsible for creating fields of specified type.
  * 
@@ -44,5 +46,11 @@ public interface FieldFactory {
 	TypeDescriptor getNumberType();
 	
 	TypeDescriptor getNumberType(int scale);
+	
+	TypeDescriptor[] retrieve(ByteBuffer bb);
+	
+	void store(TypeDescriptor[] rowType, ByteBuffer bb);
+	
+	int getStoredLength(TypeDescriptor[] rowType);
 	
 }

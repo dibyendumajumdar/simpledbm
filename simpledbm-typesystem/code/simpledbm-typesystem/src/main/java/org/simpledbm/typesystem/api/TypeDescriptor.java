@@ -22,11 +22,13 @@ package org.simpledbm.typesystem.api;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
+import org.simpledbm.rss.api.st.Storable;
+
 /**
  * Provides type information.
  * @author Dibyendu Majumdar
  */
-public interface TypeDescriptor {
+public interface TypeDescriptor extends Storable {
 
     static final int TYPE_INTEGER = 1;
     static final int TYPE_VARCHAR = 2;

@@ -23,6 +23,7 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
@@ -53,5 +54,29 @@ public class IntegerType implements TypeDescriptor {
 	public TimeZone getTimeZone() {
 		return null;
 	}
-    
+
+	public int getStoredLength() {
+		return 0;
+	}
+
+	public void retrieve(ByteBuffer bb) {
+	}
+
+	public void store(ByteBuffer bb) {
+	}
+	
+	public int hashCode() {
+		return TYPE_INTEGER;
+	}
+	
+	public boolean equals(Object other) {
+		if (other == this) 
+			return true;
+		if (other == null) 
+			return false;
+		if (other.getClass() == getClass()) 
+			return true;
+		return false;
+	}
+	
 }
