@@ -1,0 +1,94 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.simpledbm.integration-tests</groupId>
+	<artifactId>simpledbm-integration-tests</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0.0</version>
+	<name>SimpleDBM Integration Tests</name>
+	<url>http://www.simpledbm.org</url>
+	<scm>
+		<connection>
+			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-integration-tests/code/simpledbm-integration-tests
+		</connection>
+		<developerConnection>
+			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-integration-tests/code/simpledbm-integration-tests
+		</developerConnection>
+		<url>http://simpledbm.googlecode.com/svn/</url>
+	</scm>
+	<developers>
+		<developer>
+			<id>dmajumdar</id>
+			<name>Dibyendu Majumdar</name>
+			<email>dibyendu at mazumdar dot demon dot co dot uk</email>
+			<url></url>
+			<organization>SimpleDBM</organization>
+			<organizationUrl>www.simpledbm.org</organizationUrl>
+			<roles />
+			<timezone></timezone>
+			<properties />
+		</developer>
+	</developers>
+
+	<licenses>
+		<license>
+			<name>
+				The GNU General Public License version 2.0 or later
+			</name>
+			<url>http://www.gnu.org/licenses/gpl.txt</url>
+		</license>
+	</licenses>
+	<dependencies>
+		<dependency>
+			<groupId>org.simpledbm.rss</groupId>
+			<artifactId>simpledbm-rss</artifactId>
+			<version>[1.0.7,)</version>
+		</dependency>
+		<dependency>
+			<groupId>org.simpledbm.typesystem</groupId>
+			<artifactId>simpledbm-typesystem</artifactId>
+			<version>[1.0.7,)</version>
+		</dependency>
+		<dependency>
+			<groupId>net.java.dev.swing-layout</groupId>
+    		<artifactId>swing-layout</artifactId>
+		    <version>[1.0.1,)</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.5</source>
+					<target>1.5</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clover-plugin</artifactId>
+				<configuration>
+					<licenseLocation>${basedir}/src/test/clover/clover.license</licenseLocation>
+					<jdk>1.5</jdk>
+					<excludes>
+				        <exclude>**/test/java</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>instrument</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
