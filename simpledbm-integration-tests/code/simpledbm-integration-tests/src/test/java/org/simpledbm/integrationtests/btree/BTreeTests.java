@@ -12,10 +12,6 @@ import org.simpledbm.typesystem.api.Row;
 
 public class BTreeTests extends BaseTestCase {
 
-	public void testCreateDatabase() {
-
-	}
-
 	void insertValuesUsingMultipleTransactions(Integer[] values,
 			boolean forceAbort) {
 		boolean success = false;
