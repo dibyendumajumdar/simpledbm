@@ -259,6 +259,7 @@ public class TestLockManager extends BaseTestCase {
             -1,
             null);
         assertEquals(LockMode.EXCLUSIVE, lockmgr.findLock(tran1, lockname));
+        assertEquals(1, lockmgr.getLocks(tran1, null).length);
         handle.release(false);
         assertEquals(LockMode.NONE, lockmgr.findLock(tran1, lockname));
         handle = lockmgr.acquire(
