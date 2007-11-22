@@ -1150,47 +1150,80 @@ public final class LockManagerImpl implements LockManager {
         }
     }
 
-    /**
-     * Acquires a lock in the specified mode. Handles most of the cases except
-     * the case where an INSTANT_DURATION lock needs to be waited for. This case
-     * requires the lock to be released after it has been granted; the lock
-     * release is handled by {@link #acquire acquire}.
-     * 
-     * <p>
-     * Algorithm:
-     * 
-     * <ol>
-     * <li>Search for the lock. </li>
-     * <li>If not found, this is a new lock and therefore grant the lock, and
-     * return success. </li>
-     * <li>Else check if requesting transaction already has a lock request.
-     * </li>
-     * <li>If not, this is the first request by the transaction. If yes, goto
-     * 11.</li>
-     * <li>Check if lock can be granted. This is true if there are no waiting
-     * requests and the new request is compatible with existing grant mode.
-     * </li>
-     * <li>If yes, grant the lock and return success. </li>
-     * <li>Otherwise, if nowait was specified, return failure. </li>
-     * <li>Otherwise, wait for the lock to be available/compatible. </li>
-     * <li>If after the wait, the lock has been granted, then return success.
-     * </li>
-     * <li> Else return failure.
-     * 
-     * </li>
-     * <li>If calling transaction already has a granted lock request then this
-     * must be a conversion request. </li>
-     * <li> Check whether the new request lock is same mode as previously held
-     * lock. </li>
-     * <li>If so, grant lock and return. </li>
-     * <li>Otherwise, check if requested lock is compatible with granted group.
-     * </li>
-     * <li>If so, grant lock and return. </li>
-     * <li>If not, and nowait specified, return failure. </li>
-     * <li>Goto 8. </li>
-     * </ol>
-     * </p>
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.locking.LockManager#getLocks(java.lang.Object, org.simpledbm.rss.api.locking.LockMode)
      */
+    public Object[] getLocks(Object owner, LockMode mode) {
+		ArrayList<Object> locks = new ArrayList<Object>();
+		globalLock.sharedLock();
+		try {
+			for (int i = 0; i < LockHashTable.length; i++) {
+				LockBucket bucket = LockHashTable[i];
+				synchronized (bucket) {
+					for (Iterator<LockItem> iter = bucket.chain.iterator(); iter
+							.hasNext();) {
+						LockItem item = iter.next();
+						if (item.target == null) {
+							continue;
+						}
+						LockRequest lockRequest = item.find(owner);
+						if (lockRequest != null
+								&& lockRequest.status == LockRequestStatus.GRANTED) {
+							if (mode == null || lockRequest.mode == mode) {
+								locks.add(item.target);
+							}
+						}
+					}
+				}
+			}
+			return locks.toArray();
+		} finally {
+			globalLock.unlockShared();
+		}
+	}
+    
+    
+    /**
+	 * Acquires a lock in the specified mode. Handles most of the cases except
+	 * the case where an INSTANT_DURATION lock needs to be waited for. This case
+	 * requires the lock to be released after it has been granted; the lock
+	 * release is handled by {@link #acquire acquire}.
+	 * 
+	 * <p>
+	 * Algorithm:
+	 * 
+	 * <ol>
+	 * <li>Search for the lock. </li>
+	 * <li>If not found, this is a new lock and therefore grant the lock, and
+	 * return success. </li>
+	 * <li>Else check if requesting transaction already has a lock request.
+	 * </li>
+	 * <li>If not, this is the first request by the transaction. If yes, goto
+	 * 11.</li>
+	 * <li>Check if lock can be granted. This is true if there are no waiting
+	 * requests and the new request is compatible with existing grant mode.
+	 * </li>
+	 * <li>If yes, grant the lock and return success. </li>
+	 * <li>Otherwise, if nowait was specified, return failure. </li>
+	 * <li>Otherwise, wait for the lock to be available/compatible. </li>
+	 * <li>If after the wait, the lock has been granted, then return success.
+	 * </li>
+	 * <li> Else return failure.
+	 * 
+	 * </li>
+	 * <li>If calling transaction already has a granted lock request then this
+	 * must be a conversion request. </li>
+	 * <li> Check whether the new request lock is same mode as previously held
+	 * lock. </li>
+	 * <li>If so, grant lock and return. </li>
+	 * <li>Otherwise, check if requested lock is compatible with granted group.
+	 * </li>
+	 * <li>If so, grant lock and return. </li>
+	 * <li>If not, and nowait specified, return failure. </li>
+	 * <li>Goto 8. </li>
+	 * </ol>
+	 * </p>
+	 */
     private LockHandleImpl doAcquire(LockState lockState) {
 
         if (log.isDebugEnabled()) {
