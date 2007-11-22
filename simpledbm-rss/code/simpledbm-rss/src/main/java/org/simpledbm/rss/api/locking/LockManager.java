@@ -121,6 +121,13 @@ public interface LockManager {
      * @return {@link LockMode} The mode in which lock is held, or {@link LockMode#NONE} if lock is not held.
      */
     LockMode findLock(Object owner, Object lockable);
+    
+    /**
+     * Searches for and returns all locks owned by specified owner.
+     * @param owner Owner of the lock, must implement equals() method.
+     * @param mode The lock mode or null if all locks are required.
+     */
+    Object[] getLocks(Object owner, LockMode mode);
 
     /**
      * Starts the Lock Manager instance.
