@@ -220,11 +220,11 @@ public class BTreeDemo {
 			trx = server.begin(IsolationMode.READ_COMMITTED);
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
-				Row row = (Row) keyFactory.newIndexKey(1);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-				RowLocation location = (RowLocation) locationFactory.newLocation();
 				for (int i = 1; i <= 201; i += 2) {
+					Row row = (Row) keyFactory.newIndexKey(1);
 					row.get(0).setInt(i);
+					RowLocation location = (RowLocation) locationFactory.newLocation();
 					location.setInt(i);
 					// Note that the row must be locked exclusively prior to the insert
 					trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
