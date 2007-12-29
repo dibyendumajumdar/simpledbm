@@ -30,7 +30,7 @@ public class SlottedPageManagerImpl implements SlottedPageManager {
 
     static final short MODULE_ID = 3;
 
-    static final short TYPE_BASE = MODULE_ID * 100;
+    static final short TYPE_BASE = 15;
     static final short TYPE_SLOTTEDPAGE = TYPE_BASE + 1;
 
     public SlottedPageManagerImpl(ObjectRegistry objectFactory) {
