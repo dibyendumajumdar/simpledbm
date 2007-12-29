@@ -43,7 +43,7 @@ public final class PageFactoryImpl implements PageFactory {
 
     static final int MODULE_ID = 5;
 
-    static final int TYPE_BASE = 5 * 100;
+    static final int TYPE_BASE = 10;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
 
     private static Logger log = Logger.getLogger(PageFactoryImpl.class
