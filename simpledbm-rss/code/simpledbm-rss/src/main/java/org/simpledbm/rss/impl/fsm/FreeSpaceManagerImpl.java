@@ -80,7 +80,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
     private static final short MODULE_ID = 2;
 
-    private static final short TYPE_BASE = MODULE_ID * 100;
+    private static final short TYPE_BASE = 20;
     static final short TYPE_HEADERPAGE = TYPE_BASE + 1;
     static final short TYPE_ONEBITSPACEMAPPAGE = TYPE_BASE + 2;
     static final short TYPE_TWOBITSPACEMAPPAGE = TYPE_BASE + 3;
@@ -318,7 +318,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bufmgr.invalidateContainer(logrec.getContainerId());
             storageManager.remove(logrec.getContainerId());
             // storageFactory.delete(logrec.getName());
-            trxmgr.logNonTransactionRelatedOperation(logrec);
+            // Following is now handled by the transaction manager
+            // trxmgr.logNonTransactionRelatedOperation(logrec);
         }
     }
 
