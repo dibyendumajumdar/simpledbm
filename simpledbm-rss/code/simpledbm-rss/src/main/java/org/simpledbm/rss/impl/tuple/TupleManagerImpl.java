@@ -142,7 +142,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
     private static final short MODULE_ID = 6;
 
-    private static final short TYPE_BASE = MODULE_ID * 100;
+    private static final short TYPE_BASE = 60;
 
     private static final short TYPE_LOCATIONFACTORY = TYPE_BASE;
 
