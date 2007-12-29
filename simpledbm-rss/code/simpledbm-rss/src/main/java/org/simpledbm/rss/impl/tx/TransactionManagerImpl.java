@@ -152,7 +152,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     private static final short MODULE_ID = 1;
 
-    private static final short TYPE_BASE = MODULE_ID * 100;
+    private static final short TYPE_BASE = 0;
     private static final short TYPE_TRXPREPARE = TYPE_BASE + 1;
     private static final short TYPE_TRXABORT = TYPE_BASE + 2;
     private static final short TYPE_TRXEND = TYPE_BASE + 3;
@@ -1120,6 +1120,7 @@ public final class TransactionManagerImpl implements TransactionManager {
                 TransactionalModule module = moduleRegistry.getModule(action
                     .getModuleId());
                 moduleRedo(module, action);
+                logNonTransactionRelatedOperation(action);
                 iter.remove();
             }
         }
