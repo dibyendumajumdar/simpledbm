@@ -19,10 +19,16 @@
  */
 package org.simpledbm.database;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.tx.BaseLoggable;
+import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.PostCommitAction;
+import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.FieldFactory;
@@ -31,11 +37,15 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
 
-public class Database {
+public class Database extends BaseTransactionalModule {
+
+	final static int MODULE_ID = 10;
+	final static int MODULE_BASE = 80;
 
 	/** Object registry id for row factory */
-	final static int ROW_FACTORY_TYPE_ID = 25000;
-
+	final static int ROW_FACTORY_TYPE_ID = MODULE_BASE+1;
+	final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE+2;
+	
 	Server server;
 
 	Properties properties;
@@ -92,7 +102,8 @@ public class Database {
          * We must always create a new server object.
          */
         server = new Server(properties);
-        registerRowFactory();
+		server.getModuleRegistry().registerModule(MODULE_ID, this);        
+		registerRowFactory();
         server.start();
 
         serverStarted = true;
@@ -132,6 +143,7 @@ public class Database {
 				server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
 						ROW_FACTORY_TYPE_ID, idx.isUnique());
 			}
+			trx.schedulePostCommitAction(new CreateTableDefinition());
 			success = true;
 		} finally {
 			if (success)
@@ -141,4 +153,68 @@ public class Database {
 		}
 	}
 
+	@Override
+	public void redo(Page page, Redoable loggable) {
+		if (loggable instanceof CreateTableDefinition) {
+			// TODO
+		}
+		
+	}
+
+	/**
+	 * Responsible for adding the table definition to the data dictionary.
+	 * 
+	 * @author dibyendumajumdar
+	 * @since 29 Dec 2007
+	 */
+	public static class CreateTableDefinition extends BaseLoggable implements PostCommitAction {
+
+		@Override
+		public void init() {
+			// TODO Auto-generated method stub
+			
+		}
+
+		public int getActionId() {
+			// TODO Auto-generated method stub
+			return 0;
+		}
+
+		public void setActionId(int actionId) {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public StringBuilder appendTo(StringBuilder sb) {
+			// TODO Auto-generated method stub
+			return super.appendTo(sb);
+		}
+
+		@Override
+		public int getStoredLength() {
+			// TODO Auto-generated method stub
+			return super.getStoredLength();
+		}
+
+		@Override
+		public void retrieve(ByteBuffer bb) {
+			// TODO Auto-generated method stub
+			super.retrieve(bb);
+		}
+
+		@Override
+		public void store(ByteBuffer bb) {
+			// TODO Auto-generated method stub
+			super.store(bb);
+		}
+
+		@Override
+		public String toString() {
+			// TODO Auto-generated method stub
+			return super.toString();
+		}
+		
+	}
+	
 }
