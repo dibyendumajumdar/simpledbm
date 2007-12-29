@@ -141,7 +141,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     private static final short MODULE_ID = 4;
 
-    private static final short TYPE_BASE = MODULE_ID * 100;
+    private static final short TYPE_BASE = 40;
     private static final short TYPE_SPLIT_OPERATION = TYPE_BASE + 1;
     private static final short TYPE_MERGE_OPERATION = TYPE_BASE + 3;
     private static final short TYPE_LINK_OPERATION = TYPE_BASE + 4;
