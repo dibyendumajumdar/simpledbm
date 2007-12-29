@@ -25,10 +25,13 @@ import java.util.ArrayList;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.util.ByteString;
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -41,7 +44,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * @author dibyendumajumdar
  * @since 7 Oct 2007
  */
-public class Table {
+public class Table implements Storable {
 
 	Database database;
 
@@ -53,6 +56,10 @@ public class Table {
 
 	ArrayList<Index> indexes = new ArrayList<Index>();
 
+	Table(Database database) {
+		this.database = database;
+	}
+	
 	public Table(Database database, int containerId, String name,
 			TypeDescriptor[] rowType) {
 		this.database = database;
@@ -280,6 +287,46 @@ public class Table {
 
 	public ArrayList<Index> getIndexes() {
 		return indexes;
+	}
+
+	public int getStoredLength() {
+		int n = 0;
+		ByteString s = new ByteString(name);
+		n += TypeSize.INTEGER;
+		n += s.getStoredLength();
+		n += database.getFieldFactory().getStoredLength(rowType);
+		n += TypeSize.SHORT;
+		for (int i = 0; i < n; i++) {
+			n += indexes.get(i).getStoredLength();
+		}
+		return 0;
+	}
+
+	public void retrieve(ByteBuffer bb) {
+		containerId = bb.getInt();
+		ByteString s = new ByteString();
+		s.retrieve(bb);
+		rowType = database.getFieldFactory().retrieve(bb);
+		int n = bb.getShort();
+		indexes = new ArrayList<Index>();
+		for (int i = 0; i < n; i++) {
+			Index idx = new Index(this);
+			idx.retrieve(bb);
+		}
+		database.getRowFactory().registerRowType(containerId, rowType);
+		database.tables.add(this);
+	}
+
+	public void store(ByteBuffer bb) {
+		bb.putInt(containerId);
+		ByteString s = new ByteString(name);
+		s.store(bb);
+		database.getFieldFactory().store(rowType, bb);
+		bb.putShort((short)indexes.size());
+		for (int i = 0; i < indexes.size(); i++) {
+			Index idx = indexes.get(i);
+			idx.store(bb);
+		}
 	}
 
 }

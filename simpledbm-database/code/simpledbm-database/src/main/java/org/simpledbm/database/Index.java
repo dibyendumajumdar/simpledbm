@@ -19,13 +19,18 @@
  */
 package org.simpledbm.database;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
+import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.ByteString;
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class Index {
+public class Index implements Storable {
 
 	Table table;
 
@@ -41,6 +46,10 @@ public class Index {
 
 	boolean unique;
 
+	Index(Table table) {
+		this.table = table;
+	}
+	
 	public Index(Table table, int containerId, String name,
 			int columns[], boolean primary, boolean unique) {
 		this.table = table;
@@ -107,4 +116,76 @@ public class Index {
         IndexKeyFactory rowFactory = table.database.getRowFactory();
         return rowFactory.minIndexKey(containerId);
     }
+
+	public int getStoredLength() {
+		ByteString s = new ByteString(name);
+		int n = 0;
+		
+		n += s.getStoredLength();
+		n += TypeSize.INTEGER;
+		n += TypeSize.BYTE * 2;
+		n += TypeSize.SHORT;
+		for (int i = 0; i < columns.length; i++) {
+			n += TypeSize.SHORT;
+		}
+		
+		return 0;
+	}
+
+	public void retrieve(ByteBuffer bb) {
+		ByteString s = new ByteString();
+		containerId = bb.getInt();
+		s.retrieve(bb);
+		name = s.toString();
+		byte b = bb.get();
+		if (b == 1) {
+			primary = true;
+		}
+		else {
+			primary = false;
+		}
+		b = bb.get();
+		if (b == 1) {
+			unique = true;
+		}
+		else {
+			unique = false;
+		}
+		int n = bb.getShort();
+		columns = new int[n];
+		for (int i = 0; i < n; i++) {
+			columns[i] = bb.getShort();
+		}
+		rowType = new TypeDescriptor[columns.length];
+		for (int i = 0; i < columns.length; i++) {
+			rowType[i] = table.getRowType()[columns[i]];
+		}
+		table.database.getRowFactory().registerRowType(containerId, rowType);
+		table.indexes.add(this);
+	}
+
+	public void store(ByteBuffer bb) {
+		bb.putInt(containerId);
+		ByteString s = new ByteString(name);
+		s.store(bb);
+		if (primary) {
+			bb.put((byte)1);
+		}
+		else {
+			bb.put((byte)0);
+		}
+		if (unique) {
+			bb.put((byte)1);
+		}
+		else {
+			bb.put((byte)0);
+		}
+		bb.putShort((short)columns.length);
+		for (int i = 0; i < columns.length; i++) {
+			bb.putShort((short) columns[i]);
+		}
+	}
+    
+    
+    
 }
