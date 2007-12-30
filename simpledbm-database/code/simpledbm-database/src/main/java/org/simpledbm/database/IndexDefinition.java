@@ -30,27 +30,48 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class Index implements Storable {
+public class IndexDefinition implements Storable {
 
-	Table table;
+	/**
+	 * Table to which this index belongs.
+	 */
+	TableDefinition table;
 
+	/**
+	 * Container ID for the index.
+	 */
 	int containerId;
 
+	/**
+	 * Name of the index.
+	 */
 	String name;
 
+	/**
+	 * Columns from the table that will be part of the index.
+	 */
 	int columns[];
 
+	/**
+	 * A row descriptor for the index, derived from the table columns.
+	 */
 	TypeDescriptor[] rowType;
 
+	/**
+	 * Is this a primary index?
+	 */
 	boolean primary;
 
+	/**
+	 * Is this a unique index?
+	 */
 	boolean unique;
 
-	Index(Table table) {
+	IndexDefinition(TableDefinition table) {
 		this.table = table;
 	}
 	
-	public Index(Table table, int containerId, String name,
+	public IndexDefinition(TableDefinition table, int containerId, String name,
 			int columns[], boolean primary, boolean unique) {
 		this.table = table;
 		this.containerId = containerId;
@@ -72,7 +93,7 @@ public class Index implements Storable {
 		table.indexes.add(this);
 	}
 
-	public Table getTable() {
+	public TableDefinition getTable() {
 		return table;
 	}
 
@@ -205,7 +226,7 @@ public class Index implements Storable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final Index other = (Index) obj;
+		final IndexDefinition other = (IndexDefinition) obj;
 		if (containerId != other.containerId)
 			return false;
 		if (name == null) {

@@ -62,11 +62,11 @@ public class Database extends BaseTransactionalModule {
 
 	final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
 
-	ArrayList<Table> tables = new ArrayList<Table>();
+	ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
-	public Table addTableDefinition(String name, int containerId,
+	public TableDefinition addTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return new Table(this, containerId, name, rowType);
+		return new TableDefinition(this, containerId, name, rowType);
 	}
 
 	public Database(Properties properties) {
@@ -127,13 +127,13 @@ public class Database extends BaseTransactionalModule {
 		return rowFactory;
 	}
 
-	public void createTable(Table tableDefinition) {
+	public void createTable(TableDefinition tableDefinition) {
 		Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
 		boolean success = false;
 		try {
 			server.createTupleContainer(trx, tableDefinition.getName(),
 					tableDefinition.getContainerId(), 8);
-			for (Index idx : tableDefinition.getIndexes()) {
+			for (IndexDefinition idx : tableDefinition.getIndexes()) {
 				server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
 						ROW_FACTORY_TYPE_ID, idx.isUnique());
 			}
@@ -163,7 +163,7 @@ public class Database extends BaseTransactionalModule {
 		}
 	}
 
-	void createTableDefinition(Table table) {
+	void createTableDefinition(TableDefinition table) {
 		String tableName = "_internal/" + table.getContainerId() + ".def";
 		StorageContainerFactory storageFactory = server.getStorageFactory();
 		StorageContainer sc = storageFactory.createIfNotExisting(tableName);
@@ -179,7 +179,7 @@ public class Database extends BaseTransactionalModule {
 		}
 	}
 	
-	Table getTableDefinition(int containerId) {
+	TableDefinition getTableDefinition(int containerId) {
 		String tableName = "_internal/" + containerId + ".def";
 		StorageContainerFactory storageFactory = server.getStorageFactory();
 		StorageContainer sc = storageFactory.open(tableName);
@@ -191,7 +191,7 @@ public class Database extends BaseTransactionalModule {
 			buffer = new byte[n];
 			sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
-			Table table = new Table(this);
+			TableDefinition table = new TableDefinition(this);
 			table.retrieve(bb);
 			return table;
 		}
@@ -209,14 +209,14 @@ public class Database extends BaseTransactionalModule {
 	public static final class CreateTableDefinition extends BaseLoggable implements PostCommitAction, ObjectRegistryAware {
 
 		int actionId;
-		Table table;
+		TableDefinition table;
 		Database database;
 		ObjectRegistry objectRegistry;
 		
 		public CreateTableDefinition() {
 		}
 		
-		public CreateTableDefinition(Table table) {
+		public CreateTableDefinition(TableDefinition table) {
 			this.table = table;
 			this.database = table.getDatabase();
 			this.objectRegistry = table.getDatabase().getServer().getObjectRegistry();
@@ -236,7 +236,12 @@ public class Database extends BaseTransactionalModule {
 
 		@Override
 		public StringBuilder appendTo(StringBuilder sb) {
-			return super.appendTo(sb);
+			sb.append("CreateTableDefinition(");
+			super.appendTo(sb);
+			sb.append(", actionId=");
+			sb.append(actionId);
+			sb.append(", table=");
+			return sb;
 		}
 
 		@Override
@@ -254,7 +259,7 @@ public class Database extends BaseTransactionalModule {
 			}
 			super.retrieve(bb);
 			actionId = bb.getInt();
-			table = new Table(database);
+			table = new TableDefinition(database);
 			table.retrieve(bb);
 		}
 
@@ -267,7 +272,7 @@ public class Database extends BaseTransactionalModule {
 
 		@Override
 		public String toString() {
-			return super.toString();
+			return appendTo(new StringBuilder()).toString();
 		}
 
 		public void setObjectFactory(ObjectRegistry objectFactory) {
