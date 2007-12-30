@@ -344,7 +344,9 @@ public class Server {
     }
 
     public synchronized final TransactionalModuleRegistry getModuleRegistry() {
-        assertStarted();
+        // assertStarted();
+        // Because there are valid reasons for accessing the registry prior
+        // starting the server
         return moduleRegistry;
     }
 
