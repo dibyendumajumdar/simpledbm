@@ -12,7 +12,7 @@ import org.simpledbm.typesystem.api.Row;
 
 public class TableScan {
 
-	final Table table;
+	final TableDefinition table;
 	
 	final IndexScan indexScan;
 	
@@ -26,12 +26,12 @@ public class TableScan {
 	
 	Row currentRow;
 	
-	TableScan(Transaction trx, Table table, int indexNo, Row startRow, boolean forUpdate) {
+	TableScan(Transaction trx, TableDefinition table, int indexNo, Row startRow, boolean forUpdate) {
 		this.table = table;
 		this.startRow = startRow;
 		this.trx = trx;
         tcont = table.database.server.getTupleContainer(trx, table.containerId);
-        Index index = table.indexes.get(indexNo);
+        IndexDefinition index = table.indexes.get(indexNo);
         icont = table.database.server.getIndex(trx, index.containerId);
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
 	}
@@ -71,7 +71,7 @@ public class TableScan {
 		Savepoint sp = trx.createSavepoint(false);
 		boolean success = false;
 		try {
-			Index pkey = table.indexes.get(0);
+			IndexDefinition pkey = table.indexes.get(0);
 			// New secondary key
 			Row newPrimaryKeyRow = table.getIndexRow(pkey, tableRow);
 			if (indexScan.getCurrentKey().equals(newPrimaryKeyRow)) {
@@ -89,7 +89,7 @@ public class TableScan {
 				// Update secondary indexes
 				// Old secondary key
 				for (int i = 1; i < table.indexes.size(); i++) {
-					Index skey = table.indexes.get(i);
+					IndexDefinition skey = table.indexes.get(i);
 					IndexContainer secondaryIndex = table.database.server
 							.getIndex(trx, skey.containerId);
 					// old secondary key
@@ -134,7 +134,7 @@ public class TableScan {
 			// Update secondary indexes
 			// Old secondary key
 			for (int i = table.indexes.size() - 1; i >= 0; i--) {
-				Index skey = table.indexes.get(i);
+				IndexDefinition skey = table.indexes.get(i);
 				IndexContainer secondaryIndex = table.database.server.getIndex(
 						trx, skey.containerId);
 				// old secondary key

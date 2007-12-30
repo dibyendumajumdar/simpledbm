@@ -44,7 +44,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * @author dibyendumajumdar
  * @since 7 Oct 2007
  */
-public class Table implements Storable {
+public class TableDefinition implements Storable {
 
 	Database database;
 
@@ -54,13 +54,13 @@ public class Table implements Storable {
 
 	TypeDescriptor[] rowType;
 
-	ArrayList<Index> indexes = new ArrayList<Index>();
+	ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-	Table(Database database) {
+	TableDefinition(Database database) {
 		this.database = database;
 	}
 
-	public Table(Database database, int containerId, String name,
+	public TableDefinition(Database database, int containerId, String name,
 			TypeDescriptor[] rowType) {
 		this.database = database;
 		this.containerId = containerId;
@@ -77,7 +77,7 @@ public class Table implements Storable {
 			throw new IllegalArgumentException(
 					"First index must be the primary");
 		}
-		new Index(this, containerId, name, columns, primary, unique);
+		new IndexDefinition(this, containerId, name, columns, primary, unique);
 	}
 
 	public Row getRow() {
@@ -104,7 +104,7 @@ public class Table implements Storable {
 			// Insert the keys. The first key should be the primary key.
 			// Insertion of primary key may fail with unique constraint
 			// violation
-			for (Index idx : indexes) {
+			for (IndexDefinition idx : indexes) {
 				IndexContainer index = database.server.getIndex(trx,
 						idx.containerId);
 				Row indexRow = getIndexRow(idx, tableRow);
@@ -123,7 +123,7 @@ public class Table implements Storable {
 		return location;
 	}
 
-	Row getIndexRow(Index index, Row tableRow) {
+	Row getIndexRow(IndexDefinition index, Row tableRow) {
 		Row indexRow = index.getRow();
 		for (int i = 0; i < index.columns.length; i++) {
 			indexRow.set(i, (Field) tableRow.get(index.columns[i]).cloneMe());
@@ -140,7 +140,7 @@ public class Table implements Storable {
 			TupleContainer table = database.server.getTupleContainer(trx,
 					containerId);
 
-			Index pkey = indexes.get(0);
+			IndexDefinition pkey = indexes.get(0);
 			// New primary key
 			Row primaryKeyRow = getIndexRow(pkey, tableRow);
 
@@ -171,7 +171,7 @@ public class Table implements Storable {
 						// Update secondary indexes
 						// Old secondary key
 						for (int i = 1; i < indexes.size(); i++) {
-							Index skey = indexes.get(i);
+							IndexDefinition skey = indexes.get(i);
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
@@ -210,7 +210,7 @@ public class Table implements Storable {
 			TupleContainer table = database.server.getTupleContainer(trx,
 					containerId);
 
-			Index pkey = indexes.get(0);
+			IndexDefinition pkey = indexes.get(0);
 			// New primary key
 			Row primaryKeyRow = getIndexRow(pkey, tableRow);
 
@@ -241,7 +241,7 @@ public class Table implements Storable {
 						// Update secondary indexes
 						// Old secondary key
 						for (int i = 1; i < indexes.size(); i++) {
-							Index skey = indexes.get(i);
+							IndexDefinition skey = indexes.get(i);
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
@@ -286,7 +286,7 @@ public class Table implements Storable {
 		return rowType;
 	}
 
-	public ArrayList<Index> getIndexes() {
+	public ArrayList<IndexDefinition> getIndexes() {
 		return indexes;
 	}
 
@@ -310,9 +310,9 @@ public class Table implements Storable {
 		name = s.toString();
 		rowType = database.getFieldFactory().retrieve(bb);
 		int n = bb.getShort();
-		indexes = new ArrayList<Index>();
+		indexes = new ArrayList<IndexDefinition>();
 		for (int i = 0; i < n; i++) {
-			Index idx = new Index(this);
+			IndexDefinition idx = new IndexDefinition(this);
 			idx.retrieve(bb);
 		}
 		if (!database.tables.contains(this)) {
@@ -328,7 +328,7 @@ public class Table implements Storable {
 		database.getFieldFactory().store(rowType, bb);
 		bb.putShort((short) indexes.size());
 		for (int i = 0; i < indexes.size(); i++) {
-			Index idx = indexes.get(i);
+			IndexDefinition idx = indexes.get(i);
 			idx.store(bb);
 		}
 	}
@@ -350,7 +350,7 @@ public class Table implements Storable {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		final Table other = (Table) obj;
+		final TableDefinition other = (TableDefinition) obj;
 		if (containerId != other.containerId)
 			return false;
 		if (name == null) {
