@@ -129,7 +129,7 @@ public class Index implements Storable {
 			n += TypeSize.SHORT;
 		}
 		
-		return 0;
+		return n;
 	}
 
 	public void retrieve(ByteBuffer bb) {
@@ -145,7 +145,7 @@ public class Index implements Storable {
 			primary = false;
 		}
 		b = bb.get();
-		if (b == 1) {
+		if (b == 1 || primary) {
 			unique = true;
 		}
 		else {
@@ -160,8 +160,10 @@ public class Index implements Storable {
 		for (int i = 0; i < columns.length; i++) {
 			rowType[i] = table.getRowType()[columns[i]];
 		}
-		table.database.getRowFactory().registerRowType(containerId, rowType);
-		table.indexes.add(this);
+		if (!table.indexes.contains(this)) {
+			table.database.getRowFactory().registerRowType(containerId, rowType);
+			table.indexes.add(this);
+		}
 	}
 
 	public void store(ByteBuffer bb) {
@@ -174,7 +176,7 @@ public class Index implements Storable {
 		else {
 			bb.put((byte)0);
 		}
-		if (unique) {
+		if (unique || primary) {
 			bb.put((byte)1);
 		}
 		else {
@@ -184,6 +186,34 @@ public class Index implements Storable {
 		for (int i = 0; i < columns.length; i++) {
 			bb.putShort((short) columns[i]);
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + containerId;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final Index other = (Index) obj;
+		if (containerId != other.containerId)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
 	}
     
     

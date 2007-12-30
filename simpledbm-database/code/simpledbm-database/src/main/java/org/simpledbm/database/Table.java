@@ -59,7 +59,7 @@ public class Table implements Storable {
 	Table(Database database) {
 		this.database = database;
 	}
-	
+
 	public Table(Database database, int containerId, String name,
 			TypeDescriptor[] rowType) {
 		this.database = database;
@@ -73,11 +73,9 @@ public class Table implements Storable {
 
 	public void addIndex(int containerId, String name, int[] columns,
 			boolean primary, boolean unique) {
-		if (primary) {
-			if (indexes.size() == 0) {
-				throw new IllegalArgumentException(
-						"First index must be the primary");
-			}
+		if (!primary && indexes.size() == 0) {
+			throw new IllegalArgumentException(
+					"First index must be the primary");
 		}
 		new Index(this, containerId, name, columns, primary, unique);
 	}
@@ -177,7 +175,8 @@ public class Table implements Storable {
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
-							Row oldSecondaryKeyRow = getIndexRow(skey, oldTableRow);
+							Row oldSecondaryKeyRow = getIndexRow(skey,
+									oldTableRow);
 							// New secondary key
 							Row secondaryKeyRow = getIndexRow(skey, tableRow);
 							if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
@@ -246,7 +245,8 @@ public class Table implements Storable {
 							IndexContainer secondaryIndex = database.server
 									.getIndex(trx, skey.containerId);
 							// old secondary key
-							Row oldSecondaryKeyRow = getIndexRow(skey, oldTableRow);
+							Row oldSecondaryKeyRow = getIndexRow(skey,
+									oldTableRow);
 							// Delete old key
 							secondaryIndex.delete(trx, oldSecondaryKeyRow,
 									location);
@@ -265,10 +265,11 @@ public class Table implements Storable {
 		}
 	}
 
-	public TableScan openScan(Transaction trx, int indexno, Row startRow, boolean forUpdate) {
+	public TableScan openScan(Transaction trx, int indexno, Row startRow,
+			boolean forUpdate) {
 		return new TableScan(trx, this, indexno, startRow, forUpdate);
 	}
-	
+
 	public Database getDatabase() {
 		return database;
 	}
@@ -296,16 +297,17 @@ public class Table implements Storable {
 		n += s.getStoredLength();
 		n += database.getFieldFactory().getStoredLength(rowType);
 		n += TypeSize.SHORT;
-		for (int i = 0; i < n; i++) {
+		for (int i = 0; i < indexes.size(); i++) {
 			n += indexes.get(i).getStoredLength();
 		}
-		return 0;
+		return n;
 	}
 
 	public void retrieve(ByteBuffer bb) {
 		containerId = bb.getInt();
 		ByteString s = new ByteString();
 		s.retrieve(bb);
+		name = s.toString();
 		rowType = database.getFieldFactory().retrieve(bb);
 		int n = bb.getShort();
 		indexes = new ArrayList<Index>();
@@ -313,8 +315,10 @@ public class Table implements Storable {
 			Index idx = new Index(this);
 			idx.retrieve(bb);
 		}
-		database.getRowFactory().registerRowType(containerId, rowType);
-		database.tables.add(this);
+		if (!database.tables.contains(this)) {
+			database.getRowFactory().registerRowType(containerId, rowType);
+			database.tables.add(this);
+		}
 	}
 
 	public void store(ByteBuffer bb) {
@@ -322,11 +326,39 @@ public class Table implements Storable {
 		ByteString s = new ByteString(name);
 		s.store(bb);
 		database.getFieldFactory().store(rowType, bb);
-		bb.putShort((short)indexes.size());
+		bb.putShort((short) indexes.size());
 		for (int i = 0; i < indexes.size(); i++) {
 			Index idx = indexes.get(i);
 			idx.store(bb);
 		}
+	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + containerId;
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final Table other = (Table) obj;
+		if (containerId != other.containerId)
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		return true;
 	}
 
 }
