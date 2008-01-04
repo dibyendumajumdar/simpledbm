@@ -32,21 +32,21 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
  * @since 29 Dec 2007
  */
 public class DatabaseRowFactory extends GenericRowFactory {
-	
-	Database database;
 
-	public DatabaseRowFactory(Database database, FieldFactory fieldFactory) {
-		super(fieldFactory);
-		this.database = database;
-	}
+    Database database;
 
-	@Override
-	protected synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
-		TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
-		if (rowType == null) {
-			TableDefinition table = database.getTableDefinition(keytype);
-			rowType = table.getRowType();
-		}
-		return rowType;
-	}
+    public DatabaseRowFactory(Database database, FieldFactory fieldFactory) {
+        super(fieldFactory);
+        this.database = database;
+    }
+
+    @Override
+    protected synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
+        TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
+        if (rowType == null) {
+            TableDefinition table = database.getTableDefinition(keytype);
+            rowType = table.getRowType();
+        }
+        return rowType;
+    }
 }
