@@ -21,6 +21,7 @@ package org.simpledbm.database;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.st.Storable;
@@ -32,100 +33,97 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class IndexDefinition implements Storable {
 
-	/**
-	 * Table to which this index belongs.
-	 */
-	TableDefinition table;
+    /**
+     * Table to which this index belongs.
+     */
+    TableDefinition table;
+    /**
+     * Container ID for the index.
+     */
+    int containerId;
+    /**
+     * Name of the index.
+     */
+    String name;
+    /**
+     * Columns from the table that will be part of the index.
+     */
+    int columns[];
+    /**
+     * A row descriptor for the index, derived from the table columns.
+     */
+    TypeDescriptor[] rowType;
+    /**
+     * Is this a primary index?
+     */
+    boolean primary;
+    /**
+     * Is this a unique index?
+     */
+    boolean unique;
 
-	/**
-	 * Container ID for the index.
-	 */
-	int containerId;
+    IndexDefinition(TableDefinition table) {
+        this.table = table;
+    }
 
-	/**
-	 * Name of the index.
-	 */
-	String name;
+    public IndexDefinition(TableDefinition table, int containerId, String name,
+            int columns[], boolean primary, boolean unique) {
+        this.table = table;
+        this.containerId = containerId;
+        this.name = name;
+        this.columns = columns;
+        this.primary = primary;
+        if (primary) {
+            this.unique = true;
+        } else {
+            this.unique = unique;
+        }
 
-	/**
-	 * Columns from the table that will be part of the index.
-	 */
-	int columns[];
+        rowType = new TypeDescriptor[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            if (columns[i] >= table.getRowType().length || columns[i] < 0) {
+                throw new RSSException("Error: The spcified column of the index does not exist");
+            }
+            rowType[i] = table.getRowType()[columns[i]];
+        }
 
-	/**
-	 * A row descriptor for the index, derived from the table columns.
-	 */
-	TypeDescriptor[] rowType;
+        table.database.getRowFactory().registerRowType(containerId, rowType);
+        table.indexes.add(this);
+    }
 
-	/**
-	 * Is this a primary index?
-	 */
-	boolean primary;
+    public TableDefinition getTable() {
+        return table;
+    }
 
-	/**
-	 * Is this a unique index?
-	 */
-	boolean unique;
+    public int getContainerId() {
+        return containerId;
+    }
 
-	IndexDefinition(TableDefinition table) {
-		this.table = table;
-	}
-	
-	public IndexDefinition(TableDefinition table, int containerId, String name,
-			int columns[], boolean primary, boolean unique) {
-		this.table = table;
-		this.containerId = containerId;
-		this.name = name;
-		this.columns = columns;
-		this.primary = primary;
-		if (primary) {
-			this.unique = true;
-		} else {
-			this.unique = unique;
-		}
+    public String getName() {
+        return name;
+    }
 
-		rowType = new TypeDescriptor[columns.length];
-		for (int i = 0; i < columns.length; i++) {
-			rowType[i] = table.getRowType()[columns[i]];
-		}
+    public int[] getColumns() {
+        return columns;
+    }
 
-		table.database.getRowFactory().registerRowType(containerId, rowType);
-		table.indexes.add(this);
-	}
+    public TypeDescriptor[] getRowType() {
+        return rowType;
+    }
 
-	public TableDefinition getTable() {
-		return table;
-	}
+    public boolean isPrimary() {
+        return primary;
+    }
 
-	public int getContainerId() {
-		return containerId;
-	}
+    public boolean isUnique() {
+        return unique;
+    }
 
-	public String getName() {
-		return name;
-	}
+    public Row getRow() {
+        RowFactory rowFactory = table.database.getRowFactory();
+        return rowFactory.newRow(containerId);
+    }
 
-	public int[] getColumns() {
-		return columns;
-	}
-
-	public TypeDescriptor[] getRowType() {
-		return rowType;
-	}
-
-	public boolean isPrimary() {
-		return primary;
-	}
-
-	public boolean isUnique() {
-		return unique;
-	}
-
-	public Row getRow() {
-		RowFactory rowFactory = table.database.getRowFactory();
-		return rowFactory.newRow(containerId);
-	}
-	
     /**
      * Create a row with values that are less than any other row in the index.
      * 
@@ -138,105 +136,104 @@ public class IndexDefinition implements Storable {
         return rowFactory.minIndexKey(containerId);
     }
 
-	public int getStoredLength() {
-		ByteString s = new ByteString(name);
-		int n = 0;
-		
-		n += s.getStoredLength();
-		n += TypeSize.INTEGER;
-		n += TypeSize.BYTE * 2;
-		n += TypeSize.SHORT;
-		for (int i = 0; i < columns.length; i++) {
-			n += TypeSize.SHORT;
-		}
-		
-		return n;
-	}
+    public int getStoredLength() {
+        ByteString s = new ByteString(name);
+        int n = 0;
 
-	public void retrieve(ByteBuffer bb) {
-		ByteString s = new ByteString();
-		containerId = bb.getInt();
-		s.retrieve(bb);
-		name = s.toString();
-		byte b = bb.get();
-		if (b == 1) {
-			primary = true;
-		}
-		else {
-			primary = false;
-		}
-		b = bb.get();
-		if (b == 1 || primary) {
-			unique = true;
-		}
-		else {
-			unique = false;
-		}
-		int n = bb.getShort();
-		columns = new int[n];
-		for (int i = 0; i < n; i++) {
-			columns[i] = bb.getShort();
-		}
-		rowType = new TypeDescriptor[columns.length];
-		for (int i = 0; i < columns.length; i++) {
-			rowType[i] = table.getRowType()[columns[i]];
-		}
-		if (!table.indexes.contains(this)) {
-			table.database.getRowFactory().registerRowType(containerId, rowType);
-			table.indexes.add(this);
-		}
-	}
+        n += s.getStoredLength();
+        n += TypeSize.INTEGER;
+        n += TypeSize.BYTE * 2;
+        n += TypeSize.SHORT;
+        for (int i = 0; i < columns.length; i++) {
+            n += TypeSize.SHORT;
+        }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(containerId);
-		ByteString s = new ByteString(name);
-		s.store(bb);
-		if (primary) {
-			bb.put((byte)1);
-		}
-		else {
-			bb.put((byte)0);
-		}
-		if (unique || primary) {
-			bb.put((byte)1);
-		}
-		else {
-			bb.put((byte)0);
-		}
-		bb.putShort((short)columns.length);
-		for (int i = 0; i < columns.length; i++) {
-			bb.putShort((short) columns[i]);
-		}
-	}
+        return n;
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + containerId;
-		result = prime * result + ((name == null) ? 0 : name.hashCode());
-		return result;
-	}
+    public void retrieve(ByteBuffer bb) {
+        ByteString s = new ByteString();
+        containerId = bb.getInt();
+        s.retrieve(bb);
+        name = s.toString();
+        byte b = bb.get();
+        if (b == 1) {
+            primary = true;
+        } else {
+            primary = false;
+        }
+        b = bb.get();
+        if (b == 1 || primary) {
+            unique = true;
+        } else {
+            unique = false;
+        }
+        int n = bb.getShort();
+        columns = new int[n];
+        for (int i = 0; i < n; i++) {
+            columns[i] = bb.getShort();
+        }
+        rowType = new TypeDescriptor[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            rowType[i] = table.getRowType()[columns[i]];
+        }
+        if (!table.indexes.contains(this)) {
+            table.database.getRowFactory().registerRowType(containerId, rowType);
+            table.indexes.add(this);
+        }
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final IndexDefinition other = (IndexDefinition) obj;
-		if (containerId != other.containerId)
-			return false;
-		if (name == null) {
-			if (other.name != null)
-				return false;
-		} else if (!name.equals(other.name))
-			return false;
-		return true;
-	}
-    
-    
-    
+    public void store(ByteBuffer bb) {
+        bb.putInt(containerId);
+        ByteString s = new ByteString(name);
+        s.store(bb);
+        if (primary) {
+            bb.put((byte) 1);
+        } else {
+            bb.put((byte) 0);
+        }
+        if (unique || primary) {
+            bb.put((byte) 1);
+        } else {
+            bb.put((byte) 0);
+        }
+        bb.putShort((short) columns.length);
+        for (int i = 0; i < columns.length; i++) {
+            bb.putShort((short) columns[i]);
+        }
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + containerId;
+        result = prime * result + ((name == null) ? 0 : name.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final IndexDefinition other = (IndexDefinition) obj;
+        if (containerId != other.containerId) {
+            return false;
+        }
+        if (name == null) {
+            if (other.name != null) {
+                return false;
+            }
+        } else if (!name.equals(other.name)) {
+            return false;
+        }
+        return true;
+    }
 }

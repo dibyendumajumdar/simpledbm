@@ -45,44 +45,37 @@ import org.simpledbm.typesystem.impl.DefaultFieldFactory;
 
 public class Database extends BaseTransactionalModule {
 
-	final static int MODULE_ID = 100;
-	final static int MODULE_BASE = 101;
+    final static int MODULE_ID = 100;
+    final static int MODULE_BASE = 101;
+    /** Object registry id for row factory */
+    final static int ROW_FACTORY_TYPE_ID = MODULE_BASE + 1;
+    final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE + 2;
+    Server server;
+    Properties properties;
+    private boolean serverStarted = false;
+    final FieldFactory fieldFactory = new DefaultFieldFactory();
+    final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
+    ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
-	/** Object registry id for row factory */
-	final static int ROW_FACTORY_TYPE_ID = MODULE_BASE+1;
-	final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE+2;
-	
-	Server server;
+    public TableDefinition addTableDefinition(String name, int containerId,
+            TypeDescriptor[] rowType) {
+        return new TableDefinition(this, containerId, name, rowType);
+    }
 
-	Properties properties;
-	
-	private boolean serverStarted = false;
+    public Database(Properties properties) {
+        validateProperties(properties);
+        this.properties = properties;
+    }
 
-	final FieldFactory fieldFactory = new DefaultFieldFactory();
+    private void validateProperties(Properties properties2) {
+    // TODO Auto-generated method stub
+    }
 
-	final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
+    public static void create(Properties properties) {
+        Server.create(properties);
+    }
 
-	ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
-
-	public TableDefinition addTableDefinition(String name, int containerId,
-			TypeDescriptor[] rowType) {
-		return new TableDefinition(this, containerId, name, rowType);
-	}
-
-	public Database(Properties properties) {
-		validateProperties(properties);
-		this.properties = properties;
-	}
-	
-	private void validateProperties(Properties properties2) {
-		// TODO Auto-generated method stub
-	}
-
-	public static void create(Properties properties) {
-		Server.create(properties);
-	}
-
-	public void start() {
+    public void start() {
         /*
          * We cannot start the server more than once
          */
@@ -96,188 +89,187 @@ public class Database extends BaseTransactionalModule {
         server = new Server(properties);
         server.getObjectRegistry().registerSingleton(MODULE_ID, this);
         server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION, CreateTableDefinition.class.getName());
-		server.getModuleRegistry().registerModule(MODULE_ID, this);     
-		registerRowFactory();
+        server.getModuleRegistry().registerModule(MODULE_ID, this);
+        registerRowFactory();
         server.start();
 
         serverStarted = true;
-	}
+    }
 
-	private void registerRowFactory() {
+    private void registerRowFactory() {
         server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
-	}
+    }
 
-	public void shutdown() {
+    public void shutdown() {
         if (serverStarted) {
             server.shutdown();
             serverStarted = false;
             server = null;
         }
-	}
+    }
 
-	public Server getServer() {
-		return server;
-	}
+    public Server getServer() {
+        return server;
+    }
 
-	public FieldFactory getFieldFactory() {
-		return fieldFactory;
-	}
+    public FieldFactory getFieldFactory() {
+        return fieldFactory;
+    }
 
-	public RowFactory getRowFactory() {
-		return rowFactory;
-	}
+    public RowFactory getRowFactory() {
+        return rowFactory;
+    }
 
-	public void createTable(TableDefinition tableDefinition) {
-		Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
-		boolean success = false;
-		try {
-			server.createTupleContainer(trx, tableDefinition.getName(),
-					tableDefinition.getContainerId(), 8);
-			for (IndexDefinition idx : tableDefinition.getIndexes()) {
-				server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
-						ROW_FACTORY_TYPE_ID, idx.isUnique());
-			}
-			CreateTableDefinition ctd = (CreateTableDefinition) server.getLoggableFactory().getInstance(MODULE_ID, TYPE_CREATE_TABLE_DEFINITION);
-			ctd.database = this;
-			ctd.table = tableDefinition;
-			trx.schedulePostCommitAction(ctd);
-			success = true;
-		} finally {
-			if (success)
-				trx.commit();
-			else
-				trx.abort();
-		}
-	}
+    public void createTable(TableDefinition tableDefinition) {
+        Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+        boolean success = false;
+        try {
+            server.createTupleContainer(trx, tableDefinition.getName(),
+                    tableDefinition.getContainerId(), 8);
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
+                server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
+                        ROW_FACTORY_TYPE_ID, idx.isUnique());
+            }
+            CreateTableDefinition ctd = (CreateTableDefinition) server.getLoggableFactory().getInstance(MODULE_ID, TYPE_CREATE_TABLE_DEFINITION);
+            ctd.database = this;
+            ctd.table = tableDefinition;
+            trx.schedulePostCommitAction(ctd);
+            success = true;
+        } finally {
+            if (success) {
+                trx.commit();
+            } else {
+                trx.abort();
+            }
+        }
+    }
 
-	@Override
-	public void redo(Page page, Redoable loggable) {
-		/* No Op */
-	}
+    @Override
+    public void redo(Page page, Redoable loggable) {
+    /* No Op */
+    }
 
-	@Override
-	public void redo(Loggable loggable) {
-		if (loggable instanceof CreateTableDefinition) {
-			CreateTableDefinition ctd = (CreateTableDefinition) loggable;
-			createTableDefinition(ctd.table);
-		}
-	}
+    @Override
+    public void redo(Loggable loggable) {
+        if (loggable instanceof CreateTableDefinition) {
+            CreateTableDefinition ctd = (CreateTableDefinition) loggable;
+            createTableDefinition(ctd.table);
+        }
+    }
 
-	void createTableDefinition(TableDefinition table) {
-		String tableName = "_internal/" + table.getContainerId() + ".def";
-		StorageContainerFactory storageFactory = server.getStorageFactory();
-		StorageContainer sc = storageFactory.createIfNotExisting(tableName);
-		try {
-			byte buffer[] = new byte[table.getStoredLength() + TypeSize.INTEGER];
-			ByteBuffer bb = ByteBuffer.wrap(buffer);
-			bb.putInt(buffer.length);
-			table.store(bb);
-			sc.write(0, buffer, 0, buffer.length);
-		}
-		finally {
-			sc.close();
-		}
-	}
-	
-	TableDefinition getTableDefinition(int containerId) {
-		String tableName = "_internal/" + containerId + ".def";
-		StorageContainerFactory storageFactory = server.getStorageFactory();
-		StorageContainer sc = storageFactory.open(tableName);
-		try {
-			byte buffer[] = new byte[TypeSize.INTEGER];
-			sc.read(0, buffer, 0, buffer.length);
-			ByteBuffer bb = ByteBuffer.wrap(buffer);
-			int n = bb.getInt();
-			buffer = new byte[n];
-			sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
-			bb = ByteBuffer.wrap(buffer);
-			TableDefinition table = new TableDefinition(this);
-			table.retrieve(bb);
-			return table;
-		}
-		finally {
-			sc.close();
-		}	
-	}
-	
-	/**
-	 * Responsible for adding the table definition to the data dictionary.
-	 * 
-	 * @author dibyendumajumdar
-	 * @since 29 Dec 2007
-	 */
-	public static final class CreateTableDefinition extends BaseLoggable implements PostCommitAction, ObjectRegistryAware {
+    void createTableDefinition(TableDefinition table) {
+        String tableName = "_internal/" + table.getContainerId() + ".def";
+        StorageContainerFactory storageFactory = server.getStorageFactory();
+        StorageContainer sc = storageFactory.createIfNotExisting(tableName);
+        try {
+            byte buffer[] = new byte[table.getStoredLength() + TypeSize.INTEGER];
+            ByteBuffer bb = ByteBuffer.wrap(buffer);
+            bb.putInt(buffer.length);
+            table.store(bb);
+            sc.write(0, buffer, 0, buffer.length);
+        } finally {
+            sc.close();
+        }
+    }
 
-		int actionId;
-		TableDefinition table;
-		Database database;
-		ObjectRegistry objectRegistry;
-		
-		public CreateTableDefinition() {
-		}
-		
-		public CreateTableDefinition(TableDefinition table) {
-			this.table = table;
-			this.database = table.getDatabase();
-			this.objectRegistry = table.getDatabase().getServer().getObjectRegistry();
-		}
-		
-		@Override
-		public void init() {
-		}
+    TableDefinition getTableDefinition(int containerId) {
+        String tableName = "_internal/" + containerId + ".def";
+        StorageContainerFactory storageFactory = server.getStorageFactory();
+        StorageContainer sc = storageFactory.open(tableName);
+        try {
+            byte buffer[] = new byte[TypeSize.INTEGER];
+            sc.read(0, buffer, 0, buffer.length);
+            ByteBuffer bb = ByteBuffer.wrap(buffer);
+            int n = bb.getInt();
+            buffer = new byte[n];
+            sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
+            bb = ByteBuffer.wrap(buffer);
+            TableDefinition table = new TableDefinition(this);
+            table.retrieve(bb);
+            return table;
+        } finally {
+            sc.close();
+        }
+    }
 
-		public int getActionId() {
-			return actionId;
-		}
+    /**
+     * Responsible for adding the table definition to the data dictionary.
+     * 
+     * @author dibyendumajumdar
+     * @since 29 Dec 2007
+     */
+    public static final class CreateTableDefinition extends BaseLoggable implements PostCommitAction, ObjectRegistryAware {
 
-		public void setActionId(int actionId) {
-			this.actionId = actionId;
-		}
+        int actionId;
+        TableDefinition table;
+        Database database;
+        ObjectRegistry objectRegistry;
 
-		@Override
-		public StringBuilder appendTo(StringBuilder sb) {
-			sb.append("CreateTableDefinition(");
-			super.appendTo(sb);
-			sb.append(", actionId=");
-			sb.append(actionId);
-			sb.append(", table=");
-			return sb;
-		}
+        public CreateTableDefinition() {
+        }
 
-		@Override
-		public int getStoredLength() {
-			int n = super.getStoredLength();
-			n += TypeSize.INTEGER;
-			n += table.getStoredLength();
-			return n;
-		}
+        public CreateTableDefinition(TableDefinition table) {
+            this.table = table;
+            this.database = table.getDatabase();
+            this.objectRegistry = table.getDatabase().getServer().getObjectRegistry();
+        }
 
-		@Override
-		public void retrieve(ByteBuffer bb) {
-			if (database == null) {
-				throw new RSSException("Unexpected error: database is null");
-			}
-			super.retrieve(bb);
-			actionId = bb.getInt();
-			table = new TableDefinition(database);
-			table.retrieve(bb);
-		}
+        @Override
+        public void init() {
+        }
 
-		@Override
-		public void store(ByteBuffer bb) {
-			super.store(bb);
-			bb.putInt(actionId);
-			table.store(bb);
-		}
+        public int getActionId() {
+            return actionId;
+        }
 
-		@Override
-		public String toString() {
-			return appendTo(new StringBuilder()).toString();
-		}
+        public void setActionId(int actionId) {
+            this.actionId = actionId;
+        }
 
-		public void setObjectFactory(ObjectRegistry objectFactory) {
-			this.objectRegistry = objectFactory;
-			database = (Database) objectRegistry.getInstance(Database.MODULE_ID);
-		}
-	}
+        @Override
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("CreateTableDefinition(");
+            super.appendTo(sb);
+            sb.append(", actionId=");
+            sb.append(actionId);
+            sb.append(", table=");
+            return sb;
+        }
+
+        @Override
+        public int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.INTEGER;
+            n += table.getStoredLength();
+            return n;
+        }
+
+        @Override
+        public void retrieve(ByteBuffer bb) {
+            if (database == null) {
+                throw new RSSException("Unexpected error: database is null");
+            }
+            super.retrieve(bb);
+            actionId = bb.getInt();
+            table = new TableDefinition(database);
+            table.retrieve(bb);
+        }
+
+        @Override
+        public void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(actionId);
+            table.store(bb);
+        }
+
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
+        public void setObjectFactory(ObjectRegistry objectFactory) {
+            this.objectRegistry = objectFactory;
+            database = (Database) objectRegistry.getInstance(Database.MODULE_ID);
+        }
+    }
 }
