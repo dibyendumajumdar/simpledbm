@@ -63,7 +63,7 @@ public class TableDefinition implements Storable {
             throw new IllegalArgumentException(
                     "First index must be the primary");
         }
-        new IndexDefinition(this, containerId, name, columns, primary, unique);
+        indexes.add(new IndexDefinition(this, containerId, name, columns, primary, unique));
     }
 
     public Database getDatabase() {
