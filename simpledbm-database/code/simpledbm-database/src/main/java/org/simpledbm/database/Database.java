@@ -29,6 +29,8 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
+import org.simpledbm.rss.api.st.StorageContainerInfo;
+import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.IsolationMode;
@@ -57,9 +59,72 @@ public class Database extends BaseTransactionalModule {
     final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
     ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
-    public TableDefinition addTableDefinition(String name, int containerId,
+    /**
+     * Register a table definition to the in-memory dictionary cache.
+     * Caller must protect {@link #tables}.
+     * @param tableDefinition
+     */
+    private void registerTableDefinition(TableDefinition tableDefinition) {
+        /*
+         * Let us check if another thread has aleady loaded registered
+         * this definition.
+         */
+        for (TableDefinition td : tables) {
+            if (td.getContainerId() == tableDefinition.getContainerId()) {
+                return;
+            }
+        }
+        for (IndexDefinition idx : tableDefinition.getIndexes()) {
+            getRowFactory().registerRowType(idx.getContainerId(), idx.getRowType());
+        }
+        getRowFactory().registerRowType(tableDefinition.getContainerId(), tableDefinition.getRowType());
+        tables.add(tableDefinition);
+    }
+
+    /**
+     * Allocates a new TableDefinition object.
+     * @param name
+     * @param containerId
+     * @param rowType
+     * @return
+     */
+    public TableDefinition newTableDefinition(String name, int containerId,
             TypeDescriptor[] rowType) {
         return new TableDefinition(this, containerId, name, rowType);
+    }
+
+    /**
+     * Gets a table definition object from the cache.
+     * @param containerId
+     * @return
+     */
+    public TableDefinition getTableDefinition(int containerId) {
+        synchronized (tables) {
+            for (TableDefinition tableDefinition : tables) {
+                if (tableDefinition.getContainerId() == containerId) {
+                    return tableDefinition;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Load definitions of tables at startup.
+     */
+    private void loadTableDefinitionsAtStartup() {
+        StorageContainerInfo[] containers = getServer().getStorageManager().getActiveContainers();
+        for (StorageContainerInfo sc : containers) {
+            int containerId = sc.getContainerId();
+            if (getTableDefinition(containerId) == null) {
+                try {
+                    retrieveTableDefinition(containerId);
+                } catch (StorageException e) {
+                // ignore
+                }
+            }
+        }
+    // TODO
     }
 
     public Database(Properties properties) {
@@ -92,6 +157,7 @@ public class Database extends BaseTransactionalModule {
         server.getModuleRegistry().registerModule(MODULE_ID, this);
         registerRowFactory();
         server.start();
+        loadTableDefinitionsAtStartup();
 
         serverStarted = true;
     }
@@ -124,6 +190,9 @@ public class Database extends BaseTransactionalModule {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
+            /*
+             * Following will obtain a lock on the containerID.
+             */
             server.createTupleContainer(trx, tableDefinition.getName(),
                     tableDefinition.getContainerId(), 8);
             for (IndexDefinition idx : tableDefinition.getIndexes()) {
@@ -153,11 +222,11 @@ public class Database extends BaseTransactionalModule {
     public void redo(Loggable loggable) {
         if (loggable instanceof CreateTableDefinition) {
             CreateTableDefinition ctd = (CreateTableDefinition) loggable;
-            createTableDefinition(ctd.table);
+            storeTableDefinition(ctd.table);
         }
     }
 
-    void createTableDefinition(TableDefinition table) {
+    private void storeTableDefinition(TableDefinition table) {
         String tableName = "_internal/" + table.getContainerId() + ".def";
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.createIfNotExisting(tableName);
@@ -172,10 +241,19 @@ public class Database extends BaseTransactionalModule {
         }
     }
 
-    TableDefinition getTableDefinition(int containerId) {
+    /**
+     * Retrieve a table definition from storage and register the table
+     * definition.
+     * 
+     * @param containerId
+     * @return
+     */
+    TableDefinition retrieveTableDefinition(int containerId) {
+
         String tableName = "_internal/" + containerId + ".def";
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.open(tableName);
+        TableDefinition table = null;
         try {
             byte buffer[] = new byte[TypeSize.INTEGER];
             sc.read(0, buffer, 0, buffer.length);
@@ -184,12 +262,15 @@ public class Database extends BaseTransactionalModule {
             buffer = new byte[n];
             sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
             bb = ByteBuffer.wrap(buffer);
-            TableDefinition table = new TableDefinition(this);
+            table = new TableDefinition(this);
             table.retrieve(bb);
-            return table;
         } finally {
             sc.close();
         }
+        synchronized (tables) {
+            registerTableDefinition(table);
+        }
+        return table;
     }
 
     /**

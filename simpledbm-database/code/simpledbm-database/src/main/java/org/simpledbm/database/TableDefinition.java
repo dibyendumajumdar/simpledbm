@@ -49,15 +49,12 @@ public class TableDefinition implements Storable {
         this.database = database;
     }
 
-    public TableDefinition(Database database, int containerId, String name,
+    TableDefinition(Database database, int containerId, String name,
             TypeDescriptor[] rowType) {
         this.database = database;
         this.containerId = containerId;
         this.name = name;
         this.rowType = rowType;
-
-        database.getRowFactory().registerRowType(containerId, rowType);
-        database.tables.add(this);
     }
 
     public void addIndex(int containerId, String name, int[] columns,
@@ -114,10 +111,10 @@ public class TableDefinition implements Storable {
             IndexDefinition idx = new IndexDefinition(this);
             idx.retrieve(bb);
         }
-        if (!database.tables.contains(this)) {
-            database.getRowFactory().registerRowType(containerId, rowType);
-            database.tables.add(this);
-        }
+//        if (!database.tables.contains(this)) {
+//            database.getRowFactory().registerRowType(containerId, rowType);
+//            database.tables.add(this);
+//        }
     }
 
     public void store(ByteBuffer bb) {
