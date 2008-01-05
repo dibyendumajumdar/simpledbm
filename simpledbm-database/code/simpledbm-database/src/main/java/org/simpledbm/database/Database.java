@@ -190,6 +190,14 @@ public class Database extends BaseTransactionalModule {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
+            synchronized(tables) {
+                if (getTableDefinition(tableDefinition.getContainerId()) != null) {
+                    registerTableDefinition(tableDefinition);
+                }
+                else {
+                    throw new RSSException("Table already exists");
+                }
+            }
             /*
              * Following will obtain a lock on the containerID.
              */
