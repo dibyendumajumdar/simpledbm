@@ -451,6 +451,14 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         p.dump();
     }
 
+    public void lockTupleContainer(Transaction trx, int containerId, LockMode mode) {
+        trx.acquireLock(
+            lockAdaptor.getLockableContainerId(containerId),
+            mode,
+            LockDuration.COMMIT_DURATION);        
+    }
+    
+    
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.tuple.TupleManager#createTupleContainer(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int)
      */
