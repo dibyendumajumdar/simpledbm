@@ -89,11 +89,11 @@ public class DatabaseTests extends TestCase {
         db = new Database(getServerProperties());
         db.start();
         try {
-            TableDefinition table = db.retrieveTableDefinition(1);
+            TableDefinition table = db.getTableDefinition(1);
+            assertNotNull(table);
         } finally {
             db.shutdown();
         }
-
 
     }
 
