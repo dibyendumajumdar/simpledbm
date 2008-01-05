@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.ObjectRegistryAware;
@@ -190,11 +192,13 @@ public class Database extends BaseTransactionalModule {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
-            synchronized(tables) {
+            // Lock tuple container to prevent concurrent access
+            getServer().getTupleManager().lockTupleContainer(trx, tableDefinition.getContainerId(), LockMode.EXCLUSIVE);
+
+            synchronized (tables) {
                 if (getTableDefinition(tableDefinition.getContainerId()) == null) {
                     registerTableDefinition(tableDefinition);
-                }
-                else {
+                } else {
                     throw new RSSException("Table already exists");
                 }
             }
