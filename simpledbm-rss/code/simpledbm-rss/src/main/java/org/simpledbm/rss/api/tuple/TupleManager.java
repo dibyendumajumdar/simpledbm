@@ -20,6 +20,7 @@
 package org.simpledbm.rss.api.tuple;
 
 import org.simpledbm.rss.api.loc.LocationFactory;
+import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
@@ -39,6 +40,9 @@ import org.simpledbm.rss.api.tx.Transaction;
  */
 public interface TupleManager {
 
+    void lockTupleContainer(Transaction rx, int containerId, LockMode mode);
+    
+    
     /**
      * Creates a new Tuple Container. 
      * 
