@@ -75,7 +75,7 @@ public class DatabaseTests extends TestCase {
                 ff.getNumberType(2)		/* salary */
 
             };
-            TableDefinition table = db.addTableDefinition("employee", 1, employee_rowtype);
+            TableDefinition table = db.newTableDefinition("employee", 1, employee_rowtype);
             table.addIndex(2, "employee1.idx", new int[]{0}, true, true);
             table.addIndex(3, "employee2.idx", new int[]{2, 1}, false, false);
             table.addIndex(4, "employee3.idx", new int[]{5}, false, false);
@@ -89,7 +89,7 @@ public class DatabaseTests extends TestCase {
         db = new Database(getServerProperties());
         db.start();
         try {
-            TableDefinition table = db.getTableDefinition(1);
+            TableDefinition table = db.retrieveTableDefinition(1);
         } finally {
             db.shutdown();
         }
