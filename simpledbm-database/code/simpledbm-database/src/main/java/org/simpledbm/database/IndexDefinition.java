@@ -86,9 +86,6 @@ public class IndexDefinition implements Storable {
             }
             rowType[i] = table.getRowType()[columns[i]];
         }
-
-        table.database.getRowFactory().registerRowType(containerId, rowType);
-        table.indexes.add(this);
     }
 
     public TableDefinition getTable() {

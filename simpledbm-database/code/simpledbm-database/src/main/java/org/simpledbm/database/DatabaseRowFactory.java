@@ -41,10 +41,10 @@ public class DatabaseRowFactory extends GenericRowFactory {
     }
 
     @Override
-    protected synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
+    protected TypeDescriptor[] getTypeDescriptor(int keytype) {
         TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
         if (rowType == null) {
-            TableDefinition table = database.getTableDefinition(keytype);
+            TableDefinition table = database.retrieveTableDefinition(keytype);
             rowType = table.getRowType();
         }
         return rowType;
