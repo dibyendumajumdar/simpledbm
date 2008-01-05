@@ -191,7 +191,7 @@ public class Database extends BaseTransactionalModule {
         boolean success = false;
         try {
             synchronized(tables) {
-                if (getTableDefinition(tableDefinition.getContainerId()) != null) {
+                if (getTableDefinition(tableDefinition.getContainerId()) == null) {
                     registerTableDefinition(tableDefinition);
                 }
                 else {
