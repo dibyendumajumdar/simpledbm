@@ -24,7 +24,6 @@ import java.util.ArrayList;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.RSSException;
-import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
