@@ -203,6 +203,9 @@ public class Server {
     public Server(Properties props) {
 
         Logger.configure(props);
+        log = Logger.getLogger(Server.class
+                .getPackage()
+                .getName());
 
         final LogFactory logFactory = new LogFactoryImpl();
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();

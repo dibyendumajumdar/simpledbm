@@ -611,6 +611,15 @@ public class MessageCatalog {
 
     }
 
+    /**
+     * Add a key/message to the message catalog.
+     * @param key A key to identify the message
+     * @param message Message string
+     */
+    public static void addMessage(String key, String message) {
+    	msgs.put(key, message);
+    }
+    
     public String getMessage(String key) {
         String s = msgs.get(key);
         if (s != null) {
