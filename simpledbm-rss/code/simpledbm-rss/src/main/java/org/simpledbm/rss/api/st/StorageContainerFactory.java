@@ -58,6 +58,13 @@ public interface StorageContainerFactory {
     StorageContainer open(String name);
 
     /**
+     * Checks whether a container of specified name exists.
+     * @param name Name of the storage container
+     * @return true if the container exists
+     */
+    boolean exists(String name);
+    
+    /**
      * Removes a container physically.
      * @throws StorageException 
      */

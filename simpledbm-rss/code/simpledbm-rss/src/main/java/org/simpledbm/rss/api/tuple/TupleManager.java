@@ -40,7 +40,14 @@ import org.simpledbm.rss.api.tx.Transaction;
  */
 public interface TupleManager {
 
-    void lockTupleContainer(Transaction rx, int containerId, LockMode mode);
+	
+	/**
+	 * Locks a tuple container in specified mode for COMMIT duration.
+	 * @param trx Transaction acquiring the lock
+	 * @param containerId ID of the tuple container
+	 * @param mode The Lock mode
+	 */
+    void lockTupleContainer(Transaction trx, int containerId, LockMode mode);
     
     
     /**
