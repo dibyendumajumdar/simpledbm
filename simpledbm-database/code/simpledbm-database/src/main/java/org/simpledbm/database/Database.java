@@ -31,7 +31,6 @@ import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
-import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.IsolationMode;
@@ -41,6 +40,8 @@ import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -58,6 +59,22 @@ public class Database extends BaseTransactionalModule {
     private boolean serverStarted = false;
     final FieldFactory fieldFactory = new DefaultFieldFactory();
     final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
+    
+    static Logger log = Logger.getLogger(Database.class.getPackage().getName());
+
+    static {
+    	MessageCatalog.addMessage("WD0001",
+                "SIMPLEDBM-WD0001: Table {0} already loaded");
+    	MessageCatalog.addMessage("ID0002",
+    		"SIMPLEDBM-ID0002: Loading definition for table {0} at startup");    
+    }
+    final MessageCatalog mcat = new MessageCatalog();
+    
+    
+    /**
+     * The table cache holds definitions of all tables and associated
+     * indexes.
+     */
     ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
     /**
@@ -67,18 +84,19 @@ public class Database extends BaseTransactionalModule {
      */
     private void registerTableDefinition(TableDefinition tableDefinition) {
         /*
-         * Let us check if another thread has aleady loaded registered
+         * Let us check if another thread has already loaded registered
          * this definition.
          */
         for (TableDefinition td : tables) {
             if (td.getContainerId() == tableDefinition.getContainerId()) {
+            	log.warn(Database.class.getName(), "registerTableDefinition", mcat.getMessage("WD0001", tableDefinition));
                 return;
             }
         }
+        getRowFactory().registerRowType(tableDefinition.getContainerId(), tableDefinition.getRowType());
         for (IndexDefinition idx : tableDefinition.getIndexes()) {
             getRowFactory().registerRowType(idx.getContainerId(), idx.getRowType());
         }
-        getRowFactory().registerRowType(tableDefinition.getContainerId(), tableDefinition.getRowType());
         tables.add(tableDefinition);
     }
 
@@ -111,22 +129,23 @@ public class Database extends BaseTransactionalModule {
     }
 
     /**
-     * Load definitions of tables at startup.
-     */
-    private void loadTableDefinitionsAtStartup() {
-        StorageContainerInfo[] containers = getServer().getStorageManager().getActiveContainers();
-        for (StorageContainerInfo sc : containers) {
-            int containerId = sc.getContainerId();
-            if (getTableDefinition(containerId) == null) {
-                try {
-                    retrieveTableDefinition(containerId);
-                } catch (StorageException e) {
-                // ignore
-                }
-            }
-        }
-    // TODO
-    }
+	 * Load definitions of tables at system startup.
+	 */
+	private void loadTableDefinitionsAtStartup() {
+		StorageContainerInfo[] containers = getServer().getStorageManager()
+				.getActiveContainers();
+		StorageContainerFactory factory = getServer().getStorageFactory();
+		for (StorageContainerInfo sc : containers) {
+			int containerId = sc.getContainerId();
+			String tableName = makeTableDefName(containerId);
+
+			if (factory.exists(tableName)
+					&& getTableDefinition(containerId) == null) {
+				log.info(getClass().getName(), "loadTableDefinitonsAtStartup", mcat.getMessage("ID0002", containerId));
+				retrieveTableDefinition(containerId);
+			}
+		}
+	}
 
     public Database(Properties properties) {
         validateProperties(properties);
@@ -153,6 +172,7 @@ public class Database extends BaseTransactionalModule {
          * We must always create a new server object.
          */
         server = new Server(properties);
+        log = Logger.getLogger(Database.class.getPackage().getName());
         server.getObjectRegistry().registerSingleton(MODULE_ID, this);
         server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION, CreateTableDefinition.class.getName());
         server.getModuleRegistry().registerModule(MODULE_ID, this);
@@ -237,8 +257,17 @@ public class Database extends BaseTransactionalModule {
         }
     }
 
+    private String makeTableDefName(int containerId) {
+    	return "_internal/" + containerId + ".def";
+    }
+    
+    /**
+     * Makes the table definition persistent by storing it as a 
+     * container.
+     * @param table The Table Definition to be persisted
+     */
     private void storeTableDefinition(TableDefinition table) {
-        String tableName = "_internal/" + table.getContainerId() + ".def";
+        String tableName = makeTableDefName(table.getContainerId());
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.createIfNotExisting(tableName);
         try {
@@ -256,12 +285,12 @@ public class Database extends BaseTransactionalModule {
      * Retrieve a table definition from storage and register the table
      * definition.
      * 
-     * @param containerId
-     * @return
+     * @param containerId The container ID of the table's tuple container
+     * @return The Table Definition of the specified table.
      */
     TableDefinition retrieveTableDefinition(int containerId) {
 
-        String tableName = "_internal/" + containerId + ".def";
+        String tableName = makeTableDefName(containerId);
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.open(tableName);
         TableDefinition table = null;
