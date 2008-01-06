@@ -312,4 +312,14 @@ public final class FileStorageContainerFactory implements
             }
         }
     }
+
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.st.StorageContainerFactory#exists(java.lang.String)
+	 */
+	public boolean exists(String logicalName) {
+        checkBasePath(false);
+        String name = getFileName(logicalName, false);
+        File file = new File(name);
+		return file.exists();
+	}
 }
