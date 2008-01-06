@@ -87,7 +87,7 @@ public class GenericRowFactory implements RowFactory {
     	return row;
     }
     
-    synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
+    protected synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
         return typeDescMap.get(keytype);
     }
     
