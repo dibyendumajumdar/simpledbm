@@ -36,7 +36,7 @@ import org.simpledbm.rss.util.TypeSize;
  */
 public abstract class Page implements Storable, Dumpable {
 
-    public static final int SIZE = TypeSize.SHORT + PageId.SIZE + Lsn.SIZE;
+    public static final int SIZE = TypeSize.SHORT + Lsn.SIZE;
 
     /**
      * The type code for the page. Used to re-create correct type of
@@ -46,9 +46,10 @@ public abstract class Page implements Storable, Dumpable {
 
     /**
      * The identity of the page.
+     * Transient.
      */
     private PageId pageId = new PageId();
-
+    
     /**
      * Page LSN is the LSN of the last log record that made
      * changes to the page. 
@@ -58,11 +59,13 @@ public abstract class Page implements Storable, Dumpable {
     /**
      * PageFactory that created this page. Note that the page
      * size is fixed by the factory.
+     * Transient.
      */
     private PageFactory pageFactory = null;
 
     /**
      * A read/write latch to protect access to the page.
+     * Transient.
      */
     protected Latch lock;
 
@@ -83,7 +86,7 @@ public abstract class Page implements Storable, Dumpable {
     }
 
     public final void setPageId(PageId pageId) {
-        this.pageId = pageId;
+        this.pageId = new PageId(pageId);
     }
 
     public final Lsn getPageLsn() {
@@ -91,7 +94,7 @@ public abstract class Page implements Storable, Dumpable {
     }
 
     public final void setPageLsn(Lsn lsn) {
-        pageLsn = lsn;
+        pageLsn = new Lsn(lsn);
     }
 
     public abstract void init();
@@ -100,20 +103,20 @@ public abstract class Page implements Storable, Dumpable {
      * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
      */
     public final int getStoredLength() {
-        return pageFactory.getPageSize();
+        return pageFactory.getUsablePageSize();
     }
 
     public void retrieve(ByteBuffer bb) {
         type = bb.getShort();
         pageId = new PageId();
-        pageId.retrieve(bb);
+        // pageId.retrieve(bb);
         pageLsn = new Lsn();
         pageLsn.retrieve(bb);
     }
 
     public void store(ByteBuffer bb) {
         bb.putShort(type);
-        pageId.store(bb);
+        // pageId.store(bb);
         pageLsn.store(bb);
     }
 
@@ -188,7 +191,7 @@ public abstract class Page implements Storable, Dumpable {
         return true;
     }
 
-    public StringBuilder appendTo(StringBuilder sb) {
+	public StringBuilder appendTo(StringBuilder sb) {
         sb.append("pageType=").append(type).append(", pageId=");
         pageId.appendTo(sb).append(", pageLsn=");
         pageLsn.appendTo(sb);
