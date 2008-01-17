@@ -1,3 +1,8 @@
+1.0.8-BETA:
+ * dm: Added checksum verification to page reads and writes.
+ * dm: Enhanced the storage factory interface to allow checking for the existence of a container.
+ * dm: Enhanced the MessageCatalog component so that clients can register new messages dynamically.
+
 1.0.7-BETA:
  * dm: Fixed a couple of severe defects.
            DecreaseTreeHeight was always setting unique flag to false, due to a typo.
@@ -19,7 +24,7 @@
  * dm: Disabled test case for concurrent server access to same database due to portability issues with file locking behaviour.
 
 1.0.3-BETA:
- * dm: Refactored synthronization code in Buffer Manager, in particular, handling of volatile instance variables.
+ * dm: Refactored synchronization code in Buffer Manager, in particular, handling of volatile instance variables.
  * dm: Renamed the property log.disableExplicitFlushRequests to log.explicitFlushRequests.
  * dm: Renamed the property bufferpool.bufferWriterSleepInterval to bufferpool.writerSleepInterval.
  * dm: Reformatted all code using eclipse 3.3 to convert tabs to spaces.
