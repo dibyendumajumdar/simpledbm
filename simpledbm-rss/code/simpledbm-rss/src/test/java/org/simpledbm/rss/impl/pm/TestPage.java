@@ -75,8 +75,8 @@ public class TestPage extends BaseTestCase {
         pageFactory.store(page);
         page = pageFactory.retrieve(new PageId(1, 0));
         System.out.println("Retrieved page contents = " + page);
-        assertEquals(page.getPageId(), new PageId(1, 0));
-        assertEquals(page.getPageLsn(), new Lsn(91, 33));
+        assertEquals(new PageId(1, 0), page.getPageId());
+        assertEquals(new Lsn(91, 33), page.getPageLsn());
         storageManager.shutdown();
         storageFactory.delete("testfile.dat");
     }

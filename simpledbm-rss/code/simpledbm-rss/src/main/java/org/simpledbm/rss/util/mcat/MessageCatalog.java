@@ -394,6 +394,10 @@ public class MessageCatalog {
             .put(
                 "EP0003",
                 "SIMPLEDBM-EP0003: Error occurred while writing page {0}: container not available");
+        msgs
+        	.put(
+        	    "EP0004",
+                "SIMPLEDBM-EP0004: Error occurred while reading page {0}: checksum invalid");
 
         // Object Registry messages
         msgs.put(

@@ -30,6 +30,8 @@ import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageManager;
+import org.simpledbm.rss.util.ChecksumCalculator;
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -85,6 +87,10 @@ public final class PageFactoryImpl implements PageFactory {
     public final int getPageSize() {
         return pageSize;
     }
+    
+    public final int getUsablePageSize() {
+    	return pageSize - TypeSize.LONG;
+    }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
@@ -100,13 +106,15 @@ public final class PageFactoryImpl implements PageFactory {
     }
 
     /**
-     * Converts a byte stream to a page. First two bytes must contain the type
+     * Converts a byte stream to a page. 
+     * First two bytes must contain the type
      * information for the page. This is used to obtain the correct Page implementation
      * from the Object Registry. 
+     * 
      * @param bb The ByteBuffer that provides access to the byte stream
      * @return Page instance initialized with the contents of the byte stream
      */
-    private Page getInstance(ByteBuffer bb) {
+    private Page getInstance(PageId pageId, ByteBuffer bb) {
         bb.mark();
         short pagetype = bb.getShort();
         bb.reset();
@@ -115,9 +123,11 @@ public final class PageFactoryImpl implements PageFactory {
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
         page.init();
         page.retrieve(bb);
+        page.setPageId(pageId);
         return page;
     }
-
+    
+    
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.pm.PageFactory#retrieve(org.simpledbm.rss.api.pm.PageId)
      */
@@ -145,11 +155,22 @@ public final class PageFactoryImpl implements PageFactory {
                 n,
                 pageSize));
         }
+        long checksumCalculated = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
         ByteBuffer bb = ByteBuffer.wrap(data);
-        return getInstance(bb);
+        long checksumOnPage = bb.getLong();
+        //System.out.println("Calculated checksum = " + checksumCalculated);
+        //System.out.println("Retrieved checksum = " + checksumOnPage);
+        if (checksumOnPage != checksumCalculated) {
+        	log.error(this.getClass().getName(),"retrieve", mcat.getMessage("EP0004",
+                    pageId));
+            throw new PageReadException(mcat.getMessage(
+                    "EP0004",
+                    pageId));
+        }
+        return getInstance(pageId, bb);
     }
 
-    /* (non-Javadoc)
+	/* (non-Javadoc)
      * @see org.simpledbm.rss.api.pm.PageFactory#store(org.simpledbm.rss.api.pm.Page)
      */
     public final void store(Page page) {
@@ -165,7 +186,13 @@ public final class PageFactoryImpl implements PageFactory {
         long offset = page.getPageId().getPageNumber() * pageSize;
         byte[] data = new byte[pageSize];
         ByteBuffer bb = ByteBuffer.wrap(data);
+        bb.mark();
+        bb.putLong(0);
         page.store(bb);
+        long checksum = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
+        //System.out.println("Stored checksum = " + checksum);        
+        bb.reset();
+        bb.putLong(checksum);
         container.write(offset, data, 0, pageSize);
     }
 
