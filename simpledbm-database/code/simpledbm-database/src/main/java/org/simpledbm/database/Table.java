@@ -37,8 +37,12 @@ import org.simpledbm.typesystem.api.Row;
  */
 public class Table {
 
-    TableDefinition definition;
+    final TableDefinition definition;
 
+    public Table(TableDefinition definition) {
+    	this.definition = definition;
+    }
+    
     public Location addRow(Transaction trx, Row tableRow) {
 
         Location location = null;
