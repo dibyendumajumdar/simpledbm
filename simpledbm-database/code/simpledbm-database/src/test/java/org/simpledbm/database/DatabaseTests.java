@@ -20,12 +20,17 @@
 package org.simpledbm.database;
 
 import java.io.File;
+import java.math.BigInteger;
+import java.util.Date;
 import java.util.Properties;
 
-import org.simpledbm.typesystem.api.FieldFactory;
-import org.simpledbm.typesystem.api.TypeDescriptor;
-
 import junit.framework.TestCase;
+
+import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class DatabaseTests extends TestCase {
 
@@ -94,9 +99,45 @@ public class DatabaseTests extends TestCase {
         } finally {
             db.shutdown();
         }
+        
+        // Lets add some data
+        db = new Database(getServerProperties());
+        db.start();
+        try {
+            TableDefinition tableDefinition = db.getTableDefinition(1);
+            assertNotNull(tableDefinition);
+            Table table = new Table(tableDefinition);
+            Row tableRow = tableDefinition.getRow();
+            FieldFactory ff = db.getFieldFactory();
+            tableRow.get(0).setInt(1);
+            tableRow.get(1).setString("Joe");
+            tableRow.get(2).setString("Blogg");
+            tableRow.get(5).setDate(new Date(1930, 12, 31));
+            tableRow.get(6).setString("500.00");
 
+            Transaction trx = db.getServer().begin(IsolationMode.READ_COMMITTED);
+            boolean okay = false;
+            try {
+            	table.addRow(trx, tableRow);
+            	okay = true;
+            }
+            finally {
+            	if (okay) {
+            		trx.commit();
+            	}
+            	else {
+            		trx.abort();
+            	}
+            }
+        } finally {
+            db.shutdown();
+        }
+        
+        
     }
 
+    
+    
     void deleteRecursively(String pathname) {
         File file = new File(pathname);
         deleteRecursively(file);
