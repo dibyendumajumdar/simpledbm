@@ -2989,6 +2989,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     icursor.bcursor.unfixP();
                     icursor.fetchCount++;
                     icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+                    
+                    /*
+                     * FIXME - If isolationMode is READ_COMMITTED and the current
+                     * key does not match search criteria (NOT FOUND), then we 
+                     * should release the lock on the key here.
+                     * At present this is handled by closing the scan.
+                     */
                     return true;
                 } catch (LockException e) {
 
@@ -3033,6 +3040,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         icursor.bcursor.unfixP();
                         icursor.fetchCount++;
                         icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+                        /*
+                         * FIXME - If isolationMode is READ_COMMITTED and the current
+                         * key does not match search criteria (NOT FOUND), then we 
+                         * should release the lock on the key here.
+                         * At present this is handled by closing the scan.
+                         */
                         return true;
                     }
                     trx.rollback(sp);
@@ -3040,6 +3053,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             } finally {
                 icursor.bcursor.unfixAll();
             }
+            /*
+             * Search has to retried
+             */
             return false;
         }
 
@@ -3276,7 +3292,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             trx.unregisterTransactionalCursor(this);
             RSSException ex = null;
 
-            // Following should be redundant because of fetchCompleted().
+            // Following is needed because in the not found scenario,
+            // fetchCompleted will not be called.
             try {
                 if (currentKey != null) {
                     if (trx.getIsolationMode() == IsolationMode.READ_COMMITTED
