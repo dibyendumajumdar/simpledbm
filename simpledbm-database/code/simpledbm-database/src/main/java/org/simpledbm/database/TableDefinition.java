@@ -168,7 +168,7 @@ public class TableDefinition implements Storable {
         return rowFactory.newRow(containerId);
     }
 
-    Row getIndexRow(IndexDefinition index, Row tableRow) {
+    public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.columns.length; i++) {
             indexRow.set(i, (Field) tableRow.get(index.columns[i]).cloneMe());

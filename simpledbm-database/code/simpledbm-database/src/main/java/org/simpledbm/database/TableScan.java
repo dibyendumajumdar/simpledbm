@@ -39,13 +39,13 @@ public class TableScan {
     final Transaction trx;
     Row currentRow;
 
-    TableScan(Transaction trx, Table table, int indexNo, Row startRow, boolean forUpdate) {
+    TableScan(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
         this.table = table;
-        this.startRow = startRow;
         this.trx = trx;
         tcont = table.definition.database.server.getTupleContainer(trx, table.definition.containerId);
         IndexDefinition index = table.definition.indexes.get(indexNo);
         icont = table.definition.database.server.getIndex(trx, index.containerId);
+        this.startRow = table.definition.getIndexRow(index, tableRow);
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
     }
 
@@ -142,16 +142,15 @@ public class TableScan {
             oldTableRow.retrieve(bb);
             // Okay, now update the table row
             tcont.delete(trx, location);
-            // Update secondary indexes
-            // Old secondary key
+            // Update indexes
             for (int i = table.definition.indexes.size() - 1; i >= 0; i--) {
                 IndexDefinition skey = table.definition.indexes.get(i);
-                IndexContainer secondaryIndex = table.definition.database.server.getIndex(
+                IndexContainer index = table.definition.database.server.getIndex(
                         trx, skey.containerId);
                 // old secondary key
-                Row oldSecondaryKeyRow = table.definition.getIndexRow(skey, oldTableRow);
+                Row indexRow = table.definition.getIndexRow(skey, oldTableRow);
                 // Delete old key
-                secondaryIndex.delete(trx, oldSecondaryKeyRow, location);
+                index.delete(trx, indexRow, location);
             }
             success = true;
         } finally {

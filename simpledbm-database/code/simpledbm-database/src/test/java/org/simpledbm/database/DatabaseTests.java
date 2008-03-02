@@ -34,126 +34,166 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class DatabaseTests extends TestCase {
 
-    public DatabaseTests() {
-        super();
-    }
+	public DatabaseTests() {
+		super();
+	}
 
-    public DatabaseTests(String name) {
-        super(name);
-    }
+	public DatabaseTests(String name) {
+		super(name);
+	}
 
-    static Properties getServerProperties() {
-        Properties properties = new Properties();
-        properties.setProperty("log.ctl.1", "ctl.a");
-        properties.setProperty("log.ctl.2", "ctl.b");
-        properties.setProperty("log.groups.1.path", ".");
-        properties.setProperty("log.archive.path", ".");
-        properties.setProperty("log.group.files", "3");
-        properties.setProperty("log.file.size", "16384");
-        properties.setProperty("log.buffer.size", "16384");
-        properties.setProperty("log.buffer.limit", "4");
-        properties.setProperty("log.flush.interval", "5");
-        properties.setProperty("storage.basePath", "testdata/DatabaseTests");
-        properties.setProperty("bufferpool.numbuffers", "50");
-        properties.setProperty("logging.properties.type", "log4j");
-        properties.setProperty("logging.propertis.file", "classpath:simpledbm.logging.properties");
+	static Properties getServerProperties() {
+		Properties properties = new Properties();
+		properties.setProperty("log.ctl.1", "ctl.a");
+		properties.setProperty("log.ctl.2", "ctl.b");
+		properties.setProperty("log.groups.1.path", ".");
+		properties.setProperty("log.archive.path", ".");
+		properties.setProperty("log.group.files", "3");
+		properties.setProperty("log.file.size", "16384");
+		properties.setProperty("log.buffer.size", "16384");
+		properties.setProperty("log.buffer.limit", "4");
+		properties.setProperty("log.flush.interval", "5");
+		properties.setProperty("storage.basePath", "testdata/DatabaseTests");
+		properties.setProperty("bufferpool.numbuffers", "50");
+		properties.setProperty("logging.properties.type", "log4j");
+		properties.setProperty("logging.propertis.file",
+				"classpath:simpledbm.logging.properties");
 
-        return properties;
-    }
+		return properties;
+	}
 
-    public void testBasicFunctions() throws Exception {
+	public void testBasicFunctions() throws Exception {
 
-        deleteRecursively("testdata/DatabaseTests");
-        Database.create(getServerProperties());
+		deleteRecursively("testdata/DatabaseTests");
+		Database.create(getServerProperties());
 
-        Database db = new Database(getServerProperties());
-        db.start();
-        try {
-            FieldFactory ff = db.getFieldFactory();
-            TypeDescriptor employee_rowtype[] = {
-                ff.getIntegerType(), /* primary key */
-                ff.getVarcharType(20), /* name */
-                ff.getVarcharType(20), /* surname */
-                ff.getVarcharType(20), /* city */
-                ff.getVarcharType(45), /* email address */
-                ff.getDateTimeType(), /* date of birth */
-                ff.getNumberType(2)		/* salary */
+		Database db = new Database(getServerProperties());
+		db.start();
+		try {
+			FieldFactory ff = db.getFieldFactory();
+			TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
+																		 * primary
+																		 * key
+																		 */
+			ff.getVarcharType(20), /* name */
+			ff.getVarcharType(20), /* surname */
+			ff.getVarcharType(20), /* city */
+			ff.getVarcharType(45), /* email address */
+			ff.getDateTimeType(), /* date of birth */
+			ff.getNumberType(2) /* salary */
 
-            };
-            TableDefinition table = db.newTableDefinition("employee", 1, employee_rowtype);
-            table.addIndex(2, "employee1.idx", new int[]{0}, true, true);
-            table.addIndex(3, "employee2.idx", new int[]{2, 1}, false, false);
-            table.addIndex(4, "employee3.idx", new int[]{5}, false, false);
-            table.addIndex(5, "employee4.idx", new int[]{6}, false, false);
+			};
+			TableDefinition tableDefinition = db.newTableDefinition("employee", 1,
+					employee_rowtype);
+			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
+			tableDefinition
+					.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+							false);
+			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false, false);
+			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false, false);
 
-            db.createTable(table);
-        } finally {
-            db.shutdown();
-        }
+			db.createTable(tableDefinition);
+		} finally {
+			db.shutdown();
+		}
 
-        db = new Database(getServerProperties());
-        db.start();
-        try {
-            TableDefinition table = db.getTableDefinition(1);
-            assertNotNull(table);
-        } finally {
-            db.shutdown();
-        }
-        
-        // Lets add some data
-        db = new Database(getServerProperties());
-        db.start();
-        try {
-            TableDefinition tableDefinition = db.getTableDefinition(1);
-            assertNotNull(tableDefinition);
-            Table table = new Table(tableDefinition);
-            Row tableRow = tableDefinition.getRow();
-            FieldFactory ff = db.getFieldFactory();
-            tableRow.get(0).setInt(1);
-            tableRow.get(1).setString("Joe");
-            tableRow.get(2).setString("Blogg");
-            tableRow.get(5).setDate(new Date(1930, 12, 31));
-            tableRow.get(6).setString("500.00");
+		db = new Database(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+		} finally {
+			db.shutdown();
+		}
 
-            Transaction trx = db.getServer().begin(IsolationMode.READ_COMMITTED);
-            boolean okay = false;
-            try {
-            	table.addRow(trx, tableRow);
-            	okay = true;
-            }
-            finally {
-            	if (okay) {
-            		trx.commit();
-            	}
-            	else {
-            		trx.abort();
-            	}
-            }
-        } finally {
-            db.shutdown();
-        }
-        
-        
-    }
+		// Lets add some data
+		db = new Database(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+			Table table = new Table(tableDefinition);
+			Row tableRow = tableDefinition.getRow();
+			tableRow.get(0).setInt(1);
+			tableRow.get(1).setString("Joe");
+			tableRow.get(2).setString("Blogg");
+			tableRow.get(5).setDate(new Date(1930, 12, 31));
+			tableRow.get(6).setString("500.00");
 
-    
-    
-    void deleteRecursively(String pathname) {
-        File file = new File(pathname);
-        deleteRecursively(file);
-    }
+			Transaction trx = db.getServer()
+					.begin(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				table.addRow(trx, tableRow);
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
 
-    void deleteRecursively(File dir) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteRecursively(file);
-                } else {
-                    file.delete();
-                }
-            }
-        }
-        dir.delete();
-    }
+		db = new Database(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+			Table table = new Table(tableDefinition);
+			Transaction trx = db.getServer()
+					.begin(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Row tableRow = tableDefinition.getRow();
+				tableRow.get(2).setString("Blogg");
+				TableScan scan = table.openScan(trx, 1, tableRow, true);
+				try {
+					if (scan.fetchNext()) {
+						Row currentRow = scan.getCurrentRow();
+						Row tr = tableDefinition.getRow();
+						tr.get(0).setInt(1);
+						tr.get(1).setString("Joe");
+						tr.get(2).setString("Blogg");
+						tr.get(5).setDate(new Date(1930, 12, 31));
+						tr.get(6).setString("500.00");
+						assertEquals(tr, currentRow);
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+
+	}
+
+	void deleteRecursively(String pathname) {
+		File file = new File(pathname);
+		deleteRecursively(file);
+	}
+
+	void deleteRecursively(File dir) {
+		if (dir.isDirectory()) {
+			File[] files = dir.listFiles();
+			for (File file : files) {
+				if (file.isDirectory()) {
+					deleteRecursively(file);
+				} else {
+					file.delete();
+				}
+			}
+		}
+		dir.delete();
+	}
 }
