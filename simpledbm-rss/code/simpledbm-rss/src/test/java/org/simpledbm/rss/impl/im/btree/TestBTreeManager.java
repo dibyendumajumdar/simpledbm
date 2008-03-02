@@ -3148,6 +3148,9 @@ public class TestBTreeManager extends BaseTestCase {
 							} else {
 								assertEquals(LockMode.NONE, trx.hasLock(scan
 										.getCurrentLocation()));
+								int count = ((TransactionManagerImpl.TransactionImpl) trx)
+									.countLocks();
+								assertEquals(0, count);
 							}
 						}
 					}
