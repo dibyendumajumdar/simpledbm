@@ -28,6 +28,11 @@ package org.simpledbm.rss.api.event;
  */
 public interface EventListener {
 
+	/**
+	 * Handles the event. Must check the event type and only react if the event
+	 * is of interest. Note that this method must not perform any time-consuming 
+	 * activity or acquire resources. It must be as light-weight/quick as possible.
+	 */
 	Object handleEvent(Event event);
 	
 }
