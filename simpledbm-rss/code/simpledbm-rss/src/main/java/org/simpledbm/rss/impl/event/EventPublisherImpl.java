@@ -45,7 +45,9 @@ public class EventPublisherImpl implements EventPublisher {
 	public void addEventListener(EventListener listener) {
 		writeLock.lock();
 		try {
-			listeners.add(listener);
+			if (!listeners.contains(listener)) {
+				listeners.add(listener);
+			}
 		}
 		finally {
 			writeLock.unlock();
