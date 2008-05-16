@@ -53,7 +53,7 @@ public class Table {
         try {
             // Get a handle to the table container.
             // Note - will be locked in shared mode.
-            TupleContainer table = definition.database.server.getTupleContainer(trx,
+            TupleContainer table = definition.database.getServer().getTupleContainer(trx,
                     definition.containerId);
 
             // Lets create the new row and lock the location
@@ -63,7 +63,7 @@ public class Table {
             // Insertion of primary key may fail with unique constraint
             // violation
             for (IndexDefinition idx : definition.indexes) {
-                IndexContainer index = definition.database.server.getIndex(trx,
+                IndexContainer index = definition.database.getServer().getIndex(trx,
                         idx.containerId);
                 Row indexRow = definition.getIndexRow(idx, tableRow);
                 index.insert(trx, indexRow, inserter.getLocation());
@@ -87,14 +87,14 @@ public class Table {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            TupleContainer table = definition.database.server.getTupleContainer(trx,
+            TupleContainer table = definition.database.getServer().getTupleContainer(trx,
                     definition.containerId);
 
             IndexDefinition pkey = definition.indexes.get(0);
             // New primary key
             Row primaryKeyRow = definition.getIndexRow(pkey, tableRow);
 
-            IndexContainer primaryIndex = definition.database.server.getIndex(trx,
+            IndexContainer primaryIndex = definition.database.getServer().getIndex(trx,
                     pkey.containerId);
 
             // Start a scan, with the primary key as argument
@@ -122,7 +122,7 @@ public class Table {
                         // Old secondary key
                         for (int i = 1; i < definition.indexes.size(); i++) {
                             IndexDefinition skey = definition.indexes.get(i);
-                            IndexContainer secondaryIndex = definition.database.server.getIndex(trx, skey.containerId);
+                            IndexContainer secondaryIndex = definition.database.getServer().getIndex(trx, skey.containerId);
                             // old secondary key
                             Row oldSecondaryKeyRow = definition.getIndexRow(skey,
                                     oldTableRow);
@@ -156,14 +156,14 @@ public class Table {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            TupleContainer table = definition.database.server.getTupleContainer(trx,
+            TupleContainer table = definition.database.getServer().getTupleContainer(trx,
                     definition.containerId);
 
             IndexDefinition pkey = definition.indexes.get(0);
             // New primary key
             Row primaryKeyRow = definition.getIndexRow(pkey, tableRow);
 
-            IndexContainer primaryIndex = definition.database.server.getIndex(trx,
+            IndexContainer primaryIndex = definition.database.getServer().getIndex(trx,
                     pkey.containerId);
 
             // Start a scan, with the primary key as argument
@@ -191,7 +191,7 @@ public class Table {
                         // Old secondary key
                         for (int i = 1; i < definition.indexes.size(); i++) {
                             IndexDefinition skey = definition.indexes.get(i);
-                            IndexContainer secondaryIndex = definition.database.server.getIndex(trx, skey.containerId);
+                            IndexContainer secondaryIndex = definition.database.getServer().getIndex(trx, skey.containerId);
                             // old secondary key
                             Row oldSecondaryKeyRow = definition.getIndexRow(skey,
                                     oldTableRow);
