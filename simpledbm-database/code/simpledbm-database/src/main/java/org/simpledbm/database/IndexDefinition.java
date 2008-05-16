@@ -88,7 +88,7 @@ public class IndexDefinition implements Storable {
         }
     }
 
-    public TableDefinitionImpl getTable() {
+    public TableDefinition getTable() {
         return table;
     }
 

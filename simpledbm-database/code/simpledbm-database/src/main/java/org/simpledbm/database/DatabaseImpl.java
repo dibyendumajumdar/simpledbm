@@ -88,7 +88,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
          * Let us check if another thread has already loaded registered
          * this definition.
          */
-        for (TableDefinitionImpl td : tables) {
+        for (TableDefinition td : tables) {
             if (td.getContainerId() == tableDefinition.getContainerId()) {
             	log.warn(DatabaseImpl.class.getName(), "registerTableDefinition", mcat.getMessage("WD0001", tableDefinition));
                 return;
@@ -114,7 +114,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
     public TableDefinitionImpl getTableDefinition(int containerId) {
         synchronized (tables) {
-            for (TableDefinitionImpl tableDefinition : tables) {
+            for (TableDefinition tableDefinition : tables) {
                 if (tableDefinition.getContainerId() == containerId) {
                     return tableDefinition;
                 }
@@ -301,7 +301,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * @param containerId The container ID of the table's tuple container
      * @return The Table Definition of the specified table.
      */
-    TableDefinitionImpl retrieveTableDefinition(int containerId) {
+    TableDefinition retrieveTableDefinition(int containerId) {
 
         String tableName = makeTableDefName(containerId);
         StorageContainerFactory storageFactory = server.getStorageFactory();
