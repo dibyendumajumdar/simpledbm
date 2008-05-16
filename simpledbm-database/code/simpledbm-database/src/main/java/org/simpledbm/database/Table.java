@@ -37,9 +37,9 @@ import org.simpledbm.typesystem.api.Row;
  */
 public class Table {
 
-    final TableDefinition definition;
+    final TableDefinitionImpl definition;
 
-    public Table(TableDefinition definition) {
+    public Table(TableDefinitionImpl definition) {
     	this.definition = definition;
     }
     

@@ -84,7 +84,7 @@ public class DatabaseTests extends TestCase {
 			ff.getNumberType(2) /* salary */
 
 			};
-			TableDefinition tableDefinition = db.newTableDefinition("employee", 1,
+			TableDefinitionImpl tableDefinition = db.newTableDefinition("employee", 1,
 					employee_rowtype);
 			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
 			tableDefinition
@@ -101,7 +101,7 @@ public class DatabaseTests extends TestCase {
 		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
+			TableDefinitionImpl tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 		} finally {
 			db.shutdown();
@@ -111,7 +111,7 @@ public class DatabaseTests extends TestCase {
 		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
+			TableDefinitionImpl tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 			Table table = new Table(tableDefinition);
 			Row tableRow = tableDefinition.getRow();
@@ -141,7 +141,7 @@ public class DatabaseTests extends TestCase {
 		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
+			TableDefinitionImpl tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 			Table table = new Table(tableDefinition);
 			Transaction trx = db.getServer()

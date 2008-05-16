@@ -36,7 +36,7 @@ public class IndexDefinition implements Storable {
     /**
      * Table to which this index belongs.
      */
-    TableDefinition table;
+    TableDefinitionImpl table;
     /**
      * Container ID for the index.
      */
@@ -62,11 +62,11 @@ public class IndexDefinition implements Storable {
      */
     boolean unique;
 
-    IndexDefinition(TableDefinition table) {
+    IndexDefinition(TableDefinitionImpl table) {
         this.table = table;
     }
 
-    public IndexDefinition(TableDefinition table, int containerId, String name,
+    public IndexDefinition(TableDefinitionImpl table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
         this.table = table;
         this.containerId = containerId;
@@ -88,7 +88,7 @@ public class IndexDefinition implements Storable {
         }
     }
 
-    public TableDefinition getTable() {
+    public TableDefinitionImpl getTable() {
         return table;
     }
 
