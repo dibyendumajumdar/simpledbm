@@ -1,6 +1,5 @@
 package org.simpledbm.database.api;
 
-import org.simpledbm.database.TableDefinitionImpl;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -15,7 +14,7 @@ public interface Database {
 	 * @param rowType
 	 * @return
 	 */
-	public abstract TableDefinitionImpl newTableDefinition(String name,
+	public abstract TableDefinition newTableDefinition(String name,
 			int containerId, TypeDescriptor[] rowType);
 
 	/**
@@ -23,7 +22,7 @@ public interface Database {
 	 * @param containerId
 	 * @return
 	 */
-	public abstract TableDefinitionImpl getTableDefinition(int containerId);
+	public abstract TableDefinition getTableDefinition(int containerId);
 
 	public abstract void start();
 
@@ -35,6 +34,6 @@ public interface Database {
 
 	public abstract RowFactory getRowFactory();
 
-	public abstract void createTable(TableDefinitionImpl tableDefinition);
+	public abstract void createTable(TableDefinition tableDefinition);
 
 }

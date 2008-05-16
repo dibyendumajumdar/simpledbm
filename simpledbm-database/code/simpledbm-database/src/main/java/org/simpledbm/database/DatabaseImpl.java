@@ -77,14 +77,14 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * The table cache holds definitions of all tables and associated
      * indexes.
      */
-    ArrayList<TableDefinitionImpl> tables = new ArrayList<TableDefinitionImpl>();
+    ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
     /**
      * Register a table definition to the in-memory dictionary cache.
      * Caller must protect {@link #tables}.
      * @param tableDefinition
      */
-    private void registerTableDefinition(TableDefinitionImpl tableDefinition) {
+    private void registerTableDefinition(TableDefinition tableDefinition) {
         /*
          * Let us check if another thread has already loaded registered
          * this definition.
@@ -113,7 +113,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#getTableDefinition(int)
 	 */
-    public TableDefinitionImpl getTableDefinition(int containerId) {
+    public TableDefinition getTableDefinition(int containerId) {
         synchronized (tables) {
             for (TableDefinition tableDefinition : tables) {
                 if (tableDefinition.getContainerId() == containerId) {
@@ -221,7 +221,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#createTable(org.simpledbm.database.TableDefinition)
 	 */
-    public void createTable(TableDefinitionImpl tableDefinition) {
+    public void createTable(TableDefinition tableDefinition) {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
@@ -280,7 +280,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * container.
      * @param table The Table Definition to be persisted
      */
-    private void storeTableDefinition(TableDefinitionImpl table) {
+    private void storeTableDefinition(TableDefinition table) {
         String tableName = makeTableDefName(table.getContainerId());
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.createIfNotExisting(tableName);
@@ -336,7 +336,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     public static final class CreateTableDefinition extends BaseLoggable implements PostCommitAction, ObjectRegistryAware {
 
         int actionId;
-        TableDefinitionImpl table;
+        TableDefinition table;
         Database database;
         ObjectRegistry objectRegistry;
 
