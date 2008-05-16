@@ -33,9 +33,9 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
  */
 public class DatabaseRowFactory extends GenericRowFactory {
 
-    Database database;
+    DatabaseImpl database;
 
-    public DatabaseRowFactory(Database database, FieldFactory fieldFactory) {
+    public DatabaseRowFactory(DatabaseImpl database, FieldFactory fieldFactory) {
         super(fieldFactory);
         this.database = database;
     }
