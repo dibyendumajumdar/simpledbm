@@ -60,7 +60,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     Properties properties;
     private boolean serverStarted = false;
     final FieldFactory fieldFactory = new DefaultFieldFactory();
-    final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
+    final RowFactory rowFactory = new DatabaseRowFactoryImpl(this, fieldFactory);
     
     static Logger log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
 
