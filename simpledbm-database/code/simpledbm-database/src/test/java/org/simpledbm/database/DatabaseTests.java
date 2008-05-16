@@ -114,7 +114,7 @@ public class DatabaseTests extends TestCase {
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
-			TableImpl table = new TableImpl(tableDefinition);
+			Table table = new TableImpl(tableDefinition);
 			Row tableRow = tableDefinition.getRow();
 			tableRow.get(0).setInt(1);
 			tableRow.get(1).setString("Joe");
@@ -144,7 +144,7 @@ public class DatabaseTests extends TestCase {
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
-			TableImpl table = new TableImpl(tableDefinition);
+			Table table = new TableImpl(tableDefinition);
 			Transaction trx = db.getServer()
 					.begin(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
