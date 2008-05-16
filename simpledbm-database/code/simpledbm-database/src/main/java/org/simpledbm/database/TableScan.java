@@ -21,6 +21,7 @@ package org.simpledbm.database;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.database.api.Table;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
@@ -31,7 +32,7 @@ import org.simpledbm.typesystem.api.Row;
 
 public class TableScan {
 
-    final TableImpl table;
+    private final Table table;
     final IndexScan indexScan;
     final Row startRow;
     final TupleContainer tcont;
@@ -39,7 +40,7 @@ public class TableScan {
     final Transaction trx;
     Row currentRow;
 
-    TableScan(Transaction trx, TableImpl table, int indexNo, Row tableRow, boolean forUpdate) {
+    TableScan(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
         this.table = table;
         this.trx = trx;
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
@@ -57,7 +58,7 @@ public class TableScan {
             byte[] data = tcont.read(location);
             // parse the data
             ByteBuffer bb = ByteBuffer.wrap(data);
-            currentRow = table.getDefinition().getRow();
+            currentRow = getTable().getDefinition().getRow();
             currentRow.retrieve(bb);
         }
         return okay;
@@ -84,9 +85,9 @@ public class TableScan {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            IndexDefinition pkey = table.getDefinition().getIndexes().get(0);
+            IndexDefinition pkey = getTable().getDefinition().getIndexes().get(0);
             // New secondary key
-            Row newPrimaryKeyRow = table.getDefinition().getIndexRow(pkey, tableRow);
+            Row newPrimaryKeyRow = getTable().getDefinition().getIndexRow(pkey, tableRow);
             if (indexScan.getCurrentKey().equals(newPrimaryKeyRow)) {
                 // Get location of the tuple
                 Location location = indexScan.getCurrentLocation();
@@ -95,19 +96,19 @@ public class TableScan {
                 byte[] data = tcont.read(location);
                 // parse the data
                 ByteBuffer bb = ByteBuffer.wrap(data);
-                Row oldTableRow = table.getDefinition().getRow();
+                Row oldTableRow = getTable().getDefinition().getRow();
                 oldTableRow.retrieve(bb);
                 // Okay, now update the table row
                 tcont.update(trx, location, tableRow);
                 // Update secondary indexes
                 // Old secondary key
-                for (int i = 1; i < table.getDefinition().getIndexes().size(); i++) {
-                    IndexDefinition skey = table.getDefinition().getIndexes().get(i);
-                    IndexContainer secondaryIndex = table.getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
+                for (int i = 1; i < getTable().getDefinition().getIndexes().size(); i++) {
+                    IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
+                    IndexContainer secondaryIndex = getTable().getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                     // old secondary key
-                    Row oldSecondaryKeyRow = table.getDefinition().getIndexRow(skey, tableRow);
+                    Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
                     // New secondary key
-                    Row secondaryKeyRow = table.getDefinition().getIndexRow(skey, tableRow);
+                    Row secondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
                     if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
                         // Delete old key
                         secondaryIndex.delete(trx, oldSecondaryKeyRow, location);
@@ -116,7 +117,7 @@ public class TableScan {
                     }
                 }
             } else {
-                table.addRow(trx, tableRow);
+                getTable().addRow(trx, tableRow);
             }
             success = true;
         } finally {
@@ -138,17 +139,17 @@ public class TableScan {
             byte[] data = tcont.read(location);
             // parse the data
             ByteBuffer bb = ByteBuffer.wrap(data);
-            Row oldTableRow = table.getDefinition().getRow();
+            Row oldTableRow = getTable().getDefinition().getRow();
             oldTableRow.retrieve(bb);
             // Okay, now update the table row
             tcont.delete(trx, location);
             // Update indexes
-            for (int i = table.getDefinition().getIndexes().size() - 1; i >= 0; i--) {
-                IndexDefinition skey = table.getDefinition().getIndexes().get(i);
-                IndexContainer index = table.getDefinition().getDatabase().getServer().getIndex(
+            for (int i = getTable().getDefinition().getIndexes().size() - 1; i >= 0; i--) {
+                IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
+                IndexContainer index = getTable().getDefinition().getDatabase().getServer().getIndex(
                         trx, skey.containerId);
                 // old secondary key
-                Row indexRow = table.getDefinition().getIndexRow(skey, oldTableRow);
+                Row indexRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);
                 // Delete old key
                 index.delete(trx, indexRow, location);
             }
@@ -159,4 +160,8 @@ public class TableScan {
             }
         }
     }
+
+	Table getTable() {
+		return table;
+	}
 }
