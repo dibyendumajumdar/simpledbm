@@ -36,7 +36,7 @@ import org.simpledbm.typesystem.api.Row;
  * 
  * @author Dibyendu Majumdar
  */
-public class TableImpl {
+public class TableImpl implements Table {
 
     private final TableDefinition definition;
 
@@ -44,6 +44,9 @@ public class TableImpl {
     	this.definition = definition;
     }
     
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Table#addRow(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.typesystem.api.Row)
+	 */
     public Location addRow(Transaction trx, Row tableRow) {
 
         Location location = null;
@@ -82,6 +85,9 @@ public class TableImpl {
         return location;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Table#updateRow(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.typesystem.api.Row)
+	 */
     public void updateRow(Transaction trx, Row tableRow) {
 
         // Start a new transaction
@@ -151,6 +157,9 @@ public class TableImpl {
         }
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Table#deleteRow(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.typesystem.api.Row)
+	 */
     public void deleteRow(Transaction trx, Row tableRow) {
 
         // Start a new transaction
@@ -214,6 +223,9 @@ public class TableImpl {
         }
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Table#openScan(org.simpledbm.rss.api.tx.Transaction, int, org.simpledbm.typesystem.api.Row, boolean)
+	 */
     public TableScan openScan(Transaction trx, int indexno, Row startRow,
             boolean forUpdate) {
         return new TableScan(trx, this, indexno, startRow, forUpdate);
