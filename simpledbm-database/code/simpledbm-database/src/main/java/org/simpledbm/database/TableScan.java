@@ -42,9 +42,9 @@ public class TableScan {
     TableScan(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
         this.table = table;
         this.trx = trx;
-        tcont = table.definition.database.server.getTupleContainer(trx, table.definition.containerId);
+        tcont = table.definition.database.getServer().getTupleContainer(trx, table.definition.containerId);
         IndexDefinition index = table.definition.indexes.get(indexNo);
-        icont = table.definition.database.server.getIndex(trx, index.containerId);
+        icont = table.definition.database.getServer().getIndex(trx, index.containerId);
         this.startRow = table.definition.getIndexRow(index, tableRow);
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
     }
@@ -103,7 +103,7 @@ public class TableScan {
                 // Old secondary key
                 for (int i = 1; i < table.definition.indexes.size(); i++) {
                     IndexDefinition skey = table.definition.indexes.get(i);
-                    IndexContainer secondaryIndex = table.definition.database.server.getIndex(trx, skey.containerId);
+                    IndexContainer secondaryIndex = table.definition.database.getServer().getIndex(trx, skey.containerId);
                     // old secondary key
                     Row oldSecondaryKeyRow = table.definition.getIndexRow(skey, tableRow);
                     // New secondary key
@@ -145,7 +145,7 @@ public class TableScan {
             // Update indexes
             for (int i = table.definition.indexes.size() - 1; i >= 0; i--) {
                 IndexDefinition skey = table.definition.indexes.get(i);
-                IndexContainer index = table.definition.database.server.getIndex(
+                IndexContainer index = table.definition.database.getServer().getIndex(
                         trx, skey.containerId);
                 // old secondary key
                 Row indexRow = table.definition.getIndexRow(skey, oldTableRow);

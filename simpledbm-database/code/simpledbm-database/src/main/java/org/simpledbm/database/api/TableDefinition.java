@@ -1,8 +1,8 @@
-package org.simpledbm.database;
+package org.simpledbm.database.api;
 
 import java.util.ArrayList;
 
-import org.simpledbm.database.api.Database;
+import org.simpledbm.database.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
