@@ -38,7 +38,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * @author dibyendumajumdar
  * @since 7 Oct 2007
  */
-public class TableDefinitionImpl implements Storable {
+public class TableDefinitionImpl implements Storable, TableDefinition {
 
     Database database;
     int containerId;
@@ -58,6 +58,9 @@ public class TableDefinitionImpl implements Storable {
         this.rowType = rowType;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#addIndex(int, java.lang.String, int[], boolean, boolean)
+	 */
     public void addIndex(int containerId, String name, int[] columns,
             boolean primary, boolean unique) {
         if (!primary && indexes.size() == 0) {
@@ -67,22 +70,37 @@ public class TableDefinitionImpl implements Storable {
         indexes.add(new IndexDefinition(this, containerId, name, columns, primary, unique));
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getDatabase()
+	 */
     public Database getDatabase() {
         return database;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getContainerId()
+	 */
     public int getContainerId() {
         return containerId;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getName()
+	 */
     public String getName() {
         return name;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getRowType()
+	 */
     public TypeDescriptor[] getRowType() {
         return rowType;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getIndexes()
+	 */
     public ArrayList<IndexDefinition> getIndexes() {
         return indexes;
     }
@@ -164,11 +182,17 @@ public class TableDefinitionImpl implements Storable {
         return true;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getRow()
+	 */
     public Row getRow() {
         RowFactory rowFactory = database.getRowFactory();
         return rowFactory.newRow(containerId);
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableDefinition#getIndexRow(org.simpledbm.database.IndexDefinition, org.simpledbm.typesystem.api.Row)
+	 */
     public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.columns.length; i++) {

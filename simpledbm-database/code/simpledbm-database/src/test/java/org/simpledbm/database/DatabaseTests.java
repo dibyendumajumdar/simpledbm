@@ -101,7 +101,7 @@ public class DatabaseTests extends TestCase {
 		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
-			TableDefinitionImpl tableDefinition = db.getTableDefinition(1);
+			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 		} finally {
 			db.shutdown();
