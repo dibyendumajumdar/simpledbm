@@ -39,17 +39,17 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class TableDefinition implements Storable {
 
-    DatabaseImpl database;
+    Database database;
     int containerId;
     String name;
     TypeDescriptor[] rowType;
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-    TableDefinition(DatabaseImpl database) {
+    TableDefinition(Database database) {
         this.database = database;
     }
 
-    TableDefinition(DatabaseImpl database, int containerId, String name,
+    TableDefinition(Database database, int containerId, String name,
             TypeDescriptor[] rowType) {
         this.database = database;
         this.containerId = containerId;
@@ -66,7 +66,7 @@ public class TableDefinition implements Storable {
         indexes.add(new IndexDefinition(this, containerId, name, columns, primary, unique));
     }
 
-    public DatabaseImpl getDatabase() {
+    public Database getDatabase() {
         return database;
     }
 

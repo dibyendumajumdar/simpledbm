@@ -67,7 +67,7 @@ public class DatabaseTests extends TestCase {
 		deleteRecursively("testdata/DatabaseTests");
 		DatabaseImpl.create(getServerProperties());
 
-		DatabaseImpl db = new DatabaseImpl(getServerProperties());
+		Database db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
 			FieldFactory ff = db.getFieldFactory();
