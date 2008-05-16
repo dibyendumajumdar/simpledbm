@@ -1,3 +1,6 @@
+1.0.9-BETA:
+ * dm: Added a simple event publication mechanism
+
 1.0.8-BETA:
  * dm: Added checksum verification to page reads and writes.
  * dm: Enhanced the storage factory interface to allow checking for the existence of a container.
