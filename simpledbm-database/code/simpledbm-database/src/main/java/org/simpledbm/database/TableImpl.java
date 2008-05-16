@@ -227,7 +227,7 @@ public class TableImpl implements Table {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Table#openScan(org.simpledbm.rss.api.tx.Transaction, int, org.simpledbm.typesystem.api.Row, boolean)
 	 */
-    public TableScanImpl openScan(Transaction trx, int indexno, Row startRow,
+    public TableScan openScan(Transaction trx, int indexno, Row startRow,
             boolean forUpdate) {
         return new TableScanImpl(trx, this, indexno, startRow, forUpdate);
     }
