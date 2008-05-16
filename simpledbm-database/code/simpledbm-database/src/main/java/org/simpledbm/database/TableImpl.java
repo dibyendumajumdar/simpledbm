@@ -232,7 +232,7 @@ public class TableImpl implements Table {
         return new TableScan(trx, this, indexno, startRow, forUpdate);
     }
 
-	TableDefinition getDefinition() {
+	public TableDefinition getDefinition() {
 		return definition;
 	}
 }

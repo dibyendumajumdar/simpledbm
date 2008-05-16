@@ -15,5 +15,7 @@ public interface Table {
 
 	public abstract TableScan openScan(Transaction trx, int indexno,
 			Row startRow, boolean forUpdate);
+	
+	public abstract TableDefinition getDefinition();
 
 }
