@@ -22,6 +22,7 @@ package org.simpledbm.database;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.simpledbm.database.api.Database;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
