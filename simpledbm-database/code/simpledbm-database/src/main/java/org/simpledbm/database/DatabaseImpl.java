@@ -47,7 +47,7 @@ import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
 
-public class DatabaseImpl extends BaseTransactionalModule {
+public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
     final static int MODULE_ID = 100;
     final static int MODULE_BASE = 101;
@@ -100,23 +100,17 @@ public class DatabaseImpl extends BaseTransactionalModule {
         tables.add(tableDefinition);
     }
 
-    /**
-     * Allocates a new TableDefinition object.
-     * @param name
-     * @param containerId
-     * @param rowType
-     * @return
-     */
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#newTableDefinition(java.lang.String, int, org.simpledbm.typesystem.api.TypeDescriptor[])
+	 */
     public TableDefinition newTableDefinition(String name, int containerId,
             TypeDescriptor[] rowType) {
         return new TableDefinition(this, containerId, name, rowType);
     }
 
-    /**
-     * Gets a table definition object from the cache.
-     * @param containerId
-     * @return
-     */
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#getTableDefinition(int)
+	 */
     public TableDefinition getTableDefinition(int containerId) {
         synchronized (tables) {
             for (TableDefinition tableDefinition : tables) {
@@ -160,6 +154,9 @@ public class DatabaseImpl extends BaseTransactionalModule {
         Server.create(properties);
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#start()
+	 */
     public void start() {
         /*
          * We cannot start the server more than once
@@ -187,6 +184,9 @@ public class DatabaseImpl extends BaseTransactionalModule {
         server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#shutdown()
+	 */
     public void shutdown() {
         if (serverStarted) {
             server.shutdown();
@@ -195,18 +195,30 @@ public class DatabaseImpl extends BaseTransactionalModule {
         }
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#getServer()
+	 */
     public Server getServer() {
         return server;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#getFieldFactory()
+	 */
     public FieldFactory getFieldFactory() {
         return fieldFactory;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#getRowFactory()
+	 */
     public RowFactory getRowFactory() {
         return rowFactory;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.Database#createTable(org.simpledbm.database.TableDefinition)
+	 */
     public void createTable(TableDefinition tableDefinition) {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
@@ -323,7 +335,7 @@ public class DatabaseImpl extends BaseTransactionalModule {
 
         int actionId;
         TableDefinition table;
-        DatabaseImpl database;
+        Database database;
         ObjectRegistry objectRegistry;
 
         public CreateTableDefinition() {
@@ -390,7 +402,7 @@ public class DatabaseImpl extends BaseTransactionalModule {
 
         public void setObjectFactory(ObjectRegistry objectFactory) {
             this.objectRegistry = objectFactory;
-            database = (DatabaseImpl) objectRegistry.getInstance(DatabaseImpl.MODULE_ID);
+            database = (Database) objectRegistry.getInstance(DatabaseImpl.MODULE_ID);
         }
     }
 }
