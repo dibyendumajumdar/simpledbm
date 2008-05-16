@@ -32,11 +32,11 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
  * @author Dibyendu Majumdar
  * @since 29 Dec 2007
  */
-public class DatabaseRowFactory extends GenericRowFactory {
+public class DatabaseRowFactoryImpl extends GenericRowFactory {
 
     DatabaseImpl database;
 
-    public DatabaseRowFactory(DatabaseImpl database, FieldFactory fieldFactory) {
+    public DatabaseRowFactoryImpl(DatabaseImpl database, FieldFactory fieldFactory) {
         super(fieldFactory);
         this.database = database;
     }
