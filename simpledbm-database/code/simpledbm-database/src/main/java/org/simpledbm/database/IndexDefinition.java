@@ -37,7 +37,7 @@ public class IndexDefinition implements Storable {
     /**
      * Table to which this index belongs.
      */
-    TableDefinitionImpl table;
+    TableDefinition table;
     /**
      * Container ID for the index.
      */
@@ -63,11 +63,11 @@ public class IndexDefinition implements Storable {
      */
     boolean unique;
 
-    IndexDefinition(TableDefinitionImpl table) {
+    IndexDefinition(TableDefinition table) {
         this.table = table;
     }
 
-    public IndexDefinition(TableDefinitionImpl table, int containerId, String name,
+    public IndexDefinition(TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
         this.table = table;
         this.containerId = containerId;
@@ -118,7 +118,7 @@ public class IndexDefinition implements Storable {
     }
 
     public Row getRow() {
-        RowFactory rowFactory = table.database.getRowFactory();
+        RowFactory rowFactory = table.getDatabase().getRowFactory();
         return rowFactory.newRow(containerId);
     }
 
@@ -130,7 +130,7 @@ public class IndexDefinition implements Storable {
      * @return Appropriate row type
      */
     IndexKey makeMinRow(int containerId) {
-        IndexKeyFactory rowFactory = table.database.getRowFactory();
+        IndexKeyFactory rowFactory = table.getDatabase().getRowFactory();
         return rowFactory.minIndexKey(containerId);
     }
 
@@ -175,9 +175,9 @@ public class IndexDefinition implements Storable {
         for (int i = 0; i < columns.length; i++) {
             rowType[i] = table.getRowType()[columns[i]];
         }
-        if (!table.indexes.contains(this)) {
-            table.database.getRowFactory().registerRowType(containerId, rowType);
-            table.indexes.add(this);
+        if (!table.getIndexes().contains(this)) {
+            table.getDatabase().getRowFactory().registerRowType(containerId, rowType);
+            table.getIndexes().add(this);
         }
     }
 
