@@ -65,9 +65,9 @@ public class DatabaseTests extends TestCase {
 	public void testBasicFunctions() throws Exception {
 
 		deleteRecursively("testdata/DatabaseTests");
-		Database.create(getServerProperties());
+		DatabaseImpl.create(getServerProperties());
 
-		Database db = new Database(getServerProperties());
+		DatabaseImpl db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
 			FieldFactory ff = db.getFieldFactory();
@@ -97,7 +97,7 @@ public class DatabaseTests extends TestCase {
 			db.shutdown();
 		}
 
-		db = new Database(getServerProperties());
+		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
@@ -107,7 +107,7 @@ public class DatabaseTests extends TestCase {
 		}
 
 		// Lets add some data
-		db = new Database(getServerProperties());
+		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
@@ -137,7 +137,7 @@ public class DatabaseTests extends TestCase {
 			db.shutdown();
 		}
 
-		db = new Database(getServerProperties());
+		db = new DatabaseImpl(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);

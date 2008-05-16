@@ -47,7 +47,7 @@ import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
 
-public class Database extends BaseTransactionalModule {
+public class DatabaseImpl extends BaseTransactionalModule {
 
     final static int MODULE_ID = 100;
     final static int MODULE_BASE = 101;
@@ -60,7 +60,7 @@ public class Database extends BaseTransactionalModule {
     final FieldFactory fieldFactory = new DefaultFieldFactory();
     final RowFactory rowFactory = new DatabaseRowFactory(this, fieldFactory);
     
-    static Logger log = Logger.getLogger(Database.class.getPackage().getName());
+    static Logger log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
 
     static {
     	MessageCatalog.addMessage("WD0001",
@@ -89,7 +89,7 @@ public class Database extends BaseTransactionalModule {
          */
         for (TableDefinition td : tables) {
             if (td.getContainerId() == tableDefinition.getContainerId()) {
-            	log.warn(Database.class.getName(), "registerTableDefinition", mcat.getMessage("WD0001", tableDefinition));
+            	log.warn(DatabaseImpl.class.getName(), "registerTableDefinition", mcat.getMessage("WD0001", tableDefinition));
                 return;
             }
         }
@@ -147,7 +147,7 @@ public class Database extends BaseTransactionalModule {
 		}
 	}
 
-    public Database(Properties properties) {
+    public DatabaseImpl(Properties properties) {
         validateProperties(properties);
         this.properties = properties;
     }
@@ -172,7 +172,7 @@ public class Database extends BaseTransactionalModule {
          * We must always create a new server object.
          */
         server = new Server(properties);
-        log = Logger.getLogger(Database.class.getPackage().getName());
+        log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
         server.getObjectRegistry().registerSingleton(MODULE_ID, this);
         server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION, CreateTableDefinition.class.getName());
         server.getModuleRegistry().registerModule(MODULE_ID, this);
@@ -323,7 +323,7 @@ public class Database extends BaseTransactionalModule {
 
         int actionId;
         TableDefinition table;
-        Database database;
+        DatabaseImpl database;
         ObjectRegistry objectRegistry;
 
         public CreateTableDefinition() {
@@ -390,7 +390,7 @@ public class Database extends BaseTransactionalModule {
 
         public void setObjectFactory(ObjectRegistry objectFactory) {
             this.objectRegistry = objectFactory;
-            database = (Database) objectRegistry.getInstance(Database.MODULE_ID);
+            database = (DatabaseImpl) objectRegistry.getInstance(DatabaseImpl.MODULE_ID);
         }
     }
 }
