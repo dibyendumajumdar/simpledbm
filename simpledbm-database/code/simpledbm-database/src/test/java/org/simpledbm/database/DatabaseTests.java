@@ -28,6 +28,7 @@ import junit.framework.TestCase;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.database.api.TableScan;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.FieldFactory;
