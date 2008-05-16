@@ -38,7 +38,7 @@ import org.simpledbm.typesystem.api.Row;
  */
 public class TableImpl {
 
-    final TableDefinition definition;
+    private final TableDefinition definition;
 
     public TableImpl(TableDefinition definition) {
     	this.definition = definition;
@@ -54,8 +54,8 @@ public class TableImpl {
         try {
             // Get a handle to the table container.
             // Note - will be locked in shared mode.
-            TupleContainer table = definition.getDatabase().getServer().getTupleContainer(trx,
-                    definition.getContainerId());
+            TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
+                    getDefinition().getContainerId());
 
             // Lets create the new row and lock the location
             TupleInserter inserter = table.insert(trx, tableRow);
@@ -63,10 +63,10 @@ public class TableImpl {
             // Insert the keys. The first key should be the primary key.
             // Insertion of primary key may fail with unique constraint
             // violation
-            for (IndexDefinition idx : definition.getIndexes()) {
-                IndexContainer index = definition.getDatabase().getServer().getIndex(trx,
+            for (IndexDefinition idx : getDefinition().getIndexes()) {
+                IndexContainer index = getDefinition().getDatabase().getServer().getIndex(trx,
                         idx.containerId);
-                Row indexRow = definition.getIndexRow(idx, tableRow);
+                Row indexRow = getDefinition().getIndexRow(idx, tableRow);
                 index.insert(trx, indexRow, inserter.getLocation());
             }
             // All keys inserted successfully, so now complete the insert
@@ -88,14 +88,14 @@ public class TableImpl {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            TupleContainer table = definition.getDatabase().getServer().getTupleContainer(trx,
-                    definition.getContainerId());
+            TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
+                    getDefinition().getContainerId());
 
-            IndexDefinition pkey = definition.getIndexes().get(0);
+            IndexDefinition pkey = getDefinition().getIndexes().get(0);
             // New primary key
-            Row primaryKeyRow = definition.getIndexRow(pkey, tableRow);
+            Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
-            IndexContainer primaryIndex = definition.getDatabase().getServer().getIndex(trx,
+            IndexContainer primaryIndex = getDefinition().getDatabase().getServer().getIndex(trx,
                     pkey.containerId);
 
             // Start a scan, with the primary key as argument
@@ -115,20 +115,20 @@ public class TableImpl {
                         byte[] data = table.read(location);
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = definition.getRow();
+                        Row oldTableRow = getDefinition().getRow();
                         oldTableRow.retrieve(bb);
                         // Okay, now update the table row
                         table.update(trx, location, tableRow);
                         // Update secondary indexes
                         // Old secondary key
-                        for (int i = 1; i < definition.getIndexes().size(); i++) {
-                            IndexDefinition skey = definition.getIndexes().get(i);
-                            IndexContainer secondaryIndex = definition.getDatabase().getServer().getIndex(trx, skey.containerId);
+                        for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
+                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                             // old secondary key
-                            Row oldSecondaryKeyRow = definition.getIndexRow(skey,
+                            Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
                                     oldTableRow);
                             // New secondary key
-                            Row secondaryKeyRow = definition.getIndexRow(skey, tableRow);
+                            Row secondaryKeyRow = getDefinition().getIndexRow(skey, tableRow);
                             if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
                                 // Delete old key
                                 secondaryIndex.delete(trx, oldSecondaryKeyRow,
@@ -157,14 +157,14 @@ public class TableImpl {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            TupleContainer table = definition.getDatabase().getServer().getTupleContainer(trx,
-                    definition.getContainerId());
+            TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
+                    getDefinition().getContainerId());
 
-            IndexDefinition pkey = definition.getIndexes().get(0);
+            IndexDefinition pkey = getDefinition().getIndexes().get(0);
             // New primary key
-            Row primaryKeyRow = definition.getIndexRow(pkey, tableRow);
+            Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
-            IndexContainer primaryIndex = definition.getDatabase().getServer().getIndex(trx,
+            IndexContainer primaryIndex = getDefinition().getDatabase().getServer().getIndex(trx,
                     pkey.containerId);
 
             // Start a scan, with the primary key as argument
@@ -184,17 +184,17 @@ public class TableImpl {
                         byte[] data = table.read(location);
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = definition.getRow();
+                        Row oldTableRow = getDefinition().getRow();
                         oldTableRow.retrieve(bb);
                         // Okay, now update the table row
                         table.delete(trx, location);
                         // Update secondary indexes
                         // Old secondary key
-                        for (int i = 1; i < definition.getIndexes().size(); i++) {
-                            IndexDefinition skey = definition.getIndexes().get(i);
-                            IndexContainer secondaryIndex = definition.getDatabase().getServer().getIndex(trx, skey.containerId);
+                        for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
+                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                             // old secondary key
-                            Row oldSecondaryKeyRow = definition.getIndexRow(skey,
+                            Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
                                     oldTableRow);
                             // Delete old key
                             secondaryIndex.delete(trx, oldSecondaryKeyRow,
@@ -218,4 +218,8 @@ public class TableImpl {
             boolean forUpdate) {
         return new TableScan(trx, this, indexno, startRow, forUpdate);
     }
+
+	TableDefinition getDefinition() {
+		return definition;
+	}
 }
