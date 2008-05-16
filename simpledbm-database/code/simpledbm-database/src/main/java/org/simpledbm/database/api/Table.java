@@ -1,5 +1,6 @@
-package org.simpledbm.database;
+package org.simpledbm.database.api;
 
+import org.simpledbm.database.TableScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
