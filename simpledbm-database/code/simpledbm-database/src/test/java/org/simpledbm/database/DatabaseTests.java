@@ -20,7 +20,6 @@
 package org.simpledbm.database;
 
 import java.io.File;
-import java.math.BigInteger;
 import java.util.Date;
 import java.util.Properties;
 

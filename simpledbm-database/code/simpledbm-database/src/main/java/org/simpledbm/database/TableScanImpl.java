@@ -30,7 +30,7 @@ import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
 
-public class TableScanImpl {
+public class TableScanImpl implements TableScan {
 
     private final Table table;
     final IndexScan indexScan;
@@ -50,6 +50,9 @@ public class TableScanImpl {
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#fetchNext()
+	 */
     public boolean fetchNext() {
         boolean okay = indexScan.fetchNext();
         if (okay) {
@@ -64,22 +67,37 @@ public class TableScanImpl {
         return okay;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#getCurrentRow()
+	 */
     public Row getCurrentRow() {
         return currentRow;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#getCurrentIndexRow()
+	 */
     public Row getCurrentIndexRow() {
         return (Row) indexScan.getCurrentKey();
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#fetchCompleted(boolean)
+	 */
     public void fetchCompleted(boolean matched) {
         indexScan.fetchCompleted(matched);
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#close()
+	 */
     public void close() {
         indexScan.close();
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#updateCurrentRow(org.simpledbm.typesystem.api.Row)
+	 */
     public void updateCurrentRow(Row tableRow) {
         // Start a new transaction
         Savepoint sp = trx.createSavepoint(false);
@@ -127,6 +145,9 @@ public class TableScanImpl {
         }
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.TableScan#deleteRow()
+	 */
     public void deleteRow() {
         // Start a new transaction
         Savepoint sp = trx.createSavepoint(false);
