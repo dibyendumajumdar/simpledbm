@@ -45,7 +45,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     int containerId;
     String name;
     TypeDescriptor[] rowType;
-    ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
+    ArrayList<IndexDefinitionImpl> indexes = new ArrayList<IndexDefinitionImpl>();
 
     TableDefinitionImpl(Database database) {
         this.database = database;
@@ -68,7 +68,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
             throw new IllegalArgumentException(
                     "First index must be the primary");
         }
-        indexes.add(new IndexDefinition(this, containerId, name, columns, primary, unique));
+        indexes.add(new IndexDefinitionImpl(this, containerId, name, columns, primary, unique));
     }
 
     /* (non-Javadoc)
@@ -102,7 +102,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableDefinition#getIndexes()
 	 */
-    public ArrayList<IndexDefinition> getIndexes() {
+    public ArrayList<IndexDefinitionImpl> getIndexes() {
         return indexes;
     }
 
@@ -126,9 +126,9 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         name = s.toString();
         rowType = database.getFieldFactory().retrieve(bb);
         int n = bb.getShort();
-        indexes = new ArrayList<IndexDefinition>();
+        indexes = new ArrayList<IndexDefinitionImpl>();
         for (int i = 0; i < n; i++) {
-            IndexDefinition idx = new IndexDefinition(this);
+            IndexDefinitionImpl idx = new IndexDefinitionImpl(this);
             idx.retrieve(bb);
         }
 //        if (!database.tables.contains(this)) {
@@ -144,7 +144,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         database.getFieldFactory().store(rowType, bb);
         bb.putShort((short) indexes.size());
         for (int i = 0; i < indexes.size(); i++) {
-            IndexDefinition idx = indexes.get(i);
+            IndexDefinitionImpl idx = indexes.get(i);
             idx.store(bb);
         }
     }
@@ -194,7 +194,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableDefinition#getIndexRow(org.simpledbm.database.IndexDefinition, org.simpledbm.typesystem.api.Row)
 	 */
-    public Row getIndexRow(IndexDefinition index, Row tableRow) {
+    public Row getIndexRow(IndexDefinitionImpl index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.columns.length; i++) {
             indexRow.set(i, (Field) tableRow.get(index.columns[i]).cloneMe());
