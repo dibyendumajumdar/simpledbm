@@ -1,5 +1,6 @@
-package org.simpledbm.database;
+package org.simpledbm.database.api;
 
+import org.simpledbm.database.TableDefinition;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.RowFactory;
