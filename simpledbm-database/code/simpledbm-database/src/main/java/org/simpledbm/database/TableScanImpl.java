@@ -30,7 +30,7 @@ import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
 
-public class TableScan {
+public class TableScanImpl {
 
     private final Table table;
     final IndexScan indexScan;
@@ -40,7 +40,7 @@ public class TableScan {
     final Transaction trx;
     Row currentRow;
 
-    TableScan(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
+    TableScanImpl(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
         this.table = table;
         this.trx = trx;
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
