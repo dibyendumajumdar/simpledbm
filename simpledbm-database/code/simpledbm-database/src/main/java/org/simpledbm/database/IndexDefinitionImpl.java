@@ -32,7 +32,7 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class IndexDefinition implements Storable {
+public class IndexDefinitionImpl implements Storable {
 
     /**
      * Table to which this index belongs.
@@ -63,11 +63,11 @@ public class IndexDefinition implements Storable {
      */
     boolean unique;
 
-    IndexDefinition(TableDefinition table) {
+    IndexDefinitionImpl(TableDefinition table) {
         this.table = table;
     }
 
-    public IndexDefinition(TableDefinition table, int containerId, String name,
+    public IndexDefinitionImpl(TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
         this.table = table;
         this.containerId = containerId;
@@ -221,7 +221,7 @@ public class IndexDefinition implements Storable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final IndexDefinition other = (IndexDefinition) obj;
+        final IndexDefinitionImpl other = (IndexDefinitionImpl) obj;
         if (containerId != other.containerId) {
             return false;
         }

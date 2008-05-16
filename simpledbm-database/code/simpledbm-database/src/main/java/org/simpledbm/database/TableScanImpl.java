@@ -45,7 +45,7 @@ public class TableScanImpl implements TableScan {
         this.table = table;
         this.trx = trx;
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
-        IndexDefinition index = table.getDefinition().getIndexes().get(indexNo);
+        IndexDefinitionImpl index = table.getDefinition().getIndexes().get(indexNo);
         icont = table.getDefinition().getDatabase().getServer().getIndex(trx, index.containerId);
         this.startRow = table.getDefinition().getIndexRow(index, tableRow);
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
@@ -104,7 +104,7 @@ public class TableScanImpl implements TableScan {
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            IndexDefinition pkey = getTable().getDefinition().getIndexes().get(0);
+            IndexDefinitionImpl pkey = getTable().getDefinition().getIndexes().get(0);
             // New secondary key
             Row newPrimaryKeyRow = getTable().getDefinition().getIndexRow(pkey, tableRow);
             if (indexScan.getCurrentKey().equals(newPrimaryKeyRow)) {
@@ -122,7 +122,7 @@ public class TableScanImpl implements TableScan {
                 // Update secondary indexes
                 // Old secondary key
                 for (int i = 1; i < getTable().getDefinition().getIndexes().size(); i++) {
-                    IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
+                    IndexDefinitionImpl skey = getTable().getDefinition().getIndexes().get(i);
                     IndexContainer secondaryIndex = getTable().getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                     // old secondary key
                     Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
@@ -167,7 +167,7 @@ public class TableScanImpl implements TableScan {
             tcont.delete(trx, location);
             // Update indexes
             for (int i = getTable().getDefinition().getIndexes().size() - 1; i >= 0; i--) {
-                IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
+                IndexDefinitionImpl skey = getTable().getDefinition().getIndexes().get(i);
                 IndexContainer index = getTable().getDefinition().getDatabase().getServer().getIndex(
                         trx, skey.containerId);
                 // old secondary key

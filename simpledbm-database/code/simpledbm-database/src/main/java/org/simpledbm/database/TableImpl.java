@@ -68,7 +68,7 @@ public class TableImpl implements Table {
             // Insert the keys. The first key should be the primary key.
             // Insertion of primary key may fail with unique constraint
             // violation
-            for (IndexDefinition idx : getDefinition().getIndexes()) {
+            for (IndexDefinitionImpl idx : getDefinition().getIndexes()) {
                 IndexContainer index = getDefinition().getDatabase().getServer().getIndex(trx,
                         idx.containerId);
                 Row indexRow = getDefinition().getIndexRow(idx, tableRow);
@@ -99,7 +99,7 @@ public class TableImpl implements Table {
             TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
                     getDefinition().getContainerId());
 
-            IndexDefinition pkey = getDefinition().getIndexes().get(0);
+            IndexDefinitionImpl pkey = getDefinition().getIndexes().get(0);
             // New primary key
             Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
@@ -130,7 +130,7 @@ public class TableImpl implements Table {
                         // Update secondary indexes
                         // Old secondary key
                         for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexDefinitionImpl skey = getDefinition().getIndexes().get(i);
                             IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                             // old secondary key
                             Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
@@ -171,7 +171,7 @@ public class TableImpl implements Table {
             TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
                     getDefinition().getContainerId());
 
-            IndexDefinition pkey = getDefinition().getIndexes().get(0);
+            IndexDefinitionImpl pkey = getDefinition().getIndexes().get(0);
             // New primary key
             Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
@@ -202,7 +202,7 @@ public class TableImpl implements Table {
                         // Update secondary indexes
                         // Old secondary key
                         for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexDefinitionImpl skey = getDefinition().getIndexes().get(i);
                             IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
                             // old secondary key
                             Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
