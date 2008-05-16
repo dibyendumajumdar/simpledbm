@@ -19,6 +19,7 @@
  */
 package org.simpledbm.database;
 
+import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.GenericRowFactory;

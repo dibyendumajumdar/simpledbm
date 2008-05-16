@@ -27,6 +27,7 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 import org.simpledbm.database.api.Database;
+import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.FieldFactory;
