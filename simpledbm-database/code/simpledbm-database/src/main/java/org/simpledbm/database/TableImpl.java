@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.database.api.TableScan;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;

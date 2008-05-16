@@ -1,4 +1,4 @@
-package org.simpledbm.database;
+package org.simpledbm.database.api;
 
 import org.simpledbm.typesystem.api.Row;
 
