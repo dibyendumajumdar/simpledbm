@@ -38,7 +38,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * @author dibyendumajumdar
  * @since 7 Oct 2007
  */
-public class TableDefinition implements Storable {
+public class TableDefinitionImpl implements Storable {
 
     Database database;
     int containerId;
@@ -46,11 +46,11 @@ public class TableDefinition implements Storable {
     TypeDescriptor[] rowType;
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-    TableDefinition(Database database) {
+    TableDefinitionImpl(Database database) {
         this.database = database;
     }
 
-    TableDefinition(Database database, int containerId, String name,
+    TableDefinitionImpl(Database database, int containerId, String name,
             TypeDescriptor[] rowType) {
         this.database = database;
         this.containerId = containerId;
@@ -150,7 +150,7 @@ public class TableDefinition implements Storable {
         if (getClass() != obj.getClass()) {
             return false;
         }
-        final TableDefinition other = (TableDefinition) obj;
+        final TableDefinitionImpl other = (TableDefinitionImpl) obj;
         if (containerId != other.containerId) {
             return false;
         }

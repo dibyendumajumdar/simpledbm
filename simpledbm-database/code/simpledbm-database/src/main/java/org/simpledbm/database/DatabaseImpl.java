@@ -76,19 +76,19 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * The table cache holds definitions of all tables and associated
      * indexes.
      */
-    ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
+    ArrayList<TableDefinitionImpl> tables = new ArrayList<TableDefinitionImpl>();
 
     /**
      * Register a table definition to the in-memory dictionary cache.
      * Caller must protect {@link #tables}.
      * @param tableDefinition
      */
-    private void registerTableDefinition(TableDefinition tableDefinition) {
+    private void registerTableDefinition(TableDefinitionImpl tableDefinition) {
         /*
          * Let us check if another thread has already loaded registered
          * this definition.
          */
-        for (TableDefinition td : tables) {
+        for (TableDefinitionImpl td : tables) {
             if (td.getContainerId() == tableDefinition.getContainerId()) {
             	log.warn(DatabaseImpl.class.getName(), "registerTableDefinition", mcat.getMessage("WD0001", tableDefinition));
                 return;
@@ -104,17 +104,17 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#newTableDefinition(java.lang.String, int, org.simpledbm.typesystem.api.TypeDescriptor[])
 	 */
-    public TableDefinition newTableDefinition(String name, int containerId,
+    public TableDefinitionImpl newTableDefinition(String name, int containerId,
             TypeDescriptor[] rowType) {
-        return new TableDefinition(this, containerId, name, rowType);
+        return new TableDefinitionImpl(this, containerId, name, rowType);
     }
 
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#getTableDefinition(int)
 	 */
-    public TableDefinition getTableDefinition(int containerId) {
+    public TableDefinitionImpl getTableDefinition(int containerId) {
         synchronized (tables) {
-            for (TableDefinition tableDefinition : tables) {
+            for (TableDefinitionImpl tableDefinition : tables) {
                 if (tableDefinition.getContainerId() == containerId) {
                     return tableDefinition;
                 }
@@ -220,7 +220,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#createTable(org.simpledbm.database.TableDefinition)
 	 */
-    public void createTable(TableDefinition tableDefinition) {
+    public void createTable(TableDefinitionImpl tableDefinition) {
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
@@ -279,7 +279,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * container.
      * @param table The Table Definition to be persisted
      */
-    private void storeTableDefinition(TableDefinition table) {
+    private void storeTableDefinition(TableDefinitionImpl table) {
         String tableName = makeTableDefName(table.getContainerId());
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.createIfNotExisting(tableName);
@@ -301,12 +301,12 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * @param containerId The container ID of the table's tuple container
      * @return The Table Definition of the specified table.
      */
-    TableDefinition retrieveTableDefinition(int containerId) {
+    TableDefinitionImpl retrieveTableDefinition(int containerId) {
 
         String tableName = makeTableDefName(containerId);
         StorageContainerFactory storageFactory = server.getStorageFactory();
         StorageContainer sc = storageFactory.open(tableName);
-        TableDefinition table = null;
+        TableDefinitionImpl table = null;
         try {
             byte buffer[] = new byte[TypeSize.INTEGER];
             sc.read(0, buffer, 0, buffer.length);
@@ -315,7 +315,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             buffer = new byte[n];
             sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
             bb = ByteBuffer.wrap(buffer);
-            table = new TableDefinition(this);
+            table = new TableDefinitionImpl(this);
             table.retrieve(bb);
         } finally {
             sc.close();
@@ -335,14 +335,14 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     public static final class CreateTableDefinition extends BaseLoggable implements PostCommitAction, ObjectRegistryAware {
 
         int actionId;
-        TableDefinition table;
+        TableDefinitionImpl table;
         Database database;
         ObjectRegistry objectRegistry;
 
         public CreateTableDefinition() {
         }
 
-        public CreateTableDefinition(TableDefinition table) {
+        public CreateTableDefinition(TableDefinitionImpl table) {
             this.table = table;
             this.database = table.getDatabase();
             this.objectRegistry = table.getDatabase().getServer().getObjectRegistry();
@@ -385,7 +385,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             }
             super.retrieve(bb);
             actionId = bb.getInt();
-            table = new TableDefinition(database);
+            table = new TableDefinitionImpl(database);
             table.retrieve(bb);
         }
 
