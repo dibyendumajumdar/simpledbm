@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.simpledbm.database.api.Database;
+import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.util.ByteString;
@@ -45,7 +46,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     int containerId;
     String name;
     TypeDescriptor[] rowType;
-    ArrayList<IndexDefinitionImpl> indexes = new ArrayList<IndexDefinitionImpl>();
+    ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
     TableDefinitionImpl(Database database) {
         this.database = database;
@@ -102,7 +103,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableDefinition#getIndexes()
 	 */
-    public ArrayList<IndexDefinitionImpl> getIndexes() {
+    public ArrayList<IndexDefinition> getIndexes() {
         return indexes;
     }
 
@@ -126,7 +127,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         name = s.toString();
         rowType = database.getFieldFactory().retrieve(bb);
         int n = bb.getShort();
-        indexes = new ArrayList<IndexDefinitionImpl>();
+        indexes = new ArrayList<IndexDefinition>();
         for (int i = 0; i < n; i++) {
             IndexDefinitionImpl idx = new IndexDefinitionImpl(this);
             idx.retrieve(bb);
@@ -144,7 +145,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         database.getFieldFactory().store(rowType, bb);
         bb.putShort((short) indexes.size());
         for (int i = 0; i < indexes.size(); i++) {
-            IndexDefinitionImpl idx = indexes.get(i);
+            IndexDefinition idx = indexes.get(i);
             idx.store(bb);
         }
     }
@@ -194,10 +195,10 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableDefinition#getIndexRow(org.simpledbm.database.IndexDefinition, org.simpledbm.typesystem.api.Row)
 	 */
-    public Row getIndexRow(IndexDefinitionImpl index, Row tableRow) {
+    public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
-        for (int i = 0; i < index.columns.length; i++) {
-            indexRow.set(i, (Field) tableRow.get(index.columns[i]).cloneMe());
+        for (int i = 0; i < index.getColumns().length; i++) {
+            indexRow.set(i, (Field) tableRow.get(index.getColumns()[i]).cloneMe());
         }
         return indexRow;
     }

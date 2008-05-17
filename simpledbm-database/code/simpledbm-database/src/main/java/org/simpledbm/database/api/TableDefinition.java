@@ -2,7 +2,6 @@ package org.simpledbm.database.api;
 
 import java.util.ArrayList;
 
-import org.simpledbm.database.IndexDefinitionImpl;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -20,10 +19,10 @@ public interface TableDefinition extends Storable {
 
 	public abstract TypeDescriptor[] getRowType();
 
-	public abstract ArrayList<IndexDefinitionImpl> getIndexes();
+	public abstract ArrayList<IndexDefinition> getIndexes();
 
 	public abstract Row getRow();
 
-	public abstract Row getIndexRow(IndexDefinitionImpl index, Row tableRow);
+	public abstract Row getIndexRow(IndexDefinition index, Row tableRow);
 
 }

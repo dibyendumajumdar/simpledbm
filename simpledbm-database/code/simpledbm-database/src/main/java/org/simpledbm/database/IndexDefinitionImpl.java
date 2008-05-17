@@ -21,6 +21,7 @@ package org.simpledbm.database;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.im.IndexKey;

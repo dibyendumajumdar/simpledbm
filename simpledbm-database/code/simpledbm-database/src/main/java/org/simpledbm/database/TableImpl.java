@@ -21,6 +21,7 @@ package org.simpledbm.database;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
@@ -70,7 +71,7 @@ public class TableImpl implements Table {
             // violation
             for (IndexDefinition idx : getDefinition().getIndexes()) {
                 IndexContainer index = getDefinition().getDatabase().getServer().getIndex(trx,
-                        idx.containerId);
+                        idx.getContainerId());
                 Row indexRow = getDefinition().getIndexRow(idx, tableRow);
                 index.insert(trx, indexRow, inserter.getLocation());
             }
@@ -99,12 +100,12 @@ public class TableImpl implements Table {
             TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
                     getDefinition().getContainerId());
 
-            IndexDefinitionImpl pkey = getDefinition().getIndexes().get(0);
+            IndexDefinition pkey = getDefinition().getIndexes().get(0);
             // New primary key
             Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
             IndexContainer primaryIndex = getDefinition().getDatabase().getServer().getIndex(trx,
-                    pkey.containerId);
+                    pkey.getContainerId());
 
             // Start a scan, with the primary key as argument
             IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
@@ -130,8 +131,8 @@ public class TableImpl implements Table {
                         // Update secondary indexes
                         // Old secondary key
                         for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinitionImpl skey = getDefinition().getIndexes().get(i);
-                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
+                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
                             // old secondary key
                             Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
                                     oldTableRow);
@@ -171,12 +172,12 @@ public class TableImpl implements Table {
             TupleContainer table = getDefinition().getDatabase().getServer().getTupleContainer(trx,
                     getDefinition().getContainerId());
 
-            IndexDefinitionImpl pkey = getDefinition().getIndexes().get(0);
+            IndexDefinition pkey = getDefinition().getIndexes().get(0);
             // New primary key
             Row primaryKeyRow = getDefinition().getIndexRow(pkey, tableRow);
 
             IndexContainer primaryIndex = getDefinition().getDatabase().getServer().getIndex(trx,
-                    pkey.containerId);
+                    pkey.getContainerId());
 
             // Start a scan, with the primary key as argument
             IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
@@ -202,8 +203,8 @@ public class TableImpl implements Table {
                         // Update secondary indexes
                         // Old secondary key
                         for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinitionImpl skey = getDefinition().getIndexes().get(i);
-                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.containerId);
+                            IndexDefinition skey = getDefinition().getIndexes().get(i);
+                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
                             // old secondary key
                             Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
                                     oldTableRow);
