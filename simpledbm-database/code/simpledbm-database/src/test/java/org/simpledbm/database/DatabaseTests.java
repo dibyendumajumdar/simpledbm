@@ -26,11 +26,10 @@ import java.util.Properties;
 import junit.framework.TestCase;
 
 import org.simpledbm.database.api.Database;
+import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
-import org.simpledbm.database.impl.DatabaseImpl;
-import org.simpledbm.database.impl.TableImpl;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.FieldFactory;
@@ -70,9 +69,9 @@ public class DatabaseTests extends TestCase {
 	public void testBasicFunctions() throws Exception {
 
 		deleteRecursively("testdata/DatabaseTests");
-		DatabaseImpl.create(getServerProperties());
+		DatabaseFactory.create(getServerProperties());
 
-		Database db = new DatabaseImpl(getServerProperties());
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
 			FieldFactory ff = db.getFieldFactory();
@@ -102,7 +101,7 @@ public class DatabaseTests extends TestCase {
 			db.shutdown();
 		}
 
-		db = new DatabaseImpl(getServerProperties());
+		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
@@ -112,7 +111,7 @@ public class DatabaseTests extends TestCase {
 		}
 
 		// Lets add some data
-		db = new DatabaseImpl(getServerProperties());
+		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
@@ -142,7 +141,7 @@ public class DatabaseTests extends TestCase {
 			db.shutdown();
 		}
 
-		db = new DatabaseImpl(getServerProperties());
+		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
