@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.database;
+package org.simpledbm.database.impl;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.database;
+package org.simpledbm.database.impl;
 
 import java.nio.ByteBuffer;
 
@@ -43,7 +43,7 @@ public class TableImpl implements Table {
 
     private final TableDefinition definition;
 
-    public TableImpl(TableDefinition definition) {
+    TableImpl(TableDefinition definition) {
     	this.definition = definition;
     }
     
