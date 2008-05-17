@@ -68,7 +68,7 @@ public class TableImpl implements Table {
             // Insert the keys. The first key should be the primary key.
             // Insertion of primary key may fail with unique constraint
             // violation
-            for (IndexDefinitionImpl idx : getDefinition().getIndexes()) {
+            for (IndexDefinition idx : getDefinition().getIndexes()) {
                 IndexContainer index = getDefinition().getDatabase().getServer().getIndex(trx,
                         idx.containerId);
                 Row indexRow = getDefinition().getIndexRow(idx, tableRow);

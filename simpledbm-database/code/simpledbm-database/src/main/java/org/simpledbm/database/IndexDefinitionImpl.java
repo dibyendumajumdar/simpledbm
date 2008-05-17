@@ -32,7 +32,7 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-public class IndexDefinitionImpl implements Storable {
+public class IndexDefinitionImpl implements IndexDefinition {
 
     /**
      * Table to which this index belongs.
@@ -89,34 +89,58 @@ public class IndexDefinitionImpl implements Storable {
         }
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getTable()
+	 */
     public TableDefinition getTable() {
         return table;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getContainerId()
+	 */
     public int getContainerId() {
         return containerId;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getName()
+	 */
     public String getName() {
         return name;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getColumns()
+	 */
     public int[] getColumns() {
         return columns;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getRowType()
+	 */
     public TypeDescriptor[] getRowType() {
         return rowType;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#isPrimary()
+	 */
     public boolean isPrimary() {
         return primary;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#isUnique()
+	 */
     public boolean isUnique() {
         return unique;
     }
 
+    /* (non-Javadoc)
+	 * @see org.simpledbm.database.IndexDefinition#getRow()
+	 */
     public Row getRow() {
         RowFactory rowFactory = table.getDatabase().getRowFactory();
         return rowFactory.newRow(containerId);

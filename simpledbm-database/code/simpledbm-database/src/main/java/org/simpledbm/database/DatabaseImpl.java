@@ -96,7 +96,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             }
         }
         getRowFactory().registerRowType(tableDefinition.getContainerId(), tableDefinition.getRowType());
-        for (IndexDefinitionImpl idx : tableDefinition.getIndexes()) {
+        for (IndexDefinition idx : tableDefinition.getIndexes()) {
             getRowFactory().registerRowType(idx.getContainerId(), idx.getRowType());
         }
         tables.add(tableDefinition);
@@ -240,7 +240,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
              */
             server.createTupleContainer(trx, tableDefinition.getName(),
                     tableDefinition.getContainerId(), 8);
-            for (IndexDefinitionImpl idx : tableDefinition.getIndexes()) {
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
                 server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
                         ROW_FACTORY_TYPE_ID, idx.isUnique());
             }
