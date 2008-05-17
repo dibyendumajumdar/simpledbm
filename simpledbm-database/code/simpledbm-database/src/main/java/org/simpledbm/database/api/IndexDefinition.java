@@ -1,6 +1,5 @@
-package org.simpledbm.database;
+package org.simpledbm.database.api;
 
-import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
