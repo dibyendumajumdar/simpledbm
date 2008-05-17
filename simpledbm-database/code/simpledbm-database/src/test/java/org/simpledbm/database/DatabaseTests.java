@@ -29,6 +29,8 @@ import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
+import org.simpledbm.database.impl.DatabaseImpl;
+import org.simpledbm.database.impl.TableImpl;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.FieldFactory;
@@ -115,7 +117,7 @@ public class DatabaseTests extends TestCase {
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
-			Table table = new TableImpl(tableDefinition);
+			Table table = db.getTable(tableDefinition);
 			Row tableRow = tableDefinition.getRow();
 			tableRow.get(0).setInt(1);
 			tableRow.get(1).setString("Joe");
@@ -145,7 +147,7 @@ public class DatabaseTests extends TestCase {
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
-			Table table = new TableImpl(tableDefinition);
+			Table table = db.getTable(tableDefinition);
 			Transaction trx = db.getServer()
 					.begin(IsolationMode.READ_COMMITTED);
 			boolean okay = false;

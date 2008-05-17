@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.database;
+package org.simpledbm.database.impl;
 
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.typesystem.api.FieldFactory;

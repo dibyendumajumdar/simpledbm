@@ -35,5 +35,7 @@ public interface Database {
 	public abstract RowFactory getRowFactory();
 
 	public abstract void createTable(TableDefinition tableDefinition);
+	
+	public abstract Table getTable(TableDefinition tableDefinition);
 
 }

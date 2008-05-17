@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : dibyendu@mazumdar.demon.co.uk
  */
-package org.simpledbm.database;
+package org.simpledbm.database.impl;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -25,6 +25,7 @@ import java.util.Properties;
 
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.IndexDefinition;
+import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.locking.LockMode;
@@ -408,4 +409,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             database = (Database) objectRegistry.getInstance(DatabaseImpl.MODULE_ID);
         }
     }
+
+	public Table getTable(TableDefinition tableDefinition) {
+		return new TableImpl(tableDefinition);
+	}
 }
