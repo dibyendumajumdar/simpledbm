@@ -51,8 +51,28 @@ import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.DefaultFieldFactory;
 
+/**
+ * The Database Manager is implemented as a Transactional Module because it 
+ * manages the persistence of the data dictionary.
+ * 
+ * @author dibyendumajumdar
+ */
 public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
+	/*
+	 * Data Dictionary implementation notes:
+	 * The Data Dictionary is not maintained in tables. This is to avoid the
+	 * chicken and egg situation that would occur. Instead, the table
+	 * definitions are stored in a custom serialized format. Each table
+	 * definition (along with associated index definitions) is stored in a
+	 * dedicated container. The system maintains all the definitions in
+	 * memory as well. At startup, all existing definitions are loaded by the
+	 * system into memory. New definitions are added to the memory cache as well as
+	 * persisted to the database as described above.
+	 * At present there is no support for deleting a table.
+	 * Also indexes cannot be added at a later stage.
+	 */
+	
     final static int MODULE_ID = 100;
     final static int MODULE_BASE = 101;
     /** Object registry id for row factory */
@@ -67,6 +87,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     static Logger log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
 
     static {
+    	/*
+    	 * Add messages to the Message Catalog.
+    	 */
     	MessageCatalog.addMessage("WD0001",
                 "SIMPLEDBM-WD0001: Table {0} already loaded");
     	MessageCatalog.addMessage("ID0002",
