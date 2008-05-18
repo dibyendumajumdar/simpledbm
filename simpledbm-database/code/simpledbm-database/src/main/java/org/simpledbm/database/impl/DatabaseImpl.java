@@ -107,7 +107,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#newTableDefinition(java.lang.String, int, org.simpledbm.typesystem.api.TypeDescriptor[])
 	 */
-    public TableDefinitionImpl newTableDefinition(String name, int containerId,
+    public TableDefinition newTableDefinition(String name, int containerId,
             TypeDescriptor[] rowType) {
         return new TableDefinitionImpl(this, containerId, name, rowType);
     }

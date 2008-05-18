@@ -50,11 +50,26 @@ public interface TableDefinition extends Storable {
 	 */
 	public abstract TypeDescriptor[] getRowType();
 
-	
+	/**
+	 * Returns an array of IndexDefinition objects associated with the table.
+	 * @return ArrayList of IndexDefinition objects
+	 */
 	public abstract ArrayList<IndexDefinition> getIndexes();
 
+	/**
+	 * Constructs an empty row for the table.
+	 * @return Row
+	 */
 	public abstract Row getRow();
 
+	/**
+	 * Constructs an row for the specified Index. Appropriate columns from the
+	 * table are copied into the Index row.
+	 *  
+	 * @param index The Index for which the row is to be constructed
+	 * @param tableRow The table row
+	 * @return An initialized Index Row
+	 */
 	public abstract Row getIndexRow(IndexDefinition index, Row tableRow);
 
 }
