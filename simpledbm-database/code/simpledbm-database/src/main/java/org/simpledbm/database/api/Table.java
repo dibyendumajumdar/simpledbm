@@ -8,6 +8,10 @@ import org.simpledbm.typesystem.api.Row;
  * A Table is a collection of rows. Each row is made up of columns (fields).
  * A table must have a primary key defined which uniquely identifies each row in the
  * table.
+ * <p>
+ * A Table is created by {@link Database#createTable(TableDefinition) Database.createTable()}.
+ * Once created, the Table object can be accessed by calling {@link Database#getTable(TableDefinition)
+ * Database.getTable()} method. 
  * 
  * @author dibyendu majumdar
  */
