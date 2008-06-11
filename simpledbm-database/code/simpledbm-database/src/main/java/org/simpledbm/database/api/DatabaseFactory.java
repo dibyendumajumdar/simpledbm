@@ -8,13 +8,15 @@ import org.simpledbm.database.impl.DatabaseImpl;
  * The DatabaseFactory class is responsible for creating and obtaining instances of 
  * Databases.
  * 
- * @author dibyendumajumdar
+ * @author dibyendu majumdar
  */
 public class DatabaseFactory {
 	
 	/**
 	 * Creates a new SimpleDBM database based upon supplied properties.
-	 * @param properties 
+	 * For details of available properties, please refer to the SimpleDBM 
+	 * User Manual.
+	 * @param properties Properties for SimpleDBM 
 	 */
 	public static void create(Properties properties) {
 		DatabaseImpl.create(properties);
@@ -22,12 +24,11 @@ public class DatabaseFactory {
 	
 	/**
 	 * Obtains a database instance for an existing database.
-	 * @param properties
+	 * @param properties Properties for SimpleDBM
 	 * @return Database Instance
 	 */
 	public static Database getDatabase(Properties properties) {
 		return new DatabaseImpl(properties);
 	}
-	
 
 }
