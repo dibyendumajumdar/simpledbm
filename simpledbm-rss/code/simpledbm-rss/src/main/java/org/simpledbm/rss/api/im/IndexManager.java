@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.api.im;
 
+import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
@@ -65,4 +66,13 @@ public interface IndexManager {
      */
     IndexContainer getIndex(Transaction trx, int containerId);
 
+	
+	/**
+	 * Locks an index container in specified mode for COMMIT duration.
+	 * @param trx Transaction acquiring the lock
+	 * @param containerId ID of the index container
+	 * @param mode The Lock mode
+	 */
+    void lockIndexContainer(Transaction trx, int containerId, LockMode mode);    
+    
 }

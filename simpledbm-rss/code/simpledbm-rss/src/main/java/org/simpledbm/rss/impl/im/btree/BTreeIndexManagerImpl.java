@@ -1014,6 +1014,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             LockDuration.COMMIT_DURATION);
         return getIndex(containerId);
     }
+    
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.im.IndexManager#lockIndexContainer(org.simpledbm.rss.api.tx.Transaction, int, org.simpledbm.rss.api.locking.LockMode)
+     */
+    public void lockIndexContainer(Transaction trx, int containerId, LockMode mode) {
+        trx.acquireLock(
+            lockAdaptor.getLockableContainerId(containerId),
+            mode,
+            LockDuration.COMMIT_DURATION);        
+    }
+    
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.im.IndexManager#createIndex(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int, int, int, boolean)
