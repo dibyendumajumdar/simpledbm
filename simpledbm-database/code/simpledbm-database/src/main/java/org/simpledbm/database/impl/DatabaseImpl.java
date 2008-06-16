@@ -27,6 +27,7 @@ import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
@@ -73,15 +74,22 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * Also indexes cannot be added at a later stage.
 	 */
 	
+	/* ID for this module */
     final static int MODULE_ID = 100;
     final static int MODULE_BASE = 101;
     /** Object registry id for row factory */
     final static int ROW_FACTORY_TYPE_ID = MODULE_BASE + 1;
+    /** Type ID for Loggable object */
     final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE + 2;
+    /** RSS Server object */
     Server server;
+    /** Database startup/create properties */
     Properties properties;
+    /** Flag to indicate whether the database has been started */
     private boolean serverStarted = false;
+    /** The TypeSystem Factory we will use for costructing types */
     final FieldFactory fieldFactory = new DefaultFieldFactory();
+    /** The RowFactory we will use for constructing rows */
     final RowFactory rowFactory = new DatabaseRowFactoryImpl(this, fieldFactory);
     
     static Logger log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
@@ -93,14 +101,18 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     	MessageCatalog.addMessage("WD0001",
                 "SIMPLEDBM-WD0001: Table {0} already loaded");
     	MessageCatalog.addMessage("ID0002",
-    		"SIMPLEDBM-ID0002: Loading definition for table {0} at startup");    
+    		"SIMPLEDBM-ID0002: Loading definition for table {0} at startup"); 
+    	MessageCatalog.addMessage("ED0003", "SIMPLEDBM-ED0003: Database is already started");
+    	MessageCatalog.addMessage("ID0004", "SIMPLEDBM-ID0004: SimpleDBM Database startup complete");
+    	MessageCatalog.addMessage("ED0005", "SIMPLEDBM-ED0005: The table definition for {0} lacks a primary index definition");
     }
     final MessageCatalog mcat = new MessageCatalog();
     
     
     /**
      * The table cache holds definitions of all tables and associated
-     * indexes.
+     * indexes. The table cache is updated at system startup, and also 
+     * every time a new table is created. 
      */
     ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
@@ -120,7 +132,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
                 return;
             }
         }
+        /* Register the table's type descriptor with the Row Factory */
         getRowFactory().registerRowType(tableDefinition.getContainerId(), tableDefinition.getRowType());
+        /* For each of the indexes, register the row type descriptor */
         for (IndexDefinition idx : tableDefinition.getIndexes()) {
             getRowFactory().registerRowType(idx.getContainerId(), idx.getRowType());
         }
@@ -153,6 +167,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * Load definitions of tables at system startup.
 	 */
 	private void loadTableDefinitionsAtStartup() {
+		/*
+		 * A table definition is stored in a special container that is named
+		 * as <containerId>.def, where containerId is the table's
+		 * container ID. At startup, we look at all the open containers and
+		 * identify the table definitions by looking at the name of the
+		 * container.
+		 */
 		StorageContainerInfo[] containers = getServer().getStorageManager()
 				.getActiveContainers();
 		StorageContainerFactory factory = getServer().getStorageFactory();
@@ -160,6 +181,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			int containerId = sc.getContainerId();
 			String tableName = makeTableDefName(containerId);
 
+			/* 
+			 * If the container is a table definition container, retrieve it
+			 * from the storage system.
+			 */
 			if (factory.exists(tableName)
 					&& getTableDefinition(containerId) == null) {
 				log.info(getClass().getName(), "loadTableDefinitonsAtStartup", mcat.getMessage("ID0002", containerId));
@@ -168,6 +193,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
+    /**
+     * Constructs the Database object. The actual initialization of the
+     * server objects is deferred until the database is started.
+     * 
+     * @param properties Properties for the database. For details see
+     * RSS Documentation.
+     */
     public DatabaseImpl(Properties properties) {
         validateProperties(properties);
         this.properties = properties;
@@ -177,6 +209,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     // TODO Auto-generated method stub
     }
 
+    /**
+     * Creates the Database server on persistent storage.
+     * @param properties
+     */
     public static void create(Properties properties) {
         Server.create(properties);
     }
@@ -189,26 +225,46 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
          * We cannot start the server more than once
          */
         if (serverStarted) {
-            throw new RSSException("Server is already started");
+        	log.error(getClass().getName(), "start", mcat.getMessage("ED0003"));
+            throw new DatabaseException(mcat.getMessage("ED0003"));
         }
 
         /*
          * We must always create a new server object.
+         * Construction sequence is very important. Before the RSS instance is
+         * started, the DatabaseImpl module must be registered as a transactional
+         * module.
          */
         server = new Server(properties);
         log = Logger.getLogger(DatabaseImpl.class.getPackage().getName());
+        /* 
+         * Register any objects we need to manage the database. This must be
+         * done prior to starting the database.
+         */
         server.getObjectRegistry().registerSingleton(MODULE_ID, this);
         server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION, CreateTableDefinition.class.getName());
+        server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
+        /*
+         * Register this module as a transactional module. This will allow the 
+         * module to participate in transactions.
+         */
         server.getModuleRegistry().registerModule(MODULE_ID, this);
-        registerRowFactory();
+        
+        /*
+         * Now we are ready to start.
+         */
         server.start();
+        /*
+         * Immediately after server startup, we need to load all the table definitions
+         * into our table cache.
+         */
         loadTableDefinitionsAtStartup();
 
+        /*
+         * Finally, let's set the started flag to true.
+         */
+        log.info(getClass().getName(), "start", mcat.getMessage("ID0004"));
         serverStarted = true;
-    }
-
-    private void registerRowFactory() {
-        server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
     }
 
     /* (non-Javadoc)
@@ -242,22 +298,57 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     public RowFactory getRowFactory() {
         return rowFactory;
     }
+    
+    private void validateTableDefinition(TableDefinition tableDefinition) {
+    	/*
+    	 * Check that the table has primary key index
+    	 */
+    	if (tableDefinition.getIndexes().size() == 0 || !tableDefinition.getIndexes().get(0).isUnique()) {
+    		log.error(getClass().getName(), "validateTableDefinition", mcat.getMessage("ED0005", tableDefinition.getName()));
+    		throw new DatabaseException(mcat.getMessage("ED0005", tableDefinition.getName()));
+    	}
+    	/*
+    	 * Other validations:
+    	 * TODO
+    	 */
+    }
 
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.Database#createTable(org.simpledbm.database.TableDefinition)
 	 */
     public void createTable(TableDefinition tableDefinition) {
+    	
+    	validateTableDefinition(tableDefinition);
+    	
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
-            // Lock tuple container to prevent concurrent access
+            /*
+             *  First let's lock tuple container to prevent concurrent access
+             */
             getServer().getTupleManager().lockTupleContainer(trx, tableDefinition.getContainerId(), LockMode.EXCLUSIVE);
-
+            /*
+             *  Lets also lock all the index containers
+             */
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
+                server.getIndexManager().lockIndexContainer(trx, idx.getContainerId(), LockMode.EXCLUSIVE);
+            }
+            
+            /*
+             * Okay - but lets also check that none of the containers are active
+             */
+            boolean containersActive = false;
+            
+            
+            /*
+             * Now also check whether a table definition already exists. This should never happen,
+             * actually (TODO)
+             */
             synchronized (tables) {
                 if (getTableDefinition(tableDefinition.getContainerId()) == null) {
                     registerTableDefinition(tableDefinition);
                 } else {
-                    throw new RSSException("Table already exists");
+                    throw new DatabaseException("Table already exists");
                 }
             }
             /*
