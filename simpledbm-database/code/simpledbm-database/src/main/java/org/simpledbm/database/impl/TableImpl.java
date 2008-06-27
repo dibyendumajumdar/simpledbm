@@ -35,7 +35,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
 
 /**
- * A Table instance
+ * A Table instance.
  * 
  * @author Dibyendu Majumdar
  */

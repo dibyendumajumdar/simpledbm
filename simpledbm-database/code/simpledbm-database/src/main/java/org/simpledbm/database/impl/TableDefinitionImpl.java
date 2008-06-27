@@ -25,9 +25,12 @@ import java.util.ArrayList;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.Field;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -42,10 +45,35 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class TableDefinitionImpl implements Storable, TableDefinition {
 
-    Database database;
+	static Logger log = Logger.getLogger(TableDefinitionImpl.class.getPackage()
+			.getName());
+
+	final static MessageCatalog mcat = new MessageCatalog();	
+	
+	/**
+	 * Database to which this table definition belongs to.
+	 */
+    final Database database;
+    
+    /**
+     * Container ID for the table.
+     */
     int containerId;
+    
+    /**
+     * The name of the Table Container.
+     */
     String name;
+    
+    /**
+     * The row type for the table. The row type is used to create row
+     * instances.
+     */
     TypeDescriptor[] rowType;
+    
+    /**
+     * List of indexes associated with the table.
+     */
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
     TableDefinitionImpl(Database database) {
@@ -66,8 +94,8 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     public void addIndex(int containerId, String name, int[] columns,
             boolean primary, boolean unique) {
         if (!primary && indexes.size() == 0) {
-            throw new IllegalArgumentException(
-                    "First index must be the primary");
+        	log.error(getClass().getName(), "addIndex", mcat.getMessage("ED0012"));
+        	throw new DatabaseException(mcat.getMessage("ED0012"));
         }
         indexes.add(new IndexDefinitionImpl(this, containerId, name, columns, primary, unique));
     }
@@ -107,6 +135,9 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         return indexes;
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
+     */
     public int getStoredLength() {
         int n = 0;
         ByteString s = new ByteString(name);
@@ -120,6 +151,9 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         return n;
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
+     */
     public void retrieve(ByteBuffer bb) {
         containerId = bb.getInt();
         ByteString s = new ByteString();
@@ -132,12 +166,11 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
             IndexDefinitionImpl idx = new IndexDefinitionImpl(this);
             idx.retrieve(bb);
         }
-//        if (!database.tables.contains(this)) {
-//            database.getRowFactory().registerRowType(containerId, rowType);
-//            database.tables.add(this);
-//        }
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#store(java.nio.ByteBuffer)
+     */
     public void store(ByteBuffer bb) {
         bb.putInt(containerId);
         ByteString s = new ByteString(name);

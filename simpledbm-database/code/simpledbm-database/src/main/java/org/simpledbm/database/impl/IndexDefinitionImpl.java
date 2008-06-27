@@ -23,18 +23,28 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
-import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
+/**
+ * An implementation of IndexDefinition.
+ * @author dibyendumajumdar
+ */
 public class IndexDefinitionImpl implements IndexDefinition {
 
+	static Logger log = Logger.getLogger(IndexDefinitionImpl.class.getPackage()
+			.getName());
+
+	final static MessageCatalog mcat = new MessageCatalog();
+	
     /**
      * Table to which this index belongs.
      */
@@ -70,7 +80,13 @@ public class IndexDefinitionImpl implements IndexDefinition {
 
     public IndexDefinitionImpl(TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
-        this.table = table;
+
+    	if (columns.length == 0) {
+    		log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0010"));
+    		throw new DatabaseException(mcat.getMessage("ED0010"));
+    	}
+    	
+    	this.table = table;
         this.containerId = containerId;
         this.name = name;
         this.columns = columns;
@@ -84,7 +100,8 @@ public class IndexDefinitionImpl implements IndexDefinition {
         rowType = new TypeDescriptor[columns.length];
         for (int i = 0; i < columns.length; i++) {
             if (columns[i] >= table.getRowType().length || columns[i] < 0) {
-                throw new RSSException("Error: The spcified column of the index does not exist");
+            	log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0011", columns[i], table.getName()));
+            	throw new DatabaseException(mcat.getMessage("ED0011", columns[i], table.getName()));
             }
             rowType[i] = table.getRowType()[columns[i]];
         }
@@ -159,6 +176,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return rowFactory.minIndexKey(containerId);
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
+     */
     public int getStoredLength() {
         ByteString s = new ByteString(name);
         int n = 0;
@@ -174,6 +194,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return n;
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
+     */
     public void retrieve(ByteBuffer bb) {
         ByteString s = new ByteString();
         containerId = bb.getInt();
@@ -206,6 +229,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
         }
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.Storable#store(java.nio.ByteBuffer)
+     */
     public void store(ByteBuffer bb) {
         bb.putInt(containerId);
         ByteString s = new ByteString(name);
