@@ -7,7 +7,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 /**
  * The IndexDefinition type holds information about a single
  * index on a table. Columns are identified by their position
- * in the table row (position starts from 0).
+ * in the table row (column position starts from 0).
  * <p>
  * IndexDefinition objects are indirectly created by calling
  * {@link TableDefinition#addIndex(int, String, int[], boolean, boolean) TableDefinition.addIndex()}.
