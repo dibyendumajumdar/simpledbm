@@ -26,7 +26,7 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
 
 /**
  * The DatabaseRowFactory extends the functionality of GenericRowFunctionality
- * by allowing the rowtype of a container to be retrived from an external
+ * by allowing the rowtype of a container to be retrieved from an external
  * data dictionary.
  * 
  * @author Dibyendu Majumdar
@@ -34,20 +34,30 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
  */
 public class DatabaseRowFactoryImpl extends GenericRowFactory {
 
-    DatabaseImpl database;
+    private final DatabaseImpl database;
 
     public DatabaseRowFactoryImpl(DatabaseImpl database, FieldFactory fieldFactory) {
         super(fieldFactory);
         this.database = database;
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.typesystem.impl.GenericRowFactory#getTypeDescriptor(int)
+     */
     @Override
     protected TypeDescriptor[] getTypeDescriptor(int keytype) {
         TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
         if (rowType == null) {
-            TableDefinition table = database.retrieveTableDefinition(keytype);
+            TableDefinition table = getDatabase().retrieveTableDefinition(keytype);
             rowType = table.getRowType();
         }
         return rowType;
     }
+
+	/**
+	 * @return the database
+	 */
+	DatabaseImpl getDatabase() {
+		return database;
+	}
 }
