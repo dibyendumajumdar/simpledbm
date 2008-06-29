@@ -26,8 +26,8 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
 
 /**
  * The DatabaseRowFactory extends the functionality of GenericRowFunctionality
- * by allowing the rowtype of a container to be retrieved from an external
- * data dictionary.
+ * by allowing the rowtype of a container to be retrieved from an external data
+ * dictionary.
  * 
  * @author Dibyendu Majumdar
  * @since 29 Dec 2007
@@ -48,6 +48,13 @@ public class DatabaseRowFactoryImpl extends GenericRowFactory {
     protected TypeDescriptor[] getTypeDescriptor(int keytype) {
         TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
         if (rowType == null) {
+        	/*
+			 * Normally, the table definitions are always accessed from the data
+			 * dictionary cache. However, during restart recovery it is possible
+			 * that the table definition will be needed prior to initialization
+			 * of the dictionary cache. To allow for this, we load the table
+			 * definition here.
+			 */
             TableDefinition table = getDatabase().retrieveTableDefinition(keytype);
             rowType = table.getRowType();
         }

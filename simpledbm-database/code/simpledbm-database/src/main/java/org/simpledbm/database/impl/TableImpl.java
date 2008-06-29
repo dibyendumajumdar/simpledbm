@@ -110,48 +110,58 @@ public class TableImpl implements Table {
             // Start a scan, with the primary key as argument
             IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
                     null, true);
-            if (indexScan.fetchNext()) {
-                // Scan always return item >= search key, so let's
-                // check if we had an exact match
-                boolean matched = indexScan.getCurrentKey().equals(
-                        primaryKeyRow);
-                try {
-                    if (matched) {
-                        // Get location of the tuple
-                        Location location = indexScan.getCurrentLocation();
-                        // We need the old row data to be able to delete indexes
-                        // fetch tuple data
-                        byte[] data = table.read(location);
-                        // parse the data
-                        ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = getDefinition().getRow();
-                        oldTableRow.retrieve(bb);
-                        // Okay, now update the table row
-                        table.update(trx, location, tableRow);
-                        // Update secondary indexes
-                        // Old secondary key
-                        for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinition skey = getDefinition().getIndexes().get(i);
-                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
-                            // old secondary key
-                            Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
-                                    oldTableRow);
-                            // New secondary key
-                            Row secondaryKeyRow = getDefinition().getIndexRow(skey, tableRow);
-                            if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
-                                // Delete old key
-                                secondaryIndex.delete(trx, oldSecondaryKeyRow,
-                                        location);
-                                // Insert new key
-                                secondaryIndex.insert(trx, secondaryKeyRow,
-                                        location);
-                            }
-                        }
-                    }
-                } finally {
-                    indexScan.fetchCompleted(matched);
-                }
-            }
+            try {
+				if (indexScan.fetchNext()) {
+					// Scan always return item >= search key, so let's
+					// check if we had an exact match
+					boolean matched = indexScan.getCurrentKey().equals(
+							primaryKeyRow);
+					try {
+						if (matched) {
+							// Get location of the tuple
+							Location location = indexScan.getCurrentLocation();
+							// We need the old row data to be able to delete
+							// indexes
+							// fetch tuple data
+							byte[] data = table.read(location);
+							// parse the data
+							ByteBuffer bb = ByteBuffer.wrap(data);
+							Row oldTableRow = getDefinition().getRow();
+							oldTableRow.retrieve(bb);
+							// Okay, now update the table row
+							table.update(trx, location, tableRow);
+							// Update secondary indexes
+							// Old secondary key
+							for (int i = 1; i < getDefinition().getIndexes()
+									.size(); i++) {
+								IndexDefinition skey = getDefinition()
+										.getIndexes().get(i);
+								IndexContainer secondaryIndex = getDefinition()
+										.getDatabase().getServer().getIndex(
+												trx, skey.getContainerId());
+								// old secondary key
+								Row oldSecondaryKeyRow = getDefinition()
+										.getIndexRow(skey, oldTableRow);
+								// New secondary key
+								Row secondaryKeyRow = getDefinition()
+										.getIndexRow(skey, tableRow);
+								if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
+									// Delete old key
+									secondaryIndex.delete(trx,
+											oldSecondaryKeyRow, location);
+									// Insert new key
+									secondaryIndex.insert(trx, secondaryKeyRow,
+											location);
+								}
+							}
+						}
+					} finally {
+						indexScan.fetchCompleted(matched);
+					}
+				}
+			} finally {
+				indexScan.close();
+			}
             success = true;
         } finally {
             if (!success) {
@@ -182,42 +192,51 @@ public class TableImpl implements Table {
             // Start a scan, with the primary key as argument
             IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
                     null, true);
-            if (indexScan.fetchNext()) {
-                // Scan always return item >= search key, so let's
-                // check if we had an exact match
-                boolean matched = indexScan.getCurrentKey().equals(
-                        primaryKeyRow);
-                try {
-                    if (matched) {
-                        // Get location of the tuple
-                        Location location = indexScan.getCurrentLocation();
-                        // We need the old row data to be able to delete indexes
-                        // fetch tuple data
-                        byte[] data = table.read(location);
-                        // parse the data
-                        ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = getDefinition().getRow();
-                        oldTableRow.retrieve(bb);
-                        // Okay, now update the table row
-                        table.delete(trx, location);
-                        // Update secondary indexes
-                        // Old secondary key
-                        for (int i = 1; i < getDefinition().getIndexes().size(); i++) {
-                            IndexDefinition skey = getDefinition().getIndexes().get(i);
-                            IndexContainer secondaryIndex = getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
-                            // old secondary key
-                            Row oldSecondaryKeyRow = getDefinition().getIndexRow(skey,
-                                    oldTableRow);
-                            // Delete old key
-                            secondaryIndex.delete(trx, oldSecondaryKeyRow,
-                                    location);
-                        }
-                        primaryIndex.delete(trx, primaryKeyRow, location);
-                    }
-                } finally {
-                    indexScan.fetchCompleted(matched);
-                }
-            }
+            try {
+				if (indexScan.fetchNext()) {
+					// Scan always return item >= search key, so let's
+					// check if we had an exact match
+					boolean matched = indexScan.getCurrentKey().equals(
+							primaryKeyRow);
+					try {
+						if (matched) {
+							// Get location of the tuple
+							Location location = indexScan.getCurrentLocation();
+							// We need the old row data to be able to delete
+							// indexes
+							// fetch tuple data
+							byte[] data = table.read(location);
+							// parse the data
+							ByteBuffer bb = ByteBuffer.wrap(data);
+							Row oldTableRow = getDefinition().getRow();
+							oldTableRow.retrieve(bb);
+							// Okay, now update the table row
+							table.delete(trx, location);
+							// Update secondary indexes
+							// Old secondary key
+							for (int i = 1; i < getDefinition().getIndexes()
+									.size(); i++) {
+								IndexDefinition skey = getDefinition()
+										.getIndexes().get(i);
+								IndexContainer secondaryIndex = getDefinition()
+										.getDatabase().getServer().getIndex(
+												trx, skey.getContainerId());
+								// old secondary key
+								Row oldSecondaryKeyRow = getDefinition()
+										.getIndexRow(skey, oldTableRow);
+								// Delete old key
+								secondaryIndex.delete(trx, oldSecondaryKeyRow,
+										location);
+							}
+							primaryIndex.delete(trx, primaryKeyRow, location);
+						}
+					} finally {
+						indexScan.fetchCompleted(matched);
+					}
+				}
+			} finally {
+				indexScan.close();
+			}
             success = true;
         } finally {
             if (!success) {

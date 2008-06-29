@@ -138,7 +138,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	private void registerTableDefinition(TableDefinition tableDefinition) {
 		/*
 		 * Let us check if another thread has already loaded registered this
-		 * definition.
+		 * definition. It is also possible that the table may have been loaded
+		 * during restart recovery.
 		 */
 		for (TableDefinition td : tables) {
 			if (td.getContainerId() == tableDefinition.getContainerId()) {
@@ -378,11 +379,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
 			/*
 			 * Okay - but lets also check that none of the containers are active
+			 * 
+			 * Scan through the list of active containers and check that the new
+			 * containerIds or names do not clash with existing names and ids.
 			 */
-			boolean containersActive = false;
-			// TODO: Scan through the list of active containers and check that
-			// the new containerIds or names
-			// do not clash with existing names and ids.
 			HashSet<String> namesSet = new HashSet<String>();
 			HashSet<Integer> containerIdSet = new HashSet<Integer>();
 
@@ -406,8 +406,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			}
 
 			/*
-			 * Now also check whether a table definition already exists. This
-			 * should never happen, actually (TODO)
+			 * Add the table definition to the dictionary cache.
+			 * Also check whether a table definition already exists. This
+			 * should never happen, actually.
 			 */
 			synchronized (tables) {
 				if (getTableDefinition(tableDefinition.getContainerId()) == null) {
