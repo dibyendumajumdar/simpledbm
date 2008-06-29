@@ -165,6 +165,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         for (int i = 0; i < n; i++) {
             IndexDefinitionImpl idx = new IndexDefinitionImpl(this);
             idx.retrieve(bb);
+            indexes.add(idx);
         }
     }
 

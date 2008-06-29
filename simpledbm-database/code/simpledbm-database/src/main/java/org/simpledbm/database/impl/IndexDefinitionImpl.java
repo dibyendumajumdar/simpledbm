@@ -223,10 +223,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
         for (int i = 0; i < columns.length; i++) {
             rowType[i] = table.getRowType()[columns[i]];
         }
-        if (!table.getIndexes().contains(this)) {
-            table.getDatabase().getRowFactory().registerRowType(containerId, rowType);
-            table.getIndexes().add(this);
-        }
+//        if (!table.getIndexes().contains(this)) {
+//            table.getIndexes().add(this);
+//        }
     }
 
     /* (non-Javadoc)
