@@ -179,9 +179,193 @@ public class DatabaseTests extends TestCase {
 		} finally {
 			db.shutdown();
 		}
-
 	}
 
+	static class EmpRecord {
+		int Id;
+		String name;
+		String surname;
+		String city;
+		String email;
+		Date dob;
+		String salary = "0.0";
+		
+		public EmpRecord(int id, String name, String surname, String city, Date dob, String email,
+				String salary) {
+			super();
+			Id = id;
+			this.city = city;
+			this.dob = dob;
+			this.email = email;
+			this.name = name;
+			this.salary = salary;
+			this.surname = surname;
+		}
+	}
+
+	private void createTestDatabase() {
+		deleteRecursively("testdata/DatabaseTests");
+		DatabaseFactory.create(getServerProperties());
+
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			FieldFactory ff = db.getFieldFactory();
+			TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
+																		 * primary
+																		 * key
+																		 */
+			ff.getVarcharType(20), /* name */
+			ff.getVarcharType(20), /* surname */
+			ff.getVarcharType(20), /* city */
+			ff.getVarcharType(45), /* email address */
+			ff.getDateTimeType(), /* date of birth */
+			ff.getNumberType(2) /* salary */
+
+			};
+			TableDefinition tableDefinition = db.newTableDefinition("employee", 1,
+					employee_rowtype);
+			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
+			tableDefinition
+					.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+							false);
+			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false, false);
+			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false, false);
+
+			db.createTable(tableDefinition);
+		} finally {
+			db.shutdown();
+		}
+	}
+	
+	private void createTestData(int startno, int range, boolean doCommit) {
+		// Lets add some data
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+			Table table = db.getTable(tableDefinition);
+			
+			boolean okay = false;
+			Transaction trx = db.getServer()
+					.begin(IsolationMode.READ_COMMITTED);
+			try {
+				for (int i = startno; i < (startno + range); i++) {
+					Row tableRow = tableDefinition.getRow();
+					tableRow.get(0).setInt(i);
+					tableRow.get(1).setString("Joe" + i);
+					tableRow.get(2).setString("Blogg" + i);
+					tableRow.get(5).setDate(new Date(1930, 12, 31));
+					tableRow.get(6).setInt(1000 + i);
+					table.addRow(trx, tableRow);
+				}
+				okay = true;
+			} finally {
+				if (doCommit) {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+
+	private void listData(int startno, int range) {
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+			Table table = db.getTable(tableDefinition);
+			Transaction trx = db.getServer()
+					.begin(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Row tableRow = tableDefinition.getRow();
+				tableRow.get(2).setString("Blogg");
+				TableScan scan = table.openScan(trx, 0, tableRow, false);
+				try {
+					int i = startno;
+					while (scan.fetchNext() && i < (startno + range)) {
+						Row currentRow = scan.getCurrentRow();
+						Row tr = tableDefinition.getRow();
+						tr.get(0).setInt(i);
+						tr.get(1).setString("Joe" + i);
+						tr.get(2).setString("Blogg" + i);
+						tr.get(5).setDate(new Date(1930, 12, 31));
+						tr.get(6).setInt(1000 + i);
+						assertEquals(tr, currentRow);
+						scan.fetchCompleted(true);
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}	
+	}
+	
+	private int countData() {
+		int i = 0;
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			TableDefinition tableDefinition = db.getTableDefinition(1);
+			assertNotNull(tableDefinition);
+			Table table = db.getTable(tableDefinition);
+			Transaction trx = db.getServer()
+					.begin(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Row tableRow = tableDefinition.getRow();
+				tableRow.get(2).setString("Blogg");
+				TableScan scan = table.openScan(trx, 0, tableRow, false);
+				try {
+					while (scan.fetchNext()) {
+						scan.fetchCompleted(true);
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}	
+		return i;
+	}	
+	
+	public void testRecovery() {
+		createTestDatabase();
+		createTestData(1, 100, true);
+		assertEquals(100, countData());	
+		createTestData(101, 100, false);
+		assertEquals(100, countData());	
+		createTestData(101, 100, true);
+		assertEquals(200, countData());	
+	}
+	
 	void deleteRecursively(String pathname) {
 		File file = new File(pathname);
 		deleteRecursively(file);
