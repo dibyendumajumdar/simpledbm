@@ -317,32 +317,32 @@ public class Server {
     }
 
     public synchronized final IndexManager getIndexManager() {
-        assertStarted();
+        //assertStarted();
         return indexManager;
     }
 
     public synchronized final BufferManager getBufferManager() {
-        assertStarted();
+        //assertStarted();
         return bufferManager;
     }
 
     public synchronized final LatchFactory getLatchFactory() {
-        assertStarted();
+        //assertStarted();
         return latchFactory;
     }
 
     public synchronized final LockManager getLockManager() {
-        assertStarted();
+        //assertStarted();
         return lockManager;
     }
 
     public synchronized final LoggableFactory getLoggableFactory() {
-        assertStarted();
+        //assertStarted();
         return loggableFactory;
     }
 
     public synchronized final LogManager getLogManager() {
-        assertStarted();
+        //assertStarted();
         return logManager;
     }
 
@@ -361,37 +361,37 @@ public class Server {
     }
 
     public synchronized final PageFactory getPageFactory() {
-        assertStarted();
+        //assertStarted();
         return pageFactory;
     }
 
     public synchronized final FreeSpaceManager getSpaceManager() {
-        assertStarted();
+        //assertStarted();
         return spaceManager;
     }
 
     public synchronized final SlottedPageManager getSlottedPageManager() {
-        assertStarted();
+        //assertStarted();
         return slottedPageManager;
     }
 
     public synchronized final StorageContainerFactory getStorageFactory() {
-        assertStarted();
+        //assertStarted();
         return storageFactory;
     }
 
     public synchronized final StorageManager getStorageManager() {
-        assertStarted();
+        //assertStarted();
         return storageManager;
     }
 
     public synchronized final TransactionManager getTransactionManager() {
-        assertStarted();
+        //assertStarted();
         return transactionManager;
     }
 
     public synchronized final TupleManager getTupleManager() {
-        assertStarted();
+        //assertStarted();
         return tupleManager;
     }
 
