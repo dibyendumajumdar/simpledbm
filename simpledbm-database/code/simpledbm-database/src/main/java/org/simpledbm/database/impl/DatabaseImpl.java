@@ -481,17 +481,41 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	private void storeTableDefinition(TableDefinition tableDefinition) {
 		String tableName = makeTableDefName(tableDefinition.getContainerId());
 		StorageContainerFactory storageFactory = server.getStorageFactory();
-		StorageContainer sc = storageFactory.createIfNotExisting(tableName);
+		StorageContainer sc = storageFactory.create(tableName);
 		try {
-			byte buffer[] = new byte[tableDefinition.getStoredLength() + TypeSize.INTEGER];
+			int n = tableDefinition.getStoredLength();
+			byte buffer[] = new byte[n + TypeSize.INTEGER + TypeSize.BYTE];
 			ByteBuffer bb = ByteBuffer.wrap(buffer);
-			bb.putInt(buffer.length);
+			bb.put((byte) 1);
+			bb.putInt(n);
 			tableDefinition.store(bb);
 			sc.write(0, buffer, 0, buffer.length);
 		} finally {
 			sc.close();
 		}
+		for (IndexDefinition idx : tableDefinition.getIndexes()) {
+			storeIndexDefinition(idx);
+		}
 	}
+	
+	private void storeIndexDefinition(IndexDefinition indexDefinition) {
+		/*
+		 * For indexes, we store a pointer to the table definition.
+		 */
+		String indexName = makeTableDefName(indexDefinition.getContainerId());
+		StorageContainerFactory storageFactory = server.getStorageFactory();
+		StorageContainer sc = storageFactory.create(indexName);
+		try {
+			byte buffer[] = new byte[TypeSize.INTEGER + TypeSize.BYTE];
+			ByteBuffer bb = ByteBuffer.wrap(buffer);
+			bb.put((byte) 2);
+			bb.putInt(indexDefinition.getTable().getContainerId());
+			sc.write(0, buffer, 0, buffer.length);
+		} finally {
+			sc.close();
+		}
+	}
+	
 
 	/**
 	 * Retrieve a table definition from storage and register the table
@@ -508,12 +532,21 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		StorageContainer sc = storageFactory.open(tableName);
 		TableDefinitionImpl table = null;
 		try {
-			byte buffer[] = new byte[TypeSize.INTEGER];
+			byte buffer[] = new byte[TypeSize.BYTE + TypeSize.INTEGER];
 			sc.read(0, buffer, 0, buffer.length);
 			ByteBuffer bb = ByteBuffer.wrap(buffer);
+			byte b = bb.get();
 			int n = bb.getInt();
+			if (b == ((byte)2)) {
+				/*
+				 * Index definition, so n must be the table definition's container ID. We
+				 * could save reading the table definition by checking whether it is already
+				 * cached - but for now, this should work.
+				 */
+				return retrieveTableDefinition(n);
+			}
 			buffer = new byte[n];
-			sc.read(TypeSize.INTEGER, buffer, 0, buffer.length);
+			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
 			table = new TableDefinitionImpl(this);
 			table.retrieve(bb);
