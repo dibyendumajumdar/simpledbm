@@ -19,7 +19,7 @@
  */
 package org.simpledbm.database.impl;
 
-import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
@@ -54,9 +54,18 @@ public class DatabaseRowFactoryImpl extends GenericRowFactory {
 			 * that the table definition will be needed prior to initialization
 			 * of the dictionary cache. To allow for this, we load the table
 			 * definition here.
+			 * Note that this will also populate the dictionary cache
 			 */
-            TableDefinition table = getDatabase().retrieveTableDefinition(keytype);
-            rowType = table.getRowType();
+            getDatabase().retrieveTableDefinition(keytype);
+        }
+        /*
+         * We may be looking for an index row type, or a table
+         * row type. So let's look in the cache again.
+         */
+        rowType = super.getTypeDescriptor(keytype);
+        if (rowType == null) {
+        	// FIXME Proper error message is needed (see ED0013)
+        	throw new DatabaseException();
         }
         return rowType;
     }
