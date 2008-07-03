@@ -119,6 +119,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		MessageCatalog.addMessage("ED0010", "SIMPLEDBM-ED0010: An index must have at least one column");
 		MessageCatalog.addMessage("ED0011", "SIMPLEDBM-ED0011: The column {0} does not exist in table definition for {1}");
 		MessageCatalog.addMessage("ED0012", "SIMPLEDBM-ED0012: The first index for the table must be the primary index");
+		MessageCatalog.addMessage("ED0013", "SIMPLEDBM-ED0013: Unexpected error occurred while reading the data dictionary for container {0}");
+		
 	}
 	final static MessageCatalog mcat = new MessageCatalog();
 
