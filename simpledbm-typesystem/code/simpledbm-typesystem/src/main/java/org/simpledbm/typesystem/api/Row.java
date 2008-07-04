@@ -15,15 +15,16 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.typesystem.api;
 
 import org.simpledbm.rss.api.im.IndexKey;
 
 /**
- * A Row is an array of fields, and can be used as multi-field record within
+ * A Row is an array of DataValue objects, and can be used as multi-value record within
  * a table or an index.
+ * 
  * @author Dibyendu Majumdar
  */
 public interface Row extends IndexKey {
@@ -31,17 +32,17 @@ public interface Row extends IndexKey {
 	/**
 	 * Returns the number of fields in the row.
 	 */
-	int getNumberOfFields();
+	int getNumberOfColumns();
 
 	/**
-	 * Returns a specific field
+	 * Returns a specific column's value
 	 */
-	Field get(int i);
+	DataValue getColumnValue(int i);
 
 	/**
-	 * Sets the specified field
+	 * Sets the specified column's value
 	 */
-	void set(int i, Field field);
+	void setColumnValue(int i, DataValue field);
 	
 	/**
 	 * Creates a copy of this row.
