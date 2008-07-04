@@ -1,3 +1,22 @@
+/***
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *    Project: www.simpledbm.org
+ *    Author : Dibyendu Majumdar
+ *    Email  : d dot majumdar at gmail dot com ignore
+ */
 package org.simpledbm.integrationtests.btree;
 
 import java.io.File;
@@ -17,11 +36,11 @@ import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.impl.DefaultFieldFactory;
+import org.simpledbm.typesystem.impl.DefaultTypeFactory;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
 
@@ -29,7 +48,7 @@ public class BTreeDatabase {
 
 	Server server;
 
-	final FieldFactory fieldFactory = new DefaultFieldFactory();
+	final TypeFactory fieldFactory = new DefaultTypeFactory();
 
 	final RowFactory keyFactory = new GenericRowFactory(fieldFactory);
 
@@ -91,7 +110,7 @@ public class BTreeDatabase {
 		boolean success = false;
 		try {
 			server.createIndex(trx, "testbtree.dat", 1, 8, KEY_FACTORY_TYPE,
-					LOCATION_FACTORY_TYPE, true);
+					LOCATION_FACTORY_TYPE, false);
 		} finally {
 			if (success)
 				trx.commit();
@@ -106,7 +125,7 @@ public class BTreeDatabase {
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 			for (int i = 1; i <= 201; i += 2) {
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.get(0).setInt(i);
+				row.getColumnValue(0).setInt(i);
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
 				location.setInt(i);
@@ -136,7 +155,7 @@ public class BTreeDatabase {
 		try {
 			IndexContainer btree = server.getIndex(trx, 1);
 			Row row = (Row) keyFactory.newIndexKey(1);
-			row.get(0).setString(key);
+			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 			Location location = locationFactory.newLocation();
@@ -164,7 +183,7 @@ public class BTreeDatabase {
 		try {
 			IndexContainer btree = server.getIndex(trx, 1);
 			Row row = (Row) keyFactory.newIndexKey(1);
-			row.get(0).setString(key);
+			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 			Location location = locationFactory.newLocation();
@@ -189,7 +208,7 @@ public class BTreeDatabase {
 		try {
 			IndexContainer btree = server.getIndex(trx, 1);
 			Row row = (Row) keyFactory.newIndexKey(1);
-			row.get(0).setString(key);
+			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 			Location location = locationFactory.newLocation();
