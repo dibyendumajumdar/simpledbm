@@ -39,11 +39,11 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.typesystem.api.FieldFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.impl.DefaultFieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.impl.DefaultTypeFactory;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
 
@@ -152,7 +152,7 @@ public class BTreeDemo {
 
 		Server server;
 		
-		final FieldFactory fieldFactory = new DefaultFieldFactory();
+		final TypeFactory fieldFactory = new DefaultTypeFactory();
 
 		final RowFactory keyFactory = new GenericRowFactory(fieldFactory);
 
@@ -223,7 +223,7 @@ public class BTreeDemo {
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				for (int i = 1; i <= 201; i += 2) {
 					Row row = (Row) keyFactory.newIndexKey(1);
-					row.get(0).setInt(i);
+					row.getColumnValue(0).setInt(i);
 					RowLocation location = (RowLocation) locationFactory.newLocation();
 					location.setInt(i);
 					// Note that the row must be locked exclusively prior to the insert
@@ -250,7 +250,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.get(0).setString(key);
+				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
 				location.parseString(sloc);
@@ -275,7 +275,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.get(0).setString(key);
+				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
 				location.parseString(sloc);
@@ -297,7 +297,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.get(0).setString(key);
+				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation();
 				location.parseString(sloc);
