@@ -20,6 +20,7 @@
 package org.simpledbm.database;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 
@@ -65,43 +66,18 @@ public class DatabaseTests extends TestCase {
 
 		return properties;
 	}
-
+	
+	Date getDOB(int year, int month, int day) {
+		Calendar c = Calendar.getInstance();
+		c.set(year, month-1, day, 0, 0, 0);
+		return c.getTime();
+	}
+	
 	public void testBasicFunctions() throws Exception {
 
-		deleteRecursively("testdata/DatabaseTests");
-		DatabaseFactory.create(getServerProperties());
+		createTestDatabase();
 
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
-		db.start();
-		try {
-			FieldFactory ff = db.getFieldFactory();
-			TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
-																		 * primary
-																		 * key
-																		 */
-			ff.getVarcharType(20), /* name */
-			ff.getVarcharType(20), /* surname */
-			ff.getVarcharType(20), /* city */
-			ff.getVarcharType(45), /* email address */
-			ff.getDateTimeType(), /* date of birth */
-			ff.getNumberType(2) /* salary */
-
-			};
-			TableDefinition tableDefinition = db.newTableDefinition("employee", 1,
-					employee_rowtype);
-			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
-			tableDefinition
-					.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
-							false);
-			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false, false);
-			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false, false);
-
-			db.createTable(tableDefinition);
-		} finally {
-			db.shutdown();
-		}
-
-		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
@@ -121,7 +97,7 @@ public class DatabaseTests extends TestCase {
 			tableRow.get(0).setInt(1);
 			tableRow.get(1).setString("Joe");
 			tableRow.get(2).setString("Blogg");
-			tableRow.get(5).setDate(new Date(1930, 12, 31));
+			tableRow.get(5).setDate(getDOB(1930, 12, 31));
 			tableRow.get(6).setString("500.00");
 
 			Transaction trx = db.getServer()
@@ -161,7 +137,7 @@ public class DatabaseTests extends TestCase {
 						tr.get(0).setInt(1);
 						tr.get(1).setString("Joe");
 						tr.get(2).setString("Blogg");
-						tr.get(5).setDate(new Date(1930, 12, 31));
+						tr.get(5).setDate(getDOB(1930, 12, 31));
 						tr.get(6).setString("500.00");
 						assertEquals(tr, currentRow);
 					}
@@ -256,8 +232,9 @@ public class DatabaseTests extends TestCase {
 					tableRow.get(0).setInt(i);
 					tableRow.get(1).setString("Joe" + i);
 					tableRow.get(2).setString("Blogg" + i);
-					tableRow.get(5).setDate(new Date(1930, 12, 31));
+					tableRow.get(5).setDate(getDOB(1930, 12, 31));
 					tableRow.get(6).setInt(1000 + i);
+					System.out.println("Adding " + tableRow);
 					table.addRow(trx, tableRow);
 				}
 				okay = true;
@@ -297,7 +274,7 @@ public class DatabaseTests extends TestCase {
 						tr.get(0).setInt(i);
 						tr.get(1).setString("Joe" + i);
 						tr.get(2).setString("Blogg" + i);
-						tr.get(5).setDate(new Date(1930, 12, 31));
+						tr.get(5).setDate(getDOB(1930, 12, 31));
 						tr.get(6).setInt(1000 + i);
 						assertEquals(tr, currentRow);
 						scan.fetchCompleted(true);
