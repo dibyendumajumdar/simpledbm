@@ -15,12 +15,12 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.database.impl;
 
 import org.simpledbm.exception.DatabaseException;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
 
@@ -36,7 +36,7 @@ public class DatabaseRowFactoryImpl extends GenericRowFactory {
 
     private final DatabaseImpl database;
 
-    public DatabaseRowFactoryImpl(DatabaseImpl database, FieldFactory fieldFactory) {
+    public DatabaseRowFactoryImpl(DatabaseImpl database, TypeFactory fieldFactory) {
         super(fieldFactory);
         this.database = database;
     }

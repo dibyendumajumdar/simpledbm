@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.database.impl;
 
@@ -47,10 +47,10 @@ import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.impl.DefaultFieldFactory;
+import org.simpledbm.typesystem.impl.DefaultTypeFactory;
 
 /**
  * The Database Manager is implemented as a Transactional Module because it
@@ -87,7 +87,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	/** Flag to indicate whether the database has been started */
 	private boolean serverStarted = false;
 	/** The TypeSystem Factory we will use for costructing types */
-	final FieldFactory fieldFactory = new DefaultFieldFactory();
+	final TypeFactory fieldFactory = new DefaultTypeFactory();
 	/** The RowFactory we will use for constructing rows */
 	final RowFactory rowFactory = new DatabaseRowFactoryImpl(this, fieldFactory);
 
@@ -324,7 +324,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * 
 	 * @see org.simpledbm.database.Database#getFieldFactory()
 	 */
-	public FieldFactory getFieldFactory() {
+	public TypeFactory getFieldFactory() {
 		return fieldFactory;
 	}
 
