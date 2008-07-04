@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 /*
  * Created on: Nov 15, 2005
@@ -26,8 +26,8 @@ package org.simpledbm.typesystem.impl;
 import java.util.HashMap;
 
 import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.typesystem.api.Field;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.DataValue;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -44,14 +44,14 @@ public class GenericRowFactory implements RowFactory {
     /**
      * The field factory instance that will be used to create fields.
      */
-    private final FieldFactory fieldFactory;
+    private final TypeFactory fieldFactory;
     
     /**
      * Contains a mapping of container IDs to row type descriptors.
      */
     private HashMap<Integer, TypeDescriptor[]> typeDescMap = new HashMap<Integer, TypeDescriptor[]>();
     
-    public GenericRowFactory(FieldFactory fieldFactory) {
+    public GenericRowFactory(TypeFactory fieldFactory) {
         this.fieldFactory = fieldFactory;
     }
     
@@ -71,8 +71,8 @@ public class GenericRowFactory implements RowFactory {
     
     public IndexKey maxIndexKey(int keytype) {
     	GenericRow row = (GenericRow) newIndexKey(keytype);
-    	for (int i = 0; i < row.getNumberOfFields(); i++) {
-    		Field field = row.get(i);
+    	for (int i = 0; i < row.getNumberOfColumns(); i++) {
+    		DataValue field = row.getColumnValue(i);
     		field.setPositiveInfinity();
     	}
     	return row;
@@ -80,8 +80,8 @@ public class GenericRowFactory implements RowFactory {
 
     public IndexKey minIndexKey(int keytype) {
     	GenericRow row = (GenericRow) newIndexKey(keytype);
-    	for (int i = 0; i < row.getNumberOfFields(); i++) {
-    		Field field = row.get(i);
+    	for (int i = 0; i < row.getNumberOfColumns(); i++) {
+    		DataValue field = row.getColumnValue(i);
     		field.setNegativeInfinity();
     	}
     	return row;
@@ -99,9 +99,9 @@ public class GenericRowFactory implements RowFactory {
 
         final TypeDescriptor[] rowTypeDesc;
         
-        final FieldFactory fieldFactory;
+        final TypeFactory fieldFactory;
         
-        public IndexRowFactory(FieldFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
+        public IndexRowFactory(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
             this.fieldFactory = fieldFactory;
             this.rowTypeDesc = rowTypeDesc;
         }

@@ -15,41 +15,41 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.typesystem.impl;
 
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.typesystem.api.Field;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.DataValue;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class GenericRow implements Row, IndexKey, Cloneable {
 
-    Field[] fields;
+    DataValue[] fields;
     
     // final FieldFactory fieldFactory;
     
-    public GenericRow(FieldFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
+    public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
         // this.fieldFactory = fieldFactory;
-        fields = new Field[rowTypeDesc.length];
+        fields = new DataValue[rowTypeDesc.length];
         for (int i = 0; i < rowTypeDesc.length; i++) {
             fields[i] = fieldFactory.getInstance(rowTypeDesc[i]); 
         }
     }
     
-	public int getNumberOfFields() {
+	public int getNumberOfColumns() {
 		return fields.length;
 	}
 
-	public Field get(int i) {
+	public DataValue getColumnValue(int i) {
 		return fields[i];
 	}
 
-	public void set(int i, Field field) {
+	public void setColumnValue(int i, DataValue field) {
         fields[i] = field;
 	}
 
@@ -79,7 +79,7 @@ public class GenericRow implements Row, IndexKey, Cloneable {
 
 	public int getStoredLength() {
         int n = 0;
-        for (Field f: fields) {
+        for (DataValue f: fields) {
             n += f.getStoredLength();
         }
         return n;
@@ -91,7 +91,7 @@ public class GenericRow implements Row, IndexKey, Cloneable {
         }
         GenericRow other = (GenericRow) o;
         for (int i = 0; i < fields.length; i++) {
-            int result = fields[i].compareTo(other.get(i));
+            int result = fields[i].compareTo(other.getColumnValue(i));
             if (result != 0) {
                 return result > 0 ? 1 : -1;
             }
@@ -110,9 +110,9 @@ public class GenericRow implements Row, IndexKey, Cloneable {
     @Override
     public Object clone() throws CloneNotSupportedException {
         GenericRow row = (GenericRow) super.clone();
-        row.fields = new Field[fields.length];
+        row.fields = new DataValue[fields.length];
         for (int i = 0; i < fields.length; i++) {
-            row.fields[i] = (Field) fields[i].cloneMe();
+            row.fields[i] = (DataValue) fields[i].cloneMe();
         }
         return row;
     }
