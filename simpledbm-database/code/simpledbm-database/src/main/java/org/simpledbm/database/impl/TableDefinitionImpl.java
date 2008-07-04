@@ -143,7 +143,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         ByteString s = new ByteString(name);
         n += TypeSize.INTEGER;
         n += s.getStoredLength();
-        n += database.getFieldFactory().getStoredLength(rowType);
+        n += database.getTypeFactory().getStoredLength(rowType);
         n += TypeSize.SHORT;
         for (int i = 0; i < indexes.size(); i++) {
             n += indexes.get(i).getStoredLength();
@@ -159,7 +159,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         ByteString s = new ByteString();
         s.retrieve(bb);
         name = s.toString();
-        rowType = database.getFieldFactory().retrieve(bb);
+        rowType = database.getTypeFactory().retrieve(bb);
         int n = bb.getShort();
         indexes = new ArrayList<IndexDefinition>();
         for (int i = 0; i < n; i++) {
@@ -176,7 +176,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         bb.putInt(containerId);
         ByteString s = new ByteString(name);
         s.store(bb);
-        database.getFieldFactory().store(rowType, bb);
+        database.getTypeFactory().store(rowType, bb);
         bb.putShort((short) indexes.size());
         for (int i = 0; i < indexes.size(); i++) {
             IndexDefinition idx = indexes.get(i);

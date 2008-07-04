@@ -324,7 +324,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * 
 	 * @see org.simpledbm.database.Database#getFieldFactory()
 	 */
-	public TypeFactory getFieldFactory() {
+	public TypeFactory getTypeFactory() {
 		return fieldFactory;
 	}
 

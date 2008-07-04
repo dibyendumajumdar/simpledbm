@@ -57,7 +57,7 @@ public interface Database {
 	 * @param containerId ID of the container that will hold the table data
 	 * @param rowType A row type definition. 
 	 * @return A TableDefinition object.
-	 * @see Database#getFieldFactory()
+	 * @see Database#getTypeFactory()
 	 */
 	public abstract TableDefinition newTableDefinition(String name,
 			int containerId, TypeDescriptor[] rowType);
@@ -102,7 +102,7 @@ public interface Database {
 	 * </pre>
 	 * @return FieldFactory object
 	 */
-	public abstract TypeFactory getFieldFactory();
+	public abstract TypeFactory getTypeFactory();
 
 	/**
 	 * Returns the RowFactory instance associated with this database.
