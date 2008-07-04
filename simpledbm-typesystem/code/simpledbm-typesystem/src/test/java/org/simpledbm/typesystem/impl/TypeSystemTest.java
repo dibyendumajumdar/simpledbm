@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 /*
  * Created on: Nov 16, 2005
@@ -28,7 +28,7 @@ import java.util.Date;
 
 import junit.framework.TestCase;
 
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -43,19 +43,19 @@ public class TypeSystemTest extends TestCase {
     }
 
     public void testRowFactory() throws Exception {
-        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeFactory fieldFactory = new DefaultTypeFactory();
         RowFactory rowFactory = new GenericRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
         rowFactory.registerRowType(1, rowtype1);
         Row row = rowFactory.newRow(1);
-        assertEquals(row.getNumberOfFields(), 2);
-        System.err.println("Number of fields in row = " + row.getNumberOfFields());
-        row.get(0).setInt(5432);
-        row.get(1).setInt(2345);
-        assertEquals(row.get(0).getInt(), 5432);
-        assertEquals(row.get(1).getInt(), 2345);
+        assertEquals(row.getNumberOfColumns(), 2);
+        System.err.println("Number of fields in row = " + row.getNumberOfColumns());
+        row.getColumnValue(0).setInt(5432);
+        row.getColumnValue(1).setInt(2345);
+        assertEquals(row.getColumnValue(0).getInt(), 5432);
+        assertEquals(row.getColumnValue(1).getInt(), 2345);
         System.err.println("Row contents = " + row);
         Row rowClone = row.cloneMe();
         System.err.println("Cloned Row contents = " + rowClone);
@@ -68,7 +68,7 @@ public class TypeSystemTest extends TestCase {
         System.err.println("Row1 contents = " + row1);
         Row row3 = row.cloneMe();
         assertTrue(row.compareTo(row3) == 0);
-        row.get(0).setString("9876");
+        row.getColumnValue(0).setString("9876");
         assertTrue(row.compareTo(row3) > 0);
         System.err.println("Row contents = " + row);
         System.err.println("Row3 contents = " + row3);
@@ -77,43 +77,43 @@ public class TypeSystemTest extends TestCase {
         System.err.println("Comparing row3 and row = " + row3.compareTo(row));
         System.err.println("Comparing row3 and row1 = " + row3.compareTo(row1));
         row.parseString("300,hello world");
-        assertTrue(row.get(0).getInt() == 300);
-        assertTrue(row.get(1).getString().equals("hello worl"));
+        assertTrue(row.getColumnValue(0).getInt() == 300);
+        assertTrue(row.getColumnValue(1).getString().equals("hello worl"));
         System.err.println("Row contents after parse string = " + row);
-        row.get(1).setString("a");
-        row3.get(1).setString("ab");
-        assertTrue(row.get(1).compareTo(row3.get(1)) < 0);
-        row3.get(1).setNull();
-        assertTrue(row.get(1).compareTo(row3.get(1)) > 0);
-        assertTrue(row3.get(1).isNull());
-        row.get(0).setPositiveInfinity();
-        row3.get(0).setInt(Integer.MAX_VALUE);
-        assertTrue(row.get(0).compareTo(row3.get(0)) > 0);
-        assertTrue(!row.get(0).isNull());
-        row.get(0).setNegativeInfinity();
-        row3.get(0).setInt(Integer.MIN_VALUE);
-        assertTrue(row.get(0).compareTo(row3.get(0)) < 0);
-        assertTrue(!row.get(0).isNull());
+        row.getColumnValue(1).setString("a");
+        row3.getColumnValue(1).setString("ab");
+        assertTrue(row.getColumnValue(1).compareTo(row3.getColumnValue(1)) < 0);
+        row3.getColumnValue(1).setNull();
+        assertTrue(row.getColumnValue(1).compareTo(row3.getColumnValue(1)) > 0);
+        assertTrue(row3.getColumnValue(1).isNull());
+        row.getColumnValue(0).setPositiveInfinity();
+        row3.getColumnValue(0).setInt(Integer.MAX_VALUE);
+        assertTrue(row.getColumnValue(0).compareTo(row3.getColumnValue(0)) > 0);
+        assertTrue(!row.getColumnValue(0).isNull());
+        row.getColumnValue(0).setNegativeInfinity();
+        row3.getColumnValue(0).setInt(Integer.MIN_VALUE);
+        assertTrue(row.getColumnValue(0).compareTo(row3.getColumnValue(0)) < 0);
+        assertTrue(!row.getColumnValue(0).isNull());
     }
     
     public void testBigDecimal() {
-        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeFactory fieldFactory = new DefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getNumberType(2);
-        NumberField f1 = (NumberField) fieldFactory.getInstance(type);
+        NumberValue f1 = (NumberValue) fieldFactory.getInstance(type);
         f1.setString("780.919");
         assertEquals("780.92", f1.toString());
-        NumberField f2 = (NumberField) fieldFactory.getInstance(type);
+        NumberValue f2 = (NumberValue) fieldFactory.getInstance(type);
         f2.setInt(781);
         assertEquals("781.00", f2.toString());
         assertTrue(f2.compareTo(f1) > 0);
-        NumberField f3 = (NumberField) f1.cloneMe();
+        NumberValue f3 = (NumberValue) f1.cloneMe();
         assertEquals(f1, f3);
     }
     
     public void testDateTime() {
-        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeFactory fieldFactory = new DefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getDateTimeType();
-        DateTimeField f1 = (DateTimeField) fieldFactory.getInstance(type);
+        DateTimeValue f1 = (DateTimeValue) fieldFactory.getInstance(type);
         assertTrue(f1.isNull());
         f1.setString("14-Dec-1989 00:00:00 +0000");
         assertEquals(f1.getString(), "14-Dec-1989 00:00:00 +0000");
@@ -123,21 +123,21 @@ public class TypeSystemTest extends TestCase {
         ByteBuffer bb = ByteBuffer.allocate(f1.getStoredLength());
         f1.store(bb);
         bb.flip();
-        DateTimeField f2 = (DateTimeField) fieldFactory.getInstance(type);
+        DateTimeValue f2 = (DateTimeValue) fieldFactory.getInstance(type);
         f2.retrieve(bb);
         assertEquals(f1, f2);
         assertEquals(f2.getLong(), d.getTime());
     }
     
     public void testVarchar() {
-        final FieldFactory fieldFactory = new DefaultFieldFactory();
+        final TypeFactory fieldFactory = new DefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarcharType(10);
-    	VarcharField f1 = (VarcharField) fieldFactory.getInstance(type);
+    	VarcharValue f1 = (VarcharValue) fieldFactory.getInstance(type);
     	assertTrue(f1.isNull());
     	assertFalse(f1.isNegativeInfinity());
     	assertFalse(f1.isPositiveInfinity());
     	assertFalse(f1.isValue());
-    	VarcharField f2 = (VarcharField) f1.cloneMe();
+    	VarcharValue f2 = (VarcharValue) f1.cloneMe();
     	assertEquals(f1, f2);
     	assertTrue(f2.isNull());
     	assertFalse(f2.isNegativeInfinity());
@@ -169,7 +169,7 @@ public class TypeSystemTest extends TestCase {
     	f2.setString("abcdefghik");
     	assertTrue(f1.compareTo(f2) < 0);
     	assertTrue(f2.compareTo(f1) > 0);
-    	VarcharField f3 = (VarcharField) f1.cloneMe();
+    	VarcharValue f3 = (VarcharValue) f1.cloneMe();
     	f3.setPositiveInfinity();
     	assertTrue(f1.compareTo(f3) < 0);
     	assertTrue(f2.compareTo(f3) < 0);
@@ -177,7 +177,7 @@ public class TypeSystemTest extends TestCase {
     	assertFalse(f3.isNull());
     	assertFalse(f3.isValue());
     	assertEquals("+infinity", f3.toString());
-    	VarcharField f4 = (VarcharField) fieldFactory.getInstance(type);
+    	VarcharValue f4 = (VarcharValue) fieldFactory.getInstance(type);
     	f4.setPositiveInfinity();
     	assertTrue(f3.equals(f4));
     	assertFalse(f4.isNegativeInfinity());
@@ -188,7 +188,7 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testStorage() {
-        FieldFactory fieldFactory = new DefaultFieldFactory();
+        TypeFactory fieldFactory = new DefaultTypeFactory();
 //        RowFactory rowFactory = new GenericRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
