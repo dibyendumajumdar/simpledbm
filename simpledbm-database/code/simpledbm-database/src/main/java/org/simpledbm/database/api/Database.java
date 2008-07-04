@@ -15,12 +15,12 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.database.api;
 
 import org.simpledbm.rss.main.Server;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
@@ -102,7 +102,7 @@ public interface Database {
 	 * </pre>
 	 * @return FieldFactory object
 	 */
-	public abstract FieldFactory getFieldFactory();
+	public abstract TypeFactory getFieldFactory();
 
 	/**
 	 * Returns the RowFactory instance associated with this database.

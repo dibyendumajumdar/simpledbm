@@ -33,7 +33,7 @@ import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.typesystem.api.FieldFactory;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
@@ -94,11 +94,11 @@ public class DatabaseTests extends TestCase {
 			assertNotNull(tableDefinition);
 			Table table = db.getTable(tableDefinition);
 			Row tableRow = tableDefinition.getRow();
-			tableRow.get(0).setInt(1);
-			tableRow.get(1).setString("Joe");
-			tableRow.get(2).setString("Blogg");
-			tableRow.get(5).setDate(getDOB(1930, 12, 31));
-			tableRow.get(6).setString("500.00");
+			tableRow.getColumnValue(0).setInt(1);
+			tableRow.getColumnValue(1).setString("Joe");
+			tableRow.getColumnValue(2).setString("Blogg");
+			tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+			tableRow.getColumnValue(6).setString("500.00");
 
 			Transaction trx = db.getServer()
 					.begin(IsolationMode.READ_COMMITTED);
@@ -128,17 +128,17 @@ public class DatabaseTests extends TestCase {
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();
-				tableRow.get(2).setString("Blogg");
+				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 1, tableRow, true);
 				try {
 					if (scan.fetchNext()) {
 						Row currentRow = scan.getCurrentRow();
 						Row tr = tableDefinition.getRow();
-						tr.get(0).setInt(1);
-						tr.get(1).setString("Joe");
-						tr.get(2).setString("Blogg");
-						tr.get(5).setDate(getDOB(1930, 12, 31));
-						tr.get(6).setString("500.00");
+						tr.getColumnValue(0).setInt(1);
+						tr.getColumnValue(1).setString("Joe");
+						tr.getColumnValue(2).setString("Blogg");
+						tr.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+						tr.getColumnValue(6).setString("500.00");
 						assertEquals(tr, currentRow);
 					}
 				} finally {
@@ -186,7 +186,7 @@ public class DatabaseTests extends TestCase {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			FieldFactory ff = db.getFieldFactory();
+			TypeFactory ff = db.getFieldFactory();
 			TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
 																		 * primary
 																		 * key
@@ -229,11 +229,11 @@ public class DatabaseTests extends TestCase {
 			try {
 				for (int i = startno; i < (startno + range); i++) {
 					Row tableRow = tableDefinition.getRow();
-					tableRow.get(0).setInt(i);
-					tableRow.get(1).setString("Joe" + i);
-					tableRow.get(2).setString("Blogg" + i);
-					tableRow.get(5).setDate(getDOB(1930, 12, 31));
-					tableRow.get(6).setInt(1000 + i);
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+					tableRow.getColumnValue(6).setInt(1000 + i);
 					System.out.println("Adding " + tableRow);
 					table.addRow(trx, tableRow);
 				}
@@ -264,18 +264,18 @@ public class DatabaseTests extends TestCase {
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();
-				tableRow.get(2).setString("Blogg");
+				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 0, tableRow, false);
 				try {
 					int i = startno;
 					while (scan.fetchNext() && i < (startno + range)) {
 						Row currentRow = scan.getCurrentRow();
 						Row tr = tableDefinition.getRow();
-						tr.get(0).setInt(i);
-						tr.get(1).setString("Joe" + i);
-						tr.get(2).setString("Blogg" + i);
-						tr.get(5).setDate(getDOB(1930, 12, 31));
-						tr.get(6).setInt(1000 + i);
+						tr.getColumnValue(0).setInt(i);
+						tr.getColumnValue(1).setString("Joe" + i);
+						tr.getColumnValue(2).setString("Blogg" + i);
+						tr.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+						tr.getColumnValue(6).setInt(1000 + i);
 						assertEquals(tr, currentRow);
 						scan.fetchCompleted(true);
 						i++;
@@ -309,7 +309,7 @@ public class DatabaseTests extends TestCase {
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();
-				tableRow.get(2).setString("Blogg");
+				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 0, tableRow, false);
 				try {
 					while (scan.fetchNext()) {
