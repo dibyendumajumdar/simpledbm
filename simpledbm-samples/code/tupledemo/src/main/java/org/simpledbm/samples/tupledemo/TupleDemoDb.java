@@ -37,6 +37,7 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 import org.simpledbm.typesystem.impl.DefaultTypeFactory;
 import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
@@ -133,9 +134,9 @@ class TupleDemoDb {
      */
     void registerTableRowType() {
 
-        final TypeFactory fieldFactory = new DefaultTypeFactory();
+        final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 
-        final RowFactory rowFactory = new GenericRowFactory(fieldFactory);
+        final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
 
         /**
          * Table row (id, name, surname, city)
