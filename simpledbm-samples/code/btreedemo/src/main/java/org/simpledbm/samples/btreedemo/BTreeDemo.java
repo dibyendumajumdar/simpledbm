@@ -43,9 +43,7 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
-import org.simpledbm.typesystem.impl.DefaultTypeFactory;
-import org.simpledbm.typesystem.impl.GenericRowFactory;
-import org.simpledbm.typesystem.impl.IntegerType;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 /**
  * This class demonstrates how to interface with the BTree module.
@@ -152,11 +150,11 @@ public class BTreeDemo {
 
 		Server server;
 		
-		final TypeFactory fieldFactory = new DefaultTypeFactory();
+		final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 
-		final RowFactory keyFactory = new GenericRowFactory(fieldFactory);
+		final RowFactory keyFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
 
-		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { new IntegerType() };
+		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { fieldFactory.getIntegerType() };
 
 		IndexContainer btree;
 
