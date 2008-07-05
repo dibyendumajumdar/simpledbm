@@ -100,8 +100,7 @@ public class DatabaseTests extends TestCase {
 			tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
 			tableRow.getColumnValue(6).setString("500.00");
 
-			Transaction trx = db.getServer()
-					.begin(IsolationMode.READ_COMMITTED);
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
 				table.addRow(trx, tableRow);
@@ -123,8 +122,7 @@ public class DatabaseTests extends TestCase {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 			Table table = db.getTable(tableDefinition);
-			Transaction trx = db.getServer()
-					.begin(IsolationMode.READ_COMMITTED);
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();
@@ -224,8 +222,7 @@ public class DatabaseTests extends TestCase {
 			Table table = db.getTable(tableDefinition);
 			
 			boolean okay = false;
-			Transaction trx = db.getServer()
-					.begin(IsolationMode.READ_COMMITTED);
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			try {
 				for (int i = startno; i < (startno + range); i++) {
 					Row tableRow = tableDefinition.getRow();
@@ -259,8 +256,7 @@ public class DatabaseTests extends TestCase {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 			Table table = db.getTable(tableDefinition);
-			Transaction trx = db.getServer()
-					.begin(IsolationMode.READ_COMMITTED);
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();
@@ -304,8 +300,7 @@ public class DatabaseTests extends TestCase {
 			TableDefinition tableDefinition = db.getTableDefinition(1);
 			assertNotNull(tableDefinition);
 			Table table = db.getTable(tableDefinition);
-			Transaction trx = db.getServer()
-					.begin(IsolationMode.READ_COMMITTED);
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
 				Row tableRow = tableDefinition.getRow();

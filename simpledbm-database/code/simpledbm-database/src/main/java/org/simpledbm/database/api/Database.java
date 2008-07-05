@@ -19,10 +19,12 @@
  */
 package org.simpledbm.database.api;
 
+import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
-import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 /**
  * A SimpleDBM Database is a collection of Tables. The Database runs as an embedded server, and 
@@ -41,7 +43,7 @@ public interface Database {
 	 * 
 	 * <pre>
 	 * Database db = ...;
-	 * FieldFactory ff = db.getFieldFactory();
+	 * TypeFactory ff = db.getTypeFactory();
 	 * TypeDescriptor employee_rowtype[] = { 
 	 *   ff.getIntegerType(),
 	 *   ff.getVarcharType(20),
@@ -87,8 +89,13 @@ public interface Database {
 	public abstract Server getServer();
 
 	/**
-	 * Returns the FieldFactory instance associated with this database.
-	 * The FieldFactory object can be used to create TypeDescriptors for various types that
+	 * Starts a new Transaction
+	 */
+	public abstract Transaction startTransaction(IsolationMode isolationMode);
+	
+	/**
+	 * Returns the TypeFactory instance associated with this database.
+	 * The TypeFactory object can be used to create TypeDescriptors for various types that
 	 * can become columns in a row.
 	 * <pre>
 	 * Database db = ...;
@@ -100,7 +107,6 @@ public interface Database {
 	 *   ff.getNumberType(2) 
 	 *   };
 	 * </pre>
-	 * @return FieldFactory object
 	 */
 	public abstract TypeFactory getTypeFactory();
 
