@@ -86,7 +86,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	Properties properties;
 	/** Flag to indicate whether the database has been started */
 	private boolean serverStarted = false;
-	/** The TypeSystem Factory we will use for costructing types */
+	/** The TypeSystem Factory we will use for constructing types */
 	final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 	/** The RowFactory we will use for constructing rows */
 	final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, new DictionaryCacheImpl(this));
@@ -358,6 +358,16 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		/*
 		 * Other validations: TODO
 		 */
+	}
+
+	public Table getTable(Transaction trx, int containerId) {
+		/*
+		 * First let's lock tuple container to prevent table from being
+		 * deleted while we have access to it.
+		 */
+		getServer().getTupleManager().lockTupleContainer(trx,
+				containerId, LockMode.SHARED);
+		return getTable(getTableDefinition(containerId));	
 	}
 
 	/*
@@ -672,10 +682,14 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.database.api.Database#getTable(org.simpledbm.database.api.TableDefinition)
-	 */
-	public Table getTable(TableDefinition tableDefinition) {
+	/**
+	 * Obtains an instance of the Table associated with the supplied
+	 * TableDefinition.
+	 * 
+	 * @param tableDefinition
+	 * @return Table object representing the table
+	 */	
+	Table getTable(TableDefinition tableDefinition) {
 		return new TableImpl(tableDefinition);
 	}
 }

@@ -236,4 +236,30 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         }
         return indexRow;
     }
+
+    /* (non-Javadoc)
+     * @see org.simpledbm.database.api.TableDefinition#getNumberOfIndexes()
+     */
+    public int getNumberOfIndexes() {
+    	return indexes.size();
+    }
+    
+	/* (non-Javadoc)
+	 * @see org.simpledbm.database.api.TableDefinition#getIndex(int)
+	 */
+	public IndexDefinition getIndex(int indexNo) {
+		if (indexNo < 0 || indexNo  >= indexes.size()) {
+			// FIXME
+			// log error
+			throw new DatabaseException();
+		}
+		return indexes.get(indexNo);
+	}
+
+	/* (non-Javadoc)
+	 * @see org.simpledbm.database.api.TableDefinition#getIndexRow(int, org.simpledbm.typesystem.api.Row)
+	 */
+	public Row getIndexRow(int indexNo, Row tableRow) {
+		return getIndexRow(getIndex(indexNo), tableRow);
+	}
 }

@@ -256,4 +256,12 @@ public class TableImpl implements Table {
 	public TableDefinition getDefinition() {
 		return definition;
 	}
+
+	public Row getIndexRow(int indexNo, Row tableRow) {
+		return definition.getIndexRow(indexNo, tableRow);
+	}
+
+	public Row getRow() {
+		return definition.getRow();
+	}
 }

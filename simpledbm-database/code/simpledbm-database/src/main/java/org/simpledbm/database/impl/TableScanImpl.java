@@ -46,7 +46,7 @@ public class TableScanImpl implements TableScan {
         this.table = table;
         this.trx = trx;
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
-        IndexDefinition index = table.getDefinition().getIndexes().get(indexNo);
+        IndexDefinition index = table.getDefinition().getIndex(indexNo);
         icont = table.getDefinition().getDatabase().getServer().getIndex(trx, index.getContainerId());
         this.startRow = table.getDefinition().getIndexRow(index, tableRow);
         indexScan = icont.openScan(trx, startRow, null, forUpdate);

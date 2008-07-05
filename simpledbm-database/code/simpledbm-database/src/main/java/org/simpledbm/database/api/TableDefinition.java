@@ -76,6 +76,12 @@ public interface TableDefinition extends Storable {
 	public abstract ArrayList<IndexDefinition> getIndexes();
 
 	/**
+	 * Returns the specified index. Index positions start at 0.
+	 * @param indexNo Index position
+	 */
+	public abstract IndexDefinition getIndex(int indexNo);
+	
+	/**
 	 * Constructs an empty row for the table.
 	 * @return Row
 	 */
@@ -90,5 +96,20 @@ public interface TableDefinition extends Storable {
 	 * @return An initialized Index Row
 	 */
 	public abstract Row getIndexRow(IndexDefinition index, Row tableRow);
+
+	/**
+	 * Returns the number of indexes associated with the table.
+	 */
+    public abstract int getNumberOfIndexes();
+	
+	/**
+	 * Constructs an row for the specified Index. Appropriate columns from the
+	 * table are copied into the Index row.
+	 *  
+	 * @param index The Index for which the row is to be constructed
+	 * @param tableRow The table row
+	 * @return An initialized Index Row
+	 */
+	public abstract Row getIndexRow(int indexNo, Row tableRow);
 
 }
