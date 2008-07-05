@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.rss.main;
 
@@ -53,6 +53,8 @@ public class TestServer extends BaseTestCase {
         Server server = new Server(properties);
         server.start();
         server.shutdown();
+        
+        Server.drop(properties);
     }
 
     public void testCase2() throws Exception {
@@ -95,6 +97,7 @@ public class TestServer extends BaseTestCase {
             server.shutdown();
         }
 
+        Server.drop(properties);
     }
 
    
@@ -124,6 +127,7 @@ public class TestServer extends BaseTestCase {
         } catch (RSSException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0005"));
             server.shutdown();
+            Server.drop(properties);
             return;
         }
         fail("Unexpected result - server2 startup should have failed");
@@ -152,6 +156,7 @@ public class TestServer extends BaseTestCase {
             server.start();
         } catch (RSSException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0003"));
+            Server.drop(properties);
             return;
         }
         fail("Unexpected result - server startup should have failed");
