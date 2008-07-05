@@ -337,6 +337,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		return rowFactory;
 	}
 
+	/* (non-Javadoc)
+	 * @see org.simpledbm.database.api.Database#startTransaction(org.simpledbm.rss.api.tx.IsolationMode)
+	 */
+	public Transaction startTransaction(IsolationMode isolationMode) {
+		return getServer().begin(isolationMode);
+	}
+
 	private void validateTableDefinition(TableDefinition tableDefinition) {
 		/*
 		 * Check that the table has primary key index
