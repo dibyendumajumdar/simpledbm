@@ -32,6 +32,7 @@ import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class TypeSystemTest extends TestCase {
 
@@ -43,8 +44,8 @@ public class TypeSystemTest extends TestCase {
     }
 
     public void testRowFactory() throws Exception {
-        TypeFactory fieldFactory = new DefaultTypeFactory();
-        RowFactory rowFactory = new GenericRowFactory(fieldFactory);
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+        RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
@@ -97,7 +98,7 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testBigDecimal() {
-        TypeFactory fieldFactory = new DefaultTypeFactory();
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getNumberType(2);
         NumberValue f1 = (NumberValue) fieldFactory.getInstance(type);
         f1.setString("780.919");
@@ -111,7 +112,7 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testDateTime() {
-        TypeFactory fieldFactory = new DefaultTypeFactory();
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getDateTimeType();
         DateTimeValue f1 = (DateTimeValue) fieldFactory.getInstance(type);
         assertTrue(f1.isNull());
@@ -130,7 +131,7 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testVarchar() {
-        final TypeFactory fieldFactory = new DefaultTypeFactory();
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarcharType(10);
     	VarcharValue f1 = (VarcharValue) fieldFactory.getInstance(type);
     	assertTrue(f1.isNull());
@@ -188,8 +189,7 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testStorage() {
-        TypeFactory fieldFactory = new DefaultTypeFactory();
-//        RowFactory rowFactory = new GenericRowFactory(fieldFactory);
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
             fieldFactory.getDateTimeType(), fieldFactory.getNumberType()
@@ -205,7 +205,5 @@ public class TypeSystemTest extends TestCase {
     		assertEquals(rowtype1[i], rowtype2[i]);
     		assertEquals(rowtype1[i].hashCode(), rowtype2[i].hashCode());
     	}
-   	
     }
-    
 }
