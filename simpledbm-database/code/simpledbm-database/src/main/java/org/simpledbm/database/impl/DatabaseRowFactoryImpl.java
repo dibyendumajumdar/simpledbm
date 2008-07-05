@@ -32,48 +32,6 @@ import org.simpledbm.typesystem.impl.GenericRowFactory;
  * @author Dibyendu Majumdar
  * @since 29 Dec 2007
  */
-public class DatabaseRowFactoryImpl extends GenericRowFactory {
+public class DatabaseRowFactoryImpl  {
 
-    private final DatabaseImpl database;
-
-    public DatabaseRowFactoryImpl(DatabaseImpl database, TypeFactory fieldFactory) {
-        super(fieldFactory);
-        this.database = database;
-    }
-
-    /* (non-Javadoc)
-     * @see org.simpledbm.typesystem.impl.GenericRowFactory#getTypeDescriptor(int)
-     */
-    @Override
-    protected TypeDescriptor[] getTypeDescriptor(int keytype) {
-        TypeDescriptor rowType[] = super.getTypeDescriptor(keytype);
-        if (rowType == null) {
-        	/*
-			 * Normally, the table definitions are always accessed from the data
-			 * dictionary cache. However, during restart recovery it is possible
-			 * that the table definition will be needed prior to initialization
-			 * of the dictionary cache. To allow for this, we load the table
-			 * definition here.
-			 * Note that this will also populate the dictionary cache
-			 */
-            getDatabase().retrieveTableDefinition(keytype);
-        }
-        /*
-         * We may be looking for an index row type, or a table
-         * row type. So let's look in the cache again.
-         */
-        rowType = super.getTypeDescriptor(keytype);
-        if (rowType == null) {
-        	// FIXME Proper error message is needed (see ED0013)
-        	throw new DatabaseException();
-        }
-        return rowType;
-    }
-
-	/**
-	 * @return the database
-	 */
-	DatabaseImpl getDatabase() {
-		return database;
-	}
 }
