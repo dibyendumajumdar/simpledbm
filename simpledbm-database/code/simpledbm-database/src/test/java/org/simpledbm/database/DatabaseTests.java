@@ -90,19 +90,18 @@ public class DatabaseTests extends TestCase {
 		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
-			assertNotNull(tableDefinition);
-			Table table = db.getTable(tableDefinition);
-			Row tableRow = tableDefinition.getRow();
-			tableRow.getColumnValue(0).setInt(1);
-			tableRow.getColumnValue(1).setString("Joe");
-			tableRow.getColumnValue(2).setString("Blogg");
-			tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-			tableRow.getColumnValue(6).setString("500.00");
-
 			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				Row tableRow = table.getRow();
+				tableRow.getColumnValue(0).setInt(1);
+				tableRow.getColumnValue(1).setString("Joe");
+				tableRow.getColumnValue(2).setString("Blogg");
+				tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+				tableRow.getColumnValue(6).setString("500.00");
+
 				table.addRow(trx, tableRow);
 				okay = true;
 			} finally {
@@ -119,19 +118,18 @@ public class DatabaseTests extends TestCase {
 		db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
-			assertNotNull(tableDefinition);
-			Table table = db.getTable(tableDefinition);
 			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
-				Row tableRow = tableDefinition.getRow();
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				Row tableRow = table.getRow();
 				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 1, tableRow, true);
 				try {
 					if (scan.fetchNext()) {
 						Row currentRow = scan.getCurrentRow();
-						Row tr = tableDefinition.getRow();
+						Row tr = table.getRow();
 						tr.getColumnValue(0).setInt(1);
 						tr.getColumnValue(1).setString("Joe");
 						tr.getColumnValue(2).setString("Blogg");
@@ -217,15 +215,13 @@ public class DatabaseTests extends TestCase {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
-			assertNotNull(tableDefinition);
-			Table table = db.getTable(tableDefinition);
-			
 			boolean okay = false;
 			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			try {
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
 				for (int i = startno; i < (startno + range); i++) {
-					Row tableRow = tableDefinition.getRow();
+					Row tableRow = table.getRow();
 					tableRow.getColumnValue(0).setInt(i);
 					tableRow.getColumnValue(1).setString("Joe" + i);
 					tableRow.getColumnValue(2).setString("Blogg" + i);
@@ -253,20 +249,19 @@ public class DatabaseTests extends TestCase {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
-			assertNotNull(tableDefinition);
-			Table table = db.getTable(tableDefinition);
 			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
-				Row tableRow = tableDefinition.getRow();
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				Row tableRow = table.getRow();
 				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 0, tableRow, false);
 				try {
 					int i = startno;
 					while (scan.fetchNext() && i < (startno + range)) {
 						Row currentRow = scan.getCurrentRow();
-						Row tr = tableDefinition.getRow();
+						Row tr = table.getRow();
 						tr.getColumnValue(0).setInt(i);
 						tr.getColumnValue(1).setString("Joe" + i);
 						tr.getColumnValue(2).setString("Blogg" + i);
@@ -297,13 +292,12 @@ public class DatabaseTests extends TestCase {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TableDefinition tableDefinition = db.getTableDefinition(1);
-			assertNotNull(tableDefinition);
-			Table table = db.getTable(tableDefinition);
 			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
 			boolean okay = false;
 			try {
-				Row tableRow = tableDefinition.getRow();
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				Row tableRow = table.getRow();
 				tableRow.getColumnValue(2).setString("Blogg");
 				TableScan scan = table.openScan(trx, 0, tableRow, false);
 				try {

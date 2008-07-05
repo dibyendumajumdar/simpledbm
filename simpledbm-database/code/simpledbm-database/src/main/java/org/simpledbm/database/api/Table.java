@@ -84,4 +84,19 @@ public interface Table {
 	 */
 	public abstract TableDefinition getDefinition();
 
+	/**
+	 * Constructs an empty row for the table.
+	 * @return Row
+	 */
+	public abstract Row getRow();
+
+	/**
+	 * Constructs an row for the specified Index. Appropriate columns from the
+	 * table are copied into the Index row.
+	 *  
+	 * @param index The Index for which the row is to be constructed
+	 * @param tableRow The table row
+	 * @return An initialized Index Row
+	 */
+	public abstract Row getIndexRow(int index, Row tableRow);	
 }

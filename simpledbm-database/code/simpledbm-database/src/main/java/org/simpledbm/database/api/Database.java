@@ -126,11 +126,11 @@ public interface Database {
 	public abstract void createTable(TableDefinition tableDefinition);
 	
 	/**
-	 * Obtains an instance of the Table associated with the supplied
-	 * TableDefinition.
+	 * Gets the table associated with the specified container ID.
 	 * 
-	 * @param tableDefinition
-	 * @return Table object representing the table
+	 * @param trx Transaction context
+	 * @param containerId Id of the container
+	 * @return Table
 	 */
-	public abstract Table getTable(TableDefinition tableDefinition);
+	public abstract Table getTable(Transaction trx, int containerId);
 }
