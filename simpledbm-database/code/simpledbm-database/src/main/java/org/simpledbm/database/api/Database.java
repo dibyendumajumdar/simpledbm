@@ -92,7 +92,7 @@ public interface Database {
 	 * can become columns in a row.
 	 * <pre>
 	 * Database db = ...;
-	 * FieldFactory ff = db.getFieldFactory();
+	 * TypeFactory ff = db.getTypeFactory();
 	 * TypeDescriptor employee_rowtype[] = { 
 	 *   ff.getIntegerType(),
 	 *   ff.getVarcharType(20),
