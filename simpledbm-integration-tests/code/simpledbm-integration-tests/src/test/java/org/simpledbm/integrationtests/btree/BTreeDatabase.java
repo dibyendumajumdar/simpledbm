@@ -36,23 +36,21 @@ import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.impl.DefaultTypeFactory;
-import org.simpledbm.typesystem.impl.GenericRowFactory;
-import org.simpledbm.typesystem.impl.IntegerType;
+import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class BTreeDatabase {
 
 	Server server;
 
-	final TypeFactory fieldFactory = new DefaultTypeFactory();
+	final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 
-	final RowFactory keyFactory = new GenericRowFactory(fieldFactory);
+	final RowFactory keyFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
 
-	final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { new IntegerType() };
+	final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { fieldFactory.getIntegerType() };
 
 	IndexContainer btree;
 
