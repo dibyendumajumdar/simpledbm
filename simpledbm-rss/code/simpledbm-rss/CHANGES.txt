@@ -1,7 +1,7 @@
-1.0.9-BETA:
- * dm: Added a simple event publication mechanism
-
 1.0.8-BETA:
+ * dm: Added a simple event publication mechanism
+ * dm: Added a method to drop the database instance, including all storage.
+ * dm: Added a method to StorageFactory to delete the entire storage tree.
  * dm: Added checksum verification to page reads and writes.
  * dm: Enhanced the storage factory interface to allow checking for the existence of a container.
  * dm: Enhanced the MessageCatalog component so that clients can register new messages dynamically.
