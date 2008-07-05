@@ -9,3 +9,5 @@ rst2latex.py --documentclass="article" --documentoptions="oneside" --use-latex-f
 rst2latex.py --documentclass="book" --documentoptions="oneside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc usermanual.rst usermanual.tex
 
 rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc developerguide.rst developerguide.tex
+
+rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc database-api.rst database-api.tex
