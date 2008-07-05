@@ -19,6 +19,27 @@
  */
 package org.simpledbm.typesystem.api;
 
+import org.simpledbm.typesystem.impl.DefaultTypeFactory;
+import org.simpledbm.typesystem.impl.GenericRowFactory;
+import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
+
+/**
+ * TypeSystemFactory is the entry point for external clients to obtain access
+ * to the type system interfaces.
+ * 
+ * @author dibyendumajumdar
+ */
 public class TypeSystemFactory {
 
+	public static TypeFactory getDefaultTypeFactory() {
+		return new DefaultTypeFactory();
+	}
+	
+	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
+		return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
+	}
+	
+	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache) {
+		return new GenericRowFactory(typeFactory, dictionaryCache);
+	}
 }

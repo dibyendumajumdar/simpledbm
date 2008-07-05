@@ -27,10 +27,11 @@ import java.util.HashMap;
 
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.typesystem.api.DataValue;
-import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 public class GenericRowFactory implements RowFactory {
 
@@ -47,12 +48,14 @@ public class GenericRowFactory implements RowFactory {
     private final TypeFactory fieldFactory;
     
     /**
-     * Contains a mapping of container IDs to row type descriptors.
+     * A mapping between container Ids and TypeDescriptor[] is
+     * stored in the Dictionary Cache
      */
-    private HashMap<Integer, TypeDescriptor[]> typeDescMap = new HashMap<Integer, TypeDescriptor[]>();
+    private final DictionaryCache dictionaryCache;
     
-    public GenericRowFactory(TypeFactory fieldFactory) {
+    public GenericRowFactory(TypeFactory fieldFactory, DictionaryCache dictionaryCache) {
         this.fieldFactory = fieldFactory;
+        this.dictionaryCache = dictionaryCache;
     }
     
     public IndexKey newIndexKey(int containerId) {
@@ -87,15 +90,19 @@ public class GenericRowFactory implements RowFactory {
     	return row;
     }
     
-    protected synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
-        return typeDescMap.get(keytype);
+    protected TypeDescriptor[] getTypeDescriptor(int keytype) {
+        return dictionaryCache.getTypeDescriptor(keytype);
     }
     
-    public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
-    	typeDescMap.put(keytype, rowTypeDesc);
+    public void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
+    	dictionaryCache.registerRowType(keytype, rowTypeDesc);
     }
 
-    static class IndexRowFactory {
+    public DictionaryCache getDictionaryCache() {
+		return dictionaryCache;
+	}
+
+	static class IndexRowFactory {
 
         final TypeDescriptor[] rowTypeDesc;
         

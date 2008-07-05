@@ -37,6 +37,11 @@ public interface RowFactory extends IndexKeyFactory {
 	Row newRow(int containerId);
 	
 	/**
+	 * Retrieves the DictionaryCache associated with this Row Factory.
+	 */
+	DictionaryCache getDictionaryCache();
+	
+	/**
 	 * Registers the row definition for a particular container ID.
 	 * @param containerId container ID for which the row type information is being registered
 	 * @param rowTypeDesc An array of types that describe the fields in the row.
