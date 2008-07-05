@@ -186,7 +186,7 @@ public class DatabaseTests extends TestCase {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
 		try {
-			TypeFactory ff = db.getFieldFactory();
+			TypeFactory ff = db.getTypeFactory();
 			TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
 																		 * primary
 																		 * key
