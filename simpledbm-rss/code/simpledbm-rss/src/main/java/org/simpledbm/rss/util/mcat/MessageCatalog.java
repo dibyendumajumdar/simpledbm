@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.rss.util.mcat;
 
@@ -524,6 +524,9 @@ public class MessageCatalog {
             .put(
                 "ES0023",
                 "SIMPLEDBM-ES0023: Unexpected error occurred while closing StorageContainer {0}");
+        msgs.put(
+                "ES0024",
+                "SIMPLEDBM-ES0024: Unable to delete path name {0}");
 
         // tuple manager messages
         msgs.put(

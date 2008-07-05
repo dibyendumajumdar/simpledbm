@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.rss.api.st;
 
@@ -69,4 +69,9 @@ public interface StorageContainerFactory {
      * @throws StorageException 
      */
     void delete(String name);
+    
+    /**
+     * Remove an entire storage hierarchy.
+     */
+    void delete();
 }

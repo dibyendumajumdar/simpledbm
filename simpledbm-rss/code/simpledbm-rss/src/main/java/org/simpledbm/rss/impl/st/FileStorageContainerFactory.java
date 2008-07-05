@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.rss.impl.st;
 
@@ -321,5 +321,51 @@ public final class FileStorageContainerFactory implements
         String name = getFileName(logicalName, false);
         File file = new File(name);
 		return file.exists();
+	}
+
+	private void deleteRecursively(File dir) {
+		if (dir.isDirectory()) {
+			File[] files = dir.listFiles();
+			for (File file : files) {
+				if (file.isDirectory()) {
+					deleteRecursively(file);
+				} else {
+			        if (log.isDebugEnabled()) {
+			            log.debug(
+			                this.getClass().getName(),
+			                "deleteRecursively",
+			                "SIMPLEDBM-DEBUG: Deleting " + file.getAbsolutePath());
+			        }
+					if (!file.delete()) {
+						log.error(this.getClass().getName(),
+								"deleteRecursively", mcat.getMessage("ES0016",
+										file.getAbsolutePath()));
+						throw new StorageException(mcat.getMessage("ES0016",
+								file.getAbsolutePath()));
+					}
+				}
+			}
+		}
+        if (log.isDebugEnabled()) {
+            log.debug(
+                this.getClass().getName(),
+                "deleteRecursively",
+                "SIMPLEDBM-DEBUG: Deleting " + dir.getAbsolutePath());
+        }
+		if (!dir.delete()) {
+			log.error(this.getClass().getName(), "deleteRecursively", mcat
+					.getMessage("ES0024", dir.getAbsolutePath()));
+			throw new StorageException(mcat.getMessage("ES0024", dir
+					.getAbsolutePath()));
+		}
+	}
+	
+	/* (non-Javadoc)
+	 * @see org.simpledbm.rss.api.st.StorageContainerFactory#deleteTree(java.lang.String)
+	 */
+	public void delete() {
+        checkBasePath(false);
+		File file = new File(basePath);
+		deleteRecursively(file);
 	}
 }

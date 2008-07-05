@@ -15,7 +15,7 @@
  *
  *    Project: www.simpledbm.org
  *    Author : Dibyendu Majumdar
- *    Email  : dibyendu@mazumdar.demon.co.uk
+ *    Email  : d dot majumdar at gmail dot com ignore
  */
 package org.simpledbm.rss.main;
 
@@ -194,6 +194,22 @@ public class Server {
         server.shutdown();
     }
 
+    /**
+     * Drops a database instance.
+     */
+    public static void drop(Properties props) {
+        Server server = new Server(props);
+        server.lockServerInstance();
+        server.unlockServerInstance();
+        /*
+         * There is a potential race condition here because
+         * between the gap that exists here someone else could
+         * start the server.
+         * FIXME
+         */
+        server.getStorageFactory().delete();
+    }
+    
     /**
      * Initializes a new RSS Server instance.
      * @see #start()
