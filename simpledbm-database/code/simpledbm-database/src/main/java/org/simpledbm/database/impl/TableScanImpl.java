@@ -48,7 +48,18 @@ public class TableScanImpl implements TableScan {
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
         IndexDefinition index = table.getDefinition().getIndex(indexNo);
         icont = table.getDefinition().getDatabase().getServer().getIndex(trx, index.getContainerId());
-        this.startRow = table.getDefinition().getIndexRow(index, tableRow);
+        if (tableRow == null) {
+        	/*
+        	 * Create a start row that begins at negative infinity
+        	 */
+        	this.startRow = table.getDefinition().getIndex(indexNo).getRow();
+        	for (int i = 0; i < startRow.getNumberOfColumns(); i++) {
+        		startRow.getColumnValue(i).setNegativeInfinity();
+        	}
+        }
+        else  {
+        	this.startRow = table.getDefinition().getIndexRow(index, tableRow);
+        }
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
     }
 
