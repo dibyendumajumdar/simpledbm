@@ -69,7 +69,8 @@ public class DatabaseTests extends TestCase {
 	
 	Date getDOB(int year, int month, int day) {
 		Calendar c = Calendar.getInstance();
-		c.set(year, month-1, day, 0, 0, 0);
+		c.clear();
+		c.set(year, month-1, day);
 		return c.getTime();
 	}
 	
@@ -135,6 +136,7 @@ public class DatabaseTests extends TestCase {
 						tr.getColumnValue(2).setString("Blogg");
 						tr.getColumnValue(5).setDate(getDOB(1930, 12, 31));
 						tr.getColumnValue(6).setString("500.00");
+						
 						assertEquals(tr, currentRow);
 					}
 				} finally {
@@ -286,6 +288,38 @@ public class DatabaseTests extends TestCase {
 			db.shutdown();
 		}	
 	}
+
+	private void dumpData() {
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Table table = db.getTable(trx, 1);
+				TableScan scan = table.openScan(trx, 0, null, false);
+				try {
+					while (scan.fetchNext()) {
+						Row currentRow = scan.getCurrentRow();
+						System.out.println("Row = " + currentRow);
+						scan.fetchCompleted(true);
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}	
+	}
+	
 	
 	private int countData() {
 		int i = 0;
@@ -320,6 +354,45 @@ public class DatabaseTests extends TestCase {
 		return i;
 	}	
 	
+	private void updateData() {
+		/*
+		 * Update all rows - city will be set to London.
+		 */
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				/* start an update mode scan */
+				TableScan scan = table.openScan(trx, 0, null, true);
+				try {
+					while (scan.fetchNext()) {
+						Row tr = scan.getCurrentRow();
+						tr.getColumnValue(3).setString("London");
+						tr.getColumnValue(4).setString(tr.getColumnValue(1).getString() + "." + tr.getColumnValue(2).getString() + "@gmail.com");
+						tr.getColumnValue(6).setInt(50000);
+						scan.updateCurrentRow(tr);
+						scan.fetchCompleted(true);
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}	
+	}
+	
 	public void testRecovery() {
 		createTestDatabase();
 		createTestData(1, 100, true);
@@ -328,6 +401,15 @@ public class DatabaseTests extends TestCase {
 		assertEquals(100, countData());	
 		createTestData(101, 100, true);
 		assertEquals(200, countData());	
+	}
+	
+	public void testUpdates() {
+		createTestDatabase();
+		createTestData(1, 100, true);
+		assertEquals(100, countData());	
+		updateData();
+		assertEquals(100, countData());	
+		dumpData();
 	}
 	
 	void deleteRecursively(String pathname) {
