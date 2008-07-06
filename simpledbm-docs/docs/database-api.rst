@@ -463,8 +463,7 @@ at present that you need to be aware of.
 Creating a Table and Indexes
 ============================
 
-To create a table and associated indexes, you first create a table definition.
-You start by creating the table's row defintion. This consists of an array of
+You start by creating the table's row definition, which consists of an array of
 ``TypeDescriptor`` objects. Each element of the array represents a column definition
 for the table.
 
@@ -491,9 +490,9 @@ The new step is to create a ``TableDefinition`` object by calling the
 
 The ``newTableDefinition()`` method takes 3 arguments:
 
-* The name of the table container.
-* The ID for the table container. IDs start at 1, and must be unique.
-* The ``TypeDescriptor array`` that you created before.
+1. The name of the table container.
+2. The ID for the table container. IDs start at 1, and must be unique.
+3. The ``TypeDescriptor array`` that you created before.
 
 Now you can add indexes by invoking the ``addIndex()`` method provided
 by the ``TableDefinition`` interface.::
@@ -508,16 +507,16 @@ Above example shows four indexes being created.
 
 The ``addIndex()`` method takes following arguments.
 
-* The ID of the index container. Must be unique.
-* The name of the index container.
-* An array of integers. Each element of the array must refer to a table
-  column by position. The table column positions start at zero. Therefore the
-  array { 2, 1 } refers to 3rd column, and 2nd column of the table.
-* The next argument is a boolean value to indicate whether the index is the primary
-  index. Note that the first index must be the primary index.
-* The next argument is also a boolean value to indicate whether duplicate
-  values are allowed in the index. If set, this makes the index unique, which
-  prevents duplicates. The primary index must always be unique.
+1. The ID of the index container. Must be unique.
+2. The name of the index container.
+3. An array of integers. Each element of the array must refer to a table
+   column by position. The table column positions start at zero. Therefore the
+   array { 2, 1 } refers to 3rd column, and 2nd column of the table.
+4. The next argument is a boolean value to indicate whether the index is the primary
+   index. Note that the first index must be the primary index.
+5. The next argument is also a boolean value to indicate whether duplicate
+   values are allowed in the index. If set, this makes the index unique, which
+   prevents duplicates. The primary index must always be unique.
 
 Now that you have a fully initialized ``TableDefinition`` object, you can
 proceed to create the table and indexes by invoking the ``createTable()`` 
@@ -531,7 +530,7 @@ to such transactions.
 Isolation Modes
 ===============
 
-Before describing how to scan keys within an Index, it is necessary to
+Before describing how to access table data using scans, it is necessary to
 describe the various lock isolation modes supported by SimpleDBM.
 
 Common Behaviour
@@ -539,9 +538,9 @@ Common Behaviour
 
 Following behaviour is common across all lock isolation modes.
 
-1. All locking is on Tuple Locations (rowids) only.
-2. When a tuple is inserted or deleted, its Location is first
-   locked in EXCLUSIVE mode, the tuple is inserted or deleted from data
+1. All locking is on Row Locations (rowids) only.
+2. When a row is inserted or deleted, its rowid is first
+   locked in EXCLUSIVE mode, the row is inserted or deleted from data
    page, and only after that, indexes are modified.
 3. Updates to indexed columns are treated as key deletes followed
    by key inserts. The updated row is locked in EXCLUSIVE mode before
@@ -553,14 +552,14 @@ Following behaviour is common across all lock isolation modes.
 Read Committed/Cursor Stability
 -------------------------------
 
-During scans, the tuple location is locked in SHARED or UPDATE mode
+During scans, the rowid is locked in SHARED or UPDATE mode
 while the cursor is positioned on the key. The lock on current
-location is released before the cursor moves to the next key.
+rowid is released before the cursor moves to the next key.
 
 Repeatable Read (RR)
 --------------------
 
-SHARED mode locks obtained on tuple locations during scans are retained until
+SHARED mode locks obtained on rowids during scans are retained until
 the transaction completes. UPDATE mode locks are downgraded to SHARED mode when
 the cursor moves.
 
@@ -570,21 +569,23 @@ Serializable
 Same as Repeatable Read, with additional locking (next key) during
 scans to prevent phantom reads.
 
-
 Inserting rows into a table
 ===========================
 
 To insert a row into a table, following steps are needed.
 
-You need a transaction context in which to perform the insert.
-Get the ``Table`` object associated with the table.::
+Obtain a transaction context in which to perform the insert.::
 
   Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
   boolean okay = false;
   try {
+
+Get the ``Table`` object associated with the table. Tables are 
+identified by their container Ids.::
+
     Table table = db.getTable(trx, 1);
     
-The next step is to create a balnk row. Note that you need to always create
+Create a balnk row. It is best to create
 new row objects rather than reusing existing objects.::    
     
     Row tableRow = table.getRow();
@@ -616,7 +617,7 @@ In order to read table data, you must open a scan. A scan is a mechanism
 for accessing table rows one by one. Scans are ordered using indexes.
 
 Opening an TableScan requires you to specify a starting row.
-If you want to start from the beginning, then you may specify null values
+If you want to start from the beginning, then you may specify ``null``
 as the starting row. The values from the starting row are used 
 to perform an index search, and the scan begins from the first row
 greater or equal to the values in the starting row.
@@ -625,9 +626,9 @@ In SimpleDBM, scans do not have a stop value. Instead, a scan
 starts fetching data from the first row that is greater or equal to the 
 supplied starting row. You must determine whether the fetched key satisfies
 the search criteria or not. If the fetched key no longer meets the search
-criteria, you should call ``fetchCompleted()`` with a false value, 
+criteria, you should call ``fetchCompleted()`` with a ``false`` value, 
 indicating that there is no need to fetch any more keys. This then causes 
-the scan to reach logical EOF.
+the scan to reach logical ``EOF``.
 
 The code snippet below shows a table scan that is used to count the
 number of rows in the table.:: 
@@ -676,7 +677,7 @@ scan in UPDATE mode. This is done by supplying a boolean true as the
 fourth argument to ``openScan()`` method.
 
 Here is an example of an update. The table is scanned from first row
-to last and three columns are updated in all the rows.::
+to last and three of the columns are updated in all the rows.::
 
   Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
   boolean okay = false;
@@ -710,8 +711,8 @@ to last and three columns are updated in all the rows.::
 The following points are worth noting:
 
 1. If you update the columns that form part of the index that
-   is performing the scan, then the result may be unexpected.
-   As the data is updated it will alter the scan ordering.
+   is performing the scan, then the results may be unexpected.
+   As the data is updated it may alter the scan ordering.
 2. The update mode scan places UPDATE locks on rows as these
    are accessed. When the row is updated, the lock is promoted
    to EXCLUSIVE mode. If you skip the row without updating it,
@@ -721,10 +722,11 @@ The following points are worth noting:
 Deleting tuples
 ===============
  
-Row deletes are done in a similar way as row updates.
-Start a scan in UPDATE mode, if you intend to delete rows
-during the scan. 
- 
+Start a table scan in UPDATE mode, if you intend to delete rows
+during the scan. Row deletes are performed in a similar way as 
+row updates, except that ``TableScan.deleteRow()`` is invoked on the 
+current row. 
+
 ----------------
 The Database API
 ----------------
@@ -735,8 +737,8 @@ DatabaseFactory
 ::
 
   /**
-   * The DatabaseFactory class is responsible for creating and obtaining instances of 
-   * Databases.
+   * The DatabaseFactory class is responsible for creating and obtaining 
+   * instances of Databases.
    */
   public class DatabaseFactory {
 	
@@ -847,20 +849,22 @@ TableDefinition
 ::
 
   /**
-   * A TableDefinition holds information about a table, such as its name, container ID,
-   * types and number of columns, etc..
+   * A TableDefinition holds information about a table, such as its name, 
+   * container ID, types and number of columns, etc..
    */
   public interface TableDefinition extends Storable {
 
 	/**
-	 * Adds an Index to the table definition. Only one primay index is allowed.
+	 * Adds an Index to the table definition. Only one primay index 
+	 * is allowed.
 	 * 
 	 * @param containerId Container ID for the new index. 
 	 * @param name Name of the Index Container
 	 * @param columns Array of Column identifiers - columns to be indexed
-	 * @param primary A boolean flag indicating that this is the primary index or not
+	 * @param primary A boolean flag indicating that this is 
+	 *                the primary index or not
 	 * @param unique A boolean flag indicating whether the index 
-	 * should allow only unique values
+	 *               should allow only unique values
 	 */
 	public abstract void addIndex(int containerId, String name, int[] columns,
 			boolean primary, boolean unique);
@@ -887,8 +891,8 @@ TableDefinition
     public abstract int getNumberOfIndexes();
 	
 	/**
-	 * Constructs an row for the specified Index. Appropriate columns from the
-	 * table are copied into the Index row.
+	 * Constructs an row for the specified Index. Appropriate columns 
+	 * from the table are copied into the Index row.
 	 *  
 	 * @param index The Index for which the row is to be constructed
 	 * @param tableRow The table row
@@ -915,8 +919,8 @@ Table
   public interface Table {
 
 	/**
-	 * Adds a row to the table. The primary key of the row must be unique and
-	 * different from all other rows in the table.
+	 * Adds a row to the table. The primary key of the row must 
+	 * be unique and different from all other rows in the table.
 	 * 
 	 * @param trx The Transaction managing this row insert  
 	 * @param tableRow The row to be inserted
@@ -949,7 +953,8 @@ Table
 	 * @param trx Transaction managing the scan
 	 * @param indexno The index to be used for the scan
 	 * @param startRow The starting row of the scan
-	 * @param forUpdate A boolean value indicating whether the scan will be used to update rows
+	 * @param forUpdate A boolean value indicating whether the scan will 
+	 *                  be used to update rows
 	 * @return A TableScan
 	 */
 	public abstract TableScan openScan(Transaction trx, int indexno,
@@ -1014,7 +1019,8 @@ TableScan
 	public abstract void fetchCompleted(boolean matched);
 
 	/**
-	 * Closes the scan, releasing locks and other resources acquired by the scan.
+	 * Closes the scan, releasing locks and other resources 
+	 * acquired by the scan.
 	 */
 	public abstract void close();
 
