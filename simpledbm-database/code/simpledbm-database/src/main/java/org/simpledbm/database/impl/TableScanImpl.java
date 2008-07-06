@@ -24,16 +24,23 @@ import java.nio.ByteBuffer;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableScan;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.Row;
 
 public class TableScanImpl implements TableScan {
 
+	static Logger log = Logger.getLogger(TableScanImpl.class.getPackage()
+			.getName());	
+	final static MessageCatalog mcat = new MessageCatalog();
+	
     private final Table table;
     final IndexScan indexScan;
     final Row startRow;
@@ -84,14 +91,14 @@ public class TableScanImpl implements TableScan {
 	 * @see org.simpledbm.database.TableScan#getCurrentRow()
 	 */
     public Row getCurrentRow() {
-        return currentRow;
+        return currentRow.cloneMe();
     }
 
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableScan#getCurrentIndexRow()
 	 */
     public Row getCurrentIndexRow() {
-        return (Row) indexScan.getCurrentKey();
+        return ((Row) indexScan.getCurrentKey()).cloneMe();
     }
 
     /* (non-Javadoc)
@@ -112,8 +119,11 @@ public class TableScanImpl implements TableScan {
 	 * @see org.simpledbm.database.TableScan#updateCurrentRow(org.simpledbm.typesystem.api.Row)
 	 */
     public void updateCurrentRow(Row tableRow) {
-        // Start a new transaction
-        Savepoint sp = trx.createSavepoint(false);
+    	if (!getTable().validateRow(tableRow)) {
+    		log.error(getClass().getName(), "updateCurrentRow", mcat.getMessage("ED0015", tableRow));
+    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    	}    	
+    	Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
             IndexDefinition pkey = getTable().getDefinition().getIndexes().get(0);
@@ -148,7 +158,10 @@ public class TableScanImpl implements TableScan {
                     }
                 }
             } else {
-                getTable().addRow(trx, tableRow);
+                // getTable().addRow(trx, tableRow);
+            	// Can't add as we do not know that this was intended
+            	log.error(getClass().getName(), "updateCurrentRow", mcat.getMessage("ED0014"));
+            	throw new DatabaseException(mcat.getMessage("ED0014"));
             }
             success = true;
         } finally {

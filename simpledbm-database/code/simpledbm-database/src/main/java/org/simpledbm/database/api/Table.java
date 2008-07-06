@@ -99,4 +99,9 @@ public interface Table {
 	 * @return An initialized Index Row
 	 */
 	public abstract Row getIndexRow(int index, Row tableRow);	
+	
+	/**
+	 * Check the table row for validity.
+	 */
+	public abstract boolean validateRow(Row tableRow);
 }

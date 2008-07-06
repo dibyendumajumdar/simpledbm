@@ -25,6 +25,7 @@ import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
+import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
@@ -32,6 +33,8 @@ import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.Row;
 
 /**
@@ -41,10 +44,26 @@ import org.simpledbm.typesystem.api.Row;
  */
 public class TableImpl implements Table {
 
+	static Logger log = Logger.getLogger(TableImpl.class.getPackage()
+			.getName());	
+	final static MessageCatalog mcat = new MessageCatalog();
+	
     private final TableDefinition definition;
 
     TableImpl(TableDefinition definition) {
     	this.definition = definition;
+    }
+    
+    public boolean validateRow(Row tableRow) {
+        for (IndexDefinition idx : getDefinition().getIndexes()) {
+            Row indexRow = getDefinition().getIndexRow(idx, tableRow);
+            for (int i = 0; i < indexRow.getNumberOfColumns(); i++) {
+            	if (indexRow.getColumnValue(i).isNull()) {
+            		return false;
+            	}
+            }
+        }
+    	return true;
     }
     
     /* (non-Javadoc)
@@ -52,6 +71,10 @@ public class TableImpl implements Table {
 	 */
     public Location addRow(Transaction trx, Row tableRow) {
 
+    	if (!validateRow(tableRow)) {
+    		log.error(getClass().getName(), "addRow", mcat.getMessage("ED0015", tableRow));
+    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    	}
         Location location = null;
         // Create a savepoint so that we can rollback to a consistent
         // state in case there is a problem.
@@ -93,6 +116,10 @@ public class TableImpl implements Table {
 	 */
     public void updateRow(Transaction trx, Row tableRow) {
 
+    	if (!validateRow(tableRow)) {
+    		log.error(getClass().getName(), "updateRow", mcat.getMessage("ED0015", tableRow));
+    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    	}
         // Start a new transaction
         Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
