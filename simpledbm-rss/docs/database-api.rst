@@ -612,35 +612,38 @@ Finally, insert the row and commit the transaction.::
 Accessing table data
 ====================
 
-In order to read tuples, you must open a scan. A scan is a mechanism
-for accessing tuples one by one. Scans are ordered using indexes.
+In order to read table data, you must open a scan. A scan is a mechanism
+for accessing table rows one by one. Scans are ordered using indexes.
 
-Opening an TableScan requires you to specify a start condition.
+Opening an TableScan requires you to specify a starting row.
 If you want to start from the beginning, then you may specify null values
-as the starting row. 
+as the starting row. The values from the starting row are used 
+to perform an index search, and the scan begins from the first row
+greater or equal to the values in the starting row.
 
-In SimpleDBM, scans do not have a stop value. Instead, a scan starts fetching
-data from the first row that is greater or equal to the supplied
-start row. You must determine whether the fetched key satisfies
+In SimpleDBM, scans do not have a stop value. Instead, a scan 
+starts fetching data from the first row that is greater or equal to the 
+supplied starting row. You must determine whether the fetched key satisfies
 the search criteria or not. If the fetched key no longer meets the search
-criteria, you should call ``fetchCompleted()`` with a false value, indicating that
-there is no need to fetch any more keys. This then causes the scan to
-reach logical EOF.
+criteria, you should call ``fetchCompleted()`` with a false value, 
+indicating that there is no need to fetch any more keys. This then causes 
+the scan to reach logical EOF.
 
 The code snippet below shows a table scan that is used to count the
 number of rows in the table.:: 
 
   Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
   boolean okay = false;
+  int count = 0;
   try {
     Table table = db.getTable(trx, 1);
-    assertNotNull(table);
-    Row tableRow = table.getRow();
+    /* open a scan with null starting row */
+    /* scan will use index 0 - ie - first index */
     TableScan scan = table.openScan(trx, 0, null, false);
     try {
       while (scan.fetchNext()) {
         scan.fetchCompleted(true);
-        i++;
+        count++;
       }
     } finally {
       scan.close();
@@ -656,33 +659,71 @@ number of rows in the table.::
 
 The following points are worth noting.
 
-* The ``openScan()`` method takes an index identifier as the second argument.
-  The scan is ordered by the index.
-  
-* The third argument is the starting row for the scan. If ``null`` is specified,
-  as in the example above, then the scan will start from logical negative
-  infinity, ie, from the first row (as per selected index) in the table.
-  
-* The scan must be closed in a finally block to ensure proper cleanup of resources.
+1. The ``openScan()`` method takes an index identifier as the second argument.
+   The scan is ordered by the index. 
+2. The third argument is the starting row for the scan. If ``null`` is specified,
+   as in the example above, then the scan will start from logical negative
+   infinity, ie, from the first row (as per selected index) in the table.
+3. The scan must be closed in a finally block to ensure proper cleanup of 
+   resources.
 
 Updating tuples
 ===============
 
-In order to update a tuple, you must first obtain its Location using a
-scan. typically, if you intend to update the tuple, you should open the
+In order to update a row, you must first obtain its Location using a
+scan. Typically, if you intend to update the tuple, you should open the
 scan in UPDATE mode. This is done by supplying a boolean true as the
-second argument to ``openScan()`` method.
+fourth argument to ``openScan()`` method.
 
-Note that in the current implementation of SimpleDBM, the space
-allocated to a tuple is never reduced, even if the tuple grows smaller
-due to updates.
+Here is an example of an update. The table is scanned from first row
+to last and three columns are updated in all the rows.::
+
+  Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+  boolean okay = false;
+  try {
+    Table table = db.getTable(trx, 1);
+    /* start an update mode scan */
+    TableScan scan = table.openScan(trx, 0, null, true);
+    try {
+      while (scan.fetchNext()) {
+        Row tr = scan.getCurrentRow();
+        tr.getColumnValue(3).setString("London");
+        tr.getColumnValue(4).setString(
+          tr.getColumnValue(1).getString() + "." + 
+          tr.getColumnValue(2).getString() + "@gmail.com");
+        tr.getColumnValue(6).setInt(50000);
+        scan.updateCurrentRow(tr);
+        scan.fetchCompleted(true);
+      }
+    } finally {
+      scan.close();
+    }
+    okay = true;
+  } finally {
+    if (okay) {
+      trx.commit();
+    } else {
+      trx.abort();
+    }
+  }
+
+The following points are worth noting:
+
+1. If you update the columns that form part of the index that
+   is performing the scan, then the result may be unexpected.
+   As the data is updated it will alter the scan ordering.
+2. The update mode scan places UPDATE locks on rows as these
+   are accessed. When the row is updated, the lock is promoted
+   to EXCLUSIVE mode. If you skip the row without updating it,
+   the lock is either released (READ_COMMITTED) or downgraded
+   (in other lock modes) to SHARED lock.
  
 Deleting tuples
 ===============
  
-Tuple deletes are done in a similar way as tuple updates.
-Start a scan in UPDATE mode, if you intend to delete tuples
-during the scan. Here is an example.
+Row deletes are done in a similar way as row updates.
+Start a scan in UPDATE mode, if you intend to delete rows
+during the scan. 
  
 ----------------
 The Database API
@@ -696,8 +737,6 @@ DatabaseFactory
   /**
    * The DatabaseFactory class is responsible for creating and obtaining instances of 
    * Databases.
-   * 
-   * @author dibyendu majumdar
    */
   public class DatabaseFactory {
 	
@@ -705,20 +744,13 @@ DatabaseFactory
 	 * Creates a new SimpleDBM database based upon supplied properties.
 	 * For details of available properties, please refer to the SimpleDBM 
 	 * User Manual.
-	 * @param properties Properties for SimpleDBM 
 	 */
-	public static void create(Properties properties) {
-		DatabaseImpl.create(properties);
-	}
+	public static void create(Properties properties);
 	
 	/**
 	 * Obtains a database instance for an existing database.
-	 * @param properties Properties for SimpleDBM
-	 * @return Database Instance
 	 */
-	public static Database getDatabase(Properties properties) {
-		return new DatabaseImpl(properties);
-	}
+	public static Database getDatabase(Properties properties);
 
   }
 
@@ -728,39 +760,23 @@ Database
 ::
 
   /**
-   * A SimpleDBM Database is a collection of Tables. The Database runs as an embedded server, and 
-   * provides an API for creating and maintaining tables.
-   * <p>
-   * A Database is created using {@link DatabaseFactory#create(java.util.Properties)}. An
-   * existing Database can be instantiated using {@link DatabaseFactory#getDatabase(java.util.Properties)}.
-   * 
-   * @author dibyendu majumdar
+   * A SimpleDBM Database is a collection of Tables. The Database runs as 
+   * an embedded server, and provides an API for creating and 
+   * maintaining tables.
+   * A Database is created using DatabaseFactory.create(). An
+   * existing Database can be instantiated using 
+   * DatabaseFactory.getDatabase().
    */
   public interface Database {
 
 	/**
-	 * Constructs a new TableDefinition object. A TableDefinition object is used when
-	 * creating new tables.
-	 * 
-	 * <pre>
-	 * Database db = ...;
-	 * TypeFactory ff = db.getTypeFactory();
-	 * TypeDescriptor employee_rowtype[] = { 
-	 *   ff.getIntegerType(),
-	 *   ff.getVarcharType(20),
-	 *   ff.getDateTimeType(), 
-	 *   ff.getNumberType(2) 
-	 *   };
-	 * TableDefinition tableDefinition = 
-	 *   db.newTableDefinition("employee", 1,
-	 *      employee_rowtype); 
-	 * </pre>
+	 * Constructs a new TableDefinition object. A TableDefinition object 
+	 * is used when creating new tables.
 	 * 
 	 * @param name Name of the table
 	 * @param containerId ID of the container that will hold the table data
 	 * @param rowType A row type definition. 
 	 * @return A TableDefinition object.
-	 * @see Database#getTypeFactory()
 	 */
 	public abstract TableDefinition newTableDefinition(String name,
 			int containerId, TypeDescriptor[] rowType);
@@ -796,33 +812,22 @@ Database
 	
 	/**
 	 * Returns the TypeFactory instance associated with this database.
-	 * The TypeFactory object can be used to create TypeDescriptors for various types that
-	 * can become columns in a row.
-	 * <pre>
-	 * Database db = ...;
-	 * TypeFactory ff = db.getTypeFactory();
-	 * TypeDescriptor employee_rowtype[] = { 
-	 *   ff.getIntegerType(),
-	 *   ff.getVarcharType(20),
-	 *   ff.getDateTimeType(), 
-	 *   ff.getNumberType(2) 
-	 *   };
-	 * </pre>
+	 * The TypeFactory object can be used to create TypeDescriptors 
+	 * for various types that can become columns in a row.
 	 */
 	public abstract TypeFactory getTypeFactory();
 
 	/**
 	 * Returns the RowFactory instance associated with this database.
 	 * The RowFactory is used to generate rows.
-	 * @return RowFactory instance.
 	 */
 	public abstract RowFactory getRowFactory();
 
 	/**
-	 * Creates a Table and associated indexes using the information in the supplied 
-	 * TableDefinition object. Note that the table must have a primary index defined.
+	 * Creates a Table and associated indexes using the information 
+	 * in the supplied TableDefinition object. Note that the table 
+	 * must have a primary index defined.
 	 * The table creation is performed in a standalone transaction.
-	 * @param tableDefinition The TableDefinition object that contains information about the table to be created.
 	 */
 	public abstract void createTable(TableDefinition tableDefinition);
 	
@@ -836,4 +841,190 @@ Database
 	public abstract Table getTable(Transaction trx, int containerId);
   } 
  
+TableDefinition
+===============
 
+::
+
+  /**
+   * A TableDefinition holds information about a table, such as its name, container ID,
+   * types and number of columns, etc..
+   */
+  public interface TableDefinition extends Storable {
+
+	/**
+	 * Adds an Index to the table definition. Only one primay index is allowed.
+	 * 
+	 * @param containerId Container ID for the new index. 
+	 * @param name Name of the Index Container
+	 * @param columns Array of Column identifiers - columns to be indexed
+	 * @param primary A boolean flag indicating that this is the primary index or not
+	 * @param unique A boolean flag indicating whether the index 
+	 * should allow only unique values
+	 */
+	public abstract void addIndex(int containerId, String name, int[] columns,
+			boolean primary, boolean unique);
+
+	/**
+	 * Gets the Container ID associated with the table.
+	 */
+	public abstract int getContainerId();
+
+	/**
+	 * Returns the Table's container name.
+	 */
+	public abstract String getName();
+
+	/**
+	 * Constructs an empty row for the table.
+	 * @return Row
+	 */
+	public abstract Row getRow();
+
+	/**
+	 * Returns the number of indexes associated with the table.
+	 */
+    public abstract int getNumberOfIndexes();
+	
+	/**
+	 * Constructs an row for the specified Index. Appropriate columns from the
+	 * table are copied into the Index row.
+	 *  
+	 * @param index The Index for which the row is to be constructed
+	 * @param tableRow The table row
+	 * @return An initialized Index Row
+	 */
+	public abstract Row getIndexRow(int indexNo, Row tableRow);
+  }
+
+Table
+=====
+
+::
+
+  /**
+   * A Table is a collection of rows. Each row is made up of 
+   * columns (fields). A table must have a primary key defined 
+   * which uniquely identifies each row in the
+   * table.
+   * <p>
+   * A Table is created by Database.createTable().
+   * Once created, the Table object can be accessed by calling 
+   * Database.getTable() method. 
+   */
+  public interface Table {
+
+	/**
+	 * Adds a row to the table. The primary key of the row must be unique and
+	 * different from all other rows in the table.
+	 * 
+	 * @param trx The Transaction managing this row insert  
+	 * @param tableRow The row to be inserted
+	 * @return Location of the new row
+	 */
+	public abstract Location addRow(Transaction trx, Row tableRow);
+
+	/**
+	 * Updates the supplied row in the table. Note that the row to be
+	 * updated is identified by its primary key.
+	 * 
+	 * @param trx The Transaction managing this update
+	 * @param tableRow The row to be updated.
+	 */
+	public abstract void updateRow(Transaction trx, Row tableRow);
+
+	/**
+	 * Deletes the supplied row from the table. Note that the row to be
+	 * deleted is identified by its primary key.
+	 * 
+	 * @param trx The Transaction managing this delete
+	 * @param tableRow The row to be deleted.
+	 */
+	public abstract void deleteRow(Transaction trx, Row tableRow);
+	
+	/**
+	 * Opens a Table Scan, which allows rows to be fetched from the Table,
+	 * and updated.
+	 * 
+	 * @param trx Transaction managing the scan
+	 * @param indexno The index to be used for the scan
+	 * @param startRow The starting row of the scan
+	 * @param forUpdate A boolean value indicating whether the scan will be used to update rows
+	 * @return A TableScan
+	 */
+	public abstract TableScan openScan(Transaction trx, int indexno,
+			Row startRow, boolean forUpdate);
+	
+	/**
+	 * Constructs an empty row for the table.
+	 * @return Row
+	 */
+	public abstract Row getRow();
+
+	/**
+	 * Constructs an row for the specified Index. Appropriate columns from the
+	 * table are copied into the Index row.
+	 *  
+	 * @param index The Index for which the row is to be constructed
+	 * @param tableRow The table row
+	 * @return An initialized Index Row
+	 */
+	public abstract Row getIndexRow(int index, Row tableRow);	
+  }
+  
+TableScan
+=========
+
+::
+
+  /**
+   * A TableScan is an Iterator that allows clients to iterate through the
+   * contents of a Table. The iteraion is always ordered through an Index.
+   * The Transaction managing the iteration defines the Lock Isolation level.
+   */
+  public interface TableScan {
+
+	/**
+	 * Fetches the next row from the Table. The row to be fetched depends
+	 * upon the current position of the scan, and the Index ordering of 
+	 * the scan.
+	 * @return A boolean value indicating success of EOF
+	 */
+	public abstract boolean fetchNext();
+
+	/**
+	 * Returns a copy of the current Row.
+	 */
+	public abstract Row getCurrentRow();
+
+	/**
+	 * Returns a copy of the current Index Row.
+	 */
+	public abstract Row getCurrentIndexRow();
+
+	/**
+	 * Notifies the scan that the fetch has been completed 
+	 * and locks may be released (depending upon the 
+	 * Isolation level).
+	 * @param matched A boolean value that should be true 
+	 *   if the row is part of the search criteria match result. 
+	 *   If set to false, this indicates that no further 
+	 *   fetches are required.
+	 */
+	public abstract void fetchCompleted(boolean matched);
+
+	/**
+	 * Closes the scan, releasing locks and other resources acquired by the scan.
+	 */
+	public abstract void close();
+
+	/**
+	 * Updates the current row. 
+	 */
+	public abstract void updateCurrentRow(Row tableRow);
+
+	/**
+	 * Deletes the current row.
+	 */
+	public abstract void deleteRow();
+  }
