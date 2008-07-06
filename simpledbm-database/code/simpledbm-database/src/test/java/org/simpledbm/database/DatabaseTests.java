@@ -297,9 +297,7 @@ public class DatabaseTests extends TestCase {
 			try {
 				Table table = db.getTable(trx, 1);
 				assertNotNull(table);
-				Row tableRow = table.getRow();
-				tableRow.getColumnValue(2).setString("Blogg");
-				TableScan scan = table.openScan(trx, 0, tableRow, false);
+				TableScan scan = table.openScan(trx, 0, null, false);
 				try {
 					while (scan.fetchNext()) {
 						scan.fetchCompleted(true);
