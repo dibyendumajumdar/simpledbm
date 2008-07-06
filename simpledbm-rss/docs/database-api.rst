@@ -88,7 +88,7 @@ Creating a SimpleDBM database
 A SimpleDBM database is created by a call to DatabaseFactory.create(), 
 as shown below: ::
 
-  import org.simpledbm.database.api.Database;
+  import org.simpledbm.database.api.DatabaseFactory;
   ...  
   Properties properties = new Properties();
   properties.setProperty("log.ctl.1", "ctl.a");
@@ -101,7 +101,7 @@ as shown below: ::
   properties.setProperty("log.buffer.limit", "4");
   properties.setProperty("log.flush.interval", "5");
   properties.setProperty("storage.basePath", 
-    "demodata/TupleDemo1");
+    "demodata/DemoDb");
   
   DatabaseFactory.create(properties);
 
@@ -190,7 +190,7 @@ Opening a database
 ==================
 
 Once a database has been created, it can be opened by creating an
-instance of SimpleDBM server, and starting it. The same properties that were
+instance of Database, and starting it. The same properties that were
 supplied while creating the database, can be supplied when starting it.
 
 Here is a code snippet that shows how this is done: ::
@@ -217,14 +217,14 @@ Here is a code snippet that shows how this is done: ::
     db.shutdown();
   }
 
-Some points to bear in mind when starting SimpleDBM server instances:
+Some points to bear in mind when starting SimpleDBM databases:
 
 1. Make sure that you invoke ``shutdown()`` eventually to ensure proper
    shutdown of the database.
 2. Database startup/shutdown is relatively expensive, so do it only
    once during the life-cycle of your application.
 3. A Database object can be used only once - after calling
-   ``shutdown()``, it is an error to do any operation with the server
+   ``shutdown()``, it is an error to do any operation with the database
    object.
 
 Managing log messages
@@ -238,7 +238,7 @@ package is used.
 You can specify the type of logging to be used using the
 Server Property ``logging.properties.type``. If this is set to
 "log4j", SimpleDBM will use Log4J logging. Any other value causes
-SimpleDBM to use defauft JDK logging.
+SimpleDBM to use default JDK logging.
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
@@ -319,136 +319,6 @@ sample contains both JDK style and Log4J style configuration.::
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
 
---------------------
-SimpleDBM TypeSystem
---------------------
-
-Introduction
-============
-
-SimpleDBM has a modular architecture. The core of the database engine is
-in the RSS module. A feature of the engine is that it has no knowledge of 
-data types. This is deliberate, to ensure the greatest flexibility. The RSS
-only cares about the "sortability" and "persistability" of data. It doesn't
-really care about the internal structure of the data.
-
-From a user perspective, the RSS is fairly low level. It requires a fair
-amount of work to use the low level API. For instance, the developer has
-to worry about how to implement various types, and how to integrate the
-types into SimpleDBM. This may be exactly what is needed for someone who
-wishes to use very specialized data types, but for the majority of users,
-this is too much complexity.
-
-The SimpleDBM-TypeSystem module adds a type system module that can
-be used with SimpleDBM. It is currently at experimental stage, and is 
-evolving. 
-
-TypeSystem Classes
-==================
-The overall design of the TypeSystem API is shown in a simplified form in
-the class diagram below:
-
-.. image:: models/TypeSystem.png
-   :scale: 60
-
-The main classes and their purposes are described below:
-
-* Row - represents a table or index row. A row consists of a number of
-  column (Field) objects which are accessed by position.
-  
-* RowFactory - implements the Dictionary Cache where row types can be
-  registered, and later on retrieved by container ID. The RowFactory 
-  is also responsible for instantiating Rows for containers.
-  
-* TypeFactory - is the main interface for generating column data 
-  type descriptors (TypeDescriptor). It provides methods for creating
-  various types. 
-  
-* TypeDescriptor holds details of the type definition. At present, only
-  following four types are available: Varchar, Number, DateTime and
-  Integer.
-
-* DataValue - this is the column value. Sub-classes implement the actual
-  behavior. DataValue provides a consistent interface for comparison, 
-  assignment and reference. 
-
-How it all fits together
-========================
-
-A client starts by creating an array of TypeDescriptor objects.
-This array represents the row type for a table or an index container.::
-
-  TypeFactory typeFactory = new DefaultTypeFactory();
-  TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
-    typeFactory.getIntegerType(), typeFactory.getVarcharType(10)
-  };
-
-In the example shown above, a row type is created with one
-integer column and one Varchar column of length 10 characters.
-
-The next step is to register the row type so that it can be
-accessed by clients. This is done as shown below::
-
-  RowFactory rowFactory = new GenericRowFactory(fieldFactory);
-  rowFactory.registerRowType(1, rowtype1);
-
-Here the row type is being registered for container ID 1.
-
-Whenever it is necessary to construct a new Row object for
-container 1, the following code can be invoked::
-
-  Row row = rowFactory.newRow(1);
-
-By default all the column values in the Row are set to NULL.
-NULL is a special state in the Field's value.
-
-Column values can be accessed via the get() method provided 
-by the Row interface. The column's value can be changed using 
-one of the setter methods implemented by the underlying Field 
-object. Example::
-
-  DataValue firstColumn = row.getColumnValue(0);
-  DataValue secondColumn = row.getColumnValue(1);
-
-  firstColumn.setInt(5); // set column value 
-  secondColumn.setString("Hello world!");
-  
-Note that column positions start at 0. 
-
-About Data Values
-==================
-A column value can be in one of four states:
-
-* Positive Infinity - this is a logical value that is greater than
-  any other value of the column. 
-  
-* Negative Infinity - the converse of Positive Infinity, this
-  represents the lowest possible value.
-  
-* Null - this represents the Null value.
-
-* Value - this signifies that there is a real value in the
-  column which is not Null and not one of the Infinity
-  values.
-
-By definition, columns are sortable. That makes Rows
-sortable as well.
-
-Integration with SimpleDBM RSS Module
-=====================================
-The TypeSystem integrates with SimpleDBM RSS in following ways:
-
-* RowFactory is a sub-class of IndexKeyFactory. Therefore RowFactory can
-  be used wherever IndexKeyFactory is required.
-  
-* Row is a sub-class of IndexKey and Storable. Therefore, Row
-  objects can be used as Tuple values as well as Index key 
-  values.
-
-* GenericRowFactory is an implementation of RowFactory that can
-  be registered with SimpleDBM as a factory for index keys and
-  table rows. 
-
 ------------
 Transactions
 ------------
@@ -459,14 +329,14 @@ Following are the main API calls for managing transactions.
 Creating new Transactions
 =========================
 
-To start a new Transaction, invoke the ``Server.begin()`` method as
+To start a new Transaction, invoke the ``Database.startTransaction()`` method as
 shown below. You must supply an ``IsolationMode``, try
 ``READ_COMMITTED`` to start with.::
 
- Server server = ...;
+ Database database = ...;
 
  // Start a new Transaction
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+ Transaction trx = database.startTransaction(IsolationMode.READ_COMMITTED);
 
 Isolation Modes are discussed in more detail in `Isolation Modes`_.
 
@@ -512,7 +382,7 @@ do so will lead to resource leaks, such as locks, which will not be
 released.  The correct way to work with transactions is shown below: ::
 
  // Start a new Transaction
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+ Transaction trx = database.startTransaction(IsolationMode.READ_COMMITTED);
  boolean success = false;
  try {
    // do some work and if this is completed succesfully ...
@@ -553,244 +423,113 @@ in certain IsolationModes, a rollback may fail due to locking, or the
 scan may not be able to reposition itself on exactly the same
 location.
 
-------
-Tables
-------
+------------------
+Tables and Indexes
+------------------
 
-SimpleDBM provides support for tables with variable length rows.
-The container for a table is known as ``TupleContainer``.  
+SimpleDBM provides support for tables with variable length rows. Tables
+can have associated BTree indexes. In this section we shall see how to create
+new tables and indexes and how to use them.
 
-A table row is defined by the interface Row, previously described
-in the section on TypeSystem.
+Limitations
+===========
 
+SimpleDBM supports creating tables and indexes but there are some limitations
+at present that you need to be aware of.
+
+* All indexes required for the table must be defined at the time of table
+  creation. At present you cannot add an index at a later
+  stage.
+
+* Tables and indexes cannot be dropped once created. Support for dropping
+  tables and indexes will be added in a future release of SimpleDBM.
+  
+* Table structures are limited in the type of columns you can have. At
+  present Varchar, DateTime, Number and Integer types are supported. More
+  data types will be available in a future release of SimpleDBM.
+  
+* Null columns cannot be indexed.
+
+* There is no support for referential integrity constraints or any other
+  type of constraint. Therefore you need to enforce any such requirement in
+  your application logic.
+  
+* Generally speaking, table rows can be large, but be aware that large rows
+  are split across multiple database pages.
+
+* An Index key must be limited in size to about 1K. 
+  
 
 Creating a Table and Indexes
 ============================
 
-When you create a ``TupleContainer``, you must supply a name for the
-container, a unique numeric ID which should not be in use by any other
-container, and the extent size. For efficiency, SimpleDBM allocates
-space in extents; an extent is simply a set of contiguous pages.::
+To create a table and associated indexes, you first create a table definition.
+You start by creating the table's row defintion. This consists of an array of
+``TypeDescriptor`` objects. Each element of the array represents a column definition
+for the table.
 
- /**
-  * Creates a new Tuple Container. 
-  * 
-  * @param trx Transaction to be used for creating the container
-  * @param name Name of the container
-  * @param containerId A numeric ID for the container - must 
-  *                    be unique for each container
-  * @param extentSize The number of pages that should be part 
-  *                   of each extent in the container
-  */
- public void createTupleContainer(Transaction trx, String name,
-  int containerId, int extentSize);
+You use the ``TypeFactory`` interface for creating the ``TypeDescriptor`` objects as
+shown below.::
 
-Note that the ``createTupleContainer()`` method requires a Transaction.
-Given below is an example of how a tuple container may be created.
-In this instance, we are creating a TupleContainer named "test.db", which
-will be assigned container ID 1, and will have an extent size of 20 pages.::
+  Database db = ...;
+  TypeFactory ff = db.getTypeFactory();
+  TypeDescriptor employee_rowtype[] = { 
+    ff.getIntegerType(), /* primary key */
+    ff.getVarcharType(20), /* name */
+    ff.getVarcharType(20), /* surname */
+    ff.getVarcharType(20), /* city */
+    ff.getVarcharType(45), /* email address */
+    ff.getDateTimeType(), /* date of birth */
+    ff.getNumberType(2) /* salary */
+  };
 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- boolean success = false;
- try {
-   server.createTupleContainer(trx, "test.db", 1, 20);
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();			
-   else 
-     trx.abort();
- }
+The new step is to create a ``TableDefinition`` object by calling the 
+``Database.newTableDefinition()`` method.::
 
-Note: 
-  When you create a Container it is exclusively locked. The lock
-  is released when you commit or abort the transaction. The exclusive lock
-  prevents any other transaction from manipulating the container while it is
-  being created.
+  TableDefinition tableDefinition = db.newTableDefinition("employee.dat", 1,
+    employee_rowtype);
 
-Recommendation: 
-  You should create standalone transactions for creating
-  containers, and commit the transaction as soon as the container has been
-  created.
+The ``newTableDefinition()`` method takes 3 arguments:
 
-Accessing a TupleContainer
-==========================
+* The name of the table container.
+* The ID for the table container. IDs start at 1, and must be unique.
+* The ``TypeDescriptor array`` that you created before.
 
-To manipulate a ``TupleContainer``, you must first get access to it. This
-is done by invoking the ``getTupleContainer()`` method provided by the
-SimpleDBM Server object. Note that when you access a ``TupleContainer`` in
-this way, a shared lock is placed on the container. This prevents
-other transactions from deleting the container while you are working
-with it. However, other transactions can perform row level operations
-on the same container concurrently.::
+Now you can add indexes by invoking the ``addIndex()`` method provided
+by the ``TableDefinition`` interface.::
+			
+  tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
+  tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+    false);
+  tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false, false);
+  tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false, false);
 
- Server server ...
- 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- try {
-   boolean success = false      
-   TupleContainer container = server.getTupleContainer(trx, 1);
-   // do something
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();
-   else
-     trx.abort();
- }
+Above example shows four indexes being created.
 
-Inserting tuples
-================
+The ``addIndex()`` method takes following arguments.
 
-SimpleDBM treats tuples (rows) as blobs of data, and does not care
-about the internal structure of a tuple. The only requirement is that
-a tuple must implement the ``Storable`` interface.
+* The ID of the index container. Must be unique.
+* The name of the index container.
+* An array of integers. Each element of the array must refer to a table
+  column by position. The table column positions start at zero. Therefore the
+  array { 2, 1 } refers to 3rd column, and 2nd column of the table.
+* The next argument is a boolean value to indicate whether the index is the primary
+  index. Note that the first index must be the primary index.
+* The next argument is also a boolean value to indicate whether duplicate
+  values are allowed in the index. If set, this makes the index unique, which
+  prevents duplicates. The primary index must always be unique.
 
-An insert operation is split into two steps. In the first step,
-the initial chunk of the tuple is inserted and a Location assigned to
-the tuple. At this point, you can do other things such as add entries 
-to indexes. 
+Now that you have a fully initialized ``TableDefinition`` object, you can
+proceed to create the table and indexes by invoking the ``createTable()`` 
+method provided by the Database interface.::
 
-You complete the insert as a second step. At this point, if the tuple
-was larger than the space allowed for in the first chunk, additional
-chunks get created and allocated for the tuple.
-
-The reason for the two step operation is to ensure that for large
-tuples that span multiple pages, the insert does not proceed until it
-is certain that the insert will be successful. It is assumed that once
-the indexes have been successfully updated, in particular, the primary
-key has been created, then the insert can proceed.
-
-In the example below, we insert a tuple of type ``ByteString``, which is
-a ``Storable`` wrapper for ``String`` objects.::
-
- Server server ...
- 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- try {
-   boolean success = false      
-   TupleContainer container = server.getTupleContainer(trx, 1);
-   TupleInserter inserter = 
-     container.insert(trx, new ByteString("Hello World!"));
-   Location location = inserter.getLocation();
+  db.createTable(tableDefinition);
   
-   // Create index entires here
- 
-   inserter.completeInsert();
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();
-   else
-     trx.abort();
- }
-
-Reading tuples
-==============
-
-In order to read tuples, you must open a scan. A scan is a mechanism
-for accessing tuples one by one. You can open Index Scans (described
-in next chapter) or Tuple Scans. A Tuple Scan directly scans a
-TupleContainer.  Compared to index scans, tuple scans are unordered,
-and do not support Serializable or Repeatable Read lock modes. Another
-limitation at present is that tuple scans do not save their state
-during savepoints, and therefore cannot restore their state in the event of
-a rollback to a savepoint.::
-
- Server server ...
- 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- try {
-   boolean success = false      
-   TupleContainer container = server.getTupleContainer(trx, 1);
-   TupleScan scan = container.openScan(trx, false);
-   while (scan.fetchNext()) {
-     byte[] data = scan.getCurrentTuple();
-     // Do somthing with the tuple data
-   }
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();
-   else
-     trx.abort();
- }
-
-
-Updating tuples
-===============
-
-In order to update a tuple, you must first obtain its Location using a
-scan. typically, if you intend to update the tuple, you should open the
-scan in UPDATE mode. This is done by supplying a boolean true as the
-second argument to ``openScan()`` method.
-
-Note that in the current implementation of SimpleDBM, the space
-allocated to a tuple is never reduced, even if the tuple grows smaller
-due to updates.::
-
- Server server ...
- 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- try {
-   boolean success = false      
-   TupleContainer container = server.getTupleContainer(trx, 1);
-   TupleScan scan = container.openScan(trx, true);
-   while (scan.fetchNext()) {
-     Location location = scan.getCurrentLocation();
-     byte[] data = scan.getCurrentTuple();
-     // Do somthing with the tuple data
-     // Assume updatedTuple contains update tuple data.
-     Storable updatedTuple = ... ;
-     // Update the tuple
-     container.update(trx, location, updatedTuple);
-   }
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();
-   else
-     trx.abort();
-  }
- 
-Deleting tuples
-===============
- 
-Tuple deletes are done in a similar way as tuple updates.
-Start a scan in UPDATE mode, if you intend to delete tuples
-during the scan. Here is an example: ::
- 
- Server server ...
- 
- Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
- try {
-   boolean success = false      
-   TupleContainer container = server.getTupleContainer(trx, 1);
-   TupleScan scan = container.openScan(trx, true);
-   while (scan.fetchNext()) {
-     Location location = scan.getCurrentLocation();
-     container.delete(trx, location);
-   }
-   success = true;
- }
- finally {
-   if (success)
-     trx.commit();
-   else
-     trx.abort();
- }
-
-
-Scanning keys
-=============
+Note that tables are created in their own transactions, and you have no access
+to such transactions.
 
 Isolation Modes
----------------
+===============
 
 Before describing how to scan keys within an Index, it is necessary to
 describe the various lock isolation modes supported by SimpleDBM.
@@ -831,125 +570,270 @@ Serializable
 Same as Repeatable Read, with additional locking (next key) during
 scans to prevent phantom reads.
 
-Scanning API
-------------
 
-Opening an IndexScan requires you to specify a start condition.
+Inserting rows into a table
+===========================
+
+To insert a row into a table, following steps are needed.
+
+You need a transaction context in which to perform the insert.
+Get the ``Table`` object associated with the table.::
+
+  Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+  boolean okay = false;
+  try {
+    Table table = db.getTable(trx, 1);
+    
+The next step is to create a balnk row. Note that you need to always create
+new row objects rather than reusing existing objects.::    
+    
+    Row tableRow = table.getRow();
+  
+You can assign values to the columns as shown below.::
+
+    tableRow.getColumnValue(0).setInt(1);
+    tableRow.getColumnValue(1).setString("Joe");
+    tableRow.getColumnValue(2).setString("Blogg");
+    tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
+    tableRow.getColumnValue(6).setString("500.00");
+
+Finally, insert the row and commit the transaction.::
+
+    table.addRow(trx, tableRow);
+    okay = true;
+  } finally {
+    if (okay) {
+      trx.commit();
+    } else {
+      trx.abort();
+    }
+  }
+
+Accessing table data
+====================
+
+In order to read tuples, you must open a scan. A scan is a mechanism
+for accessing tuples one by one. Scans are ordered using indexes.
+
+Opening an TableScan requires you to specify a start condition.
 If you want to start from the beginning, then you may specify null values
-as the start key/location. 
+as the starting row. 
 
-In SimpleDBM, scans do not have a stop key. Instead, a scan starts fetching
-data from the first key/location that is greater or equal to the supplied
-start key/location. You must determine whether the fetched key satisfies
+In SimpleDBM, scans do not have a stop value. Instead, a scan starts fetching
+data from the first row that is greater or equal to the supplied
+start row. You must determine whether the fetched key satisfies
 the search criteria or not. If the fetched key no longer meets the search
 criteria, you should call ``fetchCompleted()`` with a false value, indicating that
 there is no need to fetch any more keys. This then causes the scan to
 reach logical EOF.
 
-The API for index scans is shown below: ::
+The code snippet below shows a table scan that is used to count the
+number of rows in the table.:: 
 
- public interface IndexContainer {
- 	
-   /**
-    * Opens a new index scan. The Scan will fetch keys >= the 
-    * specified key and location. Before returning fetched keys, 
-    * the associated Location objects will be locked. The lock 
-    * mode depends upon the forUpdate flag. The IsolationMode
-    * of the transaction determines when lock are released. 
-    * 
-    * Caller must obtain a Shared lock on the Index Container 
-    * prior to calling this method.
-    * 
-    * @param trx Transaction that will manage locks obtained 
-    *            by the scan
-    * @param key The starting key to be searched for
-    * @param location The starting location to be searched for.
-    * @param forUpdate If this set, UPDATED mode locks will 
-    *                  be acquired, else SHARED mode locks will
-    *                  be acquired.
-    */
-   public IndexScan openScan(Transaction trx, IndexKey key, 
-     Location location, boolean forUpdate);	
- 	
- }
+  Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+  boolean okay = false;
+  try {
+    Table table = db.getTable(trx, 1);
+    assertNotNull(table);
+    Row tableRow = table.getRow();
+    TableScan scan = table.openScan(trx, 0, null, false);
+    try {
+      while (scan.fetchNext()) {
+        scan.fetchCompleted(true);
+        i++;
+      }
+    } finally {
+      scan.close();
+    }
+    okay = true;
+  } finally {
+    if (okay) {
+      trx.commit();
+    } else {
+      trx.abort();
+    }
+  }
+
+The following points are worth noting.
+
+* The ``openScan()`` method takes an index identifier as the second argument.
+  The scan is ordered by the index.
+  
+* The third argument is the starting row for the scan. If ``null`` is specified,
+  as in the example above, then the scan will start from logical negative
+  infinity, ie, from the first row (as per selected index) in the table.
+  
+* The scan must be closed in a finally block to ensure proper cleanup of resources.
+
+Updating tuples
+===============
+
+In order to update a tuple, you must first obtain its Location using a
+scan. typically, if you intend to update the tuple, you should open the
+scan in UPDATE mode. This is done by supplying a boolean true as the
+second argument to ``openScan()`` method.
+
+Note that in the current implementation of SimpleDBM, the space
+allocated to a tuple is never reduced, even if the tuple grows smaller
+due to updates.
  
+Deleting tuples
+===============
  
- public interface IndexScan {
- 	
-   /**
-    * Fetches the next available key from the Index. 
-    * Handles the situation where current key has been deleted.
-    * Note that prior to returning the key the Location 
-    * object associated with the key is locked.
-    * After fetching an index row, typically, data must 
-    * be fetched from associated tuple container. Locks 
-    * obtained by the fetch protect such access. After 
-    * tuple has been fetched, caller must invoke 
-    * fetchCompleted() to ensure that locks are released 
-    * in certain lock isolation modes. Failure to do so will 
-    * cause extra locking.
-    */
-   public boolean fetchNext();
- 	
-   /**
-    * In certain isolation modes, releases locks acquired 
-    * by fetchNext(). Must be invoked after the data from 
-    * associated tuple container has been fetched.
-    * If the argument matched is set to false, the scan 
-    * is assumed to have reached eof of file. The next
-    * call to fetchNext() will return false.
-    * 
-    * @param matched If set to true indicates that the 
-    *                key satisfies search query
-    */
-   public void fetchCompleted(boolean matched);
- 	
-   /**
-    * Returns the IndexKey on which the scan is currently 
-    * positioned.
-    */
-   public IndexKey getCurrentKey();
- 	
-   /**
-    * Returns the Location associated with the current 
-    * IndexKey.
-    */
-   public Location getCurrentLocation();
- 	
-   /**
-    * After the scan is completed, the close method 
-    * should be called to release all resources acquired 
-    * by the scan.
-    */
-   public void close();
- 	
-   /**
-    * Returns the End of File status of the scan. Once 
-    * the scan has gone past the last available key in 
-    * the Index, this will return true.  
-    */
-   public boolean isEof();
- }
+Tuple deletes are done in a similar way as tuple updates.
+Start a scan in UPDATE mode, if you intend to delete tuples
+during the scan. Here is an example.
+ 
+----------------
+The Database API
+----------------
 
+DatabaseFactory
+===============
 
-Following code snippet, taken from the btreedemo sample,
-shows how to implement index scans.::
+::
 
- Transaction trx = ...;
- IndexContainer indexContainer = ...;
- IndexScan scan = indexContainer.openScan(trx, null, 
-   null, false);
- try {
-   while (scan.fetchNext()) {
-     System.err.println("SCAN NEXT=" + scan.getCurrentKey() + 
-       "," + scan.getCurrentLocation());
-     scan.fetchCompleted(true);
-   }
- } finally {
-   if (scan != null) {
-     scan.close();
-   }
- }
+  /**
+   * The DatabaseFactory class is responsible for creating and obtaining instances of 
+   * Databases.
+   * 
+   * @author dibyendu majumdar
+   */
+  public class DatabaseFactory {
+	
+	/**
+	 * Creates a new SimpleDBM database based upon supplied properties.
+	 * For details of available properties, please refer to the SimpleDBM 
+	 * User Manual.
+	 * @param properties Properties for SimpleDBM 
+	 */
+	public static void create(Properties properties) {
+		DatabaseImpl.create(properties);
+	}
+	
+	/**
+	 * Obtains a database instance for an existing database.
+	 * @param properties Properties for SimpleDBM
+	 * @return Database Instance
+	 */
+	public static Database getDatabase(Properties properties) {
+		return new DatabaseImpl(properties);
+	}
 
-Another example of an index scan can be found in section `Deleting a key`_.
+  }
+
+Database
+========
+
+::
+
+  /**
+   * A SimpleDBM Database is a collection of Tables. The Database runs as an embedded server, and 
+   * provides an API for creating and maintaining tables.
+   * <p>
+   * A Database is created using {@link DatabaseFactory#create(java.util.Properties)}. An
+   * existing Database can be instantiated using {@link DatabaseFactory#getDatabase(java.util.Properties)}.
+   * 
+   * @author dibyendu majumdar
+   */
+  public interface Database {
+
+	/**
+	 * Constructs a new TableDefinition object. A TableDefinition object is used when
+	 * creating new tables.
+	 * 
+	 * <pre>
+	 * Database db = ...;
+	 * TypeFactory ff = db.getTypeFactory();
+	 * TypeDescriptor employee_rowtype[] = { 
+	 *   ff.getIntegerType(),
+	 *   ff.getVarcharType(20),
+	 *   ff.getDateTimeType(), 
+	 *   ff.getNumberType(2) 
+	 *   };
+	 * TableDefinition tableDefinition = 
+	 *   db.newTableDefinition("employee", 1,
+	 *      employee_rowtype); 
+	 * </pre>
+	 * 
+	 * @param name Name of the table
+	 * @param containerId ID of the container that will hold the table data
+	 * @param rowType A row type definition. 
+	 * @return A TableDefinition object.
+	 * @see Database#getTypeFactory()
+	 */
+	public abstract TableDefinition newTableDefinition(String name,
+			int containerId, TypeDescriptor[] rowType);
+
+	/**
+	 * Gets the table definition associated with the specified container ID.
+	 * 
+	 * @param containerId Id of the container
+	 * @return TableDefinition
+	 */
+	public abstract TableDefinition getTableDefinition(int containerId);
+
+	/**
+	 * Starts the database instance.
+	 */
+	public abstract void start();
+
+	/**
+	 * Shuts down the database instance.
+	 */
+	public abstract void shutdown();
+
+	/**
+	 * Gets the SimpleDBM RSS Server object that is managing this database.
+	 * @return SimpleDBM RSS Server object.
+	 */
+	public abstract Server getServer();
+
+	/**
+	 * Starts a new Transaction
+	 */
+	public abstract Transaction startTransaction(IsolationMode isolationMode);
+	
+	/**
+	 * Returns the TypeFactory instance associated with this database.
+	 * The TypeFactory object can be used to create TypeDescriptors for various types that
+	 * can become columns in a row.
+	 * <pre>
+	 * Database db = ...;
+	 * TypeFactory ff = db.getTypeFactory();
+	 * TypeDescriptor employee_rowtype[] = { 
+	 *   ff.getIntegerType(),
+	 *   ff.getVarcharType(20),
+	 *   ff.getDateTimeType(), 
+	 *   ff.getNumberType(2) 
+	 *   };
+	 * </pre>
+	 */
+	public abstract TypeFactory getTypeFactory();
+
+	/**
+	 * Returns the RowFactory instance associated with this database.
+	 * The RowFactory is used to generate rows.
+	 * @return RowFactory instance.
+	 */
+	public abstract RowFactory getRowFactory();
+
+	/**
+	 * Creates a Table and associated indexes using the information in the supplied 
+	 * TableDefinition object. Note that the table must have a primary index defined.
+	 * The table creation is performed in a standalone transaction.
+	 * @param tableDefinition The TableDefinition object that contains information about the table to be created.
+	 */
+	public abstract void createTable(TableDefinition tableDefinition);
+	
+	/**
+	 * Gets the table associated with the specified container ID.
+	 * 
+	 * @param trx Transaction context
+	 * @param containerId Id of the container
+	 * @return Table
+	 */
+	public abstract Table getTable(Transaction trx, int containerId);
+  } 
+ 
 
