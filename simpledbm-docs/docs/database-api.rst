@@ -6,7 +6,7 @@ SimpleDBM Database API
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Version: 1.0.x
+:Version: 1.0.8
 :Date: 05 July 2008
 :Copyright: Copyright by Dibyendu Majumdar, 2008
 
@@ -53,6 +53,30 @@ SimpleDBM is currently in early BETA and not suitable for Production use. Note t
 The latest builds can be downloaded from:
 
 http://code.google.com/p/simpledbm/downloads/list.
+
+-----------------
+SimpleDBM Modules
+-----------------
+
+The core of SimpleDBM is the RSS (named in honor of the
+first IBM Relational Database prototype System-R Relational Storage
+System - RSS). The RSS provides the underlying storage structures for
+transactions, locking, b-trees etc. The RSS API is however, slightly
+low level for ordinary users. It is meant to be used by people interested
+in build their own Database Engines on top. The RSS is described in 
+detail in the `SimpleDBM RSS User's Manual <http://www.simpledbm.org>`_ and 
+`SimpleDBM RSS Developers's Guide <http://www.simpledbm.org>`_.
+
+To provides users with a simplified API, two additional modules are
+available. 
+
+The first one is the SimpleDBM TypeSystem module, which adds support
+for typed data values and multi-attribute row objects. For details of this
+module, please read `SimpleDBM TypeSystem <http://www.simpledbm.org>`_.
+
+The second module, the Database API is the subject of this document.
+This module implements a high level API using the 
+TypeSystem module on top of the RSS.
 
 ---------------
 Getting Started
