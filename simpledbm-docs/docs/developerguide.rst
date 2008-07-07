@@ -1,14 +1,14 @@
 .. -*- coding: utf-8 -*-
 
-----------------------------
-SimpleDBM Developers's Guide
-----------------------------
+--------------------------------
+SimpleDBM RSS Developers's Guide
+--------------------------------
 
 :Author: Dibyendu Majumdar
-:Contact: dibyendu@mazumdar.demon.co.uk
-:Date: 30 September 2007
-:Version: 1.0.6
-:Copyright: Copyright by Dibyendu Majumdar, 2005-2007
+:Contact: d.majumdar@gmail.com
+:Date: 7 July 2008
+:Version: 1.0.8
+:Copyright: Copyright by Dibyendu Majumdar, 2005-2008
 
 .. contents::
 
@@ -1251,10 +1251,11 @@ lock, which can be used subsequently to release the lock. Example:
     // do some work
     handle.release(false);
 
-Limitations in current implementation
--------------------------------------
-The biggest limitation is the lack of a Deadlock Detector. SimpleDBM
-uses lock timeout as a workaround to this problem.
+Deadlock Detector
+-----------------
+The Lock Manager contains a simple Deadlock Detector implemented
+which is based upon algorithm described in the book Transaction Processing: 
+Concepts and Techniques, by Jim Gray and Andreas Reuter.
 
 ============
 Page Manager
