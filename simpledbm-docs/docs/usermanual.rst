@@ -1,14 +1,14 @@
 .. -*- coding: utf-8 -*-
 
-=======================
-SimpleDBM User's Manual
-=======================
+===========================
+SimpleDBM RSS User's Manual
+===========================
 
 :Author: Dibyendu Majumdar
-:Contact: dibyendu@mazumdar.demon.co.uk
-:Version: 1.0.6
-:Date: 30 September 2007
-:Copyright: Copyright by Dibyendu Majumdar, 2007
+:Contact: d.majumdar@gmail.com
+:Version: 1.0.8
+:Date: 7 July 2008
+:Copyright: Copyright by Dibyendu Majumdar, 2007-2008
 
 .. contents::
 
@@ -251,7 +251,7 @@ package is used.
 You can specify the type of logging to be used using the
 Server Property ``logging.properties.type``. If this is set to
 "log4j", SimpleDBM will use Log4J logging. Any other value causes
-SimpleDBM to use defauft JDK logging.
+SimpleDBM to use default JDK logging.
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
