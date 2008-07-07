@@ -1,8 +1,8 @@
 .. -*- coding: utf-8 -*-
 
-======================
-SimpleDBM Database API
-======================
+====================
+SimpleDBM TypeSystem
+====================
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
@@ -88,24 +88,30 @@ the class diagram below:
 
 The main classes and their purposes are described below:
 
-* Row - represents a table or index row. A row consists of a number of
+Row
+  represents a table or index row. A row consists of a number of
   column (Field) objects which are accessed by position.
   
-* DictionaryCache - implements the Dictionary Cache where row types can be
+DictionaryCache
+  implements the Dictionary Cache where row types can be
   registered, and later on retrieved by container ID.   
   
-* RowFactory - The RowFactory is responsible for instantiating Rows for 
+RowFactory
+  The RowFactory is responsible for instantiating Rows for 
   tables and indexes.
   
-* TypeFactory - is the main interface for generating column data 
+TypeFactory
+  is the main interface for generating column data 
   type descriptors (TypeDescriptor). It provides methods for creating
   various types. 
   
-* TypeDescriptor holds details of the type definition. At present, only
+TypeDescriptor 
+  holds details of the type definition. At present, only
   following four types are available: Varchar, Number, DateTime and
   Integer.
 
-* DataValue - this is the column value. Sub-classes implement the actual
+DataValue
+  this is the column value. Sub-classes implement the actual
   behavior. DataValue provides a consistent interface for comparison, 
   assignment and reference. 
 
