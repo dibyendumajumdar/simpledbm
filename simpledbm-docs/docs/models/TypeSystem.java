@@ -34,8 +34,10 @@ interface IndexKeyFactory {}
 /**
  * @navassoc - <create> - Row
  * @navassoc - <uses> - TypeFactory
+ * @navassoc - <uses> - DictionaryCache
  */
 interface RowFactory extends IndexKeyFactory {
-	void registerRowType(int Id, TypeDescriptor[] types);
 }
 
+interface DictionaryCache {
+}
