@@ -19,8 +19,10 @@ Introduction
 Overview
 ========
 
-The goal of SimpleDBM project is to build a Relational Database
+The goal of SimpleDBM_ project is to build a Relational Database
 Manager in Java.
+
+.. _SimpleDBM: http://www.simpledbm.org
 
 It is anticipated that there will be two major sub-systems in the
 dbms backend. The Data Manager subsystem (Relational Storage System
@@ -35,24 +37,24 @@ of the SQL Manager sub-system has not started yet.
 
 Technology
 ==========
-SimpleDBM is written in Java and uses features available since version 5.0
+SimpleDBM_ is written in Java and uses features available since version 5.0
 of this language.
 
 Third party libraries
 ---------------------
 To void license compatibility issues, and to reduce dependency on
-third-party libraries, SimpleDBM makes little or no use of any
+third-party libraries, SimpleDBM_ makes little or no use of any
 external libraries. A custom wrapper is used for logging, which uses
 the Java logging API by default, but can use Log4J if available.
 
 Obtaining SimpleDBM
 -------------------
-SimpleDBM source can be obtained from the SimpleDBM Google project
+SimpleDBM_ source can be obtained from the SimpleDBM_ Google project
 site http://code.google.com/p/simpledbm/. Source code is maintained in
 a Subversion repository, so you will need a subversion client on
 your PC.
 
-The SimpleDBM SVN repository is organized as follows:
+The SimpleDBM_ SVN repository is organized as follows:
 
 ::
 
@@ -67,7 +69,9 @@ The SimpleDBM SVN repository is organized as follows:
           |                           component.
           |
           +--- simpledbm-samples      This contains some sample programs
-                                      that demonstrate how to use SimpleDBM.
+          |                           that demonstrate how to use SimpleDBM.
+          |
+          +--- simpledbm-docs         Contains the documentation sources.                           
 
 Under each of the top-level folders, there is the following structure.
 
@@ -86,7 +90,7 @@ In the code sub-directory, there is a top-level directory for each project.
 SVN URLs
 --------
 
-Here are the SVN URLs for the various SimpleDBM sub-systems.
+Here are the SVN URLs for the various SimpleDBM_ sub-systems.
 
 Base URL
   http://simpledbm.googlecode.com/svn/trunk
@@ -111,7 +115,7 @@ If you are a committer, you need to use ``https`` instead of ``http``.
 Pre-requisites
 --------------
 
-SimpleDBM uses Maven_ for build management. You will need to obtain a
+SimpleDBM_ uses Maven_ for build management. You will need to obtain a
 copy of Maven 2. Install Maven and set up your PATH so that Maven can be
 executed by typing the following command.
 
@@ -121,22 +125,21 @@ executed by typing the following command.
 
 .. _Maven: http://maven.apache.org.
 
-SimpleDBM development is done using Eclipse 3.2. You can use any IDE
+SimpleDBM_ development is done using Eclipse 3.2. You can use any IDE
 of your choice, but you may need to find ways of converting the maven
-projects to the format recognised by your IDE.
+projects to the format recognized by your IDE.
 
 You will need a Subversion client in order to checkout the code for
-SimpleDBM. The following URL can be used to download the Eclipse subclipse
+SimpleDBM_. The following URL can be used to download the Eclipse subclipse
 plugin through the Eclipse Update Manager.
 
   http://subclipse.tigris.org/update_1.2.x
 
-SimpleDBM requires Java SE 5.0 or above. Java SE 6.0 is recommended.
-On the Mac, Java SE 5.0 is available for Mac OS X Tiger - but I have found
-that when running the test cases, this JVM often just hangs.
+SimpleDBM_ requires Java SE 5.0 or above. Java SE 6.0 is recommended.
+On the Mac, Java SE 5.0 is available for Mac OS X Tiger.
 
 Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
-SimpleDBM code will not compile.
+SimpleDBM_ code will not compile.
 
 Instructions for Eclipse
 ------------------------
@@ -163,7 +166,7 @@ workspace.
 
 6. Switch back to Eclipse and refresh the project. It should now
 display a small J against the project showing that it is a Java project. Eclipse
-is now setup to automatically rebuild SimpleDBM whenever you change any
+is now setup to automatically rebuild SimpleDBM_ whenever you change any
 code.
 
 Maven commands 
@@ -185,13 +188,13 @@ To create the package and install it in the local repository.
 
 Test Code Coverage
 ------------------
-I use Clover Code Coverage tool to analyse the coverage of unit test cases.
+I use Clover Code Coverage tool to analyze the coverage of unit test cases.
 
 Installing Clover plug-in in Eclipse
 -------------------------------------
 
 The Clover plugin for Eclipse can be downloaded from the Clover
-website ``http://www.cenqua.com/clover/``. After
+website ``http://www.atlassian.com/software/clover/``. After
 downloading, extract the zip file and place contents in your Eclipse
 plugins folder. You will need to separately download and install a
 license file in the top-level Clover plugin directory. Restart Eclipse
@@ -203,18 +206,18 @@ Compilation tab. Enable Fork compiler into separate JVM. Enter the Java
 5.0 JDK installation directory in the ``JDK_HOME`` field, and set the Heap
 size of the compiler JVM to 64 MB.
 
-In the Clover View, select SimpleDBM project, and click on the
-button Toggle Compiling with Clover. Now when you build SimpleDBM or run
+In the Clover View, select SimpleDBM_ project, and click on the
+button Toggle Compiling with Clover. Now when you build SimpleDBM_ or run
 any of the unit tests, Clover will automatically produce coverage data.
 
 Clover support in Maven builds
 ------------------------------
 
-The SimpleDBM Maven build script is already configured for
+The SimpleDBM_ Maven build script is already configured for
 Clover. You must save the Clover license file to
 ``src/test/clover/clover.license`` prior to executing mvn.
 
-To build SimpleDBM with Clover enabled, and to produce a coverage
+To build SimpleDBM_ with Clover enabled, and to produce a coverage
 report, run: 
 ::
 
@@ -229,11 +232,11 @@ Coding and Design Principles
 Modular design
 ==============
 
-SimpleDBM is broken down into modules. Each module implements a
+SimpleDBM_ is broken down into modules. Each module implements a
 particular sub-system, and is contained in its own package.
 
 Each module has a public API, which is specified via a set of Java
-interfaces. Classes must not be used as part of the public API,
+interfaces. Classes are generally not used as part of the public API,
 though there are a few exceptional cases.
 
 To make the modules reusable and as independent of each other as
@@ -244,7 +247,7 @@ for one module to interact with another is to go via the public
 interfaces of the respective modules. Modules are not allowed to
 depend upon implementation specifics of other modules.
 
-SimpleDBM uses constructor based dependency injection to link
+SimpleDBM_ uses constructor based dependency injection to link
 modules. It is being designed in such a way that a third-party IoC
 (Inversion of Control) container may be used to manage the
 dependencies.
@@ -252,7 +255,7 @@ dependencies.
 Documentation
 =============
 
-Most of the design documentation for SimpleDBM is incorporated as
+Most of the design documentation for SimpleDBM_ is incorporated as
 Javadoc comments within the source code, and in package and overview
 documents. The aim is to keep the documentation as close to the
 source code as possible.
@@ -264,7 +267,7 @@ Java coding standards
 =====================
 
 Heavy use is made of the new concurrency packages in Java 5.0. Enums
-are used where appropriate. SimpleDBM does not define any Generic
+are used where appropriate. SimpleDBM_ does not define any Generic
 classes itself, but makes liberal use of Java 5.0 Generic classes.
 
 Fine grained thread locking is used to maximize concurrency. Using
@@ -274,16 +277,17 @@ fine-grained locking. Deadlock is avoided by careful ordering of
 locks.
 
 Memory management is left to the Garbage Collector. Rather than
-using Object pools, SimpleDBM encourages the use of short-lived
+using Object pools, SimpleDBM_ encourages the use of short-lived
 objects, on the basis that this aids the garbage collector in
 reclaiming space more quickly. The aim is to keep permanently
 occupied memory to a low level.
 
-Checked Exceptions are used in most cases. Each module defines its
-own Exception hierarchy. Exceptions are either handled or passed up
-the stack - if they are ignored then this is documented in the code.
-Care is taken to report Exceptions properly. All error messages are
-given error codes.
+Unchecked Exceptions are used. An error message is always logged
+before an exception is thrown. This ensures that even if the
+exception is not handled by the caller, its occurrence is visible in
+the logs.
+
+All error messages are given unique error codes.
 
 Particular attention is paid to cleaning up of resources. To ensure
 that resources are cleaned up during normal as well as exceptional
@@ -310,7 +314,7 @@ available.
 Data Manager/RSS Components
 ===========================
 
-The Data Manager/Relational Storage system consists of the
+The Data Manager/Relational Storage system (RSS) consists of the
 components listed in the table given below.
 
 +------------+--------------------------------------------+
@@ -389,10 +393,10 @@ Overview
 ========
 In any object oriented persistence system, there has to be a
 mechanism for creating objects dynamically, given some form of type
-identification. SimpleDBM uses a simple Object Registry database for
+identification. SimpleDBM_ uses a simple Object Registry database for
 this purpose. Each class that may be dynamically instantiated is
 assigned a unique type code. The type code and the associated class
-name is registered in the SimpleDBM Object Registry. The typecode
+name is registered in the SimpleDBM_ Object Registry. The typecode
 can subsequently be used to request an object of the specified
 class.
 
@@ -401,18 +405,14 @@ Registering a class
 
 Before an object of a particular type can be instantiated, its class
 must be registered with the Object Registry. An example of how this
-is done is shown below:
-
-::
+is done is shown below::
 
  ObjectFactory objectFactory = new ObjectFactoryImpl();
- objectFactory.register(1, String.class.getName());
+ objectFactory.registerType(1, String.class.getName());
 
 Above registers the ``String`` class with the Object Registry. It
 assigns the type code 1 to the ``String`` class. Objects of the
-registered classes may be instantiated using their type codes:
-
-::
+registered classes may be instantiated using their type codes::
 
  String t = (String) objectFactory.getInstance(1);
 
@@ -422,14 +422,11 @@ default no-argument constructor.
 Registering Singletons
 ======================
 
-SimpleDBM's object registry also supports registration of
-singletons. Instead of the class name, simply supply an Object
-instance. Example:
-
-::
+SimpleDBM_'s object registry also supports registration of
+singletons. Example::
 
  ObjectFactory objectFactory = new ObjectFactoryImpl();
- objectFactory.register(1, new String("hello"));
+ objectFactory.registerSingleton(1, new String("hello"));
 
 Object Registry aware classes
 =============================
@@ -440,9 +437,7 @@ a class implements the ``ObjectFactoryAware`` interface, then it
 will be injected with the appropriate Object Registry object at the
 time of initialisation.
 
-Example:
-
-::
+Example::
 
  class MyObject implements ObjectFactoryAware {
    ObjectFactory objectFactory;
@@ -480,7 +475,7 @@ A Storage Container is a named entity that supports positioned
 to a file, but this is an implementation detail. The rest of the
 system does not need to know what the storage container maps to.
 
-In SimpleDBM, each table or index maps to a single storage
+In SimpleDBM_, each table or index maps to a single storage
 container. The Write Ahead Log also uses storage containers to store
 its data. Table and index containers have fixed size pages. The
 Write Ahead Log contains variable size records.
@@ -520,17 +515,17 @@ modules may obtain access to the storage container as follows:
 Storable Interface and Object serialization
 ===========================================
 
-SimpleDBM requires some way of serializing and de-serializing
+SimpleDBM_ requires some way of serializing and de-serializing
 objects from a byte stream. Java provides the java.io.Serializable
 interface and associated technology for this, however, the default
-mechanism is unsuitable for use in SimpleDBM. The problem with the
+mechanism is unsuitable for use in SimpleDBM_. The problem with the
 default method is that the language decides how to map type
 information to the stream. Since this has to be done in a generic
-manner, it cannot be optimised for space. In contrast, SimpleDBM can
+manner, it cannot be optimised for space. In contrast, SimpleDBM_ can
 use the 2-byte short integer type code used in the Object Registry
 module to efficiently store type information.
 
-SimpleDBM provides the ``org.simpledbm.rss.api.st.Storable``
+SimpleDBM_ provides the ``org.simpledbm.rss.api.st.Storable``
 interface as a substitute for ``java.io.Serializable`` interface.
 ``Storable`` interface requires the object to be able to predict
 its stored size in bytes via the ``getStoredLength()`` method. It
@@ -553,7 +548,7 @@ such as Shared locks and Update locks.
 Latch modes
 ===========
 
-SimpleDBM implements two types of latches. A ReadWrite Latch
+SimpleDBM_ implements two types of latches. A ReadWrite Latch
 supports two lock modes:
 
 Shared mode
@@ -577,7 +572,7 @@ may also be downgraded to a Shared lock.
 Implementation and Performance Notes
 ====================================
 
-The SimpleDBM Latch interface is designed to be compatible with the
+The SimpleDBM_ Latch interface is designed to be compatible with the
 Java 5.0 ReentrantReadWriteLock interface. This allows the ReadWrite
 Latch implementation to be based upon the Java primitive.
 
@@ -587,7 +582,7 @@ ReadWriteUpdate Latch.
 Obtaining a latch instance
 ==========================
 
-SimpleDBM implements a factory class for creating Latch objects. The
+SimpleDBM_ implements a factory class for creating Latch objects. The
 factory supports instantiating a ReadWrite latch, or a
 ReadWriteUpdate latch. There is also a default mode which results in
 ReadWrite latch.
@@ -675,7 +670,7 @@ records. In fact, it does not specify the format of a log record.
 SimpleDBM Implementation of the Log
 ===================================
 
-The SimpleDBM Log maintains control information separately from log
+The SimpleDBM_ Log maintains control information separately from log
 files. For safety, multiple copies of control information are stored
 (though at present, only the first control file is used when opening
 the Log).
@@ -1061,7 +1056,7 @@ between A and C, excluding A, but including and up to C.
 
 Design choices
 ==============
-The Locking subsystem specified in SimpleDBM requires that locks
+The Locking subsystem specified in SimpleDBM_ requires that locks
 should be implemented independently of the objects being locked. In
 order for locking to work, all participants must agree to agree to
 use the locking system and abide by the rules.
@@ -1079,7 +1074,7 @@ locks the system can handle. The disadvantage is that the lock
 status is maintained in persistent storage, therefore changing the
 lock status can make a page dirty. Oracle overcomes this issue in
 two ways. Firstly, it uses a multi-version system that does not
-required read locks. Thus, locks are used only for updates, and
+require read locks. Thus, locks are used only for updates, and
 since updates cause database pages to be touched anyway, using a
 lock status byte does not pose a problem. Secondly, Oracle avoids
 updating the lock status byte when locks are released, by using
@@ -1093,7 +1088,7 @@ In some systems, locking is based upon facilities provided by the
 underlying operating system. For instance, most operating systems
 support some form of file locking. Since database records are laid
 out into regions within a file system, file system locks can be
-applied on records. No major database system does this, however.
+applied on records. This is not the best way of implementing locks.
 This is because locking a region in the file would prevent all
 access to that region, which would cause other problems. Even when
 systems do use file system locks, typically, some form of logical
@@ -1104,7 +1099,7 @@ portability of the system, performance, etc.
 
 Lock Modes
 ==========
-The SimpleDBM Lock Manager supports the following Lock Modes:
+The SimpleDBM_ Lock Manager supports the following Lock Modes:
 
 INTENTION_SHARED
   Indicates the intention to read data at a lower level of 
@@ -1157,7 +1152,7 @@ The lock compatibility matrix for above is given below:
 
 Lock Conversions
 ----------------
-SimpleDBM's Lock Manager also supports Lock Conversions. The
+SimpleDBM_'s Lock Manager also supports Lock Conversions. The
 following table shows how lock conversions are handled:
 
 .. table:: Lock Conversion Table
@@ -1189,7 +1184,7 @@ Operations
 
 Obtaining an instance of Lock Manager
 -------------------------------------
-SimpleDBM provides a factory class for generating instances of the
+SimpleDBM_ provides a factory class for generating instances of the
 Lock Manager. Note that locks are meaningful only within an instance
 of the Lock Manager -- if there are two Lock Manager instances, each
 will have its own set of locks.
@@ -1239,9 +1234,7 @@ Acquiring and releasing locks
 -----------------------------
 Locks can be acquired using the ``acquire()`` method provided by
 the LockMgr interface. The acquire method returns a Handle to the
-lock, which can be used subsequently to release the lock. Example:
-
-::
+lock, which can be used subsequently to release the lock. Example::
 
     LockMgr lockmgr = new LockMgrImpl(71);
     Object owner = new Integer(1);
@@ -1254,8 +1247,10 @@ lock, which can be used subsequently to release the lock. Example:
 Deadlock Detector
 -----------------
 The Lock Manager contains a simple Deadlock Detector implemented
-which is based upon algorithm described in the book Transaction Processing: 
-Concepts and Techniques, by Jim Gray and Andreas Reuter.
+which is based upon algorithm described in [JGRAY]_. The deadlock
+detector runs in a background thread, periodically waking up to
+check for deadlocks. When a deadlock is detected, one of the transactions
+(chosen arbitrarily) is aborted.
 
 ============
 Page Manager
@@ -1264,7 +1259,7 @@ Page Manager
 Overview of Page Manager module
 ===============================
 The storage unit of a database system is a contiguous set of bytes
-known as a Page. In SimpleDBM, pages are contained with logical
+known as a Page. In SimpleDBM_, pages are contained with logical
 units called Storage Containers. The default implementation maps
 containers to Operating System files.
 
@@ -1332,25 +1327,20 @@ Sub-classes of course still need to implement their own store() and
 retrieve() methods. These methods should always invoke their super
 class counterparts before processing local content.
 
-Example:
-
-::
+Example::
 
   public class RawPage extends Page {
     int i;
     public RawPage() {
       super();
     }
-    @Override
     public void init() {
       i = 0;
     }
-    @Override
     public void store(ByteBuffer bb) {
       super.store(bb);
       bb.putInt(i);
     }
-    @Override
     public void retrieve(ByteBuffer bb) {
       super.retrieve(bb);
       i = bb.getInt();
@@ -1359,7 +1349,7 @@ Example:
 
 How various Page types are managed
 ----------------------------------
-SimpleDBM modules do not know in advance what page types are to be
+SimpleDBM_ modules do not know in advance what page types are to be
 used. Some of the modules define their own page types. However,
 despite this the Buffer Manager, and the Transaction Manager modules
 must handle pages, even read and write them to the disk as
@@ -1386,9 +1376,7 @@ necessary. This is made possible as follows:
 
 Page Factory
 ------------
-Creating a page factory is relatively simple:
-
-::
+Creating a page factory is relatively simple::
 
     StorageContainerFactory storageFactory =
         new FileStorageContainerFactory();
@@ -1406,9 +1394,7 @@ Storing and retrieving Pages
 Before pages can be stored or retrieved, the appropriate Storage
 Containers must be created/opened and registered with the Storage
 Manager. Also, the Page types must be registered with the Object
-Registry. Following sample code shows how this may be done:
-
-::
+Registry. Following sample code shows how this may be done::
 
     String name = "testfile.dat";
     // Create a new storage container called testfile.dat
@@ -1424,6 +1410,15 @@ Registry. Following sample code shows how this may be done:
     pageFactory.store(page);
     // Retrieve the page from the container
     page = (MyPage) pageFactory.retrieve(new PageId(1, 0));
+
+Checksum
+--------
+When a page is persisted, its checksum is stored in a field within
+the page. The checksum is recalculated when a page is read, and compared
+with the stored checksum. This allows SimpleDBM to detect page corruption.
+
+At present, SimpleDBM will throw an exception when corruption is
+detected.
 
 ==============
 Buffer Manager
@@ -1563,9 +1558,7 @@ Following code sample shows how page is fixed:
 
 As shown above, when a page is fixed, the Buffer Manager returns a
 BufferAccessBlock which contains a reference to the desired page.
-The Page can be accessed as follows:
-
-::
+The Page can be accessed as follows::
 
     MyPage page = (MyPage) bab.getPage();
 
@@ -1616,7 +1609,7 @@ Introduction
 ============
 The Transaction Manager is responsible for managing transactions. It
 provides interfaces for starting new transactions, and for
-committing or aborting transactions. The SimpleDBM implementation
+committing or aborting transactions. The SimpleDBM_ implementation
 also supports Savepoints. While the view seen by the user is simple,
 the Transaction Manager is a complex module and has an elaborate
 interface. This chapter will attempt to unravel the TM interface and
@@ -1626,7 +1619,7 @@ Transactions.
 
 Overiew
 =======
-SimpleDBM's transaction manager is modelled after ARIES. It makes
+SimpleDBM_'s transaction manager is modelled after [ARIES]_. It makes
 following assumptions about the rest of the system:
 
 * The system uses the Write Ahead Log protocol when making changes 
@@ -1645,8 +1638,7 @@ following assumptions about the rest of the system:
   LSN is the LSN of the oldest log record that could potentially 
   have have a change to the page. For a discussion of the Recovery 
   LSN please refer to Mohan's paper on ARIES and also to section 
-  13.4.4.1 of ``Transaction Processing: Concepts and Techniques``. 
-  The TPCT book refers to Recovery LSNs as ``forminlsn``.
+  13.4.4.1 of [JGRAY]_. [JGRAY]_ refers to Recovery LSNs as ``forminlsn``.
 
 * At the end of system restart, the Transaction Manager informs 
   the Buffer Manager the RecoveryLSN status of all dirty pages; 
@@ -1666,7 +1658,6 @@ What is ARIES?
 ==============
 ARIES is a Transaction Logging and Recovery algorithm developed at
 IBM and published by IBM researcher C. Mohan.
-
 
 For a full description of ARIES, please see ``Mohan, C.,
 Haderle, D., Lindsay, B., Pirahesh, H., Schwarz, P. ARIES: A
@@ -1780,7 +1771,7 @@ There is close coordination between the Transaction Manager and the
 Lock Manager. A Transaction needs to keep track of all locks
 acquired on its behalf so that it can release them when the
 Transaction completes. This is why the Transaction interface in
-SimpleDBM provides methods for acquiring locks. If the Lock Manager
+SimpleDBM_ provides methods for acquiring locks. If the Lock Manager
 is invoked directly by the client then the TM has no way of knowing
 which locks to release when the Transaction terminates.
 
@@ -1972,16 +1963,13 @@ Newly created pages need to be formatted, but once this is done, it
 is unnecessary to undo the formatting.
 
 Given below is an example implementation of a Page Format log
-record:
-
-::
+record::
 
   public static class FormatRawPage extends BaseLoggable
     implements Redoable, PageFormatOperation {
 
     ByteString dataPageType;
 
-    @Override
     public void init() {
     }
 
@@ -1993,20 +1981,17 @@ record:
         this.dataPageType = new ByteString(dataPageType);
     }
 
-    @Override
     public int getStoredLength() {
         return super.getStoredLength() +
             dataPageType.getStoredLength();
     }
 
-    @Override
     public void retrieve(ByteBuffer bb) {
         super.retrieve(bb);
         dataPageType = new ByteString();
         dataPageType.retrieve(bb);
     }
 
-    @Override
     public void store(ByteBuffer bb) {
         super.store(bb);
         dataPageType.store(bb);
@@ -2042,7 +2027,7 @@ a marker interface only.
 
 Usually, PageFormatOperations are redo-only.
 
-In SimpleDBM, the page format operations are handled when a
+In SimpleDBM_, the page format operations are handled when a
 container is created or expanded.
 
 MultiPageRedo
@@ -2119,9 +2104,7 @@ forward change (i.e., redo). In this case, the Transaction Manager
 asks the client to generate a Compensation record for redoing the
 undo operation. This is then applied to the affected page using the
 redo interface provided by the client. Following code shows how the
-Transaction Manager interacts with the client:
-
-::
+Transaction Manager interacts with the client::
 
     Compensation clr = module.generateCompensation(undoable);
     ....
@@ -2138,9 +2121,7 @@ it may not be the page originally affected. To handle this scenario,
 the Transaction Manager first asks the client to identify the page
 where the undo is to be applied. Once this has been done, the
 process is identical to that of Physical undos. Following code
-extract shows how the TM interacts with the client:
-
-::
+extract shows how the TM interacts with the client::
 
     BufferAccessBlock bab = module.findAndFixPageForUndo(undoable);
     ...
@@ -2161,9 +2142,7 @@ the undo operation may impact several pages, and may result in
 additional log records being generated.
 
 For such records, the Transaction Manager simply invokes the
-client's undo interface as follows:
-
-::
+client's undo interface as follows::
 
     module.undo(trx, undoable)
 
@@ -2184,7 +2163,7 @@ the use of *logical key deletes*.
 
 Where keys are physically deleted, undo of key deletes may cause
 page splits. Such undo operations may impact more than one page. The
-SimpleDBM BTree implementation is an example of this type of
+SimpleDBM_ BTree implementation is an example of this type of
 operation.
 
 Compensation records
@@ -2203,7 +2182,7 @@ operations, sometimes, they can be effectively used to represent
 redo operations as well. The system can make use of the backward
 chaining to allow certain log records to be skipped in the event of
 an undo. This feature is the basis for the Nested Top Action concept
-in ARIES. It is also exploited by the SimpleDBM BTree implementation
+in ARIES. It is also exploited by the SimpleDBM_ BTree implementation
 to reduce the amount of logging required for structure modification
 operations. For further details, please refer to the paper entitled
 -- ``Space Management issues in B-Link trees``.
@@ -2217,18 +2196,18 @@ that are encountered after the last Checkpoint. Is is therefore
 important to ensure that the effect of these log records are also
 saved in Checkpoint operations.
 
-In SimpleDBM, the only use of this operation at present is to log
+In SimpleDBM_, the only use of this operation at present is to log
 opening of containers. After a container is created, a
 NonTransactionRelatedOperation is logged to ensure that the
 container will be reopened at system restart. A Checkpoint operation
-in SimpleDBM includes a list of all open containers, hence, any past
+in SimpleDBM_ includes a list of all open containers, hence, any past
 open container log records become redundant after the Checkpoint.
 
 PostCommitActions
 -----------------
 PostCommitActions are used to defer certain actions until it is
 known for sure that the Transaction is definitely committing. In
-SimpleDBM, dropping a container is handled this way. When a request
+SimpleDBM_, dropping a container is handled this way. When a request
 is made by a client to drop a container, a PostCommitAction is
 scheduled to occur once the transaction commits.
 
@@ -2360,9 +2339,7 @@ Note that prior to deleting a container, you must acquire an
 Exclusive lock on the container ID. This will prevent other transactions
 from accessing the same container.
 
-Deleting a container is as simple an operation as extending it:
-
-::
+Deleting a container is as simple an operation as extending it::
 
  Transaction trx = trxmgr.begin();
  spacemgr.dropContainer(trx, 1);
@@ -2414,9 +2391,7 @@ of ``SpaceChecker``; this will be invoked by SpaceMgr module to
 check whether a page meets the space requirements of the client.
 
 Here is an example of a search that attempts to locate pages that
-are unallocated:
-
-::
+are unallocated::
 
  int pageNumber = spaceCursor.
       findAndFixSpaceMapPageExclusively(new SpaceChecker() {
@@ -2464,9 +2439,7 @@ responsibility to know which space map page contains the associated
 data.
 
 The SpaceCursor interface supports accessing a specific space
-map page, provided it is known which page is desired:
-
-::
+map page, provided it is known which page is desired::
  
  Transaction trx = trxmgr.begin();
  SpaceCursor spcursor = spaceMgr.getSpaceCursor(containerId);
@@ -2486,7 +2459,7 @@ Slotted Page Manager
 Introduction
 ============
 
-SimpleDBM, like most other databases, stores records in fixed size
+SimpleDBM_, like most other databases, stores records in fixed size
 pages. The Slotted Page Manager module provides an enhancement to
 the Raw Page by allowing records to be inserted, updated and deleted
 within the page. By providing a common infrastructure, client
@@ -2523,9 +2496,7 @@ outside world. The Slotted Page Manager module *registers* the
 implementation of SlottedPage to the Object Registry. This enables
 client modules to obtain new instances of SlottedPage without having
 to know how this is implemented. Following snippet of code
-illustrates this:
-
-::
+illustrates this::
 
  SlottedPageMgr spmgr = new SlottedPageMgrImpl(objectFactory);
  SlottedPage page = (SlottedPage)
@@ -2539,9 +2510,7 @@ In most cases, clients do not actually invoke the PageFactory as
 shown above. Instead it is more common to specify the page type when
 a container is first created; this ensures that the Buffer Manager
 module can instantiate the correct page type automatically. Here is
-an example of how to do this:
-
-::
+an example of how to do this::
 
  // Create the container and specify SlottedPage as the page
  // type.
@@ -2587,9 +2556,7 @@ Deleting records
 
 As mentioned before, there are two types of delete.
 The first type removes the record but does not disturb the
-Slot Numbers. Example:
-
-::
+Slot Numbers. Example::
 
  // Insert at slot 0
  page.insertAt(0, item0, true);
@@ -2601,9 +2568,7 @@ Slot Numbers. Example:
 
 The second mode is called purge, and in this mode,
 records to the right of the deleted Slot are moved
-left to fill up the hole. Example:
-
-::
+left to fill up the hole. Example::
 
  // Insert at slot 0
  page.insertAt(0, item0, true);
@@ -2803,7 +2768,7 @@ that the nodes would have to be split eventually anyway.
 
 SimpleDBM B-link Tree
 ---------------------
-SimpleDBM currently provides a B-Link Tree Index implementation, based 
+SimpleDBM_ currently provides a B-Link Tree Index implementation, based 
 upon algorithms described in [JALUTA-05]_.
 These algorithms combine the idea of short atomic actions, as in [DAVI-97],
 with top-down detection and correction of page overflow and underflow 
@@ -2931,7 +2896,7 @@ Key Differences from published algorithm
 
 Support for Non-Unique indexes
 ------------------------------
-The published algorithm assumes a unique index. SimpleDBM implementation
+The published algorithm assumes a unique index. SimpleDBM_ implementation
 supports both unique and non-unique indexes. In non-unique indexes, a 
 key/location pair is always the unit of comparison, whereas in unique 
 indexes, only key values are used. There are some differences in how 
@@ -2940,7 +2905,7 @@ locking is handled for a unique index versus a non-unique index.
 Handling of storage map
 -----------------------
 The published algorithm assumes a single page 0 that contains a bit vector
-showing the allocated/unallocated status of all pages. In SimpleDBM 
+showing the allocated/unallocated status of all pages. In SimpleDBM_ 
 implementation space allocation is managed using free space pages which 
 are arranged in a linked list and are dynamic.
 
@@ -2996,7 +2961,7 @@ The Split Operation differs from the published algorithm in following ways:
 4. Information about space map page is stored in new page.
 5. The total space occupied by keys as an indicator of key
    space. For example, when finding the median
-   key, SimpleDBM sums up key lengths to decide where to split.
+   key, SimpleDBM_ sums up key lengths to decide where to split.
 
 When implementing the Split operation it became necessary to
 enhance the transaction manager to support multi-page redo records - ie
@@ -3168,7 +3133,7 @@ greater chance that the tree will be rescanned.
 
 The published fetch algorithm does not cater for UPDATEABLE cursors. In
 general, the paper assumes that the B-Tree is standalone, and contains
-data records. In SimpleDBM, and in most DBMS implementations, a
+data records. In SimpleDBM_, and in most DBMS implementations, a
 B-Tree index is a redundant structure - leaf pages contain pointers to
 data records. The published algorithms are not always the best fit for
 this. For example:
@@ -3186,7 +3151,7 @@ this. For example:
    detect that the key does not exist and rescan. These issues are
    discussed in detail in [MOHA-02]_.
 
-SimpleDBM does not implement the optimizations described in [MOHA-02]. 
+SimpleDBM_ does not implement the optimizations described in [MOHA-02]. 
 Therefore, supposing all keys are deleted during the index scan, after the
 first page, every delete will cause the tree to be scanned from root to
 leaf. This can be avoided by using the technique described by Mohan.
@@ -3337,7 +3302,7 @@ Free Space Information
 ----------------------
 Both BTrees and Tuple Containers need free space management. By 
 free space management we mean the process of identifying pages 
-where new data can go. In the case of B-Trees, SimpleDBM uses 
+where new data can go. In the case of B-Trees, SimpleDBM_ uses 
 space map pages that use one bit per page. This is okay, because in 
 a BTree, a page is either allocated or not. 
 
@@ -3457,10 +3422,10 @@ the status of the transaction. However in this case,
 the system would have to maintain the status of all 
 transactions, even those that have committed or aborted.
 
-SimpleDBM maintains the status of only active transactions, 
+SimpleDBM_ maintains the status of only active transactions, 
 and also does not tag tuples with the IDs of transactions. 
 Hence, it is appropriate to use the Lock Manager solution 
-in SimpleDBM.
+in SimpleDBM_.
 
 .. [JALUTA-05] Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen. 
    Concurrency control and recovery for balanced B-link trees. 
@@ -3500,3 +3465,6 @@ in SimpleDBM.
    ACM Transactions on Database Systems, 17(1):94-162, March 1992. 
    Also, Readings in Database Systems, Third Edition, 1998. 
    Morgan Kaufmann Publishers.
+
+.. [JGRAY] Transaction Processing: Concepts and Techniques, by Jim Gray 
+   and Andreas Reuter

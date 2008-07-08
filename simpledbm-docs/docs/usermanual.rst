@@ -21,7 +21,8 @@ Overview
 
 SimpleDBM_ is a transactional database engine, written in Java. It has a
 very small footprint and can be embedded in the address space of an
-application. It provides a simple Java application programming interface (API), which can be learned very quickly.
+application. It provides a simple Java application programming interface (API), 
+which can be learned very quickly.
 
 .. _SimpleDBM: http://www.simpledbm.org
 
@@ -30,7 +31,7 @@ Features
 
 SimpleDBM has the following features:
 
-- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer mangement strategy is used for transactions which is optimum for performance.
+- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
 - *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
 - *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
 - *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
@@ -63,6 +64,33 @@ need to ensure is that the SimpleDBM jar file is in your classpath.
 
 SimpleDBM does not come with a type system of its own, but there is a sample
 type system implementation available, which you can enhance. 
+
+-----------------
+SimpleDBM Modules
+-----------------
+
+The core of SimpleDBM_ is the RSS (named in honor of the
+first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
+System). The RSS provides the underlying storage structures for
+transactions, locking, b-trees etc. 
+
+This document covers the RSS API.
+
+Note that the RSS API is probably too low level for ordinary users. 
+It is meant to be used by people interested
+in build their own Database Engines on top. The design of the RSS is described in 
+detail in the `SimpleDBM RSS Developers's Guide <http://www.simpledbm.org>`_.
+
+For users looking for a simpler API, two additional modules are
+available. 
+
+The first one is the SimpleDBM_ TypeSystem module, which adds support
+for typed data values and multi-attribute row objects. For details of this
+module, please read `SimpleDBM TypeSystem <http://www.simpledbm.org>`_.
+
+The second module, the Database API, implements a high level 
+Database API and uses the TypeSystem module on top of the RSS. For details of this
+module, please read `SimpleDBM Database API <http://www.simpledbm.org>`_.
 
 -------------------------------
 SimpleDBM Servers and Databases

@@ -28,27 +28,29 @@ application. It provides a simple Java application programming interface (API), 
 Features
 ========
 
-SimpleDBM has the following features:
+SimpleDBM_ has the following features:
 
-- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer mangement strategy is used for transactions which is optimum for performance.
-- *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
-- *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
-- *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
-- *Multiple Isolation Levels* - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.
-- *B-Tree Indexes* - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.
-- *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
-- *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
-- *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
+- *Transactional* - SimpleDBM_ fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
+- *Multi-threaded* - SimpleDBM_ is multi-threaded and supports concurrent reads and writes of data.
+- *Write Ahead Log* - SimpleDBM_ uses a write ahead log to ensure transaction recovery in the event of system crashes.
+- *Lock based concurrency* - SimpleDBM_ uses row-level shared, update and exclusive locks to manage concurrency. 
+- *Multiple Isolation Levels* - SimpleDBM_ supports read committed, repeatable read, and serializable isolation levels.
+- *B-Tree Indexes* - SimpleDBM_ implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM_ B-Trees continually rebalance themselves, and do not suffer from fragmentation.
+- *Tables* - SimpleDBM_ supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
+- *Latches and Locks* - SimpleDBM_ uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
+- *Deadlock detection* - SimpleDBM_ has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
 
 Non-Features
 ------------
-- SimpleDBM is not an SQL engine. 
+- SimpleDBM_ is not an SQL engine. 
 - There is no support for distributed transactions (XA) yet.
 
 Status
 ------
 
-SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
+SimpleDBM_ is currently in early BETA and not suitable for Production use. 
+Note that the SimpleDBM_ API is under flux, and is likely to change until 
+the final 1.0 release is available. 
 
 The latest builds can be downloaded from:
 
@@ -58,9 +60,9 @@ http://code.google.com/p/simpledbm/downloads/list.
 SimpleDBM Modules
 -----------------
 
-The core of SimpleDBM is the RSS (named in honor of the
-first IBM Relational Database prototype System-R Relational Storage
-System - RSS). The RSS provides the underlying storage structures for
+The core of SimpleDBM_ is the RSS (named in honor of the
+first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
+System). The RSS provides the underlying storage structures for
 transactions, locking, b-trees etc. The RSS API is however, slightly
 low level for ordinary users. It is meant to be used by people interested
 in build their own Database Engines on top. The RSS is described in 
@@ -70,46 +72,46 @@ detail in the `SimpleDBM RSS User's Manual <http://www.simpledbm.org>`_ and
 To provides users with a simplified API, two additional modules are
 available. 
 
-The first one is the SimpleDBM TypeSystem module, which adds support
+The first one is the SimpleDBM_ TypeSystem module, which adds support
 for typed data values and multi-attribute row objects. For details of this
 module, please read `SimpleDBM TypeSystem <http://www.simpledbm.org>`_.
 
-The second module, the Database API is the subject of this document.
-This module implements a high level API using the 
+The second module, the Database API, is the subject of this document.
+This module implements a high level Database API and uses the 
 TypeSystem module on top of the RSS.
 
 ---------------
 Getting Started
 ---------------
 
-A SimpleDBM server is a set of background threads and a library of API
+A SimpleDBM_ server is a set of background threads and a library of API
 calls that clients can hook into. The background threads take care of
 various tasks, such as writing out buffer pages, writing out logs,
 archiving older log files, creating checkpoints, etc.
 
-A SimpleDBM server operates on a set of data and index files, known as
-the SimpleDBM database.
+A SimpleDBM_ server operates on a set of data and index files, known as
+the SimpleDBM_ database.
 
-Only one server instance is allowed to access a SimpleDBM database at
-any point in time. SimpleDBM uses a lock file to detect multiple
+Only one server instance is allowed to access a SimpleDBM_ database at
+any point in time. SimpleDBM_ uses a lock file to detect multiple
 concurrent access to a database, and will refuse to start if it
 detects that a server is already accessing a database.
 
-Internally, SimpleDBM operates on logical entities called Storage
+Internally, SimpleDBM_ operates on logical entities called Storage
 Containers. From an implementation point of view, Storage Containers
 are mapped to files. 
 
 Tables and Indexes are stored in Containers known as TupleContainers
 and IndexContainers, respectively.
 
-The SimpleDBM database initially consists of a set of transaction log
+The SimpleDBM_ database initially consists of a set of transaction log
 files, a lock file and a special container used internally by
-SimpleDBM.
+SimpleDBM_.
 
 Creating a SimpleDBM database
 =============================
 
-A SimpleDBM database is created by a call to DatabaseFactory.create(), 
+A SimpleDBM_ database is created by a call to DatabaseFactory.create(), 
 as shown below: ::
 
   import org.simpledbm.database.api.DatabaseFactory;
@@ -241,7 +243,7 @@ Here is a code snippet that shows how this is done: ::
     db.shutdown();
   }
 
-Some points to bear in mind when starting SimpleDBM databases:
+Some points to bear in mind when starting SimpleDBM_ databases:
 
 1. Make sure that you invoke ``shutdown()`` eventually to ensure proper
    shutdown of the database.
@@ -249,26 +251,27 @@ Some points to bear in mind when starting SimpleDBM databases:
    once during the life-cycle of your application.
 3. A Database object can be used only once - after calling
    ``shutdown()``, it is an error to do any operation with the database
-   object.
+   object. Create a new database object if you want to start the
+   database again.
 
 Managing log messages
 =====================
 
-SimpleDBM has support for JDK 1.4 style logging as well as
+SimpleDBM_ has support for JDK 1.4 style logging as well as
 Log4J logging. By default, if Log4J library is available on the
-classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
+classpath, SimpleDBM_ will use it. Otherwise, JDK 1.4 util.logging
 package is used.
 
 You can specify the type of logging to be used using the
 Server Property ``logging.properties.type``. If this is set to
-"log4j", SimpleDBM will use Log4J logging. Any other value causes
-SimpleDBM to use default JDK logging.
+"log4j", SimpleDBM_ will use Log4J logging. Any other value causes
+SimpleDBM_ to use default JDK logging.
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
 is specified using the Server property ``logging.properties.file``.
 If the filename is prefixed with the string "classpath:", then
-SimpleDBM will search for the properties file in the classpath. 
+SimpleDBM_ will search for the properties file in the classpath. 
 Otherwise, the filename is searched for in the current filesystem.
 
 A sample logging properties file is shown below. Note that this
@@ -340,14 +343,14 @@ sample contains both JDK style and Log4J style configuration.::
  log4j.logger.org.simpledbm.rss.util.logging=INFO
  log4j.logger.org.simpledbm.rss.main=INFO
 
-By default, SimpleDBM looks for a logging properties file named
+By default, SimpleDBM_ looks for a logging properties file named
 "simpledbm.logging.properties".
 
 ------------
 Transactions
 ------------
 
-Most SimpleDBM operations take place in the context of a Transaction.
+Most SimpleDBM_ operations take place in the context of a Transaction.
 Following are the main API calls for managing transactions.
 
 Creating new Transactions
@@ -447,18 +450,21 @@ in certain IsolationModes, a rollback may fail due to locking, or the
 scan may not be able to reposition itself on exactly the same
 location.
 
+*Note that the cursor restoe functionality has not been tested 
+thoroughly in the current release of SimpleDBM_.*
+
 ------------------
 Tables and Indexes
 ------------------
 
-SimpleDBM provides support for tables with variable length rows. Tables
+SimpleDBM_ provides support for tables with variable length rows. Tables
 can have associated BTree indexes. In this section we shall see how to create
 new tables and indexes and how to use them.
 
 Limitations
 ===========
 
-SimpleDBM supports creating tables and indexes but there are some limitations
+SimpleDBM_ supports creating tables and indexes but there are some limitations
 at present that you need to be aware of.
 
 * All indexes required for the table must be defined at the time of table
@@ -466,11 +472,11 @@ at present that you need to be aware of.
   stage.
 
 * Tables and indexes cannot be dropped once created. Support for dropping
-  tables and indexes will be added in a future release of SimpleDBM.
+  tables and indexes will be added in a future release of SimpleDBM_.
   
 * Table structures are limited in the type of columns you can have. At
   present Varchar, DateTime, Number and Integer types are supported. More
-  data types will be available in a future release of SimpleDBM.
+  data types will be available in a future release of SimpleDBM_.
   
 * Null columns cannot be indexed.
 
@@ -481,8 +487,7 @@ at present that you need to be aware of.
 * Generally speaking, table rows can be large, but be aware that large rows
   are split across multiple database pages.
 
-* An Index key must be limited in size to about 1K. 
-  
+* An Index key must be limited in size to about 1K in storage space.
 
 Creating a Table and Indexes
 ============================
@@ -506,7 +511,7 @@ shown below.::
     ff.getNumberType(2) /* salary */
   };
 
-The new step is to create a ``TableDefinition`` object by calling the 
+The next step is to create a ``TableDefinition`` object by calling the 
 ``Database.newTableDefinition()`` method.::
 
   TableDefinition tableDefinition = db.newTableDefinition("employee.dat", 1,
@@ -537,7 +542,7 @@ The ``addIndex()`` method takes following arguments.
    column by position. The table column positions start at zero. Therefore the
    array { 2, 1 } refers to 3rd column, and 2nd column of the table.
 4. The next argument is a boolean value to indicate whether the index is the primary
-   index. Note that the first index must be the primary index.
+   index. Note that the first index must always be the primary index.
 5. The next argument is also a boolean value to indicate whether duplicate
    values are allowed in the index. If set, this makes the index unique, which
    prevents duplicates. The primary index must always be unique.
@@ -555,7 +560,7 @@ Isolation Modes
 ===============
 
 Before describing how to access table data using scans, it is necessary to
-describe the various lock isolation modes supported by SimpleDBM.
+describe the various lock isolation modes supported by SimpleDBM_.
 
 Common Behaviour
 ----------------
@@ -609,7 +614,7 @@ identified by their container Ids.::
 
     Table table = db.getTable(trx, 1);
     
-Create a balnk row. It is best to create
+Create a blank row. It is best to create
 new row objects rather than reusing existing objects.::    
     
     Row tableRow = table.getRow();
@@ -646,7 +651,7 @@ as the starting row. The values from the starting row are used
 to perform an index search, and the scan begins from the first row
 greater or equal to the values in the starting row.
 
-In SimpleDBM, scans do not have a stop value. Instead, a scan 
+In SimpleDBM_, scans do not have a stop value. Instead, a scan 
 starts fetching data from the first row that is greater or equal to the 
 supplied starting row. You must determine whether the fetched key satisfies
 the search criteria or not. If the fetched key no longer meets the search
@@ -685,7 +690,9 @@ number of rows in the table.::
 The following points are worth noting.
 
 1. The ``openScan()`` method takes an index identifier as the second argument.
-   The scan is ordered by the index. 
+   The scan is ordered by the index. Note that indexes are identified
+   by their order of creation, therefore, the first index is 0, the second is 1,
+   and so on.
 2. The third argument is the starting row for the scan. If ``null`` is specified,
    as in the example above, then the scan will start from logical negative
    infinity, ie, from the first row (as per selected index) in the table.
@@ -695,7 +702,7 @@ The following points are worth noting.
 Updating tuples
 ===============
 
-In order to update a row, you must first obtain its Location using a
+In order to update a row, you must first set the Row Location using a
 scan. Typically, if you intend to update the tuple, you should open the
 scan in UPDATE mode. This is done by supplying a boolean true as the
 fourth argument to ``openScan()`` method.
