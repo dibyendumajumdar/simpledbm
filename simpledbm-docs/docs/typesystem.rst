@@ -28,27 +28,29 @@ application. It provides a simple Java application programming interface (API), 
 Features
 ========
 
-SimpleDBM has the following features:
+SimpleDBM_ has the following features:
 
-- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer mangement strategy is used for transactions which is optimum for performance.
-- *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
-- *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
-- *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
-- *Multiple Isolation Levels* - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.
-- *B-Tree Indexes* - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.
-- *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
-- *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
-- *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
+- *Transactional* - SimpleDBM_ fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
+- *Multi-threaded* - SimpleDBM_ is multi-threaded and supports concurrent reads and writes of data.
+- *Write Ahead Log* - SimpleDBM_ uses a write ahead log to ensure transaction recovery in the event of system crashes.
+- *Lock based concurrency* - SimpleDBM_ uses row-level shared, update and exclusive locks to manage concurrency. 
+- *Multiple Isolation Levels* - SimpleDBM_ supports read committed, repeatable read, and serializable isolation levels.
+- *B-Tree Indexes* - SimpleDBM_ implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM_ B-Trees continually rebalance themselves, and do not suffer from fragmentation.
+- *Tables* - SimpleDBM_ supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
+- *Latches and Locks* - SimpleDBM_ uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
+- *Deadlock detection* - SimpleDBM_ has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
 
 Non-Features
 ------------
-- SimpleDBM is not an SQL engine. 
+- SimpleDBM_ is not an SQL engine. 
 - There is no support for distributed transactions (XA) yet.
 
 Status
 ------
 
-SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
+SimpleDBM_ is currently in early BETA and not suitable for Production use. 
+Note that the simpleDBM API is under flux, and is likely to change 
+until the final 1.0 release is available. 
 
 The latest builds can be downloaded from:
 
@@ -61,7 +63,7 @@ SimpleDBM TypeSystem
 Introduction
 ============
 
-SimpleDBM has a modular architecture. The core of the database engine is
+SimpleDBM_ has a modular architecture. The core of the database engine is
 in the RSS module. A feature of the engine is that it has no knowledge of 
 data types. This is deliberate, to ensure the greatest flexibility. The RSS
 only cares about the "sortability" and "persistability" of data. It doesn't
@@ -70,13 +72,16 @@ really care about the internal structure of the data.
 From a user perspective, the RSS is fairly low level. It requires a fair
 amount of work to use the low level API. For instance, the developer has
 to worry about how to implement various types, and how to integrate the
-types into SimpleDBM. This may be exactly what is needed for someone who
+types into SimpleDBM_. This may be exactly what is needed for someone who
 wishes to use very specialized data types, but for the majority of users,
 this is too much complexity.
 
 The SimpleDBM-TypeSystem module adds a type system module that can
-be used with SimpleDBM. It is currently at experimental stage, and is 
+be used with SimpleDBM_. It is currently at experimental stage, and is 
 evolving. 
+
+The TypeSystem is used by the Database API to provide a higher level
+interface to SimpleDBM_.
 
 TypeSystem Classes
 ==================
@@ -97,7 +102,7 @@ DictionaryCache
   registered, and later on retrieved by container ID.   
   
 RowFactory
-  The RowFactory is responsible for instantiating Rows for 
+  is responsible for instantiating Rows for 
   tables and indexes.
   
 TypeFactory
@@ -162,23 +167,27 @@ About Data Values
 ==================
 A DataValue can be in one of four states:
 
-* Positive Infinity - this is a logical value that is greater than
+Positive Infinity
+  this is a logical value that is greater than
   any other value of the column. 
   
-* Negative Infinity - the converse of Positive Infinity, this
+Negative Infinity
+  the converse of Positive Infinity, this
   represents the lowest possible value.
   
-* Null - this represents the Null value.
+Null
+  this represents the Null value.
 
-* Value - this signifies that there is a real value in the
+Value
+  this signifies that there is a real value in the
   column which is not Null and not one of the Infinity
   values.
 
-DataValues are sortable. That makes Rows sortable as well.
+DataValues are sortable. Rows are sortable as well.
 
 Integration with SimpleDBM RSS Module
 =====================================
-The TypeSystem integrates with SimpleDBM RSS in following ways:
+The TypeSystem integrates with SimpleDBM_ RSS in following ways:
 
 * RowFactory is a sub-class of IndexKeyFactory. Therefore RowFactory can
   be used wherever IndexKeyFactory is required.
@@ -188,15 +197,15 @@ The TypeSystem integrates with SimpleDBM RSS in following ways:
   values.
 
 * GenericRowFactory is an implementation of RowFactory that can
-  be registered with SimpleDBM as a factory for index keys and
+  be registered with SimpleDBM_ as a factory for index keys and
   table rows. 
 
 Samples
 =======
 The following samples show how the TypeSystem may be used:
 
-* TupleDemo - demonstrates the raw SimpleDBM RSS API and shows
+* TupleDemo - demonstrates the raw SimpleDBM_ RSS API and shows
   how the TypeSystem may be integrated with it.
   
-* BTreeDemo - demonstrates standalone use of BTrees.
+* BTreeDemo - demonstrates the standalone use of BTrees.
 
