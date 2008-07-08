@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.typesystem</groupId>
 	<artifactId>simpledbm-typesystem</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.7</version>
+	<version>1.0.8</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -21,7 +21,7 @@
 		<developer>
 			<id>dmajumdar</id>
 			<name>Dibyendu Majumdar</name>
-			<email>dibyendu at mazumdar dot demon dot co dot uk</email>
+			<email>d dot majumdar at gmail dot com</email>
 			<url></url>
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.7</version>
+			<version>1.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
