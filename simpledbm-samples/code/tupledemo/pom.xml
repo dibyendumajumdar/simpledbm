@@ -5,7 +5,8 @@
 	<groupId>org.simpledbm.samples-tupledemo</groupId>
 	<artifactId>simpledbm-samples-tupledemo</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.6</version>
+	<!--  <version>1.0.7</version> -->
+	<version>1.0.8</version>
 	<name>SimpleDBM Tuple Demonstration</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -43,12 +44,14 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>[1.0.6,)</version>
+			<!--  <version>[1.0.7,)</version> -->
+			<version>1.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.6</version>
+			<!--  <version>[1.0.7,)</version> -->
+			<version>1.0.8</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
