@@ -392,6 +392,49 @@ public class TestDatabase extends TestCase {
 			db.shutdown();
 		}	
 	}
+
+	private int deleteData() {
+		/*
+		 * Update all rows - city will be set to London.
+		 */
+		int deleteCount = 0;
+		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+			boolean okay = false;
+			try {
+				Table table = db.getTable(trx, 1);
+				assertNotNull(table);
+				/* start an update mode scan */
+				TableScan scan = table.openScan(trx, 0, null, true);
+				int i = 0;
+				try {
+					while (scan.fetchNext()) {
+						if (i % 2 == 0) {
+							scan.deleteRow();
+							deleteCount++;
+						}
+						scan.fetchCompleted(true);
+						i++;
+					}
+				} finally {
+					scan.close();
+				}
+				okay = true;
+			} finally {
+				if (okay) {
+					trx.commit();
+				} else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}	
+		return deleteCount;
+	}
+	
 	
 	public void testRecovery() {
 		createTestDatabase();
@@ -410,6 +453,8 @@ public class TestDatabase extends TestCase {
 		updateData();
 		assertEquals(100, countData());	
 		dumpData();
+		int deleteCount = deleteData();
+		assertEquals(100-deleteCount, countData());	
 	}
 	
 	void deleteRecursively(String pathname) {
