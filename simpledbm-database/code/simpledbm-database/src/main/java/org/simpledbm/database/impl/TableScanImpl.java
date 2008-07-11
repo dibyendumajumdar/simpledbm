@@ -147,7 +147,7 @@ public class TableScanImpl implements TableScan {
                     IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
                     IndexContainer secondaryIndex = getTable().getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
                     // old secondary key
-                    Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
+                    Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);
                     // New secondary key
                     Row secondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
                     if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
