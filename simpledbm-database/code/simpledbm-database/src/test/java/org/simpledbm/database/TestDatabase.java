@@ -67,10 +67,18 @@ public class TestDatabase extends TestCase {
 		return properties;
 	}
 	
-	Date getDOB(int year, int month, int day) {
+	static Date getDOB(int year, int month, int day) {
 		Calendar c = Calendar.getInstance();
 		c.clear();
 		c.set(year, month-1, day);
+		return c.getTime();
+	}
+
+	static Date getDOB(int year, int month, int day, int add) {
+		Calendar c = Calendar.getInstance();
+		c.clear();
+		c.set(year, month-1, day);
+		c.add(Calendar.DATE, add);
 		return c.getTime();
 	}
 	
@@ -456,6 +464,153 @@ public class TestDatabase extends TestCase {
 		int deleteCount = deleteData();
 		assertEquals(100-deleteCount, countData());	
 	}
+	
+	static class TesterThread implements Runnable {
+
+		Database db;
+		int startno;
+		int range;
+		int iterations;
+		
+		TesterThread(Database db, int start, int range, int iterations) {
+			this.db = db;
+			this.startno = start;
+			this.range = range;
+			this.iterations = iterations;
+		}
+		
+		void testInsert() {
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
+					tableRow.getColumnValue(6).setInt(i);
+					System.err.println("Adding " + tableRow);
+					table.addRow(trx, tableRow);
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
+
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
+					tableRow.getColumnValue(6).setInt(i);
+					
+					for (int j = 0; j < table.getDefinition().getNumberOfIndexes(); j++) {
+//						if (j == 2) {
+//							continue;
+//						}
+						TableScan scan = table.openScan(trx, j, tableRow, false);
+						try {
+							if (scan.fetchNext()) {
+								Row scanRow = scan.getCurrentRow();
+								System.err.println("Search by index " + j + " found " + scanRow + ", expected " + tableRow);
+								assertEquals(tableRow, scanRow);
+							}
+							else {
+								fail();
+							}
+							scan.fetchCompleted(false);
+						} finally {
+							scan.close();
+						}
+					}
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
+		}
+		
+		void testUpdate() {
+			
+		}
+		
+		void testDelete() {
+			
+		}
+		
+		public void run() {
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {
+			}
+			System.out.println(Thread.currentThread().getName() + ": start=" + startno + ", range=" + range);
+			try {
+				for (int i = 0; i < iterations; i++) {
+					System.out.println(Thread.currentThread().getName()
+							+ ": starting iteration " + i);
+					testInsert();
+					testUpdate();
+					testDelete();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void testStress() throws Exception {
+
+		int numThreads = 1;
+		int range = 10000;
+		int iterations = 1;
+		
+		createTestDatabase();
+		final Database db = DatabaseFactory.getDatabase(getServerProperties());
+		db.start();
+		try {
+			Thread threads[] = new Thread[numThreads];
+			for (int i = 0; i < numThreads; i++) {
+				threads[i] = new Thread(new TesterThread(db, i * range,
+						range, iterations));
+			}
+			for (int i = 0; i < numThreads; i++) {
+				threads[i].start();
+			}
+			for (int i = 0; i < numThreads; i++) {
+				try {
+					threads[i].join(60 * 1000);
+				} catch (InterruptedException e) {
+				}
+			}
+			for (int i = 0; i < numThreads; i++) {
+				if (threads[i].isAlive()) {
+					throw new Exception();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+	
 	
 	void deleteRecursively(String pathname) {
 		File file = new File(pathname);
