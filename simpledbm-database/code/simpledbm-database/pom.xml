@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.8</version>
+			<version>1.0.8a</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
