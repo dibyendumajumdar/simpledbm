@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.typesystem</groupId>
 	<artifactId>simpledbm-typesystem</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.8</version>
+	<version>1.0.8a</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
