@@ -480,6 +480,7 @@ public class TestDatabase extends TestCase {
 		}
 		
 		void testInsert() {
+			System.out.println(Thread.currentThread().getName() + " Starting inserts");
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				Transaction trx = db
@@ -493,7 +494,7 @@ public class TestDatabase extends TestCase {
 					tableRow.getColumnValue(2).setString("Blogg" + i);
 					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
 					tableRow.getColumnValue(6).setInt(i);
-					System.err.println("Adding " + tableRow);
+//					System.err.println("Adding " + tableRow);
 					table.addRow(trx, tableRow);
 					okay = true;
 				} finally {
@@ -520,14 +521,11 @@ public class TestDatabase extends TestCase {
 					tableRow.getColumnValue(6).setInt(i);
 					
 					for (int j = 0; j < table.getDefinition().getNumberOfIndexes(); j++) {
-//						if (j == 2) {
-//							continue;
-//						}
 						TableScan scan = table.openScan(trx, j, tableRow, false);
 						try {
 							if (scan.fetchNext()) {
 								Row scanRow = scan.getCurrentRow();
-								System.err.println("Search by index " + j + " found " + scanRow + ", expected " + tableRow);
+//								System.err.println("Search by index " + j + " found " + scanRow + ", expected " + tableRow);
 								assertEquals(tableRow, scanRow);
 							}
 							else {
@@ -550,11 +548,179 @@ public class TestDatabase extends TestCase {
 		}
 		
 		void testUpdate() {
-			
+			System.out.println(Thread.currentThread().getName() + " Starting updates");
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
+					tableRow.getColumnValue(6).setInt(i);
+
+					TableScan scan = table.openScan(trx, 0, tableRow, true);
+					try {
+						if (scan.fetchNext()) {
+							Row tr = scan.getCurrentRow();
+							tr.getColumnValue(3).setString("London");
+							tr.getColumnValue(4).setString(
+									tr.getColumnValue(1).getString() + "."
+											+ tr.getColumnValue(2).getString()
+											+ "@gmail.com");
+							tr.getColumnValue(6).setInt(
+									-i);
+							scan.updateCurrentRow(tr);
+						} else {
+							fail();
+						}
+						scan.fetchCompleted(false);
+					} finally {
+						scan.close();
+					}
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
+
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(3).setString("London");
+					tableRow.getColumnValue(4).setString(
+							tableRow.getColumnValue(1).getString() + "."
+									+ tableRow.getColumnValue(2).getString()
+									+ "@gmail.com");
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
+					tableRow.getColumnValue(6).setInt(-i);
+
+					for (int j = 0; j < table.getDefinition()
+							.getNumberOfIndexes(); j++) {
+						TableScan scan = table
+								.openScan(trx, j, tableRow, false);
+						try {
+							if (scan.fetchNext()) {
+								Row scanRow = scan.getCurrentRow();
+								// System.err.println("Search by index " + j +
+								// " found " + scanRow + ", expected " +
+								// tableRow);
+								assertEquals(tableRow, scanRow);
+							} else {
+								fail();
+							}
+							scan.fetchCompleted(false);
+						} finally {
+							scan.close();
+						}
+					}
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
 		}
 		
 		void testDelete() {
-			
+			System.out.println(Thread.currentThread().getName() + " Starting deletes");
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					System.out.println("Deleting row " + i);
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+
+					TableScan scan = table.openScan(trx, 0, tableRow, true);
+					try {
+						if (scan.fetchNext()) {
+							scan.deleteRow();
+						} else {
+							fail();
+						}
+						scan.fetchCompleted(false);
+					} finally {
+						scan.close();
+					}
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
+
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				Transaction trx = db
+						.startTransaction(IsolationMode.READ_COMMITTED);
+				try {
+					Table table = db.getTable(trx, 1);
+					assertNotNull(table);
+					Row tableRow = table.getRow();
+					tableRow.getColumnValue(0).setInt(i);
+					tableRow.getColumnValue(1).setString("Joe" + i);
+					tableRow.getColumnValue(2).setString("Blogg" + i);
+					tableRow.getColumnValue(3).setString("London");
+					tableRow.getColumnValue(4).setString(
+							tableRow.getColumnValue(1).getString() + "."
+									+ tableRow.getColumnValue(2).getString()
+									+ "@gmail.com");
+					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
+					tableRow.getColumnValue(6).setInt(-i);
+
+					for (int j = 0; j < table.getDefinition()
+							.getNumberOfIndexes(); j++) {
+						TableScan scan = table
+								.openScan(trx, j, tableRow, false);
+						try {
+							if (scan.fetchNext()) {
+								Row scanRow = scan.getCurrentRow();
+								// System.err.println("Search by index " + j +
+								// " found " + scanRow + ", expected " +
+								// tableRow);
+								assertTrue(scanRow.compareTo(tableRow) > 0);
+							} else {
+							}
+							scan.fetchCompleted(false);
+						} finally {
+							scan.close();
+						}
+					}
+					okay = true;
+				} finally {
+					if (okay) {
+						trx.commit();
+					} else {
+						trx.abort();
+					}
+				}
+			}
 		}
 		
 		public void run() {
@@ -581,7 +747,7 @@ public class TestDatabase extends TestCase {
 
 		int numThreads = 1;
 		int range = 10000;
-		int iterations = 1;
+		int iterations = 2;
 		
 		createTestDatabase();
 		final Database db = DatabaseFactory.getDatabase(getServerProperties());
@@ -597,7 +763,7 @@ public class TestDatabase extends TestCase {
 			}
 			for (int i = 0; i < numThreads; i++) {
 				try {
-					threads[i].join(60 * 1000);
+					threads[i].join(600*1000);
 				} catch (InterruptedException e) {
 				}
 			}
