@@ -45,7 +45,10 @@ public class DateTimeValue extends BaseDataValue {
 		if (comp != 0 || !isValue()) {
 			return comp;
 		}
-		return (int) (time - o.time);	
+		if (time == o.time) return 0;
+		else if (time > o.time) return 1;
+		else return -1;
+		// return (int) (time - o.time);	
 	}
 
 	@Override
