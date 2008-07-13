@@ -31,6 +31,7 @@ import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
+import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.TypeFactory;
@@ -61,12 +62,31 @@ public class TestDatabase extends TestCase {
 		properties.setProperty("storage.basePath", "testdata/DatabaseTests");
 		properties.setProperty("bufferpool.numbuffers", "50");
 		properties.setProperty("logging.properties.type", "log4j");
-		properties.setProperty("logging.propertis.file",
+		properties.setProperty("logging.properties.file",
 				"classpath:simpledbm.logging.properties");
 
 		return properties;
 	}
 	
+	static Properties getLargeServerProperties() {
+		Properties properties = new Properties();
+		properties.setProperty("log.ctl.1", "ctl.a");
+		properties.setProperty("log.ctl.2", "ctl.b");
+		properties.setProperty("log.groups.1.path", ".");
+		properties.setProperty("log.archive.path", ".");
+		properties.setProperty("log.group.files", "3");
+		properties.setProperty("log.file.size", "5242880");
+		properties.setProperty("log.buffer.size", "5242880");
+		properties.setProperty("log.buffer.limit", "4");
+		properties.setProperty("log.flush.interval", "30");
+		properties.setProperty("storage.basePath", "testdata/DatabaseTests");
+		properties.setProperty("bufferpool.numbuffers", "350");
+		properties.setProperty("logging.properties.type", "log4j");
+		properties.setProperty("logging.properties.file",
+				"classpath:simpledbm.logging.properties");
+		return properties;
+	}
+
 	static Date getDOB(int year, int month, int day) {
 		Calendar c = Calendar.getInstance();
 		c.clear();
@@ -84,7 +104,7 @@ public class TestDatabase extends TestCase {
 	
 	public void testBasicFunctions() throws Exception {
 
-		createTestDatabase();
+		createTestDatabase(getServerProperties());
 
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
 		db.start();
@@ -185,11 +205,11 @@ public class TestDatabase extends TestCase {
 		}
 	}
 
-	private void createTestDatabase() {
+	private void createTestDatabase(Properties properties) {
 		deleteRecursively("testdata/DatabaseTests");
-		DatabaseFactory.create(getServerProperties());
+		DatabaseFactory.create(properties);
 
-		Database db = DatabaseFactory.getDatabase(getServerProperties());
+		Database db = DatabaseFactory.getDatabase(properties);
 		db.start();
 		try {
 			TypeFactory ff = db.getTypeFactory();
@@ -445,7 +465,7 @@ public class TestDatabase extends TestCase {
 	
 	
 	public void testRecovery() {
-		createTestDatabase();
+		createTestDatabase(getServerProperties());
 		createTestData(1, 100, true);
 		assertEquals(100, countData());	
 		createTestData(101, 100, false);
@@ -455,7 +475,7 @@ public class TestDatabase extends TestCase {
 	}
 	
 	public void testUpdates() {
-		createTestDatabase();
+		createTestDatabase(getServerProperties());
 		createTestData(1, 100, true);
 		assertEquals(100, countData());	
 		updateData();
@@ -483,65 +503,79 @@ public class TestDatabase extends TestCase {
 			System.out.println(Thread.currentThread().getName() + " Starting inserts");
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
-					tableRow.getColumnValue(6).setInt(i);
-//					System.err.println("Adding " + tableRow);
-					table.addRow(trx, tableRow);
-					okay = true;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
+				while (!okay) {
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
+					try {
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+						tableRow.getColumnValue(1).setString("Joe" + i);
+						tableRow.getColumnValue(2).setString("Blogg" + i);
+						tableRow.getColumnValue(5).setDate(
+								getDOB(1930, 12, 31, i));
+						tableRow.getColumnValue(6).setInt(i);
+						// System.err.println("Adding " + tableRow);
+						table.addRow(trx, tableRow);
+						okay = true;
+					} catch (LockDeadlockException e) {
+						// deadlock
+						e.printStackTrace();
+					} finally {
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
+						}
 					}
 				}
 			}
 
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
-					tableRow.getColumnValue(6).setInt(i);
-					
-					for (int j = 0; j < table.getDefinition().getNumberOfIndexes(); j++) {
-						TableScan scan = table.openScan(trx, j, tableRow, false);
-						try {
-							if (scan.fetchNext()) {
-								Row scanRow = scan.getCurrentRow();
-//								System.err.println("Search by index " + j + " found " + scanRow + ", expected " + tableRow);
-								assertEquals(tableRow, scanRow);
+				while (!okay) {
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
+					try {
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+						tableRow.getColumnValue(1).setString("Joe" + i);
+						tableRow.getColumnValue(2).setString("Blogg" + i);
+						tableRow.getColumnValue(5).setDate(
+								getDOB(1930, 12, 31, i));
+						tableRow.getColumnValue(6).setInt(i);
+
+						for (int j = 0; j < table.getDefinition()
+								.getNumberOfIndexes(); j++) {
+							TableScan scan = table.openScan(trx, j, tableRow,
+									false);
+							try {
+								if (scan.fetchNext()) {
+									Row scanRow = scan.getCurrentRow();
+									// System.err.println("Search by index " + j
+									// + " found " + scanRow + ", expected " +
+									// tableRow);
+									assertEquals(tableRow, scanRow);
+								} else {
+									fail();
+								}
+								scan.fetchCompleted(false);
+							} finally {
+								scan.close();
 							}
-							else {
-								fail();
-							}
-							scan.fetchCompleted(false);
-						} finally {
-							scan.close();
 						}
-					}
-					okay = true;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
+						okay = true;
+					} catch (LockDeadlockException e) {
+						e.printStackTrace();
+					} finally {
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
+						}
 					}
 				}
 			}
@@ -551,77 +585,33 @@ public class TestDatabase extends TestCase {
 			System.out.println(Thread.currentThread().getName() + " Starting updates");
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
-					tableRow.getColumnValue(6).setInt(i);
-
-					TableScan scan = table.openScan(trx, 0, tableRow, true);
+				while (!okay) {
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
-						if (scan.fetchNext()) {
-							Row tr = scan.getCurrentRow();
-							tr.getColumnValue(3).setString("London");
-							tr.getColumnValue(4).setString(
-									tr.getColumnValue(1).getString() + "."
-											+ tr.getColumnValue(2).getString()
-											+ "@gmail.com");
-							tr.getColumnValue(6).setInt(
-									-i);
-							scan.updateCurrentRow(tr);
-						} else {
-							fail();
-						}
-						scan.fetchCompleted(false);
-					} finally {
-						scan.close();
-					}
-					okay = true;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
-					}
-				}
-			}
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+						tableRow.getColumnValue(1).setString("Joe" + i);
+						tableRow.getColumnValue(2).setString("Blogg" + i);
+						tableRow.getColumnValue(5).setDate(
+								getDOB(1930, 12, 31, i));
+						tableRow.getColumnValue(6).setInt(i);
 
-			for (int i = startno; i < (startno + range); i++) {
-				boolean okay = false;
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(3).setString("London");
-					tableRow.getColumnValue(4).setString(
-							tableRow.getColumnValue(1).getString() + "."
-									+ tableRow.getColumnValue(2).getString()
-									+ "@gmail.com");
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
-					tableRow.getColumnValue(6).setInt(-i);
-
-					for (int j = 0; j < table.getDefinition()
-							.getNumberOfIndexes(); j++) {
-						TableScan scan = table
-								.openScan(trx, j, tableRow, false);
+						TableScan scan = table.openScan(trx, 0, tableRow, true);
 						try {
 							if (scan.fetchNext()) {
-								Row scanRow = scan.getCurrentRow();
-								// System.err.println("Search by index " + j +
-								// " found " + scanRow + ", expected " +
-								// tableRow);
-								assertEquals(tableRow, scanRow);
+								Row tr = scan.getCurrentRow();
+								tr.getColumnValue(3).setString("London");
+								tr.getColumnValue(4).setString(
+										tr.getColumnValue(1).getString()
+												+ "."
+												+ tr.getColumnValue(2)
+														.getString()
+												+ "@gmail.com");
+								tr.getColumnValue(6).setInt(-i);
+								scan.updateCurrentRow(tr);
 							} else {
 								fail();
 							}
@@ -629,13 +619,70 @@ public class TestDatabase extends TestCase {
 						} finally {
 							scan.close();
 						}
+						okay = true;
+					} catch (LockDeadlockException e) {
+						e.printStackTrace();
+					} finally {
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
+						}
 					}
-					okay = true;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
+				}
+			}
+
+			for (int i = startno; i < (startno + range); i++) {
+				boolean okay = false;
+				while (!okay) {
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
+					try {
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+						tableRow.getColumnValue(1).setString("Joe" + i);
+						tableRow.getColumnValue(2).setString("Blogg" + i);
+						tableRow.getColumnValue(3).setString("London");
+						tableRow.getColumnValue(4).setString(
+								tableRow.getColumnValue(1).getString()
+										+ "."
+										+ tableRow.getColumnValue(2)
+												.getString() + "@gmail.com");
+						tableRow.getColumnValue(5).setDate(
+								getDOB(1930, 12, 31, i));
+						tableRow.getColumnValue(6).setInt(-i);
+
+						for (int j = 0; j < table.getDefinition()
+								.getNumberOfIndexes(); j++) {
+							TableScan scan = table.openScan(trx, j, tableRow,
+									false);
+							try {
+								if (scan.fetchNext()) {
+									Row scanRow = scan.getCurrentRow();
+									// System.err.println("Search by index " + j
+									// +
+									// " found " + scanRow + ", expected " +
+									// tableRow);
+									assertEquals(tableRow, scanRow);
+								} else {
+									fail();
+								}
+								scan.fetchCompleted(false);
+							} finally {
+								scan.close();
+							}
+						}
+						okay = true;
+					} catch (LockDeadlockException e) {
+						e.printStackTrace();
+					} finally {
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
+						}
 					}
 				}
 			}
@@ -645,38 +692,43 @@ public class TestDatabase extends TestCase {
 			System.out.println(Thread.currentThread().getName() + " Starting deletes");
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					System.out.println("Deleting row " + i);
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-
-					TableScan scan = table.openScan(trx, 0, tableRow, true);
+				while (!okay) {
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
-						if (scan.fetchNext()) {
-							scan.deleteRow();
-						} else {
-							fail();
+						System.out.println("Deleting row " + i);
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+
+						TableScan scan = table.openScan(trx, 0, tableRow, true);
+						try {
+							if (scan.fetchNext()) {
+								scan.deleteRow();
+							} else {
+								fail();
+							}
+							scan.fetchCompleted(false);
+						} finally {
+							scan.close();
 						}
-						scan.fetchCompleted(false);
+						okay = true;
+					} catch (LockDeadlockException e) {
+						e.printStackTrace();
 					} finally {
-						scan.close();
-					}
-					okay = true;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
+						}
 					}
 				}
 			}
 
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
+				while (!okay) {
 				Transaction trx = db
 						.startTransaction(IsolationMode.READ_COMMITTED);
 				try {
@@ -713,12 +765,15 @@ public class TestDatabase extends TestCase {
 						}
 					}
 					okay = true;
+				} catch (LockDeadlockException e) {
+					e.printStackTrace();
 				} finally {
 					if (okay) {
 						trx.commit();
 					} else {
 						trx.abort();
 					}
+				}
 				}
 			}
 		}
@@ -749,8 +804,8 @@ public class TestDatabase extends TestCase {
 		int range = 10000;
 		int iterations = 2;
 		
-		createTestDatabase();
-		final Database db = DatabaseFactory.getDatabase(getServerProperties());
+		createTestDatabase(getLargeServerProperties());
+		final Database db = DatabaseFactory.getDatabase(getLargeServerProperties());
 		db.start();
 		try {
 			Thread threads[] = new Thread[numThreads];
