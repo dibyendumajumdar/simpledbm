@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.im.btree;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Properties;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -67,7 +68,6 @@ import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
@@ -222,15 +222,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
-            TransactionalModuleRegistry moduleRegistry) {
+            TransactionalModuleRegistry moduleRegistry,
+            LockAdaptor lockAdaptor, Properties p) {
         this.objectFactory = objectFactory;
         this.loggableFactory = loggableFactory;
         this.spaceMgr = spaceMgr;
         this.bufmgr = bufMgr;
         this.spMgr = spMgr;
-        // FIXME lockAdaptor should be injected rather than be hard-coded
-        this.lockAdaptor = new DefaultLockAdaptor();
-
+        //this.lockAdaptor = new DefaultLockAdaptor();
+        this.lockAdaptor = lockAdaptor;
         moduleRegistry.registerModule(MODULE_ID, this);
 
         objectFactory.registerType(TYPE_SPLIT_OPERATION, SplitOperation.class

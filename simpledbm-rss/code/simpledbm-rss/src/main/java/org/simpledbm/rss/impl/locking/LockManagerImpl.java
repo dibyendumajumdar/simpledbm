@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
@@ -38,7 +39,6 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
-import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -110,9 +110,6 @@ public final class LockManagerImpl implements LockManager {
     private final Map<Object, LockWaiter> waiters = Collections
         .synchronizedMap(new HashMap<Object, LockWaiter>());
 
-    //FIXME Need to create the latch using the factory
-    private LatchFactory latchFactory = new LatchFactoryImpl();
-
     private MessageCatalog mcat = new MessageCatalog();
 
     /**
@@ -120,7 +117,7 @@ public final class LockManagerImpl implements LockManager {
      * on the lock manager. The lock manager itself acquires shared locks during normal operations,
      * thus avoiding conflict with the deadlock detector.
      */
-    private final Latch globalLock = latchFactory.newReadWriteLatch();
+    private final Latch globalLock;
 
     volatile boolean stop = false;
 
@@ -147,7 +144,8 @@ public final class LockManagerImpl implements LockManager {
      * @param hashTableSize
      *            The size of the lock hash table.
      */
-    public LockManagerImpl() {
+    public LockManagerImpl(LatchFactory latchFactory, Properties p) {
+    	globalLock = latchFactory.newReadWriteLatch();
         htsz = 0;
         count = 0;
         hashTableSize = hashPrimes[htsz];

@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.latch;
 
+import java.util.Properties;
+
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 
@@ -27,6 +29,9 @@ import org.simpledbm.rss.api.latch.LatchFactory;
  */
 public final class LatchFactoryImpl implements LatchFactory {
 
+	public LatchFactoryImpl(Properties properties) {
+	}
+	
     /* (non-Javadoc)
      * @see org.simpledbm.common.latch.LatchFactory#newReadWriteLatch()
      */

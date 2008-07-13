@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.registry;
 
+import java.util.Properties;
+
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -36,7 +38,7 @@ public class TestObjectRegistry extends BaseTestCase {
     }
 
     public void testRegistry() throws Exception {
-        ObjectRegistry factory = new ObjectRegistryImpl();
+        ObjectRegistry factory = new ObjectRegistryImpl(new Properties());
         Integer i = new Integer(55);
         factory.registerType(1, String.class.getName());
         factory.registerSingleton(2, i);

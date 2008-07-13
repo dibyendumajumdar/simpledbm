@@ -56,13 +56,14 @@ public class TestPage extends BaseTestCase {
         properties.setProperty("storage.basePath", "testdata/TestPage");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        StorageManager storageManager = new StorageManagerImpl();
-        LatchFactory latchFactory = new LatchFactoryImpl();
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        StorageManager storageManager = new StorageManagerImpl(properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(properties);
         PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
 
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
@@ -122,13 +123,14 @@ public class TestPage extends BaseTestCase {
         properties.setProperty("storage.basePath", "testdata/TestPage");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        StorageManager storageManager = new StorageManagerImpl();
-        LatchFactory latchFactory = new LatchFactoryImpl();
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        StorageManager storageManager = new StorageManagerImpl(properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(properties);
         PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
 
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);

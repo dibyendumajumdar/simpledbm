@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.registry;
 
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -49,6 +50,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
     private static final MessageCatalog mcat = new MessageCatalog();
 
+    public ObjectRegistryImpl(Properties properties) {
+    }
+    
     /*
      * (non-Javadoc)
      * 

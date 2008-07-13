@@ -49,6 +49,7 @@ import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -75,6 +76,7 @@ import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerImpl;
+import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -3298,7 +3300,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testPhantomRecords1"));
 		suite.addTest(new TestBTreeManager("testPhantomRecords2"));
 		suite.addTest(new TestBTreeManager("testIsolation"));
-		long i = System.currentTimeMillis() % 4;
+		// long i = System.currentTimeMillis() % 4;
 		// if (i == 0)
 		// suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
 		// else if (i == 1)
@@ -3357,19 +3359,20 @@ public class TestBTreeManager extends BaseTestCase {
 			properties.setProperty("storage.basePath",
 					"testdata/TestBTreeManager");
 
+			LockAdaptor lockAdaptor = new DefaultLockAdaptor(properties);
 			logFactory = new LogFactoryImpl();
 			if (create) {
 				logFactory.createLog(properties);
 			}
-			objectFactory = new ObjectRegistryImpl();
+			objectFactory = new ObjectRegistryImpl(properties);
 			storageFactory = new FileStorageContainerFactory(properties);
-			storageManager = new StorageManagerImpl();
-			latchFactory = new LatchFactoryImpl();
+			storageManager = new StorageManagerImpl(properties);
+			latchFactory = new LatchFactoryImpl(properties);
 			pageFactory = new PageFactoryImpl(objectFactory, storageManager,
-					latchFactory);
-			spmgr = new SlottedPageManagerImpl(objectFactory);
+					latchFactory, properties);
+			spmgr = new SlottedPageManagerImpl(objectFactory, properties);
 			lockmgrFactory = new LockManagerFactoryImpl();
-			lockmgr = (LockManagerImpl) lockmgrFactory.create(null);
+			lockmgr = (LockManagerImpl) lockmgrFactory.create(latchFactory, properties);
 			logmgr = (LogManagerImpl) logFactory.getLog(properties);
 			if (largeBM) {
 				logmgr.setDisableExplicitFlushRequests(true);
@@ -3379,16 +3382,16 @@ public class TestBTreeManager extends BaseTestCase {
 			if (largeBM) {
 				bufmgr.setBufferWriterSleepInterval(60000);
 			}
-			loggableFactory = new LoggableFactoryImpl(objectFactory);
-			moduleRegistry = new TransactionalModuleRegistryImpl();
+			loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
+			moduleRegistry = new TransactionalModuleRegistryImpl(properties);
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory,
 					storageManager, bufmgr, lockmgr, loggableFactory,
-					latchFactory, objectFactory, moduleRegistry);
+					latchFactory, objectFactory, moduleRegistry, properties);
 			spacemgr = new FreeSpaceManagerImpl(objectFactory, pageFactory,
 					logmgr, bufmgr, storageManager, storageFactory,
-					loggableFactory, trxmgr, moduleRegistry);
+					loggableFactory, trxmgr, moduleRegistry, properties);
 			btreeMgr = new BTreeIndexManagerImpl(objectFactory,
-					loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry);
+					loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry, lockAdaptor, properties);
 
 			objectFactory.registerType(TYPE_STRINGKEYFACTORY,
 					StringKeyFactory.class.getName());

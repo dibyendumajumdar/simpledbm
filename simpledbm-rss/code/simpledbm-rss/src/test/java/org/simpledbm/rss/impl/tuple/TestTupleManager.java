@@ -36,6 +36,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
+import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -60,6 +61,7 @@ import org.simpledbm.rss.impl.fsm.FreeSpaceManagerImpl;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
+import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -567,22 +569,24 @@ public class TestTupleManager extends BaseTestCase {
             if (create) {
                 logFactory.createLog(storageFactory, props);
             }
-            objectFactory = new ObjectRegistryImpl();
-            storageManager = new StorageManagerImpl();
-            latchFactory = new LatchFactoryImpl();
+            LockAdaptor lockAdaptor = new DefaultLockAdaptor(props);
+            objectFactory = new ObjectRegistryImpl(props);
+            storageManager = new StorageManagerImpl(props);
+            latchFactory = new LatchFactoryImpl(props);
             pageFactory = new PageFactoryImpl(
                 objectFactory,
                 storageManager,
-                latchFactory);
-            spmgr = new SlottedPageManagerImpl(objectFactory);
+                latchFactory,
+                props);
+            spmgr = new SlottedPageManagerImpl(objectFactory, props);
             lockmgrFactory = new LockManagerFactoryImpl();
-            lockmgr = lockmgrFactory.create(null);
+            lockmgr = lockmgrFactory.create(latchFactory, props);
             logmgr = logFactory.getLog(storageFactory, props);
             logmgr.start();
             bufmgr = new BufferManagerImpl(logmgr, pageFactory, 5, 11);
             bufmgr.start();
-            loggableFactory = new LoggableFactoryImpl(objectFactory);
-            moduleRegistry = new TransactionalModuleRegistryImpl();
+            loggableFactory = new LoggableFactoryImpl(objectFactory, props);
+            moduleRegistry = new TransactionalModuleRegistryImpl(props);
             trxmgr = new TransactionManagerImpl(
                 logmgr,
                 storageFactory,
@@ -592,7 +596,8 @@ public class TestTupleManager extends BaseTestCase {
                 loggableFactory,
                 latchFactory,
                 objectFactory,
-                moduleRegistry);
+                moduleRegistry,
+                props);
             spacemgr = new FreeSpaceManagerImpl(
                 objectFactory,
                 pageFactory,
@@ -602,14 +607,17 @@ public class TestTupleManager extends BaseTestCase {
                 storageFactory,
                 loggableFactory,
                 trxmgr,
-                moduleRegistry);
+                moduleRegistry,
+                props);
             btreeMgr = new BTreeIndexManagerImpl(
                 objectFactory,
                 loggableFactory,
                 spacemgr,
                 bufmgr,
                 spmgr,
-                moduleRegistry);
+                moduleRegistry,
+                lockAdaptor,
+                props);
             tuplemgr = new TupleManagerImpl(
                 objectFactory,
                 loggableFactory,
@@ -617,7 +625,9 @@ public class TestTupleManager extends BaseTestCase {
                 bufmgr,
                 spmgr,
                 moduleRegistry,
-                pageFactory);
+                pageFactory,
+                lockAdaptor,
+                props);
         }
 
         public void shutdown() {

@@ -92,7 +92,7 @@ public class TestStorageContainer extends BaseTestCase {
 				"testdata/TestStorageContainer");
 		final StorageContainerFactory factory = new FileStorageContainerFactory(
 				properties);
-		StorageManager storageManager = new StorageManagerImpl();
+		StorageManager storageManager = new StorageManagerImpl(properties);
 		String name = "testfile";
 		File file = new File("testdata/TestStorageContainer/" + name);
 		file.delete();

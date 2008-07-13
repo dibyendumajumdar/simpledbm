@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.latch;
 
+import java.util.Properties;
+
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
@@ -30,7 +32,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
  */
 public class TestLatch extends BaseTestCase {
 
-	static LatchFactory latchFactory = new LatchFactoryImpl();
+	static LatchFactory latchFactory = new LatchFactoryImpl(new Properties());
 
 	public TestLatch(String arg0) {
 		super(arg0);

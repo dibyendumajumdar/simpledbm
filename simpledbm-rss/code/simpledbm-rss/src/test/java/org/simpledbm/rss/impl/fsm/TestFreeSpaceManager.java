@@ -352,20 +352,21 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 logFactory.createLog(properties);
             }
 
-            objectFactory = new ObjectRegistryImpl();
+            objectFactory = new ObjectRegistryImpl(properties);
             storageFactory = new FileStorageContainerFactory(properties);
-            storageManager = new StorageManagerImpl();
-            latchFactory = new LatchFactoryImpl();
+            storageManager = new StorageManagerImpl(properties);
+            latchFactory = new LatchFactoryImpl(properties);
             pageFactory = new PageFactoryImpl(
                 objectFactory,
                 storageManager,
-                latchFactory);
+                latchFactory,
+                properties);
             lockmgrFactory = new LockManagerFactoryImpl();
-            lockmgr = lockmgrFactory.create(properties);
+            lockmgr = lockmgrFactory.create(latchFactory, properties);
             logmgr = logFactory.getLog(properties);
             bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
-            loggableFactory = new LoggableFactoryImpl(objectFactory);
-            moduleRegistry = new TransactionalModuleRegistryImpl();
+            loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
+            moduleRegistry = new TransactionalModuleRegistryImpl(properties);
             trxmgr = new TransactionManagerImpl(
                 logmgr,
                 storageFactory,
@@ -375,7 +376,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 loggableFactory,
                 latchFactory,
                 objectFactory,
-                moduleRegistry);
+                moduleRegistry,
+                properties);
             spacemgr = new FreeSpaceManagerImpl(
                 objectFactory,
                 pageFactory,
@@ -385,7 +387,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 storageFactory,
                 loggableFactory,
                 trxmgr,
-                moduleRegistry);
+                moduleRegistry,
+                properties);
 
             bufmgr.setStorageManager(storageManager);
 

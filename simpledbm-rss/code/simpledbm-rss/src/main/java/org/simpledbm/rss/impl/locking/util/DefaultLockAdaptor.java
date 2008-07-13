@@ -19,11 +19,17 @@
  */
 package org.simpledbm.rss.impl.locking.util;
 
+import java.util.Properties;
+
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.tx.Lockable;
 
 public class DefaultLockAdaptor implements LockAdaptor {
+	
+	public DefaultLockAdaptor(Properties p) {
+		
+	}
 
     public Lockable getLockableContainerId(int containerId) {
         return new ContainerId(containerId);

@@ -110,18 +110,19 @@ public class TestTransactionManager1 extends BaseTestCase {
         final LogFactoryImpl logFactory = new LogFactoryImpl();
         logFactory.createLog(properties);
 
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         setupObjectFactory(objectFactory);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
-        final LockManager lockmgr = lockmgrFactory.create(null);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
         final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(
@@ -131,8 +132,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             11);
         bufmgr.start();
         final LoggableFactory loggableFactory = new LoggableFactoryImpl(
-            objectFactory);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl();
+            objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
             logmgr,
             storageFactory,
@@ -142,7 +143,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             loggableFactory,
             latchFactory,
             objectFactory,
-            moduleRegistry);
+            moduleRegistry,
+            properties);
         OneBitMgr bitmgr = new OneBitMgr(
             storageFactory,
             storageManager,
@@ -171,18 +173,19 @@ public class TestTransactionManager1 extends BaseTestCase {
             "storage.basePath",
             "testdata/TestTransactionManager1");
         final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         setupObjectFactory(objectFactory);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
-        final LockManager lockmgr = lockmgrFactory.create(null);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
         final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(
@@ -192,8 +195,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             11);
         bufmgr.start();
         final LoggableFactory loggableFactory = new LoggableFactoryImpl(
-            objectFactory);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl();
+            objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
             logmgr,
             storageFactory,
@@ -203,7 +206,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             loggableFactory,
             latchFactory,
             objectFactory,
-            moduleRegistry);
+            moduleRegistry,
+            properties);
         OneBitMgr bitmgr = new OneBitMgr(
             storageFactory,
             storageManager,
@@ -257,18 +261,19 @@ public class TestTransactionManager1 extends BaseTestCase {
             "storage.basePath",
             "testdata/TestTransactionManager1");
         final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         setupObjectFactory(objectFactory);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
-        final LockManager lockmgr = lockmgrFactory.create(null);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
         final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(
@@ -278,8 +283,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             11);
         bufmgr.start();
         final LoggableFactory loggableFactory = new LoggableFactoryImpl(
-            objectFactory);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl();
+            objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
             logmgr,
             storageFactory,
@@ -289,7 +294,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             loggableFactory,
             latchFactory,
             objectFactory,
-            moduleRegistry);
+            moduleRegistry,
+            properties);
         OneBitMgr bitmgr = new OneBitMgr(
             storageFactory,
             storageManager,
@@ -400,18 +406,19 @@ public class TestTransactionManager1 extends BaseTestCase {
             "storage.basePath",
             "testdata/TestTransactionManager1");
         final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         setupObjectFactory(objectFactory);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
-        final LockManager lockmgr = lockmgrFactory.create(null);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
         final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(
@@ -421,8 +428,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             11);
         bufmgr.start();
         final LoggableFactory loggableFactory = new LoggableFactoryImpl(
-            objectFactory);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl();
+            objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
             logmgr,
             storageFactory,
@@ -432,7 +439,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             loggableFactory,
             latchFactory,
             objectFactory,
-            moduleRegistry);
+            moduleRegistry,
+            properties);
         OneBitMgr bitmgr = new OneBitMgr(
             storageFactory,
             storageManager,
@@ -482,18 +490,19 @@ public class TestTransactionManager1 extends BaseTestCase {
             "storage.basePath",
             "testdata/TestTransactionManager1");
         final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         setupObjectFactory(objectFactory);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
-        final LockManager lockmgr = lockmgrFactory.create(null);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
         final LogManager logmgr = logFactory.getLog(properties);
         logmgr.start();
         final BufferManager bufmgr = new BufferManagerImpl(
@@ -503,8 +512,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             11);
         bufmgr.start();
         final LoggableFactory loggableFactory = new LoggableFactoryImpl(
-            objectFactory);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl();
+            objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
             logmgr,
             storageFactory,
@@ -514,7 +523,8 @@ public class TestTransactionManager1 extends BaseTestCase {
             loggableFactory,
             latchFactory,
             objectFactory,
-            moduleRegistry);
+            moduleRegistry,
+            properties);
         OneBitMgr bitmgr = new OneBitMgr(
             storageFactory,
             storageManager,

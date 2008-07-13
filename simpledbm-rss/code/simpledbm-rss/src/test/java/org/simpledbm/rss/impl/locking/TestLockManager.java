@@ -19,17 +19,20 @@
  */
 package org.simpledbm.rss.impl.locking;
 
+import java.util.Properties;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 
 /**
  * Test cases for Lock Manager module.
@@ -1310,7 +1313,7 @@ public class TestLockManager extends BaseTestCase {
 
     void checkMemoryUsage() throws Exception {
 
-        LockManager lockmgr = new LockManagerImpl();
+        LockManager lockmgr = createLockManager();
         Object tran1 = new Integer(1);
 
         long startingMemoryUse = getUsedMemory();
@@ -1375,7 +1378,10 @@ public class TestLockManager extends BaseTestCase {
     }
 
     private static LockManager createLockManager() {
-        return new LockManagerImpl();
+    	Properties p = new Properties();
+    	LatchFactory latchFactory = new LatchFactoryImpl(p);
+        LockManager lockmgr = new LockManagerImpl(latchFactory, p);
+        return lockmgr;
     }
 
 }
