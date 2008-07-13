@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.pm;
 
 import java.nio.ByteBuffer;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
@@ -71,7 +72,7 @@ public final class PageFactoryImpl implements PageFactory {
     private final MessageCatalog mcat = new MessageCatalog();
 
     public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory,
-            StorageManager storageManager, LatchFactory latchFactory) {
+            StorageManager storageManager, LatchFactory latchFactory, Properties p) {
         this.pageSize = pageSize;
         this.objectFactory = objectFactory;
         this.storageManager = storageManager;
@@ -80,8 +81,8 @@ public final class PageFactoryImpl implements PageFactory {
     }
 
     public PageFactoryImpl(ObjectRegistry objectFactory,
-            StorageManager storageManager, LatchFactory latchFactory) {
-        this(DEFAULT_PAGE_SIZE, objectFactory, storageManager, latchFactory);
+            StorageManager storageManager, LatchFactory latchFactory, Properties p) {
+        this(DEFAULT_PAGE_SIZE, objectFactory, storageManager, latchFactory, p);
     }
 
     public final int getPageSize() {

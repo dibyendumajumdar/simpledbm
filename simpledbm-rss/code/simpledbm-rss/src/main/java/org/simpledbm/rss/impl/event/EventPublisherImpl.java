@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.event;
 
 import java.util.ArrayList;
+import java.util.Properties;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -42,6 +43,10 @@ public class EventPublisherImpl implements EventPublisher {
 	
 	ArrayList<EventListener> listeners = new ArrayList<EventListener>();
 
+	public EventPublisherImpl(Properties p) {
+		
+	}
+	
 	public void addEventListener(EventListener listener) {
 		writeLock.lock();
 		try {

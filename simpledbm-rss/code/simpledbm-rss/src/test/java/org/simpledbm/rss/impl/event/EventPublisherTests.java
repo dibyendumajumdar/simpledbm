@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.event;
 
+import java.util.Properties;
+
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.event.Event;
 import org.simpledbm.rss.api.event.EventListener;
@@ -35,7 +37,7 @@ public class EventPublisherTests extends BaseTestCase {
 	}
 
 	public void testBasicFunctions() {
-		EventPublisher ep = new EventPublisherImpl();
+		EventPublisher ep = new EventPublisherImpl(new Properties());
 		MyListener el = new MyListener();
 		MyListener el2 = new MyListener();
 		

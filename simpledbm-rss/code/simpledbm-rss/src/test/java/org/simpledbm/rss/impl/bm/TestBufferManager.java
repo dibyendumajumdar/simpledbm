@@ -105,13 +105,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        StorageManager storageManager = new StorageManagerImpl();
-        LatchFactory latchFactory = new LatchFactoryImpl();
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        StorageManager storageManager = new StorageManagerImpl(properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(properties);
         PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         BufferManagerImpl bufmgr = new BufferManagerImpl(
             null,
             pageFactory,
@@ -172,13 +173,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final BufferManager bufmgr = new BufferManagerImpl(
             null,
             pageFactory,
@@ -279,13 +281,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final BufferManager bufmgr = new BufferManagerImpl(
             null,
             pageFactory,
@@ -413,13 +416,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final BufferManager bufmgr = new BufferManagerImpl(
             null,
             pageFactory,
@@ -501,13 +505,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final BufferManager bufmgr = new BufferManagerImpl(
             null,
             pageFactory,
@@ -585,13 +590,14 @@ public class TestBufferManager extends BaseTestCase {
             .setProperty("storage.basePath", "testdata/TestBufferManager");
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl();
-        final StorageManager storageManager = new StorageManagerImpl();
-        final LatchFactory latchFactory = new LatchFactoryImpl();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
         final PageFactory pageFactory = new PageFactoryImpl(
             objectFactory,
             storageManager,
-            latchFactory);
+            latchFactory,
+            properties);
         final BufferManager bufmgr = new BufferManagerImpl(
             null,
             pageFactory,

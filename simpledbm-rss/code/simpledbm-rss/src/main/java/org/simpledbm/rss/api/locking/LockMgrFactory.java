@@ -21,6 +21,8 @@ package org.simpledbm.rss.api.locking;
 
 import java.util.Properties;
 
+import org.simpledbm.rss.api.latch.LatchFactory;
+
 /**
  * Defines factory interface for creating new LockMgr objects.
  * 
@@ -34,6 +36,6 @@ public interface LockMgrFactory {
      * @param props Properties that specify parameters for the Lock Manager.
      * @return A LockMgr object.
      */
-    LockManager create(Properties props);
+    LockManager create(LatchFactory latchFactory, Properties props);
 
 }

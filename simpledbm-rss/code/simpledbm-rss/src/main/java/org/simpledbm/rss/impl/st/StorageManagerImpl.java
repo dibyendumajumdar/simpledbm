@@ -21,6 +21,7 @@ package org.simpledbm.rss.impl.st;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
@@ -46,6 +47,9 @@ public final class StorageManagerImpl implements StorageManager {
 
     private static final MessageCatalog mcat = new MessageCatalog();
 
+    public StorageManagerImpl(Properties properties) {
+    }
+    
     public final void register(int id, StorageContainer container) {
         synchronized (map) {
             map.put(id, new StorageContainerHolder(id, container));

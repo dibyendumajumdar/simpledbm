@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.fsm;
 
 import java.nio.ByteBuffer;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
@@ -112,7 +113,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             StorageManager storageManager,
             StorageContainerFactory storageFactory,
             LoggableFactory loggableFactory, TransactionManager trxmgr,
-            TransactionalModuleRegistry moduleRegistry) {
+            TransactionalModuleRegistry moduleRegistry,
+            Properties p) {
         this.pageFactory = pageFactory;
         this.bufmgr = bufmgr;
         this.storageManager = storageManager;

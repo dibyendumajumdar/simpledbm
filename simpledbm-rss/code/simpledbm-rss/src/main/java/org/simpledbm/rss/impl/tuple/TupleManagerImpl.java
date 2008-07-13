@@ -26,6 +26,7 @@ package org.simpledbm.rss.impl.tuple;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
@@ -64,7 +65,6 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
@@ -183,10 +183,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     public TupleManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
-            TransactionalModuleRegistry moduleRegistry, PageFactory pageFactory) {
+            TransactionalModuleRegistry moduleRegistry, PageFactory pageFactory,
+            LockAdaptor lockAdaptor, Properties p) {
         // TODO lockAdaptor and locationFactory should be injected
         // rather than be hard-coded
-        this.lockAdaptor = new DefaultLockAdaptor();
+        // this.lockAdaptor = new DefaultLockAdaptor();
+    	this.lockAdaptor = lockAdaptor;
         this.locationFactory = new TupleIdFactory();
         this.objectFactory = objectFactory;
         this.loggableFactory = loggableFactory;

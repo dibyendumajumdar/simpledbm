@@ -20,6 +20,7 @@
 package org.simpledbm.rss.impl.tx;
 
 import java.util.HashMap;
+import java.util.Properties;
 
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionalModule;
@@ -36,6 +37,9 @@ public final class TransactionalModuleRegistryImpl implements
 
     private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
 
+    public TransactionalModuleRegistryImpl(Properties p) {
+    }
+    
     public final synchronized void registerModule(int moduleId,
             TransactionalModule module) {
         moduleMap.put((short) moduleId, module);

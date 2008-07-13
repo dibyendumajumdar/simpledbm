@@ -30,6 +30,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
+import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -54,6 +55,7 @@ import org.simpledbm.rss.impl.fsm.FreeSpaceManagerImpl;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
+import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -226,18 +228,20 @@ public class Server {
         final LogFactory logFactory = new LogFactoryImpl();
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
 
-        objectRegistry = new ObjectRegistryImpl();
+        LockAdaptor lockAdaptor = new DefaultLockAdaptor(props);
+        objectRegistry = new ObjectRegistryImpl(props);
         storageFactory = new FileStorageContainerFactory(props);
-        storageManager = new StorageManagerImpl();
-        latchFactory = new LatchFactoryImpl();
+        storageManager = new StorageManagerImpl(props);
+        latchFactory = new LatchFactoryImpl(props);
         pageFactory = new PageFactoryImpl(
             objectRegistry,
             storageManager,
-            latchFactory);
-        slottedPageManager = new SlottedPageManagerImpl(objectRegistry);
-        loggableFactory = new LoggableFactoryImpl(objectRegistry);
-        moduleRegistry = new TransactionalModuleRegistryImpl();
-        lockManager = lockMgrFactory.create(props);
+            latchFactory,
+            props);
+        slottedPageManager = new SlottedPageManagerImpl(objectRegistry, props);
+        loggableFactory = new LoggableFactoryImpl(objectRegistry, props);
+        moduleRegistry = new TransactionalModuleRegistryImpl(props);
+        lockManager = lockMgrFactory.create(latchFactory, props);
         logManager = logFactory.getLog(storageFactory, props);
         bufferManager = new BufferManagerImpl(logManager, pageFactory, props);
         transactionManager = new TransactionManagerImpl(
@@ -249,7 +253,8 @@ public class Server {
             loggableFactory,
             latchFactory,
             objectRegistry,
-            moduleRegistry);
+            moduleRegistry,
+            props);
         spaceManager = new FreeSpaceManagerImpl(
             objectRegistry,
             pageFactory,
@@ -259,14 +264,17 @@ public class Server {
             storageFactory,
             loggableFactory,
             transactionManager,
-            moduleRegistry);
+            moduleRegistry,
+            props);
         indexManager = new BTreeIndexManagerImpl(
             objectRegistry,
             loggableFactory,
             spaceManager,
             bufferManager,
             slottedPageManager,
-            moduleRegistry);
+            moduleRegistry,
+            lockAdaptor,
+            props);
         tupleManager = new TupleManagerImpl(
             objectRegistry,
             loggableFactory,
@@ -274,7 +282,9 @@ public class Server {
             bufferManager,
             slottedPageManager,
             moduleRegistry,
-            pageFactory);
+            pageFactory,
+            lockAdaptor,
+            props);
     }
 
     /**

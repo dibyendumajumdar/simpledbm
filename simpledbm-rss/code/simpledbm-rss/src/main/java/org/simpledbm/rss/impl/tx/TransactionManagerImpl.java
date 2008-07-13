@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.LockSupport;
@@ -281,7 +282,8 @@ public final class TransactionManagerImpl implements TransactionManager {
             StorageManager storageManager, BufferManager bufmgr,
             LockManager lockmgr, LoggableFactory loggableFactory,
             LatchFactory latchFactory, ObjectRegistry objectFactory,
-            TransactionalModuleRegistry moduleRegistry) {
+            TransactionalModuleRegistry moduleRegistry,
+            Properties p) {
         this.logmgr = logmgr;
         this.storageFactory = storageFactory;
         this.storageManager = storageManager;
