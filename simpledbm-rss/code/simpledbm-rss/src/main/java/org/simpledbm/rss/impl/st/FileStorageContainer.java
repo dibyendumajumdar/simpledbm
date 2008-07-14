@@ -50,6 +50,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     private final RandomAccessFile file;
 
     private final String name;
+    
+    private final String flushMode;
 
     private FileLock lock;
 
@@ -58,9 +60,10 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
      * file object.
      * @param file Existing file object.
      */
-    FileStorageContainer(String name, RandomAccessFile file) {
+    FileStorageContainer(String name, RandomAccessFile file, String flushMode) {
         this.name = name;
         this.file = file;
+        this.flushMode = flushMode;
     }
 
     /**
@@ -121,7 +124,13 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     public final synchronized void flush() throws StorageException {
         isValid();
         try {
-            file.getChannel().force(true);
+        	// FIXME hard coded values
+        	if ("force.true".equals(flushMode)) {
+        		file.getChannel().force(true);
+        	}
+        	else if ("force.false".equals(flushMode)) {
+        		file.getChannel().force(false);
+        	}
         } catch (IOException e) {
             log.error(this.getClass().getName(), "flush", mcat.getMessage(
                 "ES0005",

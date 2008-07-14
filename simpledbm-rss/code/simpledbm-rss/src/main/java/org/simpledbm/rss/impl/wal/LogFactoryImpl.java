@@ -87,17 +87,12 @@ public final class LogFactoryImpl implements LogFactory {
     public final void createLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
+        LogManagerImpl logmgr = new LogManagerImpl(storageFactory, parms.logBufferSize, parms.maxLogBuffers, parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         logmgr.setArchivePath(parms.archivePath);
         logmgr.setArchiveMode(true);
-        logmgr.setLogBufferSize(parms.logBufferSize);
         logmgr.setLogFileSize(parms.logFileSize);
         logmgr.setLogFiles(parms.groupPaths, parms.n_LogFiles);
-        logmgr.setMaxBuffers(parms.maxLogBuffers);
-        logmgr.setLogFlushInterval(parms.logFlushInterval);
-        logmgr
-            .setDisableExplicitFlushRequests(parms.disableExplicitFlushRequests);
         logmgr.create();
     }
 
@@ -118,7 +113,7 @@ public final class LogFactoryImpl implements LogFactory {
     public final LogManager getLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(storageFactory);
+        LogManagerImpl logmgr = new LogManagerImpl(storageFactory, parms.logBufferSize, parms.maxLogBuffers, parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         return logmgr;
     }
@@ -235,7 +230,7 @@ public final class LogFactoryImpl implements LogFactory {
             if (value != null) {
                 logFlushInterval = Integer.parseInt(value);
             }
-            key = "log.explicitFlushRequests";
+            key = "log.disableFlushRequests";
             value = props.getProperty(key);
             if (value != null) {
                 disableExplicitFlushRequests = Boolean.parseBoolean(value);
