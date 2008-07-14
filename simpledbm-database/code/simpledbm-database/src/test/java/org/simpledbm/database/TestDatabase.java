@@ -79,8 +79,11 @@ public class TestDatabase extends TestCase {
 		properties.setProperty("log.buffer.size", "5242880");
 		properties.setProperty("log.buffer.limit", "4");
 		properties.setProperty("log.flush.interval", "30");
+		properties.setProperty("log.disableFlushRequests", "true");
 		properties.setProperty("storage.basePath", "testdata/DatabaseTests");
 		properties.setProperty("bufferpool.numbuffers", "350");
+		properties.setProperty("bufferpool.writerSleepInterval", "60000");
+		properties.setProperty("transaction.ckpt.interval", "60000");
 		properties.setProperty("logging.properties.type", "log4j");
 		properties.setProperty("logging.properties.file",
 				"classpath:simpledbm.logging.properties");
