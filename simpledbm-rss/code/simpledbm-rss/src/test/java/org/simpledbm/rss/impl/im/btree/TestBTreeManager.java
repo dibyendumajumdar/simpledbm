@@ -3350,11 +3350,17 @@ public class TestBTreeManager extends BaseTestCase {
 				properties.setProperty("log.buffer.size", "5242880");
 				properties.setProperty("log.buffer.limit", "4");
 				properties.setProperty("log.flush.interval", "30");
+				properties.setProperty("log.disableFlushRequests", "true");
+				properties.setProperty("bufferpool.numbuffers", "350");
+				properties.setProperty("bufferpool.writerSleepInterval", "60000");
+				properties.setProperty("transaction.ckpt.interval", "60000");
+				// properties.setProperty("storage.flushMode", "noforce");
 			} else {
 				properties.setProperty("log.file.size", "16384");
 				properties.setProperty("log.buffer.size", "16384");
 				properties.setProperty("log.buffer.limit", "4");
 				properties.setProperty("log.flush.interval", "5");
+				properties.setProperty("bufferpool.numbuffers", "20");
 			}
 			properties.setProperty("storage.basePath",
 					"testdata/TestBTreeManager");
@@ -3374,14 +3380,15 @@ public class TestBTreeManager extends BaseTestCase {
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(latchFactory, properties);
 			logmgr = (LogManagerImpl) logFactory.getLog(properties);
-			if (largeBM) {
-				logmgr.setDisableExplicitFlushRequests(true);
-			}
-			bufmgr = new BufferManagerImpl(logmgr, pageFactory, largeBM ? 350
-					: 20, largeBM ? 389 : 11);
-			if (largeBM) {
-				bufmgr.setBufferWriterSleepInterval(60000);
-			}
+//			if (largeBM) {
+//				logmgr.setDisableExplicitFlushRequests(true);
+//			}
+			bufmgr = new BufferManagerImpl(logmgr, pageFactory, properties);
+//			bufmgr = new BufferManagerImpl(logmgr, pageFactory, largeBM ? 350
+//					: 20, largeBM ? 389 : 11);
+//			if (largeBM) {
+//				bufmgr.setBufferWriterSleepInterval(60000);
+//			}
 			loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
 			moduleRegistry = new TransactionalModuleRegistryImpl(properties);
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory,
@@ -3409,9 +3416,9 @@ public class TestBTreeManager extends BaseTestCase {
 						.getRawPageType(), new PageId(0, 0));
 				pageFactory.store(page);
 			}
-			if (largeBM) {
-				trxmgr.setCheckpointInterval(60000);
-			}
+//			if (largeBM) {
+//				trxmgr.setCheckpointInterval(60000);
+//			}
 			trxmgr.start();
 		}
 

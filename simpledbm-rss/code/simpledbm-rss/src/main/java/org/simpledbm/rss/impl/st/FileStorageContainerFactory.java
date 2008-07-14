@@ -83,18 +83,30 @@ public final class FileStorageContainerFactory implements
      */
     private boolean basePathVerified = false;
 
+    /**
+     * Values can be noforce, force.true or force.false.
+     */
+    private final String flushMode;
+    /**
+     * Default flush mode
+     */
+    private static final String FLUSH_MODE = "storage.flushMode";
+    private static final String DEFAULT_FLUSH_MODE = "force.true";
+    
     private static final MessageCatalog mcat = new MessageCatalog();
 
     public FileStorageContainerFactory(Properties props) {
         basePath = props.getProperty(BASE_PATH, defaultBasePath);
         createMode = props.getProperty(CREATE_MODE, defaultCreateMode);
         openMode = props.getProperty(OPEN_MODE, defaultOpenMode);
+        flushMode = props.getProperty(FLUSH_MODE, DEFAULT_FLUSH_MODE);
     }
 
     public FileStorageContainerFactory() {
         basePath = defaultBasePath;
         createMode = defaultCreateMode;
         openMode = defaultOpenMode;
+        flushMode = DEFAULT_FLUSH_MODE;
     }
 
     /**
@@ -212,7 +224,7 @@ public final class FileStorageContainerFactory implements
                 name), e);
             throw new StorageException(mcat.getMessage("ES0018", name), e);
         }
-        return new FileStorageContainer(logicalName, rafile);
+        return new FileStorageContainer(logicalName, rafile, flushMode);
     }
 
     /**
@@ -255,7 +267,7 @@ public final class FileStorageContainerFactory implements
                 name), e);
             throw new StorageException(mcat.getMessage("ES0018", name), e);
         }
-        return new FileStorageContainer(logicalName, rafile);
+        return new FileStorageContainer(logicalName, rafile, flushMode);
     }
     
     
@@ -287,7 +299,7 @@ public final class FileStorageContainerFactory implements
                 name), e);
             throw new StorageException(mcat.getMessage("ES0020", name), e);
         }
-        return new FileStorageContainer(logicalName, rafile);
+        return new FileStorageContainer(logicalName, rafile, flushMode);
     }
 
     /**

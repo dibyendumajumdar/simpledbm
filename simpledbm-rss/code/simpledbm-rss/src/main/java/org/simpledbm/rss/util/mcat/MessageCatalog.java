@@ -615,6 +615,7 @@ public class MessageCatalog {
         msgs.put(
             "EX0018",
             "SIMPLEDBM-EX0018: Error occurred while writing a Checkpoint");
+        msgs.put("IX0019", "Property {0} set to {1}");
 
     }
 

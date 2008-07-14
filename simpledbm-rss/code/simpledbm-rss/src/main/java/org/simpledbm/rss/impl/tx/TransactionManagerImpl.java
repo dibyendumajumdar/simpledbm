@@ -214,6 +214,7 @@ public final class TransactionManagerImpl implements TransactionManager {
      * The default checkpoint interval in milliseconds.
      */
     static final int DEFAULT_CHECKPOINT_INTERVAL = 15000;
+    static final String PROPERTY_CHECKPOINT_INTERVAL = "transaction.ckpt.interval";
 
     /**
      * The time interval between each checkpoint.
@@ -271,12 +272,27 @@ public final class TransactionManagerImpl implements TransactionManager {
      * 60 seconds. 
      */
     static final int DEFAULT_LOCK_TIMEOUT = 60;
-
+    static final String PROPERTY_LOCK_TIMEOUT = "transaction.lock.timeout";
+    
     /**
      * The lock timeout value can be configured to a different value.
      */
     int lockWaitTimeout = DEFAULT_LOCK_TIMEOUT;
 
+    private int getNumericProperty(Properties props, String name,
+            int defaultValue) {
+        String value = props.getProperty(name);
+        if (value != null) {
+            try {
+                int returnValue = Integer.parseInt(value);
+                return returnValue;
+            } catch (NumberFormatException e) {
+                // Ignore and return default value
+            }
+        }
+        return defaultValue;
+    }
+    
     public TransactionManagerImpl(LogManager logmgr,
             StorageContainerFactory storageFactory,
             StorageManager storageManager, BufferManager bufmgr,
@@ -284,6 +300,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             LatchFactory latchFactory, ObjectRegistry objectFactory,
             TransactionalModuleRegistry moduleRegistry,
             Properties p) {
+    	
         this.logmgr = logmgr;
         this.storageFactory = storageFactory;
         this.storageManager = storageManager;
@@ -312,6 +329,11 @@ public final class TransactionManagerImpl implements TransactionManager {
             TYPE_DUMMYCLR,
             TransactionManagerImpl.DummyCLR.class.getName());
 
+        this.lockWaitTimeout = getNumericProperty(p, PROPERTY_LOCK_TIMEOUT, DEFAULT_LOCK_TIMEOUT);
+        this.checkpointInterval = getNumericProperty(p, PROPERTY_CHECKPOINT_INTERVAL, DEFAULT_CHECKPOINT_INTERVAL);
+        
+        log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_LOCK_TIMEOUT, lockWaitTimeout));
+        log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_CHECKPOINT_INTERVAL, checkpointInterval));
     }
 
     /**

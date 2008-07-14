@@ -444,8 +444,25 @@ public final class LogManagerImpl implements LogManager {
      * Log flushes still happen during log switches or when there is a checkpoint.
      * This option can improve performance at the expense of lost transactions after recovery.
      */
-    private boolean disableExplicitFlushRequests = false;
+    private final boolean disableExplicitFlushRequests;
+    
+    /**
+     * The size of a log buffer.
+     * <p>
+     * MT safe, because it is updated only once.
+     */
+    private final int logBufferSize;    
 
+    /**
+     * Specifies the maximum number of log buffers to allocate. Thread safe.
+     */
+    private final int maxBuffers;
+
+    /**
+     * Specifies the interval between log flushes in seconds. Thread safe.
+     */
+    private final int logFlushInterval;    
+    
     MessageCatalog mcat = new MessageCatalog();
 
     /* (non-Javadoc)
@@ -490,7 +507,7 @@ public final class LogManagerImpl implements LogManager {
          * before resuming the insert. Ideally, we want to trigger 
          * the Log Writer here and start waiting on buffersAvailable.
          */
-        if (logBuffers.size() > anchor.maxBuffers) {
+        if (logBuffers.size() > maxBuffers) {
             bufferLock.unlock();
             flush();
             bufferLock.lock();
@@ -720,15 +737,15 @@ public final class LogManagerImpl implements LogManager {
 
         flushService.scheduleWithFixedDelay(
             new LogWriter(this),
-            anchor.logFlushInterval,
-            anchor.logFlushInterval,
+            logFlushInterval,
+            logFlushInterval,
             TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads", mcat
             .getMessage("IW0028"));
         flushService.scheduleWithFixedDelay(
             new ArchiveCleaner(this),
-            anchor.logFlushInterval,
-            anchor.logFlushInterval,
+            logFlushInterval,
+            logFlushInterval,
             TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads", mcat
             .getMessage("IW0029"));
@@ -793,7 +810,7 @@ public final class LogManagerImpl implements LogManager {
      */
     private int getMaxLogRecSize() {
         int n1 = getUsableLogSpace();
-        int n2 = anchor.logBufferSize;
+        int n2 = logBufferSize;
 
         return n1 < n2 ? n1 : n2;
     }
@@ -861,14 +878,6 @@ public final class LogManagerImpl implements LogManager {
         }
     }
 
-    final void setLogFlushInterval(int interval) {
-        anchor.logFlushInterval = interval;
-    }
-
-    final void setMaxBuffers(int maxBuffers) {
-        anchor.maxBuffers = maxBuffers;
-    }
-
     /**
      * Creates a LogAnchor and initializes it to default values. Defaults are to
      * use {@link #DEFAULT_LOG_GROUPS} groups containing
@@ -928,8 +937,14 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a default LogImpl.
      */
-    public LogManagerImpl(StorageContainerFactory storageFactory) {
-        archiveLock = new ReentrantLock();
+    public LogManagerImpl(StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
+
+    	this.logBufferSize = logBufferSize;
+    	this.maxBuffers = maxBuffers;
+    	this.logFlushInterval = logFlushInterval;
+    	this.disableExplicitFlushRequests = disableExplicitFlushRequests;
+    	
+    	archiveLock = new ReentrantLock();
         flushLock = new ReentrantLock();
         anchorLock = new ReentrantLock();
         bufferLock = new ReentrantLock();
@@ -945,7 +960,7 @@ public final class LogManagerImpl implements LogManager {
         files = new StorageContainer[MAX_LOG_GROUPS][MAX_LOG_FILES];
         ctlFiles = new StorageContainer[MAX_CTL_FILES];
         logBuffers = new LinkedList<LogBuffer>();
-        currentBuffer = new LogBuffer(anchor.logBufferSize);
+        currentBuffer = new LogBuffer(logBufferSize);
         logBuffers.add(currentBuffer);
 
         this.storageFactory = storageFactory;
@@ -1094,7 +1109,7 @@ public final class LogManagerImpl implements LogManager {
 
         StorageContainer file = null;
         int buflen = 8192;
-        int len = anchor.logBufferSize;
+        int len = logBufferSize;
         if (len < buflen) {
             buflen = len;
         }
@@ -1279,15 +1294,7 @@ public final class LogManagerImpl implements LogManager {
      * @return Returns the bufferSize.
      */
     public final int getLogBufferSize() {
-        return anchor.logBufferSize;
-    }
-
-    /**
-     * @param bufferSize
-     *            The bufferSize to set.
-     */
-    public final void setLogBufferSize(int bufferSize) {
-        anchor.logBufferSize = bufferSize;
+        return logBufferSize;
     }
 
     public final void setLogFileSize(int fileSize) {
@@ -1331,7 +1338,7 @@ public final class LogManagerImpl implements LogManager {
         int reclen = calculateLogRecordSize(length);
         if (currentBuffer.getRemaining() < reclen) {
             // System.err.println("CURRENT BUFFER " + currentBuffer + " IS FULL");
-            currentBuffer = new LogBuffer(anchor.logBufferSize);
+            currentBuffer = new LogBuffer(logBufferSize);
             logBuffers.add(currentBuffer);
         }
         currentBuffer.insert(lsn, data, length, prevLsn);
@@ -2028,27 +2035,6 @@ public final class LogManagerImpl implements LogManager {
                      */
                     container = storageFactory.open(name);
                 }
-//				long position = lsn.getOffset();
-//				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
-//				int n = container.read(position, lbytes, 0, lbytes.length);
-//				if (n != lbytes.length) {
-//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0023", lsn));
-//					throw new LogException(mcat.getMessage("EW0023", lsn));
-//				}
-//				position += lbytes.length;
-//				ByteBuffer bb = ByteBuffer.wrap(lbytes);
-//				int length = bb.getInt();
-//				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0024", lsn, length));
-//					throw new LogException(mcat.getMessage("EW0024", lsn, length));
-//				}
-//				byte[] bytes = new byte[length];
-//				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
-//				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
-//				if (n != (bytes.length - lbytes.length)) {
-//					logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage("EW0025", lsn));
-//					throw new LogException(mcat.getMessage("EW0025", lsn));
-//				}
                 byte[] bytes = readLogRecordData(container, lsn);
                 ByteBuffer bb = ByteBuffer.wrap(bytes);
                 return doRead(lsn, bb);
@@ -2077,29 +2063,6 @@ public final class LogManagerImpl implements LogManager {
         Lsn lsn = new Lsn(logIndex, FIRST_LSN.getOffset());
         try {
             while (true) {
-                // System.err.println("VALIDATING LSN=" + lsn);
-//				long position = lsn.getOffset();
-//				byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
-//				int n = container.read(position, lbytes, 0, lbytes.length);
-//				if (n != lbytes.length) {
-//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0023", lsn));
-//					throw new LogException(mcat.getMessage("EW0023", lsn));
-//				}
-//				position += lbytes.length;
-//				ByteBuffer bb = ByteBuffer.wrap(lbytes);
-//				int length = bb.getInt();
-//				if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0024", lsn, length));
-//					throw new LogException(mcat.getMessage("EW0024", lsn, length));
-//				}
-//				byte[] bytes = new byte[length];
-//				System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
-//				n = container.read(position, bytes, lbytes.length, bytes.length - lbytes.length);
-//				if (n != (bytes.length - lbytes.length)) {
-//					logger.error(LOG_CLASS_NAME, "validateLogFile", mcat.getMessage("EW0025", lsn));
-//					throw new LogException(mcat.getMessage("EW0025", lsn));
-//				}
-//				bb = ByteBuffer.wrap(bytes);
                 byte[] bytes = readLogRecordData(container, lsn);
                 ByteBuffer bb = ByteBuffer.wrap(bytes);
                 LogRecordImpl logrec = doRead(lsn, bb);
@@ -2634,9 +2597,10 @@ public final class LogManagerImpl implements LogManager {
         ByteString archivePath;
 
         /**
-         * The size of a log buffer.
+         * The size of a log buffer. (unused)
          * <p>
          * MT safe, because it is updated only once.
+         * @deprecated
          */
         int logBufferSize;
 
@@ -2703,12 +2667,14 @@ public final class LogManagerImpl implements LogManager {
         Lsn oldestInterestingLsn;
 
         /**
-         * Specifies the maximum number of log buffers to allocate. Thread safe.
+         * Specifies the maximum number of log buffers to allocate. Thread safe. (unused)
+         * @deprecated
          */
         int maxBuffers;
 
         /**
-         * Specifies the interval between log flushes in seconds. Thread safe.
+         * Specifies the interval between log flushes in seconds. Thread safe. (unused)
+         * @deprecated
          */
         int logFlushInterval;
 
@@ -3114,16 +3080,6 @@ public final class LogManagerImpl implements LogManager {
             }
             return Boolean.TRUE;
         }
-    }
-
-    /**
-     * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
-     * Log flushes still happen during log switches or when there is a checkpoint.
-     * This option can improve performance at the expense of lost transactions after recovery.
-     */
-    public void setDisableExplicitFlushRequests(
-            boolean disableExplicitFlushRequests) {
-        this.disableExplicitFlushRequests = disableExplicitFlushRequests;
     }
 
     /**
