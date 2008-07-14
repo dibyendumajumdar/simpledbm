@@ -803,7 +803,7 @@ instance. These are specified using a Java Properties object.
 | ``log.flush.interval``            | Sets the interval (in seconds)                             |
 |                                   | between log flushes. Default is 6 seconds.                 |
 +-----------------------------------+------------------------------------------------------------+
-| ``log.explicitFlushRequests``     | Boolean value, if set, disables                            |
+| ``log.disableFlushRequests``      | Boolean value, if set, disables                            |
 |                                   | log flushes requested explicitly by the Buffer Manager     |
 |                                   | or Transaction Manager. Log flushes still occur during     |
 |                                   | checkpoints and log switches. By reducing the log flushes, |

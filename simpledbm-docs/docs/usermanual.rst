@@ -187,7 +187,7 @@ Server Options
 | ``log.flush.interval``            | Sets the interval (in seconds)                             |
 |                                   | between log flushes. Default is 6 seconds.                 |
 +-----------------------------------+------------------------------------------------------------+
-| ``log.explicitFlushRequests``     | Boolean value, if set, disables                            |
+| ``log.disableFlushRequests``      | Boolean value, if set, disables                            |
 |                                   | log flushes requested explicitly by the Buffer Manager     |
 |                                   | or Transaction Manager. Log flushes still occur during     |
 |                                   | checkpoints and log switches. By reducing the log flushes, |
@@ -204,6 +204,9 @@ Server Options
 +-----------------------------------+------------------------------------------------------------+
 | ``storage.openMode``              | Defines mode in which files will be                        |
 |                                   | opened. Default is ``"rws"``.                              |
++-----------------------------------+------------------------------------------------------------+
+| ``storage.flushMode``             | Defines mode in which files will be flushed. Possible      |
+|                                   | values are noforce, force.true (default), and force.false  |
 +-----------------------------------+------------------------------------------------------------+
 | ``bufferpool.numbuffers``         | Sets the number of buffers to be created in                |
 |                                   | the Buffer Pool.                                           |
@@ -222,7 +225,12 @@ Server Options
 | ``logging.properties.type``       | Specify ``"log4j"`` if you want to SimpleDBM to use Log4J  |
 |                                   | for generating log messages.                               |
 +-----------------------------------+------------------------------------------------------------+
-
+| ``transaction.lock.timeout``      | Specifies the default lock timeout value in seconds.       |
+|                                   | Default is 60 seconds.                                     |
++-----------------------------------+------------------------------------------------------------+
+| ``transaction.ckpt.interval``     | Specifies the interval between checkpoints in milliseconds.|
+|                                   | Default is 15000 milliseconds (15 secs).                   |
++-----------------------------------+------------------------------------------------------------+
 The Server.create() call will overwrite any existing database
 in the specified storage path, so it must be called only when you know
 for sure that you want to create a database.
