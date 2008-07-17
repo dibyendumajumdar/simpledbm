@@ -63,7 +63,12 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * other two, but does support recursion of shared lock requests.
      */
 
-    private static final String LOG_CLASS_NAME = NewReadWriteUpdateLatch.class
+	/**
+	 * Latch will timeout in 10 seconds. This is a cheap way of detecting deadlocks.
+	 */
+    private static final int LOCK_TIMEOUT = 10;
+
+	private static final String LOG_CLASS_NAME = NewReadWriteUpdateLatch.class
         .getName();
 
     private static final Logger log = Logger
@@ -976,11 +981,11 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     public void exclusiveLock() {
-        acquire(LockMode.EXCLUSIVE, 10, false);
+        acquire(LockMode.EXCLUSIVE, LOCK_TIMEOUT, false);
     }
 
     public void exclusiveLockInterruptibly() throws InterruptedException {
-        acquire(LockMode.EXCLUSIVE, 10, false);
+        acquire(LockMode.EXCLUSIVE, LOCK_TIMEOUT, false);
     }
 
     public boolean isLatchedExclusively() {
@@ -992,11 +997,11 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     public void sharedLock() {
-        acquire(LockMode.SHARED, 10, false);
+        acquire(LockMode.SHARED, LOCK_TIMEOUT, false);
     }
 
     public void sharedLockInterruptibly() throws InterruptedException {
-        acquire(LockMode.SHARED, 10, false);
+        acquire(LockMode.SHARED, LOCK_TIMEOUT, false);
     }
 
     public boolean tryExclusiveLock() {
@@ -1048,15 +1053,15 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     public void updateLock() {
-        acquire(LockMode.UPDATE, 10, false);
+        acquire(LockMode.UPDATE, LOCK_TIMEOUT, false);
     }
 
     public void updateLockInterruptibly() throws InterruptedException {
-        acquire(LockMode.UPDATE, 10, false);
+        acquire(LockMode.UPDATE, LOCK_TIMEOUT, false);
     }
 
     public void upgradeUpdateLock() {
-        acquire(LockMode.EXCLUSIVE, 10, true);
+        acquire(LockMode.EXCLUSIVE, LOCK_TIMEOUT, true);
     }
 
     public void upgradeUpdateLockInterruptibly() throws InterruptedException {
