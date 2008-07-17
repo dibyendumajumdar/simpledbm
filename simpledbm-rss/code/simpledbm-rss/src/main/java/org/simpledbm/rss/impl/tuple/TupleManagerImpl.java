@@ -126,8 +126,16 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * Location gets exclusively locked. If this transaction or any other transaction
  * encounters the remaining segments that are marked deleted, the reclamation logic will
  * incorrectly assume that the delete is still uncommitted, because the lock on the
- * location will fail. The segments wil get eventually reused, when the transaction
+ * location will fail. The segments will get eventually reused, when the transaction
  * that locked the tuple commits.</li>
+ * <li>If both data page and free space map page need to be updated, then the
+ * latch order is data page first, and then free space map page while holding the
+ * data page latch.</li>
+ * <li>As per Mohan, space map pages are always logged using redo only log records.
+ * During normal processing, the data page update is logged first followed by the space
+ * map page update. But during undo processing, the space map page update is logged
+ * first, followed by data page update. Note that this does not change the latch
+ * ordering.</li>
  * </ol>
  * 
  * @author Dibyendu Majumdar
@@ -185,9 +193,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             BufferManager bufMgr, SlottedPageManager spMgr,
             TransactionalModuleRegistry moduleRegistry, PageFactory pageFactory,
             LockAdaptor lockAdaptor, Properties p) {
-        // TODO lockAdaptor and locationFactory should be injected
-        // rather than be hard-coded
-        // this.lockAdaptor = new DefaultLockAdaptor();
+
     	this.lockAdaptor = lockAdaptor;
         this.locationFactory = new TupleIdFactory();
         this.objectFactory = objectFactory;
@@ -304,6 +310,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             if (spacebitsAfter != spacebitsBefore) {
                 /*
                  * Requires space map page update.
+                 * We must obtain the latch on the free space map page while
+                 * holding the latch on the data page.
+                 * Also as per Mohan the space map update must be logged before the
+                 * data page update, using redo only log record.
                  */
                 FreeSpaceCursor spcursor = spaceMgr.getSpaceCursor(pageId
                     .getContainerId());
@@ -368,6 +378,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             if (spacebitsAfter != spacebitsBefore) {
                 /*
                  * Requires space map page update.
+                 * We must obtain the latch on the free space map page while
+                 * holding the latch on the data page.
+                 * Also as per Mohan the space map update must be logged before the
+                 * data page update, using redo only log record.
                  */
                 FreeSpaceCursor spcursor = spaceMgr.getSpaceCursor(pageId
                     .getContainerId());
@@ -645,6 +659,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         }
                     }
                     if (reclaim) {
+                    	/*
+                    	 * We successfully obtained an instant lock on the tuple 
+                    	 * so we know that this segment is committed and can be 
+                    	 * cleaned up.
+                    	 */
                         if (log.isDebugEnabled()) {
                             log.debug(
                                 this.getClass().getName(),
@@ -741,12 +760,13 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     .getCurrentSpaceMapPage()
                     .getPageId()
                     .getPageNumber();
-                spacebitsBefore = spcursor
-                    .getCurrentSpaceMapPage()
-                    .getSpaceBits(pageNumber);
+                /*
+                 * We must release the latch on space map page before we 
+                 * try to lock the data page.
+                 */
+                spcursor.unfixCurrentSpaceMapPage();
                 PageId pageId = new PageId(containerId, pageNumber);
                 bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
-                spcursor.unfixCurrentSpaceMapPage();
                 try {
                     reclaimDeletedTuples(trx, bab);
                     SlottedPage page = (SlottedPage) bab.getPage();
@@ -943,6 +963,15 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     logrec.segmentationFlags = 0;
                 }
 
+                /*
+                 * In order to decide whether the space map page needs to be updated,
+                 * we need to compare the space usage before and after the insert of the
+                 * tuple segment.
+                 * Note that we don't need to worry about changes made by reclaim tuple
+                 * logic as deletes update the space map page immediately.
+                 */
+                spacebitsBefore = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(page.getSpace(), 
+                		page.getFreeSpace());  
                 Lsn lsn = trx.logInsert(page, logrec);
                 relmgr.redo(page, logrec);
                 bab.setDirty(lsn);
@@ -954,6 +983,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     maxPageSpace,
                     page.getFreeSpace());
                 if (spacebits != spacebitsBefore) {
+                	/*
+                	 * We need to latch the space map page while holding the latch
+                	 * on the data page - as per Mohan.
+                	 */
                     spcursor.fixSpaceMapPageExclusively(
                         spaceMapPage,
                         pageNumber);
@@ -961,6 +994,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         FreeSpaceMapPage smp = spcursor
                             .getCurrentSpaceMapPage();
                         if (smp.getSpaceBits(pageNumber) != spacebits) {
+                        	/*
+                        	 * The space map update must be redo only, as per Mohan.
+                        	 */
                             spcursor.updateAndLogRedoOnly(
                                 trx,
                                 pageNumber,
@@ -1066,12 +1102,13 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             .getCurrentSpaceMapPage()
                             .getPageId()
                             .getPageNumber();
-                        spacebitsBefore = spcursor
-                            .getCurrentSpaceMapPage()
-                            .getSpaceBits(pageNumber);
+                        /*
+                         * Latch on space map page needs to be released before we obtain a
+                         * latch on the data page.
+                         */
+                        spcursor.unfixCurrentSpaceMapPage();
                         PageId pageId = new PageId(containerId, pageNumber);
                         bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
-                        spcursor.unfixCurrentSpaceMapPage();
                         try {
                             reclaimDeletedTuples(trx, bab);
                             SlottedPage page = (SlottedPage) bab.getPage();
@@ -1125,6 +1162,16 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     currentPos += nextSegmentSize;
                     logrec.segment = ts;
 
+                    /*
+                     * In order to determine whether the space map page needs to be updated
+                     * we need to check the free space before and after the update.
+                     * Note that we don't need to worry about the changes made by reclaim
+                     * tuple logic because tuple deletes update the space map information
+                     * immediately.
+                     */
+                    spacebitsBefore = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(page.getSpace(), 
+                    		page.getFreeSpace());  
+
                     Lsn lsn = trx.logInsert(page, logrec);
                     relmgr.redo(page, logrec);
                     bab.setDirty(lsn);
@@ -1133,6 +1180,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         maxPageSpace,
                         page.getFreeSpace());
                     if (spacebits != spacebitsBefore) {
+                    	/*
+                    	 * The latch on the space map page must be obtained while
+                    	 * holding the data page latch - as per Mohan.
+                    	 */
                         spcursor.fixSpaceMapPageExclusively(
                             spaceMapPage,
                             pageNumber);
@@ -1140,6 +1191,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             FreeSpaceMapPage smp = spcursor
                                 .getCurrentSpaceMapPage();
                             if (smp.getSpaceBits(pageNumber) != spacebits) {
+                            	/*
+                            	 * The Space map update must be logged as redo only - as per
+                            	 * Mohan. 
+                            	 */
                                 spcursor.updateAndLogRedoOnly(
                                     trx,
                                     pageNumber,
@@ -1412,6 +1467,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     bab.setDirty(lsn);
 
                     if (spacebitsBefore != spacebitsAfter) {
+                    	/*
+                    	 * We must obtain the latch on space map page while
+                    	 * holding the data page latch.
+                    	 */
                         spcursor.fixSpaceMapPageExclusively(page
                             .getSpaceMapPageNumber(), page
                             .getPageId()
@@ -1422,6 +1481,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             if (smp.getSpaceBits(page
                                 .getPageId()
                                 .getPageNumber()) != spacebitsAfter) {
+                            	/*
+                            	 * As per Mohan, we must log the space map update as
+                            	 * a redo only log record.
+                            	 */
                                 spcursor.updateAndLogRedoOnly(trx, page
                                     .getPageId()
                                     .getPageNumber(), spacebitsAfter);
