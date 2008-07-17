@@ -24,8 +24,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
@@ -34,11 +32,13 @@ import org.simpledbm.database.api.TableScan;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
-public class TestDatabase extends TestCase {
+import quicktime.streaming.SettingsDialog;
+
+public class TestDatabase extends BaseTestCase {
 
 	public TestDatabase() {
 		super();
@@ -494,12 +494,14 @@ public class TestDatabase extends TestCase {
 		int startno;
 		int range;
 		int iterations;
+		BaseTestCase testCase;
 		
-		TesterThread(Database db, int start, int range, int iterations) {
+		TesterThread(BaseTestCase testCase, Database db, int start, int range, int iterations) {
 			this.db = db;
 			this.startno = start;
 			this.range = range;
 			this.iterations = iterations;
+			this.testCase = testCase;
 		}
 		
 		void testInsert() {
@@ -525,6 +527,9 @@ public class TestDatabase extends TestCase {
 					} catch (LockDeadlockException e) {
 						// deadlock
 						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
 					} finally {
 						if (okay) {
 							trx.commit();
@@ -573,6 +578,9 @@ public class TestDatabase extends TestCase {
 						okay = true;
 					} catch (LockDeadlockException e) {
 						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
 					} finally {
 						if (okay) {
 							trx.commit();
@@ -625,6 +633,9 @@ public class TestDatabase extends TestCase {
 						okay = true;
 					} catch (LockDeadlockException e) {
 						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
 					} finally {
 						if (okay) {
 							trx.commit();
@@ -680,6 +691,9 @@ public class TestDatabase extends TestCase {
 						okay = true;
 					} catch (LockDeadlockException e) {
 						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
 					} finally {
 						if (okay) {
 							trx.commit();
@@ -699,7 +713,7 @@ public class TestDatabase extends TestCase {
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
-						System.out.println("Deleting row " + i);
+						// System.out.println("Deleting row " + i);
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						Row tableRow = table.getRow();
@@ -719,6 +733,9 @@ public class TestDatabase extends TestCase {
 						okay = true;
 					} catch (LockDeadlockException e) {
 						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
 					} finally {
 						if (okay) {
 							trx.commit();
@@ -770,6 +787,9 @@ public class TestDatabase extends TestCase {
 					okay = true;
 				} catch (LockDeadlockException e) {
 					e.printStackTrace();
+				} catch (RuntimeException e) {
+					e.printStackTrace();
+					throw e;
 				} finally {
 					if (okay) {
 						trx.commit();
@@ -796,16 +816,16 @@ public class TestDatabase extends TestCase {
 					testDelete();
 				}
 			} catch (Exception e) {
-				e.printStackTrace();
+				testCase.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
 	}
 	
 	public void testStress() throws Exception {
 
-		int numThreads = 1;
+		int numThreads = 2;
 		int range = 10000;
-		int iterations = 2;
+		int iterations = 1;
 		
 		createTestDatabase(getLargeServerProperties());
 		final Database db = DatabaseFactory.getDatabase(getLargeServerProperties());
@@ -813,7 +833,7 @@ public class TestDatabase extends TestCase {
 		try {
 			Thread threads[] = new Thread[numThreads];
 			for (int i = 0; i < numThreads; i++) {
-				threads[i] = new Thread(new TesterThread(db, i * range,
+				threads[i] = new Thread(new TesterThread(this, db, i * range,
 						range, iterations));
 			}
 			for (int i = 0; i < numThreads; i++) {
@@ -830,6 +850,7 @@ public class TestDatabase extends TestCase {
 					throw new Exception();
 				}
 			}
+			checkThreadFailures();
 		} finally {
 			db.shutdown();
 		}
