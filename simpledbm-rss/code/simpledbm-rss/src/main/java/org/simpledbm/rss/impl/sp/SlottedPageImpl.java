@@ -574,12 +574,14 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
                 "EO0002",
                 item,
                 this,
-                slotNumber));
+                slotNumber,
+                requiredSpace));
             throw new PageException(mcat.getMessage(
                 "EO0002",
                 item,
                 this,
-                slotNumber));
+                slotNumber,
+                requiredSpace));
         }
 
         int savedFlags = 0;
