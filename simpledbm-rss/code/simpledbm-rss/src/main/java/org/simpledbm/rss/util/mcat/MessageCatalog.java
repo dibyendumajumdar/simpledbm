@@ -380,6 +380,8 @@ public class MessageCatalog {
                 "SIMPLEDBM-WC0011: Detected deadlock cycle: R1 {0} (victim) waiting for R2 {1}\nR1 {2}\nR2 {3}");
         msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
         msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
+        msgs.put("IC0014", "SIMPLEDBM-IC0014: Dumping lock table");
+        msgs.put("IC0015", "SIMPLEDBM-IC0015: LockItem = {0}");
 
         // Page factory messages
         msgs
