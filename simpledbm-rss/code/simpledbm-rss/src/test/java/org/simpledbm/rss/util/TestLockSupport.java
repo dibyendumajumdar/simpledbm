@@ -13,6 +13,10 @@ public class TestLockSupport extends TestCase {
 	public TestLockSupport(String name) {
 		super(name);
 	}
+	
+	public void testDummy() {
+		
+	}
 
 //	public void testPark() {
 //        long then = System.nanoTime();
