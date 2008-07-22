@@ -60,7 +60,7 @@
     <groupId>org.apache.maven.plugins</groupId>
     <artifactId>maven-surefire-plugin</artifactId>
     <configuration>
-     <argLine>-Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
+     <argLine>-ea -Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
     </configuration>
    </plugin>
    <plugin>
