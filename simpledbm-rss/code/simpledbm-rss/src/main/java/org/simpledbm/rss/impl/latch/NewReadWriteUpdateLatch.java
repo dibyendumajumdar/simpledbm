@@ -26,6 +26,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.util.SimpleTimer;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -253,39 +254,56 @@ public final class NewReadWriteUpdateLatch implements Latch {
             /* 8. Wait for the lock to be available/compatible. */
             prepareToWait(lockState);
         }
-        long then = System.nanoTime();
-        long timeToWait = lockState.parms.timeout;
-        if (timeToWait != -1) {
-            timeToWait = TimeUnit.NANOSECONDS.convert(
-                lockState.parms.timeout,
-                TimeUnit.SECONDS);
-        }
-        for (;;) {
-            if (lockState.parms.timeout == -1) {
-                LockSupport.park();
-            } else {
-                LockSupport.parkNanos(timeToWait);
-            }
-            long now = System.nanoTime();
-            if (timeToWait > 0) {
-                timeToWait -= (now - then);
-                then = now;
-            }
-            synchronized (this) {
-                /*
-                 * As the hash table may have been resized while we were
-                 * waiting, we need to recalculate the bucket.
-                 */
-                if (lockState.lockRequest.status == LockRequestStatus.WAITING
-                        || lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
-                    if (timeToWait > 0 || lockState.parms.timeout == -1) {
-                        continue;
-                    }
-                }
-                handleWaitResult(lockState);
-                return;
-            }
-        }
+
+        SimpleTimer timer = new SimpleTimer((lockState.parms.timeout < 0) ? -1
+				: TimeUnit.NANOSECONDS.convert(lockState.parms.timeout,
+						TimeUnit.SECONDS));
+		for (;;) {
+			timer.await();
+			synchronized (this) {
+				if (lockState.lockRequest.status == LockRequestStatus.WAITING
+						|| lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
+					if (!timer.isExpired()) {
+						continue;
+					}
+				}
+				handleWaitResult(lockState);
+				return;
+			}
+		}
+//        long then = System.nanoTime();
+//        long timeToWait = lockState.parms.timeout;
+//        if (timeToWait != -1) {
+//            timeToWait = TimeUnit.NANOSECONDS.convert(
+//                lockState.parms.timeout,
+//                TimeUnit.SECONDS);
+//        }
+//        for (;;) {
+//            if (lockState.parms.timeout == -1) {
+//                LockSupport.park();
+//            } else {
+//                LockSupport.parkNanos(timeToWait);
+//            }
+//            long now = System.nanoTime();
+//            if (timeToWait > 0) {
+//                timeToWait -= (now - then);
+//                then = now;
+//            }
+//            synchronized (this) {
+//                /*
+//                 * As the hash table may have been resized while we were
+//                 * waiting, we need to recalculate the bucket.
+//                 */
+//                if (lockState.lockRequest.status == LockRequestStatus.WAITING
+//                        || lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
+//                    if (timeToWait > 0 || lockState.parms.timeout == -1) {
+//                        continue;
+//                    }
+//                }
+//                handleWaitResult(lockState);
+//                return;
+//            }
+//        }
     }
 
     /**
