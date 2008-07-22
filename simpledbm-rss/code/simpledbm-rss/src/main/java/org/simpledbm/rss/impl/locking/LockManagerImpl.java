@@ -39,6 +39,7 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
+import org.simpledbm.rss.util.SimpleTimer;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -231,6 +232,30 @@ public final class LockManagerImpl implements LockManager {
             globalLock.unlockExclusive();
         }
     }
+    
+    public void dumpLockTable() {
+		globalLock.sharedLock();
+		log.info(getClass().getName(), "dumpLockTable", mcat.getMessage("IC0014"));
+		try {
+			for (int i = 0; i < hashTableSize; i++) {
+				LockBucket bucket = LockHashTable[i];
+				synchronized (bucket) {
+					for (Iterator<LockItem> iter = bucket.chain.iterator(); iter
+							.hasNext();) {
+						LockItem item = iter.next();
+						if (item.target == null) {
+							continue;
+						}
+						log.info(getClass().getName(), "dumpLockTable",
+								mcat.getMessage("IC0014", item));
+					}
+				}
+			}
+		} finally {
+			globalLock.unlockExclusive();
+		}
+	}
+    
 
     /**
      * Checks whether the specified lock request is compatible with the granted group.
@@ -1287,28 +1312,15 @@ public final class LockManagerImpl implements LockManager {
         /*
          * Global lock is released only after the waiter list has been updated.
          */
-        globalLock.unlockShared();
-        long then = System.nanoTime();
-        long timeToWait = lockState.parms.timeout;
-        if (timeToWait != -1) {
-            timeToWait = TimeUnit.NANOSECONDS.convert(
-                lockState.parms.timeout,
-                TimeUnit.SECONDS);
-        }
+        SimpleTimer timer = new SimpleTimer((lockState.parms.timeout < 0) ? -1
+				: TimeUnit.NANOSECONDS.convert(lockState.parms.timeout,
+						TimeUnit.SECONDS));
         for (;;) {
+            globalLock.unlockShared();
             try {
-                if (lockState.parms.timeout == -1) {
-                    LockSupport.park();
-                } else {
-                    LockSupport.parkNanos(timeToWait);
-                }
+            	timer.await();
             } finally {
                 globalLock.sharedLock();
-            }
-            long now = System.nanoTime();
-            if (timeToWait > 0) {
-                timeToWait -= (now - then);
-                then = now;
             }
             /*
              * As the hash table may have been resized while we were waiting, we
@@ -1320,7 +1332,7 @@ public final class LockManagerImpl implements LockManager {
             synchronized (lockState.bucket) {
                 if (lockState.lockRequest.status == LockRequestStatus.WAITING
                         || lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
-                    if (timeToWait > 0 || lockState.parms.timeout == -1) {
+                    if (!timer.isExpired()) {
                         continue;
                     }
                 }
@@ -1329,6 +1341,52 @@ public final class LockManagerImpl implements LockManager {
                 return lockState.handle;
             }
         }
+//        /*
+//         * Global lock is released only after the waiter list has been updated.
+//         */
+//        long then = System.nanoTime();
+//        long timeToWait = lockState.parms.timeout;
+//        if (timeToWait != -1) {
+//            timeToWait = TimeUnit.NANOSECONDS.convert(
+//                lockState.parms.timeout,
+//                TimeUnit.SECONDS);
+//        }
+//        for (;;) {
+//            globalLock.unlockShared();
+//            try {
+//                if (lockState.parms.timeout == -1) {
+//                    LockSupport.park();
+//                } else {
+//                	assert timeToWait > 0;
+//                    LockSupport.parkNanos(timeToWait);
+//                }
+//            } finally {
+//                globalLock.sharedLock();
+//            }
+//            long now = System.nanoTime();
+//            if (timeToWait > 0) {
+//                timeToWait -= (now - then);
+//                then = now;
+//            }
+//            /*
+//             * As the hash table may have been resized while we were waiting, we
+//             * need to recalculate the bucket.
+//             */
+//            h = (lockState.parms.lockable.hashCode() & 0x7FFFFFFF)
+//                    % hashTableSize;
+//            lockState.bucket = LockHashTable[h];
+//            synchronized (lockState.bucket) {
+//                if (lockState.lockRequest.status == LockRequestStatus.WAITING
+//                        || lockState.lockRequest.status == LockRequestStatus.CONVERTING) {
+//                    if (timeToWait > 0 || lockState.parms.timeout == -1) {
+//                        continue;
+//                    }
+//                }
+//                waiters.remove(lockState.lockRequest.owner);
+//                handleWaitResult(lockState);
+//                return lockState.handle;
+//            }
+//        }
     }
 
     private boolean doReleaseInternal(LockState lockState) {
@@ -1515,6 +1573,7 @@ public final class LockManagerImpl implements LockManager {
             Thread.yield();
         }
         if (retry == 5) {
+        	// log.warn(getClass().getName(), "detectDeadlocks", "DeadLock Detector failed to acquire global lock");
             return;
         }
         try {
