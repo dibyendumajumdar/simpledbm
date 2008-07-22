@@ -1,3 +1,10 @@
+1.0.10-BETA:
+ * dm: Fixed issue 27 - global lock wasn't being released during lock wait if the parkNano call returned
+   before timeout. This meant that the deadlock detector could not get in to resolve deadlocks.
+ * dm: Fixed issue 26 - BTree implementation was miscalculating the space required for accommodating 
+   an index item in a node when the node was an index node but the key had come from a leaf node, ie,
+   a child node.
+
 1.0.9-BETA:
  * dm: Fixed issue 25 - latch deadlock when inserting tuples from multiple threads
 
