@@ -23,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
@@ -72,6 +73,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeImpl;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
+import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.MergeOperation;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
@@ -79,6 +81,7 @@ import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
+import org.simpledbm.rss.impl.sp.SlottedPageImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -289,7 +292,7 @@ public class TestBTreeManager extends BaseTestCase {
 
 	}
 
-	private IndexItem generateKey(BTreeImpl btree, String s, int location,
+	private IndexItem generateKey( BTreeIndexManagerImpl.IndexItemHelper btree, String s, int location,
 			int childpage, boolean isLeaf) {
 		StringKey key = (StringKey) btree.getNewIndexKey();
 		key.setString(s);
@@ -298,6 +301,34 @@ public class TestBTreeManager extends BaseTestCase {
 		IndexItem item = new IndexItem(key, loc, childpage, isLeaf, btree
 				.isUnique());
 		return item;
+	}
+	
+	static class MyIndexItemHelper implements BTreeIndexManagerImpl.IndexItemHelper {
+
+		IndexKeyFactory keyFactory = new StringKeyFactory();
+		LocationFactory locationFactory = new RowLocationFactory();
+		boolean unique = true;
+		
+		public MyIndexItemHelper(boolean unique) {
+			this.unique = unique;
+		}
+		
+		public IndexKey getMaxIndexKey() {
+			return keyFactory.maxIndexKey(1);
+		}
+
+		public IndexKey getNewIndexKey() {
+			return keyFactory.minIndexKey(1);
+		}
+
+		public Location getNewLocation() {
+			return locationFactory.newLocation();
+		}
+
+		public boolean isUnique() {
+			return true;
+		}
+		
 	}
 
 	/**
@@ -3188,6 +3219,114 @@ public class TestBTreeManager extends BaseTestCase {
 		compressKeys = false;
 		largeBM = false;
 	}
+	
+	
+	/**
+	 * Reproduce Issue-26 - the calculation of free space is wrong when the
+	 * key is of leaf type and the node is an index node.
+	 */
+	public void testCanAccomodate() {
+		compressKeys = true;
+		BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(false);
+		Properties p = new Properties();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
+        final StorageManager storageManager = new StorageManagerImpl(p);
+        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory,
+            p);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+            objectFactory, p);
+		objectFactory.registerType(TYPE_STRINGKEYFACTORY,
+				StringKeyFactory.class.getName());
+		objectFactory.registerType(TYPE_ROWLOCATIONFACTORY,
+				RowLocationFactory.class.getName());
+        SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
+            .getPageType(), new PageId());
+        page.latchExclusive();
+        BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique());
+        BTreeNode node = new BTreeNode(indexHelper);
+        node.wrap(page);
+        for (int i = 1; i < 156; i++) {
+        	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
+        }
+		IndexItem key = generateKey(indexHelper, "12345678901", 0, 0, true);
+		assertFalse(node.canAccomodate(key));
+        page.unlatchExclusive();
+	}
+	
+	// FIXME copy of redo code from btree manager implementation
+   private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
+		// left sibling - this page will aborb contents of right sibling.
+		SlottedPage q = (SlottedPage) page;
+		BTreeNode leftSibling = new BTreeNode(mergeOperation);
+		leftSibling.wrap(q);
+		int k;
+		if (leftSibling.isLeaf()) {
+			// delete the high key
+			k = leftSibling.header.keyCount;
+			q.delete(leftSibling.header.keyCount);
+		} else {
+			k = leftSibling.header.keyCount + 1;
+		}
+		for (IndexItem item : mergeOperation.items) {
+			q.insertAt(k++, item, true);
+		}
+		leftSibling.header.keyCount += mergeOperation.items.size()
+				- (leftSibling.isLeaf() ? 1 : 0);
+		leftSibling.header.rightSibling = mergeOperation.rightRightSibling;
+		leftSibling.updateHeader();
+		leftSibling.dumpAsXml();
+	}
+	
+	/**
+	 * Reproduce Issue-27 (TODO) - merge of a leaf is corrupting the page.
+	 */
+	public void testMergeLeaf() {
+		compressKeys = true;
+		BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(false);
+		Properties p = new Properties();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
+        final StorageManager storageManager = new StorageManagerImpl(p);
+        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        final PageFactory pageFactory = new PageFactoryImpl(
+            objectFactory,
+            storageManager,
+            latchFactory,
+            p);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+            objectFactory, p);
+		objectFactory.registerType(TYPE_STRINGKEYFACTORY,
+				StringKeyFactory.class.getName());
+		objectFactory.registerType(TYPE_ROWLOCATIONFACTORY,
+				RowLocationFactory.class.getName());
+        SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
+            .getPageType(), new PageId());
+        page.latchExclusive();
+        BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, true, indexHelper.isUnique());
+        BTreeNode node = new BTreeNode(indexHelper);
+        node.wrap(page);
+       	node.insert(1, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + 1, 1, 1, true));
+        node.insert(2, new IndexItem(indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(), -1, true, indexHelper.isUnique()));
+        node.header.keyCount = 2;
+        node.updateHeader();
+        MergeOperation mergeOperation = new BTreeIndexManagerImpl.MergeOperation();
+        mergeOperation.setObjectFactory(objectFactory);
+        mergeOperation.setLeaf(true);
+        mergeOperation.setUnique(indexHelper.isUnique());
+        mergeOperation.setKeyFactoryType(TYPE_STRINGKEYFACTORY);
+        mergeOperation.setLocationFactoryType(TYPE_ROWLOCATIONFACTORY);
+        mergeOperation.rightSibling = node.header.rightSibling;
+        mergeOperation.rightRightSibling = node.header.rightSibling;
+        mergeOperation.items = new LinkedList<IndexItem>();
+        for (int k = 2; k < 7; k++) {
+        	mergeOperation.items.add(generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + k, k, k, true));
+        }
+        mergeOperation.items.add(new IndexItem(indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(), -1, true, indexHelper.isUnique()));
+        redoMergeOperation(page, mergeOperation);
+	}
 
 	/**
 	 * Tests various concurrent activities.
@@ -3315,6 +3454,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite
 				.addTest(new TestBTreeManager(
 						"testMultiThreadedInsertsDescending"));
+		suite.addTest(new TestBTreeManager("testCanAccomodate"));
 		// }
 		return suite;
 	}
