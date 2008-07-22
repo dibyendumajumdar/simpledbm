@@ -433,7 +433,7 @@ public class MessageCatalog {
         msgs
             .put(
                 "EO0002",
-                "SIMPLEDBM-EO0002: Cannot insert item {0} into page {1} at slot {2} due to lack of space");
+                "SIMPLEDBM-EO0002: Cannot insert item {0} of size {3} into page at slot {2} due to lack of space: page contents = {1}");
         msgs
             .put(
                 "EO0003",
