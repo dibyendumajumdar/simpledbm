@@ -48,6 +48,10 @@ public abstract class BaseTestCase extends TestCase {
                     + " number of threads have failed the test");
         }
     }
+    
+    public final boolean threadFailed() {
+    	return threadFailureExceptions.size() > 0;
+    }
 
     final static class ThreadFailure {
         Throwable exception;

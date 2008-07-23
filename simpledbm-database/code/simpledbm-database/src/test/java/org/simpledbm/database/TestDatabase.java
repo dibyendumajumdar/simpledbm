@@ -36,8 +36,6 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
-import quicktime.streaming.SettingsDialog;
-
 public class TestDatabase extends BaseTestCase {
 
 	public TestDatabase() {
@@ -87,6 +85,7 @@ public class TestDatabase extends BaseTestCase {
 		properties.setProperty("logging.properties.type", "log4j");
 		properties.setProperty("logging.properties.file",
 				"classpath:simpledbm.logging.properties");
+		properties.setProperty("lock.deadlock.detection.interval", "3");
 		return properties;
 	}
 
@@ -509,6 +508,9 @@ public class TestDatabase extends BaseTestCase {
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
+					if (testCase.threadFailed()) {
+						return;
+					}
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
@@ -543,6 +545,9 @@ public class TestDatabase extends BaseTestCase {
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
+					if (testCase.threadFailed()) {
+						return;
+					}
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
@@ -597,12 +602,16 @@ public class TestDatabase extends BaseTestCase {
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
+					if (testCase.threadFailed()) {
+						return;
+					}
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
+					Row tableRow = null;
 					try {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
-						Row tableRow = table.getRow();
+						tableRow = table.getRow();
 						tableRow.getColumnValue(0).setInt(i);
 						tableRow.getColumnValue(1).setString("Joe" + i);
 						tableRow.getColumnValue(2).setString("Blogg" + i);
@@ -632,8 +641,10 @@ public class TestDatabase extends BaseTestCase {
 						}
 						okay = true;
 					} catch (LockDeadlockException e) {
+						System.err.println("Deadlock occurred while deleting " + tableRow);
 						e.printStackTrace();
 					} catch (RuntimeException e) {
+						System.err.println("Unexpected error occurred while deleting " + tableRow);
 						e.printStackTrace();
 						throw e;
 					} finally {
@@ -649,6 +660,9 @@ public class TestDatabase extends BaseTestCase {
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
+					if (testCase.threadFailed()) {
+						return;
+					}
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
 					try {
@@ -706,17 +720,22 @@ public class TestDatabase extends BaseTestCase {
 		}
 		
 		void testDelete() {
-			System.out.println(Thread.currentThread().getName() + " Starting deletes");
+			System.out.println(Thread.currentThread().getName()
+					+ " Starting deletes");
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
+					if (testCase.threadFailed()) {
+						return;
+					}
 					Transaction trx = db
 							.startTransaction(IsolationMode.READ_COMMITTED);
+					Row tableRow = null;
 					try {
 						// System.out.println("Deleting row " + i);
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
-						Row tableRow = table.getRow();
+						tableRow = table.getRow();
 						tableRow.getColumnValue(0).setInt(i);
 
 						TableScan scan = table.openScan(trx, 0, tableRow, true);
@@ -732,8 +751,13 @@ public class TestDatabase extends BaseTestCase {
 						}
 						okay = true;
 					} catch (LockDeadlockException e) {
+						System.err.println("Deadlock occurred while deleting "
+								+ tableRow);
 						e.printStackTrace();
 					} catch (RuntimeException e) {
+						System.err
+								.println("Unexpected error occurred while deleting "
+										+ tableRow);
 						e.printStackTrace();
 						throw e;
 					} finally {
@@ -749,54 +773,60 @@ public class TestDatabase extends BaseTestCase {
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
 				while (!okay) {
-				Transaction trx = db
-						.startTransaction(IsolationMode.READ_COMMITTED);
-				try {
-					Table table = db.getTable(trx, 1);
-					assertNotNull(table);
-					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(3).setString("London");
-					tableRow.getColumnValue(4).setString(
-							tableRow.getColumnValue(1).getString() + "."
-									+ tableRow.getColumnValue(2).getString()
-									+ "@gmail.com");
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31, i));
-					tableRow.getColumnValue(6).setInt(-i);
+					if (testCase.threadFailed()) {
+						return;
+					}
+					Transaction trx = db
+							.startTransaction(IsolationMode.READ_COMMITTED);
+					try {
+						Table table = db.getTable(trx, 1);
+						assertNotNull(table);
+						Row tableRow = table.getRow();
+						tableRow.getColumnValue(0).setInt(i);
+						tableRow.getColumnValue(1).setString("Joe" + i);
+						tableRow.getColumnValue(2).setString("Blogg" + i);
+						tableRow.getColumnValue(3).setString("London");
+						tableRow.getColumnValue(4).setString(
+								tableRow.getColumnValue(1).getString()
+										+ "."
+										+ tableRow.getColumnValue(2)
+												.getString() + "@gmail.com");
+						tableRow.getColumnValue(5).setDate(
+								getDOB(1930, 12, 31, i));
+						tableRow.getColumnValue(6).setInt(-i);
 
-					for (int j = 0; j < table.getDefinition()
-							.getNumberOfIndexes(); j++) {
-						TableScan scan = table
-								.openScan(trx, j, tableRow, false);
-						try {
-							if (scan.fetchNext()) {
-								Row scanRow = scan.getCurrentRow();
-								// System.err.println("Search by index " + j +
-								// " found " + scanRow + ", expected " +
-								// tableRow);
-								assertTrue(scanRow.compareTo(tableRow) > 0);
-							} else {
+						for (int j = 0; j < table.getDefinition()
+								.getNumberOfIndexes(); j++) {
+							TableScan scan = table.openScan(trx, j, tableRow,
+									false);
+							try {
+								if (scan.fetchNext()) {
+									Row scanRow = scan.getCurrentRow();
+									// System.err.println("Search by index " + j
+									// +
+									// " found " + scanRow + ", expected " +
+									// tableRow);
+									assertTrue(scanRow.compareTo(tableRow) > 0);
+								} else {
+								}
+								scan.fetchCompleted(false);
+							} finally {
+								scan.close();
 							}
-							scan.fetchCompleted(false);
-						} finally {
-							scan.close();
+						}
+						okay = true;
+					} catch (LockDeadlockException e) {
+						e.printStackTrace();
+					} catch (RuntimeException e) {
+						e.printStackTrace();
+						throw e;
+					} finally {
+						if (okay) {
+							trx.commit();
+						} else {
+							trx.abort();
 						}
 					}
-					okay = true;
-				} catch (LockDeadlockException e) {
-					e.printStackTrace();
-				} catch (RuntimeException e) {
-					e.printStackTrace();
-					throw e;
-				} finally {
-					if (okay) {
-						trx.commit();
-					} else {
-						trx.abort();
-					}
-				}
 				}
 			}
 		}
@@ -815,7 +845,7 @@ public class TestDatabase extends BaseTestCase {
 					testUpdate();
 					testDelete();
 				}
-			} catch (Exception e) {
+			} catch (Throwable e) {
 				testCase.setThreadFailed(Thread.currentThread(), e);
 			}
 		}
