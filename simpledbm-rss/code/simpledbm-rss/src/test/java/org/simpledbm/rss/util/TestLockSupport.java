@@ -1,11 +1,5 @@
 package org.simpledbm.rss.util;
 
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.LockSupport;
-
-import org.simpledbm.rss.api.thread.SimpleDBMLockSupport;
-import org.simpledbm.rss.api.thread.SimpleDBMThread;
-
 import junit.framework.TestCase;
 
 public class TestLockSupport extends TestCase {
