@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simpledbm.database</groupId>
@@ -10,10 +9,10 @@
 	<url>http://www.simpledbm.org</url>
 	<scm>
 		<connection>
-			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database
+			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database 
 		</connection>
 		<developerConnection>
-			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database
+			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database 
 		</developerConnection>
 		<url>http://simpledbm.googlecode.com/svn/</url>
 	</scm>
@@ -30,12 +29,9 @@
 			<properties />
 		</developer>
 	</developers>
-
 	<licenses>
 		<license>
-			<name>
-				The GNU General Public License version 2.0 or later
-			</name>
+			<name> The GNU General Public License version 2.0 or later </name>
 			<url>http://www.gnu.org/licenses/gpl.txt</url>
 		</license>
 	</licenses>
@@ -43,7 +39,7 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.8</version>
+			<version>1.0.10-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
@@ -73,10 +69,16 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>-ea -Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clover-plugin</artifactId>
 				<configuration>
-					<licenseLocation>
-						${basedir}/src/test/clover/clover.license
+					<licenseLocation> ${basedir}/src/test/clover/clover.license 
 					</licenseLocation>
 					<jdk>1.5</jdk>
 					<excludes>
