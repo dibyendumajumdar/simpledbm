@@ -219,6 +219,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private static final int TEST_MODE_SPLIT_KEY = 4;
 	private static final boolean Validating = false;
+	private static final boolean QuickValidate = true;
 
     public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -456,6 +457,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             } else {
                 k = leftSibling.header.keyCount + 1;
             }
+            int j = k;
             for (IndexItem item : mergeOperation.items) {
                 q.insertAt(k++, item, true);
             }
@@ -463,6 +465,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     - (leftSibling.isLeaf() ? 1 : 0);
             leftSibling.header.rightSibling = mergeOperation.rightRightSibling;
             leftSibling.updateHeader();
+            if (QuickValidate) {
+            	leftSibling.validateItemAt(j);
+            }
             if (Validating) {
             	leftSibling.validate();
             }
@@ -518,6 +523,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         p.insertAt(k, u, false);
         parent.header.keyCount = parent.header.keyCount + 1;
         parent.updateHeader();
+        if (QuickValidate) {
+        	parent.validateItemAt(k);
+        }
         if (Validating) {
         	parent.validate();
         }
@@ -548,6 +556,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 .getMessage("EB0001"));
             throw new IndexException(mcat.getMessage("EB0001"));
         }
+        if (QuickValidate) {
+        	parent.validateItemAt(k);
+        }
         p.purge(k);
         IndexItem item = parent.getItem(k);
         if (item.getChildPageNumber() == unlinkOperation.rightSibling) {
@@ -560,6 +571,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
         parent.header.keyCount = parent.header.keyCount - 1;
         parent.updateHeader();
+        if (QuickValidate) {
+        	parent.validateItemAt(k);
+        }
         if (Validating) {
         	parent.validate();
         }
@@ -751,6 +765,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         node.insert(sr.k, insertOp.getItem());
         node.header.keyCount = node.header.keyCount + 1;
         node.updateHeader();
+        if (QuickValidate) {
+        	node.validateItemAt(sr.k);
+        }
         if (Validating) {
         	node.validate();
         }
@@ -769,6 +786,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         node.wrap(p);
         if (Validating) {
         	node.validate();
+        }
+        if (QuickValidate) {
+        	assert node.getItem(undoInsertOp.getPosition()).equals(undoInsertOp.getItem());
+        	node.validateItemAt(undoInsertOp.getPosition());
         }
         node.page.purge(undoInsertOp.getPosition());
         node.header.keyCount = node.header.keyCount - 1;
@@ -894,6 +915,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
         SearchResult sr = node.search(deleteOp.getItem());
         assert sr.exactMatch;
+        if (QuickValidate) {
+        	node.validateItemAt(sr.k);
+        }
         node.purge(sr.k);
         node.header.keyCount = node.header.keyCount - 1;
         node.updateHeader();
@@ -917,6 +941,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	node.validate();
         }
         node.insert(undoDeleteOp.getPosition(), undoDeleteOp.getItem());
+        if (QuickValidate) {
+        	node.validateItemAt(undoDeleteOp.getPosition());
+        }
         node.header.keyCount = node.header.keyCount + 1;
         node.updateHeader();
         if (Validating) {
@@ -1273,7 +1300,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void doSplit(Transaction trx, BTreeCursor bcursor) {
 
-            final BTreeImpl btree = this;
+        	assert bcursor.getQ().isLatchedForUpdate();
+        	
+        	final BTreeImpl btree = this;
 
             Lsn undoNextLsn = null;
 
@@ -1377,6 +1406,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     bcursor.unfixQ();
                     bcursor.setQ(bcursor.removeR());
                 }
+                assert bcursor.getQ().isLatchedForUpdate();
             } finally {
                 bcursor.unfixR();
             }
@@ -1452,7 +1482,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
                 bcursor.getQ().downgradeExclusiveLatch();
             }
-
+           assert bcursor.getQ().isLatchedForUpdate();
+            
             /*
              * We log the space map operation as a separate discrete action.
              * If this log record does not survive a system crash, then the page
@@ -1504,35 +1535,40 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getQ().isLatchedForUpdate();
 
             bcursor.getP().upgradeUpdateLatch();
-            BTreeNode parentNode = btree.getBTreeNode();
-            parentNode.wrap((SlottedPage) bcursor.getP().getPage());
-
-            BTreeNode lnode = btree.getBTreeNode();
-            lnode.wrap((SlottedPage) bcursor.getQ().getPage());
-            SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
-
-            LinkOperation linkOperation = (LinkOperation) btree.btreeMgr.loggableFactory
-                .getInstance(
-                    BTreeIndexManagerImpl.MODULE_ID,
-                    BTreeIndexManagerImpl.TYPE_LINK_OPERATION);
-            linkOperation.setLeaf(parentNode.isLeaf()); // should be false 
-            linkOperation.setUnique(btree.isUnique());
-            linkOperation.setKeyFactoryType(btree.keyFactoryType);
-            linkOperation.setLocationFactoryType(btree.locationFactoryType);
-            linkOperation.leftSibling = lpage.getPageId().getPageNumber();
-            linkOperation.rightSibling = lnode.header.rightSibling;
-            IndexItem u = lnode.getHighKey();
-            u.setChildPageNumber(linkOperation.leftSibling);
-            u.setLeaf(false);
-            linkOperation.leftChildHighKey = u;
-
             try {
-                Lsn lsn = trx.logInsert(parentNode.page, linkOperation);
-                btree.btreeMgr.redo(parentNode.page, linkOperation);
-                bcursor.getP().setDirty(lsn);
-            } finally {
-                bcursor.getP().downgradeExclusiveLatch();
-            }
+				BTreeNode parentNode = btree.getBTreeNode();
+				parentNode.wrap((SlottedPage) bcursor.getP().getPage());
+
+				BTreeNode lnode = btree.getBTreeNode();
+				lnode.wrap((SlottedPage) bcursor.getQ().getPage());
+				SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
+
+				LinkOperation linkOperation = (LinkOperation) btree.btreeMgr.loggableFactory
+						.getInstance(BTreeIndexManagerImpl.MODULE_ID,
+								BTreeIndexManagerImpl.TYPE_LINK_OPERATION);
+				linkOperation.setLeaf(parentNode.isLeaf()); // should be false
+				linkOperation.setUnique(btree.isUnique());
+				linkOperation.setKeyFactoryType(btree.keyFactoryType);
+				linkOperation.setLocationFactoryType(btree.locationFactoryType);
+				linkOperation.leftSibling = lpage.getPageId().getPageNumber();
+				linkOperation.rightSibling = lnode.header.rightSibling;
+				IndexItem u = lnode.getHighKey();
+				u.setChildPageNumber(linkOperation.leftSibling);
+				u.setLeaf(false);
+				linkOperation.leftChildHighKey = u;
+
+				Lsn lsn = trx.logInsert(parentNode.page, linkOperation);
+				btree.btreeMgr.redo(parentNode.page, linkOperation);
+				bcursor.getP().setDirty(lsn);
+			} finally {
+				bcursor.getP().downgradeExclusiveLatch();
+			}
+
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
+
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
         }
 
         /**
@@ -1568,34 +1604,34 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getR().isLatchedForUpdate();
 
             bcursor.getP().upgradeUpdateLatch();
-            BTreeNode parentNode = btree.getBTreeNode();
-            parentNode.wrap((SlottedPage) bcursor.getP().getPage());
-
-            UnlinkOperation unlinkOperation = (UnlinkOperation) btree.btreeMgr.loggableFactory
-                .getInstance(
-                    BTreeIndexManagerImpl.MODULE_ID,
-                    BTreeIndexManagerImpl.TYPE_UNLINK_OPERATION);
-            unlinkOperation.setLeaf(parentNode.isLeaf()); // should be false
-            unlinkOperation.setUnique(btree.isUnique());
-            unlinkOperation.setKeyFactoryType(btree.keyFactoryType);
-            unlinkOperation.setLocationFactoryType(btree.locationFactoryType);
-            unlinkOperation.leftSibling = bcursor
-                .getQ()
-                .getPage()
-                .getPageId()
-                .getPageNumber();
-            unlinkOperation.rightSibling = bcursor
-                .getR()
-                .getPage()
-                .getPageId()
-                .getPageNumber();
             try {
-                Lsn lsn = trx.logInsert(parentNode.page, unlinkOperation);
-                btree.btreeMgr.redo(parentNode.page, unlinkOperation);
-                bcursor.getP().setDirty(lsn);
-            } finally {
-                bcursor.unfixP();
-            }
+				BTreeNode parentNode = btree.getBTreeNode();
+				parentNode.wrap((SlottedPage) bcursor.getP().getPage());
+
+				UnlinkOperation unlinkOperation = (UnlinkOperation) btree.btreeMgr.loggableFactory
+						.getInstance(BTreeIndexManagerImpl.MODULE_ID,
+								BTreeIndexManagerImpl.TYPE_UNLINK_OPERATION);
+				unlinkOperation.setLeaf(parentNode.isLeaf()); // should be false
+				unlinkOperation.setUnique(btree.isUnique());
+				unlinkOperation.setKeyFactoryType(btree.keyFactoryType);
+				unlinkOperation
+						.setLocationFactoryType(btree.locationFactoryType);
+				unlinkOperation.leftSibling = bcursor.getQ().getPage()
+						.getPageId().getPageNumber();
+				unlinkOperation.rightSibling = bcursor.getR().getPage()
+						.getPageId().getPageNumber();
+				Lsn lsn = trx.logInsert(parentNode.page, unlinkOperation);
+				btree.btreeMgr.redo(parentNode.page, unlinkOperation);
+				bcursor.getP().setDirty(lsn);
+			} finally {
+				bcursor.unfixP();
+			}
+
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
+
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
         }
 
         /**
@@ -2284,6 +2320,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
             while (tryAgain) {
                 // FIXME Test case
+            	log.warn(getClass().getName(), "repairPageUnderflow", "Retrying repairPageUnderflow");
                 tryAgain = doRepairPageUnderflow(trx, bcursor);
             }
         }
@@ -3806,6 +3843,70 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
         }
 
+        public final void validateItemAt(int slot) {
+			try {
+				IndexItem thisItem = getItem(slot);
+				if (slot > 1) {
+					IndexItem prevItem = getItem(slot - 1);
+					if (prevItem.compareTo(thisItem) >= 0) {
+						throw new RSSException("Item at slot " + slot + " is in wrong order");
+					}
+				}
+				if (isLeaf()) {
+					if (slot == header.keyCount - 1) {
+						// key before high key can be equal or less than high key in a leaf page
+						IndexItem nextItem = getItem(slot + 1);
+						if (thisItem.compareTo(nextItem) > 0) {
+							throw new RSSException("Item at slot " + slot
+									+ " is in wrong order");
+						}
+					}
+					else if (slot < header.keyCount - 1) {
+						IndexItem nextItem = getItem(slot + 1);
+						if (thisItem.compareTo(nextItem) >= 0) {
+							throw new RSSException("Item at slot " + slot
+									+ " is in wrong order");
+						}
+					}
+				}
+				else {
+					if (slot < header.keyCount) {
+						IndexItem nextItem = getItem(slot + 1);
+						if (thisItem.compareTo(nextItem) >= 0) {
+							throw new RSSException("Item at slot " + slot
+									+ " is in wrong order");
+						}
+					}
+				}
+			} catch (RSSException e) {
+				e.printStackTrace();
+				dumpAsXml();
+				throw e;
+			}
+		}
+        
+        public final void validateHeader() {
+			try {
+				if (page.getNumberOfSlots() == 0) {
+					return;
+				}
+				if (isDeallocated()) {
+					throw new RSSException("Page is marked for deallocation");
+				}
+				if (page.getSpaceMapPageNumber() == -1) {
+					throw new RSSException(
+							"Page has not been assigned a space amap page");
+				}
+				if (page.getNumberOfSlots() != header.keyCount + 1) {
+					throw new RSSException("Mismatch is keycount");
+				}
+			} catch (RSSException e) {
+				e.printStackTrace();
+				dumpAsXml();
+				throw e;
+			}
+		}
+
         /**
          * Validates the contents of the BTree node.
          */
@@ -3821,6 +3922,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				if (page.getSpaceMapPageNumber() == -1) {
 					throw new RSSException(
 							"Page has not been assigned a space amap page");
+				}
+				if (page.getNumberOfSlots() != header.keyCount + 1) {
+					throw new RSSException("Mismatch is keycount");
 				}
 				BTreeNodeHeader header = (BTreeNodeHeader) page.get(
 						HEADER_KEY_POS, new BTreeNodeHeader());
