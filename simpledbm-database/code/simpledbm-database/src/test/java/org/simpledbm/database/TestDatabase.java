@@ -806,6 +806,10 @@ public class TestDatabase extends BaseTestCase {
 									// +
 									// " found " + scanRow + ", expected " +
 									// tableRow);
+									if (scanRow.compareTo(tableRow) > 0) {
+										System.err.println("ScannedRow = " + scanRow);
+										System.err.println("Search criteria = " + tableRow);
+									}
 									assertTrue(scanRow.compareTo(tableRow) > 0);
 								} else {
 								}
@@ -853,7 +857,7 @@ public class TestDatabase extends BaseTestCase {
 	
 	public void testStress() throws Exception {
 
-		int numThreads = 2;
+		int numThreads = 3;
 		int range = 10000;
 		int iterations = 1;
 		
