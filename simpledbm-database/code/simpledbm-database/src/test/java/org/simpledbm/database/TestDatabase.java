@@ -772,6 +772,7 @@ public class TestDatabase extends BaseTestCase {
 
 			for (int i = startno; i < (startno + range); i++) {
 				boolean okay = false;
+				int deadlockcount = 0;
 				while (!okay) {
 					if (testCase.threadFailed()) {
 						return;
@@ -807,8 +808,11 @@ public class TestDatabase extends BaseTestCase {
 									// " found " + scanRow + ", expected " +
 									// tableRow);
 									if (scanRow.compareTo(tableRow) > 0) {
+										System.err.println("=========================================");
+										System.err.println("Deadlockcount = " + deadlockcount);
 										System.err.println("ScannedRow = " + scanRow);
 										System.err.println("Search criteria = " + tableRow);
+										System.err.println("=========================================");
 									}
 									assertTrue(scanRow.compareTo(tableRow) > 0);
 								} else {
@@ -821,6 +825,7 @@ public class TestDatabase extends BaseTestCase {
 						okay = true;
 					} catch (LockDeadlockException e) {
 						e.printStackTrace();
+						deadlockcount++;
 					} catch (RuntimeException e) {
 						e.printStackTrace();
 						throw e;
