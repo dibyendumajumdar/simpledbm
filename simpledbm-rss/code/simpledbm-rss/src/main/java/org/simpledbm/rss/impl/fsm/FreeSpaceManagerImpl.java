@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -2118,8 +2119,21 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                                 + " stopSMP=" + stopSMP);
                 }
 
+                int looping = 0;
                 while (pass < numPasses) {
 
+                	looping++;
+                	
+                	if (looping > 5) {
+                		System.err.println("We are looping");
+                		System.err.println("Pass = " + pass);
+                		System.err.println("Numpasses = " + numPasses);
+                		System.err.println("lastSMP = " + lastSMP);
+                		System.err.println("stopSMP = " + stopSMP);
+                		System.err.println("maxPageNumber = " + maxPageNumber);
+                   		System.err.println("smpPageId = " + smpPageId);
+                   	    throw new RSSException();
+                	}
                     /*
                      * We have to latch exclusively - it would be better to latch in update mode,
                      * and upgrade to exclusive if the change is made.
@@ -2179,6 +2193,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                         }
                     }
 
+                    
                     if (nextSMP > lastSMP) {
                         readHeaderPage();
                     } else if (nextSMP == 0) {
@@ -2209,6 +2224,19 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     } else {
                         smpPageId = new PageId(containerId, nextSMP);
                     }
+
+                	if (looping > 4) {
+                		System.err.println("We are looping");
+                		System.err.println("Pass = " + pass);
+                		System.err.println("Numpasses = " + numPasses);
+                		System.err.println("nextSMP = " + nextSMP);
+                		System.err.println("lastSMP = " + lastSMP);
+                		System.err.println("stopSMP = " + stopSMP);
+                		System.err.println("maxPageNumber = " + maxPageNumber);
+                   		System.err.println("smpPageId = " + smpPageId);
+                		throw new RSSException();
+                	}
+ 
                 }
 
                 /*
