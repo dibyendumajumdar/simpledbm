@@ -3845,6 +3845,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public final void validateItemAt(int slot) {
 			try {
+				Thread.yield();
 				IndexItem thisItem = getItem(slot);
 				if (slot > 1) {
 					IndexItem prevItem = getItem(slot - 1);
@@ -3915,6 +3916,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	if (page.getNumberOfSlots() == 0) {
         		return;
         	}
+        	Thread.yield();
         	try {
 				if (isDeallocated()) {
 					throw new RSSException("Page is marked for deallocation");
@@ -3936,6 +3938,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						deletedCount++;
 						continue;
 					}
+					Thread.yield();
 					keyCount++;
 					IndexItem item = (IndexItem) page.get(k, getNewIndexItem());
 					if (prevItem != null) {
