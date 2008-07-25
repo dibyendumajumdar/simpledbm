@@ -449,7 +449,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	leftSibling.validate();
             }
             int k;
-//            int prevHighKey = leftSibling.header.keyCount;
+            int prevHighKey = leftSibling.header.keyCount;
             if (leftSibling.isLeaf()) {
                 // delete the high key
                 k = leftSibling.header.keyCount;
@@ -468,19 +468,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (QuickValidate) {
             	leftSibling.validateItemAt(j);
             }
-            if (Validating) {
-            	leftSibling.validate();
-            }
             //if (Validating) {
-//            	try {
-//            		leftSibling.validate();
-//            	}
-//            	catch (RSSException e) {
-//            		System.err.println("Previous high key = " + prevHighKey);
-//            		System.err.println("MergeOperation = " + mergeOperation);
-//            		throw e;
-//            	}
+            //	leftSibling.validate();
             //}
+            if (Validating) {
+            	try {
+            		leftSibling.validate();
+            	}
+            	catch (RSSException e) {
+            		System.err.println("==============================");
+            		System.err.println("Previous high key = " + prevHighKey);
+            		System.err.println("MergeOperation = " + mergeOperation);
+            		throw e;
+            	}
+            }
             leftSibling.dump();
         } else if (page.getPageId().getPageNumber() == mergeOperation.rightSibling) {
             // mark right sibling as deallocated
