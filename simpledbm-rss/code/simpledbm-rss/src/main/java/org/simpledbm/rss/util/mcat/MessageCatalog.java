@@ -377,7 +377,7 @@ public class MessageCatalog {
         msgs
             .put(
                 "WC0011",
-                "SIMPLEDBM-WC0011: Detected deadlock cycle: R1 {0} (victim) waiting for R2 {1}\nR1 {2}\nR2 {3}");
+                "SIMPLEDBM-WC0011: Detected deadlock cycle: \nR1 {0} \n\t(victim) waiting for \n\tR2 {1}\n\tlock items:\n\tR1 {2}\n\tR2 {3}");
         msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
         msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
         msgs.put("IC0014", "SIMPLEDBM-IC0014: Dumping lock table");
