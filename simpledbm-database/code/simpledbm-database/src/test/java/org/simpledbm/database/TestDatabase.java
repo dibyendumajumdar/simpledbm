@@ -798,16 +798,18 @@ public class TestDatabase extends BaseTestCase {
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {
+							Row indexSearchRow = table.getIndexRow(j, tableRow);
 							TableScan scan = table.openScan(trx, j, tableRow,
 									false);
 							try {
 								if (scan.fetchNext()) {
 									Row scanRow = scan.getCurrentRow();
+									Row scannedIndexRow = scan.getCurrentIndexRow();
 									// System.err.println("Search by index " + j
 									// +
 									// " found " + scanRow + ", expected " +
 									// tableRow);
-									if (scanRow.compareTo(tableRow) <= 0) {
+									if (scannedIndexRow.compareTo(indexSearchRow) <= 0) {
 										System.err.println("=========================================");
 										System.err.println("Index = " + j);
 										System.err.println("Deadlockcount = " + deadlockcount);
@@ -815,7 +817,7 @@ public class TestDatabase extends BaseTestCase {
 										System.err.println("Search criteria = " + tableRow);
 										System.err.println("=========================================");
 									}
-									assertTrue(scanRow.compareTo(tableRow) > 0);
+									assertTrue(scannedIndexRow.compareTo(indexSearchRow) > 0);
 								} else {
 								}
 								scan.fetchCompleted(false);
