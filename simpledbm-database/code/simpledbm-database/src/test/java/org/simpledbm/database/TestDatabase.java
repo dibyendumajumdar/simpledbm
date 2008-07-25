@@ -680,7 +680,7 @@ public class TestDatabase extends BaseTestCase {
 												.getString() + "@gmail.com");
 						tableRow.getColumnValue(5).setDate(
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(-i);
+						tableRow.getColumnValue(6).setLong(-i);
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {
@@ -807,8 +807,9 @@ public class TestDatabase extends BaseTestCase {
 									// +
 									// " found " + scanRow + ", expected " +
 									// tableRow);
-									if (scanRow.compareTo(tableRow) > 0) {
+									if (scanRow.compareTo(tableRow) <= 0) {
 										System.err.println("=========================================");
+										System.err.println("Index = " + j);
 										System.err.println("Deadlockcount = " + deadlockcount);
 										System.err.println("ScannedRow = " + scanRow);
 										System.err.println("Search criteria = " + tableRow);
