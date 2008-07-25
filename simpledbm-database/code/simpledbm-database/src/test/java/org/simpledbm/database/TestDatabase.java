@@ -680,7 +680,7 @@ public class TestDatabase extends BaseTestCase {
 												.getString() + "@gmail.com");
 						tableRow.getColumnValue(5).setDate(
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setLong(-i);
+						tableRow.getColumnValue(6).setInt(-i);
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {
