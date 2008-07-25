@@ -1490,6 +1490,18 @@ public final class LockManagerImpl implements LockManager {
                     }
                     me.cycle = him;
                     if (him.cycle != null) {
+                    	/*
+                    	 * Choose the victim:
+                    	 * Prefer the manual duration locker to be a victim
+                    	 */
+                    	if (him.myLockRequest.duration == LockDuration.MANUAL_DURATION && me.myLockRequest.duration == LockDuration.COMMIT_DURATION) {
+                    		/*
+                    		 * Swap him and me.
+                    		 */
+                    		LockWaiter temp = me;
+                    		me = him;
+                    		him = temp;
+                    	}
                         log.warn(
                             log.getClass().getName(),
                             "findDeadlockCycle",
@@ -1499,6 +1511,7 @@ public final class LockManagerImpl implements LockManager {
                                 him.myLockRequest,
                                 me.myLockRequest.lockItem,
                                 him.myLockRequest.lockItem));
+                        
                         me.myLockRequest.status = LockRequestStatus.DENIED;
                         LockSupport.unpark(me.thread);
                         return true;
@@ -1532,6 +1545,18 @@ public final class LockManagerImpl implements LockManager {
                     }
                     me.cycle = him;
                     if (him.cycle != null) {
+                    	/*
+                    	 * Choose the victim:
+                    	 * Prefer the manual duration locker to be a victim
+                    	 */
+                    	if (him.myLockRequest.duration == LockDuration.MANUAL_DURATION && me.myLockRequest.duration == LockDuration.COMMIT_DURATION) {
+                    		/*
+                    		 * Swap him and me.
+                    		 */
+                    		LockWaiter temp = me;
+                    		me = him;
+                    		him = temp;
+                    	}
                         log.warn(
                             log.getClass().getName(),
                             "findDeadlockCycle",
