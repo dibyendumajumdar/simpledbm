@@ -734,7 +734,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             int pageNumber = -1;
             int spaceMapPage = -1;
             int spacebitsBefore = 0;
+
+            int looping = 0;
+            int extended = 0;
             while (pageNumber == -1) {
+            	looping++;
                 pageNumber = spcursor
                     .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                         maxPageSpace,
@@ -746,6 +750,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                             maxPageSpace,
                             requiredSpace));
+                    extended++;
                     if (pageNumber == -1) {
                         log.error(
                             this.getClass().getName(),
@@ -781,6 +786,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         bab.unfix();
                         bab = null;
                     }
+                }
+                if (looping > 100 && extended == 0) {
+                	throw new TupleException("We are looping");
                 }
             }
             if (log.isDebugEnabled()) {
@@ -1076,7 +1084,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     int spaceMapPage = -1;
                     int spacebitsBefore = -1;
 
+                    int looping = 0;
+                    int extended = 0;
                     while (pageNumber == -1) {
+                    	looping++;
                         pageNumber = spcursor
                             .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                                 maxPageSpace,
@@ -1088,6 +1099,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                                     maxPageSpace,
                                     requiredSpace));
+                            extended++;
                             if (pageNumber == -1) {
                                 log.error(
                                     this.getClass().getName(),
@@ -1121,6 +1133,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 // FIXME Test case needed
                                 bab.unfix();
                             }
+                        }
+                        if (looping > 100 && extended == 0) {
+                        	throw new TupleException("We are looping");
                         }
                     }
 
