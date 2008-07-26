@@ -187,6 +187,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     final LockAdaptor lockAdaptor;
 
     static final MessageCatalog mcat = new MessageCatalog();
+    
+    static int maximumPageSpaceFaults = 10;
 
     public TupleManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -735,22 +737,23 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             int spaceMapPage = -1;
             int spacebitsBefore = 0;
 
-            int looping = 0;
-            int extended = 0;
+            int previouslySeenPageNumber = -1;
             while (pageNumber == -1) {
-            	looping++;
                 pageNumber = spcursor
                     .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                         maxPageSpace,
                         requiredSpace));
-                if (pageNumber == -1) {
+                /*
+                 * If we hit a page we have seen before then we are looping because
+                 * space map is not accurate due to uncommitted deletes.
+                 */
+                if ((previouslySeenPageNumber != -1 && pageNumber == previouslySeenPageNumber) || pageNumber == -1) {
                     // FIXME Test case needed
                     spacemgr.extendContainer(trx, containerId);
                     pageNumber = spcursor
                         .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                             maxPageSpace,
                             requiredSpace));
-                    extended++;
                     if (pageNumber == -1) {
                         log.error(
                             this.getClass().getName(),
@@ -760,6 +763,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             "ET0004",
                             containerId));
                     }
+                }
+                if (pageNumber != -1 && previouslySeenPageNumber == -1) {
+                	previouslySeenPageNumber = pageNumber;
                 }
                 spaceMapPage = spcursor
                     .getCurrentSpaceMapPage()
@@ -786,9 +792,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         bab.unfix();
                         bab = null;
                     }
-                }
-                if (looping > 100 && extended == 0) {
-                	throw new TupleException("We are looping");
                 }
             }
             if (log.isDebugEnabled()) {
@@ -1084,22 +1087,23 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     int spaceMapPage = -1;
                     int spacebitsBefore = -1;
 
-                    int looping = 0;
-                    int extended = 0;
+                    int previouslySeenPageNumber = -1;
                     while (pageNumber == -1) {
-                    	looping++;
                         pageNumber = spcursor
                             .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                                 maxPageSpace,
                                 requiredSpace));
-                        if (pageNumber == -1) {
+                        /*
+                         * If we hit a page we have seen before then we are looping because
+                         * space map is not accurate due to uncommitted deletes.
+                         */
+                        if ((previouslySeenPageNumber != -1 && pageNumber == previouslySeenPageNumber) || pageNumber == -1) {
                             // FIXME Test case needed
                             spacemgr.extendContainer(trx, containerId);
                             pageNumber = spcursor
                                 .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
                                     maxPageSpace,
                                     requiredSpace));
-                            extended++;
                             if (pageNumber == -1) {
                                 log.error(
                                     this.getClass().getName(),
@@ -1109,6 +1113,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                     "ET0004",
                                     containerId));
                             }
+                        }
+                        if (pageNumber != -1 && previouslySeenPageNumber == -1) {
+                        	previouslySeenPageNumber = pageNumber;
                         }
                         spaceMapPage = spcursor
                             .getCurrentSpaceMapPage()
@@ -1134,9 +1141,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 bab.unfix();
                                 bab = null;
                             }
-                        }
-                        if (looping > 100 && extended == 0) {
-                        	throw new TupleException("We are looping");
                         }
                     }
 
