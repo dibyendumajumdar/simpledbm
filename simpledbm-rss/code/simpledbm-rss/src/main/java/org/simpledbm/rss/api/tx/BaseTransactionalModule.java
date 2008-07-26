@@ -21,6 +21,7 @@ package org.simpledbm.rss.api.tx;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.thread.TraceBuffer;
 
 /**
  * Provides a convenient base class for implementing Transactional Modules.
@@ -31,6 +32,8 @@ import org.simpledbm.rss.api.pm.Page;
  */
 public abstract class BaseTransactionalModule implements TransactionalModule {
 
+    final TraceBuffer traceBuffer = TraceBuffer.getTraceBuffer(1000);
+	
     public void undo(Transaction trx, Undoable undoable) {
         throw new TransactionException();
     }
@@ -49,4 +52,11 @@ public abstract class BaseTransactionalModule implements TransactionalModule {
         throw new TransactionException();
     }
 
+    public void traceDump() {
+    	traceBuffer.dump();
+    }
+    
+    protected void trace(String message) {
+    	traceBuffer.put(message);
+    }
 }
