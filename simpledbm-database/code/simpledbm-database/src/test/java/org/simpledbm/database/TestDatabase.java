@@ -767,15 +767,15 @@ public class TestDatabase extends BaseTestCase {
 							trx.abort();
 						}
 					}
-					if (!okay) {
-						// a deadlock occurred. if more than 3 threads are trying to delete
-						// stuff from next to each other this can cause problems. 
-						// Let's try to help this by waiting for a short while
-						try {
-							Thread.sleep(100);
-						} catch (InterruptedException e) {
-						}
-					}
+//					if (!okay) {
+//						// a deadlock occurred. if more than 3 threads are trying to delete
+//						// stuff from next to each other this can cause problems. 
+//						// Let's try to help this by waiting for a short while
+//						try {
+//							Thread.sleep(100);
+//						} catch (InterruptedException e) {
+//						}
+//					}
 				}
 			}
 
