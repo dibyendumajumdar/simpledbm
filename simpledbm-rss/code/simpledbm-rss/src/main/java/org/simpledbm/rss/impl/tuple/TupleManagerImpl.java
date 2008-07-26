@@ -1132,6 +1132,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             if (pageNumber == -1) {
                                 // FIXME Test case needed
                                 bab.unfix();
+                                bab = null;
                             }
                         }
                         if (looping > 100 && extended == 0) {
