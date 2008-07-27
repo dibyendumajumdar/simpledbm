@@ -22,6 +22,7 @@ package org.simpledbm.rss.api.tuple;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.api.tx.TransactionalModule;
 
 /**
  * TupleManager sub-system provides an abstraction for managing
@@ -38,7 +39,7 @@ import org.simpledbm.rss.api.tx.Transaction;
  * @author Dibyendu Majumdar
  * @since 07-Dec-2005
  */
-public interface TupleManager {
+public interface TupleManager extends TransactionalModule {
 
 	
 	/**

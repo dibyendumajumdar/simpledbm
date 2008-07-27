@@ -97,4 +97,8 @@ public interface TransactionalModule {
      */
     void redo(Loggable loggable);
 
+    /**
+     * Dump trace information gathered so far.
+     */
+    void traceDump();
 }
