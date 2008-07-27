@@ -21,6 +21,7 @@ package org.simpledbm.rss.api.im;
 
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.api.tx.TransactionalModule;
 
 /**
  * The Index Manager interface provides facilities for creating creating new Indexes 
@@ -28,7 +29,7 @@ import org.simpledbm.rss.api.tx.Transaction;
  * 
  * @author Dibyendu Majumdar
  */
-public interface IndexManager {
+public interface IndexManager extends TransactionalModule {
 
     /**
      * Creates a new index with specified container name and ID. Prior to calling this
