@@ -548,7 +548,7 @@ public class TestBTreeManager extends BaseTestCase {
 			int pageNumber = 2;
 			Transaction trx;
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, pageNumber), 0));
 			try {
 				trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -602,7 +602,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, l), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			try {
@@ -666,7 +666,7 @@ public class TestBTreeManager extends BaseTestCase {
 			// prepareParentPage(pageFactory, bufmgr, btree, 1, 4, testUnique,
 			// 2);
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -742,7 +742,7 @@ public class TestBTreeManager extends BaseTestCase {
 			// prepareParentPage(pageFactory, bufmgr, btree, 1, 4, testUnique,
 			// 2);
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -775,7 +775,7 @@ public class TestBTreeManager extends BaseTestCase {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -809,7 +809,7 @@ public class TestBTreeManager extends BaseTestCase {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, q), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
@@ -860,7 +860,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -911,7 +911,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -962,7 +962,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeCursor bcursor = new BTreeCursor();
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, q), 0));
 			try {
@@ -3563,6 +3563,7 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 
 		public void shutdown() {
+			btreeMgr.traceDump();
 			trxmgr.shutdown();
 			bufmgr.shutdown();
 			logmgr.shutdown();

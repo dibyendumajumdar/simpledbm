@@ -138,7 +138,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         .getName());
 
     static final MessageCatalog mcat = new MessageCatalog();
-
+    
     private static final short MODULE_ID = 4;
 
     private static final short TYPE_BASE = 40;
@@ -219,7 +219,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private static final int TEST_MODE_SPLIT_KEY = 4;
 	private static final boolean Validating = false;
-	private static final boolean QuickValidate = true;
+	private static final boolean QuickValidate = false;
 
     public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -370,6 +370,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private void redoSplitOperation(Page page, SplitOperation splitOperation) {
         if (page.getPageId().equals(splitOperation.getPageId())) {
+        	trace("redo split: splitting page " + page.getPageId());
             // q is the page to be split
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(splitOperation);
@@ -399,6 +400,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
             leftSibling.dump();
         } else {
+        	trace("redo split: initializing new sibling page " + page.getPageId());
             // r is the newly allocated right sibling of q
             SlottedPage r = (SlottedPage) page;
             r.init();
@@ -435,12 +437,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
         if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
+        	trace("redo merge: updating space map page " + page.getPageId());
             FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
             // deallocate page by marking it unused
             smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
         } else if (page.getPageId().getPageNumber() == mergeOperation
             .getPageId()
             .getPageNumber()) {
+        	trace("redo merge: merging into page " + page.getPageId());
             // left sibling - this page will aborb contents of right sibling.
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(mergeOperation);
@@ -485,6 +489,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             leftSibling.dump();
         } else if (page.getPageId().getPageNumber() == mergeOperation.rightSibling) {
             // mark right sibling as deallocated
+        	trace("redo merge: deallocating merged page " + page.getPageId());
             SlottedPage p = (SlottedPage) page;
             short flags = p.getFlags();
             p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
@@ -497,6 +502,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see LinkOperation
      */
     private void redoLinkOperation(Page page, LinkOperation linkOperation) {
+    	trace("redo link: updating parent page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(linkOperation);
         parent.wrap(p);
@@ -539,6 +545,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see UnlinkOperation 
      */
     private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
+    	trace("redo unlink: updating parent page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(unlinkOperation);
         parent.wrap(p);
@@ -600,6 +607,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 // moving key left
                 // the new key will become the high key
                 // FIXME Test case
+            	trace("redo distribute: inserting key into left sibling " + page.getPageId());
                 node.header.keyCount = node.header.keyCount + 1;
                 node.updateHeader();
                 p.insertAt(
@@ -615,6 +623,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             } else {
                 // moving key right
                 // delete current high key
+            	trace("redo distribute: removing key from left sibling " + page.getPageId());
                 p.purge(node.header.keyCount);
                 node.header.keyCount = node.header.keyCount - 1;
                 node.updateHeader();
@@ -630,12 +639,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 // moving key left
                 // delete key from position 1
                 // FIXME Test case
+            	trace("redo distribute: removing key from right sibling " + page.getPageId());
                 p.purge(FIRST_KEY_POS);
                 node.header.keyCount = node.header.keyCount - 1;
                 node.updateHeader();
             } else {
                 // moving key right
                 // insert new key at position 1
+            	trace("redo distribute: inserting key into right sibling " + page.getPageId());
                 p.insertAt(FIRST_KEY_POS, redistributeOperation.key, false);
                 node.header.keyCount = node.header.keyCount + 1;
                 node.updateHeader();
@@ -657,6 +668,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(ithOperation);
         if (p.getPageId().equals(ithOperation.getPageId())) {
+        	trace("redo increase tree height: initializing root page " + page.getPageId());
             // root page
             // get rid of existing entries by reinitializing page
             int savedPageNumber = p.getSpaceMapPageNumber();
@@ -670,6 +682,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             node.header.keyCount = 2;
             node.updateHeader();
         } else if (p.getPageId().getPageNumber() == ithOperation.leftSibling) {
+        	trace("redo increase tree height: initializing new child (left sibling) " + page.getPageId());
             // new left sibling
             p.init();
             formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
@@ -710,6 +723,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         } else if (page.getPageId().getPageNumber() == dthOperation
             .getPageId()
             .getPageNumber()) {
+        	trace("redo decrease tree height: updating root page " + page.getPageId() + " with contents of child page");
             // root page 
             // delete contents and absorb contents of only child
             SlottedPage p = (SlottedPage) page;
@@ -735,6 +749,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             node.dump();
         } else if (page.getPageId().getPageNumber() == dthOperation.childPageNumber) {
             // mark child page as deallocated. 
+        	trace("redo decrease tree height: marking child page " + page.getPageId() + " as deallocated");
             SlottedPage p = (SlottedPage) page;
             short flags = p.getFlags();
             p.setFlags((short) (flags | BTreeNode.NODE_TREE_DEALLOCATED));
@@ -749,6 +764,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
      */
     private void redoInsertOperation(Page page, InsertOperation insertOp) {
+    	trace("redo insert: inserting key into page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(insertOp);
         node.wrap(p);
@@ -782,6 +798,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private void redoUndoInsertOperation(Page page,
             UndoInsertOperation undoInsertOp) {
+    	trace("redo undo insert: removing inserted key from page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(undoInsertOp);
         node.wrap(p);
@@ -818,7 +835,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
 //		}
 
-        BTreeCursor bcursor = new BTreeCursor();
+        BTreeCursor bcursor = new BTreeCursor(this);
+        trace("undo insert: fixing exclusively as P " + insertOp.getPageId());
         bcursor.setP(bufmgr.fixExclusive(insertOp.getPageId(), false, -1, 0));
         try {
             SlottedPage p = (SlottedPage) bcursor.getP().getPage();
@@ -839,6 +857,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  */
                 doSearch = true;
             } else {
+            	trace("undo insert: searching page " + p.getPageId());
                 sr = node.search(insertOp.getItem());
                 if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
                     /*
@@ -859,6 +878,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * We need to traverse the tree to find the leaf page where the key
                  * now lives.
                  */
+            	trace("undo insert: original page not available or key has moved, need to search the tree");
                 bcursor.unfixP();
                 BTreeImpl btree = getBTreeImpl(insertOp
                     .getPageId()
@@ -869,6 +889,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /* At this point p points to the leaf page where the key is present */
                 assert bcursor.getP() != null;
                 assert bcursor.getP().isLatchedForUpdate();
+                trace("undo insert: upgrading latch on P from update to exclusive " + bcursor.getP().getPage().getPageId());
                 bcursor.getP().upgradeUpdateLatch();
                 p = (SlottedPage) bcursor.getP().getPage();
                 node = new BTreeNode(insertOp);
@@ -908,7 +929,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param deleteOp The log operation describing the delete
      */
     private void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
-        SlottedPage p = (SlottedPage) page;
+    	trace("redo delete: removing key from page " + page.getPageId());
+    	SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(deleteOp);
         node.wrap(p);
         if (Validating) {
@@ -935,6 +957,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     private void redoUndoDeleteOperation(Page page,
             UndoDeleteOperation undoDeleteOp) {
+    	trace("redo undo delete: re-inserting key in page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(undoDeleteOp);
         node.wrap(p);
@@ -971,7 +994,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //		log(n, <T, undo-delete, Q, (k, x), m>);
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
 
-        BTreeCursor bcursor = new BTreeCursor();
+        BTreeCursor bcursor = new BTreeCursor(this);
+        trace("undo delete: fixing exclusively as P " + deleteOp.getPageId());
         bcursor.setP(bufmgr.fixExclusive(deleteOp.getPageId(), false, -1, 0));
         try {
             SlottedPage p = (SlottedPage) bcursor.getP().getPage();
@@ -997,6 +1021,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * We need to traverse the tree to find the leaf page where the key
                  * now lives.
                  */
+            	trace("undo delete: key cannot be removed from original page");
                 bcursor.unfixP();
                 BTreeImpl btree = getBTreeImpl(deleteOp
                     .getPageId()
@@ -1014,6 +1039,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     btree.doSplit(trx, bcursor);
                     bcursor.setP(bcursor.removeQ());
                 }
+                assert bcursor.getP().isLatchedForUpdate();
+                trace("undo delete: upgrading latch on P " + bcursor.getP().getPage().getPageId() + " from update to exclusive");
                 bcursor.getP().upgradeUpdateLatch();
                 p = (SlottedPage) bcursor.getP().getPage();
                 node.wrap(p);
@@ -1259,6 +1286,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.unique = unique;
             spaceCursor = btreeMgr.spaceMgr.getSpaceCursor(containerId);
         }
+        
+        void trace(String message) {
+        	btreeMgr.trace(message);
+        }
 
         public final boolean isUnique() {
             return unique;
@@ -1313,6 +1344,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             try {
                 if (newSiblingPageNumber == -1) {
 
+                	trace("do split: extending container");
                     btree.btreeMgr.spaceMgr.extendContainer(
                         trx,
                         btree.containerId);
@@ -1341,6 +1373,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
 
             BTreeNode leftSiblingNode = btree.getBTreeNode();
+            trace("do split: upgrading latch on Q " + bcursor.getQ().getPage().getPageId() + " from update to exclusive");
             bcursor.getQ().upgradeUpdateLatch();
             assert bcursor.getQ().isLatchedExclusively();
             leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
@@ -1381,6 +1414,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 splitOperation.newKeyCount = (short) (medianKey - 1);
             }
 
+            trace("do split: latching new right sibling R exclusively " + newSiblingPageId);
             bcursor.setR(btree.btreeMgr.bufmgr.fixExclusive(
                 newSiblingPageId,
                 true,
@@ -1399,11 +1433,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int comp = splitOperation.highKey.compareTo(bcursor.searchKey);
                 if (comp >= 0) {
                     // new key will stay in current page
+                	trace("do split: downgrading latch on Q " + bcursor.getQ().getPage().getPageId());
                     bcursor.getQ().downgradeExclusiveLatch();
+                	assert bcursor.getQ().isLatchedForUpdate();
                     bcursor.unfixR();
                 } else {
                     // new key will be in the right sibling
+                	trace("do split: downgrading latch on R " + bcursor.getR().getPage().getPageId());
                     bcursor.getR().downgradeExclusiveLatch();
+                	assert bcursor.getR().isLatchedForUpdate();
                     bcursor.unfixQ();
                     bcursor.setQ(bcursor.removeR());
                 }
@@ -1433,9 +1471,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getQ().isLatchedForUpdate();
 
             BTreeNode leftSiblingNode = btree.getBTreeNode();
+            trace("do merge: upgrading update latch on Q " + bcursor.getQ().getPage().getPageId() + " to exclusive mode");
             bcursor.getQ().upgradeUpdateLatch();
             leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 
+            trace("do merge: upgrading update latch on R " + bcursor.getR().getPage().getPageId() + " to exclusive mode");
             bcursor.getR().upgradeUpdateLatch();
             BTreeNode rnode = btree.getBTreeNode();
             rnode.wrap((SlottedPage) bcursor.getR().getPage());
@@ -1481,6 +1521,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
                 bcursor.unfixR();
 
+                trace("do merge: downgrading exclusive latch on Q " + bcursor.getQ().getPage().getPageId());
                 bcursor.getQ().downgradeExclusiveLatch();
             }
            assert bcursor.getQ().isLatchedForUpdate();
@@ -1535,6 +1576,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getQ() != null;
             assert bcursor.getQ().isLatchedForUpdate();
 
+            trace("do link: upgrading update latch on P " + bcursor.getP().getPage().getPageId() + " to exclusive");
             bcursor.getP().upgradeUpdateLatch();
             try {
 				BTreeNode parentNode = btree.getBTreeNode();
@@ -1544,6 +1586,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				lnode.wrap((SlottedPage) bcursor.getQ().getPage());
 				SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
 
+				assert parentNode.findIndexItem(lnode.header.rightSibling) == null;
+				
 				LinkOperation linkOperation = (LinkOperation) btree.btreeMgr.loggableFactory
 						.getInstance(BTreeIndexManagerImpl.MODULE_ID,
 								BTreeIndexManagerImpl.TYPE_LINK_OPERATION);
@@ -1562,6 +1606,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				btree.btreeMgr.redo(parentNode.page, linkOperation);
 				bcursor.getP().setDirty(lsn);
 			} finally {
+	            trace("do link: downgrading exclusive latch on P " + bcursor.getP().getPage().getPageId());
 				bcursor.getP().downgradeExclusiveLatch();
 			}
 
@@ -1604,6 +1649,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getR() != null;
             assert bcursor.getR().isLatchedForUpdate();
 
+            trace("do unlink: upgrading update latch on P " + bcursor.getP().getPage().getPageId() + " to exclusive");
             bcursor.getP().upgradeUpdateLatch();
             try {
 				BTreeNode parentNode = btree.getBTreeNode();
@@ -1658,10 +1704,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             assert bcursor.searchKey != null;
 
+            trace("do distribute: upgrading update latch on Q " + bcursor.getQ().getPage().getPageId() + " to exclusive");
             bcursor.getQ().upgradeUpdateLatch();
             BTreeNode leftSiblingNode = btree.getBTreeNode();
             leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 
+            trace("do distribute: upgrading update latch on R " + bcursor.getR().getPage().getPageId() + " to exclusive");
             bcursor.getR().upgradeUpdateLatch();
             BTreeNode rightSiblingNode = btree.getBTreeNode();
             rightSiblingNode.wrap((SlottedPage) bcursor.getR().getPage());
@@ -1712,14 +1760,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 if (comp >= 0) {
                     // new key will stay in current page
                     // FIXME TEST case
+                    trace("do distribute: downgrading exclusive latch on Q " + bcursor.getQ().getPage().getPageId());
                     bcursor.getQ().downgradeExclusiveLatch();
                     bcursor.unfixR();
                 } else {
                     // new key will be in the right sibling
+                    trace("do distribute: downgrading exclusive latch on R " + bcursor.getR().getPage().getPageId());
                     bcursor.getR().downgradeExclusiveLatch();
                     bcursor.unfixQ();
                     bcursor.setQ(bcursor.removeR());
                 }
+                assert bcursor.getQ() != null;
+                assert bcursor.getQ().isLatchedForUpdate();
+                
+                assert bcursor.getR() == null;
             } finally {
                 bcursor.unfixR();
             }
@@ -1772,6 +1826,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             try {
                 if (newSiblingPageNumber == -1) {
                     // FIXME Test case
+                	trace("do increase tree height: extending container");
                     btree.btreeMgr.spaceMgr.extendContainer(
                         trx,
                         btree.containerId);
@@ -1801,6 +1856,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             bcursor.setP(bcursor.removeQ());
             BTreeNode rootNode = btree.getBTreeNode();
+            
+            assert bcursor.getP().isLatchedForUpdate();
+            trace("do increase tree height: upgrading update latch on P " + bcursor.getP().getPage().getPageId());
             bcursor.getP().upgradeUpdateLatch();
             rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 
@@ -1831,9 +1889,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             ithOperation.rootItems.add(rightChildHighKey);
 
             // Latch the new page exclusively
-            bcursor.setQ(btree.btreeMgr.bufmgr.fixExclusive(new PageId(
-                btree.containerId,
-                ithOperation.leftSibling), true, btree.btreeMgr.spMgr
+            PageId newChildPageId = new PageId(
+                    btree.containerId,
+                    ithOperation.leftSibling);
+            trace("do increase tree height: fixing new child page exclusively as Q " + newChildPageId);
+            bcursor.setQ(btree.btreeMgr.bufmgr.fixExclusive(newChildPageId, true, btree.btreeMgr.spMgr
                 .getPageType(), 0));
             try {
                 Lsn lsn = trx.logInsert(rootNode.page, ithOperation);
@@ -1852,13 +1912,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int comp = leftChildHighKey.compareTo(bcursor.searchKey);
                 if (comp >= 0) {
                     // new key will stay in left child page
+                	trace("do increase tree height: downgrading exclusive latch on Q " + bcursor.getQ().getPage().getPageId());
                     bcursor.getQ().downgradeExclusiveLatch();
                     bcursor.unfixR();
                 } else {
                     // new key will be in the right child page
+                	trace("do increase tree height: downgrading exclusive latch on R " + bcursor.getR().getPage().getPageId());
                     bcursor.unfixQ();
                     bcursor.setQ(bcursor.removeR());
                 }
+                assert bcursor.getQ().isLatchedForUpdate();
+                assert bcursor.getP() == null;
+                assert bcursor.getR() == null;
             } finally {
                 // TODO is this robust enough?
                 bcursor.unfixP();
@@ -1894,11 +1959,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getQ().isLatchedForUpdate();
 
             // root page
+            trace("do decrease tree height: upgrading update latch on P (root) " + bcursor.getP().getPage().getPageId());
             bcursor.getP().upgradeUpdateLatch();
             BTreeNode rootNode = btree.getBTreeNode();
             rootNode.wrap((SlottedPage) bcursor.getP().getPage());
 
             // child page
+            trace("do decrease tree height: upgrading update latch on Q (child) " + bcursor.getQ().getPage().getPageId());
             bcursor.getQ().upgradeUpdateLatch();
             BTreeNode childNode = btree.getBTreeNode();
             childNode.wrap((SlottedPage) bcursor.getQ().getPage());
@@ -1933,6 +2000,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             } finally {
                 // TODO Is this robust enough?
                 bcursor.unfixQ();
+                trace("do decrease tree height: downgrading exclusive latch on P (root) " + bcursor.getP().getPage().getPageId());
                 bcursor.getP().downgradeExclusiveLatch();
             }
 
@@ -1967,7 +2035,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
              * doSplit requires Q to point to page that is to be
              * split, so we need to point Q to P temporarily.
              */
-            BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
+        	trace("do split parent: about to split P " + bcursor.getP().getPage().getPageId());
+        	BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
             BufferAccessBlock savedR = bcursor.removeR(); // Save R
             bcursor.setQ(bcursor.removeP()); // Now Q is P
             try {
@@ -1992,6 +2061,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final boolean doRepairPageUnderflow(Transaction trx,
                 BTreeCursor bcursor) {
 
+        	trace("entering do repair page underflow");
             assert bcursor.getP() != null;
             assert bcursor.getP().isLatchedForUpdate();
 
@@ -2015,6 +2085,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
              * P then Q is not the rightmost child of P.
              */
             if (u.compareTo(highkeyP) < 0) {
+            	trace("do repair page underflow: Q is not the rightmost child of P");
                 /* Q is not the rightmost child of its parent P 
                  *
                  * There are three possibilities:
@@ -2031,9 +2102,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int R = q.header.rightSibling;
                 assert R != -1;
 
-                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                    containerId,
-                    R), 0));
+                PageId rightPageId = new PageId(containerId,R);
+                trace("do repair page underflow: fixing R for update " + rightPageId);
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(rightPageId, 0));
                 r.wrap((SlottedPage) bcursor.getR().getPage());
                 /*
                  * If the high key of Q is less than the index key in P associated with Q,
@@ -2051,14 +2122,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      *           |                     |
                      *          Q[u]------>R[v]------>S[w]
                      */
+                    trace("do repair page underflow: fig 13 R is an indirect child of P");
                     bcursor.unfixP();
                     if (q.canMergeWith(r)) {
+                    	trace("do repair page underflow: merge Q with R");
                         doMerge(trx, bcursor);
                     } else {
                         // FIXME TEST case
                         doRedistribute(trx, bcursor);
                     }
                 } else {
+                	trace("do repair page underflow: R is direct child of P");
                     /* b) or c) R is a direct child of P */
                     /* w = index record associated with R in P */
                     IndexItem w = p.findIndexItem(R);
@@ -2071,13 +2145,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     /* v = highkey of R */
                     v = r.getHighKey();
                     /*
-                     * If highkey of R is less than the index key in P associated with R,
+                     * If highkey of R (v) is less than the index key in P (w) associated with R,
                      * then R must have a right sibling S that is an indirect child of
                      * P. 
                      */
                     if (v.compareTo(w) < 0) {
                         assert S != -1;
                         assert p.findIndexItem(S) == null;
+                        trace("do repair page underflow: fig 14 R has a right sibling S that is an indirect child of P");
                         /* b) R has a right sibling S that is indirect child of P (fig 14)
                          * 
                          *                    P[u|w]
@@ -2092,13 +2167,25 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          * split.
                          */
                         if (!p.canAccomodate(v)) {
+                        	trace("do repair page underflow: split P");
                             doSplitParent(trx, bcursor);
                             /*
                              * After the split, Q should still be a child of P, but
                              * R may have moved to the sibling of P.
                              */
+                            assert bcursor.getP().isLatchedForUpdate();
+                            assert bcursor.getQ().isLatchedForUpdate();
+                            assert bcursor.getR().isLatchedForUpdate();
+                            
+                            /*
+                             * P might have changed as a result of the split of old P
+                             */
+                            p.wrap((SlottedPage) bcursor.getP().getPage());
                             assert p.findIndexItem(Q) != null;
+                            assert bcursor.getQ().getPage().getPageId().getPageNumber() == Q;
+                            
                             if (p.findIndexItem(R) == null) {
+                            	trace("do repair page underflow: After P was split, R is not a child of P anymore, must restart the algorithm");
                                 /* R is not a child of P anymore.
                                  * We need to restart the algorithm
                                  */
@@ -2108,6 +2195,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                 // System.err.println("Restarting the repairPageUnderflow algorithm");
                                 return true;
                             }
+                            assert bcursor.getR().getPage().getPageId().getPageNumber() == R;
                         }
                         /*
                          * We need to link S to P. Since our cursor is currently
@@ -2117,6 +2205,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         BufferAccessBlock savedQ = bcursor.removeQ(); // Save Q
                         bcursor.setQ(bcursor.removeR()); // Now Q is R
                         try {
+                        	trace("do repair page underflow: link S to P");
                             doLink(trx, bcursor); // Link S to P
                         } finally {
                             bcursor.setR(bcursor.removeQ()); // Restore R
@@ -2129,6 +2218,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          * In the paper the unlink of R and merge of Q and R is here,
                          * but we do this in the common section below.
                          */
+                        p.wrap((SlottedPage) bcursor.getP().getPage());
                         assert p.findIndexItem(S) != null;
                     }
 
@@ -2141,6 +2231,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      * guaranteed to be linked to parent P. So we can now
                      * unlink R from P to allow merging of Q and R.
                      */
+                    trace("do repair page underflow: unlink R from P");
                     doUnlink(trx, bcursor); // Now we can unlink R from P
                     /*
                      * Merge Q and R
@@ -2148,6 +2239,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     q.wrap((SlottedPage) bcursor.getQ().getPage());
                     r.wrap((SlottedPage) bcursor.getR().getPage());
                     if (q.canMergeWith(r)) {
+                    	trace("do reapir underflow: merge Q and R");
                         doMerge(trx, bcursor);
                     } else {
                         // FIXME TEST case
@@ -2155,6 +2247,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     }
                 }
             } else {
+            	trace("do repair page underflow: Q is the rightmost child of P");
             	assert u.compareTo(highkeyP) == 0;
                 /* Q is the rightmost child of its parent P as Q.highkey = P.highkey.
                  * There are two possibilities.
@@ -2175,9 +2268,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  */
                 bcursor.unfixQ();
                 /* Now L becomes Q */
-                bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                    containerId,
-                    L), 0));
+                PageId l_pageId = new PageId(containerId,L); 
+                trace("do repair page underflow: fixing page L (page left of Q as per P) for update as Q " + l_pageId);
+                bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(l_pageId, 0));
                 q.wrap((SlottedPage) bcursor.getQ().getPage());
                 /* The node to the right of L is N */
                 /* This may or may not be Q depending upon whether N is
@@ -2185,13 +2278,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  */
                 int N = q.header.rightSibling;
                 assert N != -1;
-                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                    containerId,
-                    N), 0));
+                PageId n_pageId = new PageId(containerId, N);
+                trace("do repair page underflow: fixing page N (page right of L as per L) for update as R " + n_pageId);
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(n_pageId, 0));
                 r.wrap((SlottedPage) bcursor.getR().getPage());
 
                 /*
-                 * Get highkey of L and compare with the index key associated with L in
+                 * Get highkey of L (u) and compare with the index key associated with L (v) in
                  * page P. 
                  */
                 u = q.getHighKey();
@@ -2207,9 +2300,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      *         ?[u]------->L[v]------->Q[w]
                      *  
                      */
+                	trace("do repair page underflow: fig 17 L is direct child of P and Q is right sibling of L (N == Q)");
                     assert q.header.rightSibling == Q;
+                    assert N == Q;
+                    /*
+                     * remember that Q holds L and R holds N (N == original Q). 
+                     */
                     if (!r.isAboutToUnderflow()) {
-                        /* Q is no longer about to overflow (remember R is Q!) */
+                    	trace("do repair page underflow: Q is no longer about to underflow");
+                        /* Q is no longer about to overflow (remember R holds original Q!) */
                         // FIXME Test case
                         bcursor.unfixP();
                         bcursor.unfixQ();
@@ -2220,7 +2319,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          * Remember that bcursor.q is positioned on L.
                          */
                         /* unlink Q from P */
-                    	
+                    	trace("do repair page underflow: unlink Q from P");
                         doUnlink(trx, bcursor);
                         /* 
                          * Fig 18.
@@ -2233,14 +2332,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          *         ?[u]------->L[v]------->Q[w]
                          *  
                          */
+                        trace("do repair page underflow: fig 18 about to underflow rightmost child is unlinked from its parent");
                         q.wrap((SlottedPage) bcursor.getQ().getPage());
                         r.wrap((SlottedPage) bcursor.getR().getPage());
+                        
                         if (q.canMergeWith(r)) {
+                        	/* merge L and Q */
+                        	trace("do repair page underflow: merge L and Q");
                             doMerge(trx, bcursor);
                         } else {
                             // FIXME Test case
                             doRedistribute(trx, bcursor);
                         }
+                        /* Q = L (already true) */
+                        assert bcursor.getQ().getPage().getPageId().getPageNumber() == L;
                     }
                 } else {
                     /*
@@ -2258,7 +2363,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      * To merge Q with N, we first need to link
                      * N to parent page P, then unlink Q from P.
                      */
+                	trace("do repair page underflow: fig 19 left sibling L of Q has right sibling N that is indirect child of P, Q is right sibling of N");
                     if (!p.canAccomodate(u)) {
+                    	trace("do repair underflow: split parent");
                         doSplitParent(trx, bcursor);
                         /*
                          * Since Q was the rightmost child of P,
@@ -2271,6 +2378,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         assert p.findIndexItem(L) != null;
                     }
                     /* link N to parent P */
+                    trace("do repair page underflow: link N to P");
                     doLink(trx, bcursor);
                     /* unlatch L */
                     bcursor.unfixQ();
@@ -2279,23 +2387,28 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     q.wrap((SlottedPage) bcursor.getQ().getPage());
                     /* latch Q again, which now becomes bcursor.r */
                     assert Q == q.header.rightSibling;
-                    bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                        containerId,
-                        Q), 0));
+                    PageId q_pageId = new PageId(containerId, Q);
+                    trace("do repair page underflow: fixing page Q for update as R " + q_pageId);
+                    bcursor.setR(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
                     r.wrap((SlottedPage) bcursor.getR().getPage());
                     if (!r.isAboutToUnderflow()) {
                         /* Q is no longer about to underflow */
                         // FIXME Test case
+                    	trace("do repair page underflow: Q is no longer about to underflow");
                         bcursor.unfixP();
                         bcursor.unfixQ();
                         bcursor.setQ(bcursor.removeR());
+                        
                     } else {
-                        /* unlink Q from parent P */
+                        /* unlink Q from parent P (note that bcursor.r points to Q) */
+                    	trace("do repair page underflow: unlink Q from P");
                         doUnlink(trx, bcursor);
+                        /* here bcursor.q is N and bcursor.r is Q */
                         q.wrap((SlottedPage) bcursor.getQ().getPage());
                         r.wrap((SlottedPage) bcursor.getR().getPage());
                         if (q.canMergeWith(r)) {
                             /* merge N and Q */
+                        	trace("do repair page underflow: merge N and Q");
                             doMerge(trx, bcursor);
                         } else {
                             doRedistribute(trx, bcursor);
@@ -2303,6 +2416,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     }
                 }
             }
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
             return false;
         }
 
@@ -2321,7 +2436,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
             while (tryAgain) {
                 // FIXME Test case
-            	log.warn(getClass().getName(), "repairPageUnderflow", "Retrying repairPageUnderflow");
+            	trace("repair page underflow: restarting algorithm");
                 tryAgain = doRepairPageUnderflow(trx, bcursor);
             }
         }
@@ -2666,7 +2781,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final boolean doInsert(Transaction trx, IndexKey key,
                 Location location) {
 
-            BTreeCursor bcursor = new BTreeCursor();
+            BTreeCursor bcursor = new BTreeCursor(btreeMgr);
             bcursor.searchKey = new IndexItem(
                 key,
                 location,
@@ -2863,7 +2978,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final boolean doDelete(Transaction trx, IndexKey key,
                 Location location) {
 
-            BTreeCursor bcursor = new BTreeCursor();
+            BTreeCursor bcursor = new BTreeCursor(btreeMgr);
             bcursor.searchKey = new IndexItem(
                 key,
                 location,
@@ -3296,7 +3411,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         /**
          * Internal use
          */
-        final BTreeCursor bcursor = new BTreeCursor();
+        final BTreeCursor bcursor;
 
         /**
          * The lock mode to be used for locking locations retrieved by the scan.
@@ -3335,6 +3450,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem startKey,
                 LockMode lockMode) {
             this.btree = btree;
+            this.bcursor = new BTreeCursor(btree.btreeMgr);
             this.trx = trx;
             this.startKey = startKey;
             this.currentKey = startKey; // initial search key
@@ -3583,6 +3699,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     }
 
     public static final class BTreeCursor {
+    	
+    	final BTreeIndexManagerImpl btreemgr;
 
         private BufferAccessBlock q = null;
 
@@ -3602,7 +3720,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         private Location nextKeyLocation = null;
 
-        public BTreeCursor() {
+        void trace(String message) {
+        	btreemgr.trace(message);
+        }        
+        
+        public BTreeCursor(BTreeIndexManagerImpl btreemgr) {
+        	this.btreemgr = btreemgr;
         }
 
         public final BufferAccessBlock getP() {
@@ -3610,12 +3733,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final BufferAccessBlock removeP() {
+        	if (p != null) {
+        		trace("bcursor: remove p " + p.getPage().getPageId());
+        	}
             BufferAccessBlock bab = p;
             p = null;
             return bab;
         }
 
         public final void setP(BufferAccessBlock p) {
+        	if (p != null) {
+        		trace("bcursor: set p " + p.getPage().getPageId());
+        	}
             assert this.p == null;
             this.p = p;
         }
@@ -3625,12 +3754,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final BufferAccessBlock removeQ() {
+        	if (q != null) {
+        		trace("bcursor: remove q " + q.getPage().getPageId());
+        	}
             BufferAccessBlock bab = q;
             q = null;
             return bab;
         }
 
         public final void setQ(BufferAccessBlock q) {
+        	if (q != null) {
+        		trace("bcursor: set q " + q.getPage().getPageId());
+        	}
             assert this.q == null;
             this.q = q;
         }
@@ -3640,13 +3775,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final BufferAccessBlock removeR() {
+        	if (r != null) {
+        		trace("bcursor: remove r " + r.getPage().getPageId());
+        	}
             BufferAccessBlock bab = r;
             r = null;
             return bab;
         }
 
         public final void setR(BufferAccessBlock r) {
-            assert this.r == null;
+        	if (r != null) {
+        		trace("bcursor: set r " + r.getPage().getPageId());
+        	}
+        	assert this.r == null;
             this.r = r;
         }
 
@@ -3660,6 +3801,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public final void unfixP() {
             if (p != null) {
+            	trace("bcursor: unfix p " + p.getPage().getPageId());
                 p.unfix();
                 p = null;
             }
@@ -3667,6 +3809,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public final void unfixQ() {
             if (q != null) {
+            	trace("bcursor: unfix q " + q.getPage().getPageId());
                 q.unfix();
                 q = null;
             }
@@ -3674,6 +3817,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public final void unfixR() {
             if (r != null) {
+            	trace("bcursor: unfix r " + r.getPage().getPageId());
                 r.unfix();
                 r = null;
             }
