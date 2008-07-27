@@ -502,7 +502,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see LinkOperation
      */
     private void redoLinkOperation(Page page, LinkOperation linkOperation) {
-    	trace("redo link: updating parent page " + page.getPageId());
+    	trace("redo link: adding link R (" + linkOperation.rightSibling + ") to parent page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(linkOperation);
         parent.wrap(p);
@@ -545,7 +545,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see UnlinkOperation 
      */
     private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
-    	trace("redo unlink: updating parent page " + page.getPageId());
+    	trace("redo unlink: removing link R (" + unlinkOperation.rightSibling + ") from parent page " + page.getPageId());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(unlinkOperation);
         parent.wrap(p);
@@ -885,7 +885,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     .getContainerId(), insertOp.getKeyFactoryType(), insertOp
                     .getLocationFactoryType(), insertOp.isUnique());
                 bcursor.setSearchKey(insertOp.getItem());
-                btree.updateModeTravese(trx, bcursor);
+                btree.updateModeTraverse(trx, bcursor);
                 /* At this point p points to the leaf page where the key is present */
                 assert bcursor.getP() != null;
                 assert bcursor.getP().isLatchedForUpdate();
@@ -1028,7 +1028,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     .getContainerId(), deleteOp.getKeyFactoryType(), deleteOp
                     .getLocationFactoryType(), deleteOp.isUnique());
                 bcursor.setSearchKey(deleteOp.getItem());
-                btree.updateModeTravese(trx, bcursor);
+                btree.updateModeTraverse(trx, bcursor);
                 /* At this point p points to the leaf page where the key should be inserted */
                 assert bcursor.getP() != null;
                 assert bcursor.getP().isLatchedForUpdate();
@@ -1316,8 +1316,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         /**
-         * Performs page split. The page to be split must be latched in UPDATE mode. After the split,
-         * the page containing the search key will remain latched.
+         * Performs page split. The page to be split (bcursor.q) must be latched in 
+         * UPDATE mode prior to the call. After the split,
+         * the page containing the search key will remain latched as bcursor.q.
          * <p>
          * This differs from the published algorithm in following ways:
          * 1. It uses nested top action. 
@@ -1454,7 +1455,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         /**
          * Merges right sibling into left sibling. Right sibling must be an indirect child.
          * Both pages must be latched in UPDATE mode prior to this call.
-         * After the merge, left sibling will remain latched. 
+         * After the merge, left sibling will remain latched as bcursor.q. 
          * <p>
          * This algorithm differs from published algorithm in its management of space map
          * update. In the interests of high concurrency, the space map page update is
@@ -1704,12 +1705,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             assert bcursor.searchKey != null;
 
-            trace("do distribute: upgrading update latch on Q " + bcursor.getQ().getPage().getPageId() + " to exclusive");
+            trace("do redistribute: upgrading update latch on Q " + bcursor.getQ().getPage().getPageId() + " to exclusive");
             bcursor.getQ().upgradeUpdateLatch();
             BTreeNode leftSiblingNode = btree.getBTreeNode();
             leftSiblingNode.wrap((SlottedPage) bcursor.getQ().getPage());
 
-            trace("do distribute: upgrading update latch on R " + bcursor.getR().getPage().getPageId() + " to exclusive");
+            trace("do redistribute: upgrading update latch on R " + bcursor.getR().getPage().getPageId() + " to exclusive");
             bcursor.getR().upgradeUpdateLatch();
             BTreeNode rightSiblingNode = btree.getBTreeNode();
             rightSiblingNode.wrap((SlottedPage) bcursor.getR().getPage());
@@ -1760,12 +1761,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 if (comp >= 0) {
                     // new key will stay in current page
                     // FIXME TEST case
-                    trace("do distribute: downgrading exclusive latch on Q " + bcursor.getQ().getPage().getPageId());
+                    trace("do redistribute: downgrading exclusive latch on Q " + bcursor.getQ().getPage().getPageId());
                     bcursor.getQ().downgradeExclusiveLatch();
                     bcursor.unfixR();
                 } else {
                     // new key will be in the right sibling
-                    trace("do distribute: downgrading exclusive latch on R " + bcursor.getR().getPage().getPageId());
+                    trace("do redistribute: downgrading exclusive latch on R " + bcursor.getR().getPage().getPageId());
                     bcursor.getR().downgradeExclusiveLatch();
                     bcursor.unfixQ();
                     bcursor.setQ(bcursor.removeR());
@@ -2004,6 +2005,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 bcursor.getP().downgradeExclusiveLatch();
             }
 
+            assert bcursor.getP() != null;
+            assert bcursor.getP().isLatchedForUpdate();
+
+            assert bcursor.getQ() == null;
+            
             /*
              * We log the space map operation as a separate discrete action.
              * If this log record does not survive a system crash, then the page
@@ -2416,6 +2422,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     }
                 }
             }
+            assert bcursor.getP() == null;
             assert bcursor.getQ() != null;
             assert bcursor.getQ().isLatchedForUpdate();
             return false;
@@ -2450,13 +2457,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * <p>This traversal mode is used for inserts and deletes.
          * Corresponds to Update-mode-traverse in btree paper.
          */
-        public final void updateModeTravese(Transaction trx, BTreeCursor bcursor) {
+        public final void updateModeTraverse(Transaction trx, BTreeCursor bcursor) {
             /*
              * Fix root page
              */
-            bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                containerId,
-                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
+        	PageId rootPageId = new PageId(
+                    containerId,
+                    BTreeIndexManagerImpl.ROOT_PAGE_NUMBER);
+        	trace("update mode traverse: fixing root page in update mode as P, page: " + rootPageId);
+            bcursor.setP(btreeMgr.bufmgr.fixForUpdate(rootPageId, 0));
             BTreeNode p = getBTreeNode();
             p.wrap((SlottedPage) bcursor.getP().getPage());
             if (p.header.rightSibling != -1) {
@@ -2467,10 +2476,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * A new child page will be allocated and the root will become
                  * the parent of this new child, and its right sibling. 
                  */
+            	PageId r_pageId = new PageId(
+                        containerId,
+                        p.header.rightSibling);
                 bcursor.setQ(bcursor.removeP());
-                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                    containerId,
-                    p.header.rightSibling), 0));
+                trace("update mode traverse: root page has right sibling - fixing in update mode as R, page: " + r_pageId);
+                bcursor.setR(btreeMgr.bufmgr.fixForUpdate(r_pageId, 0));
                 doIncreaseTreeHeight(trx, bcursor);
                 bcursor.setP(bcursor.removeQ());
                 p.wrap((SlottedPage) bcursor.getP().getPage());
@@ -2479,9 +2490,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 return;
             }
             int childPageNumber = p.findChildPage(bcursor.searchKey);
-            bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                containerId,
-                childPageNumber), 0));
+            PageId q_pageId = new PageId(
+                    containerId,
+                    childPageNumber);
+            trace("update mode traverse: fixing child page in update mode as Q, page: " + q_pageId);
+            bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
             BTreeNode q = getBTreeNode();
             q.wrap((SlottedPage) bcursor.getQ().getPage());
             boolean childPageLatched = true;
@@ -2493,7 +2506,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * have a right sibling. Decrease the height of the tree by
                  * merging the child page into the root.
                  */
-
+            	trace("update mode traverse: Q is only child of root page P, tree height needs to be decreased");
                 doDecreaseTreeHeight(trx, bcursor);
                 childPageLatched = false;
             }
@@ -2504,16 +2517,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      * BUG in published algorithm - need to avoid latching
                      * Q if already latched.
                      */
-
                     childPageNumber = p.findChildPage(bcursor.searchKey);
-                    bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                        containerId,
-                        childPageNumber), 0));
+                    q_pageId = new PageId(
+                            containerId,
+                            childPageNumber);
+                    trace("update mode traverse: fixing child page in update mode as Q, page: " + q_pageId);
+                    bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
                     q.wrap((SlottedPage) bcursor.getQ().getPage());
+                    /*
+                     * No need to set childPageLatch as this is only needed first time round.
+                     */
                 } else {
                     childPageLatched = false;
                 }
                 if (q.isAboutToUnderflow()) {
+                	trace("update mode traverse: Q is about to underflow, Q: " + q.getPage().getPageId());
                     repairPageUnderflow(trx, bcursor);
                     bcursor.setP(bcursor.removeQ());
                 } else {
@@ -2531,15 +2549,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          *           |                     |
                          *          Q[u]------>R[v]------>S[w]
                          */
+                    	trace("update mode traverse: Q has a right sibling R that is an indirect child of P");
                         if (!p.canAccomodate(u)) {
+                        	trace("update mode traverse: P cannot accomodate R's key, so P must be split");
                             doSplitParent(trx, bcursor);
                         }
+                        trace("update mode traverse: link R to P");
                        	doLink(trx, bcursor);
                     }
+                    assert bcursor.getP().isLatchedForUpdate();
+                    assert bcursor.getQ().isLatchedForUpdate();
                     q.wrap((SlottedPage) bcursor.getQ().getPage());
                     if (q.getHighKey().compareTo(bcursor.searchKey) >= 0) {
                         /* Q covers search key */
-
+                    	trace("update mode traverse: Q covers search key");
                         bcursor.unfixP();
                         bcursor.setP(bcursor.removeQ());
                     } else {
@@ -2547,9 +2570,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         int rightsibling = q.header.rightSibling;
                         bcursor.unfixP();
                         assert q.header.rightSibling != -1;
-                        bcursor.setP(btreeMgr.bufmgr.fixForUpdate(new PageId(
-                            containerId,
-                            rightsibling), 0));
+                        PageId r_pageId = new PageId(
+                                containerId,
+                                rightsibling); 
+                    	trace("update mode traverse: Q doesn't cover search key anymore, so fixing R in update mode, page: " + r_pageId);
+                        bcursor.setP(btreeMgr.bufmgr.fixForUpdate(r_pageId, 0));
                         bcursor.unfixQ();
                     }
                 }
@@ -2577,9 +2602,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             /*
              * Fix root page
              */
-            bcursor.setP(btreeMgr.bufmgr.fixShared(new PageId(
-                containerId,
-                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER), 0));
+            PageId rootPageId = new PageId(
+                    containerId,
+                    BTreeIndexManagerImpl.ROOT_PAGE_NUMBER);
+            trace("read mode traverse: fixing root page in shared mode: page " + rootPageId);
+            bcursor.setP(btreeMgr.bufmgr.fixShared(rootPageId, 0));
             BTreeNode p = getBTreeNode();
             p.wrap((SlottedPage) bcursor.getP().getPage());
             // p.dump();
@@ -2590,20 +2617,25 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     // Move right as the search key is greater than the highkey
                     // FIXME TEST case
                     int rightsibling = p.header.rightSibling;
-                    bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(
-                        containerId,
-                        rightsibling), 0));
+                    PageId r_pageId = new PageId(
+                            containerId,
+                            rightsibling);
+                    trace("read mode traverse: moving to the right as search key is greater than high key, fixing page in shared mode: " + r_pageId);
+                    bcursor.setQ(btreeMgr.bufmgr.fixShared(r_pageId, 0));
                     bcursor.unfixP();
                     bcursor.setP(bcursor.removeQ());
                     p.wrap((SlottedPage) bcursor.getP().getPage());
                     // p.dump();
+                    assert p.getHighKey().compareTo(bcursor.getSearchKey()) >= 0;
                 }
                 if (!p.isLeaf()) {
                     // find the child page and move down
                     int childPageNumber = p.findChildPage(bcursor.searchKey);
-                    bcursor.setQ(btreeMgr.bufmgr.fixShared(new PageId(
-                        containerId,
-                        childPageNumber), 0));
+                    PageId c_pageId = new PageId(
+                            containerId,
+                            childPageNumber);
+                    trace("read mode traverse: fixing child page in shared more: " + c_pageId);
+                    bcursor.setQ(btreeMgr.bufmgr.fixShared(c_pageId, 0));
                     bcursor.unfixP();
                     bcursor.setP(bcursor.removeQ());
                     p.wrap((SlottedPage) bcursor.getP().getPage());
@@ -2616,12 +2648,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Traverses a BTree down to the leaf level, and prepares the leaf page
          * for inserting the new key. bcursor.p must hold the root node
          * in update mode latch when this is called. When this returns
-         * bcursor.p will point to the page where the insert should take place.
+         * bcursor.p will point to the page where the insert should take place,
+         * and will be exclusively latched.
          * @return SearchResult containing information about where to insert the new key
          */
         public final SearchResult doInsertTraverse(Transaction trx,
                 BTreeCursor bcursor) {
-            updateModeTravese(trx, bcursor);
+            updateModeTraverse(trx, bcursor);
             /* At this point p points to the leaf page where the key is to be inserted */
             assert bcursor.getP() != null;
             assert bcursor.getP().isLatchedForUpdate();
@@ -2631,10 +2664,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert !node.isDeallocated();
             assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
             if (!node.canAccomodate(bcursor.searchKey)) {
+            	trace("insert mode traverse: splitting page as it cannot accomodate search key, page: " + bcursor.getP().getPage().getPageId());
                 bcursor.setQ(bcursor.removeP());
                 doSplit(trx, bcursor);
                 bcursor.setP(bcursor.removeQ());
             }
+        	trace("insert mode traverse: upgrading latch to exclusive mode on page: " + bcursor.getP().getPage().getPageId());
             bcursor.getP().upgradeUpdateLatch();
             node.wrap((SlottedPage) bcursor.getP().getPage());
             SearchResult sr = node.search(bcursor.searchKey);
@@ -2643,11 +2678,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         /**
          * Obtain a lock on the next key. Mode and duration are specified by the caller.
+         * bcursor.P must contain the current page, latched exclusively. If the
+         * lock on next key is successful, the page will be left latched. Else, the latch on
+         * the page will be released.
+         * 
          * @return True if insert can proceed, false if lock could not be obtained on next key.
          */
         public final boolean doNextKeyLock(Transaction trx,
                 BTreeCursor bcursor, int nextPageNumber, int nextk,
                 LockMode mode, LockDuration duration) {
+        	
+        	assert bcursor.getP() != null;
+        	assert bcursor.getP().isLatchedExclusively();
+        	
             SlottedPage nextPage = null;
             IndexItem nextItem = null;
             Lsn nextPageLsn = null;
@@ -2661,9 +2704,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             bcursor.setNextKeyLocation(null);
             if (nextPageNumber != -1) {
                 // next key is in the right sibling page
-                bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(
-                    containerId,
-                    nextPageNumber), 0));
+            	PageId r_pageId = new PageId(
+                        containerId,
+                        nextPageNumber);
+            	trace("do next key lock: as next key is in right sibling, fixing right sibling page in shared mode: " + r_pageId);
+                bcursor.setR(btreeMgr.bufmgr.fixShared(r_pageId, 0));
                 nextPage = (SlottedPage) bcursor.getR().getPage();
                 BTreeNode nextNode = getBTreeNode();
                 nextNode.wrap(nextPage);
@@ -2681,8 +2726,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
             }
             try {
-                // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Acquire conditional lock on " + nextItem.getLocation() + " in mode " + mode);
-                trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
+            	trace("do next key lock: acquiring lock on next key in no wait mode, location: " + nextItem.getLocation());
+            	trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
                 bcursor.setNextKeyLocation(nextItem.getLocation());
                 /*
                  * Instant duration lock succeeded. We can proceed with the insert.
@@ -2721,23 +2766,27 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /*
                  * Wait unconditionally for the other transaction to finish
                  */
-                // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Conditional lock failed, attempt to acquire unconditional lock on " + nextItem.getLocation() + " in mode " + mode);
                 // trx.acquireLock(nextItem.getLocation(), mode, LockDuration.INSTANT_DURATION);
                 // Above looks like an error as lock duration is hard coded???
                 // FIXME What if this lock attempt fails due to deadlock - must ensure proper cleanup.
+            	trace("do next key lock: attempting to acquire lock on next key unconditionally as conditional attempt failed, location: " + nextItem.getLocation());
                 trx.acquireLock(nextItem.getLocation(), mode, duration);
                 bcursor.setNextKeyLocation(nextItem.getLocation());
                 /*
                  * Now we have obtained the lock.
                  * We can continue from where we were if nothing has changed in the meantime
                  */
-                bcursor.setP(btreeMgr.bufmgr.fixExclusive(new PageId(
-                    containerId,
-                    currentPageNumber), false, -1, 0));
-                if (nextPageNumber != -1) {
-                    bcursor.setR(btreeMgr.bufmgr.fixShared(new PageId(
+                PageId c_pageId = new PageId(
                         containerId,
-                        nextPageNumber), 0));
+                        currentPageNumber);
+                trace("do next key lock: reacquiring exclusive mode latch on page: " + c_pageId);
+                bcursor.setP(btreeMgr.bufmgr.fixExclusive(c_pageId, false, -1, 0));
+                if (nextPageNumber != -1) {
+                	PageId n_pageId = new PageId(
+                            containerId,
+                            nextPageNumber);
+                	trace("do next key lock: reacquiring shared mode latch on next page: " + n_pageId);
+                    bcursor.setR(btreeMgr.bufmgr.fixShared(n_pageId, 0));
                 }
                 if (currentPageLsn.compareTo(bcursor
                     .getP()
@@ -2748,9 +2797,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                 .getR()
                                 .getPage()
                                 .getPageLsn()) == 0) {
+                    	trace("do next key lock: okay to continue after unconditional lock wait");
                         /*
                          * Nothing has changed, so we can carry on as before.
                          */
+                    	bcursor.unfixR();
                         return true;
                     }
                 } else {
@@ -2765,12 +2816,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
             }
             /*
-             * Restart insert
+             * Restart insert/delete
              */
-            // System.out.println(Thread.currentThread().getName() + ":Restarting insert");
-            //boolean result = 
+            trace("do next key lock: pages have changed while acquiring next key lock, hence must restart insert/delete");
+            trace("do next key lock: releasing lock on next key: " + bcursor.getNextKeyLocation());
             trx.releaseLock(bcursor.getNextKeyLocation());
-            // System.out.println(Thread.currentThread().getName() + ":doNextKeyLock: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
             bcursor.setNextKeyLocation(null);
             return false;
         }
@@ -2807,6 +2857,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     nextKeyPage = node.header.rightSibling;
                     if (nextKeyPage != -1) {
                         nextk = FIRST_KEY_POS; // first key of next page
+                        trace("insert: next key is in next page");
+                    }
+                    else {
+                    	trace("insert: next key is INFINITY");
                     }
                 } else {
                     /*
@@ -2825,7 +2879,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          */
                         try {
                             try {
-                                // System.out.println(Thread.currentThread().getName() + ":doInsert: attempt to acquire conditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+                            	trace("insert: possible duplicate key - lock key in shared more conditionally, location: " + loc);
                                 trx.acquireLockNowait(
                                     loc,
                                     LockMode.SHARED,
@@ -2845,29 +2899,32 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                  * Need to unlatch page and retry unconditionally. 
                                  */
                                 bcursor.unfixP();
-                                // System.out.println(Thread.currentThread().getName() + ":doInsert: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + LockMode.SHARED);
+                                trace("insert: failed to acquire conditional lock, try acquiring unconditionally, location: " + loc);
                                 trx.acquireLock(loc, LockMode.SHARED, duration);
                                 /*
                                  * We have obtained the lock. We need to double check that the key
                                  * still exists.
                                  */
+                                PageId rootPageId = new PageId(
+                                        containerId,
+                                        BTreeIndexManagerImpl.ROOT_PAGE_NUMBER);
+                                trace("insert: walk down the tree again to find the page where insert is to take place");
+                                trace("insert: fix root page in update mode, page: " + rootPageId);
                                 bcursor
                                     .setP(btreeMgr.bufmgr
-                                        .fixForUpdate(
-                                            new PageId(
-                                                containerId,
-                                                BTreeIndexManagerImpl.ROOT_PAGE_NUMBER),
-                                            0));
+                                        .fixForUpdate(rootPageId,0));
                                 sr = doInsertTraverse(trx, bcursor);
                             }
                             if (sr.exactMatch
                                     && sr.item.getLocation().equals(loc)) {
+                            	trace("insert: unique constraint violation");
                                 /*
                                  * Mohan says that for RR we need a commit duration lock, but
                                  * for CS, maybe we should release the lock here??
                                  */
                                 if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
                                         || trx.getIsolationMode() == IsolationMode.READ_COMMITTED) {
+                                	trace("insert: releasing lock as cursor mode is read committed, location: " + loc);
                                     trx.releaseLock(loc);
                                 }
                                 log.warn(LOG_CLASS_NAME, "doInsert", mcat
@@ -2878,6 +2935,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             /*
                              * Key has been deleted or has been rolled back in the meantime
                              */
+                            trace("insert: key no longer exists, rollback and restart");
                             needRollback = true;
                             /*
                              * Start again from the beginning
@@ -2942,9 +3000,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /*
                  * We can now release the lock on the next key.
                  */
-                //boolean result = 
+                trace("insert: releasing lock on next key: " + bcursor.getNextKeyLocation());
                 trx.releaseLock(bcursor.getNextKeyLocation());
-                // System.out.println(Thread.currentThread().getName() + ":doInsert: Release lock on Next key location[" + bcursor.getNextKeyLocation() + "] result = " + result);
             } finally {
                 bcursor.setNextKeyLocation(null);
                 bcursor.unfixAll();
@@ -2958,6 +3015,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void insert(Transaction trx, IndexKey key,
                 Location location) {
+        	trace("insert: inserting key");
             Savepoint savepoint = trx.createSavepoint(false);
             boolean success = false;
             try {
@@ -2990,7 +3048,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /*
                  * Traverse to leaf page
                  */
-                updateModeTravese(trx, bcursor);
+                updateModeTraverse(trx, bcursor);
                 assert bcursor.getP() != null;
                 assert bcursor.getP().isLatchedForUpdate();
 
@@ -3006,10 +3064,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
                 SearchResult sr = node.search(bcursor.searchKey);
                 if (!sr.exactMatch) {
+                	btreeMgr.traceDump();
                     // key not found?? something is wrong
                     log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage(
                         "EB0004",
-                        bcursor.searchKey.toString()));
+                        bcursor.searchKey.toString() + " TID " + Thread.currentThread().getId()));
                     //node.dumpAsXml();
                     throw new IndexException(mcat.getMessage(
                         "EB0004",
@@ -3075,6 +3134,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void delete(Transaction trx, IndexKey key,
                 Location location) {
+        	trace("delete: deleting key");
             Savepoint savepoint = trx.createSavepoint(false);
             boolean success = false;
             try {
