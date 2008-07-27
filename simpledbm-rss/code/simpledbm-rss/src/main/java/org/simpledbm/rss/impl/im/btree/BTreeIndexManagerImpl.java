@@ -3904,6 +3904,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Page being managed.
          */
         SlottedPage page;
+        
+        /**
+         * Noted pageId of page we are handling.
+         * Useful for validation.
+         */
+        PageId pageId;
+        
+        /**
+         * Noted pageLsn of page we are handling.
+         * Useful for validation.
+         */
+        Lsn pageLsn;
 
         final IndexItemHelper btree;
 
@@ -3916,6 +3928,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.btree = btree;
         }
 
+        private final void sanityCheck() {
+        	if (page != null && pageId.equals(page.getPageId()) && pageLsn.equals(page.getPageLsn())) {
+        		return;
+        	}
+        	throw new IndexException("The BTreeNode no longer refers to the correct page");
+        }
+        
         public final void dumpAsXml() {
             System.out.println("<page containerId=\""
                     + page.getPageId().getContainerId() + "\" pageNumber=\""
@@ -3989,7 +4008,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final void validateItemAt(int slot) {
-			try {
+        	try {
 				Thread.yield();
 				IndexItem thisItem = getItem(slot);
 				if (slot > 1) {
@@ -4121,9 +4140,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 			}
 		}
         
-        
         public final void wrap(SlottedPage page) {
             this.page = page;
+            this.pageId = page.getPageId();
+            this.pageLsn = page.getPageLsn();
             header = (BTreeNodeHeader) page.get(
                 HEADER_KEY_POS,
                 new BTreeNodeHeader());
@@ -4134,7 +4154,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final IndexItem getNewIndexItem() {
-            return new IndexItem(
+        	sanityCheck();
+        	return new IndexItem(
                 btree.getNewIndexKey(),
                 btree.getNewLocation(),
                 -1,
@@ -4160,11 +4181,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Returns specified item. 
          */
         public final IndexItem getItem(int slotNumber) {
+        	sanityCheck();
             return (IndexItem) page.get(slotNumber, getNewIndexItem());
         }
 
         public final IndexItem getInfiniteKey() {
-            return new IndexItem(
+        	sanityCheck();
+        	return new IndexItem(
                 btree.getMaxIndexKey(),
                 btree.getNewLocation(),
                 -1,
@@ -4172,7 +4195,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 isUnique());
         }
 
-        void validateItem(IndexItem item) {
+        private void validateItem(IndexItem item) {
         	if (item.isLeaf != isLeaf() || item.isUnique != isUnique()) {
         		throw new RSSException("There is a mismatch between the node and the key type");
         	}
@@ -4183,11 +4206,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * to the right if necessary.  
          */
         public final void insert(int slotNumber, IndexItem item) {
+        	sanityCheck();
         	validateItem(item);
             page.insertAt(slotNumber, item, false);
         }
 
         public final void purge(int slotNumber) {
+        	sanityCheck();
             page.purge(slotNumber);
         }
 
@@ -4195,6 +4220,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Replaces the item at specified position. 
          */
         public final void replace(int slotNumber, IndexItem item) {
+        	sanityCheck();
         	validateItem(item);
             page.insertAt(slotNumber, item, true);
         }
@@ -4203,6 +4229,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Tests whether the page is part of a unique index.
          */
         public final boolean isUnique() {
+        	sanityCheck();
             int flags = page.getFlags();
             return (flags & NODE_TREE_UNIQUE) != 0;
         }
@@ -4211,6 +4238,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Sets the unique flag.
          */
         public final void setUnique() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags | NODE_TREE_UNIQUE));
         }
@@ -4219,6 +4247,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Resets the unique flag.
          */
         public final void unsetUnique() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags & ~NODE_TREE_UNIQUE));
         }
@@ -4227,6 +4256,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Tests whether this is a leaf page.
          */
         public final boolean isLeaf() {
+        	sanityCheck();
             int flags = page.getFlags();
             return (flags & NODE_TYPE_LEAF) != 0;
         }
@@ -4235,6 +4265,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Sets the leaf flag.
          */
         public final void setLeaf() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags | NODE_TYPE_LEAF));
         }
@@ -4243,6 +4274,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Clears the leaf flag.
          */
         public final void unsetLeaf() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags & ~NODE_TYPE_LEAF));
         }
@@ -4251,6 +4283,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Is this the root page?
          */
         public final boolean isRoot() {
+        	sanityCheck();
             return page.getPageId().getPageNumber() == BTreeIndexManagerImpl.ROOT_PAGE_NUMBER;
         }
 
@@ -4258,6 +4291,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Tests whether this page has been marked as deallocated.
          */
         public final boolean isDeallocated() {
+        	sanityCheck();
             int flags = page.getFlags();
             return (flags & NODE_TREE_DEALLOCATED) != 0;
         }
@@ -4266,6 +4300,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Sets the deallocated flag.
          */
         public final void setDeallocated() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags | NODE_TREE_DEALLOCATED));
         }
@@ -4274,6 +4309,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Clears the deallocated flag.
          */
         public final void unsetDeallocated() {
+        	sanityCheck();
             int flags = page.getFlags();
             page.setFlags((short) (flags & ~NODE_TREE_DEALLOCATED));
         }
@@ -4294,10 +4330,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * high key in leaf pages.
          */
         public final int getNumberOfKeys() {
+        	sanityCheck();
             return header.keyCount;
         }
 
         final Page getPage() {
+        	sanityCheck();
             return page;
         }
 
@@ -4306,6 +4344,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * splitting a page. 
          */
         final short getSplitKey() {
+        	sanityCheck();
             if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
                 /*
                  * We are in test mode and therefore artificially limit the
@@ -4331,6 +4370,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Sets the keycount in the header record.  
          */
         public final void setNumberOfKeys(int keyCount) {
+        	sanityCheck();
             header.keyCount = keyCount;
         }
 
@@ -4338,6 +4378,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Updates the header stored within the page.
          */
         public final void updateHeader() {
+        	sanityCheck();
             page.insertAt(HEADER_KEY_POS, header, true);
         }
 
@@ -4351,6 +4392,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * be null. 
          */
         public final SearchResult search(IndexItem key) {
+        	sanityCheck();
             SearchResult result = new SearchResult();
             /*
              * Binary search algorithm
@@ -4541,6 +4583,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Tests if the current page can be merged with its right sibling. 
          */
         public final boolean canMergeWith(BTreeNode rightSibling) {
+        	sanityCheck();
             if (BTreeIndexManagerImpl.testingFlag == TEST_MODE_LIMIT_MAX_KEYS_PER_PAGE) {
                 /*
                  * We are in test mode and therefore artificially limit the
@@ -4569,6 +4612,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final boolean canAccomodate(IndexItem v) {
+        	sanityCheck();
         	/*
         	 * Note: The published algorithm says that a node is about to
         	 * overflow if it cannot accomodate a maximum length key.
