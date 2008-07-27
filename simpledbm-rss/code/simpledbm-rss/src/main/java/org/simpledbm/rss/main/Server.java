@@ -333,6 +333,13 @@ public class Server {
      */
     public synchronized void shutdown() {
         assertStarted();
+        
+        /*
+         * TODO must do this conditionally - but for now, lets do it 
+         * anyway.
+         */
+        indexManager.traceDump();
+        
         transactionManager.shutdown();
         bufferManager.shutdown();
         logManager.shutdown();
