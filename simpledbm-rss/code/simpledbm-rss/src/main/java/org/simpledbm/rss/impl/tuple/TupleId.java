@@ -153,6 +153,24 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         }
         return pageId.getContainerId();
     }
+    
+    public int getX() {
+        if (pageId == null) {
+            log.error(this.getClass().getName(), "getX", mcat
+                .getMessage("ET0003", this));
+            throw new TupleException(mcat.getMessage("ET0003", this));
+        }
+        return pageId.getPageNumber();
+    }
+    
+    public int getY() {
+        if (pageId == null) {
+            log.error(this.getClass().getName(), "getY", mcat
+                .getMessage("ET0003", this));
+            throw new TupleException(mcat.getMessage("ET0003", this));
+        }
+        return slotNumber;
+    }
 
     @Override
     public int hashCode() {
