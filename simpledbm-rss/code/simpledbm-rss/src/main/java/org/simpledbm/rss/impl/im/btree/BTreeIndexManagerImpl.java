@@ -454,7 +454,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	leftSibling.validate();
             }
             int k;
-            int prevHighKey = leftSibling.header.keyCount;
             if (leftSibling.isLeaf()) {
                 // delete the high key
                 k = leftSibling.header.keyCount;
@@ -473,19 +472,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (QuickValidate) {
             	leftSibling.validateItemAt(j);
             }
-            //if (Validating) {
-            //	leftSibling.validate();
-            //}
             if (Validating) {
-            	try {
-            		leftSibling.validate();
-            	}
-            	catch (RSSException e) {
-            		System.err.println("==============================");
-            		System.err.println("Previous high key = " + prevHighKey);
-            		System.err.println("MergeOperation = " + mergeOperation);
-            		throw e;
-            	}
+          		leftSibling.validate();
             }
             leftSibling.dump();
         } else if (page.getPageId().getPageNumber() == mergeOperation.rightSibling) {
@@ -639,7 +627,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
                 // moving key left
                 // delete key from position 1
-                // FIXME Test case
             	Trace.event(9, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
                 p.purge(FIRST_KEY_POS);
                 node.header.keyCount = node.header.keyCount - 1;
@@ -2722,7 +2709,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
             }
             try {
-            	// TODO: add nextItem.getLocation() to trace message
             	Trace.event(95, nextItem.getLocation().getContainerId(), nextItem.getLocation().getX(), nextItem.getLocation().getY());
             	trx.acquireLockNowait(nextItem.getLocation(), mode, duration);
                 bcursor.setNextKeyLocation(nextItem.getLocation());
@@ -4486,89 +4472,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return result;
         }
 
-//		public final SearchResult search_(IndexItem key) {
-//			SearchResult result = new SearchResult();
-//			int k = 1;
-//			// We do not look at the high key when searching
-//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-//				IndexItem item = getItem(k);
-//				int comp = item.compareTo(key);
-//				if (comp >= 0) {
-//					result.k = k;
-//					result.item = item;
-//					if (comp == 0) {
-//						result.exactMatch = true;
-//					}
-//					break;
-//				}
-//			}
-//			return result;
-//		}
-//		public final SearchResult searchBinaryDebug(IndexItem key) {
-//			SearchResult result = new SearchResult();
-//			int k = 1;
-//			// We do not look at the high key when searching
-//			for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-//				IndexItem item = getItem(k);
-//				int comp = item.compareTo(key);
-//				if (comp >= 0) {
-//					result.k = k;
-//					result.item = item;
-//					if (comp == 0) {
-//						result.exactMatch = true;
-//					}
-//					break;
-//				}
-//			}
-//			SearchResult result1 = new SearchResult();
-//			int j = -1;
-//			int low = FIRST_KEY_POS;
-//			int high = getKeyCount();
-//			IndexItem item = null;
-//			while (low <= high) {
-//				int mid = (low + high) >>> 1;
-//				if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-//					throw new IndexException("Invalid binary search result");
-//				}
-//				item = getItem(mid);
-//				int comp = item.compareTo(key);
-//				if (comp < 0)
-//					low = mid + 1;
-//				else if (comp > 0)
-//					high = mid - 1;
-//				else {
-//					// k = mid;
-//					// result.exactMatch = true;
-//					j = mid;
-//					result1.k = j;
-//					result1.exactMatch = true;
-//					result1.item = item;
-////					if (j != result.k) {
-////						throw new IndexException("Invalid binary search result");
-////					}
-//					break;
-//				}
-//			}
-//			if (j == -1) {
-//				if (low > getKeyCount()) {
-//					j = -1;
-//				}
-//				else {
-//					j = low;
-//					result1.k = low;
-//					result1.item = getItem(low);
-//				}
-//			}
-//			System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
-////			if (result1.k != result.k || result1.item != result.item || result1.exactMatch != result.exactMatch) {
-////				System.err.println("k = " + result.k + " j = " + j + " low = " + low + " high = " + high + " keyCount = " + getKeyCount());
-////				System.err.println("result.item = " + result.item + " result1.item = " + result1.item);
-////				
-////				throw new IndexException("Invalid search result for binary search");
-////			}
-//		
-//			return result;
-//		}
 
         /**
          * Finds the child page associated with an index item.
@@ -4679,8 +4582,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  */
                 return getNumberOfKeys() < TEST_MODE_MAX_KEYS;
             }
-            // FIXME call a method in slottedpage
-            // int requiredSpace = v.getStoredLength() + 6;
             int requiredSpace = v.getStoredLength() + page.getSlotOverhead();
             if (v.isLeaf() && !isLeaf()) {
             	// Allow for extra child pointer
