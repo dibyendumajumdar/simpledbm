@@ -1731,8 +1731,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 .getPageNumber();
             if (leftSiblingNode.page.getFreeSpace() > rpage.getFreeSpace()) {
                 // key moving left
-                // FIXME Test case
-                redistributeOperation.key = rightSiblingNode.getLastKey();
+            	redistributeOperation.key = rightSiblingNode.getItem(FIRST_KEY_POS);
                 redistributeOperation.targetSibling = redistributeOperation.leftSibling;
             } else {
                 // key moving right
