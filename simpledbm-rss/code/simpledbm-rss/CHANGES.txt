@@ -1,11 +1,11 @@
 1.0.10-BETA:
- * dm: Fixed issue 33 - The BTree code had a bug in the repair page undeflow logic,
+ * dm: Fixed issue 33 - The BTree code had a bug in the repair page underflow logic,
    where a page could potentially be accessed through a wrapper that had not been
    refreshed after the page was modified. 
  * dm: Enhancement issue 32 - To debug the concurrency errors we need a mechanism for tracing the complex
    operations with low overhead. See the article in DDJ April 23, 2007,
    Multi-threaded Debugging Techniques by Shameem Akhter and Jason Roberts.
-   This artucle is an excerpt from the book Multi-Core Programming by the same authors.
+   This article is an excerpt from the book Multi-Core Programming by the same authors.
  * dm: Fixed issue 31 - When an exception was thrown the page buffer was being
    unfixed but not set to null. This caused another call to unfix further down
    to fail. Affect the tuple manager.
