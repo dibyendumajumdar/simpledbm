@@ -39,4 +39,16 @@ public interface Location extends Lockable, Storable, Comparable<Location> {
      * @param string
      */
     void parseString(String string);
+    
+    /**
+     * Return first part of the location if applicable. Meaningless other than 
+     * as an aid to identifying the location.
+     */
+    int getX();
+    
+    /**
+     * Return second part of the location if applicable. Meaningless other than 
+     * as an aid to identifying the location.
+     */
+    int getY();
 }
