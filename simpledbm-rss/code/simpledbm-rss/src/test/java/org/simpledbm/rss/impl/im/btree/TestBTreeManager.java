@@ -90,6 +90,7 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.impl.wal.LogManagerImpl;
+import org.simpledbm.rss.tools.diagnostics.Trace;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.ClassUtils;
 
@@ -281,6 +282,14 @@ public class TestBTreeManager extends BaseTestCase {
 
 		public int getContainerId() {
 			return loc;
+		}
+
+		public int getX() {
+			return 0;
+		}
+
+		public int getY() {
+			return 0;
 		}
 	}
 
@@ -3424,7 +3433,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testInsertUnderflowFig19"));
 		suite.addTest(new TestBTreeManager("testInsertUnderflowFig15"));
 		suite.addTest(new TestBTreeManager("testInsertNextKeyInNextPage"));
-		suite.addTest(new TestBTreeManager("testInsertUnderflowFig17"));
+		suite.addTest(new TestBTreeManager("testInsertUnderflowFig17")); 
 		suite.addTest(new TestBTreeManager("testDelete1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert2"));
@@ -3439,16 +3448,6 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testPhantomRecords1"));
 		suite.addTest(new TestBTreeManager("testPhantomRecords2"));
 		suite.addTest(new TestBTreeManager("testIsolation"));
-		// long i = System.currentTimeMillis() % 4;
-		// if (i == 0)
-		// suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
-		// else if (i == 1)
-		// suite
-		// .addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-		// else if (i == 2)
-		// suite.addTest(new TestBTreeManager(
-		// "testMultiThreadedInsertsDescending"));
-		// else {
 		suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
 		suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
 		suite
@@ -3563,7 +3562,8 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 
 		public void shutdown() {
-			btreeMgr.traceDump();
+			Trace.dump();
+			
 			trxmgr.shutdown();
 			bufmgr.shutdown();
 			logmgr.shutdown();
