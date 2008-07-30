@@ -1,4 +1,21 @@
 1.0.10-BETA:
+ * dm: Fixed issue 33 - The BTree code had a bug in the repair page undeflow logic,
+   where a page could potentially be accessed through a wrapper that had not been
+   refreshed after the page was modified. 
+ * dm: Enhancement issue 32 - To debug the concurrency errors we need a mechanism for tracing the complex
+   operations with low overhead. See the article in DDJ April 23, 2007,
+   Multi-threaded Debugging Techniques by Shameem Akhter and Jason Roberts.
+   This artucle is an excerpt from the book Multi-Core Programming by the same authors.
+ * dm: Fixed issue 31 - When an exception was thrown the page buffer was being
+   unfixed but not set to null. This caused another call to unfix further down
+   to fail. Affect the tuple manager.
+ * dm: Fixed issue 29 - Fixed an issue with space allocation that occurred when
+   there are pages marked as having space in the space map, but which actually
+   contain uncommitted deletes, and therefore do not have space, the logic for 
+   allocating a page goes into an endless loop. To break the loop added a check to
+   see if the search had wrapped around.
+ * dm: Fixed issue 28 - Fixed bug in redistribute keys operation. When moving a key from the right node to
+   the left, instead of moving the first item, it is moving the last. 
  * dm: Fixed issue 27 - global lock wasn't being released during lock wait if the parkNano call returned
    before timeout. This meant that the deadlock detector could not get in to resolve deadlocks.
  * dm: Fixed issue 26 - BTree implementation was miscalculating the space required for accommodating 
