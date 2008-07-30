@@ -70,6 +70,9 @@ public class Trace {
 	 */
 	
 	public static void dump() {
+		if (!log.isDebugEnabled()) {
+			return;
+		}
 		int max = seq.get();
 		for (int i = 0; i < traceBuffer.length; i++) {
 			TraceElement e = traceBuffer[i];

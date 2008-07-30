@@ -66,6 +66,7 @@ import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
 import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
+import org.simpledbm.rss.tools.diagnostics.Trace;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -334,11 +335,7 @@ public class Server {
     public synchronized void shutdown() {
         assertStarted();
         
-        /*
-         * TODO must do this conditionally - but for now, lets do it 
-         * anyway.
-         */
-        indexManager.traceDump();
+        Trace.dump();
         
         transactionManager.shutdown();
         bufferManager.shutdown();
