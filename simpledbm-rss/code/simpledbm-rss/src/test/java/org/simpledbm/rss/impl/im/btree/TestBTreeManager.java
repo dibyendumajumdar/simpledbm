@@ -895,6 +895,58 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
 
+	void doRedistributeIssue28()
+			throws Exception {
+		boolean testUnique = false;
+		boolean testLeaf = true;
+		
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
+			try {
+				BTreeNode node = btree.getBTreeNode();
+				node.wrap((SlottedPage) bab.getPage());
+				node.dump();
+			} finally {
+				bab.unfix();
+			}
+			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
+			try {
+				BTreeNode node = btree.getBTreeNode();
+				node.wrap((SlottedPage) bab.getPage());
+				node.dump();
+			} finally {
+				bab.unfix();
+			}
+
+			BTreeCursor bcursor = new BTreeCursor(btree.btreeMgr);
+			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
+			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
+			try {
+				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+				boolean okay = false;
+				try {
+					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+							testLeaf);
+					btree.doRedistribute(trx, bcursor);
+				} finally {
+					if (okay)
+						trx.commit();
+					else {
+						trx.abort();
+					}
+				}
+			} finally {
+				bcursor.unfixQ();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+	
+	
 	void doRestartAndIncreaseTreeHeight(boolean testLeaf, boolean testUnique)
 			throws Exception {
 		final BTreeDB db = new BTreeDB(false);
@@ -2162,6 +2214,13 @@ public class TestBTreeManager extends BaseTestCase {
 	public void testRestartAndDecreaseTreeHeight() throws Exception {
 		doRestartAndDecreaseTreeHeight(false, true, 2, 5);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
+	}
+	
+	public void testRedistributeIssue28() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data9nul.xml");
+		doRedistributeIssue28();
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRedistributeIssue28.xml");
 	}
 
 	public void testSimpleInsertAbort() throws Exception {
