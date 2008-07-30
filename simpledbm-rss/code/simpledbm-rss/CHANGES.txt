@@ -1,4 +1,9 @@
 1.0.10-BETA:
+ * dm: Issue 34 - Expose additional configuration properties 
+   log.disableFlushRequests - if true, performs log flush less frequently
+   bufferpool.writerSleepInterval - changes the interval between write scans
+   transaction.ckpt.interval - changes the interval between checkpoints
+   lock.deadlock.detection.interval - changes the interval between deadlock checks
  * dm: Fixed issue 33 - The BTree code had a bug in the repair page underflow logic,
    where a page could potentially be accessed through a wrapper that had not been
    refreshed after the page was modified. 
