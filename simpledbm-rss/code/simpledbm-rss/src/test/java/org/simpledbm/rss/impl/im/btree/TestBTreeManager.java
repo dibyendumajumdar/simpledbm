@@ -3481,6 +3481,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testRestartAndUnlink"));
 		suite.addTest(new TestBTreeManager("testRestartAndMergeAgain"));
 		suite.addTest(new TestBTreeManager("testRestartAndDecreaseTreeHeight"));
+		suite.addTest(new TestBTreeManager("testRedistributeIssue28"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertAbort"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertCommit"));
 		suite.addTest(new TestBTreeManager("testInsertSplitRootAbort"));
