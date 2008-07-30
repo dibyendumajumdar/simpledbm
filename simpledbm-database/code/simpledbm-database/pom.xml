@@ -4,7 +4,7 @@
 	<groupId>org.simpledbm.database</groupId>
 	<artifactId>simpledbm-database</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.8a</version>
+	<version>1.0.9</version>
 	<name>SimpleDBM Database</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -71,7 +71,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<configuration>
-					<argLine>-ea -Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
+					<argLine>-Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
 				</configuration>
 			</plugin>
 			<plugin>
