@@ -2156,18 +2156,35 @@ public class TestBTreeManager extends BaseTestCase {
 		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data1unl.xml");
 		doPageSplit(false, true);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testPageSplitNonLeafUnique2.xml");
-	}
-
-	public void testRestartAndMerge() throws Exception {
 		doRestartAndMerge(false, true, 2, 3);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndMerge.xml");
 	}
+
+//	public void testRestartAndMerge() throws Exception {
+//		doRestartAndMerge(false, true, 2, 3);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndMerge.xml");
+//	}
 
 	public void testPageSplitLeafUnique2() throws Exception {
 		doInitContainer();
 		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data1ul.xml");
 		doPageSplit(true, true);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testPageSplitLeafUnique2.xml");
+		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
+		doRestartLink(false, true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartLink.xml");
+		doRestartDelink(false, true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartDelink.xml");
+		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
+		doRestartAndLink(false, true);
+		doRestartAndRedistribute(false, true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndRedistribute.xml");
+		doRestartAndIncreaseTreeHeight(false, true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndIncreaseTreeHeight.xml");
+		doRestartAndUnlink(false, true, 2, 5, 3);
+		doRestartAndMerge(false, true, 5, 3);
+		doRestartAndDecreaseTreeHeight(false, true, 2, 5);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
 	}
 
 	/*
@@ -2176,45 +2193,45 @@ public class TestBTreeManager extends BaseTestCase {
 	 * true); }
 	 */
 
-	public void testRestartLink() throws Exception {
-		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
-		doRestartLink(false, true);
-		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartLink.xml");
-	}
+//	public void testRestartLink() throws Exception {
+//		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
+//		doRestartLink(false, true);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartLink.xml");
+//	}
 
-	public void testRestartDelink() throws Exception {
-		doRestartDelink(false, true);
-		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartDelink.xml");
-	}
+//	public void testRestartDelink() throws Exception {
+//		doRestartDelink(false, true);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartDelink.xml");
+//	}
 
-	public void testRestartAndLinkAgain() throws Exception {
-		// System.out.println("--> PREPARING PARENT");
-		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
-		doRestartAndLink(false, true);
-	}
+//	public void testRestartAndLinkAgain() throws Exception {
+//		// System.out.println("--> PREPARING PARENT");
+//		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
+//		doRestartAndLink(false, true);
+//	}
 
-	public void testRestartAndRedistribute() throws Exception {
-		doRestartAndRedistribute(false, true);
-		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndRedistribute.xml");
-	}
+//	public void testRestartAndRedistribute() throws Exception {
+//		doRestartAndRedistribute(false, true);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndRedistribute.xml");
+//	}
 
-	public void testRestartAndIncreaseTreeHeight() throws Exception {
-		doRestartAndIncreaseTreeHeight(false, true);
-		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndIncreaseTreeHeight.xml");
-	}
+//	public void testRestartAndIncreaseTreeHeight() throws Exception {
+//		doRestartAndIncreaseTreeHeight(false, true);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndIncreaseTreeHeight.xml");
+//	}
 
-	public void testRestartAndUnlink() throws Exception {
-		doRestartAndUnlink(false, true, 2, 5, 3);
-	}
+//	public void testRestartAndUnlink() throws Exception {
+//		doRestartAndUnlink(false, true, 2, 5, 3);
+//	}
 
-	public void testRestartAndMergeAgain() throws Exception {
-		doRestartAndMerge(false, true, 5, 3);
-	}
+//	public void testRestartAndMergeAgain() throws Exception {
+//		doRestartAndMerge(false, true, 5, 3);
+//	}
 
-	public void testRestartAndDecreaseTreeHeight() throws Exception {
-		doRestartAndDecreaseTreeHeight(false, true, 2, 5);
-		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
-	}
+//	public void testRestartAndDecreaseTreeHeight() throws Exception {
+//		doRestartAndDecreaseTreeHeight(false, true, 2, 5);
+//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
+//	}
 	
 	public void testRedistributeIssue28() throws Exception {
 		doInitContainer();
@@ -2509,13 +2526,6 @@ public class TestBTreeManager extends BaseTestCase {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doScanAndDelete(false, false, "a1", "10");
-	}
-
-	/**
-	 * This test must be run after {@link #testScanDeleteCrash()}. It verifies
-	 * that the BTree has been restored after system restart.
-	 */
-	public void testScanAfterCrash() throws Exception {
 		ScanResult[] scanResults = new ScanResult[] {
 				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
 				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
@@ -2535,8 +2545,35 @@ public class TestBTreeManager extends BaseTestCase {
 				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
 				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
 				new ScanResult("<INFINITY>", "999") };
-		doScanTree(false, false, "a1", "10", scanResults);
+		doScanTree(false, false, "a1", "10", scanResults);	
 	}
+
+//	/**
+//	 * This test must be run after {@link #testScanDeleteCrash()}. It verifies
+//	 * that the BTree has been restored after system restart.
+//	 */
+//	public void testScanAfterCrash() throws Exception {
+//		ScanResult[] scanResults = new ScanResult[] {
+//				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
+//				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
+//				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
+//				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
+//				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
+//				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
+//				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
+//				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
+//				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
+//				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
+//				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
+//				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
+//				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
+//				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
+//				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
+//				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
+//				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
+//				new ScanResult("<INFINITY>", "999") };
+//		doScanTree(false, false, "a1", "10", scanResults);
+//	}
 
 	/**
 	 * This test loads a set of sorted data, and then scans the tree to verify
@@ -3323,6 +3360,7 @@ public class TestBTreeManager extends BaseTestCase {
 		IndexItem key = generateKey(indexHelper, "12345678901", 0, 0, true);
 		assertFalse(node.canAccomodate(key));
         page.unlatchExclusive();
+        compressKeys = false;
 	}
 	
 	// FIXME copy of redo code from btree manager implementation
@@ -3394,6 +3432,7 @@ public class TestBTreeManager extends BaseTestCase {
         }
         mergeOperation.items.add(new IndexItem(indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(), -1, true, indexHelper.isUnique()));
         redoMergeOperation(page, mergeOperation);
+        compressKeys = false;
 	}
 
 	/**
@@ -3468,19 +3507,21 @@ public class TestBTreeManager extends BaseTestCase {
 
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
+		
 		suite.addTest(new TestBTreeManager("testPageSplitLeafUnique"));
 		suite.addTest(new TestBTreeManager("testPageSplitNonLeafUnique2"));
-		suite.addTest(new TestBTreeManager("testRestartAndMerge"));
+		// suite.addTest(new TestBTreeManager("testRestartAndMerge"));
 		suite.addTest(new TestBTreeManager("testPageSplitLeafUnique2"));
 		// suite.addTest(new TestBTreeManager("testRestartAndLink"));
-		suite.addTest(new TestBTreeManager("testRestartLink"));
-		suite.addTest(new TestBTreeManager("testRestartDelink"));
-		suite.addTest(new TestBTreeManager("testRestartAndLinkAgain"));
-		suite.addTest(new TestBTreeManager("testRestartAndRedistribute"));
-		suite.addTest(new TestBTreeManager("testRestartAndIncreaseTreeHeight"));
-		suite.addTest(new TestBTreeManager("testRestartAndUnlink"));
-		suite.addTest(new TestBTreeManager("testRestartAndMergeAgain"));
-		suite.addTest(new TestBTreeManager("testRestartAndDecreaseTreeHeight"));
+		
+		//suite.addTest(new TestBTreeManager("testRestartLink"));
+		//suite.addTest(new TestBTreeManager("testRestartDelink"));
+		//suite.addTest(new TestBTreeManager("testRestartAndLinkAgain"));
+		//suite.addTest(new TestBTreeManager("testRestartAndRedistribute"));
+		//suite.addTest(new TestBTreeManager("testRestartAndIncreaseTreeHeight"));
+		//suite.addTest(new TestBTreeManager("testRestartAndUnlink"));
+		//suite.addTest(new TestBTreeManager("testRestartAndMergeAgain"));
+		//suite.addTest(new TestBTreeManager("testRestartAndDecreaseTreeHeight"));
 		suite.addTest(new TestBTreeManager("testRedistributeIssue28"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertAbort"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertCommit"));
@@ -3502,7 +3543,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testScan3"));
 		suite.addTest(new TestBTreeManager("testScan4"));
 		suite.addTest(new TestBTreeManager("testScanDeleteCrash", true));
-		suite.addTest(new TestBTreeManager("testScanAfterCrash", true));
+		// suite.addTest(new TestBTreeManager("testScanAfterCrash", true));
 		suite.addTest(new TestBTreeManager("testInsertInOrder"));
 		suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
 		suite.addTest(new TestBTreeManager("testPhantomRecords1"));
@@ -3514,7 +3555,6 @@ public class TestBTreeManager extends BaseTestCase {
 				.addTest(new TestBTreeManager(
 						"testMultiThreadedInsertsDescending"));
 		suite.addTest(new TestBTreeManager("testCanAccomodate"));
-		// }
 		return suite;
 	}
 
@@ -3579,15 +3619,7 @@ public class TestBTreeManager extends BaseTestCase {
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(latchFactory, properties);
 			logmgr = (LogManagerImpl) logFactory.getLog(properties);
-//			if (largeBM) {
-//				logmgr.setDisableExplicitFlushRequests(true);
-//			}
 			bufmgr = new BufferManagerImpl(logmgr, pageFactory, properties);
-//			bufmgr = new BufferManagerImpl(logmgr, pageFactory, largeBM ? 350
-//					: 20, largeBM ? 389 : 11);
-//			if (largeBM) {
-//				bufmgr.setBufferWriterSleepInterval(60000);
-//			}
 			loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
 			moduleRegistry = new TransactionalModuleRegistryImpl(properties);
 			trxmgr = new TransactionManagerImpl(logmgr, storageFactory,
@@ -3615,9 +3647,6 @@ public class TestBTreeManager extends BaseTestCase {
 						.getRawPageType(), new PageId(0, 0));
 				pageFactory.store(page);
 			}
-//			if (largeBM) {
-//				trxmgr.setCheckpointInterval(60000);
-//			}
 			trxmgr.start();
 		}
 
