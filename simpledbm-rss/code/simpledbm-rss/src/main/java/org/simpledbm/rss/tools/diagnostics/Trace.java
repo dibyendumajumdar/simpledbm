@@ -60,6 +60,11 @@ public class Trace {
 	 * The trace buffer array where events are stored.
 	 */
 	static TraceElement[] traceBuffer;
+	
+	/**
+	 * Default message format.
+	 */
+	static String defaultMessage;
 
 	/*
 	 * For performance reasons, we only allow numeric arguments to be supplied
@@ -69,17 +74,40 @@ public class Trace {
 	 * the end.
 	 */
 	
+	/**
+	 * Dumps the contents of the trace buffer to the logger named
+	 * org.simpledbm.rss.trace. Messages are output only if this logger has
+	 * a level of DEBUG or higher.
+	 */
 	public static void dump() {
 		if (!log.isDebugEnabled()) {
 			return;
 		}
+		/*
+		 * As the trace buffer can change while we are dumping its contents,
+		 * we need some way to decide which messages to output. At present
+		 * we simply check the current sequence number, and dump all 
+		 * messages with a sequence number less than the one we noted. This
+		 * has a problem though - if the sequence number wraps around, and
+		 * dump() is invoked, then any messages that have a sequence number
+		 * greater than the noted sequence will not get output. To work around
+		 * this issue, we also dump messages that have a sequence number
+		 * that is much greater than the current max - to be exact, if the difference
+		 * is greater than Integer.MAX_VALUE/2.
+		 */
 		int max = seq.get();
 		for (int i = 0; i < traceBuffer.length; i++) {
 			TraceElement e = traceBuffer[i];
-			if (e.seq < max && e.msg != -1) {
-				String msg = messages[e.msg];
-				log.debug(Trace.class.getName(), "dump", MessageFormat.format(msg,
-					e.tid, e.seq, e.d1, e.d2, e.d3, e.d4));
+			if ((e.seq < max || (e.seq > max && ((e.seq - max) > Integer.MAX_VALUE/2))) && e.msg != -1) {
+				if (e.msg < 0 || e.msg > messages.length) {
+					log.debug(Trace.class.getName(), "dump", MessageFormat.format(defaultMessage,
+							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4, e.msg));
+				}
+				else {
+					String msg = messages[e.msg];
+					log.debug(Trace.class.getName(), "dump", MessageFormat.format(msg,
+							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4));
+				}
 			}
 		}
 	}
@@ -124,23 +152,23 @@ public class Trace {
 		volatile int d4;
 
 		void init(int seq, int msg) {
-			this.tid = Thread.currentThread().getId();
 			this.seq = seq;
+			this.tid = Thread.currentThread().getId();
 			this.msg = msg;
 			this.d1 = this.d2 = this.d3 = this.d4 = 0;
 		}
 
 		void init(int seq, int msg, int d1) {
-			this.tid = Thread.currentThread().getId();
 			this.seq = seq;
+			this.tid = Thread.currentThread().getId();
 			this.msg = msg;
 			this.d1 = d1;
 			this.d2 = this.d3 = this.d4 = 0;
 		}
 
 		void init(int seq, int msg, int d1, int d2) {
-			this.tid = Thread.currentThread().getId();
 			this.seq = seq;
+			this.tid = Thread.currentThread().getId();
 			this.msg = msg;
 			this.d1 = d1;
 			this.d2 = d2;
@@ -148,8 +176,8 @@ public class Trace {
 		}
 
 		void init(int seq, int msg, int d1, int d2, int d3) {
-			this.tid = Thread.currentThread().getId();
 			this.seq = seq;
+			this.tid = Thread.currentThread().getId();
 			this.msg = msg;
 			this.d1 = d1;
 			this.d2 = d2;
@@ -158,8 +186,8 @@ public class Trace {
 		}
 
 		void init(int seq, int msg, int d1, int d2, int d3, int d4) {
-			this.tid = Thread.currentThread().getId();
 			this.seq = seq;
+			this.tid = Thread.currentThread().getId();
 			this.msg = msg;
 			this.d1 = d1;
 			this.d2 = d2;
@@ -176,6 +204,10 @@ public class Trace {
 			traceBuffer[i] = new TraceElement();
 		}
 
+		/*
+		 * We use a default message for unrecognized messages.
+		 */
+		defaultMessage = "{6} TID {0} SEQ {1} trace arguments : {2}, {3}, {4}, {5}";
 		/*
 		 * Following is a temporary solution. Ideally the messages should be stored in
 		 * an external file.
@@ -283,7 +315,7 @@ public class Trace {
 		messages[98] = "98  TID {0} SEQ {1} do next key lock: reacquiring shared mode latch on next page ({2},{3})";
 		messages[99] = "99  TID {0} SEQ {1} do next key lock: okay to continue after unconditional lock wait";
 		messages[100] = "100 TID {0} SEQ {1} do next key lock: pages have changed while acquiring next key lock, hence must restart insert/delete";
-		messages[101] = "101 TID {0} SEQ {1} do next key lock: releasing lock on next key, location: ({2},{3},{4})";
+		messages[101] = "101 TID {0} SEQ {1} do next key lock: releasing lock on next key, location: ({2}.{3}.{4})";
 		messages[102] = "102 TID {0} SEQ {1} insert: next key is in next page";
 		messages[103] = "103 TID {0} SEQ {1} insert: next key is INFINITY";
 		messages[104] = "104 TID {0} SEQ {1} insert: possible duplicate key - lock key in shared more conditionally, location: ({2}.{3}.{4})";
