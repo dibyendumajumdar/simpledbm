@@ -6,8 +6,8 @@ SimpleDBM RSS User's Manual
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Version: 1.0.8
-:Date: 7 July 2008
+:Version: 1.0.9
+:Date: 17 July 2008
 :Copyright: Copyright by Dibyendu Majumdar, 2007-2008
 
 .. contents::
@@ -153,85 +153,88 @@ number of parameters. The available options are shown below:
 Server Options
 --------------
 
-+-----------------------------------+------------------------------------------------------------+
-| Property Name                     | Description                                                |
-+===================================+============================================================+
-| ``log.ctl.{n}``                   | The fully qualified path to the                            |
-|                                   | log control file. The first file should be specified as    |
-|                                   | ``log.ctl.1``, second as ``log.ctl.2``, and so on. Up to a |
-|                                   | maximum of 3 can be specified. Default is 2.               |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.groups.{n}.path``           | The path where log files of a group should be stored.      |
-|                                   | The first log group is specified as ``log.groups.1.path``, |
-|                                   | the second as ``log.groups.2.path``,                       |
-|                                   | and so on. Up to a maximum of 3 log groups can be          |
-|                                   | specified. Default number of groups is 1. Path defaults    |
-|                                   | to current directory.                                      |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.archive.path``              | Defines the path for storing archive files. Defaults to    | 
-|                                   | current directory.                                         |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.group.files``               | Specifies the number of log files within each group.       |
-|                                   | Up to a maximum of 8 are allowed. Defaults to 2.           |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.file.size``                 | Specifies the size of each log file in                     |
-|                                   | bytes. Default is 2 KB.                                    |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.buffer.size``               | Specifies the size of the log buffer                       |
-|                                   | in bytes. Default is 2 KB.                                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.buffer.limit``              | Sets a limit on the maximum number of                      |
-|                                   | log buffers that can be allocated. Default is 10 *         |
-|                                   | log.group.files.                                           |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.flush.interval``            | Sets the interval (in seconds)                             |
-|                                   | between log flushes. Default is 6 seconds.                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.disableFlushRequests``      | Boolean value, if set, disables                            |
-|                                   | log flushes requested explicitly by the Buffer Manager     |
-|                                   | or Transaction Manager. Log flushes still occur during     |
-|                                   | checkpoints and log switches. By reducing the log flushes, |
-|                                   | performance is improved, but transactions may not be       |
-|                                   | durable. Only those transactions will survive a system     | 
-|                                   | crash that have all their log records on disk.             |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.basePath``              | Defines the base location of the                           |
-|                                   | SimpleDBM database. All files and directories are created  |
-|                                   | relative to this location.                                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.createMode``            | Defines mode in which files will be                        |
-|                                   | created. Default is ``"rws"``.                             |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.openMode``              | Defines mode in which files will be                        |
-|                                   | opened. Default is ``"rws"``.                              |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.flushMode``             | Defines mode in which files will be flushed. Possible      |
-|                                   | values are noforce, force.true (default), and force.false  |
-+-----------------------------------+------------------------------------------------------------+
-| ``bufferpool.numbuffers``         | Sets the number of buffers to be created in                |
-|                                   | the Buffer Pool.                                           |
-+-----------------------------------+------------------------------------------------------------+
-| ``bufferpool.writerSleepInterval``| Sets the interval in milliseconds between each run of      |
-|                                   | the BufferWriter. Note that BufferWriter may run earlier   |
-|                                   | than the specified interval if the pool runs out of        |
-|                                   | buffers, and a new page has to be read in. In such cases,  |
-|                                   | the Buffer Writer may be manually triggered to clean out   |
-|                                   | buffers.                                                   |
-+-----------------------------------+------------------------------------------------------------+
-| ``logging.properties.file``       | Specifies the name of logging properties file. Precede     |
-|                                   | ``classpath:`` if you want SimpleDBM to search for this    |
-|                                   | file in the classpath.                                     |
-+-----------------------------------+------------------------------------------------------------+
-| ``logging.properties.type``       | Specify ``"log4j"`` if you want to SimpleDBM to use Log4J  |
-|                                   | for generating log messages.                               |
-+-----------------------------------+------------------------------------------------------------+
-| ``transaction.lock.timeout``      | Specifies the default lock timeout value in seconds.       |
-|                                   | Default is 60 seconds.                                     |
-+-----------------------------------+------------------------------------------------------------+
-| ``transaction.ckpt.interval``     | Specifies the interval between checkpoints in milliseconds.|
-|                                   | Default is 15000 milliseconds (15 secs).                   |
-+-----------------------------------+------------------------------------------------------------+
-The Server.create() call will overwrite any existing database
++-------------------------------------+------------------------------------------------------------+
+| Property Name                       | Description                                                |
++=====================================+============================================================+
+| ``log.ctl.{n}``                     | The fully qualified path to the                            |
+|                                     | log control file. The first file should be specified as    |
+|                                     | ``log.ctl.1``, second as ``log.ctl.2``, and so on. Up to a |
+|                                     | maximum of 3 can be specified. Default is 2.               |
++-------------------------------------+------------------------------------------------------------+
+| ``log.groups.{n}.path``             | The path where log files of a group should be stored.      |
+|                                     | The first log group is specified as ``log.groups.1.path``, |
+|                                     | the second as ``log.groups.2.path``,                       |
+|                                     | and so on. Up to a maximum of 3 log groups can be          |
+|                                     | specified. Default number of groups is 1. Path defaults    |
+|                                     | to current directory.                                      |
++-------------------------------------+------------------------------------------------------------+
+| ``log.archive.path``                | Defines the path for storing archive files. Defaults to    | 
+|                                     | current directory.                                         |
++-------------------------------------+------------------------------------------------------------+
+| ``log.group.files``                 | Specifies the number of log files within each group.       |
+|                                     | Up to a maximum of 8 are allowed. Defaults to 2.           |
++-------------------------------------+------------------------------------------------------------+
+| ``log.file.size``                   | Specifies the size of each log file in                     |
+|                                     | bytes. Default is 2 KB.                                    |
++-------------------------------------+------------------------------------------------------------+
+| ``log.buffer.size``                 | Specifies the size of the log buffer                       |
+|                                     | in bytes. Default is 2 KB.                                 |
++-------------------------------------+------------------------------------------------------------+
+| ``log.buffer.limit``                | Sets a limit on the maximum number of                      |
+|                                     | log buffers that can be allocated. Default is 10 *         |
+|                                     | log.group.files.                                           |
++-------------------------------------+------------------------------------------------------------+
+| ``log.flush.interval``              | Sets the interval (in seconds)                             |
+|                                     | between log flushes. Default is 6 seconds.                 |
++-------------------------------------+------------------------------------------------------------+
+| ``log.disableFlushRequests``        | Boolean value, if set, disables                            |
+|                                     | log flushes requested explicitly by the Buffer Manager     |
+|                                     | or Transaction Manager. Log flushes still occur during     |
+|                                     | checkpoints and log switches. By reducing the log flushes, |
+|                                     | performance is improved, but transactions may not be       |
+|                                     | durable. Only those transactions will survive a system     | 
+|                                     | crash that have all their log records on disk.             |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.basePath``                | Defines the base location of the                           |
+|                                     | SimpleDBM database. All files and directories are created  |
+|                                     | relative to this location.                                 |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.createMode``              | Defines mode in which files will be                        |
+|                                     | created. Default is ``"rws"``.                             |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.openMode``                | Defines mode in which files will be                        |
+|                                     | opened. Default is ``"rws"``.                              |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.flushMode``               | Defines mode in which files will be flushed. Possible      |
+|                                     | values are noforce, force.true (default), and force.false  |
++-------------------------------------+------------------------------------------------------------+
+| ``bufferpool.numbuffers``           | Sets the number of buffers to be created in                |
+|                                     | the Buffer Pool.                                           |
++-------------------------------------+------------------------------------------------------------+
+| ``bufferpool.writerSleepInterval``  | Sets the interval in milliseconds between each run of      |
+|                                     | the BufferWriter. Note that BufferWriter may run earlier   |
+|                                     | than the specified interval if the pool runs out of        |
+|                                     | buffers, and a new page has to be read in. In such cases,  |
+|                                     | the Buffer Writer may be manually triggered to clean out   |
+|                                     | buffers.                                                   |
++-------------------------------------+------------------------------------------------------------+
+| ``lock.deadlock.detection.interval``| Sets the interval in seconds between deadlock scans.       |
++-------------------------------------+------------------------------------------------------------+
+| ``logging.properties.file``         | Specifies the name of logging properties file. Precede     |
+|                                     | ``classpath:`` if you want SimpleDBM to search for this    |
+|                                     | file in the classpath.                                     |
++-------------------------------------+------------------------------------------------------------+
+| ``logging.properties.type``         | Specify ``"log4j"`` if you want to SimpleDBM to use Log4J  |
+|                                     | for generating log messages.                               |
++-------------------------------------+------------------------------------------------------------+
+| ``transaction.lock.timeout``        | Specifies the default lock timeout value in seconds.       |
+|                                     | Default is 60 seconds.                                     |
++-------------------------------------+------------------------------------------------------------+
+| ``transaction.ckpt.interval``       | Specifies the interval between checkpoints in milliseconds.|
+|                                     | Default is 15000 milliseconds (15 secs).                   |
++-------------------------------------+------------------------------------------------------------+
+
+The ``Server.create()`` call will overwrite any existing database
 in the specified storage path, so it must be called only when you know
 for sure that you want to create a database.
 
