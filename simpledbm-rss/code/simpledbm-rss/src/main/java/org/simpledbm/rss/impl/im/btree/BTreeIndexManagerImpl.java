@@ -323,7 +323,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see #createIndex(Transaction, String, int, int, int, int, boolean)
      * @see XMLLoader 
      */
-    private void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
+    void redoLoadPageOperation(Page page, LoadPageOperation loadPageOp) {
         /*
          * A LoadPageOperation is applied to two pages: the BTree page being initialised
          * and the Space Map page that contains the used/unused status for the BTree page.
@@ -370,7 +370,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
      * @see SplitOperation
      */
-    private void redoSplitOperation(Page page, SplitOperation splitOperation) {
+    void redoSplitOperation(Page page, SplitOperation splitOperation) {
         if (page.getPageId().equals(splitOperation.getPageId())) {
         	Trace.event(0, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             // q is the page to be split
@@ -434,7 +434,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor) 
      * @see MergeOperation
      */
-    private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
+    void redoMergeOperation(Page page, MergeOperation mergeOperation) {
         if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
         	Trace.event(2, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
@@ -485,7 +485,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
      * @see LinkOperation
      */
-    private void redoLinkOperation(Page page, LinkOperation linkOperation) {
+    void redoLinkOperation(Page page, LinkOperation linkOperation) {
     	Trace.event(5, linkOperation.rightSibling, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(linkOperation);
@@ -525,7 +525,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
      * @see UnlinkOperation 
      */
-    private void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
+    void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
     	Trace.event(6, unlinkOperation.rightSibling, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(unlinkOperation);
@@ -571,7 +571,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doRedistribute(Transaction, BTreeCursor)
      * @see RedistributeOperation
      */
-    private void redoRedistributeOperation(Page page,
+    void redoRedistributeOperation(Page page,
             RedistributeOperation redistributeOperation) {
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(redistributeOperation);
@@ -637,7 +637,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
      * @see IncreaseTreeHeightOperation 
      */
-    private void redoIncreaseTreeHeightOperation(Page page,
+    void redoIncreaseTreeHeightOperation(Page page,
             IncreaseTreeHeightOperation ithOperation) {
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(ithOperation);
@@ -684,7 +684,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
      * @see DecreaseTreeHeightOperation
      */
-    private void redoDecreaseTreeHeightOperation(Page page,
+    void redoDecreaseTreeHeightOperation(Page page,
             DecreaseTreeHeightOperation dthOperation) {
         if (page.getPageId().getPageNumber() == dthOperation.childPageSpaceMap) {
             // This is not executed if the space map is updated
@@ -737,7 +737,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see BTreeImpl#doInsert(Transaction, IndexKey, Location)
      * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
      */
-    private void redoInsertOperation(Page page, InsertOperation insertOp) {
+    void redoInsertOperation(Page page, InsertOperation insertOp) {
     	Trace.event(15, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(insertOp);
@@ -767,7 +767,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param page The page where the insert should be undone.
      * @param undoInsertOp The log record containing information on the undo operation.
      */
-    private void redoUndoInsertOperation(Page page,
+    void redoUndoInsertOperation(Page page,
             UndoInsertOperation undoInsertOp) {
     	Trace.event(16, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
@@ -793,7 +793,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param trx The transaction handling this operation
      * @param insertOp The insert operation that will be undone.
      */
-    private void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
+    void undoInsertOperation(Transaction trx, InsertOperation insertOp) {
 //		Undo-insert(T,P,k,m) { X-latch(P);
 //		if (P still contains r and will not underflow if r is deleted) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
@@ -893,7 +893,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param page Page where the key is to be deleted from
      * @param deleteOp The log operation describing the delete
      */
-    private void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
+    void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
     	Trace.event(21, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
     	SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(deleteOp);
@@ -917,7 +917,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param page Page where the deleted key will be restored
      * @param undoDeleteOp The log operation describing the undo operation.
      */
-    private void redoUndoDeleteOperation(Page page,
+    void redoUndoDeleteOperation(Page page,
             UndoDeleteOperation undoDeleteOp) {
     	Trace.event(22, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
@@ -943,7 +943,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param trx The transaction constrolling this operation
      * @param deleteOp The log record that describes the delete that will be undone.
      */
-    private void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
+    void undoDeleteOperation(Transaction trx, DeleteOperation deleteOp) {
 //		X-latch(P);
 //		if (P still covers r and there is a room for r in P) { Q = P;
 //		} else { unlatch(P); update-mode-traverse(k,Q);
