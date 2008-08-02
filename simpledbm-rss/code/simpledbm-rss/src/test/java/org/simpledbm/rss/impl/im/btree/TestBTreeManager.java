@@ -23,7 +23,6 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +72,6 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeImpl;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
-import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.MergeOperation;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
@@ -3363,78 +3361,60 @@ public class TestBTreeManager extends BaseTestCase {
         compressKeys = false;
 	}
 	
-	// FIXME copy of redo code from btree manager implementation
-   private void redoMergeOperation(Page page, MergeOperation mergeOperation) {
-		// left sibling - this page will aborb contents of right sibling.
-		SlottedPage q = (SlottedPage) page;
-		BTreeNode leftSibling = new BTreeNode(mergeOperation);
-		leftSibling.wrap(q);
-		int k;
-		if (leftSibling.isLeaf()) {
-			// delete the high key
-			k = leftSibling.header.keyCount;
-			q.delete(leftSibling.header.keyCount);
-		} else {
-			k = leftSibling.header.keyCount + 1;
-		}
-		for (IndexItem item : mergeOperation.items) {
-			q.insertAt(k++, item, true);
-		}
-		leftSibling.header.keyCount += mergeOperation.items.size()
-				- (leftSibling.isLeaf() ? 1 : 0);
-		leftSibling.header.rightSibling = mergeOperation.rightRightSibling;
-		leftSibling.updateHeader();
-		leftSibling.dumpAsXml();
-	}
+//Commented out as no longer relevant - the bug was in redistribute keys (see issue-28)
+//	/**
+//	 * Reproduce Issue-26 - merge of a leaf is corrupting the page.
+//	 * @throws Exception 
+//	 */
+//	void doTestMergeLeafIssue26() throws Exception {
+//		final BTreeDB db = new BTreeDB(false);
+//		try {
+//			BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(
+//					false);
+//			SlottedPageImpl page = (SlottedPageImpl) db.pageFactory
+//					.getInstance(db.spmgr.getPageType(), new PageId());
+//			page.latchExclusive();
+//			BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY,
+//					TYPE_ROWLOCATIONFACTORY, true, indexHelper.isUnique());
+//			BTreeNode node = new BTreeNode(indexHelper);
+//			node.wrap(page);
+//			node.insert(1, generateKey(indexHelper,
+//					"SimpleDBM needs to be totally bug free" + 1, 1, 1, true));
+//			node.insert(2, new IndexItem(indexHelper.getMaxIndexKey(),
+//					indexHelper.getNewLocation(), -1, true, indexHelper
+//							.isUnique()));
+//			node.header.keyCount = 2;
+//			node.updateHeader();
+//			MergeOperation mergeOperation = new BTreeIndexManagerImpl.MergeOperation();
+//			mergeOperation.setObjectFactory(db.objectFactory);
+//			mergeOperation.setLeaf(true);
+//			mergeOperation.setUnique(indexHelper.isUnique());
+//			mergeOperation.setKeyFactoryType(TYPE_STRINGKEYFACTORY);
+//			mergeOperation.setLocationFactoryType(TYPE_ROWLOCATIONFACTORY);
+//			mergeOperation.rightSibling = node.header.rightSibling;
+//			mergeOperation.rightRightSibling = node.header.rightSibling;
+//			mergeOperation.items = new LinkedList<IndexItem>();
+//			for (int k = 2; k < 7; k++) {
+//				mergeOperation.items.add(generateKey(indexHelper,
+//						"SimpleDBM needs to be totally bug free" + k, k, k,
+//						true));
+//			}
+//			mergeOperation.items.add(new IndexItem(
+//					indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(),
+//					-1, true, indexHelper.isUnique()));
+//			db.btreeMgr.redoMergeOperation(page, mergeOperation);
+//		} finally {
+//			db.shutdown();
+//		}
+//	}
+//
+//	public void testMergeLeafIssue26() throws Exception {
+//		compressKeys = true;
+//		doInitContainer2();
+//		doTestMergeLeafIssue26();
+//		compressKeys = false;
+//	}
 	
-	/**
-	 * Reproduce Issue-27 (TODO) - merge of a leaf is corrupting the page.
-	 */
-	public void testMergeLeaf() {
-		compressKeys = true;
-		BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(false);
-		Properties p = new Properties();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
-        final StorageManager storageManager = new StorageManagerImpl(p);
-        final LatchFactory latchFactory = new LatchFactoryImpl(p);
-        final PageFactory pageFactory = new PageFactoryImpl(
-            objectFactory,
-            storageManager,
-            latchFactory,
-            p);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
-            objectFactory, p);
-		objectFactory.registerType(TYPE_STRINGKEYFACTORY,
-				StringKeyFactory.class.getName());
-		objectFactory.registerType(TYPE_ROWLOCATIONFACTORY,
-				RowLocationFactory.class.getName());
-        SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
-            .getPageType(), new PageId());
-        page.latchExclusive();
-        BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, true, indexHelper.isUnique());
-        BTreeNode node = new BTreeNode(indexHelper);
-        node.wrap(page);
-       	node.insert(1, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + 1, 1, 1, true));
-        node.insert(2, new IndexItem(indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(), -1, true, indexHelper.isUnique()));
-        node.header.keyCount = 2;
-        node.updateHeader();
-        MergeOperation mergeOperation = new BTreeIndexManagerImpl.MergeOperation();
-        mergeOperation.setObjectFactory(objectFactory);
-        mergeOperation.setLeaf(true);
-        mergeOperation.setUnique(indexHelper.isUnique());
-        mergeOperation.setKeyFactoryType(TYPE_STRINGKEYFACTORY);
-        mergeOperation.setLocationFactoryType(TYPE_ROWLOCATIONFACTORY);
-        mergeOperation.rightSibling = node.header.rightSibling;
-        mergeOperation.rightRightSibling = node.header.rightSibling;
-        mergeOperation.items = new LinkedList<IndexItem>();
-        for (int k = 2; k < 7; k++) {
-        	mergeOperation.items.add(generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + k, k, k, true));
-        }
-        mergeOperation.items.add(new IndexItem(indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(), -1, true, indexHelper.isUnique()));
-        redoMergeOperation(page, mergeOperation);
-        compressKeys = false;
-	}
-
 	/**
 	 * Tests various concurrent activities.
 	 * 
@@ -3507,21 +3487,9 @@ public class TestBTreeManager extends BaseTestCase {
 
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
-		
 		suite.addTest(new TestBTreeManager("testPageSplitLeafUnique"));
 		suite.addTest(new TestBTreeManager("testPageSplitNonLeafUnique2"));
-		// suite.addTest(new TestBTreeManager("testRestartAndMerge"));
 		suite.addTest(new TestBTreeManager("testPageSplitLeafUnique2"));
-		// suite.addTest(new TestBTreeManager("testRestartAndLink"));
-		
-		//suite.addTest(new TestBTreeManager("testRestartLink"));
-		//suite.addTest(new TestBTreeManager("testRestartDelink"));
-		//suite.addTest(new TestBTreeManager("testRestartAndLinkAgain"));
-		//suite.addTest(new TestBTreeManager("testRestartAndRedistribute"));
-		//suite.addTest(new TestBTreeManager("testRestartAndIncreaseTreeHeight"));
-		//suite.addTest(new TestBTreeManager("testRestartAndUnlink"));
-		//suite.addTest(new TestBTreeManager("testRestartAndMergeAgain"));
-		//suite.addTest(new TestBTreeManager("testRestartAndDecreaseTreeHeight"));
 		suite.addTest(new TestBTreeManager("testRedistributeIssue28"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertAbort"));
 		suite.addTest(new TestBTreeManager("testSimpleInsertCommit"));
@@ -3543,7 +3511,6 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testScan3"));
 		suite.addTest(new TestBTreeManager("testScan4"));
 		suite.addTest(new TestBTreeManager("testScanDeleteCrash", true));
-		// suite.addTest(new TestBTreeManager("testScanAfterCrash", true));
 		suite.addTest(new TestBTreeManager("testInsertInOrder"));
 		suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
 		suite.addTest(new TestBTreeManager("testPhantomRecords1"));
@@ -3551,9 +3518,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testIsolation"));
 		suite.addTest(new TestBTreeManager("testMultiThreadedInserts"));
 		suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
-		suite
-				.addTest(new TestBTreeManager(
-						"testMultiThreadedInsertsDescending"));
+		suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
 		suite.addTest(new TestBTreeManager("testCanAccomodate"));
 		return suite;
 	}
