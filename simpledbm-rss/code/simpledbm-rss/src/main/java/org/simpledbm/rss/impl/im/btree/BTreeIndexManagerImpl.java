@@ -106,7 +106,7 @@ import org.xml.sax.SAXException;
  * index key if the child is a direct child. The highkey of the child page will be &lt; than
  * the index key if the child has a sibling that is an indirect child.
  * </li>
- * <li>All pages other than root must have at least two items (excluding highkey in leaf pages). </li>
+ * <li>All pages other than root must have at least two items (in addition to highkeys in leaf pages). </li>
  * <li>The rightmost key at any level is a special key containing logical INFINITY. Initially, the empty
  * tree contains this key only. As the tree grows through splitting of pages, the INFINITY key is carried
  * forward to the rightmost pages at each level of the tree. This key can never be deleted from the
@@ -219,6 +219,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * During test mode, the median key is defined as the 5th key (4).
      */
     private static final int TEST_MODE_SPLIT_KEY = 4;
+    
+    
 	private static final boolean Validating = false;
 	private static final boolean QuickValidate = false;
 
@@ -232,7 +234,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         this.spaceMgr = spaceMgr;
         this.bufmgr = bufMgr;
         this.spMgr = spMgr;
-        //this.lockAdaptor = new DefaultLockAdaptor();
         this.lockAdaptor = lockAdaptor;
         moduleRegistry.registerModule(MODULE_ID, this);
 
@@ -376,9 +377,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(splitOperation);
             leftSibling.wrap(q);
-            if (Validating) {
-            	leftSibling.validate();
-            }
             leftSibling.header.rightSibling = splitOperation.newSiblingPageNumber;
             leftSibling.header.keyCount = splitOperation.newKeyCount;
             // get rid of the keys that will move to the
@@ -450,9 +448,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(mergeOperation);
             leftSibling.wrap(q);
-            if (Validating) {
-            	leftSibling.validate();
-            }
             int k;
             if (leftSibling.isLeaf()) {
                 // delete the high key
@@ -495,9 +490,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(linkOperation);
         parent.wrap(p);
-        if (Validating) {
-        	parent.validate();
-        }
         int k = 0;
         for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
             IndexItem item = parent.getItem(k);
@@ -538,9 +530,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode parent = new BTreeNode(unlinkOperation);
         parent.wrap(p);
-        if (Validating) {
-        	parent.validate();
-        }
         int k = 0;
         for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
             IndexItem item = parent.getItem(k);
@@ -587,9 +576,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(redistributeOperation);
         node.wrap(p);
-        if (Validating) {
-        	node.validate();
-        }
         if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
             // processing Q
             if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
@@ -756,9 +742,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(insertOp);
         node.wrap(p);
-        if (Validating) {
-        	node.validate();
-        }
         SearchResult sr = node.search(insertOp.getItem());
         assert !sr.exactMatch;
         if (sr.k == -1) {
@@ -790,9 +773,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(undoInsertOp);
         node.wrap(p);
-        if (Validating) {
-        	node.validate();
-        }
         if (QuickValidate) {
         	assert node.getItem(undoInsertOp.getPosition()).equals(undoInsertOp.getItem());
         	node.validateItemAt(undoInsertOp.getPosition());
@@ -830,9 +810,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             SlottedPage p = (SlottedPage) bcursor.getP().getPage();
             BTreeNode node = new BTreeNode(insertOp);
             node.wrap(p);
-            if (Validating) {
-            	node.validate();
-            }
             SearchResult sr = null;
             boolean doSearch = false;
             /*
@@ -921,9 +898,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     	SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(deleteOp);
         node.wrap(p);
-        if (Validating) {
-        	node.validate();
-        }
         SearchResult sr = node.search(deleteOp.getItem());
         assert sr.exactMatch;
         if (QuickValidate) {
@@ -949,9 +923,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(undoDeleteOp);
         node.wrap(p);
-        if (Validating) {
-        	node.validate();
-        }
         node.insert(undoDeleteOp.getPosition(), undoDeleteOp.getItem());
         if (QuickValidate) {
         	node.validateItemAt(undoDeleteOp.getPosition());
@@ -1001,9 +972,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /*
                  * P sill covers r and there is room for r in P. 
                  */
-                if (Validating) {
-                	node.validate();
-                }
             } else {
                 /*
                  * We need to traverse the tree to find the leaf page where the key
