@@ -6,8 +6,8 @@ SimpleDBM RSS Developers's Guide
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Date: 7 July 2008
-:Version: 1.0.8
+:Date: 17 July 2008
+:Version: 1.0.9
 :Copyright: Copyright by Dibyendu Majumdar, 2005-2008
 
 .. contents::
@@ -2748,7 +2748,7 @@ The difficult bit is to ensure that the parent nodes are properly
 updated even if there is a system crash, say between the split 
 occuring at leaf level and it being propagated to the level above.
 
-In [DAVI-97], the authors provide a solution to this problem.
+In [DAVI-92]_, the authors provide a solution to this problem.
 During tree traversals, it is possible to detect that a node
 lacks a pointer to it from the parent. When this is detected,
 an action can be initiated to add the missing link into the
@@ -2770,7 +2770,7 @@ SimpleDBM B-link Tree
 ---------------------
 SimpleDBM_ currently provides a B-Link Tree Index implementation, based 
 upon algorithms described in [JALUTA-05]_.
-These algorithms combine the idea of short atomic actions, as in [DAVI-97],
+These algorithms combine the idea of short atomic actions, as in [DAVI-92]_,
 with top-down detection and correction of page overflow and underflow 
 conditions. Unlike previous algorithms, these algorithms handle deletes
 uniformly as inserts, and automatically merge nodes as they become
@@ -3199,7 +3199,9 @@ tuple updates cannot be handled efficiently, specially with regards
 to logging, as the contents of the both before and after images of 
 the tuple must be logged. A possible optimisation would be to use 
 some form of binary diff algorithm to generate a change vector, 
-and store the change vector only in the log record. 
+and store the change vector only in the log record. Another way is
+to allow a callback method to calculate the difference between
+the old and the new tuple. 
 
 Design Decisions
 ================
@@ -3260,7 +3262,8 @@ the same tuple can end up in the same page.
 Since the structure of the tuple is opaque to this module, updates are not
 very efficiently handled. Current implementation logs the full before and 
 after images of the tuple being updated. In future, this needs to be made 
-more efficient by using some form of binary diff algorithm.
+more efficient by using some mechanism to calculate the difference between
+the old tuple and the new.
 
 Space Reclamation
 -----------------
@@ -3314,18 +3317,8 @@ empty, but when they are used, their status changes as required.
 
 There are a couple of issues related to space management that 
 merit discussion. Unfortunately, there are very few papers that 
-go into all the details. I have found the following papers very 
-useful:
-
-  C.Mohan and D.Haderle. Algorithms for Flexible Space Management 
-  in Transaction Systems Supporting Fine-Granularity Locking. 
-  In Proceedings of the International Conference on Extending 
-  Database Technology, March 1994.
-
-  Mark L.McAuliffe, Michael J. Carey and Marvin H. Solomon. Towards 
-  Effective and Efficient Free Space Management. ACM SIGMOD Record. 
-  Proceedings of the 1996 ACM SIGMOD international conference on 
-  Management of Data, June 1996. 
+go into all the details. Couple of very useful papers are
+[MOHA-94]_ and [CAREY-96]_. 
 
 The first issue is how to handle deletes. There are two options.
 
@@ -3369,7 +3362,7 @@ page need to be updated. There is the risk that the tuple
 space will never be reclaimed.
 
 The problem of unnecessary visits to a page containing reserved
-space can be avoided by techniques described in [2]. This 
+space can be avoided by techniques described in [CAREY-96]_. This 
 involves maintaining a cache of recently used pages and avoiding 
 scanning of the free space map as long as there is candidate 
 page available in the cache. When a page is affected by 
@@ -3421,11 +3414,28 @@ possible to directly query the transaction table for
 the status of the transaction. However in this case, 
 the system would have to maintain the status of all 
 transactions, even those that have committed or aborted.
-
 SimpleDBM_ maintains the status of only active transactions, 
 and also does not tag tuples with the IDs of transactions. 
 Hence, it is appropriate to use the Lock Manager solution 
 in SimpleDBM_.
+
+Latch Ordering
+--------------
+If both data page and free space map page need to be 
+updated, then the latch order is data page first, and 
+then free space map page while holding the data page 
+latch.
+
+Logging of Space Map Page updates
+---------------------------------
+As per [MOHA-94]_, space map pages should be logged using 
+redo only log records. During normal processing, the 
+data page update is logged first followed by the space
+map page update. During undo processing, the space map 
+page update is logged first, followed by data page 
+update. Note that this does not change the latch
+ordering.
+
 
 .. [JALUTA-05] Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen. 
    Concurrency control and recovery for balanced B-link trees. 
@@ -3468,3 +3478,13 @@ in SimpleDBM_.
 
 .. [JGRAY] Transaction Processing: Concepts and Techniques, by Jim Gray 
    and Andreas Reuter
+   
+.. [MOHA-94] C.Mohan and D.Haderle. Algorithms for Flexible Space Management 
+   in Transaction Systems Supporting Fine-Granularity Locking. 
+   In Proceedings of the International Conference on Extending 
+   Database Technology, March 1994.
+
+.. [CAREY-96] Mark L.McAuliffe, Michael J. Carey and Marvin H. Solomon. Towards 
+   Effective and Efficient Free Space Management. ACM SIGMOD Record. 
+   Proceedings of the 1996 ACM SIGMOD international conference on 
+   Management of Data, June 1996. 
