@@ -20,6 +20,9 @@
 package org.simpledbm.rss.util;
 
 /**
+ * Objects that need to be managed through the SimpleLinkedList must
+ * extend this class.
+ * 
  * @author Dibyendu Majumdar
  * @since 06 Jan 2007
  */
@@ -29,6 +32,9 @@ public abstract class Linkable {
 
     Linkable prev;
 
+    /**
+     * Notes that the element is a member of a list.
+     */
     boolean member;
 
     Linkable getNext() {
@@ -54,5 +60,4 @@ public abstract class Linkable {
     final void setMember(boolean member) {
         this.member = member;
     }
-
 }

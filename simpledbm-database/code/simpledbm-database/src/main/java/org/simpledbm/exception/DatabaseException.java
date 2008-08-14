@@ -23,6 +23,8 @@ import org.simpledbm.rss.api.exception.RSSException;
 
 public class DatabaseException extends RSSException {
 
+	private static final long serialVersionUID = 8471449892397523231L;
+
 	public DatabaseException() {
 	}
 

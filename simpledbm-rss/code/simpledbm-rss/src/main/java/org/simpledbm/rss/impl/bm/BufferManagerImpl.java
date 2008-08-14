@@ -180,6 +180,8 @@ public final class BufferManagerImpl implements BufferManager {
      */
     final Object waitingForBuffers = new Object();
 
+    volatile int writeCount = 0;
+    
     /**
      * Define the number of times the BufMgr will retry when it cannot locate
      * an empty frame. Each time, it retries, the Buffer Writer will be triggered.
@@ -381,11 +383,14 @@ public final class BufferManagerImpl implements BufferManager {
                 return frameNo;
             }
         }
+        
+        int noteWC = writeCount;
+        int retryAttempt = 0;
         /*
          * Find a replacement victim - this should be the Least Recently Used
          * Buffer that is unfixed.
          */
-        for (int retryAttempt = 0; retryAttempt < maxRetriesDuringBufferWait; retryAttempt++) {
+        for (; retryAttempt < maxRetriesDuringBufferWait; retryAttempt++) {
 
             if (log.isTraceEnabled()) {
                 log.trace(
@@ -475,6 +480,15 @@ public final class BufferManagerImpl implements BufferManager {
 
         }
 
+        int dc = getDirtyBuffersCount();
+        int currentWC = writeCount;
+        dumpBuffers();
+        System.err.println("getFrame() failed after " + retryAttempt + " attempts");
+        System.err.println("getFrame() failed when dirty count was " + dc);
+        System.err.println("WC at start of getFrame() was " + noteWC);
+        System.err.println("WC at end of getFrame() was " + currentWC);
+        
+        
         return -1;
     }
 
@@ -930,17 +944,7 @@ public final class BufferManagerImpl implements BufferManager {
             bucket.unlock();
         }
 
-        /*
-         * We release the page latch after the BCB has been updated.
-         * Releasing the latch earlier seems to cause a problem - pages occasionally
-         * appear to lose writes. 
-         * FIXME It is not clear what causes the problem. Ideally, we should release
-         * the page latch earlier.
-         */
-        // bab.unlatch();
-
         checkStatus();
-
     }
 
     /**
@@ -1074,10 +1078,30 @@ public final class BufferManagerImpl implements BufferManager {
         }
     }
 
+    void dumpBuffers() {
+		/*
+		 * First make a list of all the dirty pages. By making a copy we avoid
+		 * having to lock the LRU list for long.
+		 */
+		lruLatch.readLock().lock();
+		try {
+			/*
+			 * We scan the LRU list and make a note of the dirty pages.
+			 */
+			for (BufferControlBlock bcb : lru) {
+				int h = (bcb.pageId.hashCode() & 0x7FFFFFFF)
+						% bufferHash.length;
+				System.err.println(bcb + ", buffer hash: " + h);
+			}
+		} finally {
+			lruLatch.readLock().unlock();
+		}
+	}
+    
     /**
-     * Writes dirty pages to disk. After each page is written, clients waiting
-     * for free frames are informed so that they can try again.
-     */
+	 * Writes dirty pages to disk. After each page is written, clients waiting
+	 * for free frames are informed so that they can try again.
+	 */
     public void writeBuffers() {
 
         /*
@@ -1148,6 +1172,7 @@ public final class BufferManagerImpl implements BufferManager {
                             logMgr.flush(lsn);
                         }
                         pageFactory.store(page);
+                        writeCount++;
                     } finally {
                         bucket.lock();
                     }
@@ -1169,7 +1194,8 @@ public final class BufferManagerImpl implements BufferManager {
                      * written.
                      */
                     synchronized (waitingForBuffers) {
-                        waitingForBuffers.notifyAll();
+                        //waitingForBuffers.notifyAll();
+                    	waitingForBuffers.notify();
                     }
                 } else {
                     // System.err.println("Skipping write of bcb " + bcb.pageId);

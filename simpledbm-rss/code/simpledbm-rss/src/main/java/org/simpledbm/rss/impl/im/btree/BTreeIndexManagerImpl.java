@@ -372,8 +372,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     void redoSplitOperation(Page page, SplitOperation splitOperation) {
         if (page.getPageId().equals(splitOperation.getPageId())) {
-        	Trace.event(0, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             // q is the page to be split
+        	Trace.event(0, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(splitOperation);
             leftSibling.wrap(q);
@@ -389,9 +389,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 leftSibling.replace(
                     splitOperation.newKeyCount,
                     splitOperation.highKey);
-                assert leftSibling
-                    .getItem(splitOperation.newKeyCount)
-                    .compareTo(splitOperation.highKey) == 0;
             }
             leftSibling.updateHeader();
             if (Validating) {
@@ -399,8 +396,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
             leftSibling.dump();
         } else {
-        	Trace.event(1, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             // r is the newly allocated right sibling of q
+        	Trace.event(1, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), splitOperation.getPageId().getContainerId(), splitOperation.getPageId().getPageNumber());
             SlottedPage r = (SlottedPage) page;
             r.init();
             formatPage(
@@ -436,19 +433,23 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      */
     void redoMergeOperation(Page page, MergeOperation mergeOperation) {
         if (page.getPageId().getPageNumber() == mergeOperation.rightSiblingSpaceMapPage) {
-        	Trace.event(2, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+        	Trace.event(2, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), mergeOperation.rightSibling);
             FreeSpaceMapPage smp = (FreeSpaceMapPage) page;
             // deallocate page by marking it unused
             smp.setSpaceBits(mergeOperation.rightSibling, PAGE_SPACE_UNUSED);
         } else if (page.getPageId().getPageNumber() == mergeOperation
             .getPageId()
             .getPageNumber()) {
-        	Trace.event(3, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             // left sibling - this page will aborb contents of right sibling.
+        	Trace.event(3, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), mergeOperation.rightSibling);
             SlottedPage q = (SlottedPage) page;
             BTreeNode leftSibling = new BTreeNode(mergeOperation);
             leftSibling.wrap(q);
             int k;
+            /*
+             * FIXME - in the code below, we should use the methods
+             * provided by BTreeNode to manipulate items in the page.
+             */
             if (leftSibling.isLeaf()) {
                 // delete the high key
                 k = leftSibling.header.keyCount;
@@ -491,21 +492,30 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         BTreeNode parent = new BTreeNode(linkOperation);
         parent.wrap(p);
         int k = 0;
-        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
-            IndexItem item = parent.getItem(k);
-            // Change the index entry of left child to point to right child
-            if (item.getChildPageNumber() == linkOperation.leftSibling) {
-                item.setChildPageNumber(linkOperation.rightSibling);
-                p.insertAt(k, item, true);
-                break;
-            }
-        }
-        if (k > parent.header.keyCount) {
+        // REFACTOR - use the find operation and avoid reading full item.        
+//        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
+//            IndexItem item = parent.getItem(k);
+//            // Change the index entry of left child to point to right child
+//            if (item.getChildPageNumber() == linkOperation.leftSibling) {
+//                item.setChildPageNumber(linkOperation.rightSibling);
+//                p.insertAt(k, item, true);
+//                break;
+//            }
+//        }
+        k = parent.findPosition(linkOperation.leftSibling);
+        if (k == -1 || k > parent.header.keyCount) {
             // child pointer not found - corrupt b-tree?
             log.error(LOG_CLASS_NAME, "redoLinkOperation", mcat
                 .getMessage("EB0001"));
             throw new IndexException(mcat.getMessage("EB0001"));
         }
+        IndexItem item = parent.getItem(k);
+       
+        // Change the index entry of left child to point to right child
+        assert item.getChildPageNumber() == linkOperation.leftSibling;
+        item.setChildPageNumber(linkOperation.rightSibling);
+        p.insertAt(k, item, true);
+        
         // Insert new entry for left child
         IndexItem u = linkOperation.leftChildHighKey;
         p.insertAt(k, u, false);
@@ -531,13 +541,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         BTreeNode parent = new BTreeNode(unlinkOperation);
         parent.wrap(p);
         int k = 0;
-        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
-            IndexItem item = parent.getItem(k);
-            if (item.getChildPageNumber() == unlinkOperation.leftSibling) {
-                break;
-            }
-        }
-        if (k > parent.header.keyCount) {
+        // REFACTOR use the find operation and avoid reading full item
+//        for (k = FIRST_KEY_POS; k <= parent.header.keyCount; k++) {
+//            IndexItem item = parent.getItem(k);
+//            if (item.getChildPageNumber() == unlinkOperation.leftSibling) {
+//                break;
+//            }
+//        }
+        k = parent.findPosition(unlinkOperation.leftSibling);
+        if (k == -1 || k > parent.header.keyCount) {
             log.error(LOG_CLASS_NAME, "redoUnlinkOperation", mcat
                 .getMessage("EB0001"));
             throw new IndexException(mcat.getMessage("EB0001"));
@@ -642,7 +654,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         SlottedPage p = (SlottedPage) page;
         BTreeNode node = new BTreeNode(ithOperation);
         if (p.getPageId().equals(ithOperation.getPageId())) {
-        	Trace.event(11, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+        	Trace.event(11, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), ithOperation.leftSibling, ithOperation.rightSibling);
             // root page
             // get rid of existing entries by reinitializing page
             int savedPageNumber = p.getSpaceMapPageNumber();
@@ -651,12 +663,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
                 .getLocationFactoryType(), false, ithOperation.isUnique());
             node.wrap(p);
+            // insert new items
             node.insert(1, ithOperation.rootItems.get(0));
             node.insert(2, ithOperation.rootItems.get(1));
             node.header.keyCount = 2;
             node.updateHeader();
         } else if (p.getPageId().getPageNumber() == ithOperation.leftSibling) {
-        	Trace.event(12, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+        	Trace.event(12, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), ithOperation.rightSibling);
             // new left sibling
             p.init();
             formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
@@ -697,7 +710,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         } else if (page.getPageId().getPageNumber() == dthOperation
             .getPageId()
             .getPageNumber()) {
-        	Trace.event(13, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+        	Trace.event(13, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), dthOperation.childPageNumber);
             // root page 
             // delete contents and absorb contents of only child
             SlottedPage p = (SlottedPage) page;
@@ -820,17 +833,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * We need to traverse the tree to find the leaf page where the key
                  * now lives.
                  */
+            	Trace.event(123, insertOp.getPageId().getContainerId(), insertOp.getPageId().getPageNumber());
                 doSearch = true;
             } else {
-            	Trace.event(18, p.getPageId().getContainerId(), p.getPageId().getPageNumber());
                 sr = node.search(insertOp.getItem());
                 if (sr.exactMatch && node.header.keyCount > node.minimumKeys()) {
+                	Trace.event(18, p.getPageId().getContainerId(), p.getPageId().getPageNumber());
                     /*
                      * Page still contains the key and will not underflow if the key
                      * is deleted
                      */
                     doSearch = false;
                 } else {
+                	Trace.event(124, p.getPageId().getContainerId(), p.getPageId().getPageNumber());
                     /*
                      * We need to traverse the tree to find the leaf page where the key
                      * now lives.
@@ -913,7 +928,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     }
 
     /**
-     * Redo a undo operation on a key delete on the specified leaf page.
+     * Redo an undo operation on a key delete on the specified leaf page.
      * @param page Page where the deleted key will be restored
      * @param undoDeleteOp The log operation describing the undo operation.
      */
@@ -972,12 +987,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 /*
                  * P sill covers r and there is room for r in P. 
                  */
+            	Trace.event(125, deleteOp.getPageId().getContainerId(), deleteOp.getPageId().getPageNumber());
             } else {
                 /*
                  * We need to traverse the tree to find the leaf page where the key
                  * now lives.
                  */
-            	Trace.event(24);
+            	Trace.event(24, deleteOp.getPageId().getContainerId(), deleteOp.getPageId().getPageNumber());
                 bcursor.unfixP();
                 BTreeImpl btree = getBTreeImpl(deleteOp
                     .getPageId()
@@ -991,6 +1007,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 p = (SlottedPage) bcursor.getP().getPage();
                 node.wrap(p);
                 if (!node.canAccomodate(bcursor.searchKey)) {
+                	Trace.event(126, p.getPageId().getContainerId(), p.getPageId().getPageNumber());
                     bcursor.setQ(bcursor.removeP());
                     btree.doSplit(trx, bcursor);
                     bcursor.setP(bcursor.removeQ());
@@ -1087,10 +1104,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @see org.simpledbm.rss.api.im.IndexManager#getIndex(org.simpledbm.rss.api.tx.Transaction, int)
      */
     public IndexContainer getIndex(Transaction trx, int containerId) {
-        trx.acquireLock(
-            lockAdaptor.getLockableContainerId(containerId),
-            LockMode.SHARED,
-            LockDuration.COMMIT_DURATION);
+    	lockIndexContainer(trx, containerId, LockMode.SHARED);
+//        trx.acquireLock(
+//            lockAdaptor.getLockableContainerId(containerId),
+//            LockMode.SHARED,
+//            LockDuration.COMMIT_DURATION);
         return getIndex(containerId);
     }
     
@@ -1116,10 +1134,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         boolean success = false;
         try {
 
-            trx.acquireLock(
-                lockAdaptor.getLockableContainerId(containerId),
-                LockMode.EXCLUSIVE,
-                LockDuration.COMMIT_DURATION);
+        	lockIndexContainer(trx, containerId, LockMode.EXCLUSIVE);
+//            trx.acquireLock(
+//                lockAdaptor.getLockableContainerId(containerId),
+//                LockMode.EXCLUSIVE,
+//                LockDuration.COMMIT_DURATION);
             /*
              * Create the specified container
              */
@@ -2966,6 +2985,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void insert(Transaction trx, IndexKey key,
                 Location location) {
+        	if (key.equals(getMaxIndexKey())) {
+				log.error(getClass().getName(), "insert", mcat
+						.getMessage("EB0013"));
+				throw new IndexException(mcat.getMessage("EB0013"));
+			}
         	Trace.event(112);
             Savepoint savepoint = trx.createSavepoint(false);
             boolean success = false;
@@ -3085,6 +3109,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void delete(Transaction trx, IndexKey key,
                 Location location) {
+        	if (key.equals(getMaxIndexKey())) {
+        		log.error(getClass().getName(), "delete", mcat.getMessage("EB0013"));
+        		throw new IndexException(mcat.getMessage("EB0013"));
+        	}
         	Trace.event(113);
             Savepoint savepoint = trx.createSavepoint(false);
             boolean success = false;
@@ -3935,9 +3963,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.btree = btree;
         }
 
-        private final void sanityCheck() {
+        private final boolean sanityCheck() {
         	if (page != null && pageId.equals(page.getPageId()) && pageLsn.equals(page.getPageLsn())) {
-        		return;
+        		return true;
         	}
         	throw new IndexException("The BTreeNode no longer refers to the correct page");
         }
@@ -4170,6 +4198,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 isUnique());
         }
 
+        final PartialIndexItem getNewPartialIndexItem() {
+        	sanityCheck();
+        	return new PartialIndexItem(
+                isLeaf(),
+                -1);
+        }
+        
         /**
          * Returns the high key. High key is always the last physical key on the page.
          */
@@ -4192,6 +4227,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return (IndexItem) page.get(slotNumber, getNewIndexItem());
         }
 
+        final PartialIndexItem getPartialItem(int slotNumber) {
+        	sanityCheck();
+            return (PartialIndexItem) page.get(slotNumber, getNewPartialIndexItem());
+        }
+        
         public final IndexItem getInfiniteKey() {
         	sanityCheck();
         	return new IndexItem(
@@ -4451,15 +4491,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     page));
                 throw new IndexException(mcat.getMessage("EB0009", page));
             }
-            int k = 1;
-            for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-                IndexItem item = getItem(k);
-                if (item.compareTo(key) >= 0) {
-                    /* Item covers key */
-                    return item.getChildPageNumber();
-                }
-            }
-            return -1;
+            SearchResult sr = search(key);
+            assert sr.k != -1;
+            return sr.item.getChildPageNumber();
+//            int k = 1;
+//            for (k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+//                IndexItem item = getItem(k);
+//                if (item.compareTo(key) >= 0) {
+//                    /* Item covers key */
+//                    return item.getChildPageNumber();
+//                }
+//            }
+//            return -1;
         }
 
         /**
@@ -4472,15 +4515,40 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     page));
                 throw new IndexException(mcat.getMessage("EB0009", page));
             }
+            /*
+             * We avoid reading the full item until we have found the one we want.
+             */
             for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-                IndexItem item = getItem(k);
-                if (item.getChildPageNumber() == childPageNumber) {
-                    return item;
+                // IndexItem item = getItem(k);
+            	PartialIndexItem item = getPartialItem(k);
+                if (item.childPageNumber == childPageNumber) {
+                	// return item;
+                    return getItem(k);
                 }
             }
             return null;
         }
 
+        /**
+         * Finds the position of a child page pointer.
+         */
+        public final int findPosition(int childPageNumber) {
+            if (isLeaf()) {
+                log.error(LOG_CLASS_NAME, "findPosition", mcat.getMessage(
+                    "EB0009",
+                    page));
+                throw new IndexException(mcat.getMessage("EB0009", page));
+            }
+            for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+            	PartialIndexItem item = getPartialItem(k);
+                if (item.childPageNumber == childPageNumber) {
+                    return k;
+                }
+            }
+            return -1;
+        }
+        
+        
         /**
          * Finds the index item for left sibling of the
          * specified child page.
@@ -4492,15 +4560,26 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     page));
                 throw new IndexException(mcat.getMessage("EB0009", page));
             }
-            IndexItem prev = null;
-            for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
-                IndexItem item = getItem(k);
-                if (item.getChildPageNumber() == childPageNumber) {
+//            IndexItem prev = null;
+//            for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
+//                IndexItem item = getItem(k);
+//                if (item.getChildPageNumber() == childPageNumber) {
+//                    break;
+//                }
+//                prev = item;
+//            }
+//            return prev;
+            int k = FIRST_KEY_POS;
+            for (; k <= getKeyCount(); k++) {
+                PartialIndexItem item = getPartialItem(k);
+                if (item.childPageNumber == childPageNumber) {
                     break;
                 }
-                prev = item;
             }
-            return prev;
+            if (k == FIRST_KEY_POS) {
+            	return null;
+            }
+            return getItem(k-1);
         }
 
         /**
@@ -5758,6 +5837,62 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     }
 
     /**
+     * PartialIndexItem is useful when we need to instantiate an item only to check
+     * the child page pointer. In such situations, it is expensive to instantiate the whole
+     * item; instead we can do it cheaper by instantiating a PartialIndexItem.
+     * @author Dibyendu Majumdar
+     * @since 08 Aug 08
+     */
+    static class PartialIndexItem implements Storable {
+
+    	/**
+         * Pointer to child node that has keys <= this key. This is an
+         * optional field; only present in index pages. 
+         */
+        protected int childPageNumber;
+
+        /**
+         * A non-persistent flag.
+         */
+        protected boolean isLeaf;
+
+        PartialIndexItem(boolean isLeaf, int childPageNumber) {
+        	this.isLeaf = isLeaf;
+        	this.childPageNumber = childPageNumber;
+        }
+        
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
+         */
+        public void retrieve(ByteBuffer bb) {
+            if (!isLeaf) {
+                childPageNumber = bb.getInt();
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
+         */
+        public void store(ByteBuffer bb) {
+            if (!isLeaf) {
+                bb.putInt(childPageNumber);
+            }
+        }
+
+        /* (non-Javadoc)
+         * @see org.simpledbm.io.Storable#getStoredLength()
+         */
+        public int getStoredLength() {
+            int len = 0;
+            if (!isLeaf) {
+                len += TypeSize.INTEGER;
+            }
+            return len;
+        }
+    }
+    
+    
+    /**
      * IndexItem represents an item within a BTree Page. Both Index pages and
      * Leaf pages contain IndexItems. However, the content of IndexItem is somewhat
      * different in Index pages than the content in Leaf pages.
@@ -5770,7 +5905,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @author Dibyendu Majumdar
      * @since 18-Sep-2005
      */
-    public static final class IndexItem implements Storable,
+    public static final class IndexItem extends PartialIndexItem implements Storable,
             Comparable<IndexItem>, Dumpable {
 
         /**
@@ -5783,17 +5918,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * in non-unique index pages.
          */
         private Location location;
-
-        /**
-         * Pointer to child node that has keys <= this key. This is an
-         * optional field; only present in index pages. 
-         */
-        private int childPageNumber;
-
-        /**
-         * A non-persistent flag.
-         */
-        private boolean isLeaf;
 
         /**
          * A non-persistent flag.
@@ -5810,10 +5934,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public IndexItem(IndexKey key, Location loc, int childPageNumber,
                 boolean isLeaf, boolean isUnique) {
+        	super(isLeaf, childPageNumber);
             this.key = key;
             this.location = loc;
-            this.childPageNumber = childPageNumber;
-            this.isLeaf = isLeaf;
             this.isUnique = isUnique;
         }
 
@@ -5821,12 +5944,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @see org.simpledbm.io.Storable#retrieve(java.nio.ByteBuffer)
          */
         public final void retrieve(ByteBuffer bb) {
+        	super.retrieve(bb);
             key.retrieve(bb);
             if (isLocationRequired()) {
                 location.retrieve(bb);
-            }
-            if (!isLeaf) {
-                childPageNumber = bb.getInt();
             }
         }
 
@@ -5834,12 +5955,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @see org.simpledbm.io.Storable#store(java.nio.ByteBuffer)
          */
         public final void store(ByteBuffer bb) {
+        	super.store(bb);
             key.store(bb);
             if (isLocationRequired()) {
                 location.store(bb);
-            }
-            if (!isLeaf) {
-                bb.putInt(childPageNumber);
             }
         }
 
@@ -5847,12 +5966,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @see org.simpledbm.io.Storable#getStoredLength()
          */
         public final int getStoredLength() {
-            int len = key.getStoredLength();
+            int len = super.getStoredLength();
+            len += key.getStoredLength();
             if (isLocationRequired()) {
                 len += location.getStoredLength();
-            }
-            if (!isLeaf) {
-                len += TypeSize.INTEGER;
             }
             return len;
         }

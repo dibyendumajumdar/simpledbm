@@ -211,4 +211,11 @@ public class VarcharValue extends BaseDataValue {
 		return o;
 	}
 
+	@Override
+	public StringBuilder appendTo(StringBuilder sb) {
+		if (isValue()) {
+			return sb.append(getString());
+		}
+		return super.appendTo(sb);
+	}
 }

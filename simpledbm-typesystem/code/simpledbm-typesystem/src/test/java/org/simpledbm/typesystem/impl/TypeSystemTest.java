@@ -49,6 +49,11 @@ public class TypeSystemTest extends TestCase {
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
+        for (TypeDescriptor td: rowtype1) {
+            System.err.println(td);
+        }
+        System.err.println(fieldFactory.getDateTimeType());
+        System.err.println(fieldFactory.getNumberType(2));
         rowFactory.registerRowType(1, rowtype1);
         Row row = rowFactory.newRow(1);
         assertEquals(row.getNumberOfColumns(), 2);

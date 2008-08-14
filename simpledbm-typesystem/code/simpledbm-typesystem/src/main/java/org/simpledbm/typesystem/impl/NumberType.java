@@ -94,7 +94,14 @@ public class NumberType implements TypeDescriptor {
 			return false;
 		return true;
 	}
-	
-	
 
+	public StringBuilder appendTo(StringBuilder sb) {
+		return sb.append("NumberType(scale=").append(scale).append(")");
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 }

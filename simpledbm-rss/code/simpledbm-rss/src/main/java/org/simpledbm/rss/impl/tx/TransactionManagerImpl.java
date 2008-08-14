@@ -1533,7 +1533,7 @@ public final class TransactionManagerImpl implements TransactionManager {
     public static final class TransactionImpl implements Transaction, Storable,
             Dumpable {
 
-        private TransactionManagerImpl trxmgr;
+		private TransactionManagerImpl trxmgr;
 
         public static final int SIZE = Lsn.SIZE * 3 + TransactionId.SIZE
                 + TypeSize.BYTE * 2;
@@ -2508,6 +2508,30 @@ public final class TransactionManagerImpl implements TransactionManager {
             return trxmgr;
         }
 
+        @Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (!super.equals(obj))
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			final TransactionImpl other = (TransactionImpl) obj;
+			if (trxId == null) {
+				if (other.trxId != null)
+					return false;
+			} else if (!trxId.equals(other.trxId))
+				return false;
+			return true;
+		}
+
+		@Override
+		public int hashCode() {
+			final int PRIME = 31;
+			int result = super.hashCode();
+			result = PRIME * result + ((trxId == null) ? 0 : trxId.hashCode());
+			return result;
+		}
     }
 
     /**

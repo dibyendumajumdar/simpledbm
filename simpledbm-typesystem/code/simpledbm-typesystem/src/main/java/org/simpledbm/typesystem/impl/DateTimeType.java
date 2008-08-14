@@ -117,7 +117,19 @@ public class DateTimeType implements TypeDescriptor {
 			return false;
 		return true;
 	}
-	
-	
-	
+
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("DataTimeType(timeZone=").
+			append(timeZone.getID()).
+			append(", dateFormat='").
+			append(dateFormat.toPattern()).
+			append("')");
+		return sb;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 }

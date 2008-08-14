@@ -20,6 +20,9 @@
 package org.simpledbm.rss.impl.fsm;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
@@ -60,7 +63,16 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         implements FreeSpaceManager {
-
+	
+	/*
+	 * When new pages are added, we could set the space map pointer so that
+	 * clients can always work out the space map page associated with a page.
+	 * Currently this is not possible because the base Page class does not hold
+	 * the space map pointer - only the sub-class SlottedPage does. This module
+	 * is meant to be generic. A solution might be to add the space map pointer
+	 * to the base Page class.
+	 */
+	
     static final Logger log = Logger.getLogger(FreeSpaceManagerImpl.class
         .getPackage()
         .getName());
@@ -79,6 +91,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
     private final TransactionManager trxmgr;
 
+    final FreeSpaceCursorCache cursorCache = new FreeSpaceCursorCache(this);
+    
     private static final short MODULE_ID = 2;
 
     private static final short TYPE_BASE = 20;
@@ -179,7 +193,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         return new SpaceCursorImpl(this, containerId);
     }
 
-    @Override
+    public FreeSpaceCursor getPooledSpaceCursor(int containerId) {
+		return cursorCache.getFreeSpaceCursor(containerId);
+	}
+
+	public void releaseSpaceCursor(FreeSpaceCursor fsc) {
+		cursorCache.returnFreeSpaceCursor(fsc);
+	}
+
+	@Override
     public final Compensation generateCompensation(Undoable undoable) {
         if (undoable instanceof CreateContainer) {
             UndoCreateContainer clr = (UndoCreateContainer) loggableFactory
@@ -239,6 +261,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             bufmgr.invalidateContainer(logrec.getContainerId());
             storageManager.remove(logrec.getContainerId());
             // storageFactory.delete(logrec.getName());
+            cursorCache.removeContainerId(logrec.getContainerId());
         } else if (loggable instanceof FormatHeaderPage) {
             HeaderPage hdrPage = (HeaderPage) page;
             FormatHeaderPage logrec = (FormatHeaderPage) loggable;
@@ -322,6 +345,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             // storageFactory.delete(logrec.getName());
             // Following is now handled by the transaction manager
             // trxmgr.logNonTransactionRelatedOperation(logrec);
+            cursorCache.removeContainerId(logrec.getContainerId());
         }
     }
 
@@ -1396,7 +1420,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
-
     }
 
     /**
@@ -1416,7 +1439,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
-
     }
 
     /**
@@ -2067,7 +2089,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return doFindAndFixSMP(checker, true);
         }
 
-        final int doFindAndFixSMP(FreeSpaceChecker checker, boolean exclusive) {
+        public int findAndFixSpaceMapPageShared(FreeSpaceChecker checker) {
+            return doFindAndFixSMP(checker, false);
+		}
+
+		final int doFindAndFixSMP(FreeSpaceChecker checker, boolean exclusive) {
 
             initScan();
 
@@ -2335,6 +2361,70 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             spacemgr.redo(page, updateSpaceMapLog);
             bab.setDirty(lsn);
         }
+
+		public int getContainerId() {
+			return containerId;
+		}
     }
 
+    /**
+     * Cache for FreeSpaceCursor objects, keyed by container Id.
+     * @author Dibyendu Majumdar
+     * @since 10 Aug 08
+     */
+    static class FreeSpaceCursorCache {
+    	
+    	FreeSpaceManagerImpl fsm;
+    	
+    	HashMap<Integer, List<FreeSpaceCursor>> cache = new HashMap<Integer, List<FreeSpaceCursor>>();
+    	
+    	FreeSpaceCursorCache(FreeSpaceManagerImpl fsm) {
+    		this.fsm = fsm;
+		}
+
+    	/**
+    	 * Returns a FreeSpaceCursor for specified container Id. If no cached instance exists,
+    	 * a new cursor is allocated and returned.
+    	 */
+    	FreeSpaceCursor getFreeSpaceCursor(int containerId) {
+    		synchronized (cache) {
+    			List<FreeSpaceCursor> cursorList = cache.get(containerId);
+    			if (cursorList == null) {
+    				cursorList = new ArrayList<FreeSpaceCursor>();
+    				cache.put(containerId, cursorList);
+    			}
+    			if (cursorList.size() > 0) {
+    				return cursorList.remove(cursorList.size()-1);
+    			}
+    		}
+    		return new SpaceCursorImpl(fsm, containerId);
+    	}
+    	
+    	/**
+    	 * Returns a FreeSpaceCursor to the cache.
+    	 */
+    	void returnFreeSpaceCursor(FreeSpaceCursor fsc) {
+    		synchronized (cache) {
+    			List<FreeSpaceCursor> cursorList = cache.get(fsc.getContainerId());
+    			if (cursorList == null) {
+    				cursorList = new ArrayList<FreeSpaceCursor>();
+    				cache.put(fsc.getContainerId(), cursorList);
+    			}
+    			cursorList.add(fsc);
+    		}
+    	}
+    	
+    	/**
+    	 * Removes all cached instances of FreeSpaceCursor for specified
+    	 * containerId.
+    	 */
+    	void removeContainerId(int containerId) {
+    		synchronized (cache) {
+    			List<FreeSpaceCursor> cursorList = cache.remove(containerId);
+    			if (cursorList != null) {
+    				cursorList.clear();
+    			}
+    		}
+    	}
+    }
 }

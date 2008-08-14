@@ -22,6 +22,7 @@ package org.simpledbm.database.api;
 import java.util.ArrayList;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
@@ -31,7 +32,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * 
  * @author dibyendumajumdar
  */
-public interface TableDefinition extends Storable {
+public interface TableDefinition extends Storable, Dumpable {
 
 	/**
 	 * Adds an Index to the table definition. Only one primay index is allowed.

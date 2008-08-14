@@ -78,5 +78,15 @@ public class IntegerType implements TypeDescriptor {
 			return true;
 		return false;
 	}
+
+	public StringBuilder appendTo(StringBuilder sb) {
+		return sb.append("IntegerType()");
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 	
 }

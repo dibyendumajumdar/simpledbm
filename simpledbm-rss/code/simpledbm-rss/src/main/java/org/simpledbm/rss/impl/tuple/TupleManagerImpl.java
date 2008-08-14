@@ -65,6 +65,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.tools.diagnostics.Trace;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
@@ -174,13 +175,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
     final LoggableFactory loggableFactory;
 
-    final FreeSpaceManager spaceMgr;
+    private final FreeSpaceManager spaceMgr;
 
     final BufferManager bufmgr;
 
     final SlottedPageManager spMgr;
-
-    final PageFactory pageFactory;
 
     final TupleIdFactory locationFactory;
 
@@ -188,7 +187,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
     static final MessageCatalog mcat = new MessageCatalog();
     
-    static int maximumPageSpaceFaults = 10;
+    private final SlottedPage emptyPage;
 
     public TupleManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -203,7 +202,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         this.spaceMgr = spaceMgr;
         this.bufmgr = bufMgr;
         this.spMgr = spMgr;
-        this.pageFactory = pageFactory;
 
         moduleRegistry.registerModule(MODULE_ID, this);
 
@@ -231,8 +229,24 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         objectFactory.registerType(
             TYPE_LOG_UNDOUPDATETUPLESEGMENT,
             UndoUpdateTupleSegment.class.getName());
+
+        emptyPage = (SlottedPage) pageFactory.getInstance(
+                spMgr.getPageType(),
+                new PageId());
+        emptyPage.init();
     }
 
+    /**
+     * Returns the approximate space available in an empty page.
+     */
+    final int getPageSpace() {
+    	return emptyPage.getSpace();
+    }
+    
+    final int getPageSlotOverhead() {
+    	return emptyPage.getSlotOverhead();
+    }
+    
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.tx.BaseTransactionalModule#generateCompensation(org.simpledbm.rss.api.tx.Undoable)
      */
@@ -292,6 +306,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         InsertTupleSegment logrec = (InsertTupleSegment) undoable;
         int spaceMapPage = logrec.spaceMapPage;
 
+        Trace.event(127, pageId.getContainerId(), pageId.getPageNumber());
         BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false, -1, 0);
         try {
             SlottedPage page = (SlottedPage) bab.getPage();
@@ -317,27 +332,17 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                  * Also as per Mohan the space map update must be logged before the
                  * data page update, using redo only log record.
                  */
-                FreeSpaceCursor spcursor = spaceMgr.getSpaceCursor(pageId
-                    .getContainerId());
-                spcursor.fixSpaceMapPageExclusively(spaceMapPage, pageId
-                    .getPageNumber());
-                try {
-                    spcursor.updateAndLogRedoOnly(
-                        trx,
-                        pageId.getPageNumber(),
-                        spacebitsAfter);
-                    if (log.isDebugEnabled()) {
-                        log.debug(
-                            this.getClass().getName(),
-                            "undoInsertSegment",
-                            "SIMPLEDBM-DEBUG: Updated space map information from "
-                                    + spacebitsBefore + " to " + spacebitsAfter
-                                    + " for page " + pageId
-                                    + " in space map page " + spaceMapPage
-                                    + " as a result of " + clr);
-                    }
-                } finally {
-                    spcursor.unfixCurrentSpaceMapPage();
+            	updateSpaceMapInfo(trx, pageId.getContainerId(), 
+            			pageId.getPageNumber(), spaceMapPage, spacebitsAfter, spacebitsBefore);
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        this.getClass().getName(),
+                        "undoInsertSegment",
+                        "SIMPLEDBM-DEBUG: Updated space map information from "
+                                + spacebitsBefore + " to " + spacebitsAfter
+                                + " for page " + pageId
+                                + " in space map page " + spaceMapPage
+                                + " as a result of " + clr);
                 }
             }
             Lsn lsn = trx.logInsert(page, clr);
@@ -378,38 +383,20 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 .getSpace(), page.getFreeSpace());
 
             if (spacebitsAfter != spacebitsBefore) {
-                /*
-                 * Requires space map page update.
-                 * We must obtain the latch on the free space map page while
-                 * holding the latch on the data page.
-                 * Also as per Mohan the space map update must be logged before the
-                 * data page update, using redo only log record.
-                 */
-                FreeSpaceCursor spcursor = spaceMgr.getSpaceCursor(pageId
-                    .getContainerId());
-                spcursor.fixSpaceMapPageExclusively(page
-                    .getSpaceMapPageNumber(), pageId.getPageNumber());
-                try {
-                    spcursor.updateAndLogRedoOnly(
-                        trx,
-                        pageId.getPageNumber(),
-                        spacebitsAfter);
-                    if (log.isDebugEnabled()) {
-                        log.debug(
-                            this.getClass().getName(),
-                            "undoDeleteSegment",
-                            "SIMPLEDBM-DEBUG: Updated space map information from "
-                                    + spacebitsBefore + " to " + spacebitsAfter
-                                    + " for page " + pageId
-                                    + " in space map page "
-                                    + page.getSpaceMapPageNumber()
-                                    + " as a result of " + clr);
-                    }
-                } finally {
-                    spcursor.unfixCurrentSpaceMapPage();
-                }
+            	updateSpaceMapInfo(trx, page.getPageId().getContainerId(), page
+						.getPageId().getPageNumber(), page
+						.getSpaceMapPageNumber(), spacebitsAfter,
+						spacebitsBefore);
+				if (log.isDebugEnabled()) {
+					log.debug(this.getClass().getName(), "undoDeleteSegment",
+							"SIMPLEDBM-DEBUG: Updated space map information from "
+									+ spacebitsBefore + " to " + spacebitsAfter
+									+ " for page " + pageId
+									+ " in space map page "
+									+ page.getSpaceMapPageNumber()
+									+ " as a result of " + clr);
+				}
             }
-
             Lsn lsn = trx.logInsert(page, clr);
             bab.setDirty(lsn);
         } finally {
@@ -469,6 +456,303 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         p.dump();
     }
 
+    /**
+	 * Physically deletes any slots that are left over from previous
+	 * deletes. The operation is logged.
+	 */
+    void reclaimDeletedTuples(Transaction trx, BufferAccessBlock bab) {
+        SlottedPage page = (SlottedPage) bab.getPage();
+        int slotsDeleted = 0;
+        for (int slotNumber = 0; slotNumber < page.getNumberOfSlots(); slotNumber++) {
+            /*
+             * If slot is already deleted, then go to next one.
+             */
+            if (page.isSlotDeleted(slotNumber)) {
+                continue;
+            }
+            /*
+             * Is the slot logically deleted?
+             */
+            if (TupleHelper.isDeleted(page, slotNumber)) {
+                TupleId location;
+
+                if (!TupleHelper.isSegmented(page, slotNumber)
+                        || TupleHelper.isFirstSegment(page, slotNumber)) {
+                    location = new TupleId(page.getPageId(), slotNumber);
+                } else {
+                    /*
+                     * If the slot is part of a tuple that is segmented, and
+                     * if is not the first segment, then we need to read the
+                     * tuple segment to determine the Location to which this
+                     * segment belogs. The location is stored in the link field.
+                     */
+                    TupleSegment ts = new TupleSegment();
+                    page.get(slotNumber, ts);
+                    PageId pageId = new PageId(page
+                        .getPageId()
+                        .getContainerId(), ts.nextPageNumber);
+                    location = new TupleId(pageId, ts.nextSlotNumber);
+                }
+                /*
+                 * Check if the location was locked by current transaction.
+                 */
+                LockMode mode = trx.hasLock(location);
+                if (mode == LockMode.EXCLUSIVE) {
+                    /*
+                     * The current transaction holds an exclusive lock on
+                     * the tuple. Hence the delete must have been executed
+                     * within this transaction. Or the transaction is
+                     * currently reusing this tuple location as part of an
+                     * insert.
+                     * Therefore the tuple segment cannot be reclaimed
+                     */
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            this.getClass().getName(),
+                            "reclaimDeletedTuples",
+                            "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
+                                    + page.getPageId() + ", slot="
+                                    + slotNumber
+                                    + ") skipped as the associated tuple "
+                                    + location
+                                    + " is locked in this transaction");
+                    }
+                    continue;
+                }
+                boolean reclaim = false;
+                /*
+                 * Test if we can acquire an exclusive lock on the tuple. If
+                 * this test succeeds then the slot can be deleted, because
+                 * it means that the original transaction that deleted the
+                 * tuple has committed.
+                 */
+                try {
+                    trx.acquireLockNowait(
+                        location,
+                        LockMode.EXCLUSIVE,
+                        LockDuration.INSTANT_DURATION);
+                    reclaim = true;
+                } catch (LockException e) {
+                    if (log.isDebugEnabled()) {
+                        log
+                            .debug(
+                                this.getClass().getName(),
+                                "reclaimDeletedTuples",
+                                "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
+                                        + page.getPageId()
+                                        + ", slot="
+                                        + slotNumber
+                                        + ") skipped because cannot obtain lock on "
+                                        + location,
+                                e);
+                    }
+                }
+                if (reclaim) {
+                	/*
+                	 * We successfully obtained an instant lock on the tuple 
+                	 * so we know that this segment is committed and can be 
+                	 * cleaned up.
+                	 */
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            this.getClass().getName(),
+                            "reclaimDeletedTuples",
+                            "SIMPLEDBM-DEBUG: Reclaiming tuple segment at (page="
+                                    + page.getPageId() + ", slot="
+                                    + slotNumber
+                                    + ") associated with tuple at "
+                                    + location);
+                    }
+                    /*
+                     * TODO: Instead of deleting one slot at a time, we should do them all
+                     * in a batch.
+                     */
+                    DeleteSlot logrec = (DeleteSlot) loggableFactory
+                        .getInstance(
+                            TupleManagerImpl.MODULE_ID,
+                            TupleManagerImpl.TYPE_LOG_DELETESLOT);
+                    logrec.slotNumber = slotNumber;
+                    Lsn lsn = trx.logInsert(page, logrec);
+                    redo(page, logrec);
+                    bab.setDirty(lsn);
+                    slotsDeleted++;
+                }
+            }
+        }
+    }
+
+    /**
+     * Holds the results of a free space scan.
+     */
+    static class FindPageResults {
+    	/**
+    	 * The page found is fixed exclusively. Will be null if 
+    	 * the search was unsuccessful.
+    	 */
+		BufferAccessBlock bab = null;
+		
+		/**
+		 * Page number of the page found by the search. If unsuccessful,
+		 * this will be set to -1.
+		 */
+		int pageNumber;
+		
+		/**
+		 * Space map page associated with above page.
+		 */
+		int spaceMapPage;
+    }
+    
+    /**
+     * Locate a page that has the required space. Space map pages are consulted,
+     * but any candidate page is visited to verify the space available. This is necessary
+     * due to the way deletes are handled.
+     */
+	FindPageResults locateEmptyPage(Transaction trx, int containerId, int requiredSpace) {
+		int pageNumber = -1;
+		
+		/*
+		 * We need some way of deciding whether we are in an endless loop.
+		 * This can happen because pages may be marked as available in the free space
+		 * map, but in reality be unusable due to uncommitted deletes. The mechanism
+		 * we use simply uses the starting page as a signpost.
+		 */
+		int previouslySeenPageNumber = -1;
+		BufferAccessBlock bab = null;
+		int maxPageSpace = getPageSpace();
+		int spaceMapPage;
+		FreeSpaceCursor spcursor = spaceMgr
+				.getPooledSpaceCursor(containerId);
+		try {
+			while (pageNumber == -1) {
+				pageNumber = spcursor
+						.findAndFixSpaceMapPageShared(new TwoBitSpaceCheckerImpl(
+								maxPageSpace, requiredSpace));
+				/*
+				 * If we hit a page we have seen before then we are looping
+				 * because space map may not be accurate due to uncommitted
+				 * deletes.
+				 */
+				if ((previouslySeenPageNumber != -1 && pageNumber == previouslySeenPageNumber)
+						|| pageNumber == -1) {
+					// FIXME Test case needed
+					spaceMgr.extendContainer(trx, containerId);
+					pageNumber = spcursor
+							.findAndFixSpaceMapPageShared(new TwoBitSpaceCheckerImpl(
+									maxPageSpace, requiredSpace));
+					if (pageNumber == -1) {
+						log.error(this.getClass().getName(),
+								"doCompleteInsert", mcat.getMessage(
+										"ET0004", containerId));
+						throw new TupleException(mcat.getMessage("ET0004",
+								containerId));
+					}
+					previouslySeenPageNumber = -1;
+				}
+				if (pageNumber != -1 && previouslySeenPageNumber == -1) {
+					previouslySeenPageNumber = pageNumber;
+				}
+				spaceMapPage = spcursor.getCurrentSpaceMapPage()
+						.getPageId().getPageNumber();
+				/*
+				 * Latch on space map page needs to be released before we
+				 * obtain a latch on the data page.
+				 */
+				spcursor.unfixCurrentSpaceMapPage();
+				PageId pageId = new PageId(containerId, pageNumber);
+				bab = bufmgr.fixExclusive(pageId, false, -1, 0);
+				try {
+					reclaimDeletedTuples(trx, bab);
+					SlottedPage page = (SlottedPage) bab.getPage();
+					if (page.getFreeSpace() < requiredSpace) {
+						// FIXME Test case needed
+						pageNumber = -1;
+					}
+					else {
+						FindPageResults results = new FindPageResults();
+						results.bab = bab;
+						results.spaceMapPage = spaceMapPage;
+						results.pageNumber = pageNumber;
+						return results;
+					}
+				} finally {
+					if (pageNumber == -1) {
+						// FIXME Test case needed
+						bab.unfix();
+						bab = null;
+					}
+				}
+			}
+		} finally {
+			spaceMgr.releaseSpaceCursor(spcursor);
+		}
+		/*
+		 * Should never reach here.
+		 */
+		throw new TupleException();
+	}
+
+	/**
+	 * Updates space map information for a particular page.
+	 * The data page latch must be held when this is called.
+	 * @param trx Transaction managing this update
+	 * @param containerId The ID of the container being updated 
+	 * @param pageNumber The page whose space usage has changed
+	 * @param spaceMapPage The space map page that will maintain the space usage data
+	 * @param spacebitsAfter The new space usage bits
+	 * @param spacebitsBefore The old space usage bits
+	 */
+	void updateSpaceMapInfo(Transaction trx, int containerId, int pageNumber, int spaceMapPage, int spacebitsAfter, int spacebitsBefore) {
+        /*
+         * We must obtain the latch on the free space map page while
+         * holding the latch on the data page.
+         * As per Mohan the space map update must be logged before the
+         * data page update, using redo only log record.
+         */
+    	Trace.event(128, containerId, spaceMapPage, pageNumber, spacebitsAfter);
+		
+		/*
+		 * We get a new space cursor rather than a pooled on as we do not want this
+		 * operation to affect the search for free space.
+		 */
+		FreeSpaceCursor spcursor = spaceMgr.getSpaceCursor(containerId);
+        if (spacebitsAfter != spacebitsBefore) {
+        	/*
+        	 * We need to latch the space map page while holding the latch
+        	 * on the data page - as per Mohan.
+        	 */
+            spcursor.fixSpaceMapPageExclusively(
+                spaceMapPage,
+                pageNumber);
+            try {
+                FreeSpaceMapPage smp = spcursor
+                    .getCurrentSpaceMapPage();
+                if (smp.getSpaceBits(pageNumber) != spacebitsAfter) {
+                	/*
+                	 * The space map update must be redo only, as per Mohan.
+                	 */
+                    spcursor.updateAndLogRedoOnly(
+                        trx,
+                        pageNumber,
+                        spacebitsAfter);
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            this.getClass().getName(),
+                            "doStartInsert",
+                            "SIMPLEDBM-DEBUG: Updated space map information from "
+                                    + spacebitsBefore + " to "
+                                    + spacebitsAfter + " for page "
+                                    + pageNumber
+                                    + " in space map page "
+                                    + spaceMapPage);
+                    }
+                }
+            } finally {
+                spcursor.unfixCurrentSpaceMapPage();
+            }
+        }
+	}
+	
     public void lockTupleContainer(Transaction trx, int containerId, LockMode mode) {
         trx.acquireLock(
             lockAdaptor.getLockableContainerId(containerId),
@@ -476,36 +760,22 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             LockDuration.COMMIT_DURATION);        
     }
     
-    
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.tuple.TupleManager#createTupleContainer(org.simpledbm.rss.api.tx.Transaction, java.lang.String, int, int)
      */
     public void createTupleContainer(Transaction trx, String name,
             int containerId, int extentSize) {
-        trx.acquireLock(
-            lockAdaptor.getLockableContainerId(containerId),
-            LockMode.EXCLUSIVE,
-            LockDuration.COMMIT_DURATION);
+    	lockTupleContainer(trx, containerId, LockMode.EXCLUSIVE);
         spaceMgr.createContainer(trx, name, containerId, 2, extentSize, spMgr
             .getPageType());
-    }
-
-    /* (non-Javadoc)
-     * @see org.simpledbm.rss.api.tuple.TupleManager#getTupleContainer(int)
-     */
-    TupleContainer getTupleContainer(int containerId) {
-        return new TupleContainerImpl(this, containerId);
     }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.tuple.TupleManager#getTupleContainer(org.simpledbm.rss.api.tx.Transaction, int)
      */
     public TupleContainer getTupleContainer(Transaction trx, int containerId) {
-        trx.acquireLock(
-            lockAdaptor.getLockableContainerId(containerId),
-            LockMode.SHARED,
-            LockDuration.COMMIT_DURATION);
-        return getTupleContainer(containerId);
+    	lockTupleContainer(trx, containerId, LockMode.SHARED);
+        return new TupleContainerImpl(this, containerId);
     }
 
     /* (non-Javadoc)
@@ -528,22 +798,37 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
      */
     public static class TupleInserterImpl implements TupleInserter {
 
-        TupleContainerImpl tupleContainer;
+        final TupleContainerImpl tupleContainer;
 
-        Transaction trx;
+        final TupleManagerImpl tuplemgr;
+        
+        final Transaction trx;
 
-        Storable tuple;
+        /**
+         * The tuple being inserted or updated.
+         */
+        final Storable tuple;
 
+        final int containerId;
+
+        /**
+         * The location allocated to the tuple.
+         */
         TupleId location;
 
-        int containerId;
-
+        /**
+         * The full length of the table row (tuple) we are inserting.
+         */
         int tupleLength;
 
-        int spaceMapPage;
-
+        /**
+         * Tracks the offset within the tuple where insert is currently.
+         */
         int currentPos = 0;
 
+        /**
+         * The tuple converted to a byte array. 
+         */
         byte[] tupleData;
 
         int prevSegmentPage;
@@ -556,7 +841,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         Savepoint savepoint;
 
-        boolean updateMode = false;
+        /**
+         * The completeInsert() method may be invoked either due to an insert
+         * or due to an update. This flag tells if this is an update. The behaviour is
+         * slightly different for updates.
+         */
+        boolean updateMode;
 
         /**
          * Flag to indicate that insert was started successfully,
@@ -565,131 +855,194 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         boolean proceedWithInsert = false;
 
-        public TupleInserterImpl(TupleContainerImpl relation) {
+        /**
+         * Maximum theoretical space in a page.
+         */
+        final int maxPageSpace;
+
+        /**
+         * Total Overhead in bytes per tuple segment.
+         * Includes slot overhead and tuple segment overhead.
+         */
+        final int overhead;
+
+        /**
+         * Maximum possible tuple segment - assumes only segment in
+         * a page.
+         */
+        final int maxSegmentSize;
+
+        BufferAccessBlock bab = null;
+        
+        public TupleInserterImpl(TupleContainerImpl relation, Transaction trx, Storable tuple, boolean isUpdate) {
             this.tupleContainer = relation;
+            this.tuplemgr = tupleContainer.tuplemgr;
+            this.containerId = tupleContainer.containerId;
+            this.maxPageSpace = relation.tuplemgr.getPageSpace();
+            TupleSegment ts = new TupleSegment();
+            this.overhead = ts.overhead() + relation.tuplemgr.getPageSlotOverhead();
+            this.maxSegmentSize = maxPageSpace - overhead;
+            this.updateMode = isUpdate;
+            this.trx = trx;
+            this.tuple = tuple;
         }
 
         /**
-         * Physically deletes any slots that are left over from previous
-         * deletes. The operation is logged.
+         * Allocates a new location for the tuple. If successful, the location will be
+         * exclusively latched upon return of this method.
+         * <p>
+         * Sets {@link #location} if successful.
+         * <p>
+         * Before this method is called, bab must be set to the page where insert
+         * should take place, and must be latched exclusively.
          */
-        void reclaimDeletedTuples(Transaction trx, BufferAccessBlock bab) {
+        boolean allocateTupleLocation() {
+            /*
+             * When this is called, the new page should have been fixed exclusively.
+             */
+        	assert bab != null;
+        	assert bab.isLatchedExclusively();
+        	
+            int slotNumber = -1;
             SlottedPage page = (SlottedPage) bab.getPage();
-            int slotsDeleted = 0;
-            for (int slotNumber = 0; slotNumber < page.getNumberOfSlots(); slotNumber++) {
-                /*
-                 * If slot is already deleted, then go to next one.
-                 */
-                if (page.isSlotDeleted(slotNumber)) {
-                    continue;
-                }
-                /*
-                 * Is the slot logically deleted?
-                 */
-                if (TupleHelper.isDeleted(page, slotNumber)) {
-                    TupleId location;
+            int pageNumber = page.getPageId().getPageNumber();
 
-                    if (!TupleHelper.isSegmented(page, slotNumber)
-                            || TupleHelper.isFirstSegment(page, slotNumber)) {
-                        location = new TupleId(page.getPageId(), slotNumber);
+            /*
+             * Following loops around trying to use a slot within the page
+             * that has been identified.
+             */
+            boolean done = false;
+            boolean mustRestart = false;
+            while (!done && !mustRestart) {
+
+                /*
+                 * Find a deleted slot or a new slot
+                 */
+                for (slotNumber = 0; slotNumber < page.getNumberOfSlots(); slotNumber++) {
+                    if (page.isSlotDeleted(slotNumber)) {
+                        break;
+                    }
+                }
+
+                /*
+                 * We have the tentative tuple id.
+                 */
+                location = new TupleId(page.getPageId(), slotNumber);
+                if (log.isDebugEnabled()) {
+                    log.debug(
+                        this.getClass().getName(),
+                        "startInsert",
+                        "SIMPLEDBM-DEBUG: Tentative location for new tuple will be "
+                                + location);
+                }
+
+                /*
+                 * Try to get a conditional lock on the proposed tuple id.
+                 */
+                boolean locked = false;
+                try {
+                    trx.acquireLockNowait(
+                        location,
+                        LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
+                    locked = true;
+                } catch (LockException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug(
+                            this.getClass().getName(),
+                            "startInsert",
+                            "SIMPLEDBM-DEBUG: Failed to obtain conditional lock on location "
+                                    + location);
+                    }
+                }
+
+                if (locked) {
+                    done = true;
+                } else {
+                    /*
+                     * Conditional lock failed. We need to get unconditional
+                     * lock, but before that we need to release latches.
+                     */
+                    // FIXME Test case needed
+                    Savepoint sp = trx.createSavepoint(false);
+                    Lsn lsn = page.getPageLsn();
+
+                    bab.unfix();
+                    bab = null;
+
+                    trx.acquireLock(
+                        location,
+                        LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
+
+                    PageId pageId = new PageId(containerId, pageNumber);
+                    bab = tuplemgr.bufmgr.fixExclusive(pageId, false, -1, 0);
+                    page = (SlottedPage) bab.getPage();
+                    if (!page.getPageLsn().equals(lsn)) {
+                        /*
+                         * Page has changed in the meantime. Can we still
+                         * continue with the insert?
+                         */
+                        if (page.getFreeSpace() >= overhead) {
+                            /*
+                             * There is still enough space in the page
+                             */
+                            if (slotNumber == page.getNumberOfSlots()
+                                    || page.isSlotDeleted(slotNumber)) {
+                                done = true;
+                            } else {
+                                /* 
+                                 * Slot has changed in the meantime.
+                                 * Release lock on previous slot and try another slot.
+                                 */
+                                trx.rollback(sp);
+                                if (log.isDebugEnabled()) {
+                                    log
+                                        .debug(
+                                            this.getClass().getName(),
+                                            "startInsert",
+                                            "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
+                                                    + location
+                                                    + " as page has changed in the meantime");
+                                }
+                                /*
+                                 * Will try again.
+                                 */
+                            }
+                        } else {
+                            /*
+                             * No more space in the page.
+                             */
+                            mustRestart = true;
+                        }
                     } else {
-                        /*
-                         * If the slot is part of a tuple that is segmented, and
-                         * if is not the first segment, then we need to read the
-                         * tuple segment to determine the Location to which this
-                         * segment belogs. The location is stored in the link field.
-                         */
-                        TupleSegment ts = new TupleSegment();
-                        page.get(slotNumber, ts);
-                        PageId pageId = new PageId(page
-                            .getPageId()
-                            .getContainerId(), ts.nextPageNumber);
-                        location = new TupleId(pageId, ts.nextSlotNumber);
-                    }
-                    /*
-                     * Check if the location was locked by current transaction.
-                     */
-                    LockMode mode = trx.hasLock(location);
-                    if (mode == LockMode.EXCLUSIVE) {
-                        /*
-                         * The current transaction holds an exclusive lock on
-                         * the tuple. Hence the delete must have been executed
-                         * within this transaction, and therefore the tuple
-                         * segment cannot be reclaimed. Or the transaction is
-                         * currently reusing this tuple location as part of an
-                         * insert.
-                         */
-                        if (log.isDebugEnabled()) {
-                            log.debug(
-                                this.getClass().getName(),
-                                "reclaimDeletedTuples",
-                                "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
-                                        + page.getPageId() + ", slot="
-                                        + slotNumber
-                                        + ") skipped as the associated tuple "
-                                        + location
-                                        + " is locked in this transaction");
-                        }
-                        continue;
-                    }
-                    boolean reclaim = false;
-                    /*
-                     * Test if we can acquire an exclusive lock on the tuple. If
-                     * this test succeeds then the slot can be deleted, because
-                     * it means that the original transaction that deleted the
-                     * tuple has committed.
-                     */
-                    try {
-                        trx.acquireLockNowait(
-                            location,
-                            LockMode.EXCLUSIVE,
-                            LockDuration.INSTANT_DURATION);
-                        reclaim = true;
-                    } catch (LockException e) {
-                        if (log.isDebugEnabled()) {
-                            log
-                                .debug(
-                                    this.getClass().getName(),
-                                    "reclaimDeletedTuples",
-                                    "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
-                                            + page.getPageId()
-                                            + ", slot="
-                                            + slotNumber
-                                            + ") skipped because cannot obtain lock on "
-                                            + location,
-                                    e);
-                        }
-                    }
-                    if (reclaim) {
                     	/*
-                    	 * We successfully obtained an instant lock on the tuple 
-                    	 * so we know that this segment is committed and can be 
-                    	 * cleaned up.
+                    	 * Page hasn't changed, so we are still okay.
                     	 */
-                        if (log.isDebugEnabled()) {
-                            log.debug(
-                                this.getClass().getName(),
-                                "reclaimDeletedTuples",
-                                "SIMPLEDBM-DEBUG: Reclaiming tuple segment at (page="
-                                        + page.getPageId() + ", slot="
-                                        + slotNumber
-                                        + ") associated with tuple at "
-                                        + location);
-                        }
-                        DeleteSlot logrec = (DeleteSlot) tupleContainer.tuplemgr.loggableFactory
-                            .getInstance(
-                                TupleManagerImpl.MODULE_ID,
-                                TupleManagerImpl.TYPE_LOG_DELETESLOT);
-                        logrec.slotNumber = slotNumber;
-                        Lsn lsn = trx.logInsert(page, logrec);
-                        tupleContainer.tuplemgr.redo(page, logrec);
-                        bab.setDirty(lsn);
-                        slotsDeleted++;
+                        done = true;
                     }
                 }
             }
-        }
 
+            if (mustRestart) {
+                /*
+                 * Cannot use the page or the slot originally identified due
+                 * to lack of space. Must restart the insert
+                 */
+                if (log.isDebugEnabled()) {
+                    log
+                        .debug(
+                            this.getClass().getName(),
+                            "startInsert",
+                            "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
+                                    + location
+                                    + " as page has changed in the meantime - Insert will be restarted");
+                }
+                return false;
+            }
+            return true;
+        }
+        
         /**
          * Start an insert. Gets the Location that has been reserved for the new
          * tuple. In case the tuple data extends to multiple pages, the Location
@@ -700,27 +1053,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         boolean doStartInsert() {
 
-            TupleManagerImpl relmgr = tupleContainer.tuplemgr;
-
-            containerId = tupleContainer.containerId;
-
-            SlottedPage emptyPage = tupleContainer.emptyPage;
-
-            FreeSpaceManager spacemgr = relmgr.spaceMgr;
-            FreeSpaceCursor spcursor = spacemgr.getSpaceCursor(containerId);
-
             tupleLength = tuple.getStoredLength();
-
-            int maxPageSpace = emptyPage.getSpace();
-
-            TupleSegment ts = new TupleSegment();
-            int overhead = ts.overhead() + emptyPage.getSlotOverhead();
-
-            int maxSegmentSize = maxPageSpace - overhead;
-
             boolean segmentationRequired;
             segmentationRequired = tupleLength > maxSegmentSize;
-            BufferAccessBlock bab = null;
 
             int firstSegmentSize;
             if (segmentationRequired) {
@@ -733,67 +1068,16 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             /*
              * Locate a page where the insert can go.
              */
-            int pageNumber = -1;
-            int spaceMapPage = -1;
             int spacebitsBefore = 0;
 
-            int previouslySeenPageNumber = -1;
-            while (pageNumber == -1) {
-                pageNumber = spcursor
-                    .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
-                        maxPageSpace,
-                        requiredSpace));
-                /*
-                 * If we hit a page we have seen before then we are looping because
-                 * space map is not accurate due to uncommitted deletes.
-                 */
-                if ((previouslySeenPageNumber != -1 && pageNumber == previouslySeenPageNumber) || pageNumber == -1) {
-                    // FIXME Test case needed
-                    spacemgr.extendContainer(trx, containerId);
-                    pageNumber = spcursor
-                        .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
-                            maxPageSpace,
-                            requiredSpace));
-                    if (pageNumber == -1) {
-                        log.error(
-                            this.getClass().getName(),
-                            "doStartInsert",
-                            mcat.getMessage("ET0004", containerId));
-                        throw new TupleException(mcat.getMessage(
-                            "ET0004",
-                            containerId));
-                    }
-                }
-                if (pageNumber != -1 && previouslySeenPageNumber == -1) {
-                	previouslySeenPageNumber = pageNumber;
-                }
-                spaceMapPage = spcursor
-                    .getCurrentSpaceMapPage()
-                    .getPageId()
-                    .getPageNumber();
-                /*
-                 * We must release the latch on space map page before we 
-                 * try to lock the data page.
-                 */
-                spcursor.unfixCurrentSpaceMapPage();
-                PageId pageId = new PageId(containerId, pageNumber);
-                bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
-                try {
-                    reclaimDeletedTuples(trx, bab);
-                    SlottedPage page = (SlottedPage) bab.getPage();
-                    // TODO perhaps we should allow for some storage space below
-                    if (page.getFreeSpace() < overhead) {
-                        // FIXME Test case needed
-                        pageNumber = -1;
-                    }
-                } finally {
-                    if (pageNumber == -1) {
-                        // FIXME Test case needed
-                        bab.unfix();
-                        bab = null;
-                    }
-                }
-            }
+            FindPageResults fp = tuplemgr.locateEmptyPage(trx, containerId, requiredSpace);
+            bab = fp.bab;
+            int pageNumber = fp.pageNumber;
+            int spaceMapPage = fp.spaceMapPage;
+            
+            assert bab != null;
+            assert bab.isLatchedExclusively();
+            
             if (log.isDebugEnabled()) {
                 log.debug(
                     this.getClass().getName(),
@@ -803,140 +1087,17 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             }
 
             try {
+            	if (!allocateTupleLocation()) {
+            		return false;
+            	}
 
-                /*
-                 * At this point the the new page should be fixed.
-                 */
-                int slotNumber = -1;
-                SlottedPage page = (SlottedPage) bab.getPage();
-
-                /*
-                 * Following loops around trying to use a slot within the page
-                 * that has been identified.
-                 */
-                boolean canContinue = false;
-                boolean mustRestart = false;
-                while (!canContinue && !mustRestart) {
-
-                    /*
-                     * Find a deleted slot or a new slot
-                     */
-                    for (slotNumber = 0; slotNumber < page.getNumberOfSlots(); slotNumber++) {
-                        if (page.isSlotDeleted(slotNumber)) {
-                            break;
-                        }
-                    }
-
-                    /*
-                     * We have the tentative tuple id.
-                     */
-                    location = new TupleId(page.getPageId(), slotNumber);
-                    if (log.isDebugEnabled()) {
-                        log.debug(
-                            this.getClass().getName(),
-                            "startInsert",
-                            "SIMPLEDBM-DEBUG: Tentative location for new tuple will be "
-                                    + location);
-                    }
-
-                    /*
-                     * Try to get a conditional lock on the proposed tuple id.
-                     */
-                    boolean locked = false;
-                    try {
-                        trx.acquireLockNowait(
-                            location,
-                            LockMode.EXCLUSIVE,
-                            LockDuration.COMMIT_DURATION);
-                        locked = true;
-                    } catch (LockException e) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(
-                                this.getClass().getName(),
-                                "startInsert",
-                                "SIMPLEDBM-DEBUG: Failed to obtain conditional lock on location "
-                                        + location);
-                        }
-                    }
-
-                    if (locked) {
-                        canContinue = true;
-                    } else {
-                        /*
-                         * Conditional lock failed. We need to get unconditional
-                         * lock, but before that we need to release latches.
-                         */
-                        // FIXME Test case needed
-                        Savepoint sp = trx.createSavepoint(false);
-                        Lsn lsn = page.getPageLsn();
-
-                        bab.unfix();
-                        bab = null;
-
-                        trx.acquireLock(
-                            location,
-                            LockMode.EXCLUSIVE,
-                            LockDuration.COMMIT_DURATION);
-
-                        PageId pageId = new PageId(containerId, pageNumber);
-                        bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
-                        page = (SlottedPage) bab.getPage();
-                        if (!page.getPageLsn().equals(lsn)) {
-                            /*
-                             * Page has changed in the meantime. Can we still
-                             * continue with the insert?
-                             */
-                            if (page.getFreeSpace() >= overhead) {
-                                /*
-                                 * There is still enough space in the page
-                                 */
-                                if (slotNumber == page.getNumberOfSlots()
-                                        || page.isSlotDeleted(slotNumber)) {
-                                    canContinue = true;
-                                } else {
-                                    /*
-                                     * Release lock on previous slot.
-                                     */
-                                    trx.rollback(sp);
-                                    if (log.isDebugEnabled()) {
-                                        log
-                                            .debug(
-                                                this.getClass().getName(),
-                                                "startInsert",
-                                                "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
-                                                        + location
-                                                        + " as page has changed in the meantime");
-                                    }
-                                }
-                            } else {
-                                /*
-                                 * No more space in the page.
-                                 */
-                                mustRestart = true;
-                            }
-                        } else {
-                            canContinue = true;
-                        }
-                    }
-                }
-
-                if (mustRestart) {
-                    /*
-                     * Cannot use the page or the slot originally identified due
-                     * to lack of space. Must restart the insert
-                     */
-                    if (log.isDebugEnabled()) {
-                        log
-                            .debug(
-                                this.getClass().getName(),
-                                "startInsert",
-                                "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
-                                        + location
-                                        + " as page has changed in the meantime - Insert will be restarted");
-                    }
-                    return false;
-                }
-
+            	assert bab != null;
+            	assert bab.isLatchedExclusively();
+            	assert location != null;
+            	assert location.getPageId().equals(bab.getPage().getPageId());
+            	
+            	SlottedPage page = (SlottedPage) bab.getPage();
+            	int slotNumber = location.getSlotNumber();
                 firstSegmentSize = page.getFreeSpace() - overhead;
                 if (firstSegmentSize < tupleLength) {
                     segmentationRequired = true;
@@ -952,12 +1113,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 tupleData = data;
                 currentPos = 0;
 
-                InsertTupleSegment logrec = (InsertTupleSegment) relmgr.loggableFactory
-                    .getInstance(
-                        TupleManagerImpl.MODULE_ID,
-                        TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
-                logrec.slotNumber = slotNumber;
-                logrec.spaceMapPage = spaceMapPage;
+                TupleSegment ts = new TupleSegment();
                 ts.data = new byte[firstSegmentSize];
                 System.arraycopy(
                     tupleData,
@@ -966,6 +1122,13 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     0,
                     firstSegmentSize);
                 currentPos += firstSegmentSize;
+                
+                InsertTupleSegment logrec = (InsertTupleSegment) tuplemgr.loggableFactory
+                    .getInstance(
+                        TupleManagerImpl.MODULE_ID,
+                        TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
+                logrec.slotNumber = slotNumber;
+                logrec.spaceMapPage = spaceMapPage;
                 logrec.segment = ts;
                 if (segmentationRequired) {
                     logrec.segmentationFlags = TupleHelper.TUPLE_SEGMENT
@@ -984,57 +1147,22 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 spacebitsBefore = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(page.getSpace(), 
                 		page.getFreeSpace());  
                 Lsn lsn = trx.logInsert(page, logrec);
-                relmgr.redo(page, logrec);
+                tuplemgr.redo(page, logrec);
                 bab.setDirty(lsn);
 
                 prevSegmentPage = page.getPageId().getPageNumber();
                 prevSegmentSlotNumber = slotNumber;
 
-                int spacebits = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(
+                int spacebitsAfter = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(
                     maxPageSpace,
                     page.getFreeSpace());
-                if (spacebits != spacebitsBefore) {
-                	/*
-                	 * We need to latch the space map page while holding the latch
-                	 * on the data page - as per Mohan.
-                	 */
-                    spcursor.fixSpaceMapPageExclusively(
-                        spaceMapPage,
-                        pageNumber);
-                    try {
-                        FreeSpaceMapPage smp = spcursor
-                            .getCurrentSpaceMapPage();
-                        if (smp.getSpaceBits(pageNumber) != spacebits) {
-                        	/*
-                        	 * The space map update must be redo only, as per Mohan.
-                        	 */
-                            spcursor.updateAndLogRedoOnly(
-                                trx,
-                                pageNumber,
-                                spacebits);
-                            if (log.isDebugEnabled()) {
-                                log.debug(
-                                    this.getClass().getName(),
-                                    "doStartInsert",
-                                    "SIMPLEDBM-DEBUG: Updated space map information from "
-                                            + spacebitsBefore + " to "
-                                            + spacebits + " for page "
-                                            + page.getPageId()
-                                            + " in space map page "
-                                            + page.getSpaceMapPageNumber()
-                                            + " as a result of " + logrec);
-                            }
-                        }
-                    } finally {
-                        spcursor.unfixCurrentSpaceMapPage();
-                    }
+                if (spacebitsAfter != spacebitsBefore) {
+                    tuplemgr.updateSpaceMapInfo(trx, containerId, pageNumber, spaceMapPage, spacebitsAfter, spacebitsBefore);
                 }
             } finally {
                 if (bab != null) {
                     bab.unfix();
-                }
-                if (spcursor != null) {
-                    spcursor.unfixCurrentSpaceMapPage();
+                    bab = null;
                 }
             }
             return true;
@@ -1053,22 +1181,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 return;
             }
 
-            TupleManagerImpl relmgr = tupleContainer.tuplemgr;
-
-            SlottedPage emptyPage = tupleContainer.emptyPage;
-
-            FreeSpaceManager spacemgr = relmgr.spaceMgr;
-            FreeSpaceCursor spcursor = spacemgr.getSpaceCursor(containerId);
-
-            final int maxPageSpace = emptyPage.getSpace();
-
             TupleSegment ts = new TupleSegment();
-            final int overhead = ts.overhead() + emptyPage.getSlotOverhead();
-
-            final int maxSegmentSize = maxPageSpace - overhead;
-
             int pageNumber = -1;
-            BufferAccessBlock bab = null;
 
             try {
                 while (currentPos < tupleLength) {
@@ -1083,67 +1197,16 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     }
 
                     int requiredSpace = overhead + nextSegmentSize;
-                    pageNumber = -1;
-                    int spaceMapPage = -1;
+                    
+                    FindPageResults fp = tuplemgr.locateEmptyPage(trx, containerId, requiredSpace);
+                    pageNumber = fp.pageNumber;
+                    int spaceMapPage = fp.spaceMapPage;
+                    bab = fp.bab;
                     int spacebitsBefore = -1;
 
-                    int previouslySeenPageNumber = -1;
-                    while (pageNumber == -1) {
-                        pageNumber = spcursor
-                            .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
-                                maxPageSpace,
-                                requiredSpace));
-                        /*
-                         * If we hit a page we have seen before then we are looping because
-                         * space map is not accurate due to uncommitted deletes.
-                         */
-                        if ((previouslySeenPageNumber != -1 && pageNumber == previouslySeenPageNumber) || pageNumber == -1) {
-                            // FIXME Test case needed
-                            spacemgr.extendContainer(trx, containerId);
-                            pageNumber = spcursor
-                                .findAndFixSpaceMapPageExclusively(new TwoBitSpaceCheckerImpl(
-                                    maxPageSpace,
-                                    requiredSpace));
-                            if (pageNumber == -1) {
-                                log.error(
-                                    this.getClass().getName(),
-                                    "doCompleteInsert",
-                                    mcat.getMessage("ET0004", containerId));
-                                throw new TupleException(mcat.getMessage(
-                                    "ET0004",
-                                    containerId));
-                            }
-                        }
-                        if (pageNumber != -1 && previouslySeenPageNumber == -1) {
-                        	previouslySeenPageNumber = pageNumber;
-                        }
-                        spaceMapPage = spcursor
-                            .getCurrentSpaceMapPage()
-                            .getPageId()
-                            .getPageNumber();
-                        /*
-                         * Latch on space map page needs to be released before we obtain a
-                         * latch on the data page.
-                         */
-                        spcursor.unfixCurrentSpaceMapPage();
-                        PageId pageId = new PageId(containerId, pageNumber);
-                        bab = relmgr.bufmgr.fixExclusive(pageId, false, -1, 0);
-                        try {
-                            reclaimDeletedTuples(trx, bab);
-                            SlottedPage page = (SlottedPage) bab.getPage();
-                            if (page.getFreeSpace() < requiredSpace) {
-                                // FIXME Test case needed
-                                pageNumber = -1;
-                            }
-                        } finally {
-                            if (pageNumber == -1) {
-                                // FIXME Test case needed
-                                bab.unfix();
-                                bab = null;
-                            }
-                        }
-                    }
-
+                    assert bab != null;
+                    assert bab.isLatchedExclusively();
+                    
                     /*
                      * At this point the new page should be fixed.
                      */
@@ -1160,7 +1223,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         }
                     }
 
-                    InsertTupleSegment logrec = (InsertTupleSegment) relmgr.loggableFactory
+                    InsertTupleSegment logrec = (InsertTupleSegment) tuplemgr.loggableFactory
                         .getInstance(
                             TupleManagerImpl.MODULE_ID,
                             TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
@@ -1193,49 +1256,17 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     		page.getFreeSpace());  
 
                     Lsn lsn = trx.logInsert(page, logrec);
-                    relmgr.redo(page, logrec);
+                    tuplemgr.redo(page, logrec);
                     bab.setDirty(lsn);
 
-                    int spacebits = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(
+                    int spacebitsAfter = TwoBitSpaceCheckerImpl.mapFreeSpaceInfo(
                         maxPageSpace,
                         page.getFreeSpace());
-                    if (spacebits != spacebitsBefore) {
-                    	/*
-                    	 * The latch on the space map page must be obtained while
-                    	 * holding the data page latch - as per Mohan.
-                    	 */
-                        spcursor.fixSpaceMapPageExclusively(
-                            spaceMapPage,
-                            pageNumber);
-                        try {
-                            FreeSpaceMapPage smp = spcursor
-                                .getCurrentSpaceMapPage();
-                            if (smp.getSpaceBits(pageNumber) != spacebits) {
-                            	/*
-                            	 * The Space map update must be logged as redo only - as per
-                            	 * Mohan. 
-                            	 */
-                                spcursor.updateAndLogRedoOnly(
-                                    trx,
-                                    pageNumber,
-                                    spacebits);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(
-                                        this.getClass().getName(),
-                                        "doCompleteInsert",
-                                        "SIMPLEDBM-DEBUG: Updated space map information from "
-                                                + spacebitsBefore + " to "
-                                                + spacebits + " for page "
-                                                + page.getPageId()
-                                                + " in space map page "
-                                                + page.getSpaceMapPageNumber()
-                                                + " as a result of " + logrec);
-                                }
-                            }
-                        } finally {
-                            spcursor.unfixCurrentSpaceMapPage();
-                        }
-                    }
+                    if (spacebitsAfter != spacebitsBefore) {
+						tuplemgr.updateSpaceMapInfo(trx, containerId,
+								pageNumber, spaceMapPage, spacebitsAfter,
+								spacebitsBefore);
+					}
 
                     bab.unfix();
                     bab = null;
@@ -1248,13 +1279,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     prevSegmentPage = pageNumber;
                     prevSegmentSlotNumber = slotNumber;
                 }
-                spcursor = null;
             } finally {
                 if (bab != null) {
                     bab.unfix();
-                }
-                if (spcursor != null) {
-                    spcursor.unfixCurrentSpaceMapPage();
+                    bab = null;
                 }
             }
         }
@@ -1265,10 +1293,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         void updatePrevSegment(int nextSegmentPage, int nextSegmentSlotNumber) {
 
-            TupleManagerImpl relmgr = tupleContainer.tuplemgr;
             if (prevSegmentPage != -1) {
                 PageId pageId = new PageId(containerId, prevSegmentPage);
-                BufferAccessBlock bab = relmgr.bufmgr.fixExclusive(
+                BufferAccessBlock bab = tuplemgr.bufmgr.fixExclusive(
                     pageId,
                     false,
                     -1,
@@ -1278,7 +1305,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     Redoable loggable = null;
                     if (updateMode) {
                         updateMode = false;
-                        UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) relmgr.loggableFactory
+                        UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) tuplemgr.loggableFactory
                             .getInstance(
                                 TupleManagerImpl.MODULE_ID,
                                 TupleManagerImpl.TYPE_LOG_UNDOABLEREPLACESEGMENTLINK);
@@ -1296,7 +1323,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         }
                         loggable = logrec;
                     } else {
-                        UpdateSegmentLink logrec = (UpdateSegmentLink) relmgr.loggableFactory
+                        UpdateSegmentLink logrec = (UpdateSegmentLink) tuplemgr.loggableFactory
                             .getInstance(
                                 TupleManagerImpl.MODULE_ID,
                                 TupleManagerImpl.TYPE_LOG_UPDATESEGMENTLINK);
@@ -1306,7 +1333,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         loggable = logrec;
                     }
                     Lsn lsn = trx.logInsert(page, loggable);
-                    relmgr.redo(page, loggable);
+                    tuplemgr.redo(page, loggable);
                     bab.setDirty(lsn);
                 } finally {
                     bab.unfix();
@@ -1318,9 +1345,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          * @see org.simpledbm.rss.api.tuple.TupleInserter#startInsert(org.simpledbm.rss.api.tx.Transaction,
          *      org.simpledbm.rss.api.tuple.Tuple)
          */
-        Location startInsert(Transaction trx, Storable tuple) {
-            this.trx = trx;
-            this.tuple = tuple;
+        Location startInsert() {
             savepoint = trx.createSavepoint(false);
             proceedWithInsert = false;
             try {
@@ -1368,20 +1393,14 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
         final int containerId;
 
-        SlottedPage emptyPage;
-
         public TupleContainerImpl(TupleManagerImpl relmgr, int containerId) {
             this.tuplemgr = relmgr;
             this.containerId = containerId;
-            this.emptyPage = (SlottedPage) relmgr.pageFactory.getInstance(
-                relmgr.spMgr.getPageType(),
-                new PageId());
-            this.emptyPage.init();
         }
 
         public TupleInserter insert(Transaction trx, Storable tuple) {
-            TupleInserterImpl inserter = new TupleInserterImpl(this);
-            inserter.startInsert(trx, tuple);
+            TupleInserterImpl inserter = new TupleInserterImpl(this, trx, tuple, false);
+            inserter.startInsert();
             return inserter;
         }
 
@@ -1412,9 +1431,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
             BufferManager bufmgr = tuplemgr.bufmgr;
             TupleId tupleid = (TupleId) location;
-
-            FreeSpaceManager spacemgr = tuplemgr.spaceMgr;
-            FreeSpaceCursor spcursor = spacemgr.getSpaceCursor(containerId);
 
             trx.acquireLock(
                 location,
@@ -1487,44 +1503,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     bab.setDirty(lsn);
 
                     if (spacebitsBefore != spacebitsAfter) {
-                    	/*
-                    	 * We must obtain the latch on space map page while
-                    	 * holding the data page latch.
-                    	 */
-                        spcursor.fixSpaceMapPageExclusively(page
-                            .getSpaceMapPageNumber(), page
-                            .getPageId()
-                            .getPageNumber());
-                        try {
-                            FreeSpaceMapPage smp = spcursor
-                                .getCurrentSpaceMapPage();
-                            if (smp.getSpaceBits(page
-                                .getPageId()
-                                .getPageNumber()) != spacebitsAfter) {
-                            	/*
-                            	 * As per Mohan, we must log the space map update as
-                            	 * a redo only log record.
-                            	 */
-                                spcursor.updateAndLogRedoOnly(trx, page
-                                    .getPageId()
-                                    .getPageNumber(), spacebitsAfter);
-                                if (log.isDebugEnabled()) {
-                                    log.debug(
-                                        this.getClass().getName(),
-                                        "doDelete",
-                                        "SIMPLEDBM-DEBUG: Updated space map information from "
-                                                + spacebitsBefore + " to "
-                                                + spacebitsAfter + " for page "
-                                                + page.getPageId()
-                                                + " in space map page "
-                                                + page.getSpaceMapPageNumber()
-                                                + " as a result of " + logrec);
-                                }
-                            }
-                        } finally {
-                            spcursor.unfixCurrentSpaceMapPage();
-                        }
-                    }
+						tuplemgr.updateSpaceMapInfo(trx, containerId, page
+								.getPageId().getPageNumber(), page
+								.getSpaceMapPageNumber(), spacebitsAfter,
+								spacebitsBefore);
+					}
                 } finally {
                     bab.unfix();
                 }
@@ -1550,7 +1533,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             }
         }
 
-        byte[] doRead(Location location) {
+        public byte[] read(Location location) {
 
             if (location.getContainerId() != containerId) {
                 log.error(this.getClass().getName(), "doRead", mcat.getMessage(
@@ -1572,11 +1555,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             while (pageid != null) {
                 int nextPage = -1;
                 int nextSlot = -1;
-                BufferAccessBlock bab = bufmgr.fixExclusive(
-                    pageid,
-                    false,
-                    -1,
-                    0);
+                BufferAccessBlock bab = bufmgr.fixShared(pageid, 0);
                 try {
                     SlottedPage page = (SlottedPage) bab.getPage();
 
@@ -1620,10 +1599,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 }
             }
             return os.toByteArray();
-        }
-
-        public byte[] read(Location location) {
-            return doRead(location);
         }
 
         /**
@@ -1703,16 +1678,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         // FIXME Test case needed
                         copySize = remaining;
                     }
-
-                    UndoableUpdateTupleSegment logrec = (UndoableUpdateTupleSegment) tuplemgr.loggableFactory
-                        .getInstance(
-                            TupleManagerImpl.MODULE_ID,
-                            TupleManagerImpl.TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT);
-                    logrec.slotNumber = slotNumber;
-                    logrec.spaceMapPage = page.getSpaceMapPageNumber();
-                    logrec.oldSegment = ts;
-                    logrec.oldSegmentationFlags = page.getFlags(slotNumber);
-
+ 
                     TupleSegment tsnew = new TupleSegment();
                     tsnew.data = new byte[segmentSize];
                     System.arraycopy(
@@ -1725,6 +1691,15 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     remaining -= copySize;
                     tsnew.nextPageNumber = nextPage;
                     tsnew.nextSlotNumber = nextSlot;
+ 
+                    UndoableUpdateTupleSegment logrec = (UndoableUpdateTupleSegment) tuplemgr.loggableFactory
+                        .getInstance(
+                            TupleManagerImpl.MODULE_ID,
+                            TupleManagerImpl.TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT);
+                    logrec.slotNumber = slotNumber;
+                    logrec.spaceMapPage = page.getSpaceMapPageNumber();
+                    logrec.oldSegment = ts;
+                    logrec.oldSegmentationFlags = page.getFlags(slotNumber);
                     logrec.segment = tsnew;
 
                     if (segno == 0 && remaining > 0) {
@@ -1757,18 +1732,13 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             }
 
             if (remaining > 0) {
-                TupleInserterImpl inserter = new TupleInserterImpl(this);
-                inserter.containerId = containerId;
+                TupleInserterImpl inserter = new TupleInserterImpl(this, trx, newTuple, true);
                 inserter.currentPos = currentPos;
                 inserter.location = tupleid;
                 inserter.prevSegmentPage = prevPage;
                 inserter.prevSegmentSlotNumber = prevSlot;
-                inserter.spaceMapPage = -1;
-                inserter.trx = trx;
-                inserter.tuple = newTuple;
                 inserter.tupleData = tupleData;
                 inserter.tupleLength = tupleLength;
-                inserter.updateMode = true;
                 inserter.proceedWithInsert = true;
                 inserter.completeInsert();
             }
@@ -1791,7 +1761,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             return new TupleScanImpl(this, trx, forUpdate ? LockMode.UPDATE
                     : LockMode.SHARED);
         }
-
     }
 
     public static class TupleScanImpl implements TupleScan {
@@ -2381,6 +2350,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
      */
     public static class DeleteSlot extends BaseLoggable implements Redoable {
 
+    	/*
+    	 * TODO: Instead of deleting one slot at a time, we should delete
+    	 * all slots in one operation.
+    	 */
+    	
         /**
          * Slot to be deleted.
          */

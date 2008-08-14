@@ -183,6 +183,9 @@ public class MessageCatalog {
         msgs.put(
             "EB0012",
             "SIMPLEDBM-EB0012: Unexpected error - exception caught");
+        msgs.put(
+        	"EB0013",
+        	"SIMPLEDBM-EB0013: Cannot insert or delete logical max key");
 
         // Class Utils messages
         msgs.put("EU0001", "SIMPLEDBM-EU0001: Unable to obtain classloader");
@@ -374,10 +377,14 @@ public class MessageCatalog {
             .put(
                 "EC0010",
                 "SIMPLEDBM-EC0010: Listener {0} failed unexpectedly: lock parameters {1}");
+//        msgs
+//            .put(
+//                "WC0011",
+//                "SIMPLEDBM-WC0011: Detected deadlock cycle: \nR1 {0} \n\t(victim) waiting for \n\tR2 {1}\n\tlock items:\n\tR1 {2}\n\tR2 {3}");
         msgs
-            .put(
-                "WC0011",
-                "SIMPLEDBM-WC0011: Detected deadlock cycle: \nR1 {0} \n\t(victim) waiting for \n\tR2 {1}\n\tlock items:\n\tR1 {2}\n\tR2 {3}");
+        	.put(
+            "WC0011",
+            "SIMPLEDBM-WC0011: Detected deadlock cycle: {2} {3}");
         msgs.put("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
         msgs.put("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
         msgs.put("IC0014", "SIMPLEDBM-IC0014: Dumping lock table");
