@@ -29,6 +29,8 @@ public interface Dumpable {
 
     String newline = System.getProperty("line.separator");
     
+    String TAB = "    ";
+    
     /**
      * Appends contents to supplied StringBuilder.
      */
