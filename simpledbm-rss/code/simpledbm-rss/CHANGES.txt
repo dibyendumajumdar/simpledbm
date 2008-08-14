@@ -1,3 +1,12 @@
+1.0.11-BETA:
+ * dm: TupleManager: Lots of refactoring to make the code less monolithic
+ * dm: TupleManager: Buffer page latched exclusively during reads
+ * dm: TupleManager: Space map page latched exclusively when shared latch is needed
+ * dm: Buffer Manager: starvation on single cpu machine
+ * dm: BTree: Do not allow insert or delete on max (logical infinity) key.
+ * dm: BTree Performance fix: perform binary search on index nodes.
+ * dm: BTree Performance fix: avoid instantiating whole items when scanning for child pointer in index node.
+
 1.0.10-BETA:
  * dm: Issue 34 - Expose additional configuration properties 
    log.disableFlushRequests - if true, performs log flush less frequently
