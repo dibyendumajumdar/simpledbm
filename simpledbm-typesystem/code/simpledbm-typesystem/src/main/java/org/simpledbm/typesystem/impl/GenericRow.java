@@ -23,9 +23,10 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.typesystem.api.DataValue;
-import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeException;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 public class GenericRow implements Row, IndexKey, Cloneable {
 
@@ -122,13 +123,17 @@ public class GenericRow implements Row, IndexKey, Cloneable {
     		return (Row) clone();
     	}
     	catch (CloneNotSupportedException e) {
-    		throw new RuntimeException(e);
+    		throw new TypeException(e);
     	}
     }
     
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
+
+	public StringBuilder appendTo(StringBuilder sb) {
         for (int i = 0; i < fields.length; i++) {
             if (i != 0) {
                 sb.append(", [");
@@ -136,10 +141,9 @@ public class GenericRow implements Row, IndexKey, Cloneable {
             else {
                 sb.append("[");
             }
-            sb.append(fields[i].toString());
+            fields[i].appendTo(sb);
             sb.append("]");
         }
-        return sb.toString();
-    }
-
+		return sb;
+	}
 }

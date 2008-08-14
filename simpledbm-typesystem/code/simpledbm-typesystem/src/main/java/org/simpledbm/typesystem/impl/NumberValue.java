@@ -155,6 +155,11 @@ public class NumberValue extends BaseDataValue {
 		return getString();
 	}
 
-
-
+	@Override
+	public StringBuilder appendTo(StringBuilder sb) {
+		if (isValue()) {
+			return sb.append(getString());
+		}
+		return super.appendTo(sb);
+	}
 }

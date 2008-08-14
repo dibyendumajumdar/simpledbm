@@ -31,6 +31,7 @@ import java.util.Date;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeException;
 
 abstract class BaseDataValue implements DataValue, Cloneable {
 
@@ -184,7 +185,7 @@ abstract class BaseDataValue implements DataValue, Cloneable {
 		try {
 			o = (DataValue) clone();
 		} catch (CloneNotSupportedException e) {
-			throw new RuntimeException(e);
+			throw new TypeException(e);
 		}
 		return o;
 	}
@@ -206,4 +207,18 @@ abstract class BaseDataValue implements DataValue, Cloneable {
     	return "";
     }
 
+	public StringBuilder appendTo(StringBuilder sb) {
+    	if (isNull()) {
+    		return sb.append(NULL_VALUE);
+    	}
+    	if (isPositiveInfinity()) {
+    		return sb.append(MAX_VALUE);
+    	}
+    	if (isNegativeInfinity()) {
+    		return sb.append(MIN_VALUE);
+    	}
+		return sb;
+	}
+
+    
 }

@@ -20,6 +20,7 @@
 package org.simpledbm.typesystem.api;
 
 import org.simpledbm.rss.api.im.IndexKey;
+import org.simpledbm.rss.util.Dumpable;
 
 /**
  * A Row is an array of DataValue objects, and can be used as multi-value record within
@@ -27,7 +28,7 @@ import org.simpledbm.rss.api.im.IndexKey;
  * 
  * @author Dibyendu Majumdar
  */
-public interface Row extends IndexKey {
+public interface Row extends IndexKey, Dumpable {
 
 	/**
 	 * Returns the number of fields in the row.

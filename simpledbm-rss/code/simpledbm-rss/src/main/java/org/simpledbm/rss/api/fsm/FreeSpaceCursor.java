@@ -46,6 +46,21 @@ public interface FreeSpaceCursor {
     public int findAndFixSpaceMapPageExclusively(FreeSpaceChecker checker);
 
     /**
+     * Finds the next available page that satisfies the requirements of
+     * SpaceChecker, and then latches the concerned Space Map Page
+     * in shared mode. The fixed page becomes the current space map page.
+     * <p>
+     * For the sake of efficient searches, this method is allowed to cache data,
+     * such as last used space map page. While this method must search all the available
+     * space map pages before giving up, the order in which the space map pages are 
+     * searched is not defined. 
+     * 
+     * @param checker SpaceChecker instance
+     * @return -1 if page was not found, else page number.
+     */
+    public int findAndFixSpaceMapPageShared(FreeSpaceChecker checker);
+    
+    /**
      * Fixes specified Space Map Page exclusively. Note that the space map
      * page must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}. 
      * The fixed page becomes the current space map page.
@@ -76,4 +91,9 @@ public interface FreeSpaceCursor {
      * Unfixes the current space map page.
      */
     public void unfixCurrentSpaceMapPage();
+    
+    /**
+     * Gets the container Id associated with this cursor.
+     */
+    public int getContainerId();
 }

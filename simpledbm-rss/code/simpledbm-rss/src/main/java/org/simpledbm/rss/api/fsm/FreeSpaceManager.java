@@ -75,6 +75,17 @@ public interface FreeSpaceManager {
     public FreeSpaceCursor getSpaceCursor(int containerId);
 
     /**
+     * Get a cursor for traversing free space information within the container.
+     * Implementation may return a pooled cursor.
+     */
+    public FreeSpaceCursor getPooledSpaceCursor(int containerId);
+    
+    /**
+     * Returns a space cursor to the pool.
+     */
+    public void releaseSpaceCursor(FreeSpaceCursor fsc);
+    
+    /**
      * Opens a scan of all the pages within the container that are marked
      * non-empty. Scan will return pages in order from the beginning of the
      * container. Note that the scan may return non data pages; the caller must

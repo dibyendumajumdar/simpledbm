@@ -223,9 +223,6 @@ public class IndexDefinitionImpl implements IndexDefinition {
         for (int i = 0; i < columns.length; i++) {
             rowType[i] = table.getRowType()[columns[i]];
         }
-//        if (!table.getIndexes().contains(this)) {
-//            table.getIndexes().add(this);
-//        }
     }
 
     /* (non-Javadoc)
@@ -284,4 +281,26 @@ public class IndexDefinitionImpl implements IndexDefinition {
         }
         return true;
     }
+
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append("IndexDefinition(containerId=").append(containerId).append(", name=").append(name).
+			append(", unique=").append(unique).append(", primary=").append(primary).
+			append(", columns={");
+		for (int i = 0; i < columns.length; i++) {
+			if (i == columns.length - 1) {
+				sb.append(columns[i]);
+			}
+			else {
+				sb.append(columns[i]).append(", ");
+			}
+		}
+		sb.append("})");
+		return sb;
+	}
+    
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 }

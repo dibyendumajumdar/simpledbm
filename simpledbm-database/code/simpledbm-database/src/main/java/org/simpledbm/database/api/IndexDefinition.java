@@ -20,6 +20,7 @@
 package org.simpledbm.database.api;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
@@ -36,7 +37,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  * 
  * @author dibyendumajumdar
  */
-public interface IndexDefinition extends Storable {
+public interface IndexDefinition extends Storable, Dumpable {
 
 	/**
 	 * Returns the TableDefinition for the table associated with this index.

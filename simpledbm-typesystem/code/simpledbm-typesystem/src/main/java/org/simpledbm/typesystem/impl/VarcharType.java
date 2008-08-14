@@ -99,6 +99,14 @@ public class VarcharType implements TypeDescriptor {
 			return false;
 		return true;
 	}
+
+	public StringBuilder appendTo(StringBuilder sb) {
+		return sb.append("VarcharType(maxLength=").append(maxLength).append(")");
+	}
 	
-	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 }

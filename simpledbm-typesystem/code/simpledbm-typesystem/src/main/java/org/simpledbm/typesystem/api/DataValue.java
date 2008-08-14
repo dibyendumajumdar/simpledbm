@@ -28,6 +28,7 @@ import java.math.BigInteger;
 import java.util.Date;
 
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.util.Dumpable;
 
 /**
  * A DataValue is a data item with a type, and suitable for use in a multi-column row.
@@ -40,7 +41,7 @@ import org.simpledbm.rss.api.st.Storable;
  * 
  * @author Dibyendu Majumdar
  */
-public interface DataValue extends Storable, Comparable<DataValue> {
+public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
 
 	/**
 	 * Returns an integer representation of the data value.

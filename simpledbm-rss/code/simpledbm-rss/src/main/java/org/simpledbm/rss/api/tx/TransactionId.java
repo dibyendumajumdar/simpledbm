@@ -63,20 +63,42 @@ public final class TransactionId implements Storable, Dumpable {
         return id;
     }
 
-    @Override
-    public final boolean equals(Object obj) {
-        if (obj instanceof TransactionId) {
-            return id == ((TransactionId) obj).id;
-        }
-        return false;
-    }
+	@Override
+	public int hashCode() {
+		final int PRIME = 31;
+		int result = 1;
+		result = PRIME * result + (int) (id ^ (id >>> 32));
+		return result;
+	}
 
-    @Override
-    public final int hashCode() {
-        return (int) (id ^ (id >>> 32));
-    }
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final TransactionId other = (TransactionId) obj;
+		if (id != other.id)
+			return false;
+		return true;
+	}
+    
+//    @Override
+//    public final boolean equals(Object obj) {
+//        if (obj instanceof TransactionId) {
+//            return id == ((TransactionId) obj).id;
+//        }
+//        return false;
+//    }
+//
+//    @Override
+//    public final int hashCode() {
+//        return (int) (id ^ (id >>> 32));
+//    }
 
-    public final boolean isNull() {
+	public final boolean isNull() {
         return id == -1;
     }
 
@@ -89,5 +111,4 @@ public final class TransactionId implements Storable, Dumpable {
     public final String toString() {
         return appendTo(new StringBuilder()).toString();
     }
-
 }

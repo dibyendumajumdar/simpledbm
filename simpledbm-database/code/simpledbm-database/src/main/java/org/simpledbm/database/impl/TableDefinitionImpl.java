@@ -262,4 +262,39 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 	public Row getIndexRow(int indexNo, Row tableRow) {
 		return getIndexRow(getIndex(indexNo), tableRow);
 	}
+
+	public StringBuilder appendTo(StringBuilder sb) {
+		sb.append(newline).
+			append("TableDefinition(containerId=").append(containerId).
+			append(", name='").append(name).
+			append("', column definitions = {").append(newline);
+		for (int i = 0; i < rowType.length; i++) {
+			sb.append("column[").append(i).append("] type=");
+			if (i == rowType.length - 1) {
+				sb.append(rowType[i]);
+			}
+			else {
+				sb.append(rowType[i]).append(", ").append(newline);
+			}
+		}
+		sb.append("}").append(newline);
+		sb.append("index definitions = {").append(newline);
+		for (int i = 0; i < indexes.size(); i++) {
+			sb.append("index[").append(i).append("] = ");
+			if (i == indexes.size() - 1) {
+				sb.append(indexes.get(i));
+			}
+			else {
+				sb.append(indexes.get(i)).append(", ").append(newline);
+			}
+		}
+		sb.append("})").append(newline);
+		return sb;
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
+	}
 }

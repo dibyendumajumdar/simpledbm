@@ -21,12 +21,24 @@ package org.simpledbm.rss.util;
 
 import java.util.Iterator;
 
+/**
+ * This implementation of LinkedList that is optimized for element removal.
+ * The standard Java linked list implementation is non-intrusive and 
+ * inefficient for element removals. This implementation requires elements to
+ * extend the {@link Linkable} abstract class.
+ * <p>
+ * The implementation is not thread-safe. Caller must ensure thread safety.
+ * @author Dibyendu Majumdar
+ */
 public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
 
     Linkable head;
 
     Linkable tail;
 
+    /**
+     * Tracks the number of members in the list.
+     */
     int count;
 
     public final void addLast(E link) {

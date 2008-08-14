@@ -48,7 +48,6 @@ public class DateTimeValue extends BaseDataValue {
 		if (time == o.time) return 0;
 		else if (time > o.time) return 1;
 		else return -1;
-		// return (int) (time - o.time);	
 	}
 
 	@Override
@@ -150,11 +149,19 @@ public class DateTimeValue extends BaseDataValue {
 
 	@Override
 	public String toString() {
-		return getString();
+		StringBuilder sb = new StringBuilder();
+		return appendTo(sb).toString();
 	}
 	
 	private DateTimeType getMyType() {
 		return (DateTimeType) getType();
 	}
-	
+
+	@Override
+	public StringBuilder appendTo(StringBuilder sb) {
+		if (isValue()) {
+			return sb.append(getString());
+		}
+		return super.appendTo(sb);
+	}
 }

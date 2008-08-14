@@ -133,5 +133,13 @@ public class IntegerValue extends BaseDataValue {
 		return o;
 	}
 	
+	@Override
+	public StringBuilder appendTo(StringBuilder sb) {
+		if (isValue()) {
+			return sb.append(i);
+		}
+		return super.appendTo(sb);
+	}
+	
 }
 
