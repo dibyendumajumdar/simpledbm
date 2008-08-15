@@ -568,7 +568,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             }
         }
         // Do we have enough space in the page?
-        // TODO: Maybe we should also reserve some free space
         if (freeSpace < requiredSpace) {
             log.error(this.getClass().getName(), "insertAt", mcat.getMessage(
                 "EO0002",
@@ -768,35 +767,35 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     @Override
     public StringBuilder appendTo(StringBuilder sb) {
 
-        sb.append("\n");
+        sb.append(newline);
         sb
             .append(
                 "=========================================================================")
-            .append("\n");
+            .append(newline);
         sb.append("PAGE DUMP : ");
-        super.appendTo(sb).append("\n");
-        sb.append("PageSize=").append(getStoredLength()).append("\n");
+        super.appendTo(sb).append(newline);
+        sb.append("PageSize=").append(getStoredLength()).append(newline);
         sb
             .append("FIXED OVERHEAD=")
             .append(SlottedPageImpl.FIXED_OVERHEAD)
-            .append("\n");
-        sb.append("UsableSpace=").append(getSpace()).append("\n");
+            .append(newline);
+        sb.append("UsableSpace=").append(getSpace()).append(newline);
         // DiagnosticLogger.log("PageLsn=" + getPageLsn());
-        sb.append("PageFlags=").append(getFlags()).append("\n");
-        sb.append("#Slots=").append(getNumberOfSlots()).append("\n");
-        sb.append("#DeletedSlots=").append(getDeletedSlots()).append("\n");
-        sb.append("HighWaterMark=").append(highWaterMark).append("\n");
-        sb.append("FreeSpace=").append(getFreeSpace()).append("\n");
-        sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append("\n");
+        sb.append("PageFlags=").append(getFlags()).append(newline);
+        sb.append("#Slots=").append(getNumberOfSlots()).append(newline);
+        sb.append("#DeletedSlots=").append(getDeletedSlots()).append(newline);
+        sb.append("HighWaterMark=").append(highWaterMark).append(newline);
+        sb.append("FreeSpace=").append(getFreeSpace()).append(newline);
+        sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append(newline);
         int length = 0;
         for (int i = 0; i < getNumberOfSlots(); i++) {
             sb.append("Slot#").append(i).append("=");
-            slotTable.get(i).appendTo(sb).append("\n");
+            slotTable.get(i).appendTo(sb).append(newline);
             length += getSlotLength(i);
         }
         length += FIXED_OVERHEAD;
         length += freeSpace;
-        sb.append("Calculated PageSize=").append(length).append("\n");
+        sb.append("Calculated PageSize=").append(length).append(newline);
         return sb;
     }
 
