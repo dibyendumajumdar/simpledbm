@@ -1,12 +1,19 @@
 1.0.11-BETA:
- * dm: TupleManager: Lots of refactoring to make the code less monolithic
- * dm: TupleManager: Buffer page latched exclusively during reads
- * dm: TupleManager: Space map page latched exclusively when shared latch is needed
- * dm: Buffer Manager: starvation on single cpu machine
- * dm: BTree: Do not allow insert or delete on max (logical infinity) key.
- * dm: BTree Performance fix: perform binary search on index nodes.
- * dm: BTree Performance fix: avoid instantiating whole items when scanning for child pointer in index node.
-
+ * dm: Issue 43: TupleManager: Lots of refactoring to make the code more modular and easy to maintain.
+ * dm: Issue 40: TupleManager: Fixed buffer page being latched exclusively during reads - should be 
+   latched in shared mode.
+ * dm: Issue 41: TupleManager: Space map page was being latched exclusively when shared latch was needed.
+ * dm: Buffer Manager: Starvation on single cpu machine, with two threads. When a buffer 
+   is written, notify one thread rather than all threads.
+ * dm: Issue 21: BTree: Do not allow insert or delete on max (logical infinity) key.
+ * dm: Issue 42: BTree Performance fix: Perform binary search on index nodes.
+ * dm: Issue 39: BTree Performance fix: Avoid instantiating whole items when scanning for 
+   child pointer in index node. Introduced PartialIndexItem. Note that this changes the
+   storage format for index items.
+ * dm: Issue 35: Output from deadlock detector reformatted.
+ * dm: Issue 44: Starvation when two threads attempt to fix a buffer on a single CPU 
+   machine and all buffers are dirty
+   
 1.0.10-BETA:
  * dm: Issue 34 - Expose additional configuration properties 
    log.disableFlushRequests - if true, performs log flush less frequently
