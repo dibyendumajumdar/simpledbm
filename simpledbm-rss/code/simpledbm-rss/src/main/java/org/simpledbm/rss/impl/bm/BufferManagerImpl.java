@@ -180,8 +180,6 @@ public final class BufferManagerImpl implements BufferManager {
      */
     final Object waitingForBuffers = new Object();
 
-    volatile int writeCount = 0;
-    
     /**
      * Define the number of times the BufMgr will retry when it cannot locate
      * an empty frame. Each time, it retries, the Buffer Writer will be triggered.
@@ -383,14 +381,11 @@ public final class BufferManagerImpl implements BufferManager {
                 return frameNo;
             }
         }
-        
-        int noteWC = writeCount;
-        int retryAttempt = 0;
         /*
          * Find a replacement victim - this should be the Least Recently Used
          * Buffer that is unfixed.
          */
-        for (; retryAttempt < maxRetriesDuringBufferWait; retryAttempt++) {
+        for (int retryAttempt = 0; retryAttempt < maxRetriesDuringBufferWait; retryAttempt++) {
 
             if (log.isTraceEnabled()) {
                 log.trace(
@@ -480,15 +475,6 @@ public final class BufferManagerImpl implements BufferManager {
 
         }
 
-        int dc = getDirtyBuffersCount();
-        int currentWC = writeCount;
-        dumpBuffers();
-        System.err.println("getFrame() failed after " + retryAttempt + " attempts");
-        System.err.println("getFrame() failed when dirty count was " + dc);
-        System.err.println("WC at start of getFrame() was " + noteWC);
-        System.err.println("WC at end of getFrame() was " + currentWC);
-        
-        
         return -1;
     }
 
@@ -1172,7 +1158,6 @@ public final class BufferManagerImpl implements BufferManager {
                             logMgr.flush(lsn);
                         }
                         pageFactory.store(page);
-                        writeCount++;
                     } finally {
                         bucket.lock();
                     }
