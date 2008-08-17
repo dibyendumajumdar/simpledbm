@@ -37,7 +37,7 @@ public interface IndexScan {
      * key the Location object associated with the key is locked.
      * <p>After fetching an index row, typically, data must be fetched from
      * associated tuple container. Locks obtained by the fetch protect such
-     * access. After tuple has been fetched, caller must invoke {@link #fetchCompleted()}
+     * access. After tuple has been fetched, caller must invoke {@link #fetchCompleted(boolean)}
      * to ensure that locks are released in certain lock isolation modes. Failure
      * to do so will cause extra locking.
      */
