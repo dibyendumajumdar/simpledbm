@@ -332,6 +332,7 @@ sample contains both JDK style and Log4J style configuration.::
  org.simpledbm.rss.util.level = INFO
  org.simpledbm.rss.util.logging.level = INFO
  org.simpledbm.rss.main.level = INFO
+ org.simpledbm.rss.trace.level = INFO
 
  # Default Log4J configuration
 
@@ -367,6 +368,7 @@ sample contains both JDK style and Log4J style configuration.::
  log4j.logger.org.simpledbm.rss.util=INFO
  log4j.logger.org.simpledbm.rss.util.logging=INFO
  log4j.logger.org.simpledbm.rss.main=INFO
+ log4j.logger.org.simpledbm.rss.trace=INFO
 
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
