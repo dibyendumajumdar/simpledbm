@@ -36,7 +36,7 @@ package org.simpledbm.rss.api.wal;
  * <p>
  * To obtain an instance of Log, you need to first obtain an instance of
  * {@link LogFactory}. A LogFactory implementation provides the
- * {@link LogFactory#getLog(org.simpledbm.rss.io.StorageContainerFactory, java.util.Properties) openLog} 
+ * {@link LogFactory#getLog(org.simpledbm.rss.api.st.StorageContainerFactory, java.util.Properties)} 
  * method for obtaining an instance
  * of an existing Log.
  * <p>
