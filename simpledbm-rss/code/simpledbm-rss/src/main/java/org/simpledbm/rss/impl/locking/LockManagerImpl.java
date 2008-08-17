@@ -142,9 +142,6 @@ public final class LockManagerImpl implements LockManager {
 
     /**
      * Creates a new LockMgrImpl, ready for use.
-     * 
-     * @param hashTableSize
-     *            The size of the lock hash table.
      */
     public LockManagerImpl(LatchFactory latchFactory, Properties p) {
     	globalLock = latchFactory.newReadWriteLatch();

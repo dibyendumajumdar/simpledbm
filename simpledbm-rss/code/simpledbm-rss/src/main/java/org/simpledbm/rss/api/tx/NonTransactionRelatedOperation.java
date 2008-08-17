@@ -37,7 +37,7 @@ package org.simpledbm.rss.api.tx;
  *  
  * @author Dibyendu Majumdar
  * @since 26-Aug-2005
- * @see TransactionManager#logNonTransactionRelatedOperation(Redoable)
+ * @see TransactionManager#logNonTransactionRelatedOperation(Loggable)
  */
 public interface NonTransactionRelatedOperation extends Loggable {
 

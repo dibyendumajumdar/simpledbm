@@ -20,6 +20,7 @@
 package org.simpledbm.rss.api.tx;
 
 import org.simpledbm.rss.api.locking.LockDuration;
+import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.wal.Lsn;
@@ -30,7 +31,7 @@ import org.simpledbm.rss.api.wal.Lsn;
  * <strong>IMPORTANT:</strong> <em>A Transaction object must not
  * be concurrently used by more than one thread.</em> 
  * 
- * @see TransactionManager#begin()
+ * @see TransactionManager#begin(IsolationMode)
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
  */
@@ -58,13 +59,13 @@ public interface Transaction {
      * If the Lock Manager does not support deadlock detection, the lock timeout is
      * used to detect possible deadlocks.
      * @see TransactionManager#setLockWaitTimeout(int)
-     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
+     * @see {@link LockManager#acquire(Object, Object, LockMode, LockDuration, int, org.simpledbm.rss.api.locking.LockInfo)}
      */
     public void acquireLock(Lockable lockable, LockMode mode,
             LockDuration duration);
 
     /**
-     * Same as {@link #acquireLock(Object, LockMode, LockDuration) acquireLock} but does not wait
+     * Same as {@link #acquireLock(Lockable, LockMode, LockDuration)} but does not wait
      * for lock to be available.
      * @see #acquireLock(Object, LockMode, LockDuration) 
      */

@@ -148,9 +148,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
     /**
      * Creates a new LockMgrImpl, ready for use.
-     * 
-     * @param hashTableSize
-     *            The size of the lock hash table.
      */
     public NewReadWriteUpdateLatch() {
     }

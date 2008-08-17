@@ -2183,7 +2183,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
     /**
      * Utility to help with flags associated with segments. A
-     * {@link org.simpledbm.sp.SlottedPage} allows flags to be associated with
+     * {@link org.simpledbm.rss.api.sp.SlottedPage} allows flags to be associated with
      * each slot. This is taken advantage of here to maintain various status
      * flags for tuple segments.
      */

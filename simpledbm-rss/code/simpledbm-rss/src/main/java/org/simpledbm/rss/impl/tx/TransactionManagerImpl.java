@@ -1827,7 +1827,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         }
 
         /**
-         * @see #doAcquireLock(Object, LockMode, LockDuration, int)
+         * @see #doAcquireLock(Lockable, LockMode, LockDuration, int)
          */
         public synchronized final void acquireLock(Lockable lockable,
                 LockMode mode, LockDuration duration) {
@@ -1838,7 +1838,7 @@ public final class TransactionManagerImpl implements TransactionManager {
          * Attempts to acquire a lock without waiting; if the lock is not
          * available, an exception will be thrown.
          * 
-         * @see #doAcquireLock(Object, LockMode, LockDuration, int)
+         * @see #doAcquireLock(Lockable, LockMode, LockDuration, int)
          */
         public synchronized final void acquireLockNowait(Lockable lockable,
                 LockMode mode, LockDuration duration) {
