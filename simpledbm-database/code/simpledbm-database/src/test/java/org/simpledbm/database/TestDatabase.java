@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import java.util.Random;
 
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
@@ -259,7 +260,7 @@ public class TestDatabase extends BaseTestCase {
 					tableRow.getColumnValue(2).setString("Blogg" + i);
 					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
 					tableRow.getColumnValue(6).setInt(1000 + i);
-					System.out.println("Adding " + tableRow);
+					// System.out.println("Adding " + tableRow);
 					table.addRow(trx, tableRow);
 				}
 				okay = true;
@@ -505,7 +506,14 @@ public class TestDatabase extends BaseTestCase {
 		
 		void testInsert() {
 			System.out.println(Thread.currentThread().getName() + " Starting inserts");
-			for (int i = startno; i < (startno + range); i++) {
+			int values[] = new int[range];
+			for (int i = startno, j = 0; i < (startno + range); i++, j++) {
+				values[j] = i;
+			}
+			shuffle(values);			
+//			for (int i = startno; i < (startno + range); i++) {
+			for (int j = 0; j < values.length; j++) {
+				int i = values[j];
 				boolean okay = false;
 				while (!okay) {
 					if (testCase.threadFailed()) {
@@ -599,7 +607,14 @@ public class TestDatabase extends BaseTestCase {
 		
 		void testUpdate() {
 			System.out.println(Thread.currentThread().getName() + " Starting updates");
-			for (int i = startno; i < (startno + range); i++) {
+			int values[] = new int[range];
+			for (int i = startno, j = 0; i < (startno + range); i++, j++) {
+				values[j] = i;
+			}
+			shuffle(values);			
+//			for (int i = startno; i < (startno + range); i++) {
+			for (int j = 0; j < values.length; j++) {
+				int i = values[j];
 				boolean okay = false;
 				while (!okay) {
 					if (testCase.threadFailed()) {
@@ -722,7 +737,14 @@ public class TestDatabase extends BaseTestCase {
 		void testDelete() {
 			System.out.println(Thread.currentThread().getName()
 					+ " Starting deletes");
-			for (int i = startno; i < (startno + range); i++) {
+			int values[] = new int[range];
+			for (int i = startno, j = 0; i < (startno + range); i++, j++) {
+				values[j] = i;
+			}
+			shuffle(values);
+			//for (int j = startno; j < (startno + range); j++) {
+			for (int j = 0; j < values.length; j++) {
+				int i = values[j];
 				boolean okay = false;
 				while (!okay) {
 					if (testCase.threadFailed()) {
@@ -874,7 +896,7 @@ public class TestDatabase extends BaseTestCase {
 	
 	public void testStress() throws Exception {
 
-		int numThreads = 2;
+		int numThreads = 4;
 		int range = 10000;
 		int iterations = 1;
 		
@@ -892,7 +914,7 @@ public class TestDatabase extends BaseTestCase {
 			}
 			for (int i = 0; i < numThreads; i++) {
 				try {
-					threads[i].join(600*1000);
+					threads[i].join();
 				} catch (InterruptedException e) {
 				}
 			}
@@ -926,4 +948,25 @@ public class TestDatabase extends BaseTestCase {
 		}
 		dir.delete();
 	}
+
+	
+	
+	/**
+	 * The Fisher-Yates shuffle, as implemented by Durstenfeld, is an in-place shuffle.
+	 * Taken from wikipedia
+	 */
+	static void shuffle (int[] array) 
+    {
+        Random rng = new Random(System.currentTimeMillis());   // i.e., java.util.Random.
+        int n = array.length;        // The number of items left to shuffle (loop invariant).
+        while (n > 1) 
+        {
+            int k = rng.nextInt(n);  // 0 <= k < n.
+            n--;                     // n is now the last pertinent index;
+            int temp = array[n];     // swap array[n] with array[k] (does nothing if k == n).
+            array[n] = array[k];
+            array[k] = temp;
+        }
+    }
+	
 }
