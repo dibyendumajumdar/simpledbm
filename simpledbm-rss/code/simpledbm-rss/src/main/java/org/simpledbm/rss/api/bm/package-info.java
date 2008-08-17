@@ -51,7 +51,7 @@
  * dirty pages to disk. In order to support the Write Ahead Log protocol, the Buffer 
  * Manager must ensure that all logs related to the page in question are flushed prior
  * to the page being persisted to disk.</p>
- * <p>The {@link org.simpledbm.rss.api.trx Transaction Manager} also interacts with the Buffer Manager. During checkpoints,
+ * <p>The {@link org.simpledbm.rss.api.tx Transaction Manager} also interacts with the Buffer Manager. During checkpoints,
  * the Transaction Manager asks for a list of dirty pages. It uses information maintained
  * by the Buffer Manager to determine where recovery should start. After a system restart
  * the Transaction Manager informs the Buffer Manager about the recovery status of disk

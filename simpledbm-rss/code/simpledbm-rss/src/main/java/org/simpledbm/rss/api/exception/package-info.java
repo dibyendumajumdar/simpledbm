@@ -20,7 +20,7 @@
 
 /**
  * All SimpleDBM Exceptions are derived from a common runtime exception class 
- * named {@link RSSException}.
+ * named {@link org.simpledbm.rss.api.exception.RSSException}.
  */
 package org.simpledbm.rss.api.exception;
 

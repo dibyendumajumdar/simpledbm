@@ -138,9 +138,9 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * 
  * @author Dibyendu Majumdar
  * @since 14 June 2005
- * @see LogManagerImpl.LogAnchor
+ * @see org.simpledbm.rss.impl.wal.LogManagerImpl.LogAnchor
  * @see #readLogAnchor
- * @see LogManagerImpl.LogFileHeader
+ * @see org.simpledbm.rss.impl.wal.LogManagerImpl.LogFileHeader
  * @see #LOGREC_HEADER_SIZE
  * @see #MAX_CTL_FILES
  * @see #MAX_LOG_GROUPS
