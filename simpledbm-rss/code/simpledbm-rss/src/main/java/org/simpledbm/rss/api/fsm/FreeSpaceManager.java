@@ -40,7 +40,7 @@ public interface FreeSpaceManager {
      * 
      * @param trx The transaction that will manage this operation
      * @param containerName Name of the new container - mst be unused
-     * @param containerId The ID to be allocated to the new container - must not be in use.
+     * @param containerid The ID to be allocated to the new container - must not be in use.
      * @param spaceBits The number of bits to be used to represent free space data for an individual page.
      * @param extentSize Allocation unit - number of pages in the extent.
      * @param dataPageType The type of data pages this container will hold.
