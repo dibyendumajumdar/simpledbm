@@ -269,7 +269,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 			append(", name='").append(name).
 			append("', column definitions = {").append(newline);
 		for (int i = 0; i < rowType.length; i++) {
-			sb.append("column[").append(i).append("] type=");
+			sb.append(TAB).append("column[").append(i).append("] type=");
 			if (i == rowType.length - 1) {
 				sb.append(rowType[i]);
 			}
@@ -280,7 +280,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 		sb.append("}").append(newline);
 		sb.append("index definitions = {").append(newline);
 		for (int i = 0; i < indexes.size(); i++) {
-			sb.append("index[").append(i).append("] = ");
+			sb.append(TAB).append("index[").append(i).append("] = ");
 			if (i == indexes.size() - 1) {
 				sb.append(indexes.get(i));
 			}
