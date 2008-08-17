@@ -135,6 +135,14 @@ public class BTreeDemo {
 		public int getContainerId() {
 			return 1;
 		}
+
+		public int getX() {
+			return loc;
+		}
+
+		public int getY() {
+			return 0;
+		}
 	}
 
 	/**
