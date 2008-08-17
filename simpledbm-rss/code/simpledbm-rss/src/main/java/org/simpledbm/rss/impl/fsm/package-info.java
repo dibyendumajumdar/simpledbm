@@ -18,5 +18,12 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * This package implements the Space Manager module as specified in {@link org.simpledbm.rss.api.fsm}.
+ * Space information is maintained in special space map pages within the Storage Container. The first
+ * page of a Container contains the header page. This is followed by the first Free Space Map page.
+ * Space Map pages are linked together in a linked list. The header page maintains some basic
+ * information about the list, such as the head of the list.
+ */
 package org.simpledbm.rss.impl.fsm;
 

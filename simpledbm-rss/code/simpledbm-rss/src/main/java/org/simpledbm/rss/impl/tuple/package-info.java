@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * This implementation of the {@link org.simpledbm.rss.api.tuple Tuple Manager} interface
+ * supports rows that can span multiple pages.
+ */
 package org.simpledbm.rss.impl.tuple;
 

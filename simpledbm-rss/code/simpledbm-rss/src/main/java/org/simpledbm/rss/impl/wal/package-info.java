@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Contains an implementation of Write Ahead Log module, as defined by
+ * interfaces in {@link org.simpledbm.rss.api.wal}.
+ */
 package org.simpledbm.rss.impl.wal;
 

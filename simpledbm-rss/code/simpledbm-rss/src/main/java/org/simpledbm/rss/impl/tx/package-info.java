@@ -18,5 +18,11 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Default implementation of the SimpleDBM Transaction Manager as specified in {@link org.simpledbm.rss.api.tx}.
+ * The implementation is closely modeled upon the ARIES algorithm, described in the paper by C.Mohan and others 
+ * entitled:<cite>ARIES: A Transaction Recovery Method Supporting Fine-Granularity Locking and Partial Rollbacks 
+ * Using Write-Ahead Logging</cite>.
+ */
 package org.simpledbm.rss.impl.tx;
 

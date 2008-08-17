@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides implementations of the Latch interface as defined in
+ * {@link org.simpledbm.rss.api.latch}.
+ */
 package org.simpledbm.rss.impl.latch;
 

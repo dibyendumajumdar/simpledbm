@@ -18,5 +18,11 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Implements BTree index manager, based upon the algorithms described in <cite>
+ * Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen. Concurrency control 
+ * and recovery for balanced B-link trees. The VLDB Journal, Volume 14, Issue 2 
+ * (April 2005), Pages: 257 - 277, ISSN:1066-8888.</cite>
+ */
 package org.simpledbm.rss.impl.im.btree;
 

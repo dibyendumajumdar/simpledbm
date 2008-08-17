@@ -18,5 +18,10 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * This package defines the interface for the Object Registry subsystem,
+ * which is responsible for instantiating objects based upon
+ * type information.
+ */
 package org.simpledbm.rss.api.registry;
 

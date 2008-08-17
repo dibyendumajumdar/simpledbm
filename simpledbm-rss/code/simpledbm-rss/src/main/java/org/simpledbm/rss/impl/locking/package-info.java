@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * This implementation of the {@link org.simpledbm.rss.api.locking} uses an
+ * in-memory lock table.
+ */
 package org.simpledbm.rss.impl.locking;
 

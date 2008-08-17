@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides a logging interface to the rest of the system.
+ */
 package org.simpledbm.rss.util.logging;
 

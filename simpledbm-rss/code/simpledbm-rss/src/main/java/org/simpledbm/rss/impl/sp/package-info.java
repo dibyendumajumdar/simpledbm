@@ -18,5 +18,10 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Implementation of the SlottedPage as specified in {@link org.simpledbm.rss.api.sp}.
+ * This implementation uses a slot table within the page to maintain information
+ * about items in the page. 
+ */
 package org.simpledbm.rss.impl.sp;
 
