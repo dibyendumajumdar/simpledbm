@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.impl.bm;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -1064,7 +1065,10 @@ public final class BufferManagerImpl implements BufferManager {
         }
     }
 
-    void dumpBuffers() {
+    void dumpBuffers(final PrintStream stream) {
+    	/*
+    	 * TODO - the format of the output needs to be reviewed
+    	 */
 		/*
 		 * First make a list of all the dirty pages. By making a copy we avoid
 		 * having to lock the LRU list for long.
@@ -1077,7 +1081,7 @@ public final class BufferManagerImpl implements BufferManager {
 			for (BufferControlBlock bcb : lru) {
 				int h = (bcb.pageId.hashCode() & 0x7FFFFFFF)
 						% bufferHash.length;
-				System.err.println(bcb + ", buffer hash: " + h);
+				stream.println(bcb + ", buffer hash: " + h);
 			}
 		} finally {
 			lruLatch.readLock().unlock();
