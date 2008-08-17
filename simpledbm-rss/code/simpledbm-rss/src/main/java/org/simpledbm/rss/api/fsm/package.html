@@ -2,16 +2,14 @@
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
-<title>org.simpledbm.rss.sm</title>
+<title>org.simpledbm.rss.api.fsm</title>
 </head>
 <body>
 <p>Defines the interfaces for Space Manager module. This module is
 resposible for managing free space information within a Container.</p>
-<p>A Raw Container as created by the {@link
-org.simpledbm.rss.io.StorageContainerFactory} interface is more or less
+<p>A Raw Container as created by the {@link org.simpledbm.rss.api.st.StorageContainerFactory} interface is more or less
 a stream of bytes. The Space Manager module treats the Raw Container as
-an ordered collection of fixed size {@link org.simpledbm.rss.pm.Page
-Pages}. It also distinguishes between different types of pages. A
+an ordered collection of fixed size {@link org.simpledbm.rss.api.pm.Page Page}s. It also distinguishes between different types of pages. A
 container managed by the Space Manager module contains at least two
 types of pages. Firstly, special pages called Free Space Map Pages are
 used to track space allocation within the container. One or two bits are
