@@ -5735,7 +5735,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     /**
      * Decrease of the height of the tree when root page has only one child.
      * Must be logged as part of the root page update.
-     * @see BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeIndexManagerImpl.BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeCursor)
      * @see BTreeIndexManagerImpl#redoDecreaseTreeHeightOperation(Page, DecreaseTreeHeightOperation)
      */
     public static final class DecreaseTreeHeightOperation extends

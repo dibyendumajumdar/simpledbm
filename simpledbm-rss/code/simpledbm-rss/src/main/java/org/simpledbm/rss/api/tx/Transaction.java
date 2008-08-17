@@ -59,7 +59,7 @@ public interface Transaction {
      * If the Lock Manager does not support deadlock detection, the lock timeout is
      * used to detect possible deadlocks.
      * @see TransactionManager#setLockWaitTimeout(int)
-     * @see {@link LockManager#acquire(Object, Object, LockMode, LockDuration, int, org.simpledbm.rss.api.locking.LockInfo)}
+     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int, org.simpledbm.rss.api.locking.LockInfo)
      */
     public void acquireLock(Lockable lockable, LockMode mode,
             LockDuration duration);
@@ -67,7 +67,7 @@ public interface Transaction {
     /**
      * Same as {@link #acquireLock(Lockable, LockMode, LockDuration)} but does not wait
      * for lock to be available.
-     * @see #acquireLock(Object, LockMode, LockDuration) 
+     * @see #acquireLock(Lockable, LockMode, LockDuration) 
      */
     public void acquireLockNowait(Lockable lockable, LockMode mode,
             LockDuration duration);

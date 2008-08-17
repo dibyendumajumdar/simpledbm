@@ -22,7 +22,7 @@
  * 
  * <p>Defines the interface to low level IO sub-system. The objective is to
  * present a generic interface that can potentially be implemented in a
- * number of different ways. The default implementation is in {@link org.simpledbm.rss.api.st.impl}.</p>
+ * number of different ways. The default implementation is in {@link org.simpledbm.rss.impl.st}.</p>
  * <h2>Overview</h2>
  * <p>Database Managers typically use files to store various types of data,
  * such as, log files, data files, etc. However, from the perspective of a DBMS,
