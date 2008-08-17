@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * A mixed bag of utilities.
+ */
 package org.simpledbm.rss.util;
 

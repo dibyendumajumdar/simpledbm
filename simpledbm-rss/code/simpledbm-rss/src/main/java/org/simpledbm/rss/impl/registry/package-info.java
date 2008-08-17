@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides an implementation of the Object Registry module as
+ * specified by {@link org.simpledbm.rss.api.registry}.
+ */
 package org.simpledbm.rss.impl.registry;
 

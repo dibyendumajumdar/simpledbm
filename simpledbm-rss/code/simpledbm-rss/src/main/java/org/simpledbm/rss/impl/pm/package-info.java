@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Default implementation of the Page Manager as specified in
+ * {@link org.simpledbm.rss.api.pm}.
+ */
 package org.simpledbm.rss.impl.pm;
 

@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Implements the storage factory as specified by interfaces in
+ * {@link org.simpledbm.rss.api.st}.
+ */
 package org.simpledbm.rss.impl.st;
 

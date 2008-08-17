@@ -18,5 +18,10 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * This package defined the interface to database pages. All database pages have a common structure. The page contains
+ * rows of data. To allow efficient access to the rows, a slot table is maintained within the page. The slot table
+ * contains the positions and lengths of the rows within the page.
+ */
 package org.simpledbm.rss.api.sp;
 

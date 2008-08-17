@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Defines the interface for the SimpleDBM Transaction Manager.
+ */
 package org.simpledbm.rss.api.tx;
 

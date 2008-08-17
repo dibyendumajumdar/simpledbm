@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Default implementation of the Buffer Manager module, as specified by
+ * {@link org.simpledbm.rss.api.bm}.
+ */
 package org.simpledbm.rss.impl.bm;
 
