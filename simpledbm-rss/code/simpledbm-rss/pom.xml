@@ -3,13 +3,13 @@
  <groupId>org.simpledbm.rss</groupId>
  <artifactId>simpledbm-rss</artifactId>
  <packaging>jar</packaging>
- <version>1.0.11</version>
+ <version>1.0.12-SNAPSHOT</version>
  <name>SimpleDBM</name>
  <url>http://www.simpledbm.org</url>
  <scm>
-  <connection>scm:svn:http://simpledbm.googlecode.com/svn/tags/simpledbm-rss-1.0.11</connection>
-  <developerConnection>scm:svn:https://simpledbm.googlecode.com/svn/tags/simpledbm-rss-1.0.11</developerConnection>
-  <url>scm:svn:https://simpledbm.googlecode.com/svn/tags/simpledbm-rss-1.0.11</url>
+  <connection>scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code/simpledbm-rss</connection>
+  <developerConnection>scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code/simpledbm-rss</developerConnection>
+  <url>http://simpledbm.googlecode.com/svn/</url>
  </scm>
  <inceptionYear>2005</inceptionYear>
  <developers>
