@@ -6,8 +6,8 @@ SimpleDBM Database API
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Version: 1.0.8
-:Date: 05 July 2008
+:Version: 1.0.11
+:Date: 17 August 2008
 :Copyright: Copyright by Dibyendu Majumdar, 2008
 
 .. contents::
@@ -30,27 +30,27 @@ Features
 
 SimpleDBM_ has the following features:
 
-- *Transactional* - SimpleDBM_ fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
-- *Multi-threaded* - SimpleDBM_ is multi-threaded and supports concurrent reads and writes of data.
-- *Write Ahead Log* - SimpleDBM_ uses a write ahead log to ensure transaction recovery in the event of system crashes.
-- *Lock based concurrency* - SimpleDBM_ uses row-level shared, update and exclusive locks to manage concurrency. 
-- *Multiple Isolation Levels* - SimpleDBM_ supports read committed, repeatable read, and serializable isolation levels.
-- *B-Tree Indexes* - SimpleDBM_ implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM_ B-Trees continually rebalance themselves, and do not suffer from fragmentation.
-- *Tables* - SimpleDBM_ supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
-- *Latches and Locks* - SimpleDBM_ uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
-- *Deadlock detection* - SimpleDBM_ has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
+- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
+- *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
+- *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
+- *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
+- *Multiple Isolation Levels* - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.
+- *B-Tree Indexes* - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.
+- *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.
+- *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
+- *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
 
 Non-Features
 ------------
-- SimpleDBM_ is not an SQL engine. 
+- SimpleDBM is not an SQL engine. 
 - There is no support for distributed transactions (XA) yet.
 
 Status
 ------
 
 SimpleDBM_ is currently in early BETA and not suitable for Production use. 
-Note that the SimpleDBM_ API is under flux, and is likely to change until 
-the final 1.0 release is available. 
+Note that the SimpleDBM API is under flux, and is likely to change until 
+the production 1.0 release is available. 
 
 The latest builds can be downloaded from:
 
@@ -60,21 +60,20 @@ http://code.google.com/p/simpledbm/downloads/list.
 SimpleDBM Modules
 -----------------
 
-The core of SimpleDBM_ is the RSS (named in honor of the
+The core of SimpleDBM is the RSS (named in honor of the
 first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
 System). The RSS provides the underlying storage structures for
 transactions, locking, b-trees etc. The RSS API is however, slightly
 low level for ordinary users. It is meant to be used by people interested
-in build their own Database Engines on top. The RSS is described in 
-detail in the `SimpleDBM RSS User's Manual <http://www.simpledbm.org>`_ and 
-`SimpleDBM RSS Developers's Guide <http://www.simpledbm.org>`_.
+in building their own Database Engines on top of RSS. The RSS is described in 
+detail in the `SimpleDBM RSS User's Manual <http://simpledbm.googlecode.com/files/rss-usermanual-1.0.8.pdf>`_ and 
+`SimpleDBM RSS Developers's Guide <http://simpledbm.googlecode.com/files/rss-developerguide-1.0.8.pdf>`_.
 
 To provides users with a simplified API, two additional modules are
 available. 
 
-The first one is the SimpleDBM_ TypeSystem module, which adds support
-for typed data values and multi-attribute row objects. For details of this
-module, please read `SimpleDBM TypeSystem <http://www.simpledbm.org>`_.
+The first one is the `SimpleDBM TypeSystem <http://simpledbm.googlecode.com/files/typesystem-1.0.8.pdf>`_ module, which adds support
+for typed data values and multi-attribute row objects.
 
 The second module, the Database API, is the subject of this document.
 This module implements a high level Database API and uses the 
@@ -84,34 +83,48 @@ TypeSystem module on top of the RSS.
 Getting Started
 ---------------
 
-A SimpleDBM_ server is a set of background threads and a library of API
+A SimpleDBM server is a set of background threads and a library of API
 calls that clients can hook into. The background threads take care of
 various tasks, such as writing out buffer pages, writing out logs,
 archiving older log files, creating checkpoints, etc.
 
-A SimpleDBM_ server operates on a set of data and index files, known as
-the SimpleDBM_ database.
+A SimpleDBM server operates on a set of data and index files, known as
+the SimpleDBM database.
 
-Only one server instance is allowed to access a SimpleDBM_ database at
-any point in time. SimpleDBM_ uses a lock file to detect multiple
+Only one server instance is allowed to access a SimpleDBM database at
+any point in time. SimpleDBM uses a lock file to detect multiple
 concurrent access to a database, and will refuse to start if it
 detects that a server is already accessing a database.
 
-Internally, SimpleDBM_ operates on logical entities called Storage
+Internally, SimpleDBM operates on logical entities called Storage
 Containers. From an implementation point of view, Storage Containers
 are mapped to files. 
 
 Tables and Indexes are stored in Containers known as TupleContainers
 and IndexContainers, respectively.
 
-The SimpleDBM_ database initially consists of a set of transaction log
+The SimpleDBM database initially consists of a set of transaction log
 files, a lock file and a special container used internally by
-SimpleDBM_.
+SimpleDBM.
+
+SimpleDBM binaries
+==================
+SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.5
+or above if you want to work with SimpleDBM.
+
+You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
+project download area. The following jar files are required:
+
+* `simpledbm-rss-1.0.11.jar <http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.11.jar>`_ - this is the core database engine.
+* `simpledbm-typesystem-1.0.9.jar <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.9.jar>`_ - provides a simple type system.
+* `simpledbm-database-1.0.10.jar <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.10.jar>`_ - provides a higher level database API with support for tables and indexes. 
+
+You should make sure that required jars are in your class path.
 
 Creating a SimpleDBM database
 =============================
 
-A SimpleDBM_ database is created by a call to DatabaseFactory.create(), 
+A SimpleDBM database is created by a call to DatabaseFactory.create(), 
 as shown below: ::
 
   import org.simpledbm.database.api.DatabaseFactory;
@@ -127,7 +140,7 @@ as shown below: ::
   properties.setProperty("log.buffer.limit", "4");
   properties.setProperty("log.flush.interval", "5");
   properties.setProperty("storage.basePath", 
-    "demodata/DemoDb");
+    "demodata/DemoDB");
   
   DatabaseFactory.create(properties);
 
@@ -138,84 +151,86 @@ number of parameters. The available options are shown below:
 Server Options
 --------------
 
-+-----------------------------------+------------------------------------------------------------+
-| Property Name                     | Description                                                |
-+===================================+============================================================+
-| ``log.ctl.{n}``                   | The fully qualified path to the                            |
-|                                   | log control file. The first file should be specified as    |
-|                                   | ``log.ctl.1``, second as ``log.ctl.2``, and so on. Up to a |
-|                                   | maximum of 3 can be specified. Default is 2.               |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.groups.{n}.path``           | The path where log files of a group should be stored.      |
-|                                   | The first log group is specified as ``log.groups.1.path``, |
-|                                   | the second as ``log.groups.2.path``,                       |
-|                                   | and so on. Up to a maximum of 3 log groups can be          |
-|                                   | specified. Default number of groups is 1. Path defaults    |
-|                                   | to current directory.                                      |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.archive.path``              | Defines the path for storing archive files. Defaults to    | 
-|                                   | current directory.                                         |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.group.files``               | Specifies the number of log files within each group.       |
-|                                   | Up to a maximum of 8 are allowed. Defaults to 2.           |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.file.size``                 | Specifies the size of each log file in                     |
-|                                   | bytes. Default is 2 KB.                                    |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.buffer.size``               | Specifies the size of the log buffer                       |
-|                                   | in bytes. Default is 2 KB.                                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.buffer.limit``              | Sets a limit on the maximum number of                      |
-|                                   | log buffers that can be allocated. Default is 10 *         |
-|                                   | log.group.files.                                           |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.flush.interval``            | Sets the interval (in seconds)                             |
-|                                   | between log flushes. Default is 6 seconds.                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``log.disableFlushRequests``      | Boolean value, if set, disables                            |
-|                                   | log flushes requested explicitly by the Buffer Manager     |
-|                                   | or Transaction Manager. Log flushes still occur during     |
-|                                   | checkpoints and log switches. By reducing the log flushes, |
-|                                   | performance is improved, but transactions may not be       |
-|                                   | durable. Only those transactions will survive a system     | 
-|                                   | crash that have all their log records on disk.             |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.basePath``              | Defines the base location of the                           |
-|                                   | SimpleDBM database. All files and directories are created  |
-|                                   | relative to this location.                                 |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.createMode``            | Defines mode in which files will be                        |
-|                                   | created. Default is ``"rws"``.                             |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.openMode``              | Defines mode in which files will be                        |
-|                                   | opened. Default is ``"rws"``.                              |
-+-----------------------------------+------------------------------------------------------------+
-| ``storage.flushMode``             | Defines mode in which files will be flushed. Possible      |
-|                                   | values are noforce, force.true (default), and force.false  |
-+-----------------------------------+------------------------------------------------------------+
-| ``bufferpool.numbuffers``         | Sets the number of buffers to be created in                |
-|                                   | the Buffer Pool.                                           |
-+-----------------------------------+------------------------------------------------------------+
-| ``bufferpool.writerSleepInterval``| Sets the interval in milliseconds between each run of      |
-|                                   | the BufferWriter. Note that BufferWriter may run earlier   |
-|                                   | than the specified interval if the pool runs out of        |
-|                                   | buffers, and a new page has to be read in. In such cases,  |
-|                                   | the Buffer Writer may be manually triggered to clean out   |
-|                                   | buffers.                                                   |
-+-----------------------------------+------------------------------------------------------------+
-| ``logging.properties.file``       | Specifies the name of logging properties file. Precede     |
-|                                   | ``classpath:`` if you want SimpleDBM to search for this    |
-|                                   | file in the classpath.                                     |
-+-----------------------------------+------------------------------------------------------------+
-| ``logging.properties.type``       | Specify ``"log4j"`` if you want to SimpleDBM to use Log4J  |
-|                                   | for generating log messages.                               |
-+-----------------------------------+------------------------------------------------------------+
-| ``transaction.lock.timeout``      | Specifies the default lock timeout value in seconds.       |
-|                                   | Default is 60 seconds.                                     |
-+-----------------------------------+------------------------------------------------------------+
-| ``transaction.ckpt.interval``     | Specifies the interval between checkpoints in milliseconds.|
-|                                   | Default is 15000 milliseconds (15 secs).                   |
-+-----------------------------------+------------------------------------------------------------+
++-------------------------------------+------------------------------------------------------------+
+| Property Name                       | Description                                                |
++=====================================+============================================================+
+| ``log.ctl.{n}``                     | The fully qualified path to the                            |
+|                                     | log control file. The first file should be specified as    |
+|                                     | ``log.ctl.1``, second as ``log.ctl.2``, and so on. Up to a |
+|                                     | maximum of 3 can be specified. Default is 2.               |
++-------------------------------------+------------------------------------------------------------+
+| ``log.groups.{n}.path``             | The path where log files of a group should be stored.      |
+|                                     | The first log group is specified as ``log.groups.1.path``, |
+|                                     | the second as ``log.groups.2.path``,                       |
+|                                     | and so on. Up to a maximum of 3 log groups can be          |
+|                                     | specified. Default number of groups is 1. Path defaults    |
+|                                     | to current directory.                                      |
++-------------------------------------+------------------------------------------------------------+
+| ``log.archive.path``                | Defines the path for storing archive files. Defaults to    | 
+|                                     | current directory.                                         |
++-------------------------------------+------------------------------------------------------------+
+| ``log.group.files``                 | Specifies the number of log files within each group.       |
+|                                     | Up to a maximum of 8 are allowed. Defaults to 2.           |
++-------------------------------------+------------------------------------------------------------+
+| ``log.file.size``                   | Specifies the size of each log file in                     |
+|                                     | bytes. Default is 2 KB.                                    |
++-------------------------------------+------------------------------------------------------------+
+| ``log.buffer.size``                 | Specifies the size of the log buffer                       |
+|                                     | in bytes. Default is 2 KB.                                 |
++-------------------------------------+------------------------------------------------------------+
+| ``log.buffer.limit``                | Sets a limit on the maximum number of                      |
+|                                     | log buffers that can be allocated. Default is 10 *         |
+|                                     | log.group.files.                                           |
++-------------------------------------+------------------------------------------------------------+
+| ``log.flush.interval``              | Sets the interval (in seconds)                             |
+|                                     | between log flushes. Default is 6 seconds.                 |
++-------------------------------------+------------------------------------------------------------+
+| ``log.disableFlushRequests``        | Boolean value, if set, disables                            |
+|                                     | log flushes requested explicitly by the Buffer Manager     |
+|                                     | or Transaction Manager. Log flushes still occur during     |
+|                                     | checkpoints and log switches. By reducing the log flushes, |
+|                                     | performance is improved, but transactions may not be       |
+|                                     | durable. Only those transactions will survive a system     | 
+|                                     | crash that have all their log records on disk.             |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.basePath``                | Defines the base location of the                           |
+|                                     | SimpleDBM database. All files and directories are created  |
+|                                     | relative to this location.                                 |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.createMode``              | Defines mode in which files will be                        |
+|                                     | created. Default is ``"rws"``.                             |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.openMode``                | Defines mode in which files will be                        |
+|                                     | opened. Default is ``"rws"``.                              |
++-------------------------------------+------------------------------------------------------------+
+| ``storage.flushMode``               | Defines mode in which files will be flushed. Possible      |
+|                                     | values are noforce, force.true (default), and force.false  |
++-------------------------------------+------------------------------------------------------------+
+| ``bufferpool.numbuffers``           | Sets the number of buffers to be created in                |
+|                                     | the Buffer Pool.                                           |
++-------------------------------------+------------------------------------------------------------+
+| ``bufferpool.writerSleepInterval``  | Sets the interval in milliseconds between each run of      |
+|                                     | the BufferWriter. Note that BufferWriter may run earlier   |
+|                                     | than the specified interval if the pool runs out of        |
+|                                     | buffers, and a new page has to be read in. In such cases,  |
+|                                     | the Buffer Writer may be manually triggered to clean out   |
+|                                     | buffers.                                                   |
++-------------------------------------+------------------------------------------------------------+
+| ``lock.deadlock.detection.interval``| Sets the interval in seconds between deadlock scans.       |
++-------------------------------------+------------------------------------------------------------+
+| ``logging.properties.file``         | Specifies the name of logging properties file. Precede     |
+|                                     | ``classpath:`` if you want SimpleDBM to search for this    |
+|                                     | file in the classpath.                                     |
++-------------------------------------+------------------------------------------------------------+
+| ``logging.properties.type``         | Specify ``"log4j"`` if you want to SimpleDBM to use Log4J  |
+|                                     | for generating log messages.                               |
++-------------------------------------+------------------------------------------------------------+
+| ``transaction.lock.timeout``        | Specifies the default lock timeout value in seconds.       |
+|                                     | Default is 60 seconds.                                     |
++-------------------------------------+------------------------------------------------------------+
+| ``transaction.ckpt.interval``       | Specifies the interval between checkpoints in milliseconds.|
+|                                     | Default is 15000 milliseconds (15 secs).                   |
++-------------------------------------+------------------------------------------------------------+
 
 The DatabaseFactory.create() call will overwrite any existing database
 in the specified storage path, so it must be called only when you know
@@ -239,9 +254,17 @@ Here is a code snippet that shows how this is done: ::
   properties.setProperty("log.file.size", "16384");
   properties.setProperty("log.buffer.size", "16384");
   properties.setProperty("log.buffer.limit", "4");
-  properties.setProperty("log.flush.interval", "5");
+  properties.setProperty("log.flush.interval", "30");
+  properties.setProperty("log.disableFlushRequests", "true");
+  properties.setProperty("bufferpool.numbuffers", "100");
+  properties.setProperty("bufferpool.writerSleepInterval", "60000");
+  properties.setProperty("transaction.ckpt.interval", "60000");
+  properties.setProperty("logging.properties.type", "log4j");
+  properties.setProperty("logging.properties.file",
+    "classpath:simpledbm.logging.properties");
+  properties.setProperty("lock.deadlock.detection.interval", "3");
   properties.setProperty("storage.basePath", 
-    "demodata/TupleDemo1");
+    "demodata/DemoDB");
 
   Database db = DatabaseFactory.getDatabase(getServerProperties());
   db.start();  
@@ -252,7 +275,7 @@ Here is a code snippet that shows how this is done: ::
     db.shutdown();
   }
 
-Some points to bear in mind when starting SimpleDBM_ databases:
+Some points to bear in mind when starting SimpleDBM databases:
 
 1. Make sure that you invoke ``shutdown()`` eventually to ensure proper
    shutdown of the database.
@@ -266,21 +289,21 @@ Some points to bear in mind when starting SimpleDBM_ databases:
 Managing log messages
 =====================
 
-SimpleDBM_ has support for JDK 1.4 style logging as well as
+SimpleDBM has support for JDK 1.4 style logging as well as
 Log4J logging. By default, if Log4J library is available on the
-classpath, SimpleDBM_ will use it. Otherwise, JDK 1.4 util.logging
+classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
 package is used.
 
 You can specify the type of logging to be used using the
 Server Property ``logging.properties.type``. If this is set to
-"log4j", SimpleDBM_ will use Log4J logging. Any other value causes
-SimpleDBM_ to use default JDK logging.
+"log4j", SimpleDBM will use Log4J logging. Any other value causes
+SimpleDBM to use default JDK logging.
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
 is specified using the Server property ``logging.properties.file``.
 If the filename is prefixed with the string "classpath:", then
-SimpleDBM_ will search for the properties file in the classpath. 
+SimpleDBM will search for the properties file in the classpath. 
 Otherwise, the filename is searched for in the current filesystem.
 
 A sample logging properties file is shown below. Note that this
@@ -316,6 +339,7 @@ sample contains both JDK style and Log4J style configuration.::
  org.simpledbm.rss.util.level = INFO
  org.simpledbm.rss.util.logging.level = INFO
  org.simpledbm.rss.main.level = INFO
+ org.simpledbm.rss.trace.level = INFO
 
  # Default Log4J configuration
 
@@ -351,15 +375,16 @@ sample contains both JDK style and Log4J style configuration.::
  log4j.logger.org.simpledbm.rss.util=INFO
  log4j.logger.org.simpledbm.rss.util.logging=INFO
  log4j.logger.org.simpledbm.rss.main=INFO
+ log4j.logger.org.simpledbm.rss.trace=INFO
 
-By default, SimpleDBM_ looks for a logging properties file named
+By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
 
 ------------
 Transactions
 ------------
 
-Most SimpleDBM_ operations take place in the context of a Transaction.
+Most SimpleDBM operations take place in the context of a Transaction.
 Following are the main API calls for managing transactions.
 
 Creating new Transactions
@@ -459,21 +484,21 @@ in certain IsolationModes, a rollback may fail due to locking, or the
 scan may not be able to reposition itself on exactly the same
 location.
 
-*Note that the cursor restoe functionality has not been tested 
-thoroughly in the current release of SimpleDBM_.*
+*Note that the cursor restore functionality has not been tested 
+thoroughly in the current release of SimpleDBM.*
 
 ------------------
 Tables and Indexes
 ------------------
 
-SimpleDBM_ provides support for tables with variable length rows. Tables
+SimpleDBM provides support for tables with variable length rows. Tables
 can have associated BTree indexes. In this section we shall see how to create
 new tables and indexes and how to use them.
 
 Limitations
 ===========
 
-SimpleDBM_ supports creating tables and indexes but there are some limitations
+SimpleDBM supports creating tables and indexes but there are some limitations
 at present that you need to be aware of.
 
 * All indexes required for the table must be defined at the time of table
@@ -481,11 +506,11 @@ at present that you need to be aware of.
   stage.
 
 * Tables and indexes cannot be dropped once created. Support for dropping
-  tables and indexes will be added in a future release of SimpleDBM_.
+  tables and indexes will be added in a future release of SimpleDBM.
   
 * Table structures are limited in the type of columns you can have. At
   present Varchar, DateTime, Number and Integer types are supported. More
-  data types will be available in a future release of SimpleDBM_.
+  data types will be available in a future release of SimpleDBM.
   
 * Null columns cannot be indexed.
 
@@ -494,7 +519,7 @@ at present that you need to be aware of.
   your application logic.
   
 * Generally speaking, table rows can be large, but be aware that large rows
-  are split across multiple database pages.
+  are split across multiple database pages. The SimpleDBM page size is 8K.
 
 * An Index key must be limited in size to about 1K in storage space.
 
@@ -545,13 +570,14 @@ Above example shows four indexes being created.
 
 The ``addIndex()`` method takes following arguments.
 
-1. The ID of the index container. Must be unique.
+1. The ID of the index container. Must be unique, and different from the table
+   container ID.
 2. The name of the index container.
 3. An array of integers. Each element of the array must refer to a table
    column by position. The table column positions start at zero. Therefore the
    array { 2, 1 } refers to 3rd column, and 2nd column of the table.
 4. The next argument is a boolean value to indicate whether the index is the primary
-   index. Note that the first index must always be the primary index.
+   index. The first index must always be the primary index.
 5. The next argument is also a boolean value to indicate whether duplicate
    values are allowed in the index. If set, this makes the index unique, which
    prevents duplicates. The primary index must always be unique.
@@ -562,21 +588,27 @@ method provided by the Database interface.::
 
   db.createTable(tableDefinition);
   
-Note that tables are created in their own transactions, and you have no access
+Tables are created in their own transactions, and you have no access
 to such transactions.
+
+It is important to bear in mind that all container names must be unique.
+Think of the container name as the file name. Also, the container IDs are
+used by SimpleDBM to identify each container uniqely. Therefore these IDs
+must also be unique. 
 
 Isolation Modes
 ===============
 
 Before describing how to access table data using scans, it is necessary to
-describe the various lock isolation modes supported by SimpleDBM_.
+describe the various lock isolation modes supported by SimpleDBM.
 
 Common Behaviour
 ----------------
 
 Following behaviour is common across all lock isolation modes.
 
-1. All locking is on Row Locations (rowids) only.
+1. All locking is on Row Locations (rowids) only. The SimpleDBM Rowid is
+   called a TupleId.
 2. When a row is inserted or deleted, its rowid is first
    locked in EXCLUSIVE mode, the row is inserted or deleted from data
    page, and only after that, indexes are modified.
@@ -593,6 +625,9 @@ Read Committed/Cursor Stability
 During scans, the rowid is locked in SHARED or UPDATE mode
 while the cursor is positioned on the key. The lock on current
 rowid is released before the cursor moves to the next key.
+
+For most use cases, this is the recommended isolation mode as
+it provides the best concurrency.
 
 Repeatable Read (RR)
 --------------------
@@ -621,7 +656,8 @@ Obtain a transaction context in which to perform the insert.::
 Get the ``Table`` object associated with the table. Tables are 
 identified by their container Ids.::
 
-    Table table = db.getTable(trx, 1);
+    int containerId = 1;
+    Table table = db.getTable(trx, containerId);
     
 Create a blank row. It is best to create
 new row objects rather than reusing existing objects.::    
@@ -660,7 +696,7 @@ as the starting row. The values from the starting row are used
 to perform an index search, and the scan begins from the first row
 greater or equal to the values in the starting row.
 
-In SimpleDBM_, scans do not have a stop value. Instead, a scan 
+In SimpleDBM, scans do not have a stop value. Instead, a scan 
 starts fetching data from the first row that is greater or equal to the 
 supplied starting row. You must determine whether the fetched key satisfies
 the search criteria or not. If the fetched key no longer meets the search
@@ -699,9 +735,9 @@ number of rows in the table.::
 The following points are worth noting.
 
 1. The ``openScan()`` method takes an index identifier as the second argument.
-   The scan is ordered by the index. Note that indexes are identified
+   The scan is ordered by the index. Indexes are identified
    by their order of creation, therefore, the first index is 0, the second is 1,
-   and so on.
+   and so on. Note that the index number is not the container ID for the index.
 2. The third argument is the starting row for the scan. If ``null`` is specified,
    as in the example above, then the scan will start from logical negative
    infinity, ie, from the first row (as per selected index) in the table.
@@ -711,7 +747,7 @@ The following points are worth noting.
 Updating tuples
 ===============
 
-In order to update a row, you must first set the Row Location using a
+In order to update a row, you must first set the RowId using a
 scan. Typically, if you intend to update the tuple, you should open the
 scan in UPDATE mode. This is done by supplying a boolean true as the
 fourth argument to ``openScan()`` method.
