@@ -28,8 +28,15 @@ package org.simpledbm.rss.api.tx;
  */
 public interface TransactionalCursor {
 
+	/**
+	 * Save the state of the cursor for the specified
+	 * Savepoint.
+	 */
     void saveState(Savepoint sp);
 
+    /**
+     * Restore the cursor state to the specified Savepoint.
+     */
     void restoreState(Transaction txn, Savepoint sp);
 
 }
