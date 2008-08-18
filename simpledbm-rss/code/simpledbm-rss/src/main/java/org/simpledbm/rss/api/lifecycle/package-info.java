@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides some common life cycle interfaces.
+ */
 package org.simpledbm.rss.api.lifecycle;
 

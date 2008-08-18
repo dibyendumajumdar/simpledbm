@@ -165,52 +165,6 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         }
     }
 
-    // /**
-    // * Holds the definition of a type, either its class or if it is
-    // * a simgleton, then the object itself.
-    // */
-    // static class ObjectDefinition {
-    // private final Object object;
-    // private final int typeCode;
-    // private final boolean singleton;
-    //        
-    // ObjectDefinition(Object object, int typecode) {
-    // this.typeCode = typecode;
-    // this.object = object;
-    // singleton = !(object instanceof Class);
-    // }
-    //
-    // final Object getInstance() {
-    // if (singleton)
-    // return object;
-    // else {
-    // try {
-    // return ((Class) object).newInstance();
-    // } catch (Exception e) {
-    // // TODO Auto-generated catch block
-    // throw new ObjectCreationException(e);
-    // }
-    // }
-    // }
-    //
-    // final boolean isSingleton() {
-    // return singleton;
-    // }
-    //
-    // final int getTypeCode() {
-    // return typeCode;
-    // }
-    //        
-    // final String getClassName() {
-    // if (singleton) {
-    // return object.getClass().getName();
-    // }
-    // else {
-    // return ((Class) object).getName();
-    // }
-    // }
-    // }
-
     /**
      * Holds the definition of a type, either its class or if it is a simgleton,
      * then the object itself.

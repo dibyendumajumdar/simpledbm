@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides threading primitives for the rest of the system.
+ */
 package org.simpledbm.rss.api.thread;
 

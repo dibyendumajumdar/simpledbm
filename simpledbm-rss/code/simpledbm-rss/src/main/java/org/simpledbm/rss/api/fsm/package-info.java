@@ -19,8 +19,7 @@
  */
 
 /**
- * <p>The Free Space Manager module is
- * responsible for managing free space information within a Container.</p>
+ * <p>The Free Space Manager module is responsible for managing free space information within a Container.</p>
  * <p>A Raw Container as created by the {@link org.simpledbm.rss.api.st.StorageContainerFactory} interface is more or less
  * a stream of bytes. The Free Space Manager module treats the Raw Container as
  * an ordered collection of fixed size {@link org.simpledbm.rss.api.pm.Page Page}s. It also distinguishes between different types of pages. A

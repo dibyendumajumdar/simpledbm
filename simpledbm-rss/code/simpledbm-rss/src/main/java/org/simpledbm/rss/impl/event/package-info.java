@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Implementation of the event management framework specified
+ * in {@link org.simpledbm.rss.api.event}.
+ */
 package org.simpledbm.rss.impl.event;
 

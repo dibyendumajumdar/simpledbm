@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * The main RSS Server controller lives in this package.
+ */
 package org.simpledbm.rss.main;
 

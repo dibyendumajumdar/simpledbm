@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * The location module defines the ROWID (Location) interface
+ * for SimpleDBM.
+ */
 package org.simpledbm.rss.api.loc;
 
