@@ -62,6 +62,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
+import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.wal.Lsn;
@@ -1435,6 +1436,78 @@ public class TestBTreeManager extends BaseTestCase {
 	}
 
 	/**
+	 * Scans the tree from a starting key to the eof,
+	 * and then rolls back to savepoint. 
+	 */
+	void doTestCursorStateAfterRollbackToSavepoint(boolean testUnique, boolean commit, String k, String loc) throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+			IndexKey key = keyFactory.newIndexKey(1);
+			key.parseString(k);
+			Location location = locationFactory.newLocation();
+			location.parseString(loc);
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			boolean okay = false;
+			IndexScan scan = btree.openScan(trx, key, location, false);
+			
+			try {
+				int i;
+				// fetch a couple of items just to set the initial position
+				for (i = 0; i < 2; i++) {
+					if (scan.fetchNext()) {
+						scan.fetchCompleted(true);
+					}
+					else {
+						break;
+					}
+				}
+				assertEquals(2, i);
+				// make a note of where we are
+				IndexKey savedkey = scan.getCurrentKey();
+				Location savedlocation = scan.getCurrentLocation();
+				// create savepoint and save cursor position
+				Savepoint sp = trx.createSavepoint(true);
+				i = 0;
+				while (scan.fetchNext()) {
+					i++;
+					scan.fetchCompleted(true);
+				}
+				assertEquals(32, i);
+				int j = i;
+				// rollback to savepoint
+				trx.rollback(sp);
+				// verify that we are back to the remembered position
+				assertEquals(savedkey, scan.getCurrentKey());
+				assertEquals(savedlocation, scan.getCurrentLocation());
+				// repeat scan of remaining items
+				i = 0;
+				while (scan.fetchNext()) {
+					i++;
+					scan.fetchCompleted(true);
+				}
+				// verify that we got the same count as before.
+				assertEquals(j, i);
+			} finally {
+				scan.close();
+				if (okay && commit)
+					trx.commit();
+				else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+	}	
+	
+	/**
 	 * Scans the tree from a starting key to the eof.
 	 */
 	void doScanTree(String filename) throws Exception {
@@ -1650,12 +1723,6 @@ public class TestBTreeManager extends BaseTestCase {
 							// System.out.println("--> SCANNING TREE");
 							int i = 0;
 							while (scan.fetchNext()) {
-								// System.out.println("SCAN=" +
-								// scan.getCurrentKey() + "," +
-								// scan.getCurrentLocation());
-								// System.out.println("new ScanResult(\"" +
-								// scan.getCurrentKey() + "\", \"" +
-								// scan.getCurrentLocation() + "\"),");
 								if (result != null) {
 									assertEquals(result[i].getKey(), scan
 											.getCurrentKey().toString());
@@ -1799,14 +1866,6 @@ public class TestBTreeManager extends BaseTestCase {
 							// System.out.println("--> SCANNING TREE");
 							int i = 0;
 							while (scan.fetchNext()) {
-								// System.out.println("new ScanResult(\"" +
-								// scan.getCurrentKey() + "\", \"" +
-								// scan.getCurrentLocation() + "\"),");
-								// System.out.println("SCAN=" +
-								// scan.getCurrentKey() + "," +
-								// scan.getCurrentLocation());
-								// System.out.println("Comparing " +
-								// scan.getCurrentKey() + " with " + delkey);
 								if (result != null) {
 									assertEquals(result[i].getKey(), scan
 											.getCurrentKey().toString());
@@ -1818,11 +1877,6 @@ public class TestBTreeManager extends BaseTestCase {
 									lock.lock();
 									lockWaitStarted.await(15, TimeUnit.SECONDS);
 									lock.unlock();
-									// System.out.println("--> SCAN Sleeping for
-									// 15 seconds");
-									// Thread.sleep(15000);
-									// System.out.println("--> SCAN Sleep
-									// completed");
 								}
 								scan.fetchCompleted(true);
 								if (scan.isEof()) {
@@ -2142,13 +2196,6 @@ public class TestBTreeManager extends BaseTestCase {
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testPageSplitLeafUnique.xml");
 	}
 
-	// public void testPageSplitNonLeafUnique() throws Exception {
-	// BTreeNode.TESTING_MODE = 2;
-	// doInitContainer();
-	// doTestXml(true, "org/simpledbm/rss/impl/im/btree/data1unl.xml");
-	// doPageSplit(false, true);
-	// }
-
 	public void testPageSplitNonLeafUnique2() throws Exception {
 		doInitContainer();
 		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data1unl.xml");
@@ -2157,11 +2204,6 @@ public class TestBTreeManager extends BaseTestCase {
 		doRestartAndMerge(false, true, 2, 3);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndMerge.xml");
 	}
-
-//	public void testRestartAndMerge() throws Exception {
-//		doRestartAndMerge(false, true, 2, 3);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndMerge.xml");
-//	}
 
 	public void testPageSplitLeafUnique2() throws Exception {
 		doInitContainer();
@@ -2185,52 +2227,6 @@ public class TestBTreeManager extends BaseTestCase {
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
 	}
 
-	/*
-	 * public void testRestartAndLink() throws Exception { doLoadXml(true,
-	 * "org/simpledbm/rss/impl/im/btree/data2unl.xml"); doRestartAndLink(false,
-	 * true); }
-	 */
-
-//	public void testRestartLink() throws Exception {
-//		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
-//		doRestartLink(false, true);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartLink.xml");
-//	}
-
-//	public void testRestartDelink() throws Exception {
-//		doRestartDelink(false, true);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartDelink.xml");
-//	}
-
-//	public void testRestartAndLinkAgain() throws Exception {
-//		// System.out.println("--> PREPARING PARENT");
-//		doLoadXml(true, "org/simpledbm/rss/impl/im/btree/data2unl.xml");
-//		doRestartAndLink(false, true);
-//	}
-
-//	public void testRestartAndRedistribute() throws Exception {
-//		doRestartAndRedistribute(false, true);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndRedistribute.xml");
-//	}
-
-//	public void testRestartAndIncreaseTreeHeight() throws Exception {
-//		doRestartAndIncreaseTreeHeight(false, true);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndIncreaseTreeHeight.xml");
-//	}
-
-//	public void testRestartAndUnlink() throws Exception {
-//		doRestartAndUnlink(false, true, 2, 5, 3);
-//	}
-
-//	public void testRestartAndMergeAgain() throws Exception {
-//		doRestartAndMerge(false, true, 5, 3);
-//	}
-
-//	public void testRestartAndDecreaseTreeHeight() throws Exception {
-//		doRestartAndDecreaseTreeHeight(false, true, 2, 5);
-//		doValidateTree("org/simpledbm/rss/impl/im/btree/testRestartAndDecreaseTreeHeight.xml");
-//	}
-	
 	public void testRedistributeIssue28() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data9nul.xml");
@@ -2510,6 +2506,12 @@ public class TestBTreeManager extends BaseTestCase {
 		doScanAndDeleteThreads(false, false, "f3", "63", scanResults);
 	}
 
+	public void testCursorStateAfterRollback() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
+		doTestCursorStateAfterRollbackToSavepoint(false, false, "a1", "10");
+	}	
+	
 	/**
 	 * This test scans and deletes all keys from the BTree as a single
 	 * transaction. It completes without committing or aborting the transaction.
@@ -2545,33 +2547,6 @@ public class TestBTreeManager extends BaseTestCase {
 				new ScanResult("<INFINITY>", "999") };
 		doScanTree(false, false, "a1", "10", scanResults);	
 	}
-
-//	/**
-//	 * This test must be run after {@link #testScanDeleteCrash()}. It verifies
-//	 * that the BTree has been restored after system restart.
-//	 */
-//	public void testScanAfterCrash() throws Exception {
-//		ScanResult[] scanResults = new ScanResult[] {
-//				new ScanResult("a1", "10"), new ScanResult("a2", "11"),
-//				new ScanResult("b1", "21"), new ScanResult("b2", "22"),
-//				new ScanResult("b3", "23"), new ScanResult("b4", "24"),
-//				new ScanResult("c1", "31"), new ScanResult("c2", "32"),
-//				new ScanResult("d1", "41"), new ScanResult("d2", "42"),
-//				new ScanResult("d3", "43"), new ScanResult("d4", "44"),
-//				new ScanResult("e1", "51"), new ScanResult("e2", "52"),
-//				new ScanResult("e3", "53"), new ScanResult("e4", "54"),
-//				new ScanResult("f1", "61"), new ScanResult("f2", "62"),
-//				new ScanResult("f3", "63"), new ScanResult("f4", "64"),
-//				new ScanResult("g1", "71"), new ScanResult("g2", "72"),
-//				new ScanResult("h1", "81"), new ScanResult("h2", "82"),
-//				new ScanResult("h3", "83"), new ScanResult("h4", "84"),
-//				new ScanResult("i1", "91"), new ScanResult("i2", "92"),
-//				new ScanResult("j1", "101"), new ScanResult("j2", "102"),
-//				new ScanResult("j3", "103"), new ScanResult("j4", "104"),
-//				new ScanResult("k1", "111"), new ScanResult("k2", "112"),
-//				new ScanResult("<INFINITY>", "999") };
-//		doScanTree(false, false, "a1", "10", scanResults);
-//	}
 
 	/**
 	 * This test loads a set of sorted data, and then scans the tree to verify
@@ -3361,60 +3336,6 @@ public class TestBTreeManager extends BaseTestCase {
         compressKeys = false;
 	}
 	
-//Commented out as no longer relevant - the bug was in redistribute keys (see issue-28)
-//	/**
-//	 * Reproduce Issue-26 - merge of a leaf is corrupting the page.
-//	 * @throws Exception 
-//	 */
-//	void doTestMergeLeafIssue26() throws Exception {
-//		final BTreeDB db = new BTreeDB(false);
-//		try {
-//			BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(
-//					false);
-//			SlottedPageImpl page = (SlottedPageImpl) db.pageFactory
-//					.getInstance(db.spmgr.getPageType(), new PageId());
-//			page.latchExclusive();
-//			BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY,
-//					TYPE_ROWLOCATIONFACTORY, true, indexHelper.isUnique());
-//			BTreeNode node = new BTreeNode(indexHelper);
-//			node.wrap(page);
-//			node.insert(1, generateKey(indexHelper,
-//					"SimpleDBM needs to be totally bug free" + 1, 1, 1, true));
-//			node.insert(2, new IndexItem(indexHelper.getMaxIndexKey(),
-//					indexHelper.getNewLocation(), -1, true, indexHelper
-//							.isUnique()));
-//			node.header.keyCount = 2;
-//			node.updateHeader();
-//			MergeOperation mergeOperation = new BTreeIndexManagerImpl.MergeOperation();
-//			mergeOperation.setObjectFactory(db.objectFactory);
-//			mergeOperation.setLeaf(true);
-//			mergeOperation.setUnique(indexHelper.isUnique());
-//			mergeOperation.setKeyFactoryType(TYPE_STRINGKEYFACTORY);
-//			mergeOperation.setLocationFactoryType(TYPE_ROWLOCATIONFACTORY);
-//			mergeOperation.rightSibling = node.header.rightSibling;
-//			mergeOperation.rightRightSibling = node.header.rightSibling;
-//			mergeOperation.items = new LinkedList<IndexItem>();
-//			for (int k = 2; k < 7; k++) {
-//				mergeOperation.items.add(generateKey(indexHelper,
-//						"SimpleDBM needs to be totally bug free" + k, k, k,
-//						true));
-//			}
-//			mergeOperation.items.add(new IndexItem(
-//					indexHelper.getMaxIndexKey(), indexHelper.getNewLocation(),
-//					-1, true, indexHelper.isUnique()));
-//			db.btreeMgr.redoMergeOperation(page, mergeOperation);
-//		} finally {
-//			db.shutdown();
-//		}
-//	}
-//
-//	public void testMergeLeafIssue26() throws Exception {
-//		compressKeys = true;
-//		doInitContainer2();
-//		doTestMergeLeafIssue26();
-//		compressKeys = false;
-//	}
-	
 	/**
 	 * Tests various concurrent activities.
 	 * 
@@ -3510,6 +3431,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testScan2"));
 		suite.addTest(new TestBTreeManager("testScan3"));
 		suite.addTest(new TestBTreeManager("testScan4"));
+		suite.addTest(new TestBTreeManager("testCursorStateAfterRollback"));
 		suite.addTest(new TestBTreeManager("testScanDeleteCrash", true));
 		suite.addTest(new TestBTreeManager("testInsertInOrder"));
 		suite.addTest(new TestBTreeManager("testInsertInOrderFromFile"));
