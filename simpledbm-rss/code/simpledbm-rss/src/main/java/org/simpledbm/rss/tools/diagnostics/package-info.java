@@ -18,5 +18,9 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides efficient tracing mechanism for instrumenting
+ * the code.
+ */
 package org.simpledbm.rss.tools.diagnostics;
 

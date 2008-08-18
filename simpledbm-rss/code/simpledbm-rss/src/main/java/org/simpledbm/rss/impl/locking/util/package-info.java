@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Various adapters for locking.
+ */
 package org.simpledbm.rss.impl.locking.util;
 

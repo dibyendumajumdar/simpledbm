@@ -18,5 +18,10 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides adapter classes that act as the glue between the
+ * Lockable objects that the Tuple Manager needs and the
+ * generic objects understood by the Lock Manager.
+ */
 package org.simpledbm.rss.api.locking.util;
 

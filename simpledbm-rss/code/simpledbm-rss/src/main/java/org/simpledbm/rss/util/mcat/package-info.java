@@ -18,5 +18,8 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
+/**
+ * Provides the message catalog for the rest of the system.
+ */
 package org.simpledbm.rss.util.mcat;
 
