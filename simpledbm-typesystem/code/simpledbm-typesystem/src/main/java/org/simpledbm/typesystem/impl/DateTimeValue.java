@@ -31,6 +31,11 @@ public class DateTimeValue extends BaseDataValue {
 
 	long time;
 	
+	DateTimeValue(DateTimeValue other) {
+		super(other);
+		this.time = other.time;
+	}
+	
 	DateTimeValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
@@ -40,6 +45,11 @@ public class DateTimeValue extends BaseDataValue {
 		return super.clone();
 	}
 	
+	public DataValue cloneMe() {
+		DateTimeValue clone = new DateTimeValue(this);
+		return clone;
+	}
+
 	protected int compare(DateTimeValue o) {
 		int comp = super.compare(o);
 		if (comp != 0 || !isValue()) {

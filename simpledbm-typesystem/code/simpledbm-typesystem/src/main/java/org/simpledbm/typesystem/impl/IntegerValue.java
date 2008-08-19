@@ -29,6 +29,11 @@ public class IntegerValue extends BaseDataValue {
 
 	int i;
 	
+	IntegerValue(IntegerValue other) {
+		super(other);
+		this.i = other.i;
+	}
+	
 	public IntegerValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
@@ -133,6 +138,10 @@ public class IntegerValue extends BaseDataValue {
 		return o;
 	}
 	
+	public DataValue cloneMe() {
+		return new IntegerValue(this);
+	}
+
 	@Override
 	public StringBuilder appendTo(StringBuilder sb) {
 		if (isValue()) {

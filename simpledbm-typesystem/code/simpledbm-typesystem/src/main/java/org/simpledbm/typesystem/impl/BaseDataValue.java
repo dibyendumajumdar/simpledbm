@@ -31,7 +31,6 @@ import java.util.Date;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.api.TypeException;
 
 abstract class BaseDataValue implements DataValue, Cloneable {
 
@@ -46,6 +45,11 @@ abstract class BaseDataValue implements DataValue, Cloneable {
     
     private byte statusByte = 0; 
     private final TypeDescriptor typeDesc;
+    
+    protected BaseDataValue(BaseDataValue other) {
+    	this.statusByte = other.statusByte;
+    	this.typeDesc = other.typeDesc;
+    }
     
     protected BaseDataValue(TypeDescriptor typeDesc) {
         statusByte = NULL_FIELD;
@@ -180,15 +184,15 @@ abstract class BaseDataValue implements DataValue, Cloneable {
 		return o;
 	}
 
-	public final DataValue cloneMe() {
-		DataValue o;
-		try {
-			o = (DataValue) clone();
-		} catch (CloneNotSupportedException e) {
-			throw new TypeException(e);
-		}
-		return o;
-	}
+//	public final DataValue cloneMe() {
+//		DataValue o;
+//		try {
+//			o = (DataValue) clone();
+//		} catch (CloneNotSupportedException e) {
+//			throw new TypeException(e);
+//		}
+//		return o;
+//	}
 
     public final TypeDescriptor getType() {
         return typeDesc;

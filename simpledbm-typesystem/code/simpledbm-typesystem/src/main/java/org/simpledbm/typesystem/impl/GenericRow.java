@@ -25,7 +25,6 @@ import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.api.TypeException;
 import org.simpledbm.typesystem.api.TypeFactory;
 
 public class GenericRow implements Row, IndexKey, Cloneable {
@@ -33,6 +32,13 @@ public class GenericRow implements Row, IndexKey, Cloneable {
     DataValue[] fields;
     
     // final FieldFactory fieldFactory;
+    
+    GenericRow(GenericRow row) {
+        this.fields = new DataValue[row.fields.length];
+        for (int i = 0; i < fields.length; i++) {
+            this.fields[i] = row.fields[i].cloneMe();
+        }
+    }
     
     public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
         // this.fieldFactory = fieldFactory;
@@ -118,15 +124,19 @@ public class GenericRow implements Row, IndexKey, Cloneable {
         return row;
     }
 
-    public final Row cloneMe() {
-    	try {
-    		return (Row) clone();
-    	}
-    	catch (CloneNotSupportedException e) {
-    		throw new TypeException(e);
-    	}
-    }
+//    public final Row cloneMe() {
+//    	try {
+//    		return (Row) clone();
+//    	}
+//    	catch (CloneNotSupportedException e) {
+//    		throw new TypeException(e);
+//    	}
+//    }
     
+    public final Row cloneMe() {
+        return new GenericRow(this);
+    }
+      
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
