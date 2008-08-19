@@ -40,6 +40,10 @@ public abstract class BaseLockable implements Lockable, Dumpable {
     protected BaseLockable(byte namespace) {
         this.namespace = namespace;
     }
+    
+    protected BaseLockable(BaseLockable other) {
+    	this.namespace = other.namespace;
+    }
 
     protected byte getNameSpace() {
         return namespace;

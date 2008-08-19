@@ -126,6 +126,17 @@ public class TestBTreeManager extends BaseTestCase {
 
 		ByteString string = new ByteString();
 
+		public StringKey() {
+		}
+		
+		public StringKey(StringKey key) {
+			string = new ByteString(key.string);
+		}
+		
+		public IndexKey cloneIndexKey() {
+			return new StringKey(this);
+		}
+
 		public void setString(String s) {
 			parseString(s);
 		}
@@ -230,18 +241,28 @@ public class TestBTreeManager extends BaseTestCase {
 			s.parseString(StringKey.MIN_KEY);
 			return s;
 		}
+
 	}
 
 	/**
 	 * A simple location.
 	 */
 	public static class RowLocation extends BaseLockable implements Location {
-
+		
+		int loc;
+		
 		protected RowLocation() {
 			super((byte) 'R');
 		}
 
-		int loc;
+		RowLocation(RowLocation other) {
+			super(other);
+			this.loc = other.loc;
+		}
+
+		public Location cloneLocation() {
+			return new RowLocation(this);
+		}
 
 		public void parseString(String string) {
 			loc = Integer.parseInt(string);
@@ -1506,6 +1527,87 @@ public class TestBTreeManager extends BaseTestCase {
 			db.shutdown();
 		}
 	}	
+
+	/**
+	 * Scans the tree from a starting key to the eof,
+	 * and then rolls back to savepoint. 
+	 */
+	void doTestCursorStateAfterRollbackToSavepoint2(boolean testUnique, boolean commit, String k, String loc) throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getInstance(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getInstance(TYPE_ROWLOCATIONFACTORY);
+			IndexKey key = keyFactory.newIndexKey(1);
+			key.parseString(k);
+			Location location = locationFactory.newLocation();
+			location.parseString(loc);
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			boolean okay = false;
+			IndexScan scan = btree.openScan(trx, key, location, false);
+			
+			try {
+				Savepoint sp = trx.createSavepoint(true);
+				int i;
+				// fetch a couple of items just to set the initial position
+				for (i = 0; i < 2; i++) {
+					if (scan.fetchNext()) {
+						scan.fetchCompleted(true);
+					}
+					else {
+						break;
+					}
+				}
+				assertEquals(2, i);
+				// make a note of where we are
+				IndexKey savedkey = scan.getCurrentKey();
+				Location savedlocation = scan.getCurrentLocation();
+				// create savepoint and save cursor position
+				i = 0;
+				while (scan.fetchNext()) {
+					i++;
+					scan.fetchCompleted(true);
+				}
+				assertEquals(32, i);
+				int j = i;
+				// rollback to savepoint
+				trx.rollback(sp);
+				// verify that we are back to the remembered position
+				for (i = 0; i < 2; i++) {
+					if (scan.fetchNext()) {
+						scan.fetchCompleted(true);
+					}
+					else {
+						break;
+					}
+				}
+				assertEquals(2, i);
+				assertEquals(savedkey, scan.getCurrentKey());
+				assertEquals(savedlocation, scan.getCurrentLocation());
+				// repeat scan of remaining items
+				i = 0;
+				while (scan.fetchNext()) {
+					i++;
+					scan.fetchCompleted(true);
+				}
+				// verify that we got the same count as before.
+				assertEquals(j, i);
+			} finally {
+				scan.close();
+				if (okay && commit)
+					trx.commit();
+				else {
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+	}	
 	
 	/**
 	 * Scans the tree from a starting key to the eof.
@@ -2510,6 +2612,7 @@ public class TestBTreeManager extends BaseTestCase {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
 		doTestCursorStateAfterRollbackToSavepoint(false, false, "a1", "10");
+		doTestCursorStateAfterRollbackToSavepoint2(false, false, "a1", "10");
 	}	
 	
 	/**
