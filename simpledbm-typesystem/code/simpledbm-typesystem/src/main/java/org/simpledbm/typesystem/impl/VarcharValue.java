@@ -31,6 +31,16 @@ public class VarcharValue extends BaseDataValue {
 
 	private char[] charArray;
 
+	VarcharValue(VarcharValue other) {
+		super(other);
+		if (isValue()) {
+			this.charArray = other.charArray.clone();
+		}
+		else {
+			this.charArray = null;
+		}
+	}
+	
 	public VarcharValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
@@ -209,6 +219,10 @@ public class VarcharValue extends BaseDataValue {
 			o.charArray = null;
 		}
 		return o;
+	}
+	
+	public DataValue cloneMe() {
+		return new VarcharValue(this);
 	}
 
 	@Override
