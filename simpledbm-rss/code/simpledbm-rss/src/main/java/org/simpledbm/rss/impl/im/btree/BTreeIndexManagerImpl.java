@@ -5876,6 +5876,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         protected boolean isLeaf;
 
+        PartialIndexItem(PartialIndexItem other) {
+        	this.isLeaf = other.isLeaf;
+        	this.childPageNumber = other.childPageNumber;
+        }
+        
         PartialIndexItem(boolean isLeaf, int childPageNumber) {
         	this.isLeaf = isLeaf;
         	this.childPageNumber = childPageNumber;
@@ -5958,6 +5963,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.key = key;
             this.location = loc;
             this.isUnique = isUnique;
+        }
+        
+        public IndexItem(IndexItem other) {
+        	super(other);
+        	if (this.key != null) {
+        		this.key = other.key.cloneIndexKey();
+        	}
+        	if (this.location != null) {
+        		this.location = other.location.cloneLocation();
+        	}
+        	this.isUnique = other.isUnique;
         }
 
         /* (non-Javadoc)
