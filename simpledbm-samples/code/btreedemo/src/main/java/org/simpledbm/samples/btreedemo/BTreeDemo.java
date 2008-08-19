@@ -31,6 +31,7 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
@@ -67,9 +68,22 @@ public class BTreeDemo {
 	/**
 	 * A sample location implementation.
 	 */
-	public static class RowLocation implements Location {
+	public static class RowLocation extends BaseLockable implements Location {
 
 		int loc;
+
+		protected RowLocation() {
+			super((byte) 'R');
+		}
+
+		RowLocation(RowLocation other) {
+			super(other);
+			this.loc = other.loc;
+		}
+
+		public Location cloneLocation() {
+			return new RowLocation(this);
+		}
 
 		public void setInt(int i) {
 			this.loc = i;
