@@ -51,4 +51,10 @@ public interface Location extends Lockable, Storable, Comparable<Location> {
      * as an aid to identifying the location.
      */
     int getY();
+    
+    /**
+     * Makes a copy of the location object. The copy is guaranteed to have
+     * no state in common with this location.
+     */
+    Location cloneLocation();
 }

@@ -68,7 +68,11 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         setSlotNumber(slotNumber);
     }
 
-    public final boolean isNull() {
+    public Location cloneLocation() {
+		return new TupleId(this);
+	}
+
+	public final boolean isNull() {
         return pageId.isNull() || slotNumber == -1;
     }
 

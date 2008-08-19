@@ -46,4 +46,9 @@ public interface IndexKey extends Storable, Comparable<IndexKey> {
      * key.
      */
     void parseString(String string);
+    
+    /**
+     * Makes a deep copy of this IndexKey object.
+     */
+    IndexKey cloneIndexKey();
 }
