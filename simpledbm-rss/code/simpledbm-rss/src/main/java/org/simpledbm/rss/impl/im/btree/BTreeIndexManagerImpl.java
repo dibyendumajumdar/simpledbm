@@ -3729,23 +3729,48 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @author dibyendumajumdar
          */
         static final class CursorState {
-            IndexCursorImpl scan;
-            IndexItem currentKey;
-            IndexItem previousKey;
-            IndexItem searchKey;
-            PageId pageId;
-            Lsn pageLsn;
-            boolean eof;
-            int fetchCount;
-            int scanMode;
+            final IndexCursorImpl scan;
+            final IndexItem currentKey;
+            final IndexItem previousKey;
+            final IndexItem searchKey;
+            final PageId pageId;
+            final Lsn pageLsn;
+            final boolean eof;
+            final int fetchCount;
+            final int scanMode;
 
             CursorState(IndexCursorImpl scan) {
                 this.scan = scan;
-                this.currentKey = scan.currentKey;
-                this.previousKey = scan.previousKey;
-                this.searchKey = scan.startKey;
-                this.pageId = scan.pageId;
-                this.pageLsn = scan.pageLsn;
+                if (scan.currentKey != null) {
+                	this.currentKey = new IndexItem(scan.currentKey);
+                }
+                else {
+                	this.currentKey = null;
+                }
+                if (scan.previousKey != null) {
+                	this.previousKey = new IndexItem(scan.previousKey);
+                }
+                else {
+                	this.previousKey = null;
+                }
+                if (scan.startKey != null) {
+                	this.searchKey = new IndexItem(scan.startKey);
+                }
+                else {
+                	this.searchKey = null;
+                }
+                if (scan.pageId != null) {
+                	this.pageId = new PageId(scan.pageId);
+                }
+                else {
+                	this.pageId = null;
+                }
+                if (scan.pageLsn != null) {
+                	this.pageLsn = new Lsn(scan.pageLsn);
+                }
+                else {
+                	this.pageLsn = null;
+                }
                 this.eof = scan.isEof();
                 this.fetchCount = scan.fetchCount;
                 this.scanMode = scan.scanMode;
@@ -5967,10 +5992,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         
         public IndexItem(IndexItem other) {
         	super(other);
-        	if (this.key != null) {
+        	if (other.key != null) {
         		this.key = other.key.cloneIndexKey();
         	}
-        	if (this.location != null) {
+        	if (other.location != null) {
         		this.location = other.location.cloneLocation();
         	}
         	this.isUnique = other.isUnique;
