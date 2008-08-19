@@ -3689,10 +3689,26 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             startKey = cs.searchKey;
             pageId = cs.pageId;
             pageLsn = cs.pageLsn;
-            fetchCount = cs.fetchCount - 1;
             setEof(cs.eof);
-            scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
-            fetchNext();
+            /*
+             * If scan mode is SCAN_FETCH_GREATER it means that
+             * the crsor had fetched rows prior to being saved. So we
+             * need to set the cursor position to where it was originally.
+             */
+            if (cs.scanMode == SCAN_FETCH_GREATER) {
+                fetchCount = cs.fetchCount - 1;
+            	scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
+            	fetchNext();
+            }
+            else {
+            	/*
+            	 * Cursor was not used - so reset back to start state. 
+            	 */
+            	assert cs.fetchCount == 0;
+            	assert cs.scanMode == SCAN_FETCH_GREATER_OR_EQUAL;
+                fetchCount = 0;
+            	scanMode = SCAN_FETCH_GREATER_OR_EQUAL;
+            }
         }
 
         public void saveState(Savepoint sp) {
@@ -3708,6 +3724,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return eof;
         }
 
+        /**
+         * CursorState object holds the saved cursor state.
+         * @author dibyendumajumdar
+         */
         static final class CursorState {
             IndexCursorImpl scan;
             IndexItem currentKey;
