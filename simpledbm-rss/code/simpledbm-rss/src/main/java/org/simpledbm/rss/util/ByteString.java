@@ -51,6 +51,10 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     public ByteString(byte[] bytes) {
         this.bytes = bytes.clone();
     }
+    
+    public ByteString(ByteString s) {
+    	this.bytes = s.bytes.clone();
+    }
 
     @Override
     public String toString() {
