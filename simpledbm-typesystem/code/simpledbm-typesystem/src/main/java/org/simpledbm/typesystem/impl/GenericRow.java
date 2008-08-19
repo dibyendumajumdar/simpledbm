@@ -136,8 +136,12 @@ public class GenericRow implements Row, IndexKey, Cloneable {
     public final Row cloneMe() {
         return new GenericRow(this);
     }
-      
-    @Override
+    
+    public IndexKey cloneIndexKey() {
+		return cloneMe();
+	}
+
+	@Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         return appendTo(sb).toString();
