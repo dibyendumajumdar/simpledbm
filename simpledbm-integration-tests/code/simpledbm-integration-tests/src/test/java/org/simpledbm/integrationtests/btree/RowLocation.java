@@ -22,12 +22,26 @@ package org.simpledbm.integrationtests.btree;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.util.TypeSize;
 
-public class RowLocation implements Location {
+public class RowLocation extends BaseLockable implements Location {
 
 	int loc;
 
+	protected RowLocation() {
+		super((byte) 'R');
+	}
+
+	RowLocation(RowLocation other) {
+		super(other);
+		this.loc = other.loc;
+	}
+
+	public Location cloneLocation() {
+		return new RowLocation(this);
+	}
+	
 	public void setInt(int i) {
 		this.loc = i;
 	}
