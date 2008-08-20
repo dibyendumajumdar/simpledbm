@@ -38,10 +38,15 @@ public class DefaultTypeFactory implements TypeFactory {
         case TypeDescriptor.TYPE_INTEGER: return new IntegerValue(typeDesc);
         case TypeDescriptor.TYPE_NUMBER: return new NumberValue(typeDesc);
         case TypeDescriptor.TYPE_DATETIME: return new DateTimeValue(typeDesc);
+        case TypeDescriptor.TYPE_BINARY: return new VarbinaryValue(typeDesc);
         }
         throw new IllegalArgumentException("Unknown type: " + typeDesc);
     }
 
+	public TypeDescriptor getVarbinaryType(int maxLength) {
+		return new VarbinaryType(maxLength);
+	}
+	
 	public TypeDescriptor getDateTimeType() {
 		return new DateTimeType("UTC", "d-MMM-yyyy HH:mm:ss Z");
 	}
@@ -76,6 +81,7 @@ public class DefaultTypeFactory implements TypeFactory {
         case TypeDescriptor.TYPE_INTEGER: return new IntegerType();
         case TypeDescriptor.TYPE_NUMBER: return new NumberType();
         case TypeDescriptor.TYPE_DATETIME: return new DateTimeType();
+        case TypeDescriptor.TYPE_BINARY: return new VarbinaryType();
         }
         throw new IllegalArgumentException("Unknown type: " + typecode);
 	}
@@ -107,6 +113,4 @@ public class DefaultTypeFactory implements TypeFactory {
 		}
 		return len;
 	}
-   
-	
 }
