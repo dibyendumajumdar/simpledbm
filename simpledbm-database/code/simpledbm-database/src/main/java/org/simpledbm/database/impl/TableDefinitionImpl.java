@@ -31,7 +31,6 @@ import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
-import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -232,7 +231,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.getColumns().length; i++) {
-            indexRow.setColumnValue(i, (DataValue) tableRow.getColumnValue(index.getColumns()[i]).cloneMe());
+            indexRow.setColumnValue(i, tableRow.getColumnValue(index.getColumns()[i]).cloneMe());
         }
         return indexRow;
     }
