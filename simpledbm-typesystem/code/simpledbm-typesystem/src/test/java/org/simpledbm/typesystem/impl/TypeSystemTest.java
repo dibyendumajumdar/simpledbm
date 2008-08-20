@@ -193,6 +193,18 @@ public class TypeSystemTest extends TestCase {
     	assertEquals(f3, f4);
     }
     
+    public void testVarbinary() {
+        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+        final TypeDescriptor type = fieldFactory.getVarbinaryType(10);
+    	VarbinaryValue f1 = (VarbinaryValue) fieldFactory.getInstance(type);
+    	f1.setString("68656c6c");
+    	System.err.println(f1);
+    	assertTrue(f1.getString().equals("68656C6C"));
+    	f1.setString("00010203040506070809");
+    	System.err.println(f1);
+    	assertTrue(f1.getString().equals("00010203040506070809"));
+    }
+    
     public void testStorage() {
         TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {

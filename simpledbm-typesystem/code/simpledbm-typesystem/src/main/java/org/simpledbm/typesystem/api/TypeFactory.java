@@ -39,6 +39,11 @@ public interface TypeFactory {
 	 * Returns a TypeDescriptor for the Varchar type.
 	 */
  	TypeDescriptor getVarcharType(int maxLength);
+ 	
+	/**
+	 * Returns a TypeDescriptor for the Binary type.
+	 */
+ 	TypeDescriptor getVarbinaryType(int maxLength);
 	
  	/**
  	 * Returns a TypeDescriptor for the Integer type.
