@@ -40,11 +40,6 @@ public class DateTimeValue extends BaseDataValue {
 		super(typeDesc);
 	}
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		return super.clone();
-	}
-	
 	public DataValue cloneMe() {
 		DateTimeValue clone = new DateTimeValue(this);
 		return clone;
