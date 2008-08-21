@@ -41,7 +41,7 @@ public interface TypeFactory {
  	TypeDescriptor getVarcharType(int maxLength);
  	
 	/**
-	 * Returns a TypeDescriptor for the Binary type.
+	 * Returns a TypeDescriptor for the Varbinary type.
 	 */
  	TypeDescriptor getVarbinaryType(int maxLength);
 	
@@ -50,6 +50,11 @@ public interface TypeFactory {
  	 */
 	TypeDescriptor getIntegerType();
 
+ 	/**
+ 	 * Returns a TypeDescriptor for the Long type.
+ 	 */
+	TypeDescriptor getLongType();	
+	
 	/**
 	 * Returns a TypeDescriptor for the DateTime type.<br/>
 	 * Timezone is defaulted to UTC.<br/>
