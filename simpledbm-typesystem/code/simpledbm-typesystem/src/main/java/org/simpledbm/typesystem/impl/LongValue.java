@@ -24,6 +24,7 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeException;
 
 public class LongValue extends BaseDataValue {
 
@@ -72,6 +73,9 @@ public class LongValue extends BaseDataValue {
 	public int getInt() {
 		if (!isValue()) {
 			return 0;
+		}
+		if (i > Integer.MAX_VALUE || i < Integer.MIN_VALUE) {
+			throw new TypeException();
 		}
 		return (int)i;
 	}
