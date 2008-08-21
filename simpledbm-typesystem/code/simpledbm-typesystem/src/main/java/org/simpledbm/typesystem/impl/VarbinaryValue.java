@@ -83,17 +83,19 @@ public class VarbinaryValue extends BaseDataValue {
 	}
 
 	static String byteArrayToHexString(byte in[]) {
-
-		byte ch = 0x00;
-		int i = 0;
-		if (in == null || in.length <= 0) {
-			return null;
+		/*
+		 * Following code is a modified version of:
+		 * http://www.devx.com/tips/Tip/13540
+		 */
+		if (in.length == 0) {
+			return "";
 		}
 
 		char pseudo[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 				'A', 'B', 'C', 'D', 'E', 'F' };
-
-		StringBuilder out = new StringBuilder(in.length * 3);
+		StringBuilder out = new StringBuilder(in.length * 2);
+		byte ch = 0x00;
+		int i = 0;
 		while (i < in.length) {
 			ch = (byte) (in[i] & 0xF0); // Strip off high nibble
 			ch = (byte) (ch >>> 4); // shift the bits down
@@ -150,6 +152,14 @@ public class VarbinaryValue extends BaseDataValue {
 		throw new IllegalArgumentException();
 	}
 
+	@Override
+	public String getString() {
+		if (isValue()) {
+			return byteArrayToHexString(byteArray);
+		}
+		return super.toString();
+	}
+
 	static byte[] hexStringToByteArray(String s) {
 
 		byte[] bytes = new byte[s.length() / 2];
@@ -159,14 +169,6 @@ public class VarbinaryValue extends BaseDataValue {
 			bytes[j] = b;
 		}
 		return bytes;
-	}
-
-	@Override
-	public String getString() {
-		if (isValue()) {
-			return byteArrayToHexString(byteArray);
-		}
-		return super.toString();
 	}
 
 	@Override

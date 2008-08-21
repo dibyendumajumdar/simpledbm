@@ -23,19 +23,24 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.DataValue;
-import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 
 public class DefaultTypeFactory implements TypeFactory {
 	
+	/*
+	 * Cache some common types.
+	 */
 	static TypeDescriptor integerType = new IntegerType();
+	static TypeDescriptor longType = new LongType();
 	static TypeDescriptor numberType = new NumberType(0);
 
 	public DataValue getInstance(TypeDescriptor typeDesc) {
         switch (typeDesc.getTypeCode()) {
         case TypeDescriptor.TYPE_VARCHAR: return new VarcharValue(typeDesc);
         case TypeDescriptor.TYPE_INTEGER: return new IntegerValue(typeDesc);
+        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongValue(typeDesc);
         case TypeDescriptor.TYPE_NUMBER: return new NumberValue(typeDesc);
         case TypeDescriptor.TYPE_DATETIME: return new DateTimeValue(typeDesc);
         case TypeDescriptor.TYPE_BINARY: return new VarbinaryValue(typeDesc);
@@ -63,6 +68,10 @@ public class DefaultTypeFactory implements TypeFactory {
 		return integerType;
 	}
 
+	public TypeDescriptor getLongType() {
+		return longType;
+	}
+	
 	public TypeDescriptor getNumberType() {
 		return numberType;
 	}
@@ -79,6 +88,7 @@ public class DefaultTypeFactory implements TypeFactory {
         switch (typecode) {
         case TypeDescriptor.TYPE_VARCHAR: return new VarcharType();
         case TypeDescriptor.TYPE_INTEGER: return new IntegerType();
+        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongType();
         case TypeDescriptor.TYPE_NUMBER: return new NumberType();
         case TypeDescriptor.TYPE_DATETIME: return new DateTimeType();
         case TypeDescriptor.TYPE_BINARY: return new VarbinaryType();
