@@ -114,25 +114,6 @@ public class GenericRow implements Row, IndexKey, Cloneable {
 		return compareTo(other) == 0;
 	}
 	
-    @Override
-    public Object clone() throws CloneNotSupportedException {
-        GenericRow row = (GenericRow) super.clone();
-        row.fields = new DataValue[fields.length];
-        for (int i = 0; i < fields.length; i++) {
-            row.fields[i] = (DataValue) fields[i].cloneMe();
-        }
-        return row;
-    }
-
-//    public final Row cloneMe() {
-//    	try {
-//    		return (Row) clone();
-//    	}
-//    	catch (CloneNotSupportedException e) {
-//    		throw new TypeException(e);
-//    	}
-//    }
-    
     public final Row cloneMe() {
         return new GenericRow(this);
     }

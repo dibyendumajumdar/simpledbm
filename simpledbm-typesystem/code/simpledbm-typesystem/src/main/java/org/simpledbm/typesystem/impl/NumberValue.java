@@ -40,13 +40,6 @@ public class NumberValue extends BaseDataValue {
 		this.d = new BigDecimal(other.d.unscaledValue(), other.d.scale());
 	}
 	
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		NumberValue f = (NumberValue) super.clone();
-		f.d = new BigDecimal(d.unscaledValue(), d.scale());
-		return f;
-	}
-
 	public DataValue cloneMe() {
 		return new NumberValue(this);
 	}

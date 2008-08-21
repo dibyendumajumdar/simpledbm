@@ -132,12 +132,6 @@ public class IntegerValue extends BaseDataValue {
 		return compare((IntegerValue)o) == 0;
     }
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		IntegerValue o = (IntegerValue) super.clone();
-		return o;
-	}
-	
 	public DataValue cloneMe() {
 		return new IntegerValue(this);
 	}

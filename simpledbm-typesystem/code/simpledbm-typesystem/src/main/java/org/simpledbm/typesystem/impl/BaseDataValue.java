@@ -32,7 +32,7 @@ import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
-abstract class BaseDataValue implements DataValue, Cloneable {
+abstract class BaseDataValue implements DataValue {
 
     private static final int NULL_FIELD = 1;
     private static final int MINUS_INFINITY_FIELD = 2;
@@ -178,21 +178,6 @@ abstract class BaseDataValue implements DataValue, Cloneable {
     	}
         return compare((BaseDataValue) o) == 0;
     }
-
-	public Object clone() throws CloneNotSupportedException {
-		BaseDataValue o = (BaseDataValue) super.clone();
-		return o;
-	}
-
-//	public final DataValue cloneMe() {
-//		DataValue o;
-//		try {
-//			o = (DataValue) clone();
-//		} catch (CloneNotSupportedException e) {
-//			throw new TypeException(e);
-//		}
-//		return o;
-//	}
 
     public final TypeDescriptor getType() {
         return typeDesc;
