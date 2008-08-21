@@ -198,18 +198,24 @@ public class TypeSystemTest extends TestCase {
         final TypeDescriptor type = fieldFactory.getVarbinaryType(10);
     	VarbinaryValue f1 = (VarbinaryValue) fieldFactory.getInstance(type);
     	f1.setString("68656c6c");
-    	System.err.println(f1);
     	assertTrue(f1.getString().equals("68656C6C"));
     	f1.setString("00010203040506070809");
-    	System.err.println(f1);
     	assertTrue(f1.getString().equals("00010203040506070809"));
+    	ByteBuffer bb = ByteBuffer.allocate(7);
+    	f1.setString("68656c6c");
+    	f1.store(bb);
+    	bb.flip();
+    	f1.setNull();
+    	f1.retrieve(bb);
+    	assertTrue(f1.getString().equals("68656C6C"));
     }
     
     public void testStorage() {
         TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
-            fieldFactory.getDateTimeType(), fieldFactory.getNumberType()
+            fieldFactory.getDateTimeType(), fieldFactory.getNumberType(),
+            fieldFactory.getLongType(), fieldFactory.getVarbinaryType(10)
         };
     	int n = fieldFactory.getStoredLength(rowtype1);
     	ByteBuffer bb = ByteBuffer.allocate(n);
