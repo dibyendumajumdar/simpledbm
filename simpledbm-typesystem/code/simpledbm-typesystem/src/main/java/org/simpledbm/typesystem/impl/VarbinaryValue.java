@@ -47,6 +47,25 @@ public class VarbinaryValue extends BaseDataValue {
 	public String toString() {
 		return getString();
 	}
+	
+	@Override
+	public byte[] getBytes() {
+		if (!isValue()) {
+			return null;
+		}
+		return byteArray.clone();
+	}
+
+	@Override
+	public void setBytes(byte[] bytes) {
+		if (bytes.length > getType().getMaxLength()) {
+			byteArray = new byte[getType().getMaxLength()];
+			System.arraycopy(bytes, 0, byteArray, 0, byteArray.length);
+		} else {
+			byteArray = bytes;
+		}
+		setValue();	
+	}
 
 	@Override
 	public int getStoredLength() {
@@ -174,13 +193,7 @@ public class VarbinaryValue extends BaseDataValue {
 	@Override
 	public void setString(String string) {
 		byte[] bytes = hexStringToByteArray(string);
-		if (bytes.length > getType().getMaxLength()) {
-			byteArray = new byte[getType().getMaxLength()];
-			System.arraycopy(bytes, 0, byteArray, 0, byteArray.length);
-		} else {
-			byteArray = bytes;
-		}
-		setValue();
+		setBytes(bytes);
 	}
 
 	protected int compare(VarbinaryValue other) {

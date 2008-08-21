@@ -103,6 +103,14 @@ abstract class BaseDataValue implements DataValue {
 	public void setLong(long l) {
         throw new UnsupportedOperationException();
 	}
+	
+	public byte[] getBytes() {
+        throw new UnsupportedOperationException();
+	}
+
+	public void setBytes(byte[] bytes) {
+        throw new UnsupportedOperationException();
+	}
 
 	public void retrieve(ByteBuffer bb) {
         statusByte = bb.get();

@@ -104,6 +104,16 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
 	BigDecimal getBigDecimal();
 	
 	/**
+	 * Returns the DataValue as a byte array
+	 */
+	byte[] getBytes();
+
+	/**
+	 * Sets the DataValue to the byte array
+	 */
+	void setBytes(byte[] bytes);
+	
+	/**
 	 * Checks if the data value is NULL, which is a special value indicating that the field's value
 	 * has not been set.
 	 */
