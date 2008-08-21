@@ -32,7 +32,7 @@ public class BitwiseOperations {
      */
     static final int getbit(final int x, final int p) {
         // TODO return value should be boolean, not the integer
-        return x & (1 << (31 - p));
+        return (x & (1 << (31 - p))) == 0 ? 0 : 1;
     }
 
     /**
@@ -55,4 +55,18 @@ public class BitwiseOperations {
     static final int clearbits(final int x, final int p, final int n) {
         return x & ~((~0 << (32 - n)) >>> p);
     }
+    
+    public static void main(String args[]) {
+    	
+    	int value = 0;
+    	
+    	for (int j = 0; j < 32; j++) {
+    		value = setbit(value, j);
+    		for (int i = 0; i < 32; i++) {
+    			System.err.print(getbit(value, i));
+    		}
+    		System.err.println();
+    	}
+    }
+    
 }
