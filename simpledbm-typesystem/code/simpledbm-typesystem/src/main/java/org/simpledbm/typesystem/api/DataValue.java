@@ -45,11 +45,13 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
 
 	/**
 	 * Returns an integer representation of the data value.
+	 * @throws UnsupportedOperationException.
 	 */
 	int getInt();
 
 	/**
 	 * Converts the supplied integer value to a suitable value for the data value 
+	 * @throws UnsupportedOperationException.
 	 */
 	void setInt(Integer integer);
 
@@ -65,41 +67,49 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
 
 	/**
 	 * Sets the value of the field to the date. 
+	 * @throws UnsupportedOperationException.
 	 */
 	void setDate(Date date);
 	
 	/**
 	 * Gets the current value as a date.
+	 * @throws UnsupportedOperationException.
 	 */
 	Date getDate();
 	
 	/**
 	 * Converts the supplied long value to the data value
+	 * @throws UnsupportedOperationException.
 	 */
 	void setLong(long l);
 	
 	/**
 	 * Returns the data value as a long
+	 * @throws UnsupportedOperationException.
 	 */
 	long getLong();
 	
 	/**
 	 * Converts the supplied BigInteger to the data value
+	 * @throws UnsupportedOperationException.
 	 */
 	void setBigInteger(BigInteger i);
 	
 	/**
 	 * Returns the data value as a long
+	 * @throws UnsupportedOperationException.
 	 */
 	BigInteger getBigInteger();
 	
 	/**
 	 * Converts the supplied BigDecimal to the data value
+	 * @throws UnsupportedOperationException.
 	 */
 	void setBigDecimal(BigDecimal d);
 	
 	/**
 	 * Returns the Data Value as a BigDecimal
+	 * @throws UnsupportedOperationException.
 	 */
 	BigDecimal getBigDecimal();
 	

@@ -27,11 +27,9 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
-public class GenericRow implements Row, IndexKey, Cloneable {
+public class GenericRow implements Row, IndexKey {
 
     DataValue[] fields;
-    
-    // final FieldFactory fieldFactory;
     
     GenericRow(GenericRow row) {
         this.fields = new DataValue[row.fields.length];
@@ -41,7 +39,6 @@ public class GenericRow implements Row, IndexKey, Cloneable {
     }
     
     public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
-        // this.fieldFactory = fieldFactory;
         fields = new DataValue[rowTypeDesc.length];
         for (int i = 0; i < rowTypeDesc.length; i++) {
             fields[i] = fieldFactory.getInstance(rowTypeDesc[i]); 
