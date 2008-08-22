@@ -162,16 +162,17 @@ public class VarcharValue extends BaseDataValue {
 			return comp;
 		}
         VarcharValue o = (VarcharValue) other;
-		int n1 = charArray == null ? 0 : charArray.length;
-		int n2 = o.charArray == null ? 0 : o.charArray.length; 
-		int prefixLen = Math.min(n1, n2);
+		int len1 = charArray == null ? 0 : charArray.length;
+		int len2 = o.charArray == null ? 0 : o.charArray.length; 
+		int prefixLen = Math.min(len1, len2);
 		for (int i = 0; i < prefixLen; i++) {
-			int rc = charArray[i] - o.charArray[i];
-			if (rc != 0) {
-				return rc;
+			int c1 = charArray[i];
+			int c2 = o.charArray[i];
+			if (c1 != c2) {
+				return c1 - c2;
 			}
 		}
-		return n1 - n2;
+		return len1 - len2;
 	}
 	
     @Override
