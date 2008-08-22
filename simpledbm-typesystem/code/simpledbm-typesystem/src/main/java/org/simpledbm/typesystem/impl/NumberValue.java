@@ -93,8 +93,14 @@ public class NumberValue extends BaseDataValue {
 		int n = super.getStoredLength();
 		if (isValue()) {
 			BigInteger i = d.unscaledValue();
-			byte[] data = i.toByteArray();
-			n += TypeSize.BYTE * 2 + data.length;
+			/* 
+			 * Following length calculation is based
+			 * upon logic in BigInteger class (openjdk).
+			 */
+	        int byteLen = i.bitLength()/8 + 1;
+			//byte[] data = i.toByteArray();
+	        //int byteLen = data.length;
+			n += TypeSize.BYTE * 2 + byteLen;
 		}
 		return n;
 	}
