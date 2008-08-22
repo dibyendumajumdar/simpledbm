@@ -210,18 +210,6 @@ public class VarcharValue extends BaseDataValue {
     	return 0;
 	}
 
-	@Override
-	public Object clone() throws CloneNotSupportedException {
-		VarcharValue o = (VarcharValue) super.clone();
-		if (isValue()) {
-			o.charArray = charArray.clone();
-		}
-		else {
-			o.charArray = null;
-		}
-		return o;
-	}
-	
 	public DataValue cloneMe() {
 		return new VarcharValue(this);
 	}
