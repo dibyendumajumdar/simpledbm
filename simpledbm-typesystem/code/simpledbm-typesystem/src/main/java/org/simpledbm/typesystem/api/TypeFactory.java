@@ -75,7 +75,14 @@ public interface TypeFactory {
 	
 	/**
 	 * Returns a TypeDescriptor for the Numeric data type.<br />
-	 * Scale defaults to ?
+	 * Scale defaults to 0.
+	 * Number types have following restrictions compared to BigDecimals:
+	 * <ol>
+	 * <li>The maximum scale is limited to 127.</li>
+	 * <li>The maximum length of the number as a byte array is limited to 127.</li>
+	 * </ol>
+	 * Above limitations are simply to save storage space when persisting
+	 * Number objects. 
 	 */
 	TypeDescriptor getNumberType();
 	
