@@ -60,7 +60,6 @@ public class TestObjectRegistry extends BaseTestCase {
 			bb.putInt(3);
 			bb.putInt(value);
 		}
-		
 	}
 
     public TestObjectRegistry(String arg0) {
