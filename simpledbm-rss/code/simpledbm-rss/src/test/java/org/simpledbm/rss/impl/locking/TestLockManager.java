@@ -1333,7 +1333,7 @@ public class TestLockManager extends BaseTestCase {
                 + (endingMemoryUse - startingMemoryUse));
     }
 
-    static long sizeOf(Class clazz) {
+    static long sizeOf(Class<?> clazz) {
         long size = 0;
         Object[] objects = new Object[10000];
         try {
