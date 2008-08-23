@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.registry;
 
+import java.lang.reflect.Constructor;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Properties;
 
@@ -26,8 +28,11 @@ import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.util.ClassUtils;
+import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
+
+import com.sun.tools.example.debug.gui.TypeScript;
 
 /**
  * Default implementation of the Object Registry.
@@ -101,6 +106,29 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         }
     }
 
+    public synchronized final void registerType(int tc, Class<?> clazz) {
+		if (log.isDebugEnabled()) {
+			log.debug(this.getClass().getName(), "register",
+					"SIMPLEDBM-DEBUG: Registering typecode " + tc
+							+ " for class " + clazz.getName());
+		}
+		short typecode = (short) tc;
+		ObjectDefinition od = typeRegistry.get(typecode);
+		if (od != null) {
+			if (!od.isSingleton() && od.getClassName().equals(clazz.getName())) {
+				log.warn(LOG_CLASS_NAME, "register", mcat.getMessage("WR0001",
+						typecode));
+				return;
+			}
+			log.error(this.getClass().getName(), "register", mcat.getMessage(
+					"ER0002", typecode, od.getClassName(), clazz.getName()));
+			throw new ObjectCreationException(mcat.getMessage("ER0002",
+					typecode, od.getClassName(), clazz.getName()));
+		}
+		typeRegistry.put(typecode, new ClassDefinition(typecode, clazz));
+	}
+    
+    
     /*
      * (non-Javadoc)
      * 
@@ -164,8 +192,38 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
             return o;
         }
     }
+    
+    public Object getInstance(int typecode, ByteBuffer buf) {
+        ObjectDefinition od = typeRegistry.get((short) typecode);
+        if (od == null) {
+            log.error(this.getClass().getName(), "getInstance", mcat
+                .getMessage("ER0006", typecode));
+            throw new ObjectCreationException.UnknownTypeException(mcat
+                .getMessage("ER0006", typecode));
+        }
+        if (od.isSingleton()) {
+            return od.getInstance();
+        } else {
+            Object o = od.getInstance(buf);
+            if (o instanceof ObjectRegistryAware) {
+                ObjectRegistryAware ofa = (ObjectRegistryAware) o;
+                ofa.setObjectFactory(this);
+            }
+            return o;
+        }
+	}
 
-    /**
+	public Object getInstance(ByteBuffer buf) {
+		if (buf.remaining() < TypeSize.SHORT) {
+			throw new IllegalArgumentException();
+		}
+		buf.mark();
+		short type = buf.getShort();
+		buf.reset();
+		return getInstance(type, buf);
+	}
+
+	/**
      * Holds the definition of a type, either its class or if it is a simgleton,
      * then the object itself.
      */
@@ -182,6 +240,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
         abstract Object getInstance();
 
+        abstract Object getInstance(ByteBuffer buf);
+        
         abstract boolean isSingleton();
 
         abstract String getClassName();
@@ -209,15 +269,32 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         boolean isSingleton() {
             return true;
         }
+
+		@Override
+		Object getInstance(ByteBuffer buf) {
+			throw new UnsupportedOperationException();
+		}
     }
 
     static class ClassDefinition extends ObjectDefinition {
 
         final Class<?> clazz;
+        Constructor<?> ctor = null;
 
         ClassDefinition(int typecode, Class<?> klass) {
             super(typecode);
             this.clazz = klass;
+            Class<?>[] parameterTypes = new Class<?>[1];
+            parameterTypes[0] = ByteBuffer.class;
+            try {
+				ctor = klass.getConstructor(parameterTypes);
+			} catch (SecurityException e) {
+				// TODO Auto-generated catch block
+//				e.printStackTrace();
+			} catch (NoSuchMethodException e) {
+				// TODO Auto-generated catch block
+//				e.printStackTrace();
+			}
         }
 
         @Override
@@ -239,6 +316,28 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
             }
         }
 
+        Object getInstance(ByteBuffer buf) {
+        	if (ctor == null) {
+//                log.error(this.getClass().getName(), "getInstance", mcat
+//                        .getMessage("ER0007", getTypeCode(), clazz), e);
+//                    throw new ObjectCreationException(mcat.getMessage(
+//                        "ER0007",
+//                        getTypeCode(),
+//                        clazz), e);
+        		throw new UnsupportedOperationException();
+        	}
+            try {
+                return ctor.newInstance(buf);
+            } catch (Exception e) {
+                log.error(this.getClass().getName(), "getInstance", mcat
+                    .getMessage("ER0007", getTypeCode(), clazz), e);
+                throw new ObjectCreationException(mcat.getMessage(
+                    "ER0007",
+                    getTypeCode(),
+                    clazz), e);
+            }
+        }
+        
         @Override
         boolean isSingleton() {
             return false;

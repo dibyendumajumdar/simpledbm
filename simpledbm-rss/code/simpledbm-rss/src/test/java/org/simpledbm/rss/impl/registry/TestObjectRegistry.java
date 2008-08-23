@@ -19,11 +19,13 @@
  */
 package org.simpledbm.rss.impl.registry;
 
+import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
+import org.simpledbm.rss.api.st.Storable;
 
 /**
  * Test cases for the Object Registry module.
@@ -32,6 +34,34 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
  * @since 21-Aug-2005
  */
 public class TestObjectRegistry extends BaseTestCase {
+	
+	static class MyStorable implements Storable {
+
+		final int value;
+		
+		public MyStorable(int i) {
+			this.value = i;
+		}
+		
+		public MyStorable(ByteBuffer buf) {
+			buf.getShort();
+			this.value = buf.getInt();
+		}
+		
+		public int getStoredLength() {
+			return 6;
+		}
+
+		public void retrieve(ByteBuffer bb) {
+			throw new UnsupportedOperationException();
+		}
+
+		public void store(ByteBuffer bb) {
+			bb.putInt(3);
+			bb.putInt(value);
+		}
+		
+	}
 
     public TestObjectRegistry(String arg0) {
         super(arg0);
@@ -73,6 +103,21 @@ public class TestObjectRegistry extends BaseTestCase {
         } catch (ObjectCreationException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
         }
+        
+        factory.registerType(3, MyStorable.class.getName());
+        ByteBuffer buf = ByteBuffer.allocate(6);
+        buf.putShort((short) 3);
+        buf.putInt(311566);
+        buf.flip();
+        MyStorable o = (MyStorable) factory.getInstance(3, buf);
+        assertEquals(311566, o.value);
+
+        buf = ByteBuffer.allocate(6);
+        buf.putShort((short) 3);
+        buf.putInt(322575);
+        buf.flip();
+        o = (MyStorable) factory.getInstance(buf);
+        assertEquals(322575, o.value);
     }
 
 }
