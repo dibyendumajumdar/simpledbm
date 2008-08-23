@@ -21,6 +21,7 @@ package org.simpledbm.rss.api.sp;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.st.StorableFactory;
 
 /**
  * A SlottedPage is named as such because it contains a slot table, and supports
@@ -93,6 +94,12 @@ public abstract class SlottedPage extends Page {
      */
     public abstract Storable get(int slotNumber, Storable item);
 
+    /**
+     * Returns slot data. The client must supply the correct type of
+     * Storable factory.
+     */
+    public abstract Storable get(int slotNumber, StorableFactory storableFactory);
+    
     /**
      * Sets slot specific flags.
      */

@@ -26,6 +26,7 @@ import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.st.StorableFactory;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
@@ -692,6 +693,19 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
             .getLength());
         item.retrieve(bb);
+        return item;
+    }
+    
+    /**
+     * Return a pointer to tuple's data, as well as its length.
+     */
+    @Override
+    public final Storable get(int slotNumber, StorableFactory storableFactory) {
+        validateSlotNumber(slotNumber, false);
+        Slot slot = slotTable.get(slotNumber);
+        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
+            .getLength());
+        Storable item = storableFactory.getStorable(bb);
         return item;
     }
 
