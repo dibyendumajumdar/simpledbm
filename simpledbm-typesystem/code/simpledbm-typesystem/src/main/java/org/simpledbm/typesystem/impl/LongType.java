@@ -35,6 +35,12 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class LongType implements TypeDescriptor {
 
+	public LongType() {
+	}
+	
+	public LongType(ByteBuffer bb) {
+	}
+	
     public final int getTypeCode() {
         return TYPE_LONG_INTEGER;
     }
@@ -59,8 +65,8 @@ public class LongType implements TypeDescriptor {
 		return 0;
 	}
 
-	public void retrieve(ByteBuffer bb) {
-	}
+//	public void retrieve(ByteBuffer bb) {
+//	}
 
 	public void store(ByteBuffer bb) {
 	}

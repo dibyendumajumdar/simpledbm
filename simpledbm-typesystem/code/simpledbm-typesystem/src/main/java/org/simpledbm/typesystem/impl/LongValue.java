@@ -39,6 +39,13 @@ public class LongValue extends BaseDataValue {
 		super(typeDesc);
 	}
 
+	public LongValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+    	if (isValue()) {
+    		i = bb.getLong();
+    	}
+	}
+	
     @Override
 	public String toString() {
     	return getString();
@@ -61,13 +68,13 @@ public class LongValue extends BaseDataValue {
     	}
     }
     
-    @Override
-    public void retrieve(ByteBuffer bb) {
-    	super.retrieve(bb);
-    	if (isValue()) {
-    		i = bb.getLong();
-    	}
-    }
+//    @Override
+//    public void retrieve(ByteBuffer bb) {
+//    	super.retrieve(bb);
+//    	if (isValue()) {
+//    		i = bb.getLong();
+//    	}
+//    }
 
 	@Override
 	public int getInt() {

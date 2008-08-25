@@ -43,6 +43,18 @@ public class VarbinaryValue extends BaseDataValue {
 		super(typeDesc);
 	}
 
+	public VarbinaryValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+		if (isValue()) {
+			short n = bb.getShort();
+			if (n < 0 || n > getType().getMaxLength()) {
+				throw new TypeException();
+			}
+			byteArray = new byte[n];
+			bb.get(byteArray);
+		}
+	}
+	
 	@Override
 	public String toString() {
 		return getString();
@@ -88,18 +100,18 @@ public class VarbinaryValue extends BaseDataValue {
 		}
 	}
 
-	@Override
-	public void retrieve(ByteBuffer bb) {
-		super.retrieve(bb);
-		if (isValue()) {
-			short n = bb.getShort();
-			if (n < 0 || n > getType().getMaxLength()) {
-				throw new TypeException();
-			}
-			byteArray = new byte[n];
-			bb.get(byteArray);
-		}
-	}
+//	@Override
+//	public void retrieve(ByteBuffer bb) {
+//		super.retrieve(bb);
+//		if (isValue()) {
+//			short n = bb.getShort();
+//			if (n < 0 || n > getType().getMaxLength()) {
+//				throw new TypeException();
+//			}
+//			byteArray = new byte[n];
+//			bb.get(byteArray);
+//		}
+//	}
 
 	static String byteArrayToHexString(byte in[]) {
 		/*

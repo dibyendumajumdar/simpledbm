@@ -42,6 +42,10 @@ public class VarbinaryType implements TypeDescriptor {
     public VarbinaryType() {
 	}
     
+    public VarbinaryType(ByteBuffer bb) {
+		maxLength = bb.getInt();
+    }
+    
     public VarbinaryType(int maxLength) {
         this.maxLength = maxLength;
     }
@@ -70,9 +74,9 @@ public class VarbinaryType implements TypeDescriptor {
 		return TypeSize.INTEGER;
 	}
 
-	public void retrieve(ByteBuffer bb) {
-		maxLength = bb.getInt();
-	}
+//	public void retrieve(ByteBuffer bb) {
+//		maxLength = bb.getInt();
+//	}
 
 	public void store(ByteBuffer bb) {
 		bb.putInt(maxLength);

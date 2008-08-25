@@ -35,6 +35,12 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class IntegerType implements TypeDescriptor {
 
+	public IntegerType() {
+	}
+
+	public IntegerType(ByteBuffer bb) {
+	}
+	
     public final int getTypeCode() {
         return TYPE_INTEGER;
     }
@@ -59,8 +65,8 @@ public class IntegerType implements TypeDescriptor {
 		return 0;
 	}
 
-	public void retrieve(ByteBuffer bb) {
-	}
+//	public void retrieve(ByteBuffer bb) {
+//	}
 
 	public void store(ByteBuffer bb) {
 	}

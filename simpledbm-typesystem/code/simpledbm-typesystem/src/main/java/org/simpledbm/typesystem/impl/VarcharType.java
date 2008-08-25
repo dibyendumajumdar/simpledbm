@@ -45,6 +45,10 @@ public class VarcharType implements TypeDescriptor {
     public VarcharType(int maxLength) {
         this.maxLength = maxLength;
     }
+
+    public VarcharType(ByteBuffer bb) {
+		maxLength = bb.getInt();
+    }
     
     public final int getTypeCode() {
         return TYPE_VARCHAR;
@@ -70,9 +74,9 @@ public class VarcharType implements TypeDescriptor {
 		return TypeSize.INTEGER;
 	}
 
-	public void retrieve(ByteBuffer bb) {
-		maxLength = bb.getInt();
-	}
+//	public void retrieve(ByteBuffer bb) {
+//		maxLength = bb.getInt();
+//	}
 
 	public void store(ByteBuffer bb) {
 		bb.putInt(maxLength);

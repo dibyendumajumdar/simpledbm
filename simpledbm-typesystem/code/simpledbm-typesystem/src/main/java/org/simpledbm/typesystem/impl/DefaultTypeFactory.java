@@ -48,6 +48,18 @@ public class DefaultTypeFactory implements TypeFactory {
         throw new IllegalArgumentException("Unknown type: " + typeDesc);
     }
 
+	public DataValue getInstance(TypeDescriptor typeDesc, ByteBuffer bb) {
+        switch (typeDesc.getTypeCode()) {
+        case TypeDescriptor.TYPE_VARCHAR: return new VarcharValue(typeDesc, bb);
+        case TypeDescriptor.TYPE_INTEGER: return new IntegerValue(typeDesc, bb);
+        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongValue(typeDesc, bb);
+        case TypeDescriptor.TYPE_NUMBER: return new NumberValue(typeDesc, bb);
+        case TypeDescriptor.TYPE_DATETIME: return new DateTimeValue(typeDesc, bb);
+        case TypeDescriptor.TYPE_BINARY: return new VarbinaryValue(typeDesc, bb);
+        }
+        throw new IllegalArgumentException("Unknown type: " + typeDesc);
+    }	
+	
 	public TypeDescriptor getVarbinaryType(int maxLength) {
 		return new VarbinaryType(maxLength);
 	}
@@ -96,13 +108,25 @@ public class DefaultTypeFactory implements TypeFactory {
         throw new IllegalArgumentException("Unknown type: " + typecode);
 	}
 
+	private TypeDescriptor getTypeDescriptor(int typecode, ByteBuffer bb) {
+        switch (typecode) {
+        case TypeDescriptor.TYPE_VARCHAR: return new VarcharType(bb);
+        case TypeDescriptor.TYPE_INTEGER: return new IntegerType(bb);
+        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongType(bb);
+        case TypeDescriptor.TYPE_NUMBER: return new NumberType(bb);
+        case TypeDescriptor.TYPE_DATETIME: return new DateTimeType(bb);
+        case TypeDescriptor.TYPE_BINARY: return new VarbinaryType(bb);
+        }
+        throw new IllegalArgumentException("Unknown type: " + typecode);
+	}	
+	
 	public TypeDescriptor[] retrieve(ByteBuffer bb) {
 		int numberOfFields = bb.getShort();
 		TypeDescriptor[] rowType = new TypeDescriptor[numberOfFields];
 		for (int i = 0; i < numberOfFields; i++) {
 			int typecode = bb.get();
-			TypeDescriptor fieldType = getTypeDescriptor(typecode);
-			fieldType.retrieve(bb);
+			TypeDescriptor fieldType = getTypeDescriptor(typecode, bb);
+//			fieldType.retrieve(bb);
 			rowType[i] = fieldType;
 		}
 		return rowType;

@@ -41,6 +41,14 @@ public class DateTimeType implements TypeDescriptor {
 		dateFormat.setTimeZone(this.timeZone);
 	}
 	
+	public DateTimeType(ByteBuffer bb) {
+		ByteString bs = new ByteString(bb);
+		timeZone = TimeZone.getTimeZone(bs.toString());
+		bs = new ByteString(bb);
+		dateFormat = new SimpleDateFormat(bs.toString());
+		dateFormat.setTimeZone(timeZone);		
+	}
+	
 	public int getMaxLength() {
 		return -1;
 	}
@@ -67,14 +75,14 @@ public class DateTimeType implements TypeDescriptor {
 		return bs1.getStoredLength() + bs2.getStoredLength();
 	}
 
-	public void retrieve(ByteBuffer bb) {
-		ByteString bs = new ByteString();
-		bs.retrieve(bb);
-		timeZone = TimeZone.getTimeZone(bs.toString());
-		bs.retrieve(bb);
-		dateFormat = new SimpleDateFormat(bs.toString());
-		dateFormat.setTimeZone(timeZone);
-	}
+//	public void retrieve(ByteBuffer bb) {
+//		ByteString bs = new ByteString();
+//		bs.retrieve(bb);
+//		timeZone = TimeZone.getTimeZone(bs.toString());
+//		bs.retrieve(bb);
+//		dateFormat = new SimpleDateFormat(bs.toString());
+//		dateFormat.setTimeZone(timeZone);
+//	}
 
 	public void store(ByteBuffer bb) {
 		String s = timeZone.getID();

@@ -44,6 +44,17 @@ public class VarcharValue extends BaseDataValue {
 	public VarcharValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
+
+	public VarcharValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+    	if (isValue()) {
+			short n = bb.getShort();
+			charArray = new char[n];
+			for (int i = 0; i < charArray.length; i++) {
+				charArray[i] = bb.getChar();
+			}
+		}
+	}	
 	
     @Override
 	public String toString() {
@@ -73,17 +84,17 @@ public class VarcharValue extends BaseDataValue {
 		}
     }
     
-    @Override
-    public void retrieve(ByteBuffer bb) {
-    	super.retrieve(bb);
-    	if (isValue()) {
-			short n = bb.getShort();
-			charArray = new char[n];
-			for (int i = 0; i < charArray.length; i++) {
-				charArray[i] = bb.getChar();
-			}
-		}
-    }
+//    @Override
+//    public void retrieve(ByteBuffer bb) {
+//    	super.retrieve(bb);
+//    	if (isValue()) {
+//			short n = bb.getShort();
+//			charArray = new char[n];
+//			for (int i = 0; i < charArray.length; i++) {
+//				charArray[i] = bb.getChar();
+//			}
+//		}
+//    }
 
 	@Override
 	public int getInt() {

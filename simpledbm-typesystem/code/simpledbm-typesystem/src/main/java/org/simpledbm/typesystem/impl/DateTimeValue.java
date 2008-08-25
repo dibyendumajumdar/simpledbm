@@ -40,6 +40,13 @@ public class DateTimeValue extends BaseDataValue {
 		super(typeDesc);
 	}
 
+	DateTimeValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+		if (isValue()) {
+			time = bb.getLong();
+		}
+	}
+	
 	public DataValue cloneMe() {
 		DateTimeValue clone = new DateTimeValue(this);
 		return clone;
@@ -100,13 +107,13 @@ public class DateTimeValue extends BaseDataValue {
 		return super.toString();
 	}
 
-	@Override
-	public void retrieve(ByteBuffer bb) {
-		super.retrieve(bb);
-		if (isValue()) {
-			time = bb.getLong();
-		}
-	}
+//	@Override
+//	public void retrieve(ByteBuffer bb) {
+//		super.retrieve(bb);
+//		if (isValue()) {
+//			time = bb.getLong();
+//		}
+//	}
 
 	@Override
 	public void setString(String string) {
