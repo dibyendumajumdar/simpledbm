@@ -47,8 +47,8 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         .getName());
     private static final MessageCatalog mcat = new MessageCatalog();
 
-    PageId pageId;
-    int slotNumber;
+    private final PageId pageId;
+    private final int slotNumber;
 
     public TupleId() {
         super((byte) 'T');
@@ -64,10 +64,16 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
 
     public TupleId(PageId pageId, int slotNumber) {
         super((byte) 'T');
-        setPageId(pageId);
-        setSlotNumber(slotNumber);
+        this.pageId = new PageId(pageId);
+        this.slotNumber = slotNumber;
     }
 
+    public TupleId(ByteBuffer bb) {
+        super((byte) 'T');
+        pageId = new PageId(bb);
+        slotNumber = bb.getShort();
+    }
+    
     public Location cloneLocation() {
 		return new TupleId(this);
 	}
@@ -82,11 +88,11 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         throw new TupleException(mcat.getMessage("ET0001"));
     }
 
-    public final void retrieve(ByteBuffer bb) {
-        pageId = new PageId();
-        pageId.retrieve(bb);
-        slotNumber = bb.getShort();
-    }
+//    public final void retrieve(ByteBuffer bb) {
+//        pageId = new PageId();
+//        pageId.retrieve(bb);
+//        slotNumber = bb.getShort();
+//    }
 
     public final void store(ByteBuffer bb) {
         pageId.store(bb);
@@ -133,17 +139,17 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         return appendTo(new StringBuilder()).toString();
     }
 
-    private final void setPageId(PageId pageId) {
-        this.pageId = new PageId(pageId);
-    }
+//    private final void setPageId(PageId pageId) {
+//        this.pageId = new PageId(pageId);
+//    }
 
     public final PageId getPageId() {
         return pageId;
     }
 
-    private final void setSlotNumber(int slotNumber) {
-        this.slotNumber = slotNumber;
-    }
+//    private final void setSlotNumber(int slotNumber) {
+//        this.slotNumber = slotNumber;
+//    }
 
     public final int getSlotNumber() {
         return slotNumber;

@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.Storable;
 
@@ -60,6 +61,44 @@ public class TestObjectRegistry extends BaseTestCase {
 			bb.putInt(3);
 			bb.putInt(value);
 		}
+		
+		static class MyStorableFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return MyStorable.class;
+			}
+			public Object newInstance() {
+				return new MyStorable(0);
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new MyStorable(buf);
+			}
+		}
+	}
+
+	static class StringFactory implements ObjectFactory {
+		public Class<?> getType() {
+			return String.class;
+		}
+		public Object newInstance() {
+			return new String();
+		}
+		public Object newInstance(ByteBuffer buf) {
+			buf.getShort();
+			return new String();
+		}
+	}
+
+	static class IntegerFactory implements ObjectFactory {
+		public Class<?> getType() {
+			return Integer.class;
+		}
+		public Object newInstance() {
+			return new Integer(0);
+		}
+		public Object newInstance(ByteBuffer buf) {
+			buf.getShort();
+			return new Integer(0);
+		}
 	}
 
     public TestObjectRegistry(String arg0) {
@@ -69,7 +108,7 @@ public class TestObjectRegistry extends BaseTestCase {
     public void testRegistry() throws Exception {
         ObjectRegistry factory = new ObjectRegistryImpl(new Properties());
         Integer i = new Integer(55);
-        factory.registerType(1, String.class.getName());
+        factory.registerType(1, new StringFactory());
         factory.registerSingleton(2, i);
         factory.registerSingleton(2, i);
         assertTrue(i == factory.getInstance(2));
@@ -95,15 +134,15 @@ public class TestObjectRegistry extends BaseTestCase {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
         }
         assertTrue(i == factory.getInstance(2));
-        factory.registerType(1, String.class.getName());
+        factory.registerType(1, new StringFactory());
         try {
-            factory.registerType(1, Integer.class.getName());
+            factory.registerType(1, new IntegerFactory());
             fail();
         } catch (ObjectCreationException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
         }
         
-        factory.registerType(3, MyStorable.class.getName());
+        factory.registerType(3, new MyStorable.MyStorableFactory());
         ByteBuffer buf = ByteBuffer.allocate(6);
         buf.putShort((short) 3);
         buf.putInt(311566);
@@ -117,6 +156,7 @@ public class TestObjectRegistry extends BaseTestCase {
         buf.flip();
         o = (MyStorable) factory.getInstance(buf);
         assertEquals(322575, o.value);
+
     }
 
 }

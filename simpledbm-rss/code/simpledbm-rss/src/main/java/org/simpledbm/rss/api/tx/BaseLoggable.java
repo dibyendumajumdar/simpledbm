@@ -95,6 +95,23 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     public static final int SIZE = (Lsn.SIZE * 2) + TransactionId.SIZE
             + PageId.SIZE + TypeSize.SHORT * 3;
 
+    protected BaseLoggable() {
+    }
+    
+    protected BaseLoggable(ByteBuffer bb) {
+        typecode = bb.getShort();
+        prevTrxLsn = new Lsn(bb);
+//        prevTrxLsn.retrieve(bb);
+        undoNextLsn = new Lsn(bb);
+//        undoNextLsn.retrieve(bb);
+        trxId = new TransactionId(bb);
+//        trxId.retrieve(bb);
+        pageType = bb.getShort();
+        pageId = new PageId(bb);
+//        pageId.retrieve(bb);
+        moduleId = bb.getShort();
+    }    
+    
     public final int getTypecode() {
         return typecode;
     }
@@ -163,20 +180,20 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
         return SIZE;
     }
 
-    public void retrieve(ByteBuffer bb) {
-        typecode = bb.getShort();
-        prevTrxLsn = new Lsn();
-        prevTrxLsn.retrieve(bb);
-        undoNextLsn = new Lsn();
-        undoNextLsn.retrieve(bb);
-        trxId = new TransactionId();
-        trxId.retrieve(bb);
-        pageType = bb.getShort();
-        pageId = new PageId();
-        pageId.retrieve(bb);
-        moduleId = bb.getShort();
-    }
-
+//    public void retrieve(ByteBuffer bb) {
+//        typecode = bb.getShort();
+//        prevTrxLsn = new Lsn();
+//        prevTrxLsn.retrieve(bb);
+//        undoNextLsn = new Lsn();
+//        undoNextLsn.retrieve(bb);
+//        trxId = new TransactionId();
+//        trxId.retrieve(bb);
+//        pageType = bb.getShort();
+//        pageId = new PageId();
+//        pageId.retrieve(bb);
+//        moduleId = bb.getShort();
+//    }
+//
     public void store(ByteBuffer bb) {
         bb.putShort(typecode);
         prevTrxLsn.store(bb);
@@ -186,8 +203,6 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
         pageId.store(bb);
         bb.putShort(moduleId);
     }
-
-    public abstract void init();
 
     public StringBuilder appendTo(StringBuilder sb) {
         sb.append("Lsn=").append(lsn);

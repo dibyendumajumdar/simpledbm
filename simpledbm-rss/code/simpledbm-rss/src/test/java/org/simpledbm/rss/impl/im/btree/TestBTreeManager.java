@@ -133,6 +133,10 @@ public class TestBTreeManager extends BaseTestCase {
 			string = new ByteString(key.string);
 		}
 		
+		public StringKey(ByteBuffer bb) {
+			string = new ByteString(bb);
+		}
+		
 		public IndexKey cloneIndexKey() {
 			return new StringKey(this);
 		}
@@ -179,10 +183,10 @@ public class TestBTreeManager extends BaseTestCase {
 			return string.getStoredLength();
 		}
 
-		public void retrieve(ByteBuffer bb) {
-			string = new ByteString();
-			string.retrieve(bb);
-		}
+//		public void retrieve(ByteBuffer bb) {
+//			string = new ByteString();
+//			string.retrieve(bb);
+//		}
 
 		public void store(ByteBuffer bb) {
 			string.store(bb);
@@ -242,6 +246,10 @@ public class TestBTreeManager extends BaseTestCase {
 			return s;
 		}
 
+		public IndexKey newIndexKey(int containerId, ByteBuffer bb) {
+			return new StringKey(bb);
+		}
+		
 	}
 
 	/**
@@ -260,6 +268,11 @@ public class TestBTreeManager extends BaseTestCase {
 			this.loc = other.loc;
 		}
 
+		RowLocation(ByteBuffer bb) {
+			super((byte) 'R');
+			loc = bb.getInt();
+		}
+
 		public Location cloneLocation() {
 			return new RowLocation(this);
 		}
@@ -268,9 +281,9 @@ public class TestBTreeManager extends BaseTestCase {
 			loc = Integer.parseInt(string);
 		}
 
-		public void retrieve(ByteBuffer bb) {
-			loc = bb.getInt();
-		}
+//		public void retrieve(ByteBuffer bb) {
+//			loc = bb.getInt();
+//		}
 
 		public void store(ByteBuffer bb) {
 			bb.putInt(loc);
@@ -319,6 +332,10 @@ public class TestBTreeManager extends BaseTestCase {
 			return new RowLocation();
 		}
 
+		public Location newLocation(ByteBuffer bb) {
+			return new RowLocation(bb);
+		}
+
 	}
 
 	private IndexItem generateKey( BTreeIndexManagerImpl.IndexItemHelper btree, String s, int location,
@@ -356,6 +373,14 @@ public class TestBTreeManager extends BaseTestCase {
 
 		public boolean isUnique() {
 			return true;
+		}
+
+		public IndexKeyFactory getIndexKeyFactory() {
+			return keyFactory;
+		}
+
+		public LocationFactory getLocationFactory() {
+			return locationFactory;
 		}
 		
 	}
@@ -3419,11 +3444,11 @@ public class TestBTreeManager extends BaseTestCase {
             latchFactory,
             p);
         final SlottedPageManager spmgr = new SlottedPageManagerImpl(
-            objectFactory, p);
-		objectFactory.registerType(TYPE_STRINGKEYFACTORY,
-				StringKeyFactory.class.getName());
-		objectFactory.registerType(TYPE_ROWLOCATIONFACTORY,
-				RowLocationFactory.class.getName());
+            objectFactory, pageFactory, p);
+		objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
+				new StringKeyFactory());
+		objectFactory.registerSingleton(TYPE_ROWLOCATIONFACTORY,
+				new RowLocationFactory());
         SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
             .getPageType(), new PageId());
         page.latchExclusive();
@@ -3605,7 +3630,7 @@ public class TestBTreeManager extends BaseTestCase {
 			latchFactory = new LatchFactoryImpl(properties);
 			pageFactory = new PageFactoryImpl(objectFactory, storageManager,
 					latchFactory, properties);
-			spmgr = new SlottedPageManagerImpl(objectFactory, properties);
+			spmgr = new SlottedPageManagerImpl(objectFactory, pageFactory, properties);
 			lockmgrFactory = new LockManagerFactoryImpl();
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(latchFactory, properties);
 			logmgr = (LogManagerImpl) logFactory.getLog(properties);
@@ -3621,10 +3646,10 @@ public class TestBTreeManager extends BaseTestCase {
 			btreeMgr = new BTreeIndexManagerImpl(objectFactory,
 					loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry, lockAdaptor, properties);
 
-			objectFactory.registerType(TYPE_STRINGKEYFACTORY,
-					StringKeyFactory.class.getName());
-			objectFactory.registerType(TYPE_ROWLOCATIONFACTORY,
-					RowLocationFactory.class.getName());
+			objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
+					new StringKeyFactory());
+			objectFactory.registerSingleton(TYPE_ROWLOCATIONFACTORY,
+					new RowLocationFactory());
 
 			lockmgr.start();
 			logmgr.start();

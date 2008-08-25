@@ -61,7 +61,7 @@ public abstract class Page implements Storable, Dumpable {
      * size is fixed by the factory.
      * Transient.
      */
-    private PageFactory pageFactory = null;
+    private final PageFactory pageFactory;
 
     /**
      * A read/write latch to protect access to the page.
@@ -69,9 +69,16 @@ public abstract class Page implements Storable, Dumpable {
      */
     protected Latch lock;
 
-    protected Page() {
+    protected Page(PageFactory pageFactory) {
+    	this.pageFactory = pageFactory;
     }
 
+    protected Page(PageFactory pageFactory, ByteBuffer bb) {
+    	this.pageFactory = pageFactory;
+        type = bb.getShort();
+        pageLsn = new Lsn(bb);
+    }    
+    
     public final void setType(int type) {
         assert type < Short.MAX_VALUE;
         this.type = (short) type;
@@ -97,7 +104,7 @@ public abstract class Page implements Storable, Dumpable {
         pageLsn = new Lsn(lsn);
     }
 
-    public abstract void init();
+//    public abstract void init();
 
     /**
      * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
@@ -106,28 +113,26 @@ public abstract class Page implements Storable, Dumpable {
         return pageFactory.getUsablePageSize();
     }
 
-    public void retrieve(ByteBuffer bb) {
-        type = bb.getShort();
-        pageId = new PageId();
-        // pageId.retrieve(bb);
-        pageLsn = new Lsn();
-        pageLsn.retrieve(bb);
-    }
+//    public void retrieve(ByteBuffer bb) {
+//        type = bb.getShort();
+//        pageId = new PageId();
+//        pageLsn = new Lsn();
+//        pageLsn.retrieve(bb);
+//    }
 
     public void store(ByteBuffer bb) {
         bb.putShort(type);
-        // pageId.store(bb);
         pageLsn.store(bb);
     }
 
-    /**
-     * @param pageFactory The pageFactory to set.
-     */
-    public final void setPageFactory(PageFactory pageFactory) {
-        if (this.pageFactory == null) {
-            this.pageFactory = pageFactory;
-        }
-    }
+//    /**
+//     * @param pageFactory The pageFactory to set.
+//     */
+//    public final void setPageFactory(PageFactory pageFactory) {
+//        if (this.pageFactory == null) {
+//            this.pageFactory = pageFactory;
+//        }
+//    }
 
     public final void latchExclusive() {
         lock.exclusiveLock();
@@ -202,5 +207,4 @@ public abstract class Page implements Storable, Dumpable {
     public String toString() {
         return appendTo(new StringBuilder()).toString();
     }
-
 }

@@ -43,12 +43,12 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
     /**
      * The index identifies the log file by number.
      */
-    private int index;
+    private final int index;
 
     /**
      * The offset is the position within the Log file.
      */
-    private int offset;
+    private final int offset;
 
     public Lsn() {
         index = 0;
@@ -65,6 +65,11 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
         this.offset = lsn.offset;
     }
 
+    public Lsn(ByteBuffer bb) {
+        index = bb.getInt();
+        offset = bb.getInt();
+    }    
+    
     public final boolean isNull() {
         return index == 0 && offset == 0;
     }
@@ -108,10 +113,10 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
         return offset;
     }
 
-    public final void retrieve(ByteBuffer bb) {
-        index = bb.getInt();
-        offset = bb.getInt();
-    }
+//    public final void retrieve(ByteBuffer bb) {
+//        index = bb.getInt();
+//        offset = bb.getInt();
+//    }
 
     public final void store(ByteBuffer bb) {
         bb.putInt(index);

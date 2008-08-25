@@ -1014,8 +1014,9 @@ public final class LogManagerImpl implements LogManager {
             throw new LogException(mcat.getMessage("EW0011"));
         }
         ByteBuffer bb = ByteBuffer.wrap(bufb);
-        LogAnchor anchor = new LogAnchor();
-        anchor.retrieve(bb);
+//        LogAnchor anchor = new LogAnchor();
+//        anchor.retrieve(bb);
+        LogAnchor anchor = new LogAnchor(bb);
         return anchor;
     }
 
@@ -1172,12 +1173,13 @@ public final class LogManagerImpl implements LogManager {
      * @param logfile
      */
     private void resetLogFiles(int logfile) {
-        LogFileHeader header = new LogFileHeader();
+//        LogFileHeader header = new LogFileHeader();
         ByteBuffer bb = ByteBuffer.allocate(LogFileHeader.SIZE);
 
         for (int i = 0; i < anchor.n_LogGroups; i++) {
-            header.index = anchor.logIndexes[logfile];
-            header.id = anchor.groups[i].id;
+//            header.index = anchor.logIndexes[logfile];
+//            header.id = anchor.groups[i].id;
+            LogFileHeader header = new LogFileHeader(anchor.groups[i].id, anchor.logIndexes[logfile]);
             bb.clear();
             header.store(bb);
             bb.flip();
@@ -1200,31 +1202,31 @@ public final class LogManagerImpl implements LogManager {
      * @param fileno
      */
     private void openLogFile(int groupno, int fileno) {
-        LogFileHeader fh = new LogFileHeader();
-        byte[] bufh = new byte[fh.getStoredLength()];
+//        LogFileHeader fh = new LogFileHeader();
+//        byte[] bufh = new byte[fh.getStoredLength()];
+        byte[] bufh = new byte[LogFileHeader.SIZE];
         files[groupno][fileno] = storageFactory
             .open(anchor.groups[groupno].files[fileno].toString());
         if (anchor.fileStatus[fileno] != LOG_FILE_UNUSED) {
-            if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
-                logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
-                    "EW0012",
-                    anchor.groups[groupno].files[fileno].toString()));
-                throw new LogException(mcat.getMessage(
-                    "EW0012",
-                    anchor.groups[groupno].files[fileno].toString()));
-            }
-            ByteBuffer bh = ByteBuffer.wrap(bufh);
-            fh.retrieve(bh);
-            if (fh.id != LOG_GROUP_IDS[groupno]
-                    || fh.index != anchor.logIndexes[fileno]) {
-                logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
-                    "EW0013",
-                    anchor.groups[groupno].files[fileno].toString()));
-                throw new LogException(mcat.getMessage(
-                    "EW0013",
-                    anchor.groups[groupno].files[fileno].toString()));
-            }
-        }
+			if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
+				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
+						"EW0012", anchor.groups[groupno].files[fileno]
+								.toString()));
+				throw new LogException(mcat.getMessage("EW0012",
+						anchor.groups[groupno].files[fileno].toString()));
+			}
+			ByteBuffer bh = ByteBuffer.wrap(bufh);
+			LogFileHeader fh = new LogFileHeader(bh);
+//			fh.retrieve(bh);
+			if (fh.id != LOG_GROUP_IDS[groupno]
+					|| fh.index != anchor.logIndexes[fileno]) {
+				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
+						"EW0013", anchor.groups[groupno].files[fileno]
+								.toString()));
+				throw new LogException(mcat.getMessage("EW0013",
+						anchor.groups[groupno].files[fileno].toString()));
+			}
+		}
     }
 
     /**
@@ -1874,11 +1876,13 @@ public final class LogManagerImpl implements LogManager {
         int length = bb.getInt();
         int dataLength = length - LOGREC_HEADER_SIZE;
         LogRecordImpl logrec = new LogRecordImpl(dataLength);
-        Lsn lsn = new Lsn();
-        lsn.retrieve(bb);
+//        Lsn lsn = new Lsn();
+//        lsn.retrieve(bb);
+        Lsn lsn = new Lsn(bb);
         logrec.lsn = lsn;
-        Lsn prevLsn = new Lsn();
-        prevLsn.retrieve(bb);
+//        Lsn prevLsn = new Lsn();
+//        prevLsn.retrieve(bb);
+        Lsn prevLsn = new Lsn(bb);
         logrec.prevLsn = prevLsn;
         if (dataLength > 0) {
             bb.get(logrec.data, 0, dataLength);
@@ -2367,12 +2371,12 @@ public final class LogManagerImpl implements LogManager {
         /**
          * This is the id of the Log Group to which this file belongs.
          */
-        char id;
+        private final char id;
 
         /**
          * The index of the log file.
          */
-        int index;
+        private final int index;
 
         /**
          * The LogFileHeader occupies {@value} bytes on disk.
@@ -2380,22 +2384,24 @@ public final class LogManagerImpl implements LogManager {
         static final int SIZE = (Character.SIZE / Byte.SIZE)
                 + (Integer.SIZE / Byte.SIZE);
 
-        LogFileHeader() {
-        }
-
         LogFileHeader(char id, int index) {
             this.id = id;
             this.index = index;
         }
 
+        LogFileHeader(ByteBuffer bb) {
+            id = bb.getChar();
+            index = bb.getInt();
+        }
+        
         public int getStoredLength() {
             return SIZE;
         }
 
-        public void retrieve(ByteBuffer bb) {
-            id = bb.getChar();
-            index = bb.getInt();
-        }
+//        public void retrieve(ByteBuffer bb) {
+//            id = bb.getChar();
+//            index = bb.getInt();
+//        }
 
         public void store(ByteBuffer bb) {
             bb.putChar(id);
@@ -2425,7 +2431,7 @@ public final class LogManagerImpl implements LogManager {
          * 
          * @see LogFileHeader
          */
-        char id;
+        final char id;
 
         /**
          * The status of the Log Group.
@@ -2433,12 +2439,12 @@ public final class LogManagerImpl implements LogManager {
          * @see LogManagerImpl#LOG_GROUP_OK
          * @see LogManagerImpl#LOG_GROUP_INVALID
          */
-        int status;
+        final int status;
 
         /**
          * The path to the location for log files within this group.
          */
-        ByteString path;
+        final ByteString path;
 
         /**
          * The fully qualified names of all the log files within this group. The
@@ -2447,10 +2453,10 @@ public final class LogManagerImpl implements LogManager {
          * 
          * @see #LogGroup()
          */
-        ByteString files[];
+        final ByteString files[];
 
-        LogGroup() {
-        }
+//        LogGroup() {
+//        }
 
         LogGroup(char id, String path, int status, int n_files) {
             this.id = id;
@@ -2463,6 +2469,22 @@ public final class LogManagerImpl implements LogManager {
             }
         }
 
+        LogGroup(ByteBuffer bb) {
+            id = bb.getChar();
+            status = bb.getInt();
+//            path = new ByteString();
+//            path.retrieve(bb);
+            path = new ByteString(bb);
+            short n = bb.getShort();
+            files = new ByteString[n];
+            for (short i = 0; i < n; i++) {
+//                files[i] = new ByteString();
+//                files[i].retrieve(bb);
+                files[i] = new ByteString(bb);
+            }
+        }
+        
+        
         /*
          * @see org.simpledbm.rss.io.Storable#getStoredLength()
          */
@@ -2477,21 +2499,23 @@ public final class LogManagerImpl implements LogManager {
             return n;
         }
 
-        /*
-         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-         */
-        public void retrieve(ByteBuffer bb) {
-            id = bb.getChar();
-            status = bb.getInt();
-            path = new ByteString();
-            path.retrieve(bb);
-            short n = bb.getShort();
-            files = new ByteString[n];
-            for (short i = 0; i < n; i++) {
-                files[i] = new ByteString();
-                files[i].retrieve(bb);
-            }
-        }
+//        
+//        
+//        /*
+//         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
+//         */
+//        public void retrieve(ByteBuffer bb) {
+//            id = bb.getChar();
+//            status = bb.getInt();
+//            path = new ByteString();
+//            path.retrieve(bb);
+//            short n = bb.getShort();
+//            files = new ByteString[n];
+//            for (short i = 0; i < n; i++) {
+//                files[i] = new ByteString();
+//                files[i].retrieve(bb);
+//            }
+//        }
 
         /*
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
@@ -2678,6 +2702,66 @@ public final class LogManagerImpl implements LogManager {
          */
         int logFlushInterval;
 
+        LogAnchor() {
+        }
+        
+        LogAnchor(ByteBuffer bb) {
+            int i;
+            n_CtlFiles = bb.getShort();
+            ctlFiles = new ByteString[n_CtlFiles];
+            for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
+//                ctlFiles[i] = new ByteString();
+//                ctlFiles[i].retrieve(bb);
+                ctlFiles[i] = new ByteString(bb);
+            }
+            n_LogGroups = bb.getShort();
+            groups = new LogGroup[n_LogGroups];
+            for (i = 0; i < n_LogGroups; i++) {
+//                groups[i] = new LogGroup();
+//                groups[i].retrieve(bb);
+                groups[i] = new LogGroup(bb);
+            }
+            n_LogFiles = bb.getShort();
+            fileStatus = new short[n_LogFiles];
+            logIndexes = new int[n_LogFiles];
+            for (i = 0; i < n_LogFiles; i++) {
+                fileStatus[i] = bb.getShort();
+            }
+            for (i = 0; i < n_LogFiles; i++) {
+                logIndexes[i] = bb.getInt();
+            }
+            byte b = bb.get();
+            archiveMode = b == 1;
+//            archivePath = new ByteString();
+//            archivePath.retrieve(bb);
+            archivePath = new ByteString(bb);
+            logBufferSize = bb.getInt();
+            logFileSize = bb.getInt();
+            currentLogFile = bb.getShort();
+            currentLogIndex = bb.getInt();
+            archivedLogIndex = bb.getInt();
+//            currentLsn = new Lsn();
+//            currentLsn.retrieve(bb);
+            currentLsn = new Lsn(bb);
+//            maxLsn = new Lsn();
+//            maxLsn.retrieve(bb);
+            maxLsn = new Lsn(bb);
+//            durableLsn = new Lsn();
+//            durableLsn.retrieve(bb);
+            durableLsn = new Lsn(bb);
+//            durableCurrentLsn = new Lsn();
+//            durableCurrentLsn.retrieve(bb);
+            durableCurrentLsn = new Lsn(bb);
+//            checkpointLsn = new Lsn();
+//            checkpointLsn.retrieve(bb);
+            checkpointLsn = new Lsn(bb);
+//            oldestInterestingLsn = new Lsn();
+//            oldestInterestingLsn.retrieve(bb);
+            oldestInterestingLsn = new Lsn(bb);
+            maxBuffers = bb.getInt();
+            logFlushInterval = bb.getInt();
+        }        
+        
         public int getStoredLength() {
             int n = 0;
             int i;
@@ -2710,53 +2794,53 @@ public final class LogManagerImpl implements LogManager {
             return n;
         }
 
-        public void retrieve(ByteBuffer bb) {
-            int i;
-            n_CtlFiles = bb.getShort();
-            ctlFiles = new ByteString[n_CtlFiles];
-            for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
-                ctlFiles[i] = new ByteString();
-                ctlFiles[i].retrieve(bb);
-            }
-            n_LogGroups = bb.getShort();
-            groups = new LogGroup[n_LogGroups];
-            for (i = 0; i < n_LogGroups; i++) {
-                groups[i] = new LogGroup();
-                groups[i].retrieve(bb);
-            }
-            n_LogFiles = bb.getShort();
-            fileStatus = new short[n_LogFiles];
-            logIndexes = new int[n_LogFiles];
-            for (i = 0; i < n_LogFiles; i++) {
-                fileStatus[i] = bb.getShort();
-            }
-            for (i = 0; i < n_LogFiles; i++) {
-                logIndexes[i] = bb.getInt();
-            }
-            byte b = bb.get();
-            archiveMode = b == 1;
-            archivePath = new ByteString();
-            archivePath.retrieve(bb);
-            logBufferSize = bb.getInt();
-            logFileSize = bb.getInt();
-            currentLogFile = bb.getShort();
-            currentLogIndex = bb.getInt();
-            archivedLogIndex = bb.getInt();
-            currentLsn = new Lsn();
-            currentLsn.retrieve(bb);
-            maxLsn = new Lsn();
-            maxLsn.retrieve(bb);
-            durableLsn = new Lsn();
-            durableLsn.retrieve(bb);
-            durableCurrentLsn = new Lsn();
-            durableCurrentLsn.retrieve(bb);
-            checkpointLsn = new Lsn();
-            checkpointLsn.retrieve(bb);
-            oldestInterestingLsn = new Lsn();
-            oldestInterestingLsn.retrieve(bb);
-            maxBuffers = bb.getInt();
-            logFlushInterval = bb.getInt();
-        }
+//        public void retrieve(ByteBuffer bb) {
+//            int i;
+//            n_CtlFiles = bb.getShort();
+//            ctlFiles = new ByteString[n_CtlFiles];
+//            for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
+//                ctlFiles[i] = new ByteString();
+//                ctlFiles[i].retrieve(bb);
+//            }
+//            n_LogGroups = bb.getShort();
+//            groups = new LogGroup[n_LogGroups];
+//            for (i = 0; i < n_LogGroups; i++) {
+//                groups[i] = new LogGroup();
+//                groups[i].retrieve(bb);
+//            }
+//            n_LogFiles = bb.getShort();
+//            fileStatus = new short[n_LogFiles];
+//            logIndexes = new int[n_LogFiles];
+//            for (i = 0; i < n_LogFiles; i++) {
+//                fileStatus[i] = bb.getShort();
+//            }
+//            for (i = 0; i < n_LogFiles; i++) {
+//                logIndexes[i] = bb.getInt();
+//            }
+//            byte b = bb.get();
+//            archiveMode = b == 1;
+//            archivePath = new ByteString();
+//            archivePath.retrieve(bb);
+//            logBufferSize = bb.getInt();
+//            logFileSize = bb.getInt();
+//            currentLogFile = bb.getShort();
+//            currentLogIndex = bb.getInt();
+//            archivedLogIndex = bb.getInt();
+//            currentLsn = new Lsn();
+//            currentLsn.retrieve(bb);
+//            maxLsn = new Lsn();
+//            maxLsn.retrieve(bb);
+//            durableLsn = new Lsn();
+//            durableLsn.retrieve(bb);
+//            durableCurrentLsn = new Lsn();
+//            durableCurrentLsn.retrieve(bb);
+//            checkpointLsn = new Lsn();
+//            checkpointLsn.retrieve(bb);
+//            oldestInterestingLsn = new Lsn();
+//            oldestInterestingLsn.retrieve(bb);
+//            maxBuffers = bb.getInt();
+//            logFlushInterval = bb.getInt();
+//        }
 
         public void store(ByteBuffer bb) {
             int i;

@@ -44,17 +44,18 @@ public final class LoggableFactoryImpl implements LoggableFactory {
     }
 
     public final Loggable getInstance(ByteBuffer bb) {
-        bb.mark();
-        short typecode = bb.getShort();
-        bb.reset();
-        BaseLoggable loggable = (BaseLoggable) objectFactory
-            .getInstance(typecode);
-        if (loggable instanceof LoggableFactoryAware) {
-            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
-        }
-        loggable.init();
-        loggable.retrieve(bb);
-        return loggable;
+    	return (Loggable) objectFactory.getInstance(bb);
+//        bb.mark();
+//        short typecode = bb.getShort();
+//        bb.reset();
+//        BaseLoggable loggable = (BaseLoggable) objectFactory
+//            .getInstance(typecode);
+//        if (loggable instanceof LoggableFactoryAware) {
+//            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
+//        }
+//        loggable.init();
+//        loggable.retrieve(bb);
+//        return loggable;
     }
 
     public final Loggable getInstance(LogRecord logRec) {
@@ -71,10 +72,10 @@ public final class LoggableFactoryImpl implements LoggableFactory {
             .getInstance(typecode);
         loggable.setTypecode(typecode);
         loggable.setModuleId(moduleId);
-        if (loggable instanceof LoggableFactoryAware) {
-            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
-        }
-        loggable.init();
+//        if (loggable instanceof LoggableFactoryAware) {
+//            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
+//        }
+//        loggable.init();
         return loggable;
     }
 

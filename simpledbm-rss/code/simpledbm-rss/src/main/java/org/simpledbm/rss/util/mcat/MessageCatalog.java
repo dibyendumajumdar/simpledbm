@@ -432,8 +432,8 @@ public class MessageCatalog {
         msgs
             .put(
                 "ER0007",
-                "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");
-
+                "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");      
+        
         // Slotted Page Manager
         msgs
             .put(

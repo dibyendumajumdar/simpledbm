@@ -39,8 +39,8 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
      */
     public final static int SIZE = TypeSize.INTEGER * 2;
 
-    private int containerId;
-    private int pageNumber;
+    private final int containerId;
+    private final int pageNumber;
 
     public PageId() {
         containerId = -1;
@@ -51,12 +51,17 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
         this.containerId = containerId;
         this.pageNumber = pageNumber;
     }
-
+    
     public PageId(PageId pageId) {
         this.containerId = pageId.containerId;
         this.pageNumber = pageId.pageNumber;
     }
 
+    public PageId(ByteBuffer bb) {
+        containerId = bb.getInt();
+        pageNumber = bb.getInt();
+    }
+    
     public final int compareTo(PageId pageId) {
         if (containerId == pageId.containerId) {
             if (pageNumber == pageId.pageNumber)
@@ -71,10 +76,10 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
             return -1;
     }
 
-    public final void retrieve(ByteBuffer bb) {
-        containerId = bb.getInt();
-        pageNumber = bb.getInt();
-    }
+//    public final void retrieve(ByteBuffer bb) {
+//        containerId = bb.getInt();
+//        pageNumber = bb.getInt();
+//    }
 
     public final void store(ByteBuffer bb) {
         bb.putInt(containerId);

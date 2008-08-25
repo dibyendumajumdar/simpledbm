@@ -21,7 +21,7 @@ package org.simpledbm.rss.api.registry;
 
 /**
  * Interface to be implemented by objects that want to be
- * aware of their owning ObjectFactory. 
+ * aware of their owning ObjectRegsitry. 
  * 
  * @author Dibyendu Majumdar
  * @since 25-Sep-2005
