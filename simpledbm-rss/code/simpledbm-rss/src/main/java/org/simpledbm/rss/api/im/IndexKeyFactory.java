@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.im;
 
+import java.nio.ByteBuffer;
+
 /**
  * An IndexKeyFactory is responsible for generating keys. This interface
  * is typically implemented by the clients of the IndexManager module.
@@ -61,4 +63,8 @@ public interface IndexKeyFactory {
      * @param containerId ID of the container for which a key is required
      */
     IndexKey minIndexKey(int containerId);
+    
+    
+    IndexKey newIndexKey(int containerId, ByteBuffer bb);
+ 
 }

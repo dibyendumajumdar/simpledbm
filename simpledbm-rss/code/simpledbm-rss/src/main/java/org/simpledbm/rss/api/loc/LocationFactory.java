@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.api.loc;
 
+import java.nio.ByteBuffer;
+
 /**
  * A Factory for creating Location objects.
  * 
@@ -31,5 +33,7 @@ public interface LocationFactory {
      * Creates a new Location object.
      */
     Location newLocation();
+    
+    Location newLocation(ByteBuffer bb);
 
 }

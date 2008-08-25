@@ -19,14 +19,25 @@
  */
 package org.simpledbm.rss.api.fsm;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageFactory;
 
 /**
  * Interface definition for Space Map pages. 
  */
 public abstract class FreeSpaceMapPage extends Page {
+	
+    protected FreeSpaceMapPage(PageFactory pageFactory) {
+		super(pageFactory);
+	}
 
-    /**
+	protected FreeSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+		super(pageFactory, bb);
+	}
+
+	/**
      * Retrieves the current space value associated with the specified page. For a
      * single bit space map, the possible values are 1 and 0. For 2 bit space map,
      * the values range from 0 to 3.

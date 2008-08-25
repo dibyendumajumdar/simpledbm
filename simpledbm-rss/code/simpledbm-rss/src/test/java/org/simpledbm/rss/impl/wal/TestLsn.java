@@ -50,7 +50,7 @@ public class TestLsn extends TestCase {
         lsn3.store(bb);
         assertFalse(bb.hasRemaining());
         bb.flip();
-        lsn.retrieve(bb);
+        lsn = new Lsn(bb);
         assertTrue(lsn.compareTo(lsn3) == 0);
         System.out.println("Lsn = " + lsn);
         System.out.println("sizeof Lsn = " + lsn.getStoredLength());

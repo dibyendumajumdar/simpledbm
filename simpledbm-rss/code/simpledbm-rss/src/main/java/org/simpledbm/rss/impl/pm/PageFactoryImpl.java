@@ -77,7 +77,7 @@ public final class PageFactoryImpl implements PageFactory {
         this.objectFactory = objectFactory;
         this.storageManager = storageManager;
         this.latchFactory = latchFactory;
-        objectFactory.registerType(TYPE_RAW_PAGE, RawPage.class.getName());
+        objectFactory.registerType(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
     }
 
     public PageFactoryImpl(ObjectRegistry objectFactory,
@@ -99,10 +99,10 @@ public final class PageFactoryImpl implements PageFactory {
     public final Page getInstance(int pagetype, PageId pageId) {
         Page page = (Page) objectFactory.getInstance(pagetype);
         page.setType(pagetype);
-        page.setPageFactory(this);
+//        page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
         page.setPageId(pageId);
-        page.init();
+//        page.init();
         return page;
     }
 
@@ -119,11 +119,11 @@ public final class PageFactoryImpl implements PageFactory {
         bb.mark();
         short pagetype = bb.getShort();
         bb.reset();
-        Page page = (Page) objectFactory.getInstance(pagetype);
-        page.setPageFactory(this);
+        Page page = (Page) objectFactory.getInstance(pagetype, bb);
+//        page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
-        page.init();
-        page.retrieve(bb);
+//        page.init();
+//        page.retrieve(bb);
         page.setPageId(pageId);
         return page;
     }

@@ -151,7 +151,7 @@ public class TestTupleManager extends BaseTestCase {
             byte[] data = tcont.read(location);
             assertEquals(data.length, 16526);
             ByteBuffer bb = ByteBuffer.wrap(data);
-            t.retrieve(bb);
+            t = new StringTuple(bb);
             assertTrue(t.toString().equals("hello"));
             tcont.delete(trx, location);
             trx.abort();
@@ -163,9 +163,8 @@ public class TestTupleManager extends BaseTestCase {
             assertEquals(data.length, 16526);
             tcont.update(trx, location, t);
             data = tcont.read(location);
-            t = new StringTuple();
             bb = ByteBuffer.wrap(data);
-            t.retrieve(bb);
+            t = new StringTuple(bb);
             trx.commit();
             assertEquals(t.getStoredLength(), 18002);
             assertTrue(t.toString().equals("updated hello"));
@@ -207,9 +206,8 @@ public class TestTupleManager extends BaseTestCase {
                 byte[] data = scan.getCurrentTuple();
                 System.err.println("len=" + data.length);
                 assertEquals(tlens[i] + 2, data.length);
-                StringTuple t = new StringTuple();
                 ByteBuffer bb = ByteBuffer.wrap(data);
-                t.retrieve(bb);
+                StringTuple t = new StringTuple(bb);
                 System.err.println("Location=" + scan.getCurrentLocation()
                         + ", tupleData=[" + t.toString() + "]");
                 i++;
@@ -295,9 +293,8 @@ public class TestTupleManager extends BaseTestCase {
                 byte[] data = scan.getCurrentTuple();
                 System.err.println("len=" + data.length);
                 assertEquals(tlens[i] + 2, data.length);
-                StringTuple t = new StringTuple();
                 ByteBuffer bb = ByteBuffer.wrap(data);
-                t.retrieve(bb);
+                StringTuple t = new StringTuple(bb);
                 System.err.println("Location=" + scan.getCurrentLocation()
                         + ", tupleData=[" + t.toString() + "]");
                 if (location == null && i > (tlens.length / 2)) {
@@ -496,10 +493,40 @@ public class TestTupleManager extends BaseTestCase {
         doTestDeleteInsertScan();
     }
 
-    public static class StringTuple implements Storable {
+    public static final class StringTuple implements Storable {
 
-        ByteString string = new ByteString();
+//        final ByteString string = new ByteString();
+        private ByteString string;
 
+        public StringTuple(String string) {
+            byte data[] = new byte[16524];
+            Arrays.fill(data, (byte) ' ');
+            byte[] srcdata = string.getBytes();
+            System.arraycopy(srcdata, 0, data, 0, srcdata.length);
+            this.string = new ByteString(data);
+        }
+
+        public StringTuple(String string, int padLength) {
+            byte data[] = new byte[padLength];
+            Arrays.fill(data, (byte) ' ');
+            byte[] srcdata = string.getBytes();
+            System.arraycopy(srcdata, 0, data, 0, srcdata.length);
+            this.string = new ByteString(data);
+        }
+
+        public StringTuple(byte[] bytes) {
+            string = new ByteString(bytes);
+        }
+
+        public StringTuple(ByteBuffer bb) {
+			string = new ByteString(bb);
+		}
+    
+        public StringTuple() {
+        	string = new ByteString("");
+        }
+        
+        
         public void setString(String s) {
             parseString(s);
         }
@@ -533,10 +560,10 @@ public class TestTupleManager extends BaseTestCase {
             return string.getStoredLength();
         }
 
-        public void retrieve(ByteBuffer bb) {
-            string = new ByteString();
-            string.retrieve(bb);
-        }
+//        public void retrieve(ByteBuffer bb) {
+//            string = new ByteString();
+//            string.retrieve(bb);
+//        }
 
         public void store(ByteBuffer bb) {
             string.store(bb);
@@ -578,7 +605,7 @@ public class TestTupleManager extends BaseTestCase {
                 storageManager,
                 latchFactory,
                 props);
-            spmgr = new SlottedPageManagerImpl(objectFactory, props);
+            spmgr = new SlottedPageManagerImpl(objectFactory, pageFactory, props);
             lockmgrFactory = new LockManagerFactoryImpl();
             lockmgr = lockmgrFactory.create(latchFactory, props);
             logmgr = logFactory.getLog(storageFactory, props);

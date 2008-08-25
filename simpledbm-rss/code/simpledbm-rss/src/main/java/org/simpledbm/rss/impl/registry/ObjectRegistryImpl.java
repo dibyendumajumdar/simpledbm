@@ -19,20 +19,16 @@
  */
 package org.simpledbm.rss.impl.registry;
 
-import java.lang.reflect.Constructor;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.registry.ObjectCreationException;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.ObjectRegistryAware;
-import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
-
-import com.sun.tools.example.debug.gui.TypeScript;
 
 /**
  * Default implementation of the Object Registry.
@@ -58,83 +54,32 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     public ObjectRegistryImpl(Properties properties) {
     }
     
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.simpledbm.common.registry.ObjectFactory#register(int,
-     *      java.lang.String)
-     */
-    public synchronized final void registerType(int tc, String classname) {
-        try {
-            if (log.isDebugEnabled()) {
-                log.debug(
-                    this.getClass().getName(),
-                    "register",
-                    "SIMPLEDBM-DEBUG: Registering typecode " + tc
-                            + " for class " + classname);
-            }
-            short typecode = (short) tc;
-            ObjectDefinition od = typeRegistry.get(typecode);
-            if (od != null) {
-                if (!od.isSingleton() && od.getClassName().equals(classname)) {
-                    log.warn(LOG_CLASS_NAME, "register", mcat.getMessage(
-                        "WR0001",
-                        typecode));
-                    return;
-                }
-                log.error(this.getClass().getName(), "register", mcat
-                    .getMessage(
-                        "ER0002",
-                        typecode,
-                        od.getClassName(),
-                        classname));
-                throw new ObjectCreationException(mcat.getMessage(
-                    "ER0002",
-                    typecode,
-                    od.getClassName(),
-                    classname));
-            }
-            Class<?> clazz = ClassUtils.forName(classname);
-            typeRegistry.put(typecode, new ClassDefinition(typecode, clazz));
-        } catch (ClassNotFoundException e) {
-            log.error(this.getClass().getName(), "register", mcat.getMessage(
-                "ER0005",
-                classname), e);
-            throw new ObjectCreationException(mcat.getMessage(
-                "ER0005",
-                classname), e);
-        }
-    }
-
-    public synchronized final void registerType(int tc, Class<?> clazz) {
+    public synchronized final void registerType(int tc,
+			ObjectFactory objectFactory) {
+		String classname = objectFactory.getType().getName();
 		if (log.isDebugEnabled()) {
 			log.debug(this.getClass().getName(), "register",
 					"SIMPLEDBM-DEBUG: Registering typecode " + tc
-							+ " for class " + clazz.getName());
+							+ " for class " + classname);
 		}
 		short typecode = (short) tc;
 		ObjectDefinition od = typeRegistry.get(typecode);
 		if (od != null) {
-			if (!od.isSingleton() && od.getClassName().equals(clazz.getName())) {
+			if (!od.isSingleton() && od.getClassName().equals(classname)) {
 				log.warn(LOG_CLASS_NAME, "register", mcat.getMessage("WR0001",
 						typecode));
 				return;
 			}
 			log.error(this.getClass().getName(), "register", mcat.getMessage(
-					"ER0002", typecode, od.getClassName(), clazz.getName()));
+					"ER0002", typecode, od.getClassName(), classname));
 			throw new ObjectCreationException(mcat.getMessage("ER0002",
-					typecode, od.getClassName(), clazz.getName()));
+					typecode, od.getClassName(), classname));
 		}
-		typeRegistry.put(typecode, new ClassDefinition(typecode, clazz));
+		typeRegistry.put(typecode, new FactoryObjectDefinition(typecode,
+				objectFactory));
 	}
+
     
-    
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.simpledbm.common.registry.ObjectFactory#register(int,
-     *      java.lang.Object)
-     */
     public synchronized final void registerSingleton(int tc, Object object) {
         short typecode = (short) tc;
         if (log.isDebugEnabled()) {
@@ -181,16 +126,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
             throw new ObjectCreationException.UnknownTypeException(mcat
                 .getMessage("ER0006", typecode));
         }
-        if (od.isSingleton()) {
-            return od.getInstance();
-        } else {
-            Object o = od.getInstance();
-            if (o instanceof ObjectRegistryAware) {
-                ObjectRegistryAware ofa = (ObjectRegistryAware) o;
-                ofa.setObjectFactory(this);
-            }
-            return o;
-        }
+        return od.getInstance();
     }
     
     public Object getInstance(int typecode, ByteBuffer buf) {
@@ -201,16 +137,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
             throw new ObjectCreationException.UnknownTypeException(mcat
                 .getMessage("ER0006", typecode));
         }
-        if (od.isSingleton()) {
-            return od.getInstance();
-        } else {
-            Object o = od.getInstance(buf);
-            if (o instanceof ObjectRegistryAware) {
-                ObjectRegistryAware ofa = (ObjectRegistryAware) o;
-                ofa.setObjectFactory(this);
-            }
-            return o;
-        }
+        return od.getInstance(buf);
 	}
 
 	public Object getInstance(ByteBuffer buf) {
@@ -243,7 +170,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         abstract Object getInstance(ByteBuffer buf);
         
         abstract boolean isSingleton();
-
+        
         abstract String getClassName();
     }
 
@@ -276,73 +203,33 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 		}
     }
 
-    static class ClassDefinition extends ObjectDefinition {
+    static class FactoryObjectDefinition extends ObjectDefinition {
 
-        final Class<?> clazz;
-        Constructor<?> ctor = null;
+    	ObjectFactory objectFactory;
+    	
+		public FactoryObjectDefinition(int typecode, ObjectFactory objectFactory) {
+			super(typecode);
+			this.objectFactory = objectFactory;
+		}
 
-        ClassDefinition(int typecode, Class<?> klass) {
-            super(typecode);
-            this.clazz = klass;
-            Class<?>[] parameterTypes = new Class<?>[1];
-            parameterTypes[0] = ByteBuffer.class;
-            try {
-				ctor = klass.getConstructor(parameterTypes);
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-//				e.printStackTrace();
-			} catch (NoSuchMethodException e) {
-				// TODO Auto-generated catch block
-//				e.printStackTrace();
-			}
-        }
+		@Override
+		String getClassName() {
+			return objectFactory.getType().getName();
+		}
 
-        @Override
-        String getClassName() {
-            return clazz.getName();
-        }
+		@Override
+		Object getInstance() {
+			return objectFactory.newInstance();
+		}
 
-        @Override
-        Object getInstance() {
-            try {
-                return clazz.newInstance();
-            } catch (Exception e) {
-                log.error(this.getClass().getName(), "getInstance", mcat
-                    .getMessage("ER0007", getTypeCode(), clazz), e);
-                throw new ObjectCreationException(mcat.getMessage(
-                    "ER0007",
-                    getTypeCode(),
-                    clazz), e);
-            }
-        }
+		@Override
+		Object getInstance(ByteBuffer buf) {
+			return objectFactory.newInstance(buf);
+		}
 
-        Object getInstance(ByteBuffer buf) {
-        	if (ctor == null) {
-//                log.error(this.getClass().getName(), "getInstance", mcat
-//                        .getMessage("ER0007", getTypeCode(), clazz), e);
-//                    throw new ObjectCreationException(mcat.getMessage(
-//                        "ER0007",
-//                        getTypeCode(),
-//                        clazz), e);
-        		throw new UnsupportedOperationException();
-        	}
-            try {
-                return ctor.newInstance(buf);
-            } catch (Exception e) {
-                log.error(this.getClass().getName(), "getInstance", mcat
-                    .getMessage("ER0007", getTypeCode(), clazz), e);
-                throw new ObjectCreationException(mcat.getMessage(
-                    "ER0007",
-                    getTypeCode(),
-                    clazz), e);
-            }
-        }
-        
-        @Override
-        boolean isSingleton() {
-            return false;
-        }
-
-    }
-
+		@Override
+		boolean isSingleton() {
+			return false;
+		}
+    }   
 }

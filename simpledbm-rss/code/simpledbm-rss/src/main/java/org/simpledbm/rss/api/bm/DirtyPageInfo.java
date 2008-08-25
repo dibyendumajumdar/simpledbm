@@ -36,14 +36,14 @@ public final class DirtyPageInfo implements Storable, Dumpable {
 
     private static final int SIZE = PageId.SIZE + Lsn.SIZE;
 
-    private PageId pageId;
+    private final PageId pageId;
 
     private Lsn recoveryLsn;
 
     private Lsn realRecoveryLsn;
 
-    public DirtyPageInfo() {
-    }
+//    public DirtyPageInfo() {
+//    }
 
     public DirtyPageInfo(PageId pageId, Lsn recoveryLsn, Lsn realRecoveryLsn) {
         this.pageId = pageId;
@@ -51,6 +51,13 @@ public final class DirtyPageInfo implements Storable, Dumpable {
         this.realRecoveryLsn = realRecoveryLsn;
     }
 
+    public DirtyPageInfo(ByteBuffer bb) {
+        pageId = new PageId(bb);
+        recoveryLsn = new Lsn(bb);
+        realRecoveryLsn = recoveryLsn;
+    }
+    
+    
     /**
      * Returns the pageId of the dirty page.
      */
@@ -58,9 +65,9 @@ public final class DirtyPageInfo implements Storable, Dumpable {
         return pageId;
     }
 
-    public void setPageId(PageId pageId) {
-        this.pageId = pageId;
-    }
+//    public void setPageId(PageId pageId) {
+//        this.pageId = pageId;
+//    }
 
     /**
      * Returns the recoveryLsn assigned to the page. RecoveryLsn is
@@ -97,14 +104,14 @@ public final class DirtyPageInfo implements Storable, Dumpable {
         return appendTo(new StringBuilder()).toString();
     }
 
-    public void retrieve(ByteBuffer bb) {
-        pageId = new PageId();
-        pageId.retrieve(bb);
-        recoveryLsn = new Lsn();
-        recoveryLsn.retrieve(bb);
-        realRecoveryLsn = new Lsn();
-        realRecoveryLsn = recoveryLsn;
-    }
+//    public void retrieve(ByteBuffer bb) {
+//        pageId = new PageId();
+//        pageId.retrieve(bb);
+//        recoveryLsn = new Lsn();
+//        recoveryLsn.retrieve(bb);
+//        realRecoveryLsn = new Lsn();
+//        realRecoveryLsn = recoveryLsn;
+//    }
 
     public void store(ByteBuffer bb) {
         pageId.store(bb);

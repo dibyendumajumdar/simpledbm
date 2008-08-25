@@ -31,6 +31,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -38,6 +39,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.TestPage.MyPage;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -71,18 +73,23 @@ public class TestBufferManager extends BaseTestCase {
 
         int i = 0;
 
-        public MyPage() {
-            super();
-        }
-
-        /**
-         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
-         */
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
+        public MyPage(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
             i = bb.getInt();
-        }
+		}
+
+		public MyPage(PageFactory pageFactory) {
+			super(pageFactory);
+		}
+
+//		/**
+//         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
+//         */
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            i = bb.getInt();
+//        }
 
         /**
          * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
@@ -92,11 +99,32 @@ public class TestBufferManager extends BaseTestCase {
             super.store(bb);
             bb.putInt(i);
         }
+//
+//        @Override
+//        public void init() {
+//        }
+        
+        static class MyPageFactory implements ObjectFactory {
 
-        @Override
-        public void init() {
+        	final PageFactory pageFactory;
+        	
+        	public MyPageFactory(PageFactory pageFactory) {
+        		this.pageFactory = pageFactory;
+        	}
+        	
+			public Class<?> getType() {
+				return MyPage.class;
+			}
+
+			public Object newInstance() {
+				return new MyPage(pageFactory);
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new MyPage(pageFactory, buf);
+			}
+        	
         }
-
     }
 
     public void testCase1() throws Exception {
@@ -125,7 +153,7 @@ public class TestBufferManager extends BaseTestCase {
 
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 
@@ -190,7 +218,7 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 
@@ -315,7 +343,7 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 
@@ -456,7 +484,7 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 
@@ -542,7 +570,7 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 
@@ -631,7 +659,7 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         bufmgr.start();
 

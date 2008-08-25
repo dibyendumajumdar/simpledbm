@@ -19,7 +19,11 @@
  */
 package org.simpledbm.rss.impl.pm;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 
 /**
  * A basic implementation of a page.
@@ -29,13 +33,39 @@ import org.simpledbm.rss.api.pm.Page;
  */
 public final class RawPage extends Page {
 
-    public RawPage() {
-        super();
+    public RawPage(PageFactory pageFactory) {
+        super(pageFactory);
+    }
+    
+    public RawPage(PageFactory pageFactory, ByteBuffer buf) {
+    	super(pageFactory, buf);
     }
 
-    @Override
-    public final void init() {
-        // does nothing
-    }
+//    @Override
+//    public final void init() {
+//        // does nothing
+//    }
 
+    static final class RawPageFactory implements ObjectFactory {
+
+    	final PageFactory pageFactory;
+    	
+    	public RawPageFactory(PageFactory pageFactory) {
+    		this.pageFactory = pageFactory;
+    	}
+    	
+		public Class<?> getType() {
+			return RawPage.class;
+		}
+
+		public Object newInstance() {
+			return new RawPage(pageFactory);
+		}
+
+		public Object newInstance(ByteBuffer buf) {
+			return new RawPage(pageFactory, buf);
+		}
+    	
+    }
+    
 }

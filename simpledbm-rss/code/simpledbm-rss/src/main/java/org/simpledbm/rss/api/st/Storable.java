@@ -38,7 +38,7 @@ public interface Storable {
      * to be setup correctly for reading.
      * @param bb ByteBuffer that contains a stored representation of the object.
      */
-    void retrieve(ByteBuffer bb);
+//    void retrieve(ByteBuffer bb);
 
     /**
      * Store this object into the supplied ByteBuffer in a format that can 

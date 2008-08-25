@@ -19,6 +19,8 @@
  */
 package org.simpledbm.rss.impl.tuple;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -37,4 +39,8 @@ public class TupleIdFactory implements LocationFactory {
     public TupleId newTupleId(PageId pageId, int slotNumber) {
         return new TupleId(pageId, slotNumber);
     }
+
+	public Location newLocation(ByteBuffer bb) {
+		return new TupleId(bb);
+	}
 }

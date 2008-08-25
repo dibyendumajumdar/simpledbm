@@ -37,7 +37,7 @@ public final class TransactionId implements Storable, Dumpable {
 
     public static final int SIZE = TypeSize.LONG;
 
-    private long id;
+    private final long id;
 
     public TransactionId() {
         id = -1;
@@ -47,9 +47,13 @@ public final class TransactionId implements Storable, Dumpable {
         this.id = id;
     }
 
-    public final void retrieve(ByteBuffer bb) {
+    public TransactionId(ByteBuffer bb) {
         id = bb.getLong();
     }
+    
+//    public final void retrieve(ByteBuffer bb) {
+//        id = bb.getLong();
+//    }
 
     public final void store(ByteBuffer bb) {
         bb.putLong(id);

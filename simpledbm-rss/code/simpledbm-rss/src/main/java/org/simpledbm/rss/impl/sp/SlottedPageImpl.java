@@ -24,6 +24,8 @@ import java.util.ArrayList;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
+import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
@@ -131,23 +133,35 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         /**
          * Offset within the data array where the slot's data is stored.
          */
-        private short offset = 0;
+        private final short offset;
 
         /**
          * Flags for the slot. Unused by SlottedPageImpl.
          */
-        private short flags = 0;
+        private final short flags;
 
         /**
          * Length of the slot's data. If length == 0, it means that
          * the slot is deleted.
          */
-        private short length = 0;
+        private final short length;
 
+        
+        static Slot NULL_SLOT = new Slot();
+        
         /**
          * Default constructor
          */
         public Slot() {
+        	offset = 0;
+        	flags = 0;
+        	length = 0;
+        }
+        
+        public Slot(int flags, int offset, int length) {
+        	this.offset = (short) offset;
+        	this.flags = (short) flags;
+        	this.length = (short) length;
         }
 
         /**
@@ -159,14 +173,20 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             length = slot.length;
         }
 
-        /* (non-Javadoc)
-         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-         */
-        public final void retrieve(ByteBuffer bb) {
+        public Slot(ByteBuffer bb) {
             offset = bb.getShort();
             flags = bb.getShort();
             length = bb.getShort();
-        }
+        }        
+        
+        /* (non-Javadoc)
+         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
+         */
+//        public final void retrieve(ByteBuffer bb) {
+//            offset = bb.getShort();
+//            flags = bb.getShort();
+//            length = bb.getShort();
+//        }
 
         /* (non-Javadoc)
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
@@ -188,25 +208,25 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             return flags;
         }
 
-        final void setFlags(int flags) {
-            this.flags = (short) flags;
-        }
+//        final void setFlags(int flags) {
+//            this.flags = (short) flags;
+//        }
 
         final int getLength() {
             return length;
         }
 
-        final void setLength(int length) {
-            this.length = (short) length;
-        }
+//        final void setLength(int length) {
+//            this.length = (short) length;
+//        }
 
         final int getOffset() {
             return offset;
         }
 
-        final void setOffset(int offset) {
-            this.offset = (short) offset;
-        }
+//        final void setOffset(int offset) {
+//            this.offset = (short) offset;
+//        }
 
         public final StringBuilder appendTo(StringBuilder sb) {
             sb
@@ -226,9 +246,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
-    @Override
-    public final void retrieve(ByteBuffer bb) {
-        super.retrieve(bb);
+    public SlottedPageImpl(PageFactory pageFactory, ByteBuffer bb) {
+		super(pageFactory, bb);
         flags = bb.getShort();
         numberOfSlots = bb.getShort();
         deletedSlots = bb.getShort();
@@ -242,12 +261,50 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         slotTable.ensureCapacity(numberOfSlots);
         ByteBuffer bb1 = ByteBuffer.wrap(data);
         for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-            Slot slot = new Slot();
-            slot.retrieve(bb1);
+//            Slot slot = new Slot();
+//            slot.retrieve(bb1);
+        	Slot slot = new Slot(bb1);
             slotTable.add(slotNumber, slot);
         }
         validatePageSize();
-    }
+	}
+
+	public SlottedPageImpl(PageFactory pageFactory) {
+		super(pageFactory);
+//        flags = 0;
+//        numberOfSlots = 0;
+//        deletedSlots = 0;
+//        freeSpace = getSpace();
+//        highWaterMark = freeSpace;
+//        spaceMapPageNumber = -1;
+//        data = new byte[getSpace()];
+//        slotTable = new ArrayList<Slot>();
+		init();
+	}
+
+//	@Override
+//    public final void retrieve(ByteBuffer bb) {
+//        super.retrieve(bb);
+//        flags = bb.getShort();
+//        numberOfSlots = bb.getShort();
+//        deletedSlots = bb.getShort();
+//        freeSpace = bb.getInt();
+//        highWaterMark = bb.getInt();
+//        spaceMapPageNumber = bb.getInt();
+//        validatePageHeader();
+//        data = new byte[getSpace()];
+//        bb.get(data);
+//        slotTable.clear();
+//        slotTable.ensureCapacity(numberOfSlots);
+//        ByteBuffer bb1 = ByteBuffer.wrap(data);
+//        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+////            Slot slot = new Slot();
+////            slot.retrieve(bb1);
+//        	Slot slot = new Slot(bb1);
+//            slotTable.add(slotNumber, slot);
+//        }
+//        validatePageSize();
+//    }
 
     @Override
     public final void store(ByteBuffer bb) {
@@ -309,12 +366,12 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         return 200;
     }
 
-    /**
-     * Default constructor.
-     */
-    public SlottedPageImpl() {
-        super();
-    }
+//    /**
+//     * Default constructor.
+//     */
+//    public SlottedPageImpl() {
+//        super();
+//    }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.pm.Page#init()
@@ -402,7 +459,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
      * enough contiguous space.
      * @return Null if there is not enough contiguous space, a Slot object otherwise.
      */
-    private Slot findSpace(int slotNumber, int length) {
+    private Slot findSpace(int slotNumber, int length, int flags) {
         /* To find space between slots we would have to carry out some
          * expensive computation. First, we would have to sort the slots in
          * the order of slot.offset, and then scan for the largest chunk.
@@ -435,10 +492,12 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             return null;
         }
 
-        Slot slot = new Slot();
-        slot.setOffset(start_pos);
-        slot.setFlags(0);
-        slot.setLength(length);
+//        Slot slot = new Slot();
+//        slot.setOffset(start_pos);
+//        slot.setFlags(0);
+//        slot.setLength(length);
+        Slot slot = new Slot(flags, start_pos, length);
+        
         return slot;
     }
 
@@ -492,7 +551,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             int startPos = highWaterMark - slot.getLength();
             System.arraycopy(data, slot.getOffset(), newdata, startPos, slot
                 .getLength());
-            slot.setOffset(startPos);
+//            slot.setOffset(startPos);
+            slotTable.set(slotNumber, new Slot(slot.getFlags(), startPos, slot.getLength()));
             highWaterMark -= slot.getLength();
             freeSpace -= slot.getLength();
         }
@@ -524,10 +584,10 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             throw new PageException(mcat.getMessage("EO0001", item, this));
         }
         /* find contiguous space */
-        Slot slot = findSpace(slotNumber, len);
+        Slot slot = findSpace(slotNumber, len, 0);
         if (slot == null) {
             defragment();
-            slot = findSpace(slotNumber, len);
+            slot = findSpace(slotNumber, len, 0);
         }
 
         addSlot(slotNumber, item, slot);
@@ -585,28 +645,28 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         int savedFlags = 0;
-        boolean restoreFlags = false;
+//        boolean restoreFlags = false;
         if (replaceMode) {
             // If we are in replaceMode,
             // we may need to delete an existing tuple
             if (slotNumber < numberOfSlots && !isSlotDeleted(slotNumber)) {
                 savedFlags = slotTable.get(slotNumber).getFlags();
-                restoreFlags = true;
+//                restoreFlags = true;
                 delete(slotNumber);
             }
         }
 
         /* find contiguous space */
-        Slot slot = findSpace(slotNumber, len);
+        Slot slot = findSpace(slotNumber, len, savedFlags);
         if (slot == null) {
             defragment();
-            slot = findSpace(slotNumber, len);
+            slot = findSpace(slotNumber, len, savedFlags);
         }
 
         addSlot(slotNumber, item, slot);
-        if (restoreFlags) {
-            slotTable.get(slotNumber).setFlags(savedFlags);
-        }
+//        if (restoreFlags) {
+//            slotTable.get(slotNumber).setFlags(savedFlags);
+//        }
 //		if (debug > 0) {
 //			debugout << Thread::getCurrentThread()->getName() <<
 //				": TupleMgr.insertTupleAt: Inserting tuple [" <<
@@ -630,8 +690,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         freeSpace += getDataLength(slotNumber);
         deletedSlots++;
-        slotTable.get(slotNumber).setLength(0);
-        slotTable.get(slotNumber).setFlags(0);
+//        slotTable.get(slotNumber).setLength(0);
+//        slotTable.get(slotNumber).setFlags(0);
+        slotTable.set(slotNumber, Slot.NULL_SLOT);
     }
 
     /**
@@ -683,18 +744,18 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
-    /**
-     * Return a pointer to tuple's data, as well as its length.
-     */
-    @Override
-    public final Storable get(int slotNumber, Storable item) {
-        validateSlotNumber(slotNumber, false);
-        Slot slot = slotTable.get(slotNumber);
-        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
-            .getLength());
-        item.retrieve(bb);
-        return item;
-    }
+//    /**
+//     * Return a pointer to tuple's data, as well as its length.
+//     */
+//    @Override
+//    public final Storable get(int slotNumber, Storable item) {
+//        validateSlotNumber(slotNumber, false);
+//        Slot slot = slotTable.get(slotNumber);
+//        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
+//            .getLength());
+//        item.retrieve(bb);
+//        return item;
+//    }
     
     /**
      * Return a pointer to tuple's data, as well as its length.
@@ -719,7 +780,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         validateLatchHeldExclusively();
         validateSlotNumber(slotNumber, false);
         Slot slot = slotTable.get(slotNumber);
-        slot.setFlags(flags);
+        slotTable.set(slotNumber, new Slot(flags, slot.getOffset(), slot.getLength()));
+        //slot.setFlags(flags);
     }
 
     /**
@@ -838,6 +900,22 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         for (int i = 0; i < getNumberOfSlots(); i++) {
             DiagnosticLogger.log("Slot#" + i + "=" + slotTable.get(i));
         }
+    }
+    
+    public static final class SlottedPageImplFactory implements ObjectFactory {
+    	final PageFactory pageFactory;
+    	public SlottedPageImplFactory(PageFactory pageFactory) {
+    		this.pageFactory = pageFactory;
+    	}
+		public Class<?> getType() {
+			return SlottedPageImpl.class;
+		}
+		public Object newInstance() {
+			return new SlottedPageImpl(pageFactory);
+		}
+		public Object newInstance(ByteBuffer buf) {
+			return new SlottedPageImpl(pageFactory, buf);
+		}
     }
 
 }

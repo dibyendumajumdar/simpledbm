@@ -41,6 +41,7 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -54,7 +55,6 @@ import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Lockable;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
-import org.simpledbm.rss.api.tx.LoggableFactoryAware;
 import org.simpledbm.rss.api.tx.LogicalUndo;
 import org.simpledbm.rss.api.tx.MultiPageRedo;
 import org.simpledbm.rss.api.tx.NonTransactionRelatedOperation;
@@ -312,22 +312,22 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         objectFactory.registerType(
             TYPE_TRXPREPARE,
-            TransactionManagerImpl.TrxPrepare.class.getName());
+            new TransactionManagerImpl.TrxPrepare.TrxPrepareFactory(loggableFactory));
         objectFactory.registerType(
             TYPE_TRXABORT,
-            TransactionManagerImpl.TrxAbort.class.getName());
+            new TransactionManagerImpl.TrxAbort.TrxAbortFactory());
         objectFactory.registerType(
             TYPE_TRXEND,
-            TransactionManagerImpl.TrxEnd.class.getName());
+            new TransactionManagerImpl.TrxEnd.TrxEndFactory());
         objectFactory.registerType(
             TYPE_CHECKPOINTBEGIN,
-            TransactionManagerImpl.CheckpointBegin.class.getName());
+            new TransactionManagerImpl.CheckpointBegin.CheckpointBeginFactory());
         objectFactory.registerType(
             TYPE_CHECKPOINTEND,
-            TransactionManagerImpl.CheckpointEnd.class.getName());
+            new TransactionManagerImpl.CheckpointEnd.CheckpointEndFactory(this));
         objectFactory.registerType(
             TYPE_DUMMYCLR,
-            TransactionManagerImpl.DummyCLR.class.getName());
+            new TransactionManagerImpl.DummyCLR.DummyCLRFactory());
 
         this.lockWaitTimeout = getNumericProperty(p, PROPERTY_LOCK_TIMEOUT, DEFAULT_LOCK_TIMEOUT);
         this.checkpointInterval = getNumericProperty(p, PROPERTY_CHECKPOINT_INTERVAL, DEFAULT_CHECKPOINT_INTERVAL);
@@ -627,7 +627,7 @@ public final class TransactionManagerImpl implements TransactionManager {
          */
         CheckpointEnd checkpointEnd = (CheckpointEnd) loggableFactory
             .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTEND);
-        checkpointEnd.setTrxMgr(this);
+//        checkpointEnd.setTrxMgr(this);
         checkpointEnd.setTransactionTable(trxTable);
         /*
          * Calculate the oldest interesting LSN. This can be used by the
@@ -755,12 +755,12 @@ public final class TransactionManagerImpl implements TransactionManager {
         }
         CheckpointEnd checkpointBody = (CheckpointEnd) loggableFactory
             .getInstance(logrec);
-        /*
-         * When transaction table is reconstructed, there is a problem with
-         * initialising the TransactionImpl properly with a reference to the
-         * Transaction Manager. Hence, we do this as a second step.
-         */
-        checkpointBody.updateTrxMgr(this);
+//        /*
+//         * When transaction table is reconstructed, there is a problem with
+//         * initialising the TransactionImpl properly with a reference to the
+//         * Transaction Manager. Hence, we do this as a second step.
+//         */
+//        checkpointBody.updateTrxMgr(this);
         trxTable = checkpointBody.trxTable;
         dirtyPages = checkpointBody.newDirtyPages;
         trid.set(checkpointBody.getTrxId().longValue());
@@ -1731,7 +1731,30 @@ public final class TransactionManagerImpl implements TransactionManager {
          * Creates a new Transaction object. Only to be used when
          * reading from a container.
          */
-        TransactionImpl() {
+        TransactionImpl(TransactionManagerImpl trxmgr, ByteBuffer bb) {
+        	this.trxmgr = trxmgr;
+            this.trxMgrLatchRef = new LatchHelper(trxmgr.latch);
+            this.lockTimeout = trxmgr.getLockWaitTimeout();
+            trxId = new TransactionId(bb);
+            firstLsn = new Lsn(bb);
+            lastLsn = new Lsn(bb);
+            undoNextLsn = new Lsn(bb);
+            int ordinal = bb.get();
+            if (TrxState.TRX_PREPARED.ordinal() == ordinal) {
+                state = TrxState.TRX_PREPARED;
+            } else if (TrxState.TRX_UNPREPARED.ordinal() == ordinal) {
+                state = TrxState.TRX_UNPREPARED;
+            } else {
+                state = TrxState.TRX_DEAD;
+            }
+            ordinal = bb.get();
+            if (IsolationMode.CURSOR_STABILITY.ordinal() == ordinal) {
+                isolationMode = IsolationMode.CURSOR_STABILITY;
+            } else if (IsolationMode.READ_COMMITTED.ordinal() == ordinal) {
+                isolationMode = IsolationMode.READ_COMMITTED;
+            } else {
+                isolationMode = IsolationMode.SERIALIZABLE;
+            }
         }
 
         public synchronized int getLockTimeout() {
@@ -2053,7 +2076,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             if (!lastLsn.isNull() || !postCommitActions.isEmpty()) {
                 TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory
                     .getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
-                prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
+//                prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
                 prepareLogRec.setTrxId(trxId);
                 prepareLogRec.setPrevTrxLsn(lastLsn);
                 prepareLogRec.setPostCommitActions(postCommitActions);
@@ -2428,35 +2451,35 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
 
-        /* (non-Javadoc)
-         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-         */
-        public final void retrieve(ByteBuffer bb) {
-            trxId = new TransactionId();
-            trxId.retrieve(bb);
-            firstLsn = new Lsn();
-            firstLsn.retrieve(bb);
-            lastLsn = new Lsn();
-            lastLsn.retrieve(bb);
-            undoNextLsn = new Lsn();
-            undoNextLsn.retrieve(bb);
-            int ordinal = bb.get();
-            if (TrxState.TRX_PREPARED.ordinal() == ordinal) {
-                state = TrxState.TRX_PREPARED;
-            } else if (TrxState.TRX_UNPREPARED.ordinal() == ordinal) {
-                state = TrxState.TRX_UNPREPARED;
-            } else {
-                state = TrxState.TRX_DEAD;
-            }
-            ordinal = bb.get();
-            if (IsolationMode.CURSOR_STABILITY.ordinal() == ordinal) {
-                isolationMode = IsolationMode.CURSOR_STABILITY;
-            } else if (IsolationMode.READ_COMMITTED.ordinal() == ordinal) {
-                isolationMode = IsolationMode.READ_COMMITTED;
-            } else {
-                isolationMode = IsolationMode.SERIALIZABLE;
-            }
-        }
+//        /* (non-Javadoc)
+//         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
+//         */
+//        public final void retrieve(ByteBuffer bb) {
+//            trxId = new TransactionId();
+//            trxId.retrieve(bb);
+//            firstLsn = new Lsn();
+//            firstLsn.retrieve(bb);
+//            lastLsn = new Lsn();
+//            lastLsn.retrieve(bb);
+//            undoNextLsn = new Lsn();
+//            undoNextLsn.retrieve(bb);
+//            int ordinal = bb.get();
+//            if (TrxState.TRX_PREPARED.ordinal() == ordinal) {
+//                state = TrxState.TRX_PREPARED;
+//            } else if (TrxState.TRX_UNPREPARED.ordinal() == ordinal) {
+//                state = TrxState.TRX_UNPREPARED;
+//            } else {
+//                state = TrxState.TRX_DEAD;
+//            }
+//            ordinal = bb.get();
+//            if (IsolationMode.CURSOR_STABILITY.ordinal() == ordinal) {
+//                isolationMode = IsolationMode.CURSOR_STABILITY;
+//            } else if (IsolationMode.READ_COMMITTED.ordinal() == ordinal) {
+//                isolationMode = IsolationMode.READ_COMMITTED;
+//            } else {
+//                isolationMode = IsolationMode.SERIALIZABLE;
+//            }
+//        }
 
         /* (non-Javadoc)
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
@@ -2497,11 +2520,6 @@ public final class TransactionManagerImpl implements TransactionManager {
         @Override
         public final String toString() {
             return appendTo(new StringBuilder()).toString();
-        }
-
-        private void setTrxmgr(TransactionManagerImpl trxmgr) {
-            this.trxmgr = trxmgr;
-            this.trxMgrLatchRef = new LatchHelper(trxmgr.latch);
         }
 
         private TransactionManagerImpl getTrxmgr() {
@@ -2597,23 +2615,30 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     static final class ActiveContainerInfo implements Storable {
 
-        ByteString name;
+        private final ByteString name;
 
-        int containerId;
+        private final int containerId;
 
-        ActiveContainerInfo() {
-        }
+//        ActiveContainerInfo() {
+//        }
 
         ActiveContainerInfo(String name, int containerId) {
             this.name = new ByteString(name);
             this.containerId = containerId;
         }
 
-        public void retrieve(ByteBuffer bb) {
-            name = new ByteString();
-            name.retrieve(bb);
+        public ActiveContainerInfo(ByteBuffer bb) {
+//            name = new ByteString();
+//            name.retrieve(bb);
+        	name = new ByteString(bb);
             containerId = bb.getInt();
         }
+
+//        public void retrieve(ByteBuffer bb) {
+//            name = new ByteString();
+//            name.retrieve(bb);
+//            containerId = bb.getInt();
+//        }
 
         public void store(ByteBuffer bb) {
             assert name != null;
@@ -2643,6 +2668,13 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     static abstract class Checkpoint extends BaseLoggable {
 
+		protected Checkpoint() {
+			super();
+		}
+
+		protected Checkpoint(ByteBuffer bb) {
+			super(bb);
+		}
     }
 
     /**
@@ -2653,11 +2685,20 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         ActiveContainerInfo[] activeContainers = new ActiveContainerInfo[0];
 
-        @Override
-        public final void init() {
-        }
+		public CheckpointBegin() {
+			super();
+		}
 
-        public void setActiveContainers(StorageContainerInfo[] storageContainers) {
+		public CheckpointBegin(ByteBuffer bb) {
+			super(bb);
+            short n = bb.getShort();
+            activeContainers = new ActiveContainerInfo[n];
+            for (int i = 0; i < n; i++) {
+              activeContainers[i] = new ActiveContainerInfo(bb);
+            }
+		}
+
+		public void setActiveContainers(StorageContainerInfo[] storageContainers) {
             this.activeContainers = new ActiveContainerInfo[storageContainers.length];
             for (int i = 0; i < storageContainers.length; i++) {
                 this.activeContainers[i] = new ActiveContainerInfo(
@@ -2675,16 +2716,18 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
 
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            short n = bb.getShort();
-            activeContainers = new ActiveContainerInfo[n];
-            for (int i = 0; i < n; i++) {
-                activeContainers[i] = new ActiveContainerInfo();
-                activeContainers[i].retrieve(bb);
-            }
-        }
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            short n = bb.getShort();
+//            activeContainers = new ActiveContainerInfo[n];
+//            for (int i = 0; i < n; i++) {
+////                activeContainers[i] = new ActiveContainerInfo();
+////                activeContainers[i].retrieve(bb);
+//              activeContainers[i] = new ActiveContainerInfo(bb);
+//
+//            }
+//        }
 
         @Override
         public int getStoredLength() {
@@ -2718,6 +2761,22 @@ public final class TransactionManagerImpl implements TransactionManager {
             return appendTo(new StringBuilder()).toString();
         }
 
+        static final class CheckpointBeginFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return CheckpointBegin.class;
+			}
+
+			public Object newInstance() {
+				return new CheckpointBegin();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new CheckpointBegin(buf);
+			}
+        	
+        }
+        
     }
 
     /**
@@ -2735,19 +2794,27 @@ public final class TransactionManagerImpl implements TransactionManager {
         int n_trx = 0;
         TransactionManagerImpl trxmgr;
 
-        @Override
-        public final void init() {
-        }
+        public CheckpointEnd(TransactionManagerImpl trxmgr) {
+			super();
+			this.trxmgr = trxmgr;
+		}
 
-        final void setTrxMgr(TransactionManagerImpl trxmgr) {
-            this.trxmgr = trxmgr;
-        }
-
-        final void updateTrxMgr(TransactionManagerImpl trxmgr) {
-            for (TransactionImpl trx : trxTable) {
-                trx.setTrxmgr(trxmgr);
+		public CheckpointEnd(TransactionManagerImpl trxmgr, ByteBuffer bb) {
+			super(bb);
+			this.trxmgr = trxmgr;
+            int n_trx = bb.getInt();
+            trxTable = new LinkedList<TransactionImpl>();
+            for (int i = 0; i < n_trx; i++) {
+                TransactionImpl trx = new TransactionImpl(trxmgr, bb);
+                trxTable.add(trx);
             }
-        }
+            int n_dp = bb.getInt();
+            newDirtyPages = new ArrayList<DirtyPageInfo>(n_dp);
+            for (int i = 0; i < n_dp; i++) {
+                DirtyPageInfo dp = new DirtyPageInfo(bb);
+                newDirtyPages.add(dp);
+            }
+		}
 
         final void setDirtyPageList(DirtyPageInfo[] dirtyPages) {
             this.dirtyPages = dirtyPages;
@@ -2777,25 +2844,25 @@ public final class TransactionManagerImpl implements TransactionManager {
             return size;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            int n_trx = bb.getInt();
-            trxTable = new LinkedList<TransactionImpl>();
-            for (int i = 0; i < n_trx; i++) {
-                TransactionImpl trx = new TransactionImpl();
-                trx.retrieve(bb);
-                // trx.setTrxmgr(trxmgr);
-                trxTable.add(trx);
-            }
-            int n_dp = bb.getInt();
-            newDirtyPages = new ArrayList<DirtyPageInfo>(n_dp);
-            for (int i = 0; i < n_dp; i++) {
-                DirtyPageInfo dp = new DirtyPageInfo();
-                dp.retrieve(bb);
-                newDirtyPages.add(dp);
-            }
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            int n_trx = bb.getInt();
+//            trxTable = new LinkedList<TransactionImpl>();
+//            for (int i = 0; i < n_trx; i++) {
+//                TransactionImpl trx = new TransactionImpl();
+//                trx.retrieve(bb);
+//                // trx.setTrxmgr(trxmgr);
+//                trxTable.add(trx);
+//            }
+//            int n_dp = bb.getInt();
+//            newDirtyPages = new ArrayList<DirtyPageInfo>(n_dp);
+//            for (int i = 0; i < n_dp; i++) {
+//                DirtyPageInfo dp = new DirtyPageInfo();
+//                dp.retrieve(bb);
+//                newDirtyPages.add(dp);
+//            }
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -2841,10 +2908,31 @@ public final class TransactionManagerImpl implements TransactionManager {
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
+        
+        static final class CheckpointEndFactory implements ObjectFactory {
+        	private final TransactionManagerImpl trxmgr;
+        	CheckpointEndFactory(TransactionManagerImpl trxmgr) {
+        		this.trxmgr = trxmgr;
+        	}
+			public Class<?> getType() {
+				return CheckpointEnd.class;
+			}
+			public Object newInstance() {
+				return new CheckpointEnd(trxmgr);
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new CheckpointEnd(trxmgr, buf);
+			}
+        }
     }
 
     static abstract class TrxControl extends BaseLoggable {
-
+		protected TrxControl() {
+			super();
+		}
+		protected TrxControl(ByteBuffer bb) {
+			super(bb);
+		}
     }
 
     /**
@@ -2853,17 +2941,29 @@ public final class TransactionManagerImpl implements TransactionManager {
      * If distributed transactions are to be supported, then the lock table should
      * also be recorded here.
      */
-    static public final class TrxPrepare extends TrxControl implements
-            LoggableFactoryAware {
+    static public final class TrxPrepare extends TrxControl {
 
         LinkedList<PostCommitAction> postCommitActions = new LinkedList<PostCommitAction>();
 
-        LoggableFactory loggableFactory;
+        private final LoggableFactory loggableFactory;
 
-        @Override
-        public final void init() {
+        public TrxPrepare(LoggableFactory loggableFactory) {
+        	super();
+        	this.loggableFactory = loggableFactory;
         }
-
+        
+        public TrxPrepare(LoggableFactory loggableFactory, ByteBuffer bb) {
+        	super(bb);
+        	this.loggableFactory = loggableFactory;
+            int n = bb.getInt();
+            postCommitActions = new LinkedList<PostCommitAction>();
+            for (int i = 0; i < n; i++) {
+                PostCommitAction action = (PostCommitAction) loggableFactory
+                    .getInstance(bb);
+                postCommitActions.add(action);
+            }
+        }
+        
         public final LinkedList<PostCommitAction> getPostCommitActions() {
             return postCommitActions;
         }
@@ -2883,18 +2983,18 @@ public final class TransactionManagerImpl implements TransactionManager {
             return size;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            int n = bb.getInt();
-            postCommitActions = new LinkedList<PostCommitAction>();
-            for (int i = 0; i < n; i++) {
-                PostCommitAction action = (PostCommitAction) loggableFactory
-                    .getInstance(bb);
-                postCommitActions.add(action);
-            }
-
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            int n = bb.getInt();
+//            postCommitActions = new LinkedList<PostCommitAction>();
+//            for (int i = 0; i < n; i++) {
+//                PostCommitAction action = (PostCommitAction) loggableFactory
+//                    .getInstance(bb);
+//                postCommitActions.add(action);
+//            }
+//
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -2908,10 +3008,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         public final LoggableFactory getLoggableFactory() {
             return loggableFactory;
-        }
-
-        public final void setLoggableFactory(LoggableFactory loggableFactory) {
-            this.loggableFactory = loggableFactory;
         }
 
         public StringBuilder appendTo(StringBuilder sb) {
@@ -2934,15 +3030,40 @@ public final class TransactionManagerImpl implements TransactionManager {
             return appendTo(new StringBuilder()).toString();
         }
 
+        static final class TrxPrepareFactory implements ObjectFactory {
+
+        	private final LoggableFactory loggableFactory;
+        	TrxPrepareFactory(LoggableFactory loggableFactory) {
+        		this.loggableFactory = loggableFactory;
+        	}
+        	
+			public Class<?> getType() {
+				return TrxPrepare.class;
+			}
+
+			public Object newInstance() {
+				return new TrxPrepare(loggableFactory);
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new TrxPrepare(loggableFactory, buf);
+			}
+        	
+        }
+        
     }
 
     static public final class TrxAbort extends TrxControl {
 
-        @Override
-        public final void init() {
-        }
+    	public TrxAbort() {
+			super();
+		}
 
-        public StringBuilder appendTo(StringBuilder sb) {
+		public TrxAbort(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("TrxAbort(");
             super.appendTo(sb);
             sb.append(")");
@@ -2953,15 +3074,32 @@ public final class TransactionManagerImpl implements TransactionManager {
             return appendTo(new StringBuilder()).toString();
         }
 
+        static final class TrxAbortFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return TrxAbort.class;
+			}
+
+			public Object newInstance() {
+				return new TrxAbort();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new TrxAbort(buf);
+			}
+        }
     }
 
     static public final class TrxEnd extends TrxControl {
 
-        @Override
-        public final void init() {
-        }
+        public TrxEnd() {
+			super();
+		}
 
-        public StringBuilder appendTo(StringBuilder sb) {
+		public TrxEnd(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("TrxEnd(");
             super.appendTo(sb);
             sb.append(")");
@@ -2970,6 +3108,20 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         public String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+
+        static final class TrxEndFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return TrxEnd.class;
+			}
+
+			public Object newInstance() {
+				return new TrxEnd();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new TrxEnd(buf);
+			}
         }
     }
 
@@ -3013,14 +3165,14 @@ public final class TransactionManagerImpl implements TransactionManager {
             Compensation {
 
         public DummyCLR() {
-            super();
-        }
+			super();
+		}
 
-        @Override
-        public final void init() {
-        }
+		public DummyCLR(ByteBuffer bb) {
+			super(bb);
+		}
 
-        public StringBuilder appendTo(StringBuilder sb) {
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("DummyCLR(");
             super.appendTo(sb);
             sb.append(")");
@@ -3029,6 +3181,18 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         public String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class DummyCLRFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return DummyCLR.class;
+			}
+			public Object newInstance() {
+				return new DummyCLR();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new DummyCLR(buf);
+			}
         }
     }
 

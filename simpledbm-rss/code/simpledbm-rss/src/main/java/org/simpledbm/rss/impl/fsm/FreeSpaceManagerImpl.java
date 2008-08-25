@@ -36,6 +36,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -138,51 +139,40 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         moduleRegistry.registerModule(MODULE_ID, this);
 
-        objectFactory.registerType(TYPE_HEADERPAGE, HeaderPage.class.getName());
         objectFactory.registerType(
-            TYPE_ONEBITSPACEMAPPAGE,
-            OneBitSpaceMapPage.class.getName());
+        	TYPE_HEADERPAGE, new HeaderPage.HeaderPageFactory(pageFactory));
         objectFactory.registerType(
-            TYPE_TWOBITSPACEMAPPAGE,
-            TwoBitSpaceMapPage.class.getName());
-        objectFactory.registerType(TYPE_CREATECONTAINER, CreateContainer.class
-            .getName());
-        objectFactory.registerType(TYPE_OPENCONTAINER, OpenContainer.class
-            .getName());
+            TYPE_ONEBITSPACEMAPPAGE, new OneBitSpaceMapPage.OneBitSpaceMapPageFactory(pageFactory));
         objectFactory.registerType(
-            TYPE_FORMATHEADERPAGE,
-            FormatHeaderPage.class.getName());
+            TYPE_TWOBITSPACEMAPPAGE, new TwoBitSpaceMapPage.TwoBitSpaceMapPageFactory(pageFactory));
         objectFactory.registerType(
-            TYPE_FORMATSPACEMAPPAGE,
-            FormatSpaceMapPage.class.getName());
+        	TYPE_CREATECONTAINER, new CreateContainer.CreateContainerFactory());
         objectFactory.registerType(
-            TYPE_UPDATESPACEMAPPAGE,
-            UpdateSpaceMapPage.class.getName());
+        	TYPE_OPENCONTAINER, new OpenContainer.OpenContainerFactory());
         objectFactory.registerType(
-            TYPE_UPDATEHEADERPAGE,
-            UpdateHeaderPage.class.getName());
+            TYPE_FORMATHEADERPAGE, new FormatHeaderPage.FormatHeaderPageFactory());
         objectFactory.registerType(
-            TYPE_UNDOUPDATEHEADERPAGE,
-            UndoUpdateHeaderPage.class.getName());
+            TYPE_FORMATSPACEMAPPAGE, new FormatSpaceMapPage.FormatSpaceMapPageFactory());
+        objectFactory.registerType( 
+            TYPE_UPDATESPACEMAPPAGE, new UpdateSpaceMapPage.UpdateSpaceMapPageFactory());
         objectFactory.registerType(
-            TYPE_LINKSPACEMAPPAGE,
-            LinkSpaceMapPage.class.getName());
+            TYPE_UPDATEHEADERPAGE, new UpdateHeaderPage.UpdateHeaderPageFactory());
         objectFactory.registerType(
-            TYPE_UNDOLINKSPACEMAPPAGE,
-            UndoLinkSpaceMapPage.class.getName());
-        objectFactory.registerType(TYPE_FORMATRAWPAGE, FormatRawPage.class
-            .getName());
+            TYPE_UNDOUPDATEHEADERPAGE, new UndoUpdateHeaderPage.UndoUpdateHeaderPageFactory());
         objectFactory.registerType(
-            TYPE_UNDOCREATECONTAINER,
-            UndoCreateContainer.class.getName());
+            TYPE_LINKSPACEMAPPAGE, new LinkSpaceMapPage.LinkSpaceMapPageFactory());
         objectFactory.registerType(
-            TYPE_UNDOABLEUPDATESPACEMAPPAGE,
-            UndoableUpdateSpaceMapPage.class.getName());
+            TYPE_UNDOLINKSPACEMAPPAGE, new UndoLinkSpaceMapPage.UndoLinkSpaceMapPageFactory());
         objectFactory.registerType(
-            TYPE_UNDOSPACEMAPPAGEUPDATE,
-            UndoSpaceMapPageUpdate.class.getName());
-        objectFactory.registerType(TYPE_DROPCONTAINER, DropContainer.class
-            .getName());
+        	TYPE_FORMATRAWPAGE, new FormatRawPage.FormatRawPageFactory());
+        objectFactory.registerType(
+            TYPE_UNDOCREATECONTAINER, new UndoCreateContainer.UndoCreateContainerFactory());
+        objectFactory.registerType(
+            TYPE_UNDOABLEUPDATESPACEMAPPAGE, new UndoableUpdateSpaceMapPage.UndoableUpdateSpaceMapPageFactory());
+        objectFactory.registerType(
+            TYPE_UNDOSPACEMAPPAGEUPDATE, new UndoSpaceMapPageUpdate.UndoSpaceMapUpdateFactory());
+        objectFactory.registerType(
+        	TYPE_DROPCONTAINER, new DropContainer.DropContainerFactory());
     }
 
     public final void setTesting(int level) {
@@ -724,11 +714,23 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int containerId;
         ByteString name;
 
-        @Override
-        public final void init() {
+        public ContainerOperation() {
+			super();
             containerId = -1;
             name = new ByteString("");
-        }
+		}
+
+		public ContainerOperation(ByteBuffer bb) {
+			super(bb);
+            containerId = bb.getInt();
+            name = new ByteString(bb);
+		}
+
+//		@Override
+//        public final void init() {
+//            containerId = -1;
+//            name = new ByteString("");
+//        }
 
         public final int getContainerId() {
             return containerId;
@@ -752,13 +754,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     + name.getStoredLength();
         }
 
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            containerId = bb.getInt();
-            name = new ByteString();
-            name.retrieve(bb);
-        }
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            containerId = bb.getInt();
+//            name = new ByteString();
+//            name.retrieve(bb);
+//        }
 
         @Override
         public void store(ByteBuffer bb) {
@@ -788,7 +790,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class CreateContainer extends ContainerOperation
             implements Undoable {
         
-        public StringBuilder appendTo(StringBuilder sb) {
+        public CreateContainer() {
+			super();
+		}
+
+		public CreateContainer(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("CreateContainer(");
             super.appendTo(sb);
             sb.append(")");
@@ -799,6 +809,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
+        
+        static final class CreateContainerFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return CreateContainer.class;
+			}
+			public Object newInstance() {
+				return new CreateContainer();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new CreateContainer(buf);
+			}
+        }
     }
 
     /**
@@ -808,8 +830,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //	public static final class UndoCreateContainer extends ContainerOperation implements Compensation {
     public static final class UndoCreateContainer extends ContainerOperation
             implements Compensation, ContainerDeleteOperation {
-        
-        public StringBuilder appendTo(StringBuilder sb) {
+
+        public UndoCreateContainer() {
+			super();
+		}
+
+		public UndoCreateContainer(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("UndoCreateContainer(");
             super.appendTo(sb);
             sb.append(")");
@@ -820,6 +850,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
+        
+        static final class UndoCreateContainerFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return UndoCreateContainer.class;
+			}
+
+			public Object newInstance() {
+				return new UndoCreateContainer();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UndoCreateContainer(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -828,8 +874,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class OpenContainer extends ContainerOperation
             implements NonTransactionRelatedOperation {
-        
-        public StringBuilder appendTo(StringBuilder sb) {
+
+        public OpenContainer() {
+			super();
+		}
+
+		public OpenContainer(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("OpenContainer(");
             super.appendTo(sb);
             sb.append(")");
@@ -839,6 +893,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         @Override
         public String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class OpenContainerFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return OpenContainer.class;
+			}
+			public Object newInstance() {
+				return new OpenContainer();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new OpenContainer(buf);
+			}
         }
     }
 
@@ -853,7 +919,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int actionId;
 
-        public final int getActionId() {
+        public DropContainer() {
+			super();
+		}
+
+		public DropContainer(ByteBuffer bb) {
+			super(bb);
+            actionId = bb.getInt();
+		}
+
+		public final int getActionId() {
             return actionId;
         }
 
@@ -861,11 +936,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             this.actionId = actionId;
         }
 
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            actionId = bb.getInt();
-        }
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            actionId = bb.getInt();
+//        }
 
         @Override
         public void store(ByteBuffer bb) {
@@ -896,6 +971,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
 
+        static final class DropContainerFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return DropContainer.class;
+			}
+
+			public Object newInstance() {
+				return new DropContainer();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new DropContainer(buf);
+			}
+        	
+        }
+        
     }
 
     /**
@@ -906,9 +997,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         int dataPageType;
 
-        @Override
-        public final void init() {
-        }
+        public FormatRawPage() {
+			super();
+		}
+
+		public FormatRawPage(ByteBuffer bb) {
+			super(bb);
+            dataPageType = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//        }
 
         public final int getDataPageType() {
             return dataPageType;
@@ -923,11 +1023,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return super.getStoredLength() + TypeSize.INTEGER;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            dataPageType = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            dataPageType = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -947,6 +1047,21 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
         
+        static final class FormatRawPageFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return FormatRawPage.class;
+			}
+
+			public Object newInstance() {
+				return new FormatRawPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new FormatRawPage(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -992,9 +1107,24 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int dataPageType = -1;
 
-        @Override
-        public final void init() {
-        }
+        public FormatHeaderPage() {
+			super();
+		}
+
+		public FormatHeaderPage(ByteBuffer bb) {
+			super(bb);
+            numberOfExtents = bb.getInt();
+            extentSize = bb.getInt();
+            numberOfSpaceMapPages = bb.getInt();
+            lastSpaceMapPage = bb.getInt();
+            firstSpaceMapPage = bb.getInt();
+            spaceMapPageType = bb.getInt();
+            dataPageType = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//        }
 
         public final int getExtentSize() {
             return extentSize;
@@ -1057,17 +1187,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return super.getStoredLength() + TypeSize.INTEGER * 7;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            numberOfExtents = bb.getInt();
-            extentSize = bb.getInt();
-            numberOfSpaceMapPages = bb.getInt();
-            lastSpaceMapPage = bb.getInt();
-            firstSpaceMapPage = bb.getInt();
-            spaceMapPageType = bb.getInt();
-            dataPageType = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            numberOfExtents = bb.getInt();
+//            extentSize = bb.getInt();
+//            numberOfSpaceMapPages = bb.getInt();
+//            lastSpaceMapPage = bb.getInt();
+//            firstSpaceMapPage = bb.getInt();
+//            spaceMapPageType = bb.getInt();
+//            dataPageType = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1082,7 +1212,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
 
         public StringBuilder appendTo(StringBuilder sb) {
-
             sb.append("FormatHeaderPage(numberOfExtents=").append(numberOfExtents)
                     .append(", extentSize=").append(extentSize)
                     .append(", numberOfSpaceMapPages=").append(numberOfSpaceMapPages)
@@ -1096,6 +1225,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         @Override
         public String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class FormatHeaderPageFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return FormatHeaderPage.class;
+			}
+			public Object newInstance() {
+				return new FormatHeaderPage();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new FormatHeaderPage(buf);
+			}
         }
     }
 
@@ -1123,26 +1264,40 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int oldLastSpaceMapPage = -1;
         int newLastSpaceMapPage = -1;
 
-        @Override
-        public final void init() {
-        }
+        public UpdateHeaderPage() {
+			super();
+		}
 
-        @Override
-        public final int getStoredLength() {
-            return super.getStoredLength() + TypeSize.INTEGER * 6;
-        }
-
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
+		public UpdateHeaderPage(ByteBuffer bb) {
+			super(bb);
             oldNumberOfExtents = bb.getInt();
             newNumberOfExtents = bb.getInt();
             oldNumberOfSpaceMapPages = bb.getInt();
             newNumberOfSpaceMapPages = bb.getInt();
             oldLastSpaceMapPage = bb.getInt();
             newLastSpaceMapPage = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//        }
+
+        @Override
+        public final int getStoredLength() {
+            return super.getStoredLength() + TypeSize.INTEGER * 6;
         }
 
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            oldNumberOfExtents = bb.getInt();
+//            newNumberOfExtents = bb.getInt();
+//            oldNumberOfSpaceMapPages = bb.getInt();
+//            newNumberOfSpaceMapPages = bb.getInt();
+//            oldLastSpaceMapPage = bb.getInt();
+//            newLastSpaceMapPage = bb.getInt();
+//        }
+//
         @Override
         public final void store(ByteBuffer bb) {
             super.store(bb);
@@ -1167,10 +1322,23 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return sb;
         }
         
-        
         @Override
         public final String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class UpdateHeaderPageFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return UpdateHeaderPage.class;
+			}
+			public Object newInstance() {
+				return new UpdateHeaderPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UpdateHeaderPage(buf);
+			}
+        	
         }
     }
 
@@ -1192,22 +1360,33 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int oldLastSpaceMapPage = -1;
 
-        @Override
-        public final void init() {
-        }
+        public UndoUpdateHeaderPage() {
+			super();
+		}
+
+		public UndoUpdateHeaderPage(ByteBuffer bb) {
+			super(bb);
+            oldNumberOfExtents = bb.getInt();
+            oldNumberOfSpaceMapPages = bb.getInt();
+            oldLastSpaceMapPage = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//        }
 
         @Override
         public final int getStoredLength() {
             return super.getStoredLength() + TypeSize.INTEGER * 3;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            oldNumberOfExtents = bb.getInt();
-            oldNumberOfSpaceMapPages = bb.getInt();
-            oldLastSpaceMapPage = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            oldNumberOfExtents = bb.getInt();
+//            oldNumberOfSpaceMapPages = bb.getInt();
+//            oldLastSpaceMapPage = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1227,10 +1406,25 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return sb;
         }
         
-        
         @Override
         public final String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class UndoUpdateHeaderPageFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return UndoUpdateHeaderPage.class;
+			}
+
+			public Object newInstance() {
+				return new UndoUpdateHeaderPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UndoUpdateHeaderPage(buf);
+			}
+        	
         }
     }
 
@@ -1250,7 +1444,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int nextSpaceMapPage = -1;
 
-        public final int getFirstPageNumber() {
+        public FormatSpaceMapPage() {
+			super();
+		}
+
+		public FormatSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+            firstPageNumber = bb.getInt();
+            nextSpaceMapPage = bb.getInt();
+		}
+
+		public final int getFirstPageNumber() {
             return firstPageNumber;
         }
 
@@ -1266,12 +1470,12 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             this.nextSpaceMapPage = nextSpaceMapPage;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            firstPageNumber = bb.getInt();
-            nextSpaceMapPage = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            firstPageNumber = bb.getInt();
+//            nextSpaceMapPage = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1299,8 +1503,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
 
-        @Override
-        public final void init() {
+//        @Override
+//        public final void init() {
+//        }
+        
+        static final class FormatSpaceMapPageFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return FormatSpaceMapPage.class;
+			}
+			public Object newInstance() {
+				return new FormatSpaceMapPage();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new FormatSpaceMapPage(buf);
+			}
         }
     }
 
@@ -1309,9 +1525,19 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int pageNumber;
         int spaceValue;
 
-        @Override
-        public void init() {
-        }
+        public BaseUpdateSpaceMapPage() {
+			super();
+		}
+
+		public BaseUpdateSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+            pageNumber = bb.getInt();
+            spaceValue = bb.getInt();
+		}
+
+//		@Override
+//        public void init() {
+//        }
 
         public final int getPageNumber() {
             return pageNumber;
@@ -1334,13 +1560,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return super.getStoredLength() + TypeSize.INTEGER * 2;
         }
 
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            pageNumber = bb.getInt();
-            spaceValue = bb.getInt();
-        }
-
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            pageNumber = bb.getInt();
+//            spaceValue = bb.getInt();
+//        }
+//
         @Override
         public void store(ByteBuffer bb) {
             super.store(bb);
@@ -1367,22 +1593,31 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             BaseUpdateSpaceMapPage {
 
         int oldSpaceValue;
+        
+        public BaseUndoableUpdateSpaceMapPage() {
+			super();
+		}
 
-        @Override
-        public final void init() {
-            super.init();
-        }
+		public BaseUndoableUpdateSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+            oldSpaceValue = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//            super.init();
+//        }
 
         @Override
         public final int getStoredLength() {
             return super.getStoredLength() + TypeSize.INTEGER;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            oldSpaceValue = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            oldSpaceValue = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1409,7 +1644,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UpdateSpaceMapPage extends BaseUpdateSpaceMapPage
             implements Redoable {
 
-        public StringBuilder appendTo(StringBuilder sb) {
+        public UpdateSpaceMapPage() {
+			super();
+		}
+
+		public UpdateSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("UpdateSpaceMapPage(");
             super.appendTo(sb);
             sb.append(")");
@@ -1420,6 +1663,18 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
+        
+        static final class UpdateSpaceMapPageFactory implements ObjectFactory {
+			public Class<?> getType() {
+				return UpdateSpaceMapPage.class;
+			}
+			public Object newInstance() {
+				return new UpdateSpaceMapPage();
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new UpdateSpaceMapPage(buf);
+			}
+        }
     }
 
     /**
@@ -1427,8 +1682,16 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class UndoableUpdateSpaceMapPage extends
             BaseUndoableUpdateSpaceMapPage implements Undoable {
+    	
+        public UndoableUpdateSpaceMapPage() {
+			super();
+		}
 
-        public StringBuilder appendTo(StringBuilder sb) {
+		public UndoableUpdateSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("UndoableUpdateSpaceMapPage(");
             super.appendTo(sb);
             sb.append(")");
@@ -1439,6 +1702,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public String toString() {
             return appendTo(new StringBuilder()).toString();
         }
+        
+        static final class UndoableUpdateSpaceMapPageFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return UndoableUpdateSpaceMapPage.class;
+			}
+
+			public Object newInstance() {
+				return new UndoableUpdateSpaceMapPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UndoableUpdateSpaceMapPage(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -1447,7 +1726,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UndoSpaceMapPageUpdate extends
             BaseUpdateSpaceMapPage implements Compensation {
 
-        public StringBuilder appendTo(StringBuilder sb) {
+        public UndoSpaceMapPageUpdate() {
+			super();
+		}
+
+		public UndoSpaceMapPageUpdate(ByteBuffer bb) {
+			super(bb);
+		}
+
+		public StringBuilder appendTo(StringBuilder sb) {
             sb.append("UndoSpaceMapPageUpdate(");
             super.appendTo(sb);
             sb.append(")");
@@ -1459,6 +1746,21 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
 
+        static final class UndoSpaceMapUpdateFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return UndoSpaceMapPageUpdate.class;
+			}
+
+			public Object newInstance() {
+				return new UndoSpaceMapPageUpdate();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UndoSpaceMapPageUpdate(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -1478,17 +1780,27 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int newNextSpaceMapPage = -1;
 
-        @Override
+        public LinkSpaceMapPage() {
+			super();
+		}
+
+		public LinkSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+            oldNextSpaceMapPage = bb.getInt();
+            newNextSpaceMapPage = bb.getInt();
+		}
+
+		@Override
         public final int getStoredLength() {
             return super.getStoredLength() + TypeSize.INTEGER * 2;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            oldNextSpaceMapPage = bb.getInt();
-            newNextSpaceMapPage = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            oldNextSpaceMapPage = bb.getInt();
+//            newNextSpaceMapPage = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1511,10 +1823,25 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
 
-        @Override
-        public final void init() {
-        }
+//        @Override
+//        public final void init() {
+//        }
+        
+        static final class LinkSpaceMapPageFactory implements ObjectFactory {
 
+			public Class<?> getType() {
+				return LinkSpaceMapPage.class;
+			}
+
+			public Object newInstance() {
+				return new LinkSpaceMapPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new LinkSpaceMapPage(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -1528,16 +1855,25 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int oldNextSpaceMapPage = -1;
 
-        @Override
+        public UndoLinkSpaceMapPage() {
+			super();
+		}
+
+		public UndoLinkSpaceMapPage(ByteBuffer bb) {
+			super(bb);
+            oldNextSpaceMapPage = bb.getInt();
+		}
+
+		@Override
         public final int getStoredLength() {
             return super.getStoredLength() + TypeSize.INTEGER;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            oldNextSpaceMapPage = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            oldNextSpaceMapPage = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1558,10 +1894,25 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
 
-        @Override
-        public final void init() {
-        }
+//        @Override
+//        public final void init() {
+//        }
 
+        static final class UndoLinkSpaceMapPageFactory implements ObjectFactory {
+
+			public Class<?> getType() {
+				return UndoLinkSpaceMapPage.class;
+			}
+
+			public Object newInstance() {
+				return new UndoLinkSpaceMapPage();
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new UndoLinkSpaceMapPage(buf);
+			}
+        	
+        }
     }
 
     /**
@@ -1605,9 +1956,24 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int dataPageType = -1;
 
-        @Override
-        public final void init() {
-        }
+        public HeaderPage(PageFactory pageFactory) {
+			super(pageFactory);
+		}
+
+		public HeaderPage(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
+            numberOfExtents = bb.getInt();
+            extentSize = bb.getInt();
+            numberOfSpaceMapPages = bb.getInt();
+            lastSpaceMapPage = bb.getInt();
+            firstSpaceMapPage = bb.getInt();
+            spaceMapPageType = bb.getInt();
+            dataPageType = bb.getInt();
+		}
+
+//		@Override
+//        public final void init() {
+//        }
 
         public final int getExtentSize() {
             return extentSize;
@@ -1672,17 +2038,17 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             this.dataPageType = dataPageType;
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            numberOfExtents = bb.getInt();
-            extentSize = bb.getInt();
-            numberOfSpaceMapPages = bb.getInt();
-            lastSpaceMapPage = bb.getInt();
-            firstSpaceMapPage = bb.getInt();
-            spaceMapPageType = bb.getInt();
-            dataPageType = bb.getInt();
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            numberOfExtents = bb.getInt();
+//            extentSize = bb.getInt();
+//            numberOfSpaceMapPages = bb.getInt();
+//            lastSpaceMapPage = bb.getInt();
+//            firstSpaceMapPage = bb.getInt();
+//            spaceMapPageType = bb.getInt();
+//            dataPageType = bb.getInt();
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1710,10 +2076,25 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return sb;
         }
         
-        
         @Override
         public final String toString() {
             return appendTo(new StringBuilder()).toString();
+        }
+        
+        static class HeaderPageFactory implements ObjectFactory {
+        	final PageFactory pageFactory;
+        	public HeaderPageFactory(PageFactory pageFactory) {
+        		this.pageFactory = pageFactory;
+        	}
+			public Class<?> getType() {
+				return HeaderPage.class;
+			}
+			public Object newInstance() {
+				return new HeaderPage(pageFactory);
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new HeaderPage(pageFactory, buf);
+			}
         }
     }
 
@@ -1744,7 +2125,21 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         byte[] bits;
 
-        public abstract int get(int offset);
+        protected SpaceMapPageImpl(PageFactory pageFactory) {
+			super(pageFactory);
+			bits = new byte[getSpace()];
+		}
+
+		protected SpaceMapPageImpl(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
+            firstPageNumber = bb.getInt();
+            nextSpaceMapPage = bb.getInt();
+            lastPageNumber = firstPageNumber + getCount() - 1;
+            bits = new byte[getSpace()];
+            bb.get(bits);
+		}
+
+		public abstract int get(int offset);
 
         public abstract void set(int offset, int value);
 
@@ -1819,20 +2214,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return super.getStoredLength() - SIZE;
         }
 
-        @Override
+//        @Override
         public final void init() {
             bits = new byte[getSpace()];
         }
 
-        @Override
-        public final void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
-            firstPageNumber = bb.getInt();
-            nextSpaceMapPage = bb.getInt();
-            lastPageNumber = firstPageNumber + getCount() - 1;
-            bits = new byte[getSpace()];
-            bb.get(bits);
-        }
+//        @Override
+//        public final void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            firstPageNumber = bb.getInt();
+//            nextSpaceMapPage = bb.getInt();
+//            lastPageNumber = firstPageNumber + getCount() - 1;
+//            bits = new byte[getSpace()];
+//            bb.get(bits);
+//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -1865,7 +2260,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class TwoBitSpaceMapPage extends SpaceMapPageImpl {
 
-        @Override
+        public TwoBitSpaceMapPage(PageFactory pageFactory) {
+			super(pageFactory);
+		}
+
+		public TwoBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
+		}
+
+		@Override
         public final int get(int map_index) {
             int offset = map_index / 4;
             int part = (map_index % 4) * 2;
@@ -1908,7 +2311,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public final int emptyValue() {
             return 0;
         }
-
+        
+        static final class TwoBitSpaceMapPageFactory implements ObjectFactory {
+        	private final PageFactory pageFactory;
+        	public TwoBitSpaceMapPageFactory(PageFactory pageFactory) {
+        		this.pageFactory = pageFactory;
+        	}
+			public Class<?> getType() {
+				return TwoBitSpaceMapPage.class;
+			}
+			public Object newInstance() {
+				return new TwoBitSpaceMapPage(pageFactory);
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new TwoBitSpaceMapPage(pageFactory, buf);
+			}
+        }
     }
 
     /**
@@ -1919,7 +2337,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         final int ESIZE = Byte.SIZE;
 
-        @Override
+        public OneBitSpaceMapPage(PageFactory pageFactory) {
+			super(pageFactory);
+		}
+
+		public OneBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
+		}
+
+		@Override
         public final int get(int bit) {
             int n = bit / ESIZE;
             int part = bit % ESIZE;
@@ -1955,6 +2381,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         @Override
         public final int emptyValue() {
             return 0;
+        }
+        
+        static final class OneBitSpaceMapPageFactory implements ObjectFactory {
+        	private final PageFactory pageFactory;
+        	OneBitSpaceMapPageFactory(PageFactory pageFactory) {
+        		this.pageFactory = pageFactory;
+        	}
+			public Class<?> getType() {
+				return OneBitSpaceMapPage.class;
+			}
+			public Object newInstance() {
+				return new OneBitSpaceMapPage(pageFactory);
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new OneBitSpaceMapPage(pageFactory, buf);
+			}
         }
     }
 

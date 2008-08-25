@@ -239,7 +239,7 @@ public class Server {
             storageManager,
             latchFactory,
             props);
-        slottedPageManager = new SlottedPageManagerImpl(objectRegistry, props);
+        slottedPageManager = new SlottedPageManagerImpl(objectRegistry, pageFactory, props);
         loggableFactory = new LoggableFactoryImpl(objectRegistry, props);
         moduleRegistry = new TransactionalModuleRegistryImpl(props);
         lockManager = lockMgrFactory.create(latchFactory, props);
@@ -517,9 +517,9 @@ public class Server {
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-    public void registerType(int typecode, String classname) {
-        getObjectRegistry().registerType(typecode, classname);
-    }
+//    public void registerType(int typecode, String classname) {
+//        getObjectRegistry().registerType(typecode, classname);
+//    }
 
     /** 
      * Begins a new transaction.

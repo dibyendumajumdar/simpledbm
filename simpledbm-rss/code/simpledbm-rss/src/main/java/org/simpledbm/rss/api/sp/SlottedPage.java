@@ -19,7 +19,10 @@
  */
 package org.simpledbm.rss.api.sp;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
 
@@ -34,7 +37,15 @@ import org.simpledbm.rss.api.st.StorableFactory;
  */
 public abstract class SlottedPage extends Page {
 
-    /**
+    protected SlottedPage(PageFactory pageFactory, ByteBuffer bb) {
+		super(pageFactory, bb);
+	}
+
+	protected SlottedPage(PageFactory pageFactory) {
+		super(pageFactory);
+	}
+
+	/**
      * Returns the total space available for slot data, including the 
      * slot table.
      * @see #getFreeSpace()
@@ -88,11 +99,11 @@ public abstract class SlottedPage extends Page {
      */
     public abstract void purge(int slotNumber);
 
-    /**
-     * Returns slot data. The client must supply the correct type of
-     * Storable item.
-     */
-    public abstract Storable get(int slotNumber, Storable item);
+//    /**
+//     * Returns slot data. The client must supply the correct type of
+//     * Storable item.
+//     */
+//    public abstract Storable get(int slotNumber, Storable item);
 
     /**
      * Returns slot data. The client must supply the correct type of
@@ -153,5 +164,10 @@ public abstract class SlottedPage extends Page {
      * Returns the overhead of a single slot.
      */
     public abstract int getSlotOverhead();
+    
+    /**
+     * Reinitialize a page.
+     */
+    public abstract void init();
 
 }

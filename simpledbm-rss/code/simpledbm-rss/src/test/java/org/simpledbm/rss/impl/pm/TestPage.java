@@ -27,6 +27,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -86,18 +87,23 @@ public class TestPage extends BaseTestCase {
 
         int i = 0;
 
-        public MyPage() {
-            super();
+        public MyPage(PageFactory pageFactory) {
+            super(pageFactory);
         }
-
-        /**
-         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
-         */
-        @Override
-        public void retrieve(ByteBuffer bb) {
-            super.retrieve(bb);
+        
+        public MyPage(PageFactory pageFactory, ByteBuffer bb) {
+			super(pageFactory, bb);
             i = bb.getInt();
-        }
+		}
+
+//		/**
+//         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
+//         */
+//        @Override
+//        public void retrieve(ByteBuffer bb) {
+//            super.retrieve(bb);
+//            i = bb.getInt();
+//        }
 
         /**
          * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
@@ -108,13 +114,35 @@ public class TestPage extends BaseTestCase {
             bb.putInt(i);
         }
 
-        @Override
-        public void init() {
-        }
+//        @Override
+//        public void init() {
+//        }
 
         @Override
         public String toString() {
             return super.toString() + ".MyPage(i = " + i + ")";
+        }
+        
+        static class MyPageFactory implements ObjectFactory {
+
+        	final PageFactory pageFactory;
+        	
+        	public MyPageFactory(PageFactory pageFactory) {
+        		this.pageFactory = pageFactory;
+        	}
+        	
+			public Class<?> getType() {
+				return MyPage.class;
+			}
+
+			public Object newInstance() {
+				return new MyPage(pageFactory);
+			}
+
+			public Object newInstance(ByteBuffer buf) {
+				return new MyPage(pageFactory, buf);
+			}
+        	
         }
     }
 
@@ -135,7 +163,7 @@ public class TestPage extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, MyPage.class.getName());
+        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
             1,

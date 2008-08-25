@@ -37,27 +37,23 @@ public interface ObjectRegistry {
 
     /**
      * Registers a class to the Object Registry. 
-     * The class must implement a no-arg constructor.
-     * The class may optionally implement a constructor that takes a single ByteBuffer parameter.
-     * The class may optionally implement {@link ObjectRegistryAware}
-     * interface.
      *  
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-    public void registerType(int typecode, String classname);
+    public void registerType(int typecode, ObjectFactory objectFactory);
 
-    /**
-     * Registers a class to the Object Registry. 
-     * The class must implement a no-arg constructor.
-     * The class may optionally implement a constructor that takes a single ByteBuffer parameter.
-     * The class may optionally implement {@link ObjectRegistryAware}
-     * interface.
-     *  
-     * @param typecode A unique type code for the type.
-     * @param classname The class name.
-     */
-    public void registerType(int typecode, Class<?> klass);
+//    /**
+//     * Registers a class to the Object Registry. 
+//     * The class must implement a no-arg constructor.
+//     * The class may optionally implement a constructor that takes a single ByteBuffer parameter.
+//     * The class may optionally implement {@link ObjectRegistryAware}
+//     * interface.
+//     *  
+//     * @param typecode A unique type code for the type.
+//     * @param classname The class name.
+//     */
+//    public void registerType(int typecode, Class<?> klass);
     
     /**
      * Registers a Singleton object to the registry.
@@ -108,5 +104,4 @@ public interface ObjectRegistry {
      * @return Newly constructed object of the type
      */
     Object getInstance(ByteBuffer buf);
-    
 }
