@@ -23,6 +23,7 @@
  */
 package org.simpledbm.typesystem.impl;
 
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import org.simpledbm.rss.api.im.IndexKey;
@@ -32,6 +33,8 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
+
+import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 public class GenericRowFactory implements RowFactory {
 
@@ -62,15 +65,29 @@ public class GenericRowFactory implements RowFactory {
     	return newRow(containerId);
     }
 
-    public synchronized Row newRow(int containerId) {
+	public IndexKey newIndexKey(int containerId, ByteBuffer bb) {
+		return newRow(containerId, bb);
+	}
+        
+	private synchronized IndexRowFactory getIndexRowFactory(int containerId) {
         IndexRowFactory rowFactory = rowCache.get(containerId);
         if (rowFactory == null) {
             TypeDescriptor[] rowTypeDesc = getTypeDescriptor(containerId);
             rowFactory = new IndexRowFactory(fieldFactory, rowTypeDesc);
             rowCache.put(containerId, rowFactory);
         }
+        return rowFactory;
+	}
+    
+    public synchronized Row newRow(int containerId) {
+        IndexRowFactory rowFactory = getIndexRowFactory(containerId);
         return rowFactory.makeRow();
     }
+
+	public synchronized Row newRow(int containerId, ByteBuffer bb) {
+        IndexRowFactory rowFactory = getIndexRowFactory(containerId);
+		return rowFactory.makeRow(bb);
+	}    
     
     public IndexKey maxIndexKey(int keytype) {
     	GenericRow row = (GenericRow) newIndexKey(keytype);
@@ -117,6 +134,12 @@ public class GenericRowFactory implements RowFactory {
             return new GenericRow(fieldFactory, rowTypeDesc);
         }
 
+        public GenericRow makeRow(ByteBuffer bb) {
+            return new GenericRow(fieldFactory, rowTypeDesc, bb);
+        }
+        
+        
     }
-    
+
+
 }

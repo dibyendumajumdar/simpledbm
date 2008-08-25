@@ -31,13 +31,24 @@ public class NumberValue extends BaseDataValue {
 
 	BigDecimal d;
 	
-	protected NumberValue(TypeDescriptor typeDesc) {
+	public NumberValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
 
-	protected NumberValue(NumberValue other) {
+	public NumberValue(NumberValue other) {
 		super(other);
 		this.d = new BigDecimal(other.d.unscaledValue(), other.d.scale());
+	}
+	
+	public NumberValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+		if (isValue()) {
+			int scale = bb.get();
+			int len = bb.get();
+			byte[] data = new byte[len];
+			bb.get(data);
+			d = new BigDecimal(new BigInteger(data), scale);
+		}
 	}
 	
 	public DataValue cloneMe() {
@@ -113,17 +124,17 @@ public class NumberValue extends BaseDataValue {
 		return d.toString();
 	}
 
-	@Override
-	public void retrieve(ByteBuffer bb) {
-		super.retrieve(bb);
-		if (isValue()) {
-			int scale = bb.get();
-			int len = bb.get();
-			byte[] data = new byte[len];
-			bb.get(data);
-			d = new BigDecimal(new BigInteger(data), scale);
-		}
-	}
+//	@Override
+//	public void retrieve(ByteBuffer bb) {
+//		super.retrieve(bb);
+//		if (isValue()) {
+//			int scale = bb.get();
+//			int len = bb.get();
+//			byte[] data = new byte[len];
+//			bb.get(data);
+//			d = new BigDecimal(new BigInteger(data), scale);
+//		}
+//	}
 
 	@Override
 	public void setInt(Integer integer) {

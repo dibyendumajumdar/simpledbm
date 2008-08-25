@@ -19,6 +19,8 @@
  */
 package org.simpledbm.typesystem.api;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.im.IndexKeyFactory;
 
 /**
@@ -35,6 +37,12 @@ public interface RowFactory extends IndexKeyFactory {
 	 * used to locate the type information for the row.
 	 */
 	Row newRow(int containerId);
+	
+	/**
+	 * Creates a new row for a specified container ID. The container ID is
+	 * used to locate the type information for the row.
+	 */
+	Row newRow(int containerId, ByteBuffer bb);
 	
 	/**
 	 * Retrieves the DictionaryCache associated with this Row Factory.

@@ -45,6 +45,13 @@ public class GenericRow implements Row, IndexKey {
         }
     }
     
+    public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc, ByteBuffer bb) {
+        fields = new DataValue[rowTypeDesc.length];
+        for (int i = 0; i < rowTypeDesc.length; i++) {
+            fields[i] = fieldFactory.getInstance(rowTypeDesc[i], bb); 
+        }
+    }
+    
 	public int getNumberOfColumns() {
 		return fields.length;
 	}
@@ -69,11 +76,11 @@ public class GenericRow implements Row, IndexKey {
         }
 	}
 
-	public void retrieve(ByteBuffer bb) {
-        for (int i = 0; i < fields.length; i++) {
-            fields[i].retrieve(bb);
-        }
-	}
+//	public void retrieve(ByteBuffer bb) {
+//        for (int i = 0; i < fields.length; i++) {
+//            fields[i].retrieve(bb);
+//        }
+//	}
 
 	public void store(ByteBuffer bb) {
         for (int i = 0; i < fields.length; i++) {

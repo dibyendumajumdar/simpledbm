@@ -37,6 +37,13 @@ public class IntegerValue extends BaseDataValue {
 	public IntegerValue(TypeDescriptor typeDesc) {
 		super(typeDesc);
 	}
+	
+	public IntegerValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+		super(typeDesc, bb);
+    	if (isValue()) {
+    		i = bb.getInt();
+    	}
+	}
 
     @Override
 	public String toString() {
@@ -60,13 +67,13 @@ public class IntegerValue extends BaseDataValue {
     	}
     }
     
-    @Override
-    public void retrieve(ByteBuffer bb) {
-    	super.retrieve(bb);
-    	if (isValue()) {
-    		i = bb.getInt();
-    	}
-    }
+//    @Override
+//    public void retrieve(ByteBuffer bb) {
+//    	super.retrieve(bb);
+//    	if (isValue()) {
+//    		i = bb.getInt();
+//    	}
+//    }
 
 	@Override
 	public int getInt() {

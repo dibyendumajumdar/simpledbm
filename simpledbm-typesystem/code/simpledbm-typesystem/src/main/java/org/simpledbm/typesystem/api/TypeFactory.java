@@ -34,6 +34,11 @@ public interface TypeFactory {
 	 * Creates a DataValue instance of the specified type.
 	 */
 	DataValue getInstance(TypeDescriptor typeDesc);
+
+	/**
+	 * Creates a DataValue instance of the specified type.
+	 */
+	DataValue getInstance(TypeDescriptor typeDesc, ByteBuffer bb);	
 	
 	/**
 	 * Returns a TypeDescriptor for the Varchar type.

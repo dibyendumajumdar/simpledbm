@@ -68,10 +68,10 @@ public class TypeSystemTest extends TestCase {
         ByteBuffer bb = ByteBuffer.allocate(row.getStoredLength());
         row.store(bb);
         bb.flip();
-        Row row1 = rowFactory.newRow(1);
-        row1.retrieve(bb);
-        assertTrue(row.compareTo(row1) == 0);
+        Row row1 = rowFactory.newRow(1, bb);
+//        row1.retrieve(bb);
         System.err.println("Row1 contents = " + row1);
+        assertTrue(row.compareTo(row1) == 0);
         Row row3 = row.cloneMe();
         assertTrue(row.compareTo(row3) == 0);
         row.getColumnValue(0).setString("9876");
@@ -129,8 +129,8 @@ public class TypeSystemTest extends TestCase {
         ByteBuffer bb = ByteBuffer.allocate(f1.getStoredLength());
         f1.store(bb);
         bb.flip();
-        DateTimeValue f2 = (DateTimeValue) fieldFactory.getInstance(type);
-        f2.retrieve(bb);
+        DateTimeValue f2 = (DateTimeValue) fieldFactory.getInstance(type, bb);
+//        f2.retrieve(bb);
         assertEquals(f1, f2);
         assertEquals(f2.getLong(), d.getTime());
     }
@@ -160,7 +160,7 @@ public class TypeSystemTest extends TestCase {
     	ByteBuffer bb = ByteBuffer.allocate(n);
     	f1.store(bb);
     	bb.flip();
-    	f2.retrieve(bb);
+    	f2 = (VarcharValue) fieldFactory.getInstance(type, bb);
     	assertEquals(f1, f2);
     	assertTrue("".equals(f1.toString()));
     	assertTrue("".equals(f2.toString()));
@@ -205,8 +205,7 @@ public class TypeSystemTest extends TestCase {
     	f1.setString("68656c6c");
     	f1.store(bb);
     	bb.flip();
-    	f1.setNull();
-    	f1.retrieve(bb);
+    	f1 = (VarbinaryValue) fieldFactory.getInstance(type, bb);
     	assertTrue(f1.getString().equals("68656C6C"));
     }
     

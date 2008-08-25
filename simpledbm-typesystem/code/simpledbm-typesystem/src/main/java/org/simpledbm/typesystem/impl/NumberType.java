@@ -37,6 +37,10 @@ public class NumberType implements TypeDescriptor {
 		this.scale = scale;
 	}
 	
+	public NumberType(ByteBuffer bb) {
+		scale = bb.getInt();
+	}
+	
 	public int getMaxLength() {
 		return -1;
 	}
@@ -65,9 +69,9 @@ public class NumberType implements TypeDescriptor {
 		return TypeSize.INTEGER;
 	}
 
-	public void retrieve(ByteBuffer bb) {
-		scale = bb.getInt();
-	}
+//	public void retrieve(ByteBuffer bb) {
+//		scale = bb.getInt();
+//	}
 
 	public void store(ByteBuffer bb) {
 		bb.putInt(scale);

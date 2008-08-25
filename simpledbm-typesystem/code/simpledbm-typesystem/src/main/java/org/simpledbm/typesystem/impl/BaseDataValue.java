@@ -56,6 +56,11 @@ abstract class BaseDataValue implements DataValue {
         this.typeDesc = typeDesc;
     }
     
+    protected BaseDataValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+    	this.typeDesc = typeDesc;
+        statusByte = bb.get();
+    }
+    
     public int getInt() {
         throw new UnsupportedOperationException();
     }
@@ -112,9 +117,9 @@ abstract class BaseDataValue implements DataValue {
         throw new UnsupportedOperationException();
 	}
 
-	public void retrieve(ByteBuffer bb) {
-        statusByte = bb.get();
-    }
+//	public void retrieve(ByteBuffer bb) {
+//        statusByte = bb.get();
+//    }
 
     public void store(ByteBuffer bb) {
         bb.put(statusByte);
