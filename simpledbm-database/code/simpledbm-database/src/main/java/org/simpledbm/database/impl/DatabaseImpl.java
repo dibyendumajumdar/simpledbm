@@ -31,6 +31,7 @@ import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -274,7 +275,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		 */
 		server.getObjectRegistry().registerSingleton(MODULE_ID, this);
 		server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION,
-				CreateTableDefinition.class.getName());
+				new CreateTableDefinition.CreateTableDefinitionFactory(this));
 		server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
 		/*
 		 * Register this module as a transactional module. This will allow the
@@ -451,7 +452,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			CreateTableDefinition ctd = (CreateTableDefinition) server
 					.getLoggableFactory().getInstance(MODULE_ID,
 							TYPE_CREATE_TABLE_DEFINITION);
-			ctd.database = this;
+//			ctd.database = this;
 			ctd.table = tableDefinition;
 			trx.schedulePostCommitAction(ctd);
 			success = true;
@@ -569,8 +570,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			buffer = new byte[n];
 			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
-			table = new TableDefinitionImpl(this);
-			table.retrieve(bb);
+			table = new TableDefinitionImpl(this, bb);
+//			table.retrieve(bb);
 		} finally {
 			sc.close();
 		}
@@ -590,25 +591,21 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * @since 29 Dec 2007
 	 */
 	public static final class CreateTableDefinition extends BaseLoggable
-			implements PostCommitAction, ObjectRegistryAware {
+			implements PostCommitAction {
 
 		int actionId;
 		TableDefinition table;
-		Database database;
-		ObjectRegistry objectRegistry;
+		final Database database;
 
-		public CreateTableDefinition() {
+		public CreateTableDefinition(Database database, ByteBuffer bb) {
+			super(bb);
+			this.database = database;
+			actionId = bb.getInt();
+			table = new TableDefinitionImpl(database, bb);
 		}
 
-		public CreateTableDefinition(TableDefinitionImpl table) {
-			this.table = table;
-			this.database = table.getDatabase();
-			this.objectRegistry = table.getDatabase().getServer()
-					.getObjectRegistry();
-		}
-
-		@Override
-		public void init() {
+		public CreateTableDefinition(Database database) {
+			this.database = database;
 		}
 
 		public int getActionId() {
@@ -640,20 +637,20 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			return n;
 		}
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.api.tx.BaseLoggable#retrieve(java.nio.ByteBuffer)
-		 */
-		@Override
-		public void retrieve(ByteBuffer bb) {
-			if (database == null) {
-				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
-				throw new DatabaseException(mcat.getMessage("ED0009"));
-			}
-			super.retrieve(bb);
-			actionId = bb.getInt();
-			table = new TableDefinitionImpl(database);
-			table.retrieve(bb);
-		}
+//		/* (non-Javadoc)
+//		 * @see org.simpledbm.rss.api.tx.BaseLoggable#retrieve(java.nio.ByteBuffer)
+//		 */
+//		@Override
+//		public void retrieve(ByteBuffer bb) {
+//			if (database == null) {
+//				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
+//				throw new DatabaseException(mcat.getMessage("ED0009"));
+//			}
+//			super.retrieve(bb);
+//			actionId = bb.getInt();
+//			table = new TableDefinitionImpl(database);
+//			table.retrieve(bb);
+//		}
 
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.api.tx.BaseLoggable#store(java.nio.ByteBuffer)
@@ -670,17 +667,33 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			return appendTo(new StringBuilder()).toString();
 		}
 
-		/* (non-Javadoc)
-		 * @see org.simpledbm.rss.api.registry.ObjectRegistryAware#setObjectFactory(org.simpledbm.rss.api.registry.ObjectRegistry)
-		 */
-		public void setObjectFactory(ObjectRegistry objectFactory) {
-			this.objectRegistry = objectFactory;
-			database = (Database) objectRegistry
-					.getInstance(DatabaseImpl.MODULE_ID);
-			if (database == null) {
-				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
-				throw new DatabaseException(mcat.getMessage("ED0009"));
-			}		
+//		/* (non-Javadoc)
+//		 * @see org.simpledbm.rss.api.registry.ObjectRegistryAware#setObjectFactory(org.simpledbm.rss.api.registry.ObjectRegistry)
+//		 */
+//		public void setObjectFactory(ObjectRegistry objectFactory) {
+//			this.objectRegistry = objectFactory;
+//			database = (Database) objectRegistry
+//					.getInstance(DatabaseImpl.MODULE_ID);
+//			if (database == null) {
+//				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
+//				throw new DatabaseException(mcat.getMessage("ED0009"));
+//			}		
+//		}
+		
+		static final class CreateTableDefinitionFactory implements ObjectFactory {
+			private final Database database;
+			CreateTableDefinitionFactory(Database database) {
+				this.database = database;
+			}
+			public Class<?> getType() {
+				return CreateTableDefinition.class;
+			}
+			public Object newInstance() {
+				return new CreateTableDefinition(database);
+			}
+			public Object newInstance(ByteBuffer bb) {
+				return new CreateTableDefinition(database, bb);
+			}
 		}
 	}
 

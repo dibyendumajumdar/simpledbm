@@ -19,6 +19,7 @@
  */
 package org.simpledbm.database.api;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.simpledbm.rss.api.st.Storable;
@@ -88,6 +89,12 @@ public interface TableDefinition extends Storable, Dumpable {
 	 */
 	public abstract Row getRow();
 
+	/**
+	 * Constructs an empty row for the table.
+	 * @return Row
+	 */
+	public abstract Row getRow(ByteBuffer bb);	
+	
 	/**
 	 * Constructs an row for the specified Index. Appropriate columns from the
 	 * table are copied into the Index row.

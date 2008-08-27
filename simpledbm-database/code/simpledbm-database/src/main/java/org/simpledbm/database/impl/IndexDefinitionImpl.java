@@ -74,9 +74,33 @@ public class IndexDefinitionImpl implements IndexDefinition {
      */
     boolean unique;
 
-    IndexDefinitionImpl(TableDefinition table) {
-        this.table = table;
-    }
+    IndexDefinitionImpl(TableDefinition table, ByteBuffer bb) {
+		this.table = table;
+		containerId = bb.getInt();
+		ByteString s = new ByteString(bb);
+		name = s.toString();
+		byte b = bb.get();
+		if (b == 1) {
+			primary = true;
+		} else {
+			primary = false;
+		}
+		b = bb.get();
+		if (b == 1 || primary) {
+			unique = true;
+		} else {
+			unique = false;
+		}
+		int n = bb.getShort();
+		columns = new int[n];
+		for (int i = 0; i < n; i++) {
+			columns[i] = bb.getShort();
+		}
+		rowType = new TypeDescriptor[columns.length];
+		for (int i = 0; i < columns.length; i++) {
+			rowType[i] = table.getRowType()[columns[i]];
+		}
+	}
 
     public IndexDefinitionImpl(TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
@@ -85,7 +109,6 @@ public class IndexDefinitionImpl implements IndexDefinition {
     		log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0010"));
     		throw new DatabaseException(mcat.getMessage("ED0010"));
     	}
-    	
     	this.table = table;
         this.containerId = containerId;
         this.name = name;
@@ -96,7 +119,6 @@ public class IndexDefinitionImpl implements IndexDefinition {
         } else {
             this.unique = unique;
         }
-
         rowType = new TypeDescriptor[columns.length];
         for (int i = 0; i < columns.length; i++) {
             if (columns[i] >= table.getRowType().length || columns[i] < 0) {
@@ -194,36 +216,36 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return n;
     }
 
-    /* (non-Javadoc)
-     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
-     */
-    public void retrieve(ByteBuffer bb) {
-        ByteString s = new ByteString();
-        containerId = bb.getInt();
-        s.retrieve(bb);
-        name = s.toString();
-        byte b = bb.get();
-        if (b == 1) {
-            primary = true;
-        } else {
-            primary = false;
-        }
-        b = bb.get();
-        if (b == 1 || primary) {
-            unique = true;
-        } else {
-            unique = false;
-        }
-        int n = bb.getShort();
-        columns = new int[n];
-        for (int i = 0; i < n; i++) {
-            columns[i] = bb.getShort();
-        }
-        rowType = new TypeDescriptor[columns.length];
-        for (int i = 0; i < columns.length; i++) {
-            rowType[i] = table.getRowType()[columns[i]];
-        }
-    }
+//    /* (non-Javadoc)
+//     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
+//     */
+//    public void retrieve(ByteBuffer bb) {
+//        ByteString s = new ByteString();
+//        containerId = bb.getInt();
+//        s.retrieve(bb);
+//        name = s.toString();
+//        byte b = bb.get();
+//        if (b == 1) {
+//            primary = true;
+//        } else {
+//            primary = false;
+//        }
+//        b = bb.get();
+//        if (b == 1 || primary) {
+//            unique = true;
+//        } else {
+//            unique = false;
+//        }
+//        int n = bb.getShort();
+//        columns = new int[n];
+//        for (int i = 0; i < n; i++) {
+//            columns[i] = bb.getShort();
+//        }
+//        rowType = new TypeDescriptor[columns.length];
+//        for (int i = 0; i < columns.length; i++) {
+//            rowType[i] = table.getRowType()[columns[i]];
+//        }
+//    }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.st.Storable#store(java.nio.ByteBuffer)

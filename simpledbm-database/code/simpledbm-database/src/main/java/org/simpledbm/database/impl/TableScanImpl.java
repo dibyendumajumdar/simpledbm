@@ -81,8 +81,8 @@ public class TableScanImpl implements TableScan {
             byte[] data = tcont.read(location);
             // parse the data
             ByteBuffer bb = ByteBuffer.wrap(data);
-            currentRow = getTable().getDefinition().getRow();
-            currentRow.retrieve(bb);
+            currentRow = getTable().getDefinition().getRow(bb);
+            //currentRow.retrieve(bb);
         }
         return okay;
     }
@@ -137,8 +137,8 @@ public class TableScanImpl implements TableScan {
                 byte[] data = tcont.read(location);
                 // parse the data
                 ByteBuffer bb = ByteBuffer.wrap(data);
-                Row oldTableRow = getTable().getDefinition().getRow();
-                oldTableRow.retrieve(bb);
+                Row oldTableRow = getTable().getDefinition().getRow(bb);
+                // oldTableRow.retrieve(bb);
                 // Okay, now update the table row
                 tcont.update(trx, location, tableRow);
                 // Update secondary indexes
@@ -186,8 +186,8 @@ public class TableScanImpl implements TableScan {
             byte[] data = tcont.read(location);
             // parse the data
             ByteBuffer bb = ByteBuffer.wrap(data);
-            Row oldTableRow = getTable().getDefinition().getRow();
-            oldTableRow.retrieve(bb);
+            Row oldTableRow = getTable().getDefinition().getRow(bb);
+            // oldTableRow.retrieve(bb);
             // Okay, now update the table row
             tcont.delete(trx, location);
             // Update indexes
