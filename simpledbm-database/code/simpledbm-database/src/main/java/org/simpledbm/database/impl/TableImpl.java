@@ -153,8 +153,8 @@ public class TableImpl implements Table {
 							byte[] data = table.read(location);
 							// parse the data
 							ByteBuffer bb = ByteBuffer.wrap(data);
-							Row oldTableRow = getDefinition().getRow();
-							oldTableRow.retrieve(bb);
+							Row oldTableRow = getDefinition().getRow(bb);
+							// oldTableRow.retrieve(bb);
 							// Okay, now update the table row
 							table.update(trx, location, tableRow);
 							// Update secondary indexes
@@ -235,8 +235,8 @@ public class TableImpl implements Table {
 							byte[] data = table.read(location);
 							// parse the data
 							ByteBuffer bb = ByteBuffer.wrap(data);
-							Row oldTableRow = getDefinition().getRow();
-							oldTableRow.retrieve(bb);
+							Row oldTableRow = getDefinition().getRow(bb);
+							// oldTableRow.retrieve(bb);
 							// Okay, now update the table row
 							table.delete(trx, location);
 							// Update secondary indexes
