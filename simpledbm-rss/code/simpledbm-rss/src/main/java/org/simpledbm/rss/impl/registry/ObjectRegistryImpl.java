@@ -20,7 +20,6 @@
 package org.simpledbm.rss.impl.registry;
 
 import java.nio.ByteBuffer;
-import java.util.HashMap;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.registry.ObjectCreationException;
@@ -43,12 +42,25 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     private static final Logger log = Logger.getLogger(ObjectRegistryImpl.class
         .getPackage()
         .getName());
+    
+    static final class TypeRegistry {
+        final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
+
+        final void put(int tc, ObjectDefinition def) {
+        	typeRegistry[tc] = def;
+        }
+        
+        final ObjectDefinition get(int tc) {
+        	return typeRegistry[tc];
+        }
+    }
 
     /**
      * Maps typecode to ObjectDefinition
      */
-    private final HashMap<Short, ObjectDefinition> typeRegistry = new HashMap<Short, ObjectDefinition>();
-
+//    private final HashMap<Short, ObjectDefinition> typeRegistry = new HashMap<Short, ObjectDefinition>();
+    TypeRegistry typeRegistry = new TypeRegistry();
+    
     private static final MessageCatalog mcat = new MessageCatalog();
 
     public ObjectRegistryImpl(Properties properties) {
@@ -56,6 +68,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     
     public synchronized final void registerType(int tc,
 			ObjectFactory objectFactory) {
+    	assert tc < Short.MAX_VALUE && tc > 0;
 		String classname = objectFactory.getType().getName();
 		if (log.isDebugEnabled()) {
 			log.debug(this.getClass().getName(), "register",
@@ -81,6 +94,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
     
     public synchronized final void registerSingleton(int tc, Object object) {
+    	assert tc < Short.MAX_VALUE && tc > 0;
         short typecode = (short) tc;
         if (log.isDebugEnabled()) {
             log.debug(
