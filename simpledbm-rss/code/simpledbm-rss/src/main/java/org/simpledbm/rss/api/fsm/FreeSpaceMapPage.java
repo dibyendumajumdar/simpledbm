@@ -23,18 +23,28 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageId;
 
 /**
  * Interface definition for Space Map pages. 
  */
 public abstract class FreeSpaceMapPage extends Page {
 	
-    protected FreeSpaceMapPage(PageFactory pageFactory) {
-		super(pageFactory);
+//    protected FreeSpaceMapPage(PageFactory pageFactory) {
+//		super(pageFactory);
+//	}
+//
+//	protected FreeSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+//		super(pageFactory, bb);
+//	}
+
+	protected FreeSpaceMapPage(PageFactory pageFactory, int type,
+			PageId pageId) {
+		super(pageFactory, type, pageId);
 	}
 
-	protected FreeSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
-		super(pageFactory, bb);
+	protected FreeSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		super(pageFactory, pageId, bb);
 	}
 
 	/**

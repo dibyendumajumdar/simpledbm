@@ -203,6 +203,8 @@ public final class TransactionManagerImpl implements TransactionManager {
     final LockManager lockmgr;
 
     final LoggableFactory loggableFactory;
+    
+    final ObjectRegistry objectRegistry;
 
     final TransactionalModuleRegistry moduleRegistry;
 
@@ -306,6 +308,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         this.storageManager = storageManager;
         this.bufmgr = bufmgr;
         this.lockmgr = lockmgr;
+        this.objectRegistry = objectFactory;
         this.loggableFactory = loggableFactory;
         this.moduleRegistry = moduleRegistry;
         this.latch = latchFactory.newReadWriteLatch();
@@ -609,8 +612,10 @@ public final class TransactionManagerImpl implements TransactionManager {
          * into chunks, and also allows the dirty pages list to change even while the checkpoint
          * is in operation.  
          */
-        CheckpointBegin checkpointBegin = (CheckpointBegin) loggableFactory
-            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTBEGIN);
+//        CheckpointBegin checkpointBegin = (CheckpointBegin) loggableFactory
+//            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTBEGIN);
+        CheckpointBegin checkpointBegin = new CheckpointBegin(0, TransactionManagerImpl.TYPE_CHECKPOINTBEGIN);
+        
         checkpointBegin.setActiveContainers(storageManager
             .getActiveContainers());
         Lsn checkpointLsn = doLogInsert(checkpointBegin);
@@ -625,8 +630,10 @@ public final class TransactionManagerImpl implements TransactionManager {
          * Write the contents of checkpoint end record. Ideally this should be broken down into smaller
          * records. 
          */
-        CheckpointEnd checkpointEnd = (CheckpointEnd) loggableFactory
-            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTEND);
+//        CheckpointEnd checkpointEnd = (CheckpointEnd) loggableFactory
+//            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTEND);
+        CheckpointEnd checkpointEnd = new CheckpointEnd(0, TransactionManagerImpl.TYPE_CHECKPOINTEND, this);
+        
 //        checkpointEnd.setTrxMgr(this);
         checkpointEnd.setTransactionTable(trxTable);
         /*
@@ -2074,8 +2081,9 @@ public final class TransactionManagerImpl implements TransactionManager {
              * A readonly transaction would not have generated log records
              */
             if (!lastLsn.isNull() || !postCommitActions.isEmpty()) {
-                TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory
-                    .getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
+//                TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory
+//                    .getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
+                TrxPrepare prepareLogRec = new TrxPrepare(0, TransactionManagerImpl.TYPE_TRXPREPARE);
 //                prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
                 prepareLogRec.setTrxId(trxId);
                 prepareLogRec.setPrevTrxLsn(lastLsn);
@@ -2107,8 +2115,9 @@ public final class TransactionManagerImpl implements TransactionManager {
                 // No need to generate an end record
                 return;
             }
-            TrxEnd commitLogRec = (TrxEnd) getTrxmgr().loggableFactory
-                .getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
+//            TrxEnd commitLogRec = (TrxEnd) getTrxmgr().loggableFactory
+//                .getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
+            TrxEnd commitLogRec = new TrxEnd(0, TransactionManagerImpl.TYPE_TRXEND);
             commitLogRec.setTrxId(trxId);
             commitLogRec.setPrevTrxLsn(lastLsn);
             Lsn myLsn = getTrxmgr().doLogInsert(commitLogRec);
@@ -2193,9 +2202,12 @@ public final class TransactionManagerImpl implements TransactionManager {
                     mcat.getMessage("EX0016"));
                 throw new TransactionException(mcat.getMessage("EX0016"));
             }
-            dummyCLR = (DummyCLR) getTrxmgr().loggableFactory.getInstance(
-                TransactionManagerImpl.MODULE_ID,
-                TransactionManagerImpl.TYPE_DUMMYCLR);
+//            dummyCLR = (DummyCLR) getTrxmgr().loggableFactory.getInstance(
+//                TransactionManagerImpl.MODULE_ID,
+//                TransactionManagerImpl.TYPE_DUMMYCLR);
+            dummyCLR = new DummyCLR(
+                    TransactionManagerImpl.MODULE_ID,
+                    TransactionManagerImpl.TYPE_DUMMYCLR);
             dummyCLR.setUndoNextLsn(getLastLsn());
         }
 
@@ -2425,8 +2437,10 @@ public final class TransactionManagerImpl implements TransactionManager {
                     /*
                      * First write the Abort log record.
                      */
-                    TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory
-                        .getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
+//                    TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory
+//                        .getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
+                    TrxAbort abortLogRec = new TrxAbort(0, TransactionManagerImpl.TYPE_TRXABORT);
+                    
                     abortLogRec.setTrxId(trxId);
                     abortLogRec.setPrevTrxLsn(lastLsn);
                     Lsn myLsn = getTrxmgr().doLogInsert(abortLogRec);
@@ -2668,8 +2682,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     static abstract class Checkpoint extends BaseLoggable {
 
-		protected Checkpoint() {
-			super();
+		protected Checkpoint(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		protected Checkpoint(ByteBuffer bb) {
@@ -2685,8 +2699,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         ActiveContainerInfo[] activeContainers = new ActiveContainerInfo[0];
 
-		public CheckpointBegin() {
-			super();
+		public CheckpointBegin(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public CheckpointBegin(ByteBuffer bb) {
@@ -2767,9 +2781,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 				return CheckpointBegin.class;
 			}
 
-			public Object newInstance() {
-				return new CheckpointBegin();
-			}
+//			public Object newInstance() {
+//				return new CheckpointBegin();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new CheckpointBegin(buf);
@@ -2794,8 +2808,8 @@ public final class TransactionManagerImpl implements TransactionManager {
         int n_trx = 0;
         TransactionManagerImpl trxmgr;
 
-        public CheckpointEnd(TransactionManagerImpl trxmgr) {
-			super();
+        public CheckpointEnd(int moduleId, int typeCode, TransactionManagerImpl trxmgr) {
+			super(moduleId, typeCode);
 			this.trxmgr = trxmgr;
 		}
 
@@ -2917,9 +2931,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return CheckpointEnd.class;
 			}
-			public Object newInstance() {
-				return new CheckpointEnd(trxmgr);
-			}
+//			public Object newInstance() {
+//				return new CheckpointEnd(trxmgr);
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new CheckpointEnd(trxmgr, buf);
 			}
@@ -2927,8 +2941,8 @@ public final class TransactionManagerImpl implements TransactionManager {
     }
 
     static abstract class TrxControl extends BaseLoggable {
-		protected TrxControl() {
-			super();
+		protected TrxControl(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 		protected TrxControl(ByteBuffer bb) {
 			super(bb);
@@ -2945,16 +2959,12 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         LinkedList<PostCommitAction> postCommitActions = new LinkedList<PostCommitAction>();
 
-        private final LoggableFactory loggableFactory;
-
-        public TrxPrepare(LoggableFactory loggableFactory) {
-        	super();
-        	this.loggableFactory = loggableFactory;
+          public TrxPrepare(int moduleId, int typeCode) {
+        	super(moduleId, typeCode);
         }
         
         public TrxPrepare(LoggableFactory loggableFactory, ByteBuffer bb) {
         	super(bb);
-        	this.loggableFactory = loggableFactory;
             int n = bb.getInt();
             postCommitActions = new LinkedList<PostCommitAction>();
             for (int i = 0; i < n; i++) {
@@ -3006,9 +3016,9 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
 
-        public final LoggableFactory getLoggableFactory() {
-            return loggableFactory;
-        }
+//        public final LoggableFactory getLoggableFactory() {
+//            return loggableFactory;
+//        }
 
         public StringBuilder appendTo(StringBuilder sb) {
             sb.append("TrxPrepare(");
@@ -3041,10 +3051,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 				return TrxPrepare.class;
 			}
 
-			public Object newInstance() {
-				return new TrxPrepare(loggableFactory);
-			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new TrxPrepare(loggableFactory, buf);
 			}
@@ -3055,8 +3061,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     static public final class TrxAbort extends TrxControl {
 
-    	public TrxAbort() {
-			super();
+    	public TrxAbort(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public TrxAbort(ByteBuffer bb) {
@@ -3079,9 +3085,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 				return TrxAbort.class;
 			}
 
-			public Object newInstance() {
-				return new TrxAbort();
-			}
+//			public Object newInstance() {
+//				return new TrxAbort();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new TrxAbort(buf);
@@ -3091,8 +3097,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     static public final class TrxEnd extends TrxControl {
 
-        public TrxEnd() {
-			super();
+        public TrxEnd(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public TrxEnd(ByteBuffer bb) {
@@ -3115,9 +3121,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 				return TrxEnd.class;
 			}
 
-			public Object newInstance() {
-				return new TrxEnd();
-			}
+//			public Object newInstance() {
+//				return new TrxEnd();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new TrxEnd(buf);
@@ -3164,8 +3170,8 @@ public final class TransactionManagerImpl implements TransactionManager {
     public static final class DummyCLR extends BaseLoggable implements
             Compensation {
 
-        public DummyCLR() {
-			super();
+        public DummyCLR(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public DummyCLR(ByteBuffer bb) {
@@ -3187,9 +3193,9 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return DummyCLR.class;
 			}
-			public Object newInstance() {
-				return new DummyCLR();
-			}
+//			public Object newInstance() {
+//				return new DummyCLR();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new DummyCLR(buf);
 			}

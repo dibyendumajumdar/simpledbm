@@ -25,7 +25,8 @@ import java.util.ArrayList;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
-import org.simpledbm.rss.api.registry.ObjectFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
@@ -246,6 +247,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
+    /*
     public SlottedPageImpl(PageFactory pageFactory, ByteBuffer bb) {
 		super(pageFactory, bb);
         flags = bb.getShort();
@@ -281,7 +283,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 //        slotTable = new ArrayList<Slot>();
 		init();
 	}
-
+*/
+	
+	
 //	@Override
 //    public final void retrieve(ByteBuffer bb) {
 //        super.retrieve(bb);
@@ -306,7 +310,43 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 //        validatePageSize();
 //    }
 
-    @Override
+    SlottedPageImpl(PageFactory pageFactory, int type, PageId pageId) {
+		super(pageFactory, type, pageId);
+//      flags = 0;
+//      numberOfSlots = 0;
+//      deletedSlots = 0;
+//      freeSpace = getSpace();
+//      highWaterMark = freeSpace;
+//      spaceMapPageNumber = -1;
+//      data = new byte[getSpace()];
+//      slotTable = new ArrayList<Slot>();
+		init();
+	}
+
+	SlottedPageImpl(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		super(pageFactory, pageId, bb);
+        flags = bb.getShort();
+        numberOfSlots = bb.getShort();
+        deletedSlots = bb.getShort();
+        freeSpace = bb.getInt();
+        highWaterMark = bb.getInt();
+        spaceMapPageNumber = bb.getInt();
+        validatePageHeader();
+        data = new byte[getSpace()];
+        bb.get(data);
+        slotTable.clear();
+        slotTable.ensureCapacity(numberOfSlots);
+        ByteBuffer bb1 = ByteBuffer.wrap(data);
+        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
+//            Slot slot = new Slot();
+//            slot.retrieve(bb1);
+        	Slot slot = new Slot(bb1);
+            slotTable.add(slotNumber, slot);
+        }
+        validatePageSize();
+	}
+
+	@Override
     public final void store(ByteBuffer bb) {
         super.store(bb);
         bb.putShort(flags);
@@ -902,19 +942,28 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
     
-    public static final class SlottedPageImplFactory implements ObjectFactory {
+    public static final class SlottedPageImplFactory implements PageFactoryHelper {
     	final PageFactory pageFactory;
     	public SlottedPageImplFactory(PageFactory pageFactory) {
     		this.pageFactory = pageFactory;
     	}
-		public Class<?> getType() {
-			return SlottedPageImpl.class;
+//		public Class<?> getType() {
+//			return SlottedPageImpl.class;
+//		}
+//		public Object newInstance() {
+//			return new SlottedPageImpl(pageFactory);
+//		}
+//		public Object newInstance(ByteBuffer buf) {
+//			return new SlottedPageImpl(pageFactory, buf);
+//		}
+		public Page getInstance(int type, PageId pageId) {
+			return new SlottedPageImpl(pageFactory, type, pageId);
 		}
-		public Object newInstance() {
-			return new SlottedPageImpl(pageFactory);
+		public Page getInstance(PageId pageId, ByteBuffer bb) {
+			return new SlottedPageImpl(pageFactory, pageId, bb);
 		}
-		public Object newInstance(ByteBuffer buf) {
-			return new SlottedPageImpl(pageFactory, buf);
+		public int getPageType() {
+			return SlottedPageManagerImpl.TYPE_SLOTTEDPAGE;
 		}
     }
 

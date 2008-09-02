@@ -58,12 +58,12 @@ public interface Loggable extends Storable {
      */
     public int getModuleId();
 
-    /**
-     * Sets the ID of the TransactionalModule that generated this log record. 
-     * The TransactionalModule is responsible for redoing or undoing the effects
-     * of this log record.
-     */
-    public void setModuleId(int moduleId);
+//    /**
+//     * Sets the ID of the TransactionalModule that generated this log record. 
+//     * The TransactionalModule is responsible for redoing or undoing the effects
+//     * of this log record.
+//     */
+//    public void setModuleId(int moduleId);
 
     /**
      * Gets the ID of the Page to which this log is related. Most log records are 

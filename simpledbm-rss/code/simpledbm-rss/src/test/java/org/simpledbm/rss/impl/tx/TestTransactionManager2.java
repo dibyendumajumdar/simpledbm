@@ -34,6 +34,7 @@ import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -83,7 +84,7 @@ public class TestTransactionManager2 extends BaseTestCase {
     }
 
     void setupObjectFactory(ObjectRegistry objectFactory, PageFactory pageFactory) {
-        objectFactory.registerType(
+        objectFactory.registerSingleton(
         	TYPE_BITMGRPAGE, new BitMgrPage.BitMgrPageFactory(pageFactory));
         objectFactory.registerType(
             TYPE_BITMGRLOGCREATECONTAINER,
@@ -706,8 +707,8 @@ public class TestTransactionManager2 extends BaseTestCase {
         int containerId;
         ByteString name;
 
-        public BitMgrContainerOperation() {
-			super();
+        public BitMgrContainerOperation(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
             containerId = -1;
             name = new ByteString("");
 		}
@@ -765,8 +766,8 @@ public class TestTransactionManager2 extends BaseTestCase {
     public static class BitMgrLogCreateContainer extends
             BitMgrContainerOperation implements Redoable {
 
-		public BitMgrLogCreateContainer() {
-			super();
+		public BitMgrLogCreateContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BitMgrLogCreateContainer(ByteBuffer bb) {
@@ -778,9 +779,9 @@ public class TestTransactionManager2 extends BaseTestCase {
 				return BitMgrLogCreateContainer.class;
 			}
 
-			public Object newInstance() {
-				return new BitMgrLogCreateContainer();
-			}
+//			public Object newInstance() {
+//				return new BitMgrLogCreateContainer();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new BitMgrLogCreateContainer(buf);
@@ -793,8 +794,8 @@ public class TestTransactionManager2 extends BaseTestCase {
     public static class BitMgrLogOpenContainer extends BitMgrContainerOperation
 			implements NonTransactionRelatedOperation {
 
-		public BitMgrLogOpenContainer() {
-			super();
+		public BitMgrLogOpenContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BitMgrLogOpenContainer(ByteBuffer bb) {
@@ -806,9 +807,9 @@ public class TestTransactionManager2 extends BaseTestCase {
 				return BitMgrLogOpenContainer.class;
 			}
 
-			public Object newInstance() {
-				return new BitMgrLogOpenContainer();
-			}
+//			public Object newInstance() {
+//				return new BitMgrLogOpenContainer();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new BitMgrLogOpenContainer(buf);
@@ -819,8 +820,8 @@ public class TestTransactionManager2 extends BaseTestCase {
     public static class BitMgrLogFormatPage extends BaseLoggable implements
             Redoable, PageFormatOperation {
 
-		public BitMgrLogFormatPage() {
-			super();
+		public BitMgrLogFormatPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BitMgrLogFormatPage(ByteBuffer bb) {
@@ -836,9 +837,9 @@ public class TestTransactionManager2 extends BaseTestCase {
 				return BitMgrLogFormatPage.class;
 			}
 
-			public Object newInstance() {
-				return new BitMgrLogFormatPage();
-			}
+//			public Object newInstance() {
+//				return new BitMgrLogFormatPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new BitMgrLogFormatPage(buf);
@@ -858,8 +859,8 @@ public class TestTransactionManager2 extends BaseTestCase {
         static final int SIZE = BaseLoggable.SIZE + (Integer.SIZE / Byte.SIZE)
                 * 3;
 
-        public BitMgrLogRedoUndo() {
-			super();
+        public BitMgrLogRedoUndo(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BitMgrLogRedoUndo(ByteBuffer bb) {
@@ -923,9 +924,9 @@ public class TestTransactionManager2 extends BaseTestCase {
 				return BitMgrLogRedoUndo.class;
 			}
 
-			public Object newInstance() {
-				return new BitMgrLogRedoUndo();
-			}
+//			public Object newInstance() {
+//				return new BitMgrLogRedoUndo();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new BitMgrLogRedoUndo(buf);
@@ -947,8 +948,8 @@ public class TestTransactionManager2 extends BaseTestCase {
 //        public void init() {
 //        }
 
-        public BitMgrLogCLR() {
-			super();
+        public BitMgrLogCLR(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BitMgrLogCLR(ByteBuffer bb) {
@@ -996,9 +997,9 @@ public class TestTransactionManager2 extends BaseTestCase {
 				return BitMgrLogCLR.class;
 			}
 
-			public Object newInstance() {
-				return new BitMgrLogCLR();
-			}
+//			public Object newInstance() {
+//				return new BitMgrLogCLR();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new BitMgrLogCLR(buf);
@@ -1010,18 +1011,32 @@ public class TestTransactionManager2 extends BaseTestCase {
 
         byte[] bits;
 
-        public BitMgrPage(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+        
+        BitMgrPage(PageFactory pageFactory, int type, PageId pageId) {
+			super(pageFactory, type, pageId);
+            int n_bits = super.getStoredLength() - Page.SIZE;
+            bits = new byte[n_bits];
+		}
+
+		BitMgrPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
             int n_bits = super.getStoredLength() - Page.SIZE;
             bits = new byte[n_bits];
             bb.get(bits);
 		}
 
-		public BitMgrPage(PageFactory pageFactory) {
-			super(pageFactory);
-            int n_bits = super.getStoredLength() - Page.SIZE;
-            bits = new byte[n_bits];
-		}
+//		public BitMgrPage(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//            int n_bits = super.getStoredLength() - Page.SIZE;
+//            bits = new byte[n_bits];
+//            bb.get(bits);
+//		}
+//
+//		public BitMgrPage(PageFactory pageFactory) {
+//			super(pageFactory);
+//            int n_bits = super.getStoredLength() - Page.SIZE;
+//            bits = new byte[n_bits];
+//		}
 
 //		@Override
 //        public void init() {
@@ -1049,23 +1064,30 @@ public class TestTransactionManager2 extends BaseTestCase {
             return bits[offset];
         }
 
-        static final class BitMgrPageFactory implements ObjectFactory {
+        static final class BitMgrPageFactory implements PageFactoryHelper {
         	private final PageFactory pageFactory;
         	BitMgrPageFactory(PageFactory pageFactory) {
         		this.pageFactory = pageFactory;
         	}
-			public Class<?> getType() {
-				return BitMgrPage.class;
+//			public Class<?> getType() {
+//				return BitMgrPage.class;
+//			}
+//			public Object newInstance() {
+//				return new BitMgrPage(pageFactory);
+//			}
+//			public Object newInstance(ByteBuffer buf) {
+//				return new BitMgrPage(pageFactory, buf);
+//			}
+			public Page getInstance(int type, PageId pageId) {
+				return new BitMgrPage(pageFactory, type, pageId);
 			}
-			public Object newInstance() {
-				return new BitMgrPage(pageFactory);
+			public Page getInstance(PageId pageId, ByteBuffer bb) {
+				return new BitMgrPage(pageFactory, pageId, bb);
 			}
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrPage(pageFactory, buf);
+			public int getPageType() {
+				return TYPE_BITMGRPAGE;
 			}
-        	
         }
-        
     }
 
     public static class OneBitMgr extends BaseTransactionalModule {
@@ -1144,9 +1166,12 @@ public class TestTransactionManager2 extends BaseTestCase {
             if (undoable instanceof BitMgrLogRedoUndo) {
                 BitMgrLogRedoUndo logrec = (BitMgrLogRedoUndo) undoable;
 
-                BitMgrLogCLR clr = (BitMgrLogCLR) loggableFactory.getInstance(
-                    OneBitMgr.moduleId,
-                    TestTransactionManager2.TYPE_BITMGRLOGCLR);
+//                BitMgrLogCLR clr = (BitMgrLogCLR) loggableFactory.getInstance(
+//                    OneBitMgr.moduleId,
+//                    TestTransactionManager2.TYPE_BITMGRLOGCLR);
+                BitMgrLogCLR clr = new BitMgrLogCLR(
+                        OneBitMgr.moduleId,
+                        TestTransactionManager2.TYPE_BITMGRLOGCLR);
                 clr.index = logrec.index;
                 clr.newValue = logrec.oldValue;
                 System.out.println("UNDO: Setting bit[" + clr.index + "] to "
@@ -1204,10 +1229,13 @@ public class TestTransactionManager2 extends BaseTestCase {
                 new ObjectLock(ObjectLock.BIT, index),
                 LockMode.EXCLUSIVE,
                 LockDuration.COMMIT_DURATION);
-            BitMgrLogRedoUndo logrec = (BitMgrLogRedoUndo) loggableFactory
-                .getInstance(
-                    OneBitMgr.moduleId,
-                    TestTransactionManager2.TYPE_BITMGRLOGREDOUNDO);
+//            BitMgrLogRedoUndo logrec = (BitMgrLogRedoUndo) loggableFactory
+//                .getInstance(
+//                    OneBitMgr.moduleId,
+//                    TestTransactionManager2.TYPE_BITMGRLOGREDOUNDO);
+            BitMgrLogRedoUndo logrec = new BitMgrLogRedoUndo(
+                OneBitMgr.moduleId,
+                TestTransactionManager2.TYPE_BITMGRLOGREDOUNDO);
             BufferAccessBlock bab = bufmgr.fixExclusive(
                 pageId,
                 false,
@@ -1280,19 +1308,29 @@ public class TestTransactionManager2 extends BaseTestCase {
             Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
             boolean success = false;
             try {
-                BitMgrLogCreateContainer logcreate = (BitMgrLogCreateContainer) loggableFactory
-                    .getInstance(
-                        OneBitMgr.moduleId,
-                        TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
-                BitMgrLogOpenContainer logopen = (BitMgrLogOpenContainer) loggableFactory
-                    .getInstance(
-                        OneBitMgr.moduleId,
-                        TestTransactionManager2.TYPE_BITMGRLOGOPENCONTAINER);
-                BitMgrLogFormatPage formatpage = (BitMgrLogFormatPage) loggableFactory
-                    .getInstance(
-                        OneBitMgr.moduleId,
-                        TestTransactionManager2.TYPE_BITMGRLOGFORMATPAGE);
+//                BitMgrLogCreateContainer logcreate = (BitMgrLogCreateContainer) loggableFactory
+//                    .getInstance(
+//                        OneBitMgr.moduleId,
+//                        TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
+//                BitMgrLogOpenContainer logopen = (BitMgrLogOpenContainer) loggableFactory
+//                    .getInstance(
+//                        OneBitMgr.moduleId,
+//                        TestTransactionManager2.TYPE_BITMGRLOGOPENCONTAINER);
+//                BitMgrLogFormatPage formatpage = (BitMgrLogFormatPage) loggableFactory
+//                    .getInstance(
+//                        OneBitMgr.moduleId,
+//                        TestTransactionManager2.TYPE_BITMGRLOGFORMATPAGE);
 
+                BitMgrLogCreateContainer logcreate = new BitMgrLogCreateContainer(
+                    OneBitMgr.moduleId,
+                    TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
+                BitMgrLogOpenContainer logopen = new BitMgrLogOpenContainer(
+                    OneBitMgr.moduleId,
+                    TestTransactionManager2.TYPE_BITMGRLOGOPENCONTAINER);
+                BitMgrLogFormatPage formatpage = new BitMgrLogFormatPage(
+                    OneBitMgr.moduleId,
+                    TestTransactionManager2.TYPE_BITMGRLOGFORMATPAGE);            	
+            	
                 trx.acquireLock(
                     new ObjectLock(ObjectLock.CONTAINER, containerId),
                     LockMode.EXCLUSIVE,

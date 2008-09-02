@@ -38,11 +38,11 @@ public interface LoggableFactory {
      */
     public Loggable getInstance(ByteBuffer bb);
 
-    /**
-     * Create a new Loggable object of the specified type. The Loggable
-     * object's module id field will be set to the specified module id.
-     */
-    public Loggable getInstance(int moduleId, int typecode);
+//    /**
+//     * Create a new Loggable object of the specified type. The Loggable
+//     * object's module id field will be set to the specified module id.
+//     */
+//    public Loggable getInstance(int moduleId, int typecode);
 
     /**
      * Create an instance of Loggable object from the raw log data.

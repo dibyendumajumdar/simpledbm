@@ -43,22 +43,22 @@ public class TestSlottedPage extends BaseTestCase {
         super(arg0);
     }
 
-    public void testCtor() throws Exception {
-    	Properties p = new Properties();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
-// 		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
-        final StorageManager storageManager = new StorageManagerImpl(p);
-        final LatchFactory latchFactory = new LatchFactoryImpl(p);
-        final PageFactory pageFactory = new PageFactoryImpl(
-            objectFactory,
-            storageManager,
-            latchFactory,
-            p);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
-            objectFactory, pageFactory, p);
-        SlottedPageImpl page = new SlottedPageImpl(pageFactory);
-//        page.init();
-    }
+//    public void testCtor() throws Exception {
+//    	Properties p = new Properties();
+//        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
+//// 		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
+//        final StorageManager storageManager = new StorageManagerImpl(p);
+//        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+//        final PageFactory pageFactory = new PageFactoryImpl(
+//            objectFactory,
+//            storageManager,
+//            latchFactory,
+//            p);
+//        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+//            objectFactory, pageFactory, p);
+//        SlottedPageImpl page = new SlottedPageImpl(pageFactory);
+////        page.init();
+//    }
 
     public static class StringItem implements Storable {
 

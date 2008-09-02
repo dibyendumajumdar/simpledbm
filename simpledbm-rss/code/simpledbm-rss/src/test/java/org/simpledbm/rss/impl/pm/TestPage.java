@@ -26,8 +26,8 @@ import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -86,15 +86,24 @@ public class TestPage extends BaseTestCase {
     static public class MyPage extends Page {
 
         int i = 0;
-
-        public MyPage(PageFactory pageFactory) {
-            super(pageFactory);
-        }
         
-        public MyPage(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+        MyPage(PageFactory pageFactory, int type, PageId pageId) {
+			super(pageFactory, type, pageId);
+		}
+
+		MyPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
             i = bb.getInt();
 		}
+
+//		public MyPage(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//            i = bb.getInt();
+//		}
+//
+//		public MyPage(PageFactory pageFactory) {
+//			super(pageFactory);
+//		}
 
 //		/**
 //         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
@@ -113,17 +122,12 @@ public class TestPage extends BaseTestCase {
             super.store(bb);
             bb.putInt(i);
         }
-
+//
 //        @Override
 //        public void init() {
 //        }
-
-        @Override
-        public String toString() {
-            return super.toString() + ".MyPage(i = " + i + ")";
-        }
         
-        static class MyPageFactory implements ObjectFactory {
+        static class MyPageFactory implements PageFactoryHelper {
 
         	final PageFactory pageFactory;
         	
@@ -131,16 +135,28 @@ public class TestPage extends BaseTestCase {
         		this.pageFactory = pageFactory;
         	}
         	
-			public Class<?> getType() {
-				return MyPage.class;
+//			public Class<?> getType() {
+//				return MyPage.class;
+//			}
+//
+//			public Object newInstance() {
+//				return new MyPage(pageFactory);
+//			}
+//
+//			public Object newInstance(ByteBuffer buf) {
+//				return new MyPage(pageFactory, buf);
+//			}
+
+			public Page getInstance(int type, PageId pageId) {
+				return new MyPage(pageFactory, type, pageId);
 			}
 
-			public Object newInstance() {
-				return new MyPage(pageFactory);
+			public Page getInstance(PageId pageId, ByteBuffer bb) {
+				return new MyPage(pageFactory, pageId, bb);
 			}
 
-			public Object newInstance(ByteBuffer buf) {
-				return new MyPage(pageFactory, buf);
+			public int getPageType() {
+				return TYPE_MYPAGE;
 			}
         	
         }
@@ -163,7 +179,7 @@ public class TestPage extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerType(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
 
         MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
             1,

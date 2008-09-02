@@ -26,6 +26,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -69,7 +70,11 @@ public final class PageFactoryImpl implements PageFactory {
 
     private final LatchFactory latchFactory;
 
-    private final MessageCatalog mcat = new MessageCatalog();
+    public LatchFactory getLatchFactory() {
+		return latchFactory;
+	}
+
+	private final MessageCatalog mcat = new MessageCatalog();
 
     public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
@@ -77,7 +82,7 @@ public final class PageFactoryImpl implements PageFactory {
         this.objectFactory = objectFactory;
         this.storageManager = storageManager;
         this.latchFactory = latchFactory;
-        objectFactory.registerType(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
+        objectFactory.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
     }
 
     public PageFactoryImpl(ObjectRegistry objectFactory,
@@ -97,12 +102,16 @@ public final class PageFactoryImpl implements PageFactory {
      * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
      */
     public final Page getInstance(int pagetype, PageId pageId) {
-        Page page = (Page) objectFactory.getInstance(pagetype);
+/*        Page page = (Page) objectFactory.getInstance(pagetype);
         page.setType(pagetype);
 //        page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
         page.setPageId(pageId);
 //        page.init();
+ * 
+ */
+    	PageFactoryHelper pf = (PageFactoryHelper) objectFactory.getInstance(pagetype);
+    	Page page = pf.getInstance(pagetype, pageId);
         return page;
     }
 
@@ -119,12 +128,16 @@ public final class PageFactoryImpl implements PageFactory {
         bb.mark();
         short pagetype = bb.getShort();
         bb.reset();
+/*
         Page page = (Page) objectFactory.getInstance(pagetype, bb);
 //        page.setPageFactory(this);
         page.setLatch(latchFactory.newReadWriteUpdateLatch());
 //        page.init();
 //        page.retrieve(bb);
         page.setPageId(pageId);
+*/
+    	PageFactoryHelper pf = (PageFactoryHelper) objectFactory.getInstance(pagetype);
+    	Page page = pf.getInstance(pageId, bb);
         return page;
     }
     

@@ -17,33 +17,14 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.registry;
+package org.simpledbm.rss.api.pm;
 
 import java.nio.ByteBuffer;
 
-/**
- * ObjectFactory interface provides methods for creating instances of objects.
- * Non-singleton object types that want to register with the ObjectRegistry must
- * provide a factory implementation for constructing objects.
- * @author dibyendu majumdar
- * @since 24 Aug 08
- */
-public interface ObjectFactory {
+public interface PageFactoryHelper  {
 
-//	/**
-//	 * Construct an object using the default constructor.
-//	 */
-//	Object newInstance();
-	
-	/**
-	 * Construct an object from the supplied ByteBuffer.
-	 * The first two bytes should be interpreted as a type code. 
-	 */
-	Object newInstance(ByteBuffer buf);
-	
-	/**
-	 * Gets the class of the objects managed by this factory.
-	 */
-	Class<?> getType();
+	Page getInstance(int type, PageId pageId);
+	Page getInstance(PageId pageId, ByteBuffer bb);
+	int getPageType();
 	
 }

@@ -42,13 +42,13 @@ public abstract class Page implements Storable, Dumpable {
      * The type code for the page. Used to re-create correct type of
      * page when reading from disk.
      */
-    private short type = -1;
+    private final short type; //  = -1;
 
     /**
      * The identity of the page.
      * Transient.
      */
-    private PageId pageId = new PageId();
+    private final PageId pageId; //  = new PageId();
     
     /**
      * Page LSN is the LSN of the last log record that made
@@ -67,22 +67,27 @@ public abstract class Page implements Storable, Dumpable {
      * A read/write latch to protect access to the page.
      * Transient.
      */
-    protected Latch lock;
+    protected final Latch lock;
 
-    protected Page(PageFactory pageFactory) {
+    protected Page(PageFactory pageFactory, int type, PageId pageId) {
     	this.pageFactory = pageFactory;
+    	this.type = (short) type;
+    	this.pageId = pageId;
+    	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
     }
 
-    protected Page(PageFactory pageFactory, ByteBuffer bb) {
+    protected Page(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
     	this.pageFactory = pageFactory;
+    	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
+    	this.pageId = pageId;
         type = bb.getShort();
         pageLsn = new Lsn(bb);
     }    
     
-    public final void setType(int type) {
-        assert type < Short.MAX_VALUE;
-        this.type = (short) type;
-    }
+//    public final void setType(int type) {
+//        assert type < Short.MAX_VALUE;
+//        this.type = (short) type;
+//    }
 
     public final int getType() {
         return type;
@@ -92,9 +97,9 @@ public abstract class Page implements Storable, Dumpable {
         return pageId;
     }
 
-    public final void setPageId(PageId pageId) {
-        this.pageId = new PageId(pageId);
-    }
+//    public final void setPageId(PageId pageId) {
+//        this.pageId = new PageId(pageId);
+//    }
 
     public final Lsn getPageLsn() {
         return pageLsn;
@@ -166,11 +171,11 @@ public abstract class Page implements Storable, Dumpable {
         lock.downgradeExclusiveLock();
     }
 
-    public final void setLatch(Latch latch) {
-        if (lock == null) {
-            lock = latch;
-        }
-    }
+//    public final void setLatch(Latch latch) {
+//        if (lock == null) {
+//            lock = latch;
+//        }
+//    }
 
     @Override
     public final int hashCode() {

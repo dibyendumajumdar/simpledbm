@@ -26,7 +26,6 @@ import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
-import org.simpledbm.rss.api.tx.LoggableFactoryAware;
 import org.simpledbm.rss.api.wal.LogRecord;
 
 /**
@@ -67,16 +66,16 @@ public final class LoggableFactoryImpl implements LoggableFactory {
         return loggable;
     }
 
-    public final Loggable getInstance(int moduleId, int typecode) {
-        BaseLoggable loggable = (BaseLoggable) objectFactory
-            .getInstance(typecode);
-        loggable.setTypecode(typecode);
-        loggable.setModuleId(moduleId);
-//        if (loggable instanceof LoggableFactoryAware) {
-//            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
-//        }
-//        loggable.init();
-        return loggable;
-    }
+//    public final Loggable getInstance(int moduleId, int typecode) {
+//        BaseLoggable loggable = (BaseLoggable) objectFactory
+//            .getInstance(typecode);
+//        loggable.setTypecode(typecode);
+//        loggable.setModuleId(moduleId);
+////        if (loggable instanceof LoggableFactoryAware) {
+////            ((LoggableFactoryAware) loggable).setLoggableFactory(this);
+////        }
+////        loggable.init();
+//        return loggable;
+//    }
 
 }

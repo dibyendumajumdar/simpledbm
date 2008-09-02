@@ -35,6 +35,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -139,11 +140,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         moduleRegistry.registerModule(MODULE_ID, this);
 
-        objectFactory.registerType(
+        objectFactory.registerSingleton(
         	TYPE_HEADERPAGE, new HeaderPage.HeaderPageFactory(pageFactory));
-        objectFactory.registerType(
+        objectFactory.registerSingleton(
             TYPE_ONEBITSPACEMAPPAGE, new OneBitSpaceMapPage.OneBitSpaceMapPageFactory(pageFactory));
-        objectFactory.registerType(
+        objectFactory.registerSingleton(
             TYPE_TWOBITSPACEMAPPAGE, new TwoBitSpaceMapPage.TwoBitSpaceMapPageFactory(pageFactory));
         objectFactory.registerType(
         	TYPE_CREATECONTAINER, new CreateContainer.CreateContainerFactory());
@@ -194,8 +195,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 	@Override
     public final Compensation generateCompensation(Undoable undoable) {
         if (undoable instanceof CreateContainer) {
-            UndoCreateContainer clr = (UndoCreateContainer) loggableFactory
-                .getInstance(
+//            UndoCreateContainer clr = (UndoCreateContainer) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UNDOCREATECONTAINER);
+            UndoCreateContainer clr = new UndoCreateContainer(
                     MODULE_ID,
                     FreeSpaceManagerImpl.TYPE_UNDOCREATECONTAINER);
             CreateContainer logrec = (CreateContainer) undoable;
@@ -203,30 +207,39 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             clr.name = logrec.name;
             return clr;
         } else if (undoable instanceof UpdateHeaderPage) {
-            UndoUpdateHeaderPage clr = (UndoUpdateHeaderPage) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UNDOUPDATEHEADERPAGE);
+//            UndoUpdateHeaderPage clr = (UndoUpdateHeaderPage) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UNDOUPDATEHEADERPAGE);
+            UndoUpdateHeaderPage clr = new UndoUpdateHeaderPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UNDOUPDATEHEADERPAGE);            
             UpdateHeaderPage logrec = (UpdateHeaderPage) undoable;
             clr.oldLastSpaceMapPage = logrec.oldLastSpaceMapPage;
             clr.oldNumberOfExtents = logrec.oldNumberOfExtents;
             clr.oldNumberOfSpaceMapPages = logrec.oldNumberOfSpaceMapPages;
             return clr;
         } else if (undoable instanceof UndoableUpdateSpaceMapPage) {
-            UndoSpaceMapPageUpdate clr = (UndoSpaceMapPageUpdate) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UNDOSPACEMAPPAGEUPDATE);
+//            UndoSpaceMapPageUpdate clr = (UndoSpaceMapPageUpdate) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UNDOSPACEMAPPAGEUPDATE);
+            UndoSpaceMapPageUpdate clr = new UndoSpaceMapPageUpdate(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UNDOSPACEMAPPAGEUPDATE);
             UndoableUpdateSpaceMapPage logrec = (UndoableUpdateSpaceMapPage) undoable;
             clr.pageNumber = logrec.pageNumber;
             clr.spaceValue = logrec.oldSpaceValue;
             return clr;
         } else if (undoable instanceof LinkSpaceMapPage) {
             LinkSpaceMapPage logrec = (LinkSpaceMapPage) undoable;
-            UndoLinkSpaceMapPage clr = (UndoLinkSpaceMapPage) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UNDOLINKSPACEMAPPAGE);
+//            UndoLinkSpaceMapPage clr = (UndoLinkSpaceMapPage) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UNDOLINKSPACEMAPPAGE);
+            UndoLinkSpaceMapPage clr = new UndoLinkSpaceMapPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UNDOLINKSPACEMAPPAGE);
             clr.oldNextSpaceMapPage = logrec.oldNextSpaceMapPage;
             return clr;
         }
@@ -370,10 +383,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         trx.startNestedTopAction();
         boolean commitNTA = false;
         try {
-            CreateContainer createContainerLog = (CreateContainer) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_CREATECONTAINER);
+//            CreateContainer createContainerLog = (CreateContainer) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_CREATECONTAINER);
+            CreateContainer createContainerLog = new CreateContainer(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_CREATECONTAINER);
             createContainerLog.setContainerId(containerid);
             createContainerLog.setName(containerName);
             // We log this operation against the bootstrap container at ID 0. 
@@ -398,17 +414,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
             // Log an open container operation. This is a redoable action that will always be
             // redone.
-            OpenContainer openContainerLog = (OpenContainer) loggableFactory
-                .getInstance(MODULE_ID, FreeSpaceManagerImpl.TYPE_OPENCONTAINER);
+//            OpenContainer openContainerLog = (OpenContainer) loggableFactory
+//                .getInstance(MODULE_ID, FreeSpaceManagerImpl.TYPE_OPENCONTAINER);
+            OpenContainer openContainerLog = new OpenContainer(MODULE_ID, 
+            		FreeSpaceManagerImpl.TYPE_OPENCONTAINER);
             openContainerLog.setContainerId(containerid);
             openContainerLog.setName(containerName);
             trxmgr.logNonTransactionRelatedOperation(openContainerLog);
 
             //Format the header page
-            FormatHeaderPage formatHeaderPageLog = (FormatHeaderPage) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_FORMATHEADERPAGE);
+//            FormatHeaderPage formatHeaderPageLog = (FormatHeaderPage) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_FORMATHEADERPAGE);
+            FormatHeaderPage formatHeaderPageLog = new FormatHeaderPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_FORMATHEADERPAGE);
             formatHeaderPageLog.setExtentSize(extentSize);
             formatHeaderPageLog.setFirstSpaceMapPage(FIRST_SPACE_MAP_PAGE);
             formatHeaderPageLog.setLastSpaceMapPage(FIRST_SPACE_MAP_PAGE);
@@ -432,10 +453,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
             // Format the first Space Map page in the container and
             // mark the header page and the space map page as "in use".
-            FormatSpaceMapPage formatSMPPageLog = (FormatSpaceMapPage) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
+//            FormatSpaceMapPage formatSMPPageLog = (FormatSpaceMapPage) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
+            FormatSpaceMapPage formatSMPPageLog = new FormatSpaceMapPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
             formatSMPPageLog.setFirstPageNumber(HEADER_PAGE);
             formatSMPPageLog.setNextSpaceMapPage(0);
             bab = bufmgr.fixExclusive(new PageId(
@@ -448,10 +472,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                 page.setPageLsn(lsn);
 
                 // Mark header page in use
-                UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
-                    .getInstance(
-                        MODULE_ID,
-                        FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+//                UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
+//                    .getInstance(
+//                        MODULE_ID,
+//                        FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+                UpdateSpaceMapPage updateSpaceMapLog = new UpdateSpaceMapPage(
+                    MODULE_ID,
+                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
                 updateSpaceMapLog.setPageNumber(HEADER_PAGE);
                 updateSpaceMapLog.setSpaceValue(smpPage.fullValue());
                 lsn = trx.logInsert(page, updateSpaceMapLog);
@@ -459,10 +486,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                 page.setPageLsn(lsn);
 
                 // Mark space map page in use
-                updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
-                    .getInstance(
-                        MODULE_ID,
-                        FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+//                updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
+//                    .getInstance(
+//                        MODULE_ID,
+//                        FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+                updateSpaceMapLog = new UpdateSpaceMapPage(
+                    MODULE_ID,
+                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
                 updateSpaceMapLog.setPageNumber(FIRST_SPACE_MAP_PAGE);
                 updateSpaceMapLog.setSpaceValue(smpPage.fullValue());
                 lsn = trx.logInsert(page, updateSpaceMapLog);
@@ -482,10 +512,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     0);
                 try {
                     Page page = bab.getPage();
-                    FormatRawPage formatRawPageLog = (FormatRawPage) loggableFactory
-                        .getInstance(
-                            MODULE_ID,
-                            FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
+//                    FormatRawPage formatRawPageLog = (FormatRawPage) loggableFactory
+//                        .getInstance(
+//                            MODULE_ID,
+//                            FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
+                    FormatRawPage formatRawPageLog = new FormatRawPage(
+                        MODULE_ID,
+                        FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
                     formatRawPageLog.setDataPageType(dataPageType);
                     Lsn lsn = trx.logInsert(page, formatRawPageLog);
                     redo(page, formatRawPageLog);
@@ -542,10 +575,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
             int dataPageType = hdrPage.getDataPageType();
 
-            UpdateHeaderPage updateHeaderPage = (UpdateHeaderPage) loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UPDATEHEADERPAGE);
+//            UpdateHeaderPage updateHeaderPage = (UpdateHeaderPage) loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UPDATEHEADERPAGE);
+            UpdateHeaderPage updateHeaderPage = new UpdateHeaderPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UPDATEHEADERPAGE);
             updateHeaderPage.newLastSpaceMapPage = updateHeaderPage.oldLastSpaceMapPage = hdrPage.lastSpaceMapPage;
             updateHeaderPage.newNumberOfExtents = updateHeaderPage.oldNumberOfExtents = hdrPage.lastSpaceMapPage;
             updateHeaderPage.newNumberOfSpaceMapPages = updateHeaderPage.oldNumberOfSpaceMapPages = hdrPage.numberOfSpaceMapPages;
@@ -569,10 +605,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     pageNumber), true, dataPageType, 0);
                 try {
                     Page page = bab.getPage();
-                    FormatRawPage formatRawPageLog = (FormatRawPage) loggableFactory
-                        .getInstance(
-                            MODULE_ID,
-                            FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
+//                    FormatRawPage formatRawPageLog = (FormatRawPage) loggableFactory
+//                        .getInstance(
+//                            MODULE_ID,
+//                            FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
+                    FormatRawPage formatRawPageLog = new FormatRawPage(
+                        MODULE_ID,
+                        FreeSpaceManagerImpl.TYPE_FORMATRAWPAGE);
                     formatRawPageLog.setDataPageType(dataPageType);
                     Lsn lsn = trx.logInsert(page, formatRawPageLog);
                     redo(page, formatRawPageLog);
@@ -617,20 +656,27 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                             SpaceMapPageImpl newSmp = (SpaceMapPageImpl) newSmpBab
                                 .getPage();
 
-                            FormatSpaceMapPage formatSMPPageLog = (FormatSpaceMapPage) loggableFactory
-                                .getInstance(
-                                    MODULE_ID,
-                                    FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
+//                            FormatSpaceMapPage formatSMPPageLog = (FormatSpaceMapPage) loggableFactory
+//                                .getInstance(
+//                                    MODULE_ID,
+//                                    FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
+                            FormatSpaceMapPage formatSMPPageLog = new FormatSpaceMapPage(
+                                MODULE_ID,
+                                FreeSpaceManagerImpl.TYPE_FORMATSPACEMAPPAGE);
                             formatSMPPageLog
                                 .setFirstPageNumber(firstPageInNewSMP);
                             formatSMPPageLog.setNextSpaceMapPage(0);
                             Lsn lsn = trx.logInsert(newSmp, formatSMPPageLog);
                             redo(newSmp, formatSMPPageLog);
 
-                            UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
-                                .getInstance(
-                                    MODULE_ID,
-                                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+//                            UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) loggableFactory
+//                                .getInstance(
+//                                    MODULE_ID,
+//                                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+                            UpdateSpaceMapPage updateSpaceMapLog = new UpdateSpaceMapPage(
+                                MODULE_ID,
+                                FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+
                             updateSpaceMapLog
                                 .setPageNumber(newSpaceMapPageNumber);
                             updateSpaceMapLog
@@ -639,10 +685,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                             redo(newSmp, updateSpaceMapLog);
                             newSmpBab.setDirty(lsn);
 
-                            LinkSpaceMapPage linkSpaceMapPageLog = (LinkSpaceMapPage) loggableFactory
-                                .getInstance(
-                                    MODULE_ID,
-                                    FreeSpaceManagerImpl.TYPE_LINKSPACEMAPPAGE);
+//                            LinkSpaceMapPage linkSpaceMapPageLog = (LinkSpaceMapPage) loggableFactory
+//                                .getInstance(
+//                                    MODULE_ID,
+//                                    FreeSpaceManagerImpl.TYPE_LINKSPACEMAPPAGE);
+                            LinkSpaceMapPage linkSpaceMapPageLog = new LinkSpaceMapPage(
+                                MODULE_ID,
+                                FreeSpaceManagerImpl.TYPE_LINKSPACEMAPPAGE);
                             linkSpaceMapPageLog.newNextSpaceMapPage = newSpaceMapPageNumber;
                             linkSpaceMapPageLog.oldNextSpaceMapPage = 0;
                             linkSpaceMapPageLog.setPageId(
@@ -683,9 +732,12 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      * @see org.simpledbm.rss.api.fsm.FreeSpaceManager#dropContainer(org.simpledbm.rss.api.tx.Transaction, int)
      */
     public void dropContainer(Transaction trx, int containerId) {
-        DropContainer logrec = (DropContainer) loggableFactory.getInstance(
-            MODULE_ID,
-            TYPE_DROPCONTAINER);
+//        DropContainer logrec = (DropContainer) loggableFactory.getInstance(
+//            MODULE_ID,
+//            TYPE_DROPCONTAINER);
+        DropContainer logrec = new DropContainer(
+                MODULE_ID,
+                TYPE_DROPCONTAINER);
         StorageContainer sc;
         sc = storageManager.getInstance(containerId);
         if (sc == null) {
@@ -714,13 +766,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int containerId;
         ByteString name;
 
-        public ContainerOperation() {
-			super();
+        protected ContainerOperation(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
             containerId = -1;
             name = new ByteString("");
 		}
 
-		public ContainerOperation(ByteBuffer bb) {
+		protected ContainerOperation(ByteBuffer bb) {
 			super(bb);
             containerId = bb.getInt();
             name = new ByteString(bb);
@@ -790,8 +842,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class CreateContainer extends ContainerOperation
             implements Undoable {
         
-        public CreateContainer() {
-			super();
+        public CreateContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public CreateContainer(ByteBuffer bb) {
@@ -814,9 +866,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return CreateContainer.class;
 			}
-			public Object newInstance() {
-				return new CreateContainer();
-			}
+//			public Object newInstance() {
+//				return new CreateContainer();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new CreateContainer(buf);
 			}
@@ -831,8 +883,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UndoCreateContainer extends ContainerOperation
             implements Compensation, ContainerDeleteOperation {
 
-        public UndoCreateContainer() {
-			super();
+        public UndoCreateContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UndoCreateContainer(ByteBuffer bb) {
@@ -857,9 +909,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return UndoCreateContainer.class;
 			}
 
-			public Object newInstance() {
-				return new UndoCreateContainer();
-			}
+//			public Object newInstance() {
+//				return new UndoCreateContainer();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoCreateContainer(buf);
@@ -875,8 +927,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class OpenContainer extends ContainerOperation
             implements NonTransactionRelatedOperation {
 
-        public OpenContainer() {
-			super();
+        public OpenContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public OpenContainer(ByteBuffer bb) {
@@ -899,9 +951,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return OpenContainer.class;
 			}
-			public Object newInstance() {
-				return new OpenContainer();
-			}
+//			public Object newInstance() {
+//				return new OpenContainer();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new OpenContainer(buf);
 			}
@@ -919,8 +971,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int actionId;
 
-        public DropContainer() {
-			super();
+        public DropContainer(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public DropContainer(ByteBuffer bb) {
@@ -977,9 +1029,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return DropContainer.class;
 			}
 
-			public Object newInstance() {
-				return new DropContainer();
-			}
+//			public Object newInstance() {
+//				return new DropContainer();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new DropContainer(buf);
@@ -997,8 +1049,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         int dataPageType;
 
-        public FormatRawPage() {
-			super();
+        public FormatRawPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public FormatRawPage(ByteBuffer bb) {
@@ -1053,9 +1105,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return FormatRawPage.class;
 			}
 
-			public Object newInstance() {
-				return new FormatRawPage();
-			}
+//			public Object newInstance() {
+//				return new FormatRawPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new FormatRawPage(buf);
@@ -1107,8 +1159,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int dataPageType = -1;
 
-        public FormatHeaderPage() {
-			super();
+        public FormatHeaderPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public FormatHeaderPage(ByteBuffer bb) {
@@ -1231,9 +1283,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return FormatHeaderPage.class;
 			}
-			public Object newInstance() {
-				return new FormatHeaderPage();
-			}
+//			public Object newInstance() {
+//				return new FormatHeaderPage();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new FormatHeaderPage(buf);
 			}
@@ -1264,8 +1316,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int oldLastSpaceMapPage = -1;
         int newLastSpaceMapPage = -1;
 
-        public UpdateHeaderPage() {
-			super();
+        public UpdateHeaderPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UpdateHeaderPage(ByteBuffer bb) {
@@ -1331,9 +1383,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return UpdateHeaderPage.class;
 			}
-			public Object newInstance() {
-				return new UpdateHeaderPage();
-			}
+//			public Object newInstance() {
+//				return new UpdateHeaderPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UpdateHeaderPage(buf);
@@ -1360,8 +1412,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int oldLastSpaceMapPage = -1;
 
-        public UndoUpdateHeaderPage() {
-			super();
+        public UndoUpdateHeaderPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UndoUpdateHeaderPage(ByteBuffer bb) {
@@ -1417,9 +1469,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return UndoUpdateHeaderPage.class;
 			}
 
-			public Object newInstance() {
-				return new UndoUpdateHeaderPage();
-			}
+//			public Object newInstance() {
+//				return new UndoUpdateHeaderPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoUpdateHeaderPage(buf);
@@ -1444,8 +1496,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int nextSpaceMapPage = -1;
 
-        public FormatSpaceMapPage() {
-			super();
+        public FormatSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public FormatSpaceMapPage(ByteBuffer bb) {
@@ -1511,9 +1563,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return FormatSpaceMapPage.class;
 			}
-			public Object newInstance() {
-				return new FormatSpaceMapPage();
-			}
+//			public Object newInstance() {
+//				return new FormatSpaceMapPage();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new FormatSpaceMapPage(buf);
 			}
@@ -1525,8 +1577,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         int pageNumber;
         int spaceValue;
 
-        public BaseUpdateSpaceMapPage() {
-			super();
+        public BaseUpdateSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BaseUpdateSpaceMapPage(ByteBuffer bb) {
@@ -1594,8 +1646,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         int oldSpaceValue;
         
-        public BaseUndoableUpdateSpaceMapPage() {
-			super();
+        public BaseUndoableUpdateSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public BaseUndoableUpdateSpaceMapPage(ByteBuffer bb) {
@@ -1644,8 +1696,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UpdateSpaceMapPage extends BaseUpdateSpaceMapPage
             implements Redoable {
 
-        public UpdateSpaceMapPage() {
-			super();
+        public UpdateSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UpdateSpaceMapPage(ByteBuffer bb) {
@@ -1668,9 +1720,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return UpdateSpaceMapPage.class;
 			}
-			public Object newInstance() {
-				return new UpdateSpaceMapPage();
-			}
+//			public Object newInstance() {
+//				return new UpdateSpaceMapPage();
+//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new UpdateSpaceMapPage(buf);
 			}
@@ -1683,8 +1735,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UndoableUpdateSpaceMapPage extends
             BaseUndoableUpdateSpaceMapPage implements Undoable {
     	
-        public UndoableUpdateSpaceMapPage() {
-			super();
+        public UndoableUpdateSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UndoableUpdateSpaceMapPage(ByteBuffer bb) {
@@ -1709,9 +1761,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return UndoableUpdateSpaceMapPage.class;
 			}
 
-			public Object newInstance() {
-				return new UndoableUpdateSpaceMapPage();
-			}
+//			public Object newInstance() {
+//				return new UndoableUpdateSpaceMapPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoableUpdateSpaceMapPage(buf);
@@ -1726,8 +1778,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     public static final class UndoSpaceMapPageUpdate extends
             BaseUpdateSpaceMapPage implements Compensation {
 
-        public UndoSpaceMapPageUpdate() {
-			super();
+        public UndoSpaceMapPageUpdate(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UndoSpaceMapPageUpdate(ByteBuffer bb) {
@@ -1752,9 +1804,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return UndoSpaceMapPageUpdate.class;
 			}
 
-			public Object newInstance() {
-				return new UndoSpaceMapPageUpdate();
-			}
+//			public Object newInstance() {
+//				return new UndoSpaceMapPageUpdate();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoSpaceMapPageUpdate(buf);
@@ -1780,8 +1832,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int newNextSpaceMapPage = -1;
 
-        public LinkSpaceMapPage() {
-			super();
+        public LinkSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public LinkSpaceMapPage(ByteBuffer bb) {
@@ -1832,10 +1884,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 			public Class<?> getType() {
 				return LinkSpaceMapPage.class;
 			}
-
-			public Object newInstance() {
-				return new LinkSpaceMapPage();
-			}
+//
+//			public Object newInstance() {
+//				return new LinkSpaceMapPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new LinkSpaceMapPage(buf);
@@ -1855,8 +1907,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int oldNextSpaceMapPage = -1;
 
-        public UndoLinkSpaceMapPage() {
-			super();
+        public UndoLinkSpaceMapPage(int moduleId, int typeCode) {
+			super(moduleId, typeCode);
 		}
 
 		public UndoLinkSpaceMapPage(ByteBuffer bb) {
@@ -1904,9 +1956,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 				return UndoLinkSpaceMapPage.class;
 			}
 
-			public Object newInstance() {
-				return new UndoLinkSpaceMapPage();
-			}
+//			public Object newInstance() {
+//				return new UndoLinkSpaceMapPage();
+//			}
 
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoLinkSpaceMapPage(buf);
@@ -1956,12 +2008,27 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         int dataPageType = -1;
 
-        public HeaderPage(PageFactory pageFactory) {
-			super(pageFactory);
+//        public HeaderPage(PageFactory pageFactory) {
+//			super(pageFactory);
+//		}
+//
+//		public HeaderPage(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//            numberOfExtents = bb.getInt();
+//            extentSize = bb.getInt();
+//            numberOfSpaceMapPages = bb.getInt();
+//            lastSpaceMapPage = bb.getInt();
+//            firstSpaceMapPage = bb.getInt();
+//            spaceMapPageType = bb.getInt();
+//            dataPageType = bb.getInt();
+//		}
+		
+        public HeaderPage(PageFactory pageFactory, int type, PageId pageId) {
+			super(pageFactory, type, pageId);
 		}
 
-		public HeaderPage(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+		public HeaderPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
             numberOfExtents = bb.getInt();
             extentSize = bb.getInt();
             numberOfSpaceMapPages = bb.getInt();
@@ -1971,11 +2038,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             dataPageType = bb.getInt();
 		}
 
-//		@Override
-//        public final void init() {
-//        }
-
-        public final int getExtentSize() {
+		public final int getExtentSize() {
             return extentSize;
         }
 
@@ -2081,19 +2144,28 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
         
-        static class HeaderPageFactory implements ObjectFactory {
+        static class HeaderPageFactory implements PageFactoryHelper {
         	final PageFactory pageFactory;
         	public HeaderPageFactory(PageFactory pageFactory) {
         		this.pageFactory = pageFactory;
         	}
-			public Class<?> getType() {
-				return HeaderPage.class;
+//			public Class<?> getType() {
+//				return HeaderPage.class;
+//			}
+//			public Object newInstance() {
+//				return new HeaderPage(pageFactory);
+//			}
+//			public Object newInstance(ByteBuffer buf) {
+//				return new HeaderPage(pageFactory, buf);
+//			}
+			public Page getInstance(int type, PageId pageId) {
+				return new HeaderPage(pageFactory, type, pageId);
 			}
-			public Object newInstance() {
-				return new HeaderPage(pageFactory);
+			public Page getInstance(PageId pageId, ByteBuffer bb) {
+				return new HeaderPage(pageFactory, pageId, bb);
 			}
-			public Object newInstance(ByteBuffer buf) {
-				return new HeaderPage(pageFactory, buf);
+			public int getPageType() {
+				return FreeSpaceManagerImpl.TYPE_HEADERPAGE;
 			}
         }
     }
@@ -2125,13 +2197,29 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         byte[] bits;
 
-        protected SpaceMapPageImpl(PageFactory pageFactory) {
-			super(pageFactory);
+//        protected SpaceMapPageImpl(PageFactory pageFactory) {
+//			super(pageFactory);
+//			bits = new byte[getSpace()];
+//		}
+//
+//		protected SpaceMapPageImpl(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//            firstPageNumber = bb.getInt();
+//            nextSpaceMapPage = bb.getInt();
+//            lastPageNumber = firstPageNumber + getCount() - 1;
+//            bits = new byte[getSpace()];
+//            bb.get(bits);
+//		}
+		
+		protected SpaceMapPageImpl(PageFactory pageFactory, int type,
+				PageId pageId) {
+			super(pageFactory, type, pageId);
 			bits = new byte[getSpace()];
 		}
 
-		protected SpaceMapPageImpl(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+		protected SpaceMapPageImpl(PageFactory pageFactory, PageId pageId,
+				ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
             firstPageNumber = bb.getInt();
             nextSpaceMapPage = bb.getInt();
             lastPageNumber = firstPageNumber + getCount() - 1;
@@ -2260,12 +2348,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static final class TwoBitSpaceMapPage extends SpaceMapPageImpl {
 
-        public TwoBitSpaceMapPage(PageFactory pageFactory) {
-			super(pageFactory);
+//        public TwoBitSpaceMapPage(PageFactory pageFactory) {
+//			super(pageFactory);
+//		}
+//
+//		public TwoBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//		}
+		
+		TwoBitSpaceMapPage(PageFactory pageFactory, int type, PageId pageId) {
+			super(pageFactory, type, pageId);
 		}
 
-		public TwoBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+		TwoBitSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
 		}
 
 		@Override
@@ -2312,19 +2408,28 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return 0;
         }
         
-        static final class TwoBitSpaceMapPageFactory implements ObjectFactory {
+        static final class TwoBitSpaceMapPageFactory implements PageFactoryHelper {
         	private final PageFactory pageFactory;
         	public TwoBitSpaceMapPageFactory(PageFactory pageFactory) {
         		this.pageFactory = pageFactory;
         	}
-			public Class<?> getType() {
-				return TwoBitSpaceMapPage.class;
+//			public Class<?> getType() {
+//				return TwoBitSpaceMapPage.class;
+//			}
+//			public Object newInstance() {
+//				return new TwoBitSpaceMapPage(pageFactory);
+//			}
+//			public Object newInstance(ByteBuffer buf) {
+//				return new TwoBitSpaceMapPage(pageFactory, buf);
+//			}
+			public Page getInstance(int type, PageId pageId) {
+				return new TwoBitSpaceMapPage(pageFactory, type, pageId);
 			}
-			public Object newInstance() {
-				return new TwoBitSpaceMapPage(pageFactory);
+			public Page getInstance(PageId pageId, ByteBuffer bb) {
+				return new TwoBitSpaceMapPage(pageFactory, pageId, bb);
 			}
-			public Object newInstance(ByteBuffer buf) {
-				return new TwoBitSpaceMapPage(pageFactory, buf);
+			public int getPageType() {
+				return FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE;
 			}
         }
     }
@@ -2337,12 +2442,20 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
         final int ESIZE = Byte.SIZE;
 
-        public OneBitSpaceMapPage(PageFactory pageFactory) {
-			super(pageFactory);
+//        public OneBitSpaceMapPage(PageFactory pageFactory) {
+//			super(pageFactory);
+//		}
+//
+//		public OneBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
+//			super(pageFactory, bb);
+//		}
+
+		OneBitSpaceMapPage(PageFactory pageFactory, int type, PageId pageId) {
+			super(pageFactory, type, pageId);
 		}
 
-		public OneBitSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
-			super(pageFactory, bb);
+		OneBitSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+			super(pageFactory, pageId, bb);
 		}
 
 		@Override
@@ -2383,19 +2496,28 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return 0;
         }
         
-        static final class OneBitSpaceMapPageFactory implements ObjectFactory {
+        static final class OneBitSpaceMapPageFactory implements PageFactoryHelper {
         	private final PageFactory pageFactory;
         	OneBitSpaceMapPageFactory(PageFactory pageFactory) {
         		this.pageFactory = pageFactory;
         	}
-			public Class<?> getType() {
-				return OneBitSpaceMapPage.class;
+//			public Class<?> getType() {
+//				return OneBitSpaceMapPage.class;
+//			}
+//			public Object newInstance() {
+//				return new OneBitSpaceMapPage(pageFactory);
+//			}
+//			public Object newInstance(ByteBuffer buf) {
+//				return new OneBitSpaceMapPage(pageFactory, buf);
+//			}
+			public Page getInstance(int type, PageId pageId) {
+				return new OneBitSpaceMapPage(pageFactory, type, pageId);
 			}
-			public Object newInstance() {
-				return new OneBitSpaceMapPage(pageFactory);
+			public Page getInstance(PageId pageId, ByteBuffer bb) {
+				return new OneBitSpaceMapPage(pageFactory, pageId, bb);
 			}
-			public Object newInstance(ByteBuffer buf) {
-				return new OneBitSpaceMapPage(pageFactory, buf);
+			public int getPageType() {
+				return FreeSpaceManagerImpl.TYPE_ONEBITSPACEMAPPAGE;
 			}
         }
     }
@@ -2764,10 +2886,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     .getMessage("EF0006"));
                 throw new IllegalStateException(mcat.getMessage("EF0006"));
             }
-            UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) spacemgr.loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+//            UpdateSpaceMapPage updateSpaceMapLog = (UpdateSpaceMapPage) spacemgr.loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
+            UpdateSpaceMapPage updateSpaceMapLog = new UpdateSpaceMapPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UPDATESPACEMAPPAGE);
             Page page = bab.getPage();
             updateSpaceMapLog.setPageNumber(pageNumber);
             updateSpaceMapLog.setSpaceValue(value);
@@ -2791,10 +2916,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                     .getMessage("EF0006"));
                 throw new IllegalStateException(mcat.getMessage("EF0006"));
             }
-            UndoableUpdateSpaceMapPage updateSpaceMapLog = (UndoableUpdateSpaceMapPage) spacemgr.loggableFactory
-                .getInstance(
-                    MODULE_ID,
-                    FreeSpaceManagerImpl.TYPE_UNDOABLEUPDATESPACEMAPPAGE);
+//            UndoableUpdateSpaceMapPage updateSpaceMapLog = (UndoableUpdateSpaceMapPage) spacemgr.loggableFactory
+//                .getInstance(
+//                    MODULE_ID,
+//                    FreeSpaceManagerImpl.TYPE_UNDOABLEUPDATESPACEMAPPAGE);
+            UndoableUpdateSpaceMapPage updateSpaceMapLog = new UndoableUpdateSpaceMapPage(
+                MODULE_ID,
+                FreeSpaceManagerImpl.TYPE_UNDOABLEUPDATESPACEMAPPAGE);
             SpaceMapPageImpl page = (SpaceMapPageImpl) bab.getPage();
             updateSpaceMapLog.pageNumber = pageNumber;
             updateSpaceMapLog.spaceValue = value;
