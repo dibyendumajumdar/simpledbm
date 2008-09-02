@@ -19,11 +19,23 @@
  */
 package org.simpledbm.integrationtests.btree;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 
-public class RowLocationFactory implements LocationFactory {
+public class RowLocationFactory implements LocationFactory, ObjectFactory {
 	public Location newLocation() {
 		return new RowLocation();
+	}
+	public Location newLocation(ByteBuffer buf) {
+		return new RowLocation(buf);
+	}
+	public Class<?> getType() {
+		return RowLocation.class;
+	}
+	public Object newInstance(ByteBuffer buf) {
+		return newLocation(buf);
 	}
 }

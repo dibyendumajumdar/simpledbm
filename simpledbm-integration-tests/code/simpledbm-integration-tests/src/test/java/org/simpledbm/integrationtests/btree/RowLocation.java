@@ -37,6 +37,11 @@ public class RowLocation extends BaseLockable implements Location {
 		super(other);
 		this.loc = other.loc;
 	}
+	
+	RowLocation(ByteBuffer buf) {
+		super((byte) 'R');
+		this.loc = buf.getInt();
+	}
 
 	public Location cloneLocation() {
 		return new RowLocation(this);
@@ -50,9 +55,9 @@ public class RowLocation extends BaseLockable implements Location {
 		loc = Integer.parseInt(string);
 	}
 
-	public void retrieve(ByteBuffer bb) {
-		loc = bb.getInt();
-	}
+//	public void retrieve(ByteBuffer bb) {
+//		loc = bb.getInt();
+//	}
 
 	public void store(ByteBuffer bb) {
 		bb.putInt(loc);
