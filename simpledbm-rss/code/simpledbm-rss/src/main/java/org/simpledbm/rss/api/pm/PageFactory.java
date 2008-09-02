@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.api.pm;
 
+import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.st.StorageException;
 
 /**
@@ -77,6 +78,6 @@ public interface PageFactory {
      */
     int getRawPageType();
 
-    
+    LatchFactory getLatchFactory();
     
 }

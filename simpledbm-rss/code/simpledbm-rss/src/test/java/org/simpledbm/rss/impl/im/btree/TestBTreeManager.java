@@ -72,6 +72,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeImpl;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
+import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItemFactory;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockEventListener;
@@ -338,9 +339,20 @@ public class TestBTreeManager extends BaseTestCase {
 
 	}
 
-	private IndexItem generateKey( BTreeIndexManagerImpl.IndexItemHelper btree, String s, int location,
+//	private IndexItem generateKey( BTreeIndexManagerImpl.IndexItemHelper btree, String s, int location,
+//			int childpage, boolean isLeaf) {
+//		StringKey key = (StringKey) btree.getNewIndexKey();
+//		key.setString(s);
+//		RowLocation loc = (RowLocation) btree.getNewLocation();
+//		loc.loc = location;
+//		IndexItem item = new IndexItem(key, loc, childpage, isLeaf, btree
+//				.isUnique());
+//		return item;
+//	}
+	
+	private IndexItem generateKey( IndexItemFactory btree, String s, int location,
 			int childpage, boolean isLeaf) {
-		StringKey key = (StringKey) btree.getNewIndexKey();
+		StringKey key = (StringKey) btree.getNewIndexKey(1);
 		key.setString(s);
 		RowLocation loc = (RowLocation) btree.getNewLocation();
 		loc.loc = location;
@@ -349,41 +361,41 @@ public class TestBTreeManager extends BaseTestCase {
 		return item;
 	}
 	
-	static class MyIndexItemHelper implements BTreeIndexManagerImpl.IndexItemHelper {
-
-		IndexKeyFactory keyFactory = new StringKeyFactory();
-		LocationFactory locationFactory = new RowLocationFactory();
-		boolean unique = true;
-		
-		public MyIndexItemHelper(boolean unique) {
-			this.unique = unique;
-		}
-		
-		public IndexKey getMaxIndexKey() {
-			return keyFactory.maxIndexKey(1);
-		}
-
-		public IndexKey getNewIndexKey() {
-			return keyFactory.minIndexKey(1);
-		}
-
-		public Location getNewLocation() {
-			return locationFactory.newLocation();
-		}
-
-		public boolean isUnique() {
-			return true;
-		}
-
-		public IndexKeyFactory getIndexKeyFactory() {
-			return keyFactory;
-		}
-
-		public LocationFactory getLocationFactory() {
-			return locationFactory;
-		}
-		
-	}
+//	static class MyIndexItemHelper implements BTreeIndexManagerImpl.IndexItemHelper {
+//
+//		IndexKeyFactory keyFactory = new StringKeyFactory();
+//		LocationFactory locationFactory = new RowLocationFactory();
+//		boolean unique = true;
+//		
+//		public MyIndexItemHelper(boolean unique) {
+//			this.unique = unique;
+//		}
+//		
+//		public IndexKey getMaxIndexKey() {
+//			return keyFactory.maxIndexKey(1);
+//		}
+//
+//		public IndexKey getNewIndexKey() {
+//			return keyFactory.minIndexKey(1);
+//		}
+//
+//		public Location getNewLocation() {
+//			return locationFactory.newLocation();
+//		}
+//
+//		public boolean isUnique() {
+//			return true;
+//		}
+//
+//		public IndexKeyFactory getIndexKeyFactory() {
+//			return keyFactory;
+//		}
+//
+//		public LocationFactory getLocationFactory() {
+//			return locationFactory;
+//		}
+//		
+//	}
 
 	/**
 	 * Initialize the test harness. New log is created, and the test container
@@ -560,8 +572,8 @@ public class TestBTreeManager extends BaseTestCase {
 				 * Log record is being applied to BTree page.
 				 */
 				SlottedPage r = (SlottedPage) bab.getPage();
-				BTreeNode node = new BTreeNode(loadPageOp);
-				node.wrap(r);
+				BTreeNode node = new BTreeNode(loadPageOp.getIndexItemFactory(), r);
+//				node.wrap(r);
 				// System.out.println("Validating page ->");
 				// node.dumpAsXml();
 				// System.out.println("------------------");
@@ -609,7 +621,7 @@ public class TestBTreeManager extends BaseTestCase {
 				boolean okay = false;
 				try {
 					// System.out.println("--> SPLITTING PAGE");
-					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+					bcursor.searchKey = generateKey(btree.indexItemFactory, "da", 5, -1,
 							testLeaf);
 					btree.doSplit(trx, bcursor);
 				} finally {
@@ -641,16 +653,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE MERGE");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, l), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, r), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -702,16 +714,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -778,16 +790,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -899,16 +911,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE REDISTRIBUTING KEYS");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -921,7 +933,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				boolean okay = false;
 				try {
-					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+					bcursor.searchKey = generateKey(btree.indexItemFactory, "da", 5, -1,
 							testLeaf);
 					// System.out.println("--> REDISTRIBUTING KEYS");
 					btree.doRedistribute(trx, bcursor);
@@ -951,16 +963,16 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -973,7 +985,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				boolean okay = false;
 				try {
-					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+					bcursor.searchKey = generateKey(btree.indexItemFactory, "da", 5, -1,
 							testLeaf);
 					btree.doRedistribute(trx, bcursor);
 				} finally {
@@ -1002,16 +1014,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE INCREASING TREE HEIGHT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1024,7 +1036,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				boolean okay = false;
 				try {
-					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+					bcursor.searchKey = generateKey(btree.indexItemFactory, "da", 5, -1,
 							testLeaf);
 					// System.out.println("--> INCREASING TREE HEIGHT");
 					btree.doIncreaseTreeHeight(trx, bcursor);
@@ -1053,16 +1065,16 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE DECREASING TREE HEIGHT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, p), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, q), 0);
 			try {
-				BTreeNode node = btree.getBTreeNode();
-				node.wrap((SlottedPage) bab.getPage());
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1075,7 +1087,7 @@ public class TestBTreeManager extends BaseTestCase {
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				boolean okay = false;
 				try {
-					bcursor.searchKey = generateKey(btree, "da", 5, -1,
+					bcursor.searchKey = generateKey(btree.indexItemFactory, "da", 5, -1,
 							testLeaf);
 					// System.out.println("--> DECREASING TREE HEIGHT");
 					btree.doDecreaseTreeHeight(trx, bcursor);
@@ -3295,11 +3307,11 @@ public class TestBTreeManager extends BaseTestCase {
 			boolean forUpdate) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
 		try {
-			BTreeImpl index = (BTreeImpl) db.btreeMgr.getIndex(1);
+			BTreeImpl btree = (BTreeImpl) db.btreeMgr.getIndex(1);
 
-			IndexKey key = index.getNewIndexKey();
+			IndexKey key = btree.indexItemFactory.getNewIndexKey(1);
 			key.parseString(k);
-			RowLocation location = (RowLocation) index.getNewLocation();
+			RowLocation location = (RowLocation) btree.indexItemFactory.getNewLocation();
 			location.loc = loc;
 
 			/*
@@ -3309,7 +3321,7 @@ public class TestBTreeManager extends BaseTestCase {
 			Transaction trx = db.trxmgr.begin(isolationMode);
 			boolean found = false;
 			try {
-				IndexScan scan = index.openScan(trx, key, location, forUpdate);
+				IndexScan scan = btree.openScan(trx, key, location, forUpdate);
 				try {
 					if (scan.fetchNext()) {
 						if (key.toString().equals(
@@ -3433,7 +3445,6 @@ public class TestBTreeManager extends BaseTestCase {
 	 */
 	public void testCanAccomodate() {
 		compressKeys = true;
-		BTreeIndexManagerImpl.IndexItemHelper indexHelper = new MyIndexItemHelper(false);
 		Properties p = new Properties();
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
         final StorageManager storageManager = new StorageManagerImpl(p);
@@ -3449,16 +3460,24 @@ public class TestBTreeManager extends BaseTestCase {
 				new StringKeyFactory());
 		objectFactory.registerSingleton(TYPE_ROWLOCATIONFACTORY,
 				new RowLocationFactory());
+		BTreeIndexManagerImpl.IndexItemFactory indexHelper = new BTreeIndexManagerImpl.IndexItemFactory(new StringKeyFactory(),
+				new RowLocationFactory(), false);
         SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
             .getPageType(), new PageId());
         page.latchExclusive();
         BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique());
-        BTreeNode node = new BTreeNode(indexHelper);
-        node.wrap(page);
-        for (int i = 1; i < 156; i++) {
+        BTreeNode node = new BTreeNode(indexHelper, page);
+//        node.wrap(page);
+        for (int i = 1; i < 145; i++) {
         	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
         }
-		IndexItem key = generateKey(indexHelper, "12345678901", 0, 0, true);
+        // System.out.println(page);
+		IndexItem key = generateKey(indexHelper, "012345678901234", 0, 0, true);
+		int len = key.getStoredLength();
+		// System.out.println("key requires " + len + " bytes");
+		// it may seem we have space 
+		assertTrue(page.getFreeSpace()-page.getSlotOverhead() > len);
+		// but we cannot because no space for child pointer
 		assertFalse(node.canAccomodate(key));
         page.unlatchExclusive();
         compressKeys = false;

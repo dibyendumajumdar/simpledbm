@@ -35,7 +35,6 @@ import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;

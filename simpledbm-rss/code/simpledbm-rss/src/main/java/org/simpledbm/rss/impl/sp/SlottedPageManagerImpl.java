@@ -37,7 +37,7 @@ public class SlottedPageManagerImpl implements SlottedPageManager {
     static final short TYPE_SLOTTEDPAGE = TYPE_BASE + 1;
 
     public SlottedPageManagerImpl(ObjectRegistry objectFactory, PageFactory pageFactory, Properties p) {
-        objectFactory.registerType(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(pageFactory));
     }
 
     public int getPageType() {

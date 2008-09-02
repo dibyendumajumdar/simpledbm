@@ -233,7 +233,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
 		@Override
 		Object getInstance() {
-			return objectFactory.newInstance();
+//			return objectFactory.newInstance();
+			throw new UnsupportedOperationException();
 		}
 
 		@Override

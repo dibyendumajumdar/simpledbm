@@ -23,7 +23,8 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
-import org.simpledbm.rss.api.registry.ObjectFactory;
+import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageId;
 
 /**
  * A basic implementation of a page.
@@ -33,37 +34,57 @@ import org.simpledbm.rss.api.registry.ObjectFactory;
  */
 public final class RawPage extends Page {
 
-    public RawPage(PageFactory pageFactory) {
-        super(pageFactory);
-    }
+//    public RawPage(PageFactory pageFactory) {
+//        super(pageFactory);
+//    }
+//    
+//    public RawPage(PageFactory pageFactory, ByteBuffer buf) {
+//    	super(pageFactory, buf);
+//    }
     
-    public RawPage(PageFactory pageFactory, ByteBuffer buf) {
-    	super(pageFactory, buf);
-    }
-
 //    @Override
 //    public final void init() {
 //        // does nothing
 //    }
 
-    static final class RawPageFactory implements ObjectFactory {
+    RawPage(PageFactory pageFactory, int type, PageId pageId) {
+		super(pageFactory, type, pageId);
+	}
+
+	RawPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		super(pageFactory, pageId, bb);
+	}
+
+
+	static final class RawPageFactory implements PageFactoryHelper {
 
     	final PageFactory pageFactory;
     	
     	public RawPageFactory(PageFactory pageFactory) {
     		this.pageFactory = pageFactory;
     	}
-    	
-		public Class<?> getType() {
-			return RawPage.class;
+//    	
+//		public Class<?> getType() {
+//			return RawPage.class;
+//		}
+//
+//		public Object newInstance() {
+//			return new RawPage(pageFactory);
+//		}
+//
+//		public Object newInstance(ByteBuffer buf) {
+//			return new RawPage(pageFactory, buf);
+//		}
+		public Page getInstance(int type, PageId pageId) {
+			return new RawPage(pageFactory, type, pageId);
 		}
 
-		public Object newInstance() {
-			return new RawPage(pageFactory);
+		public Page getInstance(PageId pageId, ByteBuffer bb) {
+			return new RawPage(pageFactory, pageId, bb);
 		}
 
-		public Object newInstance(ByteBuffer buf) {
-			return new RawPage(pageFactory, buf);
+		public int getPageType() {
+			return PageFactoryImpl.TYPE_RAW_PAGE;
 		}
     	
     }
