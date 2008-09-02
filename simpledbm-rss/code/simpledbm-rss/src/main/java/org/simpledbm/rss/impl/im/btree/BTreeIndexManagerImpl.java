@@ -1948,8 +1948,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             leftChildHighKey.setChildPageNumber(ithOperation.leftSibling);
 //            IndexItem rightChildHighKey = rootNode.getInfiniteKey();
             // IndexItem rightChildHighKey = rootNode.indexItemFactory.getInfiniteKey(ithOperation.getPageId().getContainerId(), rootNode.isLeaf());           
-            IndexItem rightChildHighKey = indexItemFactory.getInfiniteKey(containerId, rootNode.isLeaf());
-            rightChildHighKey.setLeaf(false);
+            //IndexItem rightChildHighKey = indexItemFactory.getInfiniteKey(containerId, rootNode.isLeaf());
+            IndexItem rightChildHighKey = indexItemFactory.getInfiniteKey(containerId, false);
+            // rightChildHighKey.setLeaf(false);
             rightChildHighKey.setChildPageNumber(ithOperation.rightSibling);
             ithOperation.rootItems.add(leftChildHighKey);
             ithOperation.rootItems.add(rightChildHighKey);
@@ -4155,6 +4156,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         final IndexItemFactory indexItemFactory;
         
+        final PartialIndexItem.PartialIndexItemFactory partialIndexItemFactory;
+        
 //        BTreeNode(IndexItemHelper btree) {
 //            this.btree = btree;
 //        }
@@ -4167,6 +4170,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.header = (BTreeNodeHeader) this.page.get(
                 HEADER_KEY_POS,
                 new BTreeNodeHeader.BTreeNodeHeaderStorabeFactory());
+        	this.partialIndexItemFactory = new PartialIndexItem.PartialIndexItemFactory(isLeaf());
         }
         
         private final boolean sanityCheck() {
@@ -4406,12 +4410,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //                isUnique());
 //        }
 
-        final PartialIndexItem getNewPartialIndexItem() {
-        	sanityCheck();
-        	return new PartialIndexItem(
-                isLeaf(),
-                -1);
-        }
+//        final PartialIndexItem getNewPartialIndexItem() {
+//        	sanityCheck();
+//        	return new PartialIndexItem(
+//                isLeaf(),
+//                -1);
+//        }
         
         /**
          * Returns the high key. High key is always the last physical key on the page.
@@ -4439,7 +4443,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         final PartialIndexItem getPartialItem(int slotNumber) {
         	sanityCheck();
 //            return (PartialIndexItem) page.get(slotNumber, getNewPartialIndexItem());
-            return (PartialIndexItem) page.get(slotNumber, this);
+            return (PartialIndexItem) page.get(slotNumber, partialIndexItemFactory);
         }
         
 //        public final IndexItem getInfiniteKey() {
@@ -6642,6 +6646,20 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 len += TypeSize.INTEGER;
             }
             return len;
+        }
+        
+        static final class PartialIndexItemFactory implements StorableFactory {
+
+        	final boolean isleaf;
+        	
+        	PartialIndexItemFactory(boolean isleaf) {
+        		this.isleaf = isleaf;
+        	}
+        	
+			public Storable getStorable(ByteBuffer buf) {
+				return new PartialIndexItem(isleaf, buf);
+			}
+        	
         }
     }
     
