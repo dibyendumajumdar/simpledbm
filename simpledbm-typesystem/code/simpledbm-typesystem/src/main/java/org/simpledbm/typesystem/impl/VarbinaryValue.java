@@ -112,6 +112,45 @@ public class VarbinaryValue extends BaseDataValue {
 //			bb.get(byteArray);
 //		}
 //	}
+	
+	/*
+	 *   @Interruptible
+  665   public static String longAsHexString(long number) {
+  666     char[] buf = new char[18];
+  667     int index = 18;
+  668     while (--index > 1) {
+  669       int digit = (int) (number & 0x000000000000000fL);
+  670       buf[index] = digit <= 9 ? (char) ('0' + digit) : (char) ('a' + digit - 10);
+  671       number >>= 4;
+  672     }
+  673     buf[index--] = 'x';
+  674     buf[index] = '0';
+  675     return new String(buf);
+  676   }
+  677 
+  678   **
+  679    * Format a 32/64 bit number as "0x" followed by 8/16 hex digits.
+  680    * Do this without referencing Integer or Character classes,
+  681    * in order to avoid dynamic linking.
+  682    * TODO: move this method to Services.
+  683    * @param addr  The 32/64 bit number to format.
+  684    * @return a String with the hex representation of an Address
+  685    *
+  686   @Interruptible
+  687   public static String addressAsHexString(Address addr) {
+  688     int len = 2 + (BITS_IN_ADDRESS >> 2);
+  689     char[] buf = new char[len];
+  690     while (--len > 1) {
+  691       int digit = addr.toInt() & 0x0F;
+  692       buf[len] = digit <= 9 ? (char) ('0' + digit) : (char) ('a' + digit - 10);
+  693       addr = addr.toWord().rshl(4).toAddress();
+  694     }
+  695     buf[len--] = 'x';
+  696     buf[len] = '0';
+  697     return new String(buf);
+  698   }
+
+	 */
 
 	static String byteArrayToHexString(byte in[]) {
 		/*
