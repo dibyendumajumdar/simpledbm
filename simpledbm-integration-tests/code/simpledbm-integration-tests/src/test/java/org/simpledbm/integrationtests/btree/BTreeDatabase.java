@@ -90,8 +90,7 @@ public class BTreeDatabase {
 		keyFactory.registerRowType(1, rowtype1);
 
 		server.registerSingleton(KEY_FACTORY_TYPE, keyFactory);
-		server.registerType(LOCATION_FACTORY_TYPE, RowLocationFactory.class
-				.getName());
+		server.registerSingleton(LOCATION_FACTORY_TYPE, new RowLocationFactory());
 
 		server.start();
 
