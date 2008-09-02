@@ -175,7 +175,8 @@ public abstract class SlottedPage extends Page {
     public abstract int getSlotOverhead();
     
     /**
-     * Reinitialize a page.
+     * Reinitialize a page. All page settings must be set to
+     * default and any data should be zapped.
      */
     public abstract void init();
 

@@ -349,11 +349,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
              * Log record is being applied to BTree page.
              */
             SlottedPage r = (SlottedPage) page;
-            r.init();
-            formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp
-                .getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp
-                .isUnique());
-            r.setSpaceMapPageNumber(loadPageOp.getSpaceMapPageNumber());
+//            r.init();
+//            formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp
+//                .getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp
+//                .isUnique());
+//            r.setSpaceMapPageNumber(loadPageOp.getSpaceMapPageNumber());
+            BTreeNode.formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp
+                    .getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp
+                    .isUnique(), loadPageOp.getSpaceMapPageNumber());
             BTreeNode node = new BTreeNode(loadPageOp.getIndexItemFactory(), r);
 //            node.wrap(r);
             int k = FIRST_KEY_POS; // 0 is position of header item
@@ -403,14 +406,22 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // r is the newly allocated right sibling of q
         	Trace.event(1, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), splitOperation.getPageId().getContainerId(), splitOperation.getPageId().getPageNumber());
             SlottedPage r = (SlottedPage) page;
-            r.init();
-            formatPage(
-                r,
-                splitOperation.getKeyFactoryType(),
-                splitOperation.getLocationFactoryType(),
-                splitOperation.isLeaf(),
-                splitOperation.isUnique());
-            r.setSpaceMapPageNumber(splitOperation.spaceMapPageNumber);
+//            r.init();
+//            formatPage(
+//                r,
+//                splitOperation.getKeyFactoryType(),
+//                splitOperation.getLocationFactoryType(),
+//                splitOperation.isLeaf(),
+//                splitOperation.isUnique());
+//            r.setSpaceMapPageNumber(splitOperation.spaceMapPageNumber);
+            BTreeNode.formatPage(
+                    r,
+                    splitOperation.getKeyFactoryType(),
+                    splitOperation.getLocationFactoryType(),
+                    splitOperation.isLeaf(),
+                    splitOperation.isUnique(),
+                    splitOperation.spaceMapPageNumber);
+            
             BTreeNode newSiblingNode = new BTreeNode(splitOperation.getIndexItemFactory(), r);
 //            newSiblingNode.wrap(r);
             newSiblingNode.header.leftSibling = splitOperation
@@ -662,10 +673,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // root page
             // get rid of existing entries by reinitializing page
             int savedPageNumber = p.getSpaceMapPageNumber();
-            p.init();
-            p.setSpaceMapPageNumber(savedPageNumber);
-            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
-                .getLocationFactoryType(), false, ithOperation.isUnique());
+//            p.init();
+//            p.setSpaceMapPageNumber(savedPageNumber);
+//            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+//                .getLocationFactoryType(), false, ithOperation.isUnique());
+            BTreeNode.formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+                    .getLocationFactoryType(), false, ithOperation.isUnique(), savedPageNumber);
             node = new BTreeNode(ithOperation.getIndexItemFactory(), p);
 //            node.wrap(p);
             // insert new items
@@ -676,11 +689,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         } else if (p.getPageId().getPageNumber() == ithOperation.leftSibling) {
         	Trace.event(12, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), ithOperation.rightSibling);
             // new left sibling
-            p.init();
-            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
-                .getLocationFactoryType(), ithOperation.isLeaf(), ithOperation
-                .isUnique());
-            p.setSpaceMapPageNumber(ithOperation.spaceMapPageNumber);
+//            p.init();
+//            formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+//                .getLocationFactoryType(), ithOperation.isLeaf(), ithOperation
+//                .isUnique());
+//            p.setSpaceMapPageNumber(ithOperation.spaceMapPageNumber);
+            BTreeNode.formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
+                    .getLocationFactoryType(), ithOperation.isLeaf(), ithOperation
+                    .isUnique(), ithOperation.spaceMapPageNumber);
             node = new BTreeNode(ithOperation.getIndexItemFactory(), p);
 //            node.wrap(p);
             int k = FIRST_KEY_POS; // 0 is position of header item
@@ -721,12 +737,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // delete contents and absorb contents of only child
             SlottedPage p = (SlottedPage) page;
             int savedPageNumber = p.getSpaceMapPageNumber();
-            p.init();
-            p.setSpaceMapPageNumber(savedPageNumber);
-            // Leaf page status must be replicated from child page
-            formatPage(p, dthOperation.getKeyFactoryType(), dthOperation
+//            p.init();
+//            p.setSpaceMapPageNumber(savedPageNumber);
+//            // Leaf page status must be replicated from child page
+//            formatPage(p, dthOperation.getKeyFactoryType(), dthOperation
+//                .getLocationFactoryType(), dthOperation.isLeaf(), dthOperation
+//                .isUnique());
+            BTreeNode.formatPage(p, dthOperation.getKeyFactoryType(), dthOperation
                 .getLocationFactoryType(), dthOperation.isLeaf(), dthOperation
-                .isUnique());
+                .isUnique(), savedPageNumber);
             BTreeNode node = new BTreeNode(dthOperation.getIndexItemFactory(), p);
 //            node.wrap(p);
             int k = FIRST_KEY_POS;
@@ -1221,28 +1240,28 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
     }
 
-    /**
-     * Formats a new BTree page.
-     */
-    static void formatPage(SlottedPage page, int keyFactoryType,
-            int locationFactoryType, boolean leaf, boolean isUnique) {
-        /*
-         * FIXME: This method has knowledge of the BTreeNode and BTreeNodeHeader structures.
-         * Ideally this ought to be encapsulated in BTreeNode
-         */
-        short flags = 0;
-        if (leaf) {
-            flags |= BTreeNode.NODE_TYPE_LEAF;
-        }
-        if (isUnique) {
-            flags |= BTreeNode.NODE_TREE_UNIQUE;
-        }
-        page.setFlags(flags);
-        BTreeNodeHeader header = new BTreeNodeHeader();
-        header.setKeyFactoryType(keyFactoryType);
-        header.setLocationFactoryType(locationFactoryType);
-        page.insertAt(HEADER_KEY_POS, header, true);
-    }
+//    /**
+//     * Formats a new BTree page.
+//     */
+//    static void formatPage(SlottedPage page, int keyFactoryType,
+//            int locationFactoryType, boolean leaf, boolean isUnique) {
+//        /*
+//         * FIXME: This method has knowledge of the BTreeNode and BTreeNodeHeader structures.
+//         * Ideally this ought to be encapsulated in BTreeNode
+//         */
+//        short flags = 0;
+//        if (leaf) {
+//            flags |= BTreeNode.NODE_TYPE_LEAF;
+//        }
+//        if (isUnique) {
+//            flags |= BTreeNode.NODE_TREE_UNIQUE;
+//        }
+//        page.setFlags(flags);
+//        BTreeNodeHeader header = new BTreeNodeHeader();
+//        header.setKeyFactoryType(keyFactoryType);
+//        header.setLocationFactoryType(locationFactoryType);
+//        page.insertAt(HEADER_KEY_POS, header, true);
+//    }
 
 //    static interface IndexItemHelper {
 //    	
@@ -4179,6 +4198,27 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	}
         	throw new IndexException("The BTreeNode no longer refers to the correct page");
         }
+        
+        /**
+         * Formats a new BTree page.
+         */
+        static void formatPage(SlottedPage page, int keyFactoryType,
+                int locationFactoryType, boolean leaf, boolean isUnique, int spaceMapPageNumber) {
+        	page.init();
+            short flags = 0;
+            if (leaf) {
+                flags |= BTreeNode.NODE_TYPE_LEAF;
+            }
+            if (isUnique) {
+                flags |= BTreeNode.NODE_TREE_UNIQUE;
+            }
+            page.setFlags(flags);
+            page.setSpaceMapPageNumber(spaceMapPageNumber);
+            BTreeNodeHeader header = new BTreeNodeHeader();
+            header.setKeyFactoryType(keyFactoryType);
+            header.setLocationFactoryType(locationFactoryType);
+            page.insertAt(HEADER_KEY_POS, header, true);
+        }        
         
         public final void dumpAsXml() {
             System.out.println("<page containerId=\""
