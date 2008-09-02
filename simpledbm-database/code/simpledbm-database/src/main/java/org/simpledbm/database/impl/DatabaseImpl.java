@@ -449,9 +449,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 				server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
 						ROW_FACTORY_TYPE_ID, idx.isUnique());
 			}
-			CreateTableDefinition ctd = (CreateTableDefinition) server
-					.getLoggableFactory().getInstance(MODULE_ID,
-							TYPE_CREATE_TABLE_DEFINITION);
+			CreateTableDefinition ctd = new CreateTableDefinition(MODULE_ID,
+							TYPE_CREATE_TABLE_DEFINITION, this);
 //			ctd.database = this;
 			ctd.table = tableDefinition;
 			trx.schedulePostCommitAction(ctd);
@@ -604,7 +603,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			table = new TableDefinitionImpl(database, bb);
 		}
 
-		public CreateTableDefinition(Database database) {
+		public CreateTableDefinition(int moduleId, int typeCode, Database database) {
+			super(moduleId, typeCode);
 			this.database = database;
 		}
 
@@ -688,9 +688,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			public Class<?> getType() {
 				return CreateTableDefinition.class;
 			}
-			public Object newInstance() {
-				return new CreateTableDefinition(database);
-			}
+//			public Object newInstance() {
+//				return new CreateTableDefinition(database);
+//			}
 			public Object newInstance(ByteBuffer bb) {
 				return new CreateTableDefinition(database, bb);
 			}
