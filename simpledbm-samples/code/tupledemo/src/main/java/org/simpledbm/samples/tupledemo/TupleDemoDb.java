@@ -38,8 +38,6 @@ import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
-import org.simpledbm.typesystem.impl.DefaultTypeFactory;
-import org.simpledbm.typesystem.impl.GenericRowFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
 import org.simpledbm.typesystem.impl.VarcharType;
 
@@ -185,6 +183,19 @@ class TupleDemoDb {
         return rowFactory.newRow(containerId);
     }
 
+    /**
+     * Creates a new row object for the specified container.
+     * 
+     * @param containerId
+     *            ID of the container
+     * @return Appropriate row type
+     */
+    Row makeRow(int containerId, ByteBuffer buf) {
+        RowFactory rowFactory = (RowFactory) server.getObjectRegistry()
+                .getInstance(ROW_FACTORY_TYPE_ID);
+        return rowFactory.newRow(containerId, buf);
+    }    
+    
     /**
      * Create a row with values that are less than any other row in the index.
      * 
@@ -343,8 +354,8 @@ class TupleDemoDb {
                         byte[] data = table.read(location);
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = makeRow(TABLE_CONTNO);
-                        oldTableRow.retrieve(bb);
+                        Row oldTableRow = makeRow(TABLE_CONTNO, bb);
+//                        oldTableRow.retrieve(bb);
                         // Okay, now update the table row
                         table.update(trx, location, tableRow);
                         // Update secondary indexes
@@ -410,8 +421,8 @@ class TupleDemoDb {
                         byte[] data = table.read(location);
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
-                        Row oldTableRow = makeRow(TABLE_CONTNO);
-                        oldTableRow.retrieve(bb);
+                        Row oldTableRow = makeRow(TABLE_CONTNO, bb);
+//                        oldTableRow.retrieve(bb);
                         // Delete tuple data
                         table.delete(trx, location);
                         // Delete secondary index
@@ -477,8 +488,8 @@ class TupleDemoDb {
                     byte[] data = table.read(location);
                     // parse the data
                     ByteBuffer bb = ByteBuffer.wrap(data);
-                    Row tableRow = makeRow(TABLE_CONTNO);
-                    tableRow.retrieve(bb);
+                    Row tableRow = makeRow(TABLE_CONTNO, bb);
+//                    tableRow.retrieve(bb);
                     // do something with the row
                     printTableRow(tableRow);
                     // must invoke fetchCompleted
