@@ -31,6 +31,7 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Savepoint;
@@ -81,6 +82,11 @@ public class BTreeDemo {
 			this.loc = other.loc;
 		}
 
+		RowLocation(ByteBuffer buf) {
+			super((byte) 'R');
+			this.loc = buf.getInt();
+		}
+		
 		public Location cloneLocation() {
 			return new RowLocation(this);
 		}
@@ -93,9 +99,9 @@ public class BTreeDemo {
 			loc = Integer.parseInt(string);
 		}
 
-		public void retrieve(ByteBuffer bb) {
-			loc = bb.getInt();
-		}
+//		public void retrieve(ByteBuffer bb) {
+//			loc = bb.getInt();
+//		}
 
 		public void store(ByteBuffer bb) {
 			bb.putInt(loc);
@@ -162,9 +168,21 @@ public class BTreeDemo {
 	/**
 	 * Sample location Factory.
 	 */
-	public static class RowLocationFactory implements LocationFactory {
+	public static class RowLocationFactory implements LocationFactory, ObjectFactory {
 		public Location newLocation() {
 			return new RowLocation();
+		}
+
+		public Location newLocation(ByteBuffer arg0) {
+			return new RowLocation(arg0);
+		}
+
+		public Class<?> getType() {
+			return RowLocation.class;
+		}
+
+		public Object newInstance(ByteBuffer arg0) {
+			return newLocation(arg0);
 		}
 	}
 
@@ -214,8 +232,8 @@ public class BTreeDemo {
 
 			keyFactory.registerRowType(1, rowtype1);
 
-			server.registerSingleton(KEY_FACTORY_TYPE, keyFactory);
-			server.registerType(LOCATION_FACTORY_TYPE, RowLocationFactory.class.getName());
+			server.getObjectRegistry().registerSingleton(KEY_FACTORY_TYPE, keyFactory);
+			server.getObjectRegistry().registerSingleton(LOCATION_FACTORY_TYPE, new RowLocationFactory());
 
 			if (create) {
 				createBTree();
