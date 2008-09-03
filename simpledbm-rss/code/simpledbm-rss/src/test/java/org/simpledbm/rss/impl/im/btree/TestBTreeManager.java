@@ -3465,7 +3465,7 @@ public class TestBTreeManager extends BaseTestCase {
         SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
             .getPageType(), new PageId());
         page.latchExclusive();
-        BTreeIndexManagerImpl.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique());
+        BTreeIndexManagerImpl.BTreeNode.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique(), 0);
         BTreeNode node = new BTreeNode(indexHelper, page);
 //        node.wrap(page);
         for (int i = 1; i < 145; i++) {
