@@ -82,7 +82,7 @@ public class TypeSystemTest extends TestCase {
         System.err.println("Comparing row and row3 = " + row.compareTo(row3));
         System.err.println("Comparing row3 and row = " + row3.compareTo(row));
         System.err.println("Comparing row3 and row1 = " + row3.compareTo(row1));
-        row.parseString("300,hello world");
+        ((GenericRow)row).parseString("300,hello world");
         assertTrue(row.getColumnValue(0).getInt() == 300);
         assertTrue(row.getColumnValue(1).getString().equals("hello worl"));
         System.err.println("Row contents after parse string = " + row);

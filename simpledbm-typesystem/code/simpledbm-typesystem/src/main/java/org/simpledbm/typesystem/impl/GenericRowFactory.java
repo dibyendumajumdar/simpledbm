@@ -141,5 +141,9 @@ public class GenericRowFactory implements RowFactory {
         
     }
 
+	public IndexKey parseIndexKey(int arg0, String arg1) {
+		throw new UnsupportedOperationException();
+	}
+
 
 }
