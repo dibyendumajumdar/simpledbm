@@ -87,6 +87,11 @@ public class BTreeDemo {
 			this.loc = buf.getInt();
 		}
 		
+		RowLocation(String s) {
+			super((byte) 'R');
+			loc = Integer.parseInt(s);
+		}		
+		
 		public Location cloneLocation() {
 			return new RowLocation(this);
 		}
@@ -183,6 +188,9 @@ public class BTreeDemo {
 
 		public Object newInstance(ByteBuffer arg0) {
 			return newLocation(arg0);
+		}
+		public Location newLocation(String s) {
+			return new RowLocation(s);
 		}
 	}
 
@@ -290,8 +298,8 @@ public class BTreeDemo {
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-				Location location = locationFactory.newLocation();
-				location.parseString(sloc);
+				Location location = locationFactory.newLocation(sloc);
+//				location.parseString(sloc);
 				// Note that the row must be locked exclusively prior to the insert
 				trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
 				btree.insert(trx, row, location);
@@ -315,8 +323,8 @@ public class BTreeDemo {
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-				Location location = locationFactory.newLocation();
-				location.parseString(sloc);
+				Location location = locationFactory.newLocation(sloc);
+//				location.parseString(sloc);
 				// Note that the row must be locked exclusively prior to the delete
 				trx.acquireLock(location, LockMode.EXCLUSIVE, LockDuration.MANUAL_DURATION);
 				btree.delete(trx, row, location);
@@ -337,8 +345,8 @@ public class BTreeDemo {
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-				Location location = locationFactory.newLocation();
-				location.parseString(sloc);
+				Location location = locationFactory.newLocation(sloc);
+//				location.parseString(sloc);
 				IndexScan scan = btree.openScan(trx, row, location, false);
 				try {
 					while (scan.fetchNext()) {
