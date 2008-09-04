@@ -36,4 +36,12 @@ public interface LocationFactory {
     
     Location newLocation(ByteBuffer bb);
 
+    /**
+     * Used mainly for building test cases; this method should
+     * parse the input string and initialize itself. The contents 
+     * of the string is expected to match the toString() output.
+     * @param string
+     */
+    Location newLocation(String s);
+    
 }

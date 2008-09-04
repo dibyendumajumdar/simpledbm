@@ -32,13 +32,13 @@ import org.simpledbm.rss.api.tx.Lockable;
  */
 public interface Location extends Lockable, Storable, Comparable<Location> {
 
-    /**
-     * Used mainly for building test cases; this method should
-     * parse the input string and initialize itself. The contents 
-     * of the string is expected to match the toString() output.
-     * @param string
-     */
-    void parseString(String string);
+//    /**
+//     * Used mainly for building test cases; this method should
+//     * parse the input string and initialize itself. The contents 
+//     * of the string is expected to match the toString() output.
+//     * @param string
+//     */
+//    void parseString(String string);
     
     /**
      * Return first part of the location if applicable. Meaningless other than 

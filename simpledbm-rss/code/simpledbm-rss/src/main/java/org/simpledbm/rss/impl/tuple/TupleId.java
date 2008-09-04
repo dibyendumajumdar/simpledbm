@@ -73,6 +73,13 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         pageId = new PageId(bb);
         slotNumber = bb.getShort();
     }
+
+    public TupleId(String string) {
+        super((byte) 'T');
+        log.error(this.getClass().getName(), "TupleId", mcat
+                .getMessage("ET0001"));
+        throw new TupleException(mcat.getMessage("ET0001"));
+    }    
     
     public Location cloneLocation() {
 		return new TupleId(this);
@@ -82,11 +89,11 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         return pageId.isNull() || slotNumber == -1;
     }
 
-    public void parseString(String string) {
-        log.error(this.getClass().getName(), "parseString", mcat
-            .getMessage("ET0001"));
-        throw new TupleException(mcat.getMessage("ET0001"));
-    }
+//    public void parseString(String string) {
+//        log.error(this.getClass().getName(), "parseString", mcat
+//            .getMessage("ET0001"));
+//        throw new TupleException(mcat.getMessage("ET0001"));
+//    }
 
 //    public final void retrieve(ByteBuffer bb) {
 //        pageId = new PageId();

@@ -64,7 +64,19 @@ public interface IndexKeyFactory {
      */
     IndexKey minIndexKey(int containerId);
     
-    
+    /**
+     * Reads an index key from the byte stream represented by the ByteBuffer.
+     * The containerId should be used to decide on the key type.
+     * 
+     * @param containerId The ID of the container for which the key is being read
+     * @param bb ByteBuffer representing the byte stream that contains the key to be read
+     * @return A newly instantiated key.
+     */
     IndexKey newIndexKey(int containerId, ByteBuffer bb);
  
+    /**
+     * Parse the supplied string and construct a key. Not guaranteed to work,
+     * but useful for creating test cases.
+     */
+    IndexKey parseIndexKey(int containerId, String s);
 }
