@@ -51,7 +51,7 @@ public class GenericRow implements Row, IndexKey {
             fields[i] = fieldFactory.getInstance(rowTypeDesc[i], bb); 
         }
     }
-    
+
 	public int getNumberOfColumns() {
 		return fields.length;
 	}
