@@ -4736,10 +4736,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 			this.unique = unique;
 		}
 
-		public final IndexKey getNewIndexKey(int containerId) {
-			return keyFactory.newIndexKey(containerId);
-		}
-
 		public final Location getNewLocation() {
 			return locationFactory.newLocation();
 		}
@@ -4748,11 +4744,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 			return keyFactory.maxIndexKey(containerId);
 		}
 
-		public final IndexItem newIndexItem(int containerId, boolean leaf) {
-			return new IndexItem(keyFactory.newIndexKey(containerId),
-					locationFactory.newLocation(), -1, leaf, unique);
+		public final IndexKey getNewIndexKey(int containerId, String s) {
+			return keyFactory.parseIndexKey(containerId, s);
 		}
-
+		
 		public final IndexItem newIndexItem(int containerId, boolean leaf, ByteBuffer bb) {
 			return new IndexItem(leaf, unique, containerId, keyFactory,
 					locationFactory, bb);
@@ -4883,10 +4878,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             bb.put(unique ? (byte) 1 : (byte) 0);
         }
 
-        public final IndexKey getNewIndexKey() {
-            return keyFactory.newIndexKey(getPageId().getContainerId());
-        }
-
         public final Location getNewLocation() {
             return locationFactory.newLocation();
         }
@@ -4895,15 +4886,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return keyFactory.maxIndexKey(getPageId().getContainerId());
         }
 
-        public final IndexItem makeNewItem() {
-            return new IndexItem(
-                keyFactory.newIndexKey(getPageId().getContainerId()),
-                locationFactory.newLocation(),
-                -1,
-                leaf,
-                unique);
-        }
-        
         public final IndexItem makeNewItem(ByteBuffer bb) {
             return new IndexItem(leaf, unique, getPageId().getContainerId(), keyFactory, locationFactory, bb);
         }
@@ -6416,8 +6398,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 			this.locationFactory = (LocationFactory) objectRegistry.getInstance(locationFactoryType);
 		}
 		
-		IndexKey getNewIndexKey() {
-			return keyFactory.newIndexKey(pageId.getContainerId());
+		IndexKey getNewIndexKey(String s) {
+			return keyFactory.parseIndexKey(pageId.getContainerId(), s);
 		}
 	}
 
@@ -6560,12 +6542,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
             }
 
-            IndexKey key = loadPageOp.getNewIndexKey();
-            key.parseString(keyValue);
-
-            Location location = loadPageOp.locationFactory.newLocation();
-            location.parseString(locationValue);
-
+            IndexKey key = loadPageOp.getNewIndexKey(keyValue);
+            Location location = loadPageOp.locationFactory.newLocation(locationValue);
             loadPageOp.items.add(new IndexItem(
                 key,
                 location,

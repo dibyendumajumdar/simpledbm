@@ -43,4 +43,8 @@ public class TupleIdFactory implements LocationFactory {
 	public Location newLocation(ByteBuffer bb) {
 		return new TupleId(bb);
 	}
+
+	public Location newLocation(String s) {
+		return new TupleId(s);
+	}
 }

@@ -30,14 +30,6 @@ import org.simpledbm.rss.api.pm.PageId;
  */
 public abstract class FreeSpaceMapPage extends Page {
 	
-//    protected FreeSpaceMapPage(PageFactory pageFactory) {
-//		super(pageFactory);
-//	}
-//
-//	protected FreeSpaceMapPage(PageFactory pageFactory, ByteBuffer bb) {
-//		super(pageFactory, bb);
-//	}
-
 	protected FreeSpaceMapPage(PageFactory pageFactory, int type,
 			PageId pageId) {
 		super(pageFactory, type, pageId);
