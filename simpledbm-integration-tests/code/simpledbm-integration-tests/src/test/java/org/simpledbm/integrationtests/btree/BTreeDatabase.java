@@ -155,8 +155,8 @@ public class BTreeDatabase {
 			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-			Location location = locationFactory.newLocation();
-			location.parseString(sloc);
+			Location location = locationFactory.newLocation(sloc);
+//			location.parseString(sloc);
 			// Note that the row must be locked exclusively prior to the insert
 			trx.acquireLock(location, LockMode.EXCLUSIVE,
 					LockDuration.COMMIT_DURATION);
@@ -183,8 +183,8 @@ public class BTreeDatabase {
 			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-			Location location = locationFactory.newLocation();
-			location.parseString(sloc);
+			Location location = locationFactory.newLocation(sloc);
+//			location.parseString(sloc);
 			// Note that the row must be locked exclusively prior to the delete
 			trx.acquireLock(location, LockMode.EXCLUSIVE,
 					LockDuration.COMMIT_DURATION);
@@ -208,8 +208,8 @@ public class BTreeDatabase {
 			row.getColumnValue(0).setString(key);
 			LocationFactory locationFactory = (LocationFactory) server
 					.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
-			Location location = locationFactory.newLocation();
-			location.parseString(sloc);
+			Location location = locationFactory.newLocation(sloc);
+//			location.parseString(sloc);
 			IndexScan scan = btree.openScan(trx, row, location, false);
 			try {
 				while (scan.fetchNext()) {

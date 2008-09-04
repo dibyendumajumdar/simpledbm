@@ -42,6 +42,11 @@ public class RowLocation extends BaseLockable implements Location {
 		super((byte) 'R');
 		this.loc = buf.getInt();
 	}
+	
+	RowLocation(String s) {
+		super((byte) 'R');
+		loc = Integer.parseInt(s);
+	}
 
 	public Location cloneLocation() {
 		return new RowLocation(this);
