@@ -38,4 +38,7 @@ public class RowLocationFactory implements LocationFactory, ObjectFactory {
 	public Object newInstance(ByteBuffer buf) {
 		return newLocation(buf);
 	}
+	public Location newLocation(String s) {
+		return new RowLocation(s);
+	}
 }
