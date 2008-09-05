@@ -76,11 +76,6 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
             return -1;
     }
 
-//    public final void retrieve(ByteBuffer bb) {
-//        containerId = bb.getInt();
-//        pageNumber = bb.getInt();
-//    }
-
     public final void store(ByteBuffer bb) {
         bb.putInt(containerId);
         bb.putInt(pageNumber);

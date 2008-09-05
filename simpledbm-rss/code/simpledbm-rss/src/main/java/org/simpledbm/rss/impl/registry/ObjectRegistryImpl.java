@@ -66,7 +66,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     public ObjectRegistryImpl(Properties properties) {
     }
     
-    public synchronized final void registerType(int tc,
+    public synchronized final void registerObjectFactory(int tc,
 			ObjectFactory objectFactory) {
     	assert tc < Short.MAX_VALUE && tc > 0;
 		String classname = objectFactory.getType().getName();
@@ -143,6 +143,17 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         return od.getInstance();
     }
     
+    /**
+     * Creates an instance of the specified type, and initializes 
+     * it using the supplied ByteBuffer; the class in question must have
+     * a constructor that takes a ByteBuffer as the only parameter.
+     * 
+     * <p>It is an error to invoke this on a singleton.
+     * 
+     * @param typecode The code for the type
+     * @param buf The ByteBuffer to supply as argument to the object being created
+     * @return Newly constructed object of the type
+     */
     public Object getInstance(int typecode, ByteBuffer buf) {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {

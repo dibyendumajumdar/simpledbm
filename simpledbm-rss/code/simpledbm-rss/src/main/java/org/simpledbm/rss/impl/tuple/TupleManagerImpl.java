@@ -208,26 +208,26 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         moduleRegistry.registerModule(MODULE_ID, this);
 
         objectFactory.registerSingleton(TYPE_LOCATIONFACTORY, locationFactory);
-        objectFactory.registerType(TYPE_LOG_DELETESLOT, new DeleteSlot.DeleteSlotFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(TYPE_LOG_DELETESLOT, new DeleteSlot.DeleteSlotFactory());
+        objectFactory.registerObjectFactory(
             TYPE_LOG_INSERTTUPLESEGMENT, 
             new InsertTupleSegment.InsertTupleSegmentFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UNDOINSERTTUPLESEGMENT,
             new UndoInsertTupleSegment.UndoInsertTupleSegmentFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UPDATESEGMENTLINK,
             new UpdateSegmentLink.UpdateSegmentLinkFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UNDOABLEREPLACESEGMENTLINK,
             new UndoableReplaceSegmentLink.UndoableReplaceSegmentLinkFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UNDOREPLACESEGMENTLINK,
             new UndoReplaceSegmentLink.UndoReplaceSegmentLinkFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT,
             new UndoableUpdateTupleSegment.UndoableUpdateTupleSegmentFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LOG_UNDOUPDATETUPLESEGMENT,
             new UndoUpdateTupleSegment.UndoUpdateTupleSegmentFactory());
 
