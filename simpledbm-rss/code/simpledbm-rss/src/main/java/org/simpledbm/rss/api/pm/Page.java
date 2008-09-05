@@ -42,13 +42,13 @@ public abstract class Page implements Storable, Dumpable {
      * The type code for the page. Used to re-create correct type of
      * page when reading from disk.
      */
-    private final short type; //  = -1;
+    private final short type;
 
     /**
      * The identity of the page.
      * Transient.
      */
-    private final PageId pageId; //  = new PageId();
+    private final PageId pageId;
     
     /**
      * Page LSN is the LSN of the last log record that made
@@ -84,11 +84,6 @@ public abstract class Page implements Storable, Dumpable {
         pageLsn = new Lsn(bb);
     }    
     
-//    public final void setType(int type) {
-//        assert type < Short.MAX_VALUE;
-//        this.type = (short) type;
-//    }
-
     public final int getType() {
         return type;
     }
@@ -96,10 +91,6 @@ public abstract class Page implements Storable, Dumpable {
     public final PageId getPageId() {
         return pageId;
     }
-
-//    public final void setPageId(PageId pageId) {
-//        this.pageId = new PageId(pageId);
-//    }
 
     public final Lsn getPageLsn() {
         return pageLsn;
@@ -109,8 +100,6 @@ public abstract class Page implements Storable, Dumpable {
         pageLsn = new Lsn(lsn);
     }
 
-//    public abstract void init();
-
     /**
      * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
      */
@@ -118,26 +107,10 @@ public abstract class Page implements Storable, Dumpable {
         return pageFactory.getUsablePageSize();
     }
 
-//    public void retrieve(ByteBuffer bb) {
-//        type = bb.getShort();
-//        pageId = new PageId();
-//        pageLsn = new Lsn();
-//        pageLsn.retrieve(bb);
-//    }
-
     public void store(ByteBuffer bb) {
         bb.putShort(type);
         pageLsn.store(bb);
     }
-
-//    /**
-//     * @param pageFactory The pageFactory to set.
-//     */
-//    public final void setPageFactory(PageFactory pageFactory) {
-//        if (this.pageFactory == null) {
-//            this.pageFactory = pageFactory;
-//        }
-//    }
 
     public final void latchExclusive() {
         lock.exclusiveLock();
@@ -170,12 +143,6 @@ public abstract class Page implements Storable, Dumpable {
     public final void downgradeExclusive() {
         lock.downgradeExclusiveLock();
     }
-
-//    public final void setLatch(Latch latch) {
-//        if (lock == null) {
-//            lock = latch;
-//        }
-//    }
 
     @Override
     public final int hashCode() {
