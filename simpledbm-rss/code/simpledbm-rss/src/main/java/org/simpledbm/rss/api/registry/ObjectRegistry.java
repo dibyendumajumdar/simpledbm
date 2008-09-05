@@ -61,7 +61,7 @@ public interface ObjectRegistry {
      * @param typecode The code for the type
      * @return Object of the specified type.
      */
-    Object getInstance(int typecode);
+    Object getSingleton(int typecode);
     
     /**
      * Creates an instance of an object from the supplied ByteBuffer.

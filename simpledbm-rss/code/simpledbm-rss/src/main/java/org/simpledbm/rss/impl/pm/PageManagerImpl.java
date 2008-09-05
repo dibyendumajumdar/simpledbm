@@ -110,7 +110,7 @@ public final class PageManagerImpl implements PageManager {
 //        page.init();
  * 
  */
-    	PageFactory pf = (PageFactory) objectFactory.getInstance(pagetype);
+    	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
     	Page page = pf.getInstance(pagetype, pageId);
         return page;
     }
@@ -136,7 +136,7 @@ public final class PageManagerImpl implements PageManager {
 //        page.retrieve(bb);
         page.setPageId(pageId);
 */
-    	PageFactory pf = (PageFactory) objectFactory.getInstance(pagetype);
+    	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
     	Page page = pf.getInstance(pageId, bb);
         return page;
     }
