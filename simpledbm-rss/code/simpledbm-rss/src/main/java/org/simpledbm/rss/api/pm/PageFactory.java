@@ -21,10 +21,27 @@ package org.simpledbm.rss.api.pm;
 
 import java.nio.ByteBuffer;
 
+/**
+ * The PageFactory handles instantiation of pages, both in memory and from
+ * bytestreams wrapped in ByteBuffer instances.
+ * 
+ * @author dibyendumajumdar
+ */
 public interface PageFactory  {
 
+	/**
+	 * Create a new Page of the desired type.
+	 */
 	Page getInstance(int type, PageId pageId);
+
+	/**
+	 * Create a Page instance from the supplied bytestream.
+	 */
 	Page getInstance(PageId pageId, ByteBuffer bb);
+
+	/**
+	 * Return the page type associated with this PageFactory.
+	 */
 	int getPageType();
 	
 }

@@ -146,33 +146,33 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             TYPE_ONEBITSPACEMAPPAGE, new OneBitSpaceMapPage.OneBitSpaceMapPageFactory(pageFactory));
         objectFactory.registerSingleton(
             TYPE_TWOBITSPACEMAPPAGE, new TwoBitSpaceMapPage.TwoBitSpaceMapPageFactory(pageFactory));
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
         	TYPE_CREATECONTAINER, new CreateContainer.CreateContainerFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
         	TYPE_OPENCONTAINER, new OpenContainer.OpenContainerFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_FORMATHEADERPAGE, new FormatHeaderPage.FormatHeaderPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_FORMATSPACEMAPPAGE, new FormatSpaceMapPage.FormatSpaceMapPageFactory());
-        objectFactory.registerType( 
+        objectFactory.registerObjectFactory( 
             TYPE_UPDATESPACEMAPPAGE, new UpdateSpaceMapPage.UpdateSpaceMapPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UPDATEHEADERPAGE, new UpdateHeaderPage.UpdateHeaderPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UNDOUPDATEHEADERPAGE, new UndoUpdateHeaderPage.UndoUpdateHeaderPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_LINKSPACEMAPPAGE, new LinkSpaceMapPage.LinkSpaceMapPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UNDOLINKSPACEMAPPAGE, new UndoLinkSpaceMapPage.UndoLinkSpaceMapPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
         	TYPE_FORMATRAWPAGE, new FormatRawPage.FormatRawPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UNDOCREATECONTAINER, new UndoCreateContainer.UndoCreateContainerFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UNDOABLEUPDATESPACEMAPPAGE, new UndoableUpdateSpaceMapPage.UndoableUpdateSpaceMapPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_UNDOSPACEMAPPAGEUPDATE, new UndoSpaceMapPageUpdate.UndoSpaceMapUpdateFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
         	TYPE_DROPCONTAINER, new DropContainer.DropContainerFactory());
     }
 

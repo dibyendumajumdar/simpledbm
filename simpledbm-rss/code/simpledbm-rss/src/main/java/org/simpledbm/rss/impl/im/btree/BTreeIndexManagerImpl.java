@@ -238,38 +238,38 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         this.lockAdaptor = lockAdaptor;
         moduleRegistry.registerModule(MODULE_ID, this);
 
-        objectFactory.registerType(TYPE_SPLIT_OPERATION,
+        objectFactory.registerObjectFactory(TYPE_SPLIT_OPERATION,
 				new SplitOperation.SplitOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_MERGE_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_MERGE_OPERATION,
 				new MergeOperation.MergeOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_LINK_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_LINK_OPERATION,
 				new LinkOperation.LinkOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_UNLINK_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_UNLINK_OPERATION,
 				new UnlinkOperation.UnlinkOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_REDISTRIBUTE_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_REDISTRIBUTE_OPERATION,
 				new RedistributeOperation.RedistributeOperationFactory(
 						objectFactory));
 		objectFactory
-				.registerType(
+				.registerObjectFactory(
 						TYPE_INCREASETREEHEIGHT_OPERATION,
 						new IncreaseTreeHeightOperation.IncreaseTreeHeightOperationFactory(
 								objectFactory));
 		objectFactory
-				.registerType(
+				.registerObjectFactory(
 						TYPE_DECREASETREEHEIGHT_OPERATION,
 						new DecreaseTreeHeightOperation.DecreaseTreeHeightOperationFactory(
 								objectFactory));
-		objectFactory.registerType(TYPE_INSERT_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_INSERT_OPERATION,
 				new InsertOperation.InsertOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_UNDOINSERT_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_UNDOINSERT_OPERATION,
 				new UndoInsertOperation.UndoInsertOperationFactory(
 						objectFactory));
-		objectFactory.registerType(TYPE_DELETE_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_DELETE_OPERATION,
 				new DeleteOperation.DeleteOperationFactory(objectFactory));
-		objectFactory.registerType(TYPE_UNDODELETE_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_UNDODELETE_OPERATION,
 				new UndoDeleteOperation.UndoDeleteOperationFactory(
 						objectFactory));
-		objectFactory.registerType(TYPE_LOADPAGE_OPERATION,
+		objectFactory.registerObjectFactory(TYPE_LOADPAGE_OPERATION,
 				new LoadPageOperation.LoadPageOperationFactory(objectFactory));
     }
 

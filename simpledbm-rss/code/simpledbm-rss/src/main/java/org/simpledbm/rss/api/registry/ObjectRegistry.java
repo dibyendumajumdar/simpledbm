@@ -22,7 +22,7 @@ package org.simpledbm.rss.api.registry;
 import java.nio.ByteBuffer;
 
 /**
- * The ObjectFactory provides a facility for registering Classes and 
+ * The ObjectRegistry provides a facility for registering Classes and 
  * Singleton objects, associating each Class/Singleton with a unique
  * integer typecode. The typecode can be used subsequently to
  * retrieve intances of registered classes, or the Singletons.
@@ -36,25 +36,14 @@ import java.nio.ByteBuffer;
 public interface ObjectRegistry {
 
     /**
-     * Registers a class to the Object Registry. 
+     * Registers a type to the Object Registry. An ObjectFactory must be
+     * provided for creating instances of the type. 
      *  
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-    public void registerType(int typecode, ObjectFactory objectFactory);
+    public void registerObjectFactory(int typecode, ObjectFactory objectFactory);
 
-//    /**
-//     * Registers a class to the Object Registry. 
-//     * The class must implement a no-arg constructor.
-//     * The class may optionally implement a constructor that takes a single ByteBuffer parameter.
-//     * The class may optionally implement {@link ObjectRegistryAware}
-//     * interface.
-//     *  
-//     * @param typecode A unique type code for the type.
-//     * @param classname The class name.
-//     */
-//    public void registerType(int typecode, Class<?> klass);
-    
     /**
      * Registers a Singleton object to the registry.
      * 
@@ -73,19 +62,6 @@ public interface ObjectRegistry {
      * @return Object of the specified type.
      */
     Object getInstance(int typecode);
-    
-    /**
-     * Creates an instance of the specified type, and initializes 
-     * it using the supplied ByteBuffer; the class in question must have
-     * a constructor that takes a ByteBuffer as the only parameter.
-     * 
-     * <p>It is an error to invoke this on a singleton.
-     * 
-     * @param typecode The code for the type
-     * @param buf The ByteBuffer to supply as argument to the object being created
-     * @return Newly constructed object of the type
-     */
-    Object getInstance(int typecode, ByteBuffer buf);
     
     /**
      * Creates an instance of an object from the supplied ByteBuffer.
