@@ -78,6 +78,10 @@ public interface PageFactory {
      */
     int getRawPageType();
 
+    /**
+     * Returns the LatchFactory associated with this PageFactory. The LatchFactory is
+     * used to create latches used by pages for mutual exclusion.
+     */
     LatchFactory getLatchFactory();
     
 }
