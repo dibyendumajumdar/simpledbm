@@ -38,14 +38,6 @@ import org.simpledbm.rss.api.st.StorableFactory;
  */
 public abstract class SlottedPage extends Page {
 
-//    protected SlottedPage(PageFactory pageFactory, ByteBuffer bb) {
-//		super(pageFactory, bb);
-//	}
-//
-//	protected SlottedPage(PageFactory pageFactory) {
-//		super(pageFactory);
-//	}
-
 	protected SlottedPage(PageManager pageFactory, int type, PageId pageId) {
 		super(pageFactory, type, pageId);
 	}
@@ -108,11 +100,6 @@ public abstract class SlottedPage extends Page {
      */
     public abstract void purge(int slotNumber);
 
-//    /**
-//     * Returns slot data. The client must supply the correct type of
-//     * Storable item.
-//     */
-//    public abstract Storable get(int slotNumber, Storable item);
 
     /**
      * Returns slot data. The client must supply the correct type of

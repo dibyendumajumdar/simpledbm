@@ -29,8 +29,8 @@ import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -38,7 +38,7 @@ import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -72,11 +72,11 @@ public class TestBufferManager extends BaseTestCase {
 
         int i = 0;
         
-        MyPage(PageFactory pageFactory, int type, PageId pageId) {
+        MyPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
 		}
 
-		MyPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
             i = bb.getInt();
 		}
@@ -112,11 +112,11 @@ public class TestBufferManager extends BaseTestCase {
 //        public void init() {
 //        }
         
-        static class MyPageFactory implements PageFactoryHelper {
+        static class MyPageFactory implements PageFactory {
 
-        	final PageFactory pageFactory;
+        	final PageManager pageFactory;
         	
-        	public MyPageFactory(PageFactory pageFactory) {
+        	public MyPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
         	
@@ -156,7 +156,7 @@ public class TestBufferManager extends BaseTestCase {
         ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         StorageManager storageManager = new StorageManagerImpl(properties);
         LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        PageFactory pageFactory = new PageFactoryImpl(
+        PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -224,7 +224,7 @@ public class TestBufferManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -332,7 +332,7 @@ public class TestBufferManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -467,7 +467,7 @@ public class TestBufferManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -556,7 +556,7 @@ public class TestBufferManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -641,7 +641,7 @@ public class TestBufferManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,

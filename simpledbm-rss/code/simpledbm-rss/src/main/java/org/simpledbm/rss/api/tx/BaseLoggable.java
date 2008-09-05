@@ -31,7 +31,7 @@ import org.simpledbm.rss.util.TypeSize;
  * extend this class. One point to note is that this class includes the methods
  * defined by the {@link Compensation} interface.
  * <p>
- * Originally the {@link Loggable} interface used to be an abtract class and contained the
+ * Originally the {@link Loggable} interface used to be an abstract class and contained the
  * default implementation. However, that approach caused problems with the inheritance
  * hierarchy - clients were unable to insert common base classes between their implementation
  * of various Loggable types and the base class. By separating the concrete inheritance
@@ -103,25 +103,16 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     protected BaseLoggable(ByteBuffer bb) {
         typecode = bb.getShort();
         prevTrxLsn = new Lsn(bb);
-//        prevTrxLsn.retrieve(bb);
         undoNextLsn = new Lsn(bb);
-//        undoNextLsn.retrieve(bb);
         trxId = new TransactionId(bb);
-//        trxId.retrieve(bb);
         pageType = bb.getShort();
         pageId = new PageId(bb);
-//        pageId.retrieve(bb);
         moduleId = bb.getShort();
     }    
     
     public final int getTypecode() {
         return typecode;
     }
-
-//    public final void setTypecode(int typecode) {
-//        assert typecode <= Short.MAX_VALUE;
-//        this.typecode = (short) typecode;
-//    }
 
     public final Lsn getLsn() {
         return lsn;
@@ -134,11 +125,6 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     public final int getModuleId() {
         return moduleId;
     }
-
-//    public final void setModuleId(int moduleId) {
-//        assert moduleId <= Short.MAX_VALUE;
-//        this.moduleId = (short) moduleId;
-//    }
 
     public final PageId getPageId() {
         return pageId;
@@ -182,20 +168,6 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
         return SIZE;
     }
 
-//    public void retrieve(ByteBuffer bb) {
-//        typecode = bb.getShort();
-//        prevTrxLsn = new Lsn();
-//        prevTrxLsn.retrieve(bb);
-//        undoNextLsn = new Lsn();
-//        undoNextLsn.retrieve(bb);
-//        trxId = new TransactionId();
-//        trxId.retrieve(bb);
-//        pageType = bb.getShort();
-//        pageId = new PageId();
-//        pageId.retrieve(bb);
-//        moduleId = bb.getShort();
-//    }
-//
     public void store(ByteBuffer bb) {
         bb.putShort(typecode);
         prevTrxLsn.store(bb);

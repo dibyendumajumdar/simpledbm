@@ -24,7 +24,7 @@ import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
@@ -32,7 +32,7 @@ import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
 import org.simpledbm.rss.util.ByteString;
@@ -125,7 +125,7 @@ public class TestSlottedPage extends BaseTestCase {
 //		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
         final StorageManager storageManager = new StorageManagerImpl(p);
         final LatchFactory latchFactory = new LatchFactoryImpl(p);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,

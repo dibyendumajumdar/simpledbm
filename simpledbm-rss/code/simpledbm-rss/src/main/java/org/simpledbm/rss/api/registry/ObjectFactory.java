@@ -24,17 +24,12 @@ import java.nio.ByteBuffer;
 /**
  * ObjectFactory interface provides methods for creating instances of objects.
  * Non-singleton object types that want to register with the ObjectRegistry must
- * provide a factory implementation for constructing objects.
+ * provide a ObjectFactory implementation for constructing objects.
  * @author dibyendu majumdar
  * @since 24 Aug 08
  */
 public interface ObjectFactory {
 
-//	/**
-//	 * Construct an object using the default constructor.
-//	 */
-//	Object newInstance();
-	
 	/**
 	 * Construct an object from the supplied ByteBuffer.
 	 * The first two bytes should be interpreted as a type code. 

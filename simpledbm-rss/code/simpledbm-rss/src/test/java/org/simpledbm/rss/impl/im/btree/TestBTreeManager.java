@@ -51,7 +51,7 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPage;
@@ -79,7 +79,7 @@ import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -443,9 +443,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			for (int i = 0; i < results.length; i++) {
 				IndexKey key = keyFactory.parseIndexKey(1, results[i].getKey());
@@ -471,9 +471,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			String line = reader.readLine();
 			while (line != null) {
@@ -1125,9 +1125,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1170,9 +1170,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			IndexKey key1 = keyFactory.parseIndexKey(1, k1);
 //			key1.parseString(k1);
@@ -1230,9 +1230,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1279,9 +1279,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
 //						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
@@ -1317,9 +1317,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
 //						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
@@ -1378,9 +1378,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1459,9 +1459,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1509,9 +1509,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1581,9 +1581,9 @@ public class TestBTreeManager extends BaseTestCase {
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
 //			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
@@ -1662,9 +1662,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			String line = reader.readLine();
 			IndexScan scan = null;
@@ -1721,9 +1721,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			String line = reader.readLine();
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -1794,9 +1794,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
 //						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
@@ -1850,9 +1850,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, "a1");
 //						key.parseString("a1");
 						Location location = locationFactory.newLocation("10");
@@ -1948,9 +1948,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
 //						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
@@ -1992,9 +1992,9 @@ public class TestBTreeManager extends BaseTestCase {
 								TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 								testingUniqueIndex);
 						IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-								.getInstance(TYPE_STRINGKEYFACTORY);
+								.getSingleton(TYPE_STRINGKEYFACTORY);
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
-								.getInstance(TYPE_ROWLOCATIONFACTORY);
+								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, "a1");
 //						key.parseString("a1");
 						Location location = locationFactory.newLocation("10");
@@ -2084,9 +2084,9 @@ public class TestBTreeManager extends BaseTestCase {
 							TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 							testingUniqueIndex);
 					IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-							.getInstance(TYPE_STRINGKEYFACTORY);
+							.getSingleton(TYPE_STRINGKEYFACTORY);
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
-							.getInstance(TYPE_ROWLOCATIONFACTORY);
+							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
 //					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
@@ -2126,9 +2126,9 @@ public class TestBTreeManager extends BaseTestCase {
 							TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 							testingUniqueIndex);
 					IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-							.getInstance(TYPE_STRINGKEYFACTORY);
+							.getSingleton(TYPE_STRINGKEYFACTORY);
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
-							.getInstance(TYPE_ROWLOCATIONFACTORY);
+							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
 //					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
@@ -2203,9 +2203,9 @@ public class TestBTreeManager extends BaseTestCase {
 							TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 							testingUniqueIndex);
 					IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-							.getInstance(TYPE_STRINGKEYFACTORY);
+							.getSingleton(TYPE_STRINGKEYFACTORY);
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
-							.getInstance(TYPE_ROWLOCATIONFACTORY);
+							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
 //					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
@@ -2245,9 +2245,9 @@ public class TestBTreeManager extends BaseTestCase {
 							TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 							testingUniqueIndex);
 					IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-							.getInstance(TYPE_STRINGKEYFACTORY);
+							.getSingleton(TYPE_STRINGKEYFACTORY);
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
-							.getInstance(TYPE_ROWLOCATIONFACTORY);
+							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
 //					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
@@ -2282,9 +2282,9 @@ public class TestBTreeManager extends BaseTestCase {
 							TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY,
 							testingUniqueIndex);
 					IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-							.getInstance(TYPE_STRINGKEYFACTORY);
+							.getSingleton(TYPE_STRINGKEYFACTORY);
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
-							.getInstance(TYPE_ROWLOCATIONFACTORY);
+							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x1");
 //					key.parseString("x1");
 					Location location = locationFactory.newLocation("21");
@@ -2826,9 +2826,9 @@ public class TestBTreeManager extends BaseTestCase {
 				IndexContainer index = db.btreeMgr.getIndex(1);
 
 				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-						.getInstance(TYPE_STRINGKEYFACTORY);
+						.getSingleton(TYPE_STRINGKEYFACTORY);
 				LocationFactory locationFactory = (LocationFactory) db.objectFactory
-						.getInstance(TYPE_ROWLOCATIONFACTORY);
+						.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 				String line = reader.readLine();
 				int i = 1;
@@ -2912,9 +2912,9 @@ public class TestBTreeManager extends BaseTestCase {
 				IndexContainer index = db.btreeMgr.getIndex(1);
 
 				IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-						.getInstance(TYPE_STRINGKEYFACTORY);
+						.getSingleton(TYPE_STRINGKEYFACTORY);
 				LocationFactory locationFactory = (LocationFactory) db.objectFactory
-						.getInstance(TYPE_ROWLOCATIONFACTORY);
+						.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 				String line = reader.readLine();
 				int i = 1;
@@ -3024,9 +3024,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			String line = reader.readLine();
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -3086,9 +3086,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(1);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
 			try {
@@ -3137,9 +3137,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			/*
 			 * Scan the tree with lock isolation mode of READ_COMMITTED and
@@ -3194,9 +3194,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			/*
 			 * Scan the tree with lock isolation mode of CURSOR_STABILITY and
@@ -3251,9 +3251,9 @@ public class TestBTreeManager extends BaseTestCase {
 			IndexContainer index = db.btreeMgr.getIndex(containerId);
 
 			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
-					.getInstance(TYPE_STRINGKEYFACTORY);
+					.getSingleton(TYPE_STRINGKEYFACTORY);
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
-					.getInstance(TYPE_ROWLOCATIONFACTORY);
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			/*
 			 * Scan the tree with lock isolation mode of CURSOR_STABILITY and
@@ -3454,7 +3454,7 @@ public class TestBTreeManager extends BaseTestCase {
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
         final StorageManager storageManager = new StorageManagerImpl(p);
         final LatchFactory latchFactory = new LatchFactoryImpl(p);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -3603,7 +3603,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final StorageContainerFactory storageFactory;
 		final StorageManager storageManager;
 		final LatchFactory latchFactory;
-		final PageFactory pageFactory;
+		final PageManager pageFactory;
 		final SlottedPageManager spmgr;
 		final LockMgrFactory lockmgrFactory;
 		final LockManagerImpl lockmgr;
@@ -3652,7 +3652,7 @@ public class TestBTreeManager extends BaseTestCase {
 			storageFactory = new FileStorageContainerFactory(properties);
 			storageManager = new StorageManagerImpl(properties);
 			latchFactory = new LatchFactoryImpl(properties);
-			pageFactory = new PageFactoryImpl(objectFactory, storageManager,
+			pageFactory = new PageManagerImpl(objectFactory, storageManager,
 					latchFactory, properties);
 			spmgr = new SlottedPageManagerImpl(objectFactory, pageFactory, properties);
 			lockmgrFactory = new LockManagerFactoryImpl();

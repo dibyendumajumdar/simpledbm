@@ -53,10 +53,7 @@ public interface ObjectRegistry {
     public void registerSingleton(int typecode, Object object);
 
     /**
-     * Creates an instance of the specified type. If the
-     * type refers to a class, then a new Object instance 
-     * will be created. If the type refers to a Singleton, 
-     * the Singleton will be returned.
+     * Gets the registered instance of the specified type. 
      * 
      * @param typecode The code for the type
      * @return Object of the specified type.

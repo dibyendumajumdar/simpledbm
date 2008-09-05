@@ -28,6 +28,8 @@ import org.simpledbm.rss.util.TypeSize;
 /**
  * Lsn is short for Log Sequence Number, and is a unique monotonically
  * increasing numeric id given to log records. 
+ * <p>
+ * Immutable.
  * 
  * @author dibyendu
  * @since 10-June-2005
@@ -112,11 +114,6 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
     public final int getOffset() {
         return offset;
     }
-
-//    public final void retrieve(ByteBuffer bb) {
-//        index = bb.getInt();
-//        offset = bb.getInt();
-//    }
 
     public final void store(ByteBuffer bb) {
         bb.putInt(index);

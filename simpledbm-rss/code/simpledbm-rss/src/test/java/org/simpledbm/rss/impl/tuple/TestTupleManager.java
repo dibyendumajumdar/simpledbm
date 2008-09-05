@@ -38,7 +38,7 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
@@ -62,7 +62,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
@@ -576,7 +576,7 @@ public class TestTupleManager extends BaseTestCase {
         final StorageContainerFactory storageFactory;
         final StorageManager storageManager;
         final LatchFactory latchFactory;
-        final PageFactory pageFactory;
+        final PageManager pageFactory;
         final SlottedPageManager spmgr;
         final LockMgrFactory lockmgrFactory;
         final LockManager lockmgr;
@@ -600,7 +600,7 @@ public class TestTupleManager extends BaseTestCase {
             objectFactory = new ObjectRegistryImpl(props);
             storageManager = new StorageManagerImpl(props);
             latchFactory = new LatchFactoryImpl(props);
-            pageFactory = new PageFactoryImpl(
+            pageFactory = new PageManagerImpl(
                 objectFactory,
                 storageManager,
                 latchFactory,

@@ -108,11 +108,11 @@ public class TestObjectRegistry extends BaseTestCase {
     public void testRegistry() throws Exception {
         ObjectRegistry factory = new ObjectRegistryImpl(new Properties());
         Integer i = new Integer(55);
-        factory.registerType(1, new StringFactory());
+        factory.registerObjectFactory(1, new StringFactory());
         factory.registerSingleton(2, i);
         factory.registerSingleton(2, i);
-        assertTrue(i == factory.getInstance(2));
-        assertTrue(i == factory.getInstance(2));
+        assertTrue(i == factory.getSingleton(2));
+        assertTrue(i == factory.getSingleton(2));
 //        Object s = factory.getInstance(1);
 //        assertFalse(s == null);
 //        assertTrue(s instanceof String);
@@ -122,7 +122,7 @@ public class TestObjectRegistry extends BaseTestCase {
 //        assertFalse(s == s1);
         Object s = null;
         try {
-            s = factory.getInstance(5);
+            s = factory.getSingleton(5);
             fail();
         } catch (ObjectCreationException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0006"));
@@ -134,21 +134,21 @@ public class TestObjectRegistry extends BaseTestCase {
         } catch (ObjectCreationException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
         }
-        assertTrue(i == factory.getInstance(2));
-        factory.registerType(1, new StringFactory());
+        assertTrue(i == factory.getSingleton(2));
+        factory.registerObjectFactory(1, new StringFactory());
         try {
-            factory.registerType(1, new IntegerFactory());
+            factory.registerObjectFactory(1, new IntegerFactory());
             fail();
         } catch (ObjectCreationException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
         }
         
-        factory.registerType(3, new MyStorable.MyStorableFactory());
+        factory.registerObjectFactory(3, new MyStorable.MyStorableFactory());
         ByteBuffer buf = ByteBuffer.allocate(6);
         buf.putShort((short) 3);
         buf.putInt(311566);
         buf.flip();
-        MyStorable o = (MyStorable) factory.getInstance(3, buf);
+        MyStorable o = (MyStorable) factory.getInstance(buf);
         assertEquals(311566, o.value);
 
         buf = ByteBuffer.allocate(6);
