@@ -495,7 +495,6 @@ public class TestTupleManager extends BaseTestCase {
 
     public static final class StringTuple implements Storable {
 
-//        final ByteString string = new ByteString();
         private ByteString string;
 
         public StringTuple(String string) {
@@ -559,11 +558,6 @@ public class TestTupleManager extends BaseTestCase {
         public int getStoredLength() {
             return string.getStoredLength();
         }
-
-//        public void retrieve(ByteBuffer bb) {
-//            string = new ByteString();
-//            string.retrieve(bb);
-//        }
 
         public void store(ByteBuffer bb) {
             string.store(bb);
