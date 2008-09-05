@@ -22,7 +22,7 @@ package org.simpledbm.rss.api.fsm;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 
 /**
@@ -30,12 +30,12 @@ import org.simpledbm.rss.api.pm.PageId;
  */
 public abstract class FreeSpaceMapPage extends Page {
 	
-	protected FreeSpaceMapPage(PageFactory pageFactory, int type,
+	protected FreeSpaceMapPage(PageManager pageFactory, int type,
 			PageId pageId) {
 		super(pageFactory, type, pageId);
 	}
 
-	protected FreeSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+	protected FreeSpaceMapPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 		super(pageFactory, pageId, bb);
 	}
 

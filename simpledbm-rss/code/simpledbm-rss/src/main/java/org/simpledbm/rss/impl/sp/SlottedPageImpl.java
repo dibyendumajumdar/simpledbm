@@ -24,7 +24,7 @@ import java.util.ArrayList;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.sp.SlottedPage;
@@ -310,7 +310,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 //        validatePageSize();
 //    }
 
-    SlottedPageImpl(PageFactory pageFactory, int type, PageId pageId) {
+    SlottedPageImpl(PageManager pageFactory, int type, PageId pageId) {
 		super(pageFactory, type, pageId);
 //      flags = 0;
 //      numberOfSlots = 0;
@@ -323,7 +323,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 		init();
 	}
 
-	SlottedPageImpl(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+	SlottedPageImpl(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 		super(pageFactory, pageId, bb);
         flags = bb.getShort();
         numberOfSlots = bb.getShort();
@@ -943,8 +943,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
     
     public static final class SlottedPageImplFactory implements PageFactoryHelper {
-    	final PageFactory pageFactory;
-    	public SlottedPageImplFactory(PageFactory pageFactory) {
+    	final PageManager pageFactory;
+    	public SlottedPageImplFactory(PageManager pageFactory) {
     		this.pageFactory = pageFactory;
     	}
 //		public Class<?> getType() {

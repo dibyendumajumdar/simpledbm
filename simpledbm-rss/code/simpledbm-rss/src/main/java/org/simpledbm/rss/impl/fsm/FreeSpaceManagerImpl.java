@@ -34,7 +34,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
@@ -81,7 +81,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
     static final MessageCatalog mcat = new MessageCatalog();
 
-    final PageFactory pageFactory;
+    final PageManager pageFactory;
 
     final BufferManager bufmgr;
 
@@ -125,7 +125,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     private int Testing = 0;
 
     public FreeSpaceManagerImpl(ObjectRegistry objectFactory,
-            PageFactory pageFactory, LogManager logmgr, BufferManager bufmgr,
+            PageManager pageFactory, LogManager logmgr, BufferManager bufmgr,
             StorageManager storageManager,
             StorageContainerFactory storageFactory,
             LoggableFactory loggableFactory, TransactionManager trxmgr,
@@ -2023,11 +2023,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //            dataPageType = bb.getInt();
 //		}
 		
-        public HeaderPage(PageFactory pageFactory, int type, PageId pageId) {
+        public HeaderPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
 		}
 
-		public HeaderPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		public HeaderPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
             numberOfExtents = bb.getInt();
             extentSize = bb.getInt();
@@ -2145,8 +2145,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static class HeaderPageFactory implements PageFactoryHelper {
-        	final PageFactory pageFactory;
-        	public HeaderPageFactory(PageFactory pageFactory) {
+        	final PageManager pageFactory;
+        	public HeaderPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
 //			public Class<?> getType() {
@@ -2211,13 +2211,13 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //            bb.get(bits);
 //		}
 		
-		protected SpaceMapPageImpl(PageFactory pageFactory, int type,
+		protected SpaceMapPageImpl(PageManager pageFactory, int type,
 				PageId pageId) {
 			super(pageFactory, type, pageId);
 			bits = new byte[getSpace()];
 		}
 
-		protected SpaceMapPageImpl(PageFactory pageFactory, PageId pageId,
+		protected SpaceMapPageImpl(PageManager pageFactory, PageId pageId,
 				ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
             firstPageNumber = bb.getInt();
@@ -2356,11 +2356,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //			super(pageFactory, bb);
 //		}
 		
-		TwoBitSpaceMapPage(PageFactory pageFactory, int type, PageId pageId) {
+		TwoBitSpaceMapPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
 		}
 
-		TwoBitSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		TwoBitSpaceMapPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
 		}
 
@@ -2409,8 +2409,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static final class TwoBitSpaceMapPageFactory implements PageFactoryHelper {
-        	private final PageFactory pageFactory;
-        	public TwoBitSpaceMapPageFactory(PageFactory pageFactory) {
+        	private final PageManager pageFactory;
+        	public TwoBitSpaceMapPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
 //			public Class<?> getType() {
@@ -2450,11 +2450,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 //			super(pageFactory, bb);
 //		}
 
-		OneBitSpaceMapPage(PageFactory pageFactory, int type, PageId pageId) {
+		OneBitSpaceMapPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
 		}
 
-		OneBitSpaceMapPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		OneBitSpaceMapPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
 		}
 
@@ -2497,8 +2497,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static final class OneBitSpaceMapPageFactory implements PageFactoryHelper {
-        	private final PageFactory pageFactory;
-        	OneBitSpaceMapPageFactory(PageFactory pageFactory) {
+        	private final PageManager pageFactory;
+        	OneBitSpaceMapPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
 //			public Class<?> getType() {

@@ -35,7 +35,7 @@ import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageManager;
@@ -91,7 +91,7 @@ public final class BufferManagerImpl implements BufferManager {
      * The page factory instance that will manage IO of pages.
      * The page size is determined by the page factory.
      */
-    private PageFactory pageFactory;
+    private PageManager pageFactory;
 
     /**
      * Write Ahead Log Manager instance, may be set to null for testing
@@ -207,7 +207,7 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Initialize the Buffer Manager instance.
      */
-    private void init(LogManager logMgr, PageFactory pageFactory,
+    private void init(LogManager logMgr, PageManager pageFactory,
             int bufferpoolsize) {
         this.logMgr = logMgr;
         this.pageFactory = pageFactory;
@@ -240,7 +240,7 @@ public final class BufferManagerImpl implements BufferManager {
      * @param bufferpoolsize The size of the buffer pool.
      * @param hashsize Size of the hash table, should preferably be a prime number.
      */
-    public BufferManagerImpl(LogManager logMgr, PageFactory pageFactory,
+    public BufferManagerImpl(LogManager logMgr, PageManager pageFactory,
             int bufferpoolsize, int hashsize) {
         init(logMgr, pageFactory, bufferpoolsize);
     }
@@ -252,7 +252,7 @@ public final class BufferManagerImpl implements BufferManager {
      * @param pageFactory PageFactory instance, required.
      * @param props Properties that specify how the Buffer Manager should be configured
      */
-    public BufferManagerImpl(LogManager logMgr, PageFactory pageFactory,
+    public BufferManagerImpl(LogManager logMgr, PageManager pageFactory,
             Properties props) {
         int bufferpoolsize = getNumericProperty(
             props,

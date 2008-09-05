@@ -25,7 +25,7 @@ import java.util.Properties;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageReadException;
@@ -43,7 +43,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
-public final class PageFactoryImpl implements PageFactory {
+public final class PageFactoryImpl implements PageManager {
 
     static final int MODULE_ID = 5;
 
