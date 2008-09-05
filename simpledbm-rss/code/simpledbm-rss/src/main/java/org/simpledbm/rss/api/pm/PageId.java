@@ -28,6 +28,8 @@ import org.simpledbm.rss.util.TypeSize;
 /**
  * Each page in the database is uniquely identified by a pageid consisting of 
  * storage container id and the page number.
+ * <p>
+ * Immutable.
  * 
  * @author Dibyendu Majumdar
  * @since 19-Aug-2005

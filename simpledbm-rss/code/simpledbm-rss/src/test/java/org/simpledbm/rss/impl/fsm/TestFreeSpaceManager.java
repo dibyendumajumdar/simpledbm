@@ -29,7 +29,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -46,7 +46,7 @@ import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.fsm.FreeSpaceManagerImpl.SpaceCursorImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -320,7 +320,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
         final StorageContainerFactory storageFactory;
         final StorageManager storageManager;
         final LatchFactory latchFactory;
-        final PageFactory pageFactory;
+        final PageManager pageFactory;
         final LockMgrFactory lockmgrFactory;
         final LockManager lockmgr;
         final LogManager logmgr;
@@ -356,7 +356,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
             storageFactory = new FileStorageContainerFactory(properties);
             storageManager = new StorageManagerImpl(properties);
             latchFactory = new LatchFactoryImpl(properties);
-            pageFactory = new PageFactoryImpl(
+            pageFactory = new PageManagerImpl(
                 objectFactory,
                 storageManager,
                 latchFactory,

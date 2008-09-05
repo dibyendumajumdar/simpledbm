@@ -33,8 +33,8 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -63,7 +63,7 @@ import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
-import org.simpledbm.rss.impl.pm.PageFactoryImpl;
+import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -83,22 +83,22 @@ public class TestTransactionManager2 extends BaseTestCase {
         super(arg0);
     }
 
-    void setupObjectFactory(ObjectRegistry objectFactory, PageFactory pageFactory) {
+    void setupObjectFactory(ObjectRegistry objectFactory, PageManager pageFactory) {
         objectFactory.registerSingleton(
         	TYPE_BITMGRPAGE, new BitMgrPage.BitMgrPageFactory(pageFactory));
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_BITMGRLOGCREATECONTAINER,
             new BitMgrLogCreateContainer.BitMgrLogCreateContainerFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_BITMGRLOGFORMATPAGE,
             new BitMgrLogFormatPage.BitMgrLogFormatPageFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_BITMGRLOGREDOUNDO,
             new BitMgrLogRedoUndo.BitMgrLogRedoUndoFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
         	TYPE_BITMGRLOGCLR, 
         	new BitMgrLogCLR.BitMgrLogCLRFactory());
-        objectFactory.registerType(
+        objectFactory.registerObjectFactory(
             TYPE_BITMGRLOGOPENCONTAINER,
             new BitMgrLogOpenContainer.BitMgrLogOpenContainerFactory());
     }
@@ -118,7 +118,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -181,7 +181,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -269,7 +269,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -414,7 +414,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -498,7 +498,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             properties);
         final StorageManager storageManager = new StorageManagerImpl(properties);
         final LatchFactory latchFactory = new LatchFactoryImpl(properties);
-        final PageFactory pageFactory = new PageFactoryImpl(
+        final PageManager pageFactory = new PageManagerImpl(
             objectFactory,
             storageManager,
             latchFactory,
@@ -1012,13 +1012,13 @@ public class TestTransactionManager2 extends BaseTestCase {
         byte[] bits;
 
         
-        BitMgrPage(PageFactory pageFactory, int type, PageId pageId) {
+        BitMgrPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
             int n_bits = super.getStoredLength() - Page.SIZE;
             bits = new byte[n_bits];
 		}
 
-		BitMgrPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+		BitMgrPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
             int n_bits = super.getStoredLength() - Page.SIZE;
             bits = new byte[n_bits];
@@ -1064,9 +1064,9 @@ public class TestTransactionManager2 extends BaseTestCase {
             return bits[offset];
         }
 
-        static final class BitMgrPageFactory implements PageFactoryHelper {
-        	private final PageFactory pageFactory;
-        	BitMgrPageFactory(PageFactory pageFactory) {
+        static final class BitMgrPageFactory implements PageFactory {
+        	private final PageManager pageFactory;
+        	BitMgrPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
 //			public Class<?> getType() {
@@ -1108,12 +1108,12 @@ public class TestTransactionManager2 extends BaseTestCase {
 
         TransactionManager trxmgr;
 
-        PageFactory pageFactory;
+        PageManager pageFactory;
 
         ObjectRegistry objectFactory;
 
         public OneBitMgr(StorageContainerFactory storageFactory,
-                StorageManager storageManager, PageFactory pageFactory,
+                StorageManager storageManager, PageManager pageFactory,
                 BufferManager bufmgr, LoggableFactory loggableFactory,
                 TransactionManager trxmgr, ObjectRegistry objectFactory) {
             this.storageFactory = storageFactory;

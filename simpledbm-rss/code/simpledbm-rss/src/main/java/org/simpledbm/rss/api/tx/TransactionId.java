@@ -29,6 +29,8 @@ import org.simpledbm.rss.util.TypeSize;
  * Transaction Identifier. Must be a monotonically increasing value that 
  * can be converted to an integer. This property is useful because it allows the
  * ids to be mapped to bitmaps.
+ * <p>
+ * Immutable.
  * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
@@ -51,10 +53,6 @@ public final class TransactionId implements Storable, Dumpable {
         id = bb.getLong();
     }
     
-//    public final void retrieve(ByteBuffer bb) {
-//        id = bb.getLong();
-//    }
-
     public final void store(ByteBuffer bb) {
         bb.putLong(id);
     }
@@ -89,19 +87,6 @@ public final class TransactionId implements Storable, Dumpable {
 		return true;
 	}
     
-//    @Override
-//    public final boolean equals(Object obj) {
-//        if (obj instanceof TransactionId) {
-//            return id == ((TransactionId) obj).id;
-//        }
-//        return false;
-//    }
-//
-//    @Override
-//    public final int hashCode() {
-//        return (int) (id ^ (id >>> 32));
-//    }
-
 	public final boolean isNull() {
         return id == -1;
     }
