@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 
 /**
@@ -56,7 +56,7 @@ public final class RawPage extends Page {
 	}
 
 
-	static final class RawPageFactory implements PageFactoryHelper {
+	static final class RawPageFactory implements PageFactory {
 
     	final PageManager pageFactory;
     	

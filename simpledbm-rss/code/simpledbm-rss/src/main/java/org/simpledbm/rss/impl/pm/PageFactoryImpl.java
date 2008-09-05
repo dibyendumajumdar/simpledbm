@@ -26,7 +26,7 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -110,7 +110,7 @@ public final class PageFactoryImpl implements PageManager {
 //        page.init();
  * 
  */
-    	PageFactoryHelper pf = (PageFactoryHelper) objectFactory.getInstance(pagetype);
+    	PageFactory pf = (PageFactory) objectFactory.getInstance(pagetype);
     	Page page = pf.getInstance(pagetype, pageId);
         return page;
     }
@@ -136,7 +136,7 @@ public final class PageFactoryImpl implements PageManager {
 //        page.retrieve(bb);
         page.setPageId(pageId);
 */
-    	PageFactoryHelper pf = (PageFactoryHelper) objectFactory.getInstance(pagetype);
+    	PageFactory pf = (PageFactory) objectFactory.getInstance(pagetype);
     	Page page = pf.getInstance(pageId, bb);
         return page;
     }
