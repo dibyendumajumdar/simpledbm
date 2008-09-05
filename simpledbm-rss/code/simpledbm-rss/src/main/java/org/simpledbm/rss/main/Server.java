@@ -32,7 +32,7 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
@@ -94,7 +94,7 @@ public class Server {
     final private StorageContainerFactory storageFactory;
     final private StorageManager storageManager;
     final private LatchFactory latchFactory;
-    final private PageFactory pageFactory;
+    final private PageManager pageFactory;
     final private SlottedPageManager slottedPageManager;
     final private LockManager lockManager;
     final private LogManager logManager;
@@ -389,7 +389,7 @@ public class Server {
         return objectRegistry;
     }
 
-    public synchronized final PageFactory getPageFactory() {
+    public synchronized final PageManager getPageFactory() {
         //assertStarted();
         return pageFactory;
     }

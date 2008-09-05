@@ -42,7 +42,7 @@ import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -194,7 +194,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     public TupleManagerImpl(ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
-            TransactionalModuleRegistry moduleRegistry, PageFactory pageFactory,
+            TransactionalModuleRegistry moduleRegistry, PageManager pageFactory,
             LockAdaptor lockAdaptor, Properties p) {
 
     	this.lockAdaptor = lockAdaptor;

@@ -29,7 +29,7 @@ import org.simpledbm.rss.api.st.StorageException;
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
-public interface PageFactory {
+public interface PageManager {
 
     /**
      * Gets the on-disk page size of all pages managed by this factory. Page sizes can be

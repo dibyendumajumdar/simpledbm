@@ -61,7 +61,7 @@ public abstract class Page implements Storable, Dumpable {
      * size is fixed by the factory.
      * Transient.
      */
-    private final PageFactory pageFactory;
+    private final PageManager pageFactory;
 
     /**
      * A read/write latch to protect access to the page.
@@ -69,14 +69,14 @@ public abstract class Page implements Storable, Dumpable {
      */
     protected final Latch lock;
 
-    protected Page(PageFactory pageFactory, int type, PageId pageId) {
+    protected Page(PageManager pageFactory, int type, PageId pageId) {
     	this.pageFactory = pageFactory;
     	this.type = (short) type;
     	this.pageId = pageId;
     	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
     }
 
-    protected Page(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+    protected Page(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
     	this.pageFactory = pageFactory;
     	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
     	this.pageId = pageId;

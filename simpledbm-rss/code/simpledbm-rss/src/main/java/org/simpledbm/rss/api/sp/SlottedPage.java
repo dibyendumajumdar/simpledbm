@@ -22,7 +22,7 @@ package org.simpledbm.rss.api.sp;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
@@ -46,11 +46,11 @@ public abstract class SlottedPage extends Page {
 //		super(pageFactory);
 //	}
 
-	protected SlottedPage(PageFactory pageFactory, int type, PageId pageId) {
+	protected SlottedPage(PageManager pageFactory, int type, PageId pageId) {
 		super(pageFactory, type, pageId);
 	}
 
-	protected SlottedPage(PageFactory pageFactory, PageId pageId, ByteBuffer bb) {
+	protected SlottedPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 		super(pageFactory, pageId, bb);
 	}
 

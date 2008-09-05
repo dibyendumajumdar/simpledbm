@@ -47,7 +47,7 @@
  * <h2>Interactions with other modules</h2>
  * <p>The Buffer Manager interacts with the {@link org.simpledbm.rss.api.wal Log Manager}
  * and the {@link org.simpledbm.rss.api.pm Page Manager} modules. It needs the help of the
- * {@link org.simpledbm.rss.api.pm.PageFactory PageFactory} in order to instantiate new pages, read pages from disk, and write out
+ * {@link org.simpledbm.rss.api.pm.PageManager PageFactory} in order to instantiate new pages, read pages from disk, and write out
  * dirty pages to disk. In order to support the Write Ahead Log protocol, the Buffer 
  * Manager must ensure that all logs related to the page in question are flushed prior
  * to the page being persisted to disk.</p>
