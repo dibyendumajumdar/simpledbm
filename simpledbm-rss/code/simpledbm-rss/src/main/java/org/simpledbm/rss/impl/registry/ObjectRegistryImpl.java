@@ -132,7 +132,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
      * 
      * @see org.simpledbm.common.registry.ObjectFactory#getInstance(int)
      */
-    public Object getInstance(int typecode) {
+    public Object getSingleton(int typecode) {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {
             log.error(this.getClass().getName(), "getInstance", mcat

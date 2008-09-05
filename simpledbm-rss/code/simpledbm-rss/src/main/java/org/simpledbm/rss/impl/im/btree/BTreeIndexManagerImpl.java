@@ -1172,9 +1172,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.keyFactoryType = keyFactoryType;
             this.locationFactoryType = locationFactoryType;
             this.keyFactory = (IndexKeyFactory) btreeMgr.objectFactory
-                .getInstance(keyFactoryType);
+                .getSingleton(keyFactoryType);
             this.locationFactory = (LocationFactory) btreeMgr.objectFactory
-                .getInstance(locationFactoryType);
+                .getSingleton(locationFactoryType);
             this.unique = unique;
             this.indexItemFactory = new IndexItemFactory(keyFactory, locationFactory, unique);
             spaceCursor = btreeMgr.spaceMgr.getSpaceCursor(containerId);
@@ -4827,9 +4827,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             this.keyFactoryType = keyFactoryType;
             this.locationFactoryType = locationFactoryType;
             keyFactory = (IndexKeyFactory) objectFactory
-                .getInstance(keyFactoryType);
+                .getSingleton(keyFactoryType);
             locationFactory = (LocationFactory) objectFactory
-                .getInstance(locationFactoryType);
+                .getSingleton(locationFactoryType);
             this.leaf = leaf;
             this.unique = unique;
             this.indexItemFactory = new IndexItemFactory(keyFactory, locationFactory, unique);
@@ -4841,9 +4841,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             keyFactoryType = bb.getInt();
             locationFactoryType = bb.getInt();
             keyFactory = (IndexKeyFactory) objectFactory
-                .getInstance(keyFactoryType);
+                .getSingleton(keyFactoryType);
             locationFactory = (LocationFactory) objectFactory
-                .getInstance(locationFactoryType);
+                .getSingleton(locationFactoryType);
             leaf = bb.get() == 1;
             unique = bb.get() == 1;
             this.indexItemFactory = new IndexItemFactory(keyFactory, locationFactory, unique);
@@ -6390,12 +6390,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
 		public void setKeyFactoryType(int keyFactoryType) {
 			this.keyFactoryType = keyFactoryType;
-			this.keyFactory = (IndexKeyFactory) objectRegistry.getInstance(keyFactoryType);
+			this.keyFactory = (IndexKeyFactory) objectRegistry.getSingleton(keyFactoryType);
 		}
 
 		public void setLocationFactoryType(int locationFactoryType) {
 			this.locationFactoryType = locationFactoryType;
-			this.locationFactory = (LocationFactory) objectRegistry.getInstance(locationFactoryType);
+			this.locationFactory = (LocationFactory) objectRegistry.getSingleton(locationFactoryType);
 		}
 		
 		IndexKey getNewIndexKey(String s) {
