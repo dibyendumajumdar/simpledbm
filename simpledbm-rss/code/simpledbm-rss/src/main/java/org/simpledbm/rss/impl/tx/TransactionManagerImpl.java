@@ -612,8 +612,6 @@ public final class TransactionManagerImpl implements TransactionManager {
          * into chunks, and also allows the dirty pages list to change even while the checkpoint
          * is in operation.  
          */
-//        CheckpointBegin checkpointBegin = (CheckpointBegin) loggableFactory
-//            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTBEGIN);
         CheckpointBegin checkpointBegin = new CheckpointBegin(0, TransactionManagerImpl.TYPE_CHECKPOINTBEGIN);
         
         checkpointBegin.setActiveContainers(storageManager
@@ -630,11 +628,7 @@ public final class TransactionManagerImpl implements TransactionManager {
          * Write the contents of checkpoint end record. Ideally this should be broken down into smaller
          * records. 
          */
-//        CheckpointEnd checkpointEnd = (CheckpointEnd) loggableFactory
-//            .getInstance(0, TransactionManagerImpl.TYPE_CHECKPOINTEND);
         CheckpointEnd checkpointEnd = new CheckpointEnd(0, TransactionManagerImpl.TYPE_CHECKPOINTEND, this);
-        
-//        checkpointEnd.setTrxMgr(this);
         checkpointEnd.setTransactionTable(trxTable);
         /*
          * Calculate the oldest interesting LSN. This can be used by the
@@ -762,12 +756,6 @@ public final class TransactionManagerImpl implements TransactionManager {
         }
         CheckpointEnd checkpointBody = (CheckpointEnd) loggableFactory
             .getInstance(logrec);
-//        /*
-//         * When transaction table is reconstructed, there is a problem with
-//         * initialising the TransactionImpl properly with a reference to the
-//         * Transaction Manager. Hence, we do this as a second step.
-//         */
-//        checkpointBody.updateTrxMgr(this);
         trxTable = checkpointBody.trxTable;
         dirtyPages = checkpointBody.newDirtyPages;
         trid.set(checkpointBody.getTrxId().longValue());
@@ -2081,10 +2069,7 @@ public final class TransactionManagerImpl implements TransactionManager {
              * A readonly transaction would not have generated log records
              */
             if (!lastLsn.isNull() || !postCommitActions.isEmpty()) {
-//                TrxPrepare prepareLogRec = (TrxPrepare) getTrxmgr().loggableFactory
-//                    .getInstance(0, TransactionManagerImpl.TYPE_TRXPREPARE);
                 TrxPrepare prepareLogRec = new TrxPrepare(0, TransactionManagerImpl.TYPE_TRXPREPARE);
-//                prepareLogRec.setLoggableFactory(getTrxmgr().loggableFactory);
                 prepareLogRec.setTrxId(trxId);
                 prepareLogRec.setPrevTrxLsn(lastLsn);
                 prepareLogRec.setPostCommitActions(postCommitActions);
@@ -2115,8 +2100,6 @@ public final class TransactionManagerImpl implements TransactionManager {
                 // No need to generate an end record
                 return;
             }
-//            TrxEnd commitLogRec = (TrxEnd) getTrxmgr().loggableFactory
-//                .getInstance(0, TransactionManagerImpl.TYPE_TRXEND);
             TrxEnd commitLogRec = new TrxEnd(0, TransactionManagerImpl.TYPE_TRXEND);
             commitLogRec.setTrxId(trxId);
             commitLogRec.setPrevTrxLsn(lastLsn);
@@ -2437,8 +2420,6 @@ public final class TransactionManagerImpl implements TransactionManager {
                     /*
                      * First write the Abort log record.
                      */
-//                    TrxAbort abortLogRec = (TrxAbort) getTrxmgr().loggableFactory
-//                        .getInstance(0, TransactionManagerImpl.TYPE_TRXABORT);
                     TrxAbort abortLogRec = new TrxAbort(0, TransactionManagerImpl.TYPE_TRXABORT);
                     
                     abortLogRec.setTrxId(trxId);
@@ -2464,36 +2445,6 @@ public final class TransactionManagerImpl implements TransactionManager {
                 trxMgrLatchRef.unlockShared();
             }
         }
-
-//        /* (non-Javadoc)
-//         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-//         */
-//        public final void retrieve(ByteBuffer bb) {
-//            trxId = new TransactionId();
-//            trxId.retrieve(bb);
-//            firstLsn = new Lsn();
-//            firstLsn.retrieve(bb);
-//            lastLsn = new Lsn();
-//            lastLsn.retrieve(bb);
-//            undoNextLsn = new Lsn();
-//            undoNextLsn.retrieve(bb);
-//            int ordinal = bb.get();
-//            if (TrxState.TRX_PREPARED.ordinal() == ordinal) {
-//                state = TrxState.TRX_PREPARED;
-//            } else if (TrxState.TRX_UNPREPARED.ordinal() == ordinal) {
-//                state = TrxState.TRX_UNPREPARED;
-//            } else {
-//                state = TrxState.TRX_DEAD;
-//            }
-//            ordinal = bb.get();
-//            if (IsolationMode.CURSOR_STABILITY.ordinal() == ordinal) {
-//                isolationMode = IsolationMode.CURSOR_STABILITY;
-//            } else if (IsolationMode.READ_COMMITTED.ordinal() == ordinal) {
-//                isolationMode = IsolationMode.READ_COMMITTED;
-//            } else {
-//                isolationMode = IsolationMode.SERIALIZABLE;
-//            }
-//        }
 
         /* (non-Javadoc)
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
@@ -2633,26 +2584,15 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         private final int containerId;
 
-//        ActiveContainerInfo() {
-//        }
-
         ActiveContainerInfo(String name, int containerId) {
             this.name = new ByteString(name);
             this.containerId = containerId;
         }
 
         public ActiveContainerInfo(ByteBuffer bb) {
-//            name = new ByteString();
-//            name.retrieve(bb);
         	name = new ByteString(bb);
             containerId = bb.getInt();
         }
-
-//        public void retrieve(ByteBuffer bb) {
-//            name = new ByteString();
-//            name.retrieve(bb);
-//            containerId = bb.getInt();
-//        }
 
         public void store(ByteBuffer bb) {
             assert name != null;
@@ -2730,19 +2670,6 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
 
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            short n = bb.getShort();
-//            activeContainers = new ActiveContainerInfo[n];
-//            for (int i = 0; i < n; i++) {
-////                activeContainers[i] = new ActiveContainerInfo();
-////                activeContainers[i].retrieve(bb);
-//              activeContainers[i] = new ActiveContainerInfo(bb);
-//
-//            }
-//        }
-
         @Override
         public int getStoredLength() {
 
@@ -2780,11 +2707,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return CheckpointBegin.class;
 			}
-
-//			public Object newInstance() {
-//				return new CheckpointBegin();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new CheckpointBegin(buf);
 			}
@@ -2858,25 +2780,6 @@ public final class TransactionManagerImpl implements TransactionManager {
             return size;
         }
 
-//        @Override
-//        public final void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            int n_trx = bb.getInt();
-//            trxTable = new LinkedList<TransactionImpl>();
-//            for (int i = 0; i < n_trx; i++) {
-//                TransactionImpl trx = new TransactionImpl();
-//                trx.retrieve(bb);
-//                // trx.setTrxmgr(trxmgr);
-//                trxTable.add(trx);
-//            }
-//            int n_dp = bb.getInt();
-//            newDirtyPages = new ArrayList<DirtyPageInfo>(n_dp);
-//            for (int i = 0; i < n_dp; i++) {
-//                DirtyPageInfo dp = new DirtyPageInfo();
-//                dp.retrieve(bb);
-//                newDirtyPages.add(dp);
-//            }
-//        }
 
         @Override
         public final void store(ByteBuffer bb) {
@@ -2931,9 +2834,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return CheckpointEnd.class;
 			}
-//			public Object newInstance() {
-//				return new CheckpointEnd(trxmgr);
-//			}
 			public Object newInstance(ByteBuffer buf) {
 				return new CheckpointEnd(trxmgr, buf);
 			}
@@ -2993,19 +2893,6 @@ public final class TransactionManagerImpl implements TransactionManager {
             return size;
         }
 
-//        @Override
-//        public final void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            int n = bb.getInt();
-//            postCommitActions = new LinkedList<PostCommitAction>();
-//            for (int i = 0; i < n; i++) {
-//                PostCommitAction action = (PostCommitAction) loggableFactory
-//                    .getInstance(bb);
-//                postCommitActions.add(action);
-//            }
-//
-//        }
-
         @Override
         public final void store(ByteBuffer bb) {
             super.store(bb);
@@ -3015,10 +2902,6 @@ public final class TransactionManagerImpl implements TransactionManager {
                 action.store(bb);
             }
         }
-
-//        public final LoggableFactory getLoggableFactory() {
-//            return loggableFactory;
-//        }
 
         public StringBuilder appendTo(StringBuilder sb) {
             sb.append("TrxPrepare(");
@@ -3084,11 +2967,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return TrxAbort.class;
 			}
-
-//			public Object newInstance() {
-//				return new TrxAbort();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new TrxAbort(buf);
 			}
@@ -3120,11 +2998,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 			public Class<?> getType() {
 				return TrxEnd.class;
 			}
-
-//			public Object newInstance() {
-//				return new TrxEnd();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new TrxEnd(buf);
 			}

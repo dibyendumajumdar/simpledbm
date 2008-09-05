@@ -38,10 +38,10 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * SlottedPageImpl is an implementation of SlottedPage that can support page sizes
- * upto 32k. The slot offset, length, and number of slots are stored in short integers,
+ * up to 32k. The slot offset, length, and number of slots are stored in short integers,
  * hence the restriction on page size.
  * <p>
- * The page data is organised so that the slot table starts from the top,
+ * The page data is organized so that the slot table starts from the top,
  * and extends downwards, whereas, the slot data is inserted from the bottom up.
  * <pre> 
  * slot table                          slot item 
@@ -181,15 +181,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }        
         
         /* (non-Javadoc)
-         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-         */
-//        public final void retrieve(ByteBuffer bb) {
-//            offset = bb.getShort();
-//            flags = bb.getShort();
-//            length = bb.getShort();
-//        }
-
-        /* (non-Javadoc)
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
          */
         public final void store(ByteBuffer bb) {
@@ -209,25 +200,13 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             return flags;
         }
 
-//        final void setFlags(int flags) {
-//            this.flags = (short) flags;
-//        }
-
         final int getLength() {
             return length;
         }
 
-//        final void setLength(int length) {
-//            this.length = (short) length;
-//        }
-
         final int getOffset() {
             return offset;
         }
-
-//        final void setOffset(int offset) {
-//            this.offset = (short) offset;
-//        }
 
         public final StringBuilder appendTo(StringBuilder sb) {
             sb
@@ -247,79 +226,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
-    /*
-    public SlottedPageImpl(PageFactory pageFactory, ByteBuffer bb) {
-		super(pageFactory, bb);
-        flags = bb.getShort();
-        numberOfSlots = bb.getShort();
-        deletedSlots = bb.getShort();
-        freeSpace = bb.getInt();
-        highWaterMark = bb.getInt();
-        spaceMapPageNumber = bb.getInt();
-        validatePageHeader();
-        data = new byte[getSpace()];
-        bb.get(data);
-        slotTable.clear();
-        slotTable.ensureCapacity(numberOfSlots);
-        ByteBuffer bb1 = ByteBuffer.wrap(data);
-        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-//            Slot slot = new Slot();
-//            slot.retrieve(bb1);
-        	Slot slot = new Slot(bb1);
-            slotTable.add(slotNumber, slot);
-        }
-        validatePageSize();
-	}
-
-	public SlottedPageImpl(PageFactory pageFactory) {
-		super(pageFactory);
-//        flags = 0;
-//        numberOfSlots = 0;
-//        deletedSlots = 0;
-//        freeSpace = getSpace();
-//        highWaterMark = freeSpace;
-//        spaceMapPageNumber = -1;
-//        data = new byte[getSpace()];
-//        slotTable = new ArrayList<Slot>();
-		init();
-	}
-*/
-	
-	
-//	@Override
-//    public final void retrieve(ByteBuffer bb) {
-//        super.retrieve(bb);
-//        flags = bb.getShort();
-//        numberOfSlots = bb.getShort();
-//        deletedSlots = bb.getShort();
-//        freeSpace = bb.getInt();
-//        highWaterMark = bb.getInt();
-//        spaceMapPageNumber = bb.getInt();
-//        validatePageHeader();
-//        data = new byte[getSpace()];
-//        bb.get(data);
-//        slotTable.clear();
-//        slotTable.ensureCapacity(numberOfSlots);
-//        ByteBuffer bb1 = ByteBuffer.wrap(data);
-//        for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-////            Slot slot = new Slot();
-////            slot.retrieve(bb1);
-//        	Slot slot = new Slot(bb1);
-//            slotTable.add(slotNumber, slot);
-//        }
-//        validatePageSize();
-//    }
 
     SlottedPageImpl(PageManager pageFactory, int type, PageId pageId) {
 		super(pageFactory, type, pageId);
-//      flags = 0;
-//      numberOfSlots = 0;
-//      deletedSlots = 0;
-//      freeSpace = getSpace();
-//      highWaterMark = freeSpace;
-//      spaceMapPageNumber = -1;
-//      data = new byte[getSpace()];
-//      slotTable = new ArrayList<Slot>();
 		init();
 	}
 
@@ -338,8 +247,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         slotTable.ensureCapacity(numberOfSlots);
         ByteBuffer bb1 = ByteBuffer.wrap(data);
         for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-//            Slot slot = new Slot();
-//            slot.retrieve(bb1);
         	Slot slot = new Slot(bb1);
             slotTable.add(slotNumber, slot);
         }
@@ -405,13 +312,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         // During testing it is useful to artificially restrict the usable space
         return 200;
     }
-
-//    /**
-//     * Default constructor.
-//     */
-//    public SlottedPageImpl() {
-//        super();
-//    }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.pm.Page#init()
@@ -532,10 +432,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             return null;
         }
 
-//        Slot slot = new Slot();
-//        slot.setOffset(start_pos);
-//        slot.setFlags(0);
-//        slot.setLength(length);
         Slot slot = new Slot(flags, start_pos, length);
         
         return slot;
@@ -591,7 +487,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             int startPos = highWaterMark - slot.getLength();
             System.arraycopy(data, slot.getOffset(), newdata, startPos, slot
                 .getLength());
-//            slot.setOffset(startPos);
             slotTable.set(slotNumber, new Slot(slot.getFlags(), startPos, slot.getLength()));
             highWaterMark -= slot.getLength();
             freeSpace -= slot.getLength();
@@ -685,13 +580,11 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         int savedFlags = 0;
-//        boolean restoreFlags = false;
         if (replaceMode) {
             // If we are in replaceMode,
             // we may need to delete an existing tuple
             if (slotNumber < numberOfSlots && !isSlotDeleted(slotNumber)) {
                 savedFlags = slotTable.get(slotNumber).getFlags();
-//                restoreFlags = true;
                 delete(slotNumber);
             }
         }
@@ -704,9 +597,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         addSlot(slotNumber, item, slot);
-//        if (restoreFlags) {
-//            slotTable.get(slotNumber).setFlags(savedFlags);
-//        }
 //		if (debug > 0) {
 //			debugout << Thread::getCurrentThread()->getName() <<
 //				": TupleMgr.insertTupleAt: Inserting tuple [" <<
@@ -730,8 +620,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         freeSpace += getDataLength(slotNumber);
         deletedSlots++;
-//        slotTable.get(slotNumber).setLength(0);
-//        slotTable.get(slotNumber).setFlags(0);
         slotTable.set(slotNumber, Slot.NULL_SLOT);
     }
 
@@ -784,19 +672,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
-//    /**
-//     * Return a pointer to tuple's data, as well as its length.
-//     */
-//    @Override
-//    public final Storable get(int slotNumber, Storable item) {
-//        validateSlotNumber(slotNumber, false);
-//        Slot slot = slotTable.get(slotNumber);
-//        ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
-//            .getLength());
-//        item.retrieve(bb);
-//        return item;
-//    }
-    
     /**
      * Return a pointer to tuple's data, as well as its length.
      */
@@ -821,7 +696,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         validateSlotNumber(slotNumber, false);
         Slot slot = slotTable.get(slotNumber);
         slotTable.set(slotNumber, new Slot(flags, slot.getOffset(), slot.getLength()));
-        //slot.setFlags(flags);
     }
 
     /**
@@ -947,15 +821,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     	public SlottedPageImplFactory(PageManager pageFactory) {
     		this.pageFactory = pageFactory;
     	}
-//		public Class<?> getType() {
-//			return SlottedPageImpl.class;
-//		}
-//		public Object newInstance() {
-//			return new SlottedPageImpl(pageFactory);
-//		}
-//		public Object newInstance(ByteBuffer buf) {
-//			return new SlottedPageImpl(pageFactory, buf);
-//		}
 		public Page getInstance(int type, PageId pageId) {
 			return new SlottedPageImpl(pageFactory, type, pageId);
 		}

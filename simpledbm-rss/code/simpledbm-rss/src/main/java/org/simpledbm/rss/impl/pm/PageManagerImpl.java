@@ -102,14 +102,6 @@ public final class PageManagerImpl implements PageManager {
      * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
      */
     public final Page getInstance(int pagetype, PageId pageId) {
-/*        Page page = (Page) objectFactory.getInstance(pagetype);
-        page.setType(pagetype);
-//        page.setPageFactory(this);
-        page.setLatch(latchFactory.newReadWriteUpdateLatch());
-        page.setPageId(pageId);
-//        page.init();
- * 
- */
     	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
     	Page page = pf.getInstance(pagetype, pageId);
         return page;
@@ -128,14 +120,6 @@ public final class PageManagerImpl implements PageManager {
         bb.mark();
         short pagetype = bb.getShort();
         bb.reset();
-/*
-        Page page = (Page) objectFactory.getInstance(pagetype, bb);
-//        page.setPageFactory(this);
-        page.setLatch(latchFactory.newReadWriteUpdateLatch());
-//        page.init();
-//        page.retrieve(bb);
-        page.setPageId(pageId);
-*/
     	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
     	Page page = pf.getInstance(pageId, bb);
         return page;
@@ -172,8 +156,6 @@ public final class PageManagerImpl implements PageManager {
         long checksumCalculated = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
         ByteBuffer bb = ByteBuffer.wrap(data);
         long checksumOnPage = bb.getLong();
-        //System.out.println("Calculated checksum = " + checksumCalculated);
-        //System.out.println("Retrieved checksum = " + checksumOnPage);
         if (checksumOnPage != checksumCalculated) {
         	log.error(this.getClass().getName(),"retrieve", mcat.getMessage("EP0004",
                     pageId));
@@ -203,8 +185,7 @@ public final class PageManagerImpl implements PageManager {
         bb.mark();
         bb.putLong(0);
         page.store(bb);
-        long checksum = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
-        //System.out.println("Stored checksum = " + checksum);        
+        long checksum = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);      
         bb.reset();
         bb.putLong(checksum);
         container.write(offset, data, 0, pageSize);
