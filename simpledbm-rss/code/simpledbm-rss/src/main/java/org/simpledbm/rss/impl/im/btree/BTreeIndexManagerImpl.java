@@ -3125,8 +3125,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             IndexCursorImpl icursor = (IndexCursorImpl) cursor;
             try {
                 boolean doSearch = false;
-                BTreeNode node = null; // getBTreeNode();
-                // if (icursor.fetchCount > 0) {
+                BTreeNode node = null; 
                 if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
                     // This is not the first call to fetch
                     // Check to see if the BTree should be scanned to locate the key

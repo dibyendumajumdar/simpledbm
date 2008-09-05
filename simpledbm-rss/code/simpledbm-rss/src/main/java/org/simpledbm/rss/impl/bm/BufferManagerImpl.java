@@ -1183,6 +1183,10 @@ public final class BufferManagerImpl implements BufferManager {
                      * written.
                      */
                     synchronized (waitingForBuffers) {
+                    	/*
+                    	 * calling notifyAll() causes starvation on single cpu machines (on 
+                    	 * Windows).
+                    	 */
                         //waitingForBuffers.notifyAll();
                     	waitingForBuffers.notify();
                     }

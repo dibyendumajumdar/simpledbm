@@ -255,15 +255,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     public Compensation generateCompensation(Undoable undoable) {
         if (undoable instanceof InsertTupleSegment) {
             InsertTupleSegment logrec = (InsertTupleSegment) undoable;
-//            UndoInsertTupleSegment clr = (UndoInsertTupleSegment) loggableFactory
-//                .getInstance(MODULE_ID, TYPE_LOG_UNDOINSERTTUPLESEGMENT);
             UndoInsertTupleSegment clr = new UndoInsertTupleSegment(MODULE_ID, TYPE_LOG_UNDOINSERTTUPLESEGMENT);
             clr.slotNumber = logrec.slotNumber;
             return clr;
         } else if (undoable instanceof UndoableReplaceSegmentLink) {
             UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) undoable;
-//            UndoReplaceSegmentLink clr = (UndoReplaceSegmentLink) loggableFactory
-//                .getInstance(MODULE_ID, TYPE_LOG_UNDOREPLACESEGMENTLINK);
             UndoReplaceSegmentLink clr = new UndoReplaceSegmentLink(MODULE_ID, TYPE_LOG_UNDOREPLACESEGMENTLINK);
             clr.slotNumber = logrec.slotNumber;
             clr.newSegmentationFlags = logrec.oldSegmentationFlags;
@@ -273,8 +269,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         } else if (undoable instanceof UndoableUpdateTupleSegment) {
             // FIXME Test case needed
             UndoableUpdateTupleSegment logrec = (UndoableUpdateTupleSegment) undoable;
-//            UndoUpdateTupleSegment clr = (UndoUpdateTupleSegment) loggableFactory
-//                .getInstance(MODULE_ID, TYPE_LOG_UNDOUPDATETUPLESEGMENT);
             UndoUpdateTupleSegment clr = new UndoUpdateTupleSegment(MODULE_ID, TYPE_LOG_UNDOUPDATETUPLESEGMENT);
             clr.slotNumber = logrec.slotNumber;
             clr.spaceMapPage = logrec.spaceMapPage;
@@ -372,8 +366,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             Compensation clr = generateCompensation(undoable);
             clr.setUndoNextLsn(undoable.getPrevTrxLsn());
 
-//            TupleSegment ts = new TupleSegment();
-//            page.get(logrec.slotNumber, ts);
             TupleSegment ts = (TupleSegment) page.get(logrec.slotNumber, new TupleSegment.TupleSegmentFactory());
             int tslength = ts.getStoredLength();
             /*
@@ -444,8 +436,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
              * UndoReplaceSegmentLink
              */
             ExtendedUpdateSegmentLink logrec = (ExtendedUpdateSegmentLink) loggable;
-//            TupleSegment ts = new TupleSegment();
-//            p.get(logrec.slotNumber, ts);
             TupleSegment ts = (TupleSegment) p.get(logrec.slotNumber, new TupleSegment.TupleSegmentFactory());
             ts.nextPageNumber = logrec.nextSegmentPage;
             ts.nextSlotNumber = logrec.nextSegmentSlotNumber;
@@ -453,8 +443,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             p.setFlags(logrec.slotNumber, (short) logrec.newSegmentationFlags);
         } else if (loggable instanceof UpdateSegmentLink) {
             UpdateSegmentLink logrec = (UpdateSegmentLink) loggable;
-//            TupleSegment ts = new TupleSegment();
-//            p.get(logrec.slotNumber, ts);
             TupleSegment ts = (TupleSegment) p.get(logrec.slotNumber, new TupleSegment.TupleSegmentFactory());
             ts.nextPageNumber = logrec.nextSegmentPage;
             ts.nextSlotNumber = logrec.nextSegmentSlotNumber;
@@ -493,8 +481,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                      * tuple segment to determine the Location to which this
                      * segment belogs. The location is stored in the link field.
                      */
-//                    TupleSegment ts = new TupleSegment();
-//                    page.get(slotNumber, ts);
                     TupleSegment ts = (TupleSegment) page.get(slotNumber, new TupleSegment.TupleSegmentFactory());
                     PageId pageId = new PageId(page
                         .getPageId()
@@ -575,10 +561,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                      * TODO: Instead of deleting one slot at a time, we should do them all
                      * in a batch.
                      */
-//                    DeleteSlot logrec = (DeleteSlot) loggableFactory
-//                        .getInstance(
-//                            TupleManagerImpl.MODULE_ID,
-//                            TupleManagerImpl.TYPE_LOG_DELETESLOT);
                     DeleteSlot logrec = new DeleteSlot(
                         TupleManagerImpl.MODULE_ID,
                         TupleManagerImpl.TYPE_LOG_DELETESLOT);
@@ -1134,10 +1116,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     firstSegmentSize);
                 currentPos += firstSegmentSize;
                 
-//                InsertTupleSegment logrec = (InsertTupleSegment) tuplemgr.loggableFactory
-//                    .getInstance(
-//                        TupleManagerImpl.MODULE_ID,
-//                        TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
                 InsertTupleSegment logrec = new InsertTupleSegment(
                     TupleManagerImpl.MODULE_ID,
                     TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
@@ -1237,10 +1215,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         }
                     }
 
-//                    InsertTupleSegment logrec = (InsertTupleSegment) tuplemgr.loggableFactory
-//                        .getInstance(
-//                            TupleManagerImpl.MODULE_ID,
-//                            TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
                     InsertTupleSegment logrec = new InsertTupleSegment(
                         TupleManagerImpl.MODULE_ID,
                         TupleManagerImpl.TYPE_LOG_INSERTTUPLESEGMENT);
@@ -1322,10 +1296,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     Redoable loggable = null;
                     if (updateMode) {
                         updateMode = false;
-//                        UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) tuplemgr.loggableFactory
-//                            .getInstance(
-//                                TupleManagerImpl.MODULE_ID,
-//                                TupleManagerImpl.TYPE_LOG_UNDOABLEREPLACESEGMENTLINK);
                         UndoableReplaceSegmentLink logrec = new UndoableReplaceSegmentLink(
                             TupleManagerImpl.MODULE_ID,
                             TupleManagerImpl.TYPE_LOG_UNDOABLEREPLACESEGMENTLINK);
@@ -1336,18 +1306,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             .getFlags(prevSegmentSlotNumber);
                         if (TupleHelper
                             .isSegmented(page, prevSegmentSlotNumber)) {
-//                            TupleSegment ts = new TupleSegment();
-//                            page.get(prevSegmentSlotNumber, ts);
                             TupleSegment ts = (TupleSegment) page.get(prevSegmentSlotNumber, new TupleSegment.TupleSegmentFactory());
                             logrec.oldNextSegmentPage = ts.nextPageNumber;
                             logrec.oldNextSegmentSlot = ts.nextSlotNumber;
                         }
                         loggable = logrec;
                     } else {
-//                        UpdateSegmentLink logrec = (UpdateSegmentLink) tuplemgr.loggableFactory
-//                            .getInstance(
-//                                TupleManagerImpl.MODULE_ID,
-//                                TupleManagerImpl.TYPE_LOG_UPDATESEGMENTLINK);
                         UpdateSegmentLink logrec = new UpdateSegmentLink(
                             TupleManagerImpl.MODULE_ID,
                             TupleManagerImpl.TYPE_LOG_UPDATESEGMENTLINK);
@@ -1494,10 +1458,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         validated = true;
                     }
 
-//                    UndoableReplaceSegmentLink logrec = (UndoableReplaceSegmentLink) tuplemgr.loggableFactory
-//                        .getInstance(
-//                            TupleManagerImpl.MODULE_ID,
-//                            TupleManagerImpl.TYPE_LOG_UNDOABLEREPLACESEGMENTLINK);
                     UndoableReplaceSegmentLink logrec = new UndoableReplaceSegmentLink(
                         TupleManagerImpl.MODULE_ID,
                         TupleManagerImpl.TYPE_LOG_UNDOABLEREPLACESEGMENTLINK);
@@ -1507,8 +1467,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     logrec.slotNumber = slotNumber;
 
                     if (TupleHelper.isSegmented(page, slotNumber)) {
-//                        TupleSegment ts = new TupleSegment();
-//                        page.get(slotNumber, ts);
                     	TupleSegment ts = (TupleSegment) page.get(slotNumber, new TupleSegment.TupleSegmentFactory());
                         nextPage = logrec.oldNextSegmentPage = ts.nextPageNumber;
                         nextSlot = logrec.oldNextSegmentSlot = ts.nextSlotNumber;
@@ -1601,8 +1559,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         }
                         validated = true;
                     }
-//                    TupleSegment ts = new TupleSegment();
-//                    page.get(slotNumber, ts);
                 	TupleSegment ts = (TupleSegment) page.get(slotNumber, new TupleSegment.TupleSegmentFactory());
 
                     try {
@@ -1691,8 +1647,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 try {
                     SlottedPage page = (SlottedPage) bab.getPage();
 
-//                    TupleSegment ts = new TupleSegment();
-//                    page.get(slotNumber, ts);
                 	TupleSegment ts = (TupleSegment) page.get(slotNumber, new TupleSegment.TupleSegmentFactory());
 
                     if (TupleHelper.isSegmented(page, slotNumber)) {
@@ -1700,7 +1654,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         nextSlot = ts.nextSlotNumber;
                     }
 
-                    // int segmentSize = ts.getStoredLength();
                     int segmentSize = ts.data.length;
 
                     int copySize = segmentSize;
@@ -1722,10 +1675,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     tsnew.nextPageNumber = nextPage;
                     tsnew.nextSlotNumber = nextSlot;
  
-//                    UndoableUpdateTupleSegment logrec = (UndoableUpdateTupleSegment) tuplemgr.loggableFactory
-//                        .getInstance(
-//                            TupleManagerImpl.MODULE_ID,
-//                            TupleManagerImpl.TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT);
                     UndoableUpdateTupleSegment logrec = new UndoableUpdateTupleSegment(
                         TupleManagerImpl.MODULE_ID,
                         TupleManagerImpl.TYPE_LOG_UNDOABLEUPDATETUPLESEGMENT);                   
@@ -2337,14 +2286,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             return totalSpace - overhead();
         }
 
-//        public void retrieve(ByteBuffer bb) {
-//            nextPageNumber = bb.getInt();
-//            nextSlotNumber = bb.getShort();
-//            int length = bb.getShort();
-//            data = new byte[length];
-//            bb.get(data);
-//        }
-
         public void store(ByteBuffer bb) {
             bb.putInt(nextPageNumber);
             bb.putShort((short) nextSlotNumber);
@@ -2418,20 +2359,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             slotNumber = bb.getShort();
 		}
 
-//		@Override
-//        public void init() {
-//        }
-
         @Override
         public int getStoredLength() {
             return super.getStoredLength() + TypeSize.SHORT;
         }
-
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            slotNumber = bb.getShort();
-//        }
 
         @Override
         public void store(ByteBuffer bb) {
@@ -2459,11 +2390,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return DeleteSlot.class;
 			}
-
-//			public Object newInstance() {
-//				return new DeleteSlot();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new DeleteSlot(buf);
 			}
@@ -2510,25 +2436,11 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             spaceMapPage = bb.getInt();
         }
         
-//        @Override
-//        public void init() {
-//        }
-
         @Override
         public int getStoredLength() {
             return super.getStoredLength() + segment.getStoredLength()
                     + TypeSize.SHORT * 2 + TypeSize.INTEGER;
         }
-
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            segment = new TupleSegment();
-//            segment.retrieve(bb);
-//            slotNumber = bb.getShort();
-//            segmentationFlags = bb.getShort();
-//            spaceMapPage = bb.getInt();
-//        }
 
         @Override
         public void store(ByteBuffer bb) {
@@ -2582,11 +2494,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return InsertTupleSegment.class;
 			}
-
-//			public Object newInstance() {
-//				return new InsertTupleSegment();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new InsertTupleSegment(buf);
 			}
@@ -2624,11 +2531,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UndoInsertTupleSegment.class;
 			}
-
-//			public Object newInstance() {
-//				return new UndoInsertTupleSegment();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoInsertTupleSegment(buf);
 			}
@@ -2668,14 +2570,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     + oldSegment.getStoredLength();
         }
 
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            oldSegmentationFlags = bb.getShort();
-//            oldSegment = new TupleSegment();
-//            oldSegment.retrieve(bb);
-//        }
-
         @Override
         public void store(ByteBuffer bb) {
             super.store(bb);
@@ -2699,11 +2593,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UndoableUpdateTupleSegment.class;
 			}
-
-//			public Object newInstance() {
-//				return new UndoableUpdateTupleSegment();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoableUpdateTupleSegment(buf);
 			}
@@ -2740,11 +2629,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UndoUpdateTupleSegment.class;
 			}
-
-//			public Object newInstance() {
-//				return new UndoUpdateTupleSegment();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoUpdateTupleSegment(buf);
 			}
@@ -2785,24 +2669,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             nextSegmentSlotNumber = bb.getShort();
         }
         
-//        @Override
-//        public void init() {
-//        }
-
         @Override
         public int getStoredLength() {
             return super.getStoredLength() + TypeSize.INTEGER + TypeSize.SHORT
                     * 2;
         }
 
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            slotNumber = bb.getShort();
-//            nextSegmentPage = bb.getInt();
-//            nextSegmentSlotNumber = bb.getShort();
-//        }
-//
         @Override
         public void store(ByteBuffer bb) {
             super.store(bb);
@@ -2841,12 +2713,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public int getStoredLength() {
             return super.getStoredLength() + TypeSize.SHORT;
         }
-
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            newSegmentationFlags = bb.getShort();
-//        }
 
         @Override
         public void store(ByteBuffer bb) {
@@ -2900,14 +2766,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     * 2;
         }
 
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            oldNextSegmentPage = bb.getInt();
-//            oldNextSegmentSlot = bb.getShort();
-//            oldSegmentationFlags = bb.getShort();
-//        }
-
         @Override
         public void store(ByteBuffer bb) {
             super.store(bb);
@@ -2936,11 +2794,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UndoableReplaceSegmentLink.class;
 			}
-
-//			public Object newInstance() {
-//				return new UndoableReplaceSegmentLink();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoableReplaceSegmentLink(buf);
 			}
@@ -2978,11 +2831,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UndoReplaceSegmentLink.class;
 			}
-
-//			public Object newInstance() {
-//				return new UndoReplaceSegmentLink();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UndoReplaceSegmentLink(buf);
 			}
@@ -3028,16 +2876,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 			public Class<?> getType() {
 				return UpdateSegmentLink.class;
 			}
-
-//			public Object newInstance() {
-//				return new UpdateSegmentLink();
-//			}
-
 			public Object newInstance(ByteBuffer buf) {
 				return new UpdateSegmentLink(buf);
 			}
-        	
         }
-
     }
 }

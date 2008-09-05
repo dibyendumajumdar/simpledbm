@@ -34,8 +34,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * TupleId uniquely identifies the location of a tuple within the Relation.
  * It consists of the page ID and the slot number.
  * <p>
- * Note that we take care to ensure that instances of this object are
- * immutable - the only way to modify them is to read 
+ * Immutable.
  * 
  * @author Dibyendu Majumdar
  * @since 08-Dec-2005
@@ -89,18 +88,6 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         return pageId.isNull() || slotNumber == -1;
     }
 
-//    public void parseString(String string) {
-//        log.error(this.getClass().getName(), "parseString", mcat
-//            .getMessage("ET0001"));
-//        throw new TupleException(mcat.getMessage("ET0001"));
-//    }
-
-//    public final void retrieve(ByteBuffer bb) {
-//        pageId = new PageId();
-//        pageId.retrieve(bb);
-//        slotNumber = bb.getShort();
-//    }
-
     public final void store(ByteBuffer bb) {
         pageId.store(bb);
         bb.putShort((short) slotNumber);
@@ -146,17 +133,9 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         return appendTo(new StringBuilder()).toString();
     }
 
-//    private final void setPageId(PageId pageId) {
-//        this.pageId = new PageId(pageId);
-//    }
-
     public final PageId getPageId() {
         return pageId;
     }
-
-//    private final void setSlotNumber(int slotNumber) {
-//        this.slotNumber = slotNumber;
-//    }
 
     public final int getSlotNumber() {
         return slotNumber;
