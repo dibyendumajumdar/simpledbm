@@ -84,7 +84,7 @@ public final class RawPage extends Page {
 		}
 
 		public int getPageType() {
-			return PageFactoryImpl.TYPE_RAW_PAGE;
+			return PageManagerImpl.TYPE_RAW_PAGE;
 		}
     	
     }
