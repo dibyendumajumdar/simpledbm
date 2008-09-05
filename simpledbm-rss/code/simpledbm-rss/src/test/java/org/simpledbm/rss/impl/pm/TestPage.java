@@ -96,24 +96,6 @@ public class TestPage extends BaseTestCase {
             i = bb.getInt();
 		}
 
-//		public MyPage(PageFactory pageFactory, ByteBuffer bb) {
-//			super(pageFactory, bb);
-//            i = bb.getInt();
-//		}
-//
-//		public MyPage(PageFactory pageFactory) {
-//			super(pageFactory);
-//		}
-
-//		/**
-//         * @see org.simpledbm.rss.api.pm.Page#retrieve(java.nio.ByteBuffer)
-//         */
-//        @Override
-//        public void retrieve(ByteBuffer bb) {
-//            super.retrieve(bb);
-//            i = bb.getInt();
-//        }
-
         /**
          * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
          */
@@ -122,10 +104,6 @@ public class TestPage extends BaseTestCase {
             super.store(bb);
             bb.putInt(i);
         }
-//
-//        @Override
-//        public void init() {
-//        }
         
         static class MyPageFactory implements PageFactory {
 
@@ -134,19 +112,6 @@ public class TestPage extends BaseTestCase {
         	public MyPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
         	}
-        	
-//			public Class<?> getType() {
-//				return MyPage.class;
-//			}
-//
-//			public Object newInstance() {
-//				return new MyPage(pageFactory);
-//			}
-//
-//			public Object newInstance(ByteBuffer buf) {
-//				return new MyPage(pageFactory, buf);
-//			}
-
 			public Page getInstance(int type, PageId pageId) {
 				return new MyPage(pageFactory, type, pageId);
 			}

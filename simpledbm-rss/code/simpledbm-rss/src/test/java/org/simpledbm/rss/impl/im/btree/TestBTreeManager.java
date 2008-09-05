@@ -280,15 +280,6 @@ public class TestBTreeManager extends BaseTestCase {
 		public Location cloneLocation() {
 			return new RowLocation(this);
 		}
-
-//		public void parseString(String string) {
-//			loc = Integer.parseInt(string);
-//		}
-
-//		public void retrieve(ByteBuffer bb) {
-//			loc = bb.getInt();
-//		}
-
 		public void store(ByteBuffer bb) {
 			bb.putInt(loc);
 		}
@@ -346,17 +337,6 @@ public class TestBTreeManager extends BaseTestCase {
 
 	}
 
-//	private IndexItem generateKey( BTreeIndexManagerImpl.IndexItemHelper btree, String s, int location,
-//			int childpage, boolean isLeaf) {
-//		StringKey key = (StringKey) btree.getNewIndexKey();
-//		key.setString(s);
-//		RowLocation loc = (RowLocation) btree.getNewLocation();
-//		loc.loc = location;
-//		IndexItem item = new IndexItem(key, loc, childpage, isLeaf, btree
-//				.isUnique());
-//		return item;
-//	}
-	
 	private IndexItem generateKey( IndexItemFactory btree, String s, int location,
 			int childpage, boolean isLeaf) {
 		StringKey key = (StringKey) btree.getNewIndexKey(1, s);
@@ -367,42 +347,6 @@ public class TestBTreeManager extends BaseTestCase {
 		return item;
 	}
 	
-//	static class MyIndexItemHelper implements BTreeIndexManagerImpl.IndexItemHelper {
-//
-//		IndexKeyFactory keyFactory = new StringKeyFactory();
-//		LocationFactory locationFactory = new RowLocationFactory();
-//		boolean unique = true;
-//		
-//		public MyIndexItemHelper(boolean unique) {
-//			this.unique = unique;
-//		}
-//		
-//		public IndexKey getMaxIndexKey() {
-//			return keyFactory.maxIndexKey(1);
-//		}
-//
-//		public IndexKey getNewIndexKey() {
-//			return keyFactory.minIndexKey(1);
-//		}
-//
-//		public Location getNewLocation() {
-//			return locationFactory.newLocation();
-//		}
-//
-//		public boolean isUnique() {
-//			return true;
-//		}
-//
-//		public IndexKeyFactory getIndexKeyFactory() {
-//			return keyFactory;
-//		}
-//
-//		public LocationFactory getLocationFactory() {
-//			return locationFactory;
-//		}
-//		
-//	}
-
 	/**
 	 * Initialize the test harness. New log is created, and the test container
 	 * initialized. The container is allocated an extent of 64 pages which ought
@@ -449,9 +393,7 @@ public class TestBTreeManager extends BaseTestCase {
 
 			for (int i = 0; i < results.length; i++) {
 				IndexKey key = keyFactory.parseIndexKey(1, results[i].getKey());
-//				key.parseString(results[i].getKey());
 				Location location = locationFactory.newLocation(results[i].getLocation());
-//				location.parseString(results[i].getLocation());
 
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				index.insert(trx, key, location);
@@ -480,10 +422,8 @@ public class TestBTreeManager extends BaseTestCase {
 				StringTokenizer st = new StringTokenizer(line, " ");
 				String k = st.nextToken();
 				IndexKey key = keyFactory.parseIndexKey(1, k);
-//				key.parseString(k);
 				String l = st.nextToken();
 				Location location = locationFactory.newLocation(l);
-//				location.parseString(l);
 
 				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				// System.out.println("Inserting (" + key + ", " + location +
@@ -578,7 +518,6 @@ public class TestBTreeManager extends BaseTestCase {
 				 */
 				SlottedPage r = (SlottedPage) bab.getPage();
 				BTreeNode node = new BTreeNode(loadPageOp.getIndexItemFactory(), r);
-//				node.wrap(r);
 				// System.out.println("Validating page ->");
 				// node.dumpAsXml();
 				// System.out.println("------------------");
@@ -659,7 +598,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, l), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -667,7 +605,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, r), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -720,7 +657,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -728,7 +664,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -796,7 +731,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -804,7 +738,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -917,7 +850,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -925,7 +857,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -969,7 +900,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -977,7 +907,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1020,7 +949,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1028,7 +956,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1071,7 +998,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, p), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1079,7 +1005,6 @@ public class TestBTreeManager extends BaseTestCase {
 			bab = db.bufmgr.fixShared(new PageId(1, q), 0);
 			try {
 				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
-//				node.wrap((SlottedPage) bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1129,9 +1054,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			try {
@@ -1175,9 +1098,7 @@ public class TestBTreeManager extends BaseTestCase {
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 
 			IndexKey key1 = keyFactory.parseIndexKey(1, k1);
-//			key1.parseString(k1);
 			Location location1 = locationFactory.newLocation(loc1);
-//			location1.parseString(loc1);
 			Transaction trx1 = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay1 = false;
 			try {
@@ -1187,9 +1108,7 @@ public class TestBTreeManager extends BaseTestCase {
 				okay1 = true;
 
 				IndexKey key2 = keyFactory.parseIndexKey(1, k2);
-//				key2.parseString(k2);
 				Location location2 = locationFactory.newLocation(loc2);
-//				location2.parseString(loc2);
 				Transaction trx2 = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 				boolean okay2 = false;
 
@@ -1234,9 +1153,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			try {
@@ -1283,9 +1200,7 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
-//						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
-//						location.parseString(loc);
 						Transaction trx = db.trxmgr
 								.begin(IsolationMode.SERIALIZABLE);
 						boolean okay = false;
@@ -1321,9 +1236,7 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
-//						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
-//						location.parseString(loc);
 						Transaction trx = db.trxmgr
 								.begin(IsolationMode.SERIALIZABLE);
 						boolean okay = false;
@@ -1382,9 +1295,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			IndexScan scan = btree.openScan(trx, key, location, true);
@@ -1463,9 +1374,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			IndexScan scan = btree.openScan(trx, key, location, false);
@@ -1513,9 +1422,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			IndexScan scan = btree.openScan(trx, key, location, false);
@@ -1585,9 +1492,7 @@ public class TestBTreeManager extends BaseTestCase {
 			LocationFactory locationFactory = (LocationFactory) db.objectFactory
 					.getSingleton(TYPE_ROWLOCATIONFACTORY);
 			IndexKey key = keyFactory.parseIndexKey(1, k);
-//			key.parseString(k);
 			Location location = locationFactory.newLocation(loc);
-//			location.parseString(loc);
 			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
 			boolean okay = false;
 			IndexScan scan = btree.openScan(trx, key, location, false);
@@ -1675,10 +1580,8 @@ public class TestBTreeManager extends BaseTestCase {
 
 					String k = st.nextToken();
 					IndexKey key = keyFactory.parseIndexKey(1, k);
-//					key.parseString(k);
 					String l = st.nextToken();
 					Location location = locationFactory.newLocation(l);
-//					location.parseString(l);
 
 					if (scan == null) {
 						scan = index.openScan(trx, key, location, false);
@@ -1733,10 +1636,8 @@ public class TestBTreeManager extends BaseTestCase {
 
 					String k = st.nextToken();
 					IndexKey key = keyFactory.parseIndexKey(1, k);
-//					key.parseString(k);
 					String l = st.nextToken();
 					Location location = locationFactory.newLocation(l);
-//					location.parseString(l);
 
 					IndexScan scan = index.openScan(trx, key, location, false);
 					if (scan.fetchNext()) {
@@ -1798,9 +1699,7 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
-//						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
-//						location.parseString(loc);
 						// Allow the main thread to enter lock wait
 						Thread.sleep(100);
 						Transaction trx = db.trxmgr
@@ -1854,9 +1753,7 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, "a1");
-//						key.parseString("a1");
 						Location location = locationFactory.newLocation("10");
-//						location.parseString("10");
 						Transaction trx = db.trxmgr
 								.begin(IsolationMode.SERIALIZABLE);
 						boolean okay = false;
@@ -1952,9 +1849,7 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, k);
-//						key.parseString(k);
 						Location location = locationFactory.newLocation(loc);
-//						location.parseString(loc);
 						Transaction trx = db.trxmgr
 								.begin(IsolationMode.SERIALIZABLE);
 						boolean okay = false;
@@ -1996,11 +1891,8 @@ public class TestBTreeManager extends BaseTestCase {
 						LocationFactory locationFactory = (LocationFactory) db.objectFactory
 								.getSingleton(TYPE_ROWLOCATIONFACTORY);
 						IndexKey key = keyFactory.parseIndexKey(1, "a1");
-//						key.parseString("a1");
 						Location location = locationFactory.newLocation("10");
-//						location.parseString("10");
 						IndexKey delkey = keyFactory.parseIndexKey(1, k);
-//						delkey.parseString(k);
 						Transaction trx = db.trxmgr
 								.begin(IsolationMode.SERIALIZABLE);
 						boolean okay = false;
@@ -2088,9 +1980,7 @@ public class TestBTreeManager extends BaseTestCase {
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
 							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
-//					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
-//					location.parseString("2");
 					Transaction trx = db.trxmgr
 							.begin(IsolationMode.SERIALIZABLE);
 					boolean okay = false;
@@ -2130,9 +2020,7 @@ public class TestBTreeManager extends BaseTestCase {
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
 							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
-//					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
-//					location.parseString("2");
 					Transaction trx = db.trxmgr
 							.begin(IsolationMode.SERIALIZABLE);
 					boolean okay = false;
@@ -2207,9 +2095,7 @@ public class TestBTreeManager extends BaseTestCase {
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
 							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
-//					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
-//					location.parseString("2");
 					Transaction trx = db.trxmgr
 							.begin(IsolationMode.SERIALIZABLE);
 					boolean okay = false;
@@ -2249,9 +2135,7 @@ public class TestBTreeManager extends BaseTestCase {
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
 							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x");
-//					key.parseString("x");
 					Location location = locationFactory.newLocation("2");
-//					location.parseString("2");
 					Transaction trx = db.trxmgr
 							.begin(IsolationMode.SERIALIZABLE);
 					boolean okay = false;
@@ -2286,9 +2170,7 @@ public class TestBTreeManager extends BaseTestCase {
 					LocationFactory locationFactory = (LocationFactory) db.objectFactory
 							.getSingleton(TYPE_ROWLOCATIONFACTORY);
 					IndexKey key = keyFactory.parseIndexKey(1, "x1");
-//					key.parseString("x1");
 					Location location = locationFactory.newLocation("21");
-//					location.parseString("21");
 					Transaction trx = db.trxmgr
 							.begin(IsolationMode.SERIALIZABLE);
 					boolean okay = false;
@@ -2835,7 +2717,6 @@ public class TestBTreeManager extends BaseTestCase {
 				while (line != null) {
 					String k = line.trim();
 					IndexKey key = keyFactory.parseIndexKey(1, k);
-//					key.parseString(k);
 					RowLocation location = (RowLocation) locationFactory
 							.newLocation();
 					location.loc = i++;
@@ -3035,7 +2916,6 @@ public class TestBTreeManager extends BaseTestCase {
 				while (line != null) {
 					String k = line.trim();
 					IndexKey key = keyFactory.parseIndexKey(1, k);
-//					key.parseString(k);
 					RowLocation location = (RowLocation) locationFactory
 							.newLocation();
 					location.loc = i++;
@@ -3093,7 +2973,6 @@ public class TestBTreeManager extends BaseTestCase {
 			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
 			try {
 				IndexKey key = keyFactory.parseIndexKey(1, " ");
-//				key.parseString(" ");
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
 				location.loc = 1;
@@ -3148,7 +3027,6 @@ public class TestBTreeManager extends BaseTestCase {
 			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
 			try {
 				IndexKey key = keyFactory.parseIndexKey(containerId, " ");
-//				key.parseString(" ");
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
 				location.loc = 1;
@@ -3205,7 +3083,6 @@ public class TestBTreeManager extends BaseTestCase {
 			Transaction trx = db.trxmgr.begin(IsolationMode.CURSOR_STABILITY);
 			try {
 				IndexKey key = keyFactory.parseIndexKey(containerId, " ");
-//				key.parseString(" ");
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
 				location.loc = 1;
@@ -3262,7 +3139,6 @@ public class TestBTreeManager extends BaseTestCase {
 			Transaction trx = db.trxmgr.begin(IsolationMode.REPEATABLE_READ);
 			try {
 				IndexKey key = keyFactory.parseIndexKey(containerId, " ");
-//				key.parseString(" ");
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
 				location.loc = 1;
@@ -3315,7 +3191,6 @@ public class TestBTreeManager extends BaseTestCase {
 			BTreeImpl btree = (BTreeImpl) db.btreeMgr.getIndex(1);
 
 			IndexKey key = btree.indexItemFactory.getNewIndexKey(1, k);
-//			key.parseString(k);
 			RowLocation location = (RowLocation) btree.indexItemFactory.getNewLocation();
 			location.loc = loc;
 
@@ -3472,7 +3347,6 @@ public class TestBTreeManager extends BaseTestCase {
         page.latchExclusive();
         BTreeIndexManagerImpl.BTreeNode.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique(), 0);
         BTreeNode node = new BTreeNode(indexHelper, page);
-//        node.wrap(page);
         for (int i = 1; i < 145; i++) {
         	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
         }

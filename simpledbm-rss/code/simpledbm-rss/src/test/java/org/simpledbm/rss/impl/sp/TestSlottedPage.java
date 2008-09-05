@@ -43,35 +43,13 @@ public class TestSlottedPage extends BaseTestCase {
         super(arg0);
     }
 
-//    public void testCtor() throws Exception {
-//    	Properties p = new Properties();
-//        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
-//// 		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
-//        final StorageManager storageManager = new StorageManagerImpl(p);
-//        final LatchFactory latchFactory = new LatchFactoryImpl(p);
-//        final PageFactory pageFactory = new PageFactoryImpl(
-//            objectFactory,
-//            storageManager,
-//            latchFactory,
-//            p);
-//        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
-//            objectFactory, pageFactory, p);
-//        SlottedPageImpl page = new SlottedPageImpl(pageFactory);
-////        page.init();
-//    }
-
     public static class StringItem implements Storable {
 
-//        private final ByteString string = new ByteString();
         private final ByteString string;
         
         public StringItem(ByteBuffer buf) {
         	string = new ByteString(buf);
         }
-
-//        public void setString(String s) {
-//            string = new ByteString(s);
-//        }
 
         public StringItem(String s) {
 			string = new ByteString(s);
@@ -85,11 +63,6 @@ public class TestSlottedPage extends BaseTestCase {
         public int getStoredLength() {
             return string.getStoredLength();
         }
-
-//        public void retrieve(ByteBuffer bb) {
-//            string = new ByteString();
-//            string.retrieve(bb);
-//        }
 
         public void store(ByteBuffer bb) {
             string.store(bb);
@@ -135,8 +108,6 @@ public class TestSlottedPage extends BaseTestCase {
         SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
             .getPageType(), new PageId());
         page.latchExclusive();
-//        StringItem item = new StringItem();
-//        item.setString("Dibyendu Majumdar, This is pretty cool");
         StringItem item = new StringItem("Dibyendu Majumdar, This is pretty cool");
         assertEquals(page.getFreeSpace(), page.getSpace());
         page.insert(item);
@@ -162,8 +133,6 @@ public class TestSlottedPage extends BaseTestCase {
         assertEquals(page.getNumberOfSlots(), 2);
         assertEquals(page.getDeletedSlots(), 1);
         printItems(page);
-//        StringItem item3 = new StringItem();
-//        item3.setString("Dibyendu Majumdar, SimpleDBM will succeed");
         StringItem item3 = new StringItem("Dibyendu Majumdar, SimpleDBM will succeed");
         page.insertAt(2, item3, false);
         assertEquals(
@@ -173,9 +142,6 @@ public class TestSlottedPage extends BaseTestCase {
         assertEquals(page.getNumberOfSlots(), 3);
         assertEquals(page.getDeletedSlots(), 1);
         printItems(page);
-//        StringItem item4 = new StringItem();
-//        item4
-//            .setString("This is a long item, and should force the page to be compacted - by removing holes");
         StringItem item4 = new StringItem("This is a long item, and should force the page to be compacted - by removing holes");
         page.insertAt(3, item4, false);
         assertEquals(
