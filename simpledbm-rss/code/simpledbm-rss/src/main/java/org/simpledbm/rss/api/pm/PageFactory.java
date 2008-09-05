@@ -21,7 +21,7 @@ package org.simpledbm.rss.api.pm;
 
 import java.nio.ByteBuffer;
 
-public interface PageFactoryHelper  {
+public interface PageFactory  {
 
 	Page getInstance(int type, PageId pageId);
 	Page getInstance(PageId pageId, ByteBuffer bb);

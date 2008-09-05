@@ -35,7 +35,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -2144,7 +2144,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
         
-        static class HeaderPageFactory implements PageFactoryHelper {
+        static class HeaderPageFactory implements PageFactory {
         	final PageManager pageFactory;
         	public HeaderPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
@@ -2408,7 +2408,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return 0;
         }
         
-        static final class TwoBitSpaceMapPageFactory implements PageFactoryHelper {
+        static final class TwoBitSpaceMapPageFactory implements PageFactory {
         	private final PageManager pageFactory;
         	public TwoBitSpaceMapPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;
@@ -2496,7 +2496,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             return 0;
         }
         
-        static final class OneBitSpaceMapPageFactory implements PageFactoryHelper {
+        static final class OneBitSpaceMapPageFactory implements PageFactory {
         	private final PageManager pageFactory;
         	OneBitSpaceMapPageFactory(PageManager pageFactory) {
         		this.pageFactory = pageFactory;

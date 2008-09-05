@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.pm.PageFactoryHelper;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
@@ -942,7 +942,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
     
-    public static final class SlottedPageImplFactory implements PageFactoryHelper {
+    public static final class SlottedPageImplFactory implements PageFactory {
     	final PageManager pageFactory;
     	public SlottedPageImplFactory(PageManager pageFactory) {
     		this.pageFactory = pageFactory;
