@@ -43,14 +43,14 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
-public final class PageFactoryImpl implements PageManager {
+public final class PageManagerImpl implements PageManager {
 
     static final int MODULE_ID = 5;
 
     static final int TYPE_BASE = 10;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
 
-    private static Logger log = Logger.getLogger(PageFactoryImpl.class
+    private static Logger log = Logger.getLogger(PageManagerImpl.class
         .getPackage()
         .getName());
 
@@ -76,7 +76,7 @@ public final class PageFactoryImpl implements PageManager {
 
 	private final MessageCatalog mcat = new MessageCatalog();
 
-    public PageFactoryImpl(int pageSize, ObjectRegistry objectFactory,
+    public PageManagerImpl(int pageSize, ObjectRegistry objectFactory,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
         this.pageSize = pageSize;
         this.objectFactory = objectFactory;
@@ -85,7 +85,7 @@ public final class PageFactoryImpl implements PageManager {
         objectFactory.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
     }
 
-    public PageFactoryImpl(ObjectRegistry objectFactory,
+    public PageManagerImpl(ObjectRegistry objectFactory,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
         this(DEFAULT_PAGE_SIZE, objectFactory, storageManager, latchFactory, p);
     }
