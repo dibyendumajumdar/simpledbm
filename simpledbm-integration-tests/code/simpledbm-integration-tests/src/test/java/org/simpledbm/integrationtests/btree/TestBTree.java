@@ -41,7 +41,7 @@ public class TestBTree extends BaseTestCase {
 				IndexContainer btree = db.server.getIndex(trx, 1);
 				Row row = (Row) db.keyFactory.newIndexKey(1);
 				LocationFactory locationFactory = (LocationFactory) db.server
-						.getObjectRegistry().getInstance(
+						.getObjectRegistry().getSingleton(
 								BTreeDatabase.LOCATION_FACTORY_TYPE);
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
@@ -69,7 +69,7 @@ public class TestBTree extends BaseTestCase {
 		try {
 			IndexContainer btree = db.server.getIndex(trx, 1);
 			LocationFactory locationFactory = (LocationFactory) db.server
-					.getObjectRegistry().getInstance(
+					.getObjectRegistry().getSingleton(
 							BTreeDatabase.LOCATION_FACTORY_TYPE);
 			for (int i = 0; i < values.length; i++) {
 				Row row = (Row) db.keyFactory.newIndexKey(1);
