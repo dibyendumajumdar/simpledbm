@@ -32,8 +32,6 @@ import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.registry.ObjectFactory;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.ObjectRegistryAware;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
@@ -274,7 +272,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		 * done prior to starting the database.
 		 */
 		server.getObjectRegistry().registerSingleton(MODULE_ID, this);
-		server.getObjectRegistry().registerType(TYPE_CREATE_TABLE_DEFINITION,
+		server.getObjectRegistry().registerObjectFactory(TYPE_CREATE_TABLE_DEFINITION,
 				new CreateTableDefinition.CreateTableDefinitionFactory(this));
 		server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
 		/*
