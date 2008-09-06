@@ -179,7 +179,7 @@ class TupleDemoDb {
      */
     Row makeRow(int containerId) {
         RowFactory rowFactory = (RowFactory) server.getObjectRegistry()
-                .getInstance(ROW_FACTORY_TYPE_ID);
+                .getSingleton(ROW_FACTORY_TYPE_ID);
         return rowFactory.newRow(containerId);
     }
 
@@ -192,7 +192,7 @@ class TupleDemoDb {
      */
     Row makeRow(int containerId, ByteBuffer buf) {
         RowFactory rowFactory = (RowFactory) server.getObjectRegistry()
-                .getInstance(ROW_FACTORY_TYPE_ID);
+                .getSingleton(ROW_FACTORY_TYPE_ID);
         return rowFactory.newRow(containerId, buf);
     }    
     
@@ -205,7 +205,7 @@ class TupleDemoDb {
      */
     IndexKey makeMinRow(int containerId) {
         IndexKeyFactory rowFactory = (RowFactory) server.getObjectRegistry()
-                .getInstance(ROW_FACTORY_TYPE_ID);
+                .getSingleton(ROW_FACTORY_TYPE_ID);
         return rowFactory.minIndexKey(containerId);
     }
 
