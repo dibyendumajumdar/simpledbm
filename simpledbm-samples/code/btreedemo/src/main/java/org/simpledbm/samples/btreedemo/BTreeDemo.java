@@ -266,7 +266,7 @@ public class BTreeDemo {
 			trx = server.begin(IsolationMode.READ_COMMITTED);
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
-				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
+				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				for (int i = 1; i <= 201; i += 2) {
 					Row row = (Row) keyFactory.newIndexKey(1);
 					row.getColumnValue(0).setInt(i);
@@ -297,7 +297,7 @@ public class BTreeDemo {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
-				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
+				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
 				// Note that the row must be locked exclusively prior to the insert
@@ -322,7 +322,7 @@ public class BTreeDemo {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
-				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
+				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
 				// Note that the row must be locked exclusively prior to the delete
@@ -344,7 +344,7 @@ public class BTreeDemo {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
 				row.getColumnValue(0).setString(key);
-				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getInstance(LOCATION_FACTORY_TYPE);
+				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
 				IndexScan scan = btree.openScan(trx, row, location, false);
