@@ -45,7 +45,7 @@ public class TestBTree extends BaseTestCase {
 								BTreeDatabase.LOCATION_FACTORY_TYPE);
 				RowLocation location = (RowLocation) locationFactory
 						.newLocation();
-				row.getColumnValue(0).setInt(values[i]);
+				row.setInt(0, values[i]);
 				location.setInt(values[i]);
 				// Note that the row must be locked exclusively prior to the
 				// insert
@@ -73,7 +73,7 @@ public class TestBTree extends BaseTestCase {
 							BTreeDatabase.LOCATION_FACTORY_TYPE);
 			for (int i = 0; i < values.length; i++) {
 				Row row = (Row) db.keyFactory.newIndexKey(1);
-				row.getColumnValue(0).setInt(values[i]);
+				row.setInt(0, values[i]);
 				RowLocation location = (RowLocation) locationFactory.newLocation();
 				location.setInt(values[i]);
 				// Note that the row must be locked exclusively prior to the
@@ -99,7 +99,7 @@ public class TestBTree extends BaseTestCase {
 			try {
 				IndexContainer btree = db.server.getIndex(trx, 1);
 				Row row = (Row) db.keyFactory.newIndexKey(1);
-				row.getColumnValue(0).setInt(values[i]);
+				row.setInt(0, values[i]);
 				IndexScan scan = btree.openScan(trx, row, null, false);
 				try {
 					if (scan.fetchNext()) {
