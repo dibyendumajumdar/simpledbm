@@ -32,7 +32,6 @@ import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
-import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -263,20 +262,20 @@ class TupleDemoDb {
     public void addRow(int id, String name, String surname, String city) {
 
         Row tableRow = makeRow(TABLE_CONTNO);
-        tableRow.getColumnValue(0).setInt(id);
-        tableRow.getColumnValue(1).setString(name);
-        tableRow.getColumnValue(2).setString(surname);
-        tableRow.getColumnValue(3).setString(city);
+        tableRow.setInt(0, id);
+        tableRow.setString(1, name);
+        tableRow.setString(2, surname);
+        tableRow.setString(3, city);
 
         Row primaryKeyRow = makeRow(PKEY_CONTNO);
         // Set id
-        primaryKeyRow.setColumnValue(0, (DataValue) tableRow.getColumnValue(0).cloneMe());
+        primaryKeyRow.setInt(0, tableRow.getInt(0));
 
         Row secondaryKeyRow = makeRow(SKEY1_CONTNO);
         // Set surname as the first field
-        secondaryKeyRow.setColumnValue(0, (DataValue) tableRow.getColumnValue(2).cloneMe());
+        secondaryKeyRow.setString(0, tableRow.getString(2));
         // Set name
-        secondaryKeyRow.setColumnValue(1, (DataValue) tableRow.getColumnValue(1).cloneMe());
+        secondaryKeyRow.setString(1, tableRow.getString(1));
 
         // Start a new transaction
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
@@ -312,22 +311,22 @@ class TupleDemoDb {
 
         // Make new row
         Row tableRow = makeRow(TABLE_CONTNO);
-        tableRow.getColumnValue(0).setInt(id);
-        tableRow.getColumnValue(1).setString(name);
-        tableRow.getColumnValue(2).setString(surname);
-        tableRow.getColumnValue(3).setString(city);
+        tableRow.setInt(0, id);
+        tableRow.setString(1, name);
+        tableRow.setString(2, surname);
+        tableRow.setString(3, city);
 
         // New primary key
         Row primaryKeyRow = makeRow(PKEY_CONTNO);
         // Set id
-        primaryKeyRow.setColumnValue(0, (DataValue) tableRow.getColumnValue(0).cloneMe());
+        primaryKeyRow.setInt(0, tableRow.getInt(0));
 
         // New secondary key
         Row secondaryKeyRow = makeRow(SKEY1_CONTNO);
         // Set surname as the first field
-        secondaryKeyRow.setColumnValue(0, (DataValue) tableRow.getColumnValue(2).cloneMe());
+        secondaryKeyRow.setString(0, tableRow.getString(2));
         // Set name
-        secondaryKeyRow.setColumnValue(1, (DataValue) tableRow.getColumnValue(1).cloneMe());
+        secondaryKeyRow.setString(1, tableRow.getString(1));
 
         // Start a new transaction
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
@@ -355,18 +354,15 @@ class TupleDemoDb {
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
                         Row oldTableRow = makeRow(TABLE_CONTNO, bb);
-//                        oldTableRow.retrieve(bb);
                         // Okay, now update the table row
                         table.update(trx, location, tableRow);
                         // Update secondary indexes
                         // Old secondary key
                         Row oldSecondaryKeyRow = makeRow(SKEY1_CONTNO);
                         // Set surname as the first field
-                        oldSecondaryKeyRow.setColumnValue(0, (DataValue) oldTableRow.getColumnValue(2)
-                                .cloneMe());
+                        oldSecondaryKeyRow.setString(0, oldTableRow.getString(2));
                         // Set name
-                        oldSecondaryKeyRow.setColumnValue(1, (DataValue) oldTableRow.getColumnValue(1)
-                                .cloneMe());
+                        oldSecondaryKeyRow.setString(1, oldTableRow.getString(1));
                         // Delete old key
                         secondaryIndex
                                 .delete(trx, oldSecondaryKeyRow, location);
@@ -395,7 +391,7 @@ class TupleDemoDb {
         // primary key
         Row primaryKeyRow = makeRow(PKEY_CONTNO);
         // Set id
-        primaryKeyRow.getColumnValue(0).setInt(id);
+        primaryKeyRow.setInt(0, id);
 
         // Start a new transaction
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
@@ -422,18 +418,15 @@ class TupleDemoDb {
                         // parse the data
                         ByteBuffer bb = ByteBuffer.wrap(data);
                         Row oldTableRow = makeRow(TABLE_CONTNO, bb);
-//                        oldTableRow.retrieve(bb);
                         // Delete tuple data
                         table.delete(trx, location);
                         // Delete secondary index
                         // Make secondary key
                         Row oldSecondaryKeyRow = makeRow(SKEY1_CONTNO);
                         // Set surname as the first field
-                        oldSecondaryKeyRow.setColumnValue(0, (DataValue) oldTableRow.getColumnValue(2)
-                                .cloneMe());
+                        oldSecondaryKeyRow.setString(0, oldTableRow.getString(2));
                         // Set name
-                        oldSecondaryKeyRow.setColumnValue(1, (DataValue) oldTableRow.getColumnValue(1)
-                                .cloneMe());
+                        oldSecondaryKeyRow.setString(1, oldTableRow.getString(1));
                         // Delete old key
                         secondaryIndex
                                 .delete(trx, oldSecondaryKeyRow, location);
@@ -462,10 +455,10 @@ class TupleDemoDb {
      */
     public void printTableRow(Row tableRow) {
 
-        System.out.println("ID = " + tableRow.getColumnValue(0).getString() + ", Name = "
-                + tableRow.getColumnValue(1).getString() + ", Surname = "
-                + tableRow.getColumnValue(2).getString() + ", City = "
-                + tableRow.getColumnValue(3).getString());
+        System.out.println("ID = " + tableRow.getString(0) + ", Name = "
+                + tableRow.getString(1) + ", Surname = "
+                + tableRow.getString(2) + ", City = "
+                + tableRow.getString(3));
 
     }
 
@@ -489,7 +482,6 @@ class TupleDemoDb {
                     // parse the data
                     ByteBuffer bb = ByteBuffer.wrap(data);
                     Row tableRow = makeRow(TABLE_CONTNO, bb);
-//                    tableRow.retrieve(bb);
                     // do something with the row
                     printTableRow(tableRow);
                     // must invoke fetchCompleted
