@@ -19,7 +19,7 @@
  */
 
 /**
- * This package defines the interface for the Object Registry subsystem,
+ * This package defines the interface for the ObjectRegistry subsystem,
  * which is responsible for instantiating objects based upon
  * type information.
  */

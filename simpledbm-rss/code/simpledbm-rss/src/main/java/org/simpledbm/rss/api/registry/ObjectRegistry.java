@@ -22,10 +22,15 @@ package org.simpledbm.rss.api.registry;
 import java.nio.ByteBuffer;
 
 /**
- * The ObjectRegistry provides a facility for registering Classes and 
- * Singleton objects, associating each Class/Singleton with a unique
+ * The ObjectRegistry has a dual purpose; it provides a mechanism to cache singletons, 
+ * and secondly, it enables type codes to be assigned to persistable classes, so that 
+ * the type information can be used in serialization and de-serialization of objects.
+ * <p>
+ * The ObjectRegistry provides methods for registering {@link ObjectFactory} instances and 
+ * singleton objects, associating each ObjectFactory/singleton with a unique
  * integer typecode. The typecode can be used subsequently to
- * retrieve intances of registered classes, or the Singletons.
+ * re-construct instances of registered classes from byte streams, or to retrieve the singletons.
+ * <p>
  * The typecode is useful for recording type information when 
  * objects are persisted, and allows objects to be re-created when
  * data is read from persistent store.
