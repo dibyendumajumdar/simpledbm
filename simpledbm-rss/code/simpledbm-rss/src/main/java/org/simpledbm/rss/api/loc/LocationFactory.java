@@ -35,8 +35,8 @@ public interface LocationFactory {
     Location newLocation();
     
     /**
-     * Re-construct a location object from the bytestream.
-     * @param bb ByteBuffer that wraps the input bytestream
+     * Re-construct a location object from the byte stream.
+     * @param bb ByteBuffer that wraps the input byte stream
      */
     Location newLocation(ByteBuffer bb);
 

@@ -22,14 +22,16 @@ package org.simpledbm.rss.api.pm;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.latch.Latch;
+import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 
 /**
- * The root of all Page implementations. The basic most common page attributes
- * are implemented. Page Size is fixed and cannot be changed by implementations.
+ * The base class for all Page implementations. The basic most common page attributes
+ * are implemented. Page Size is determined by the {@link PageManager} and cannot
+ * be changed by sub-classes and cannot be changed by implementations.
  * 
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
@@ -61,7 +63,7 @@ public abstract class Page implements Storable, Dumpable {
      * size is fixed by the factory.
      * Transient.
      */
-    private final PageManager pageFactory;
+    private final PageManager pageManager;
 
     /**
      * A read/write latch to protect access to the page.
@@ -69,21 +71,26 @@ public abstract class Page implements Storable, Dumpable {
      */
     protected final Latch lock;
 
-    protected Page(PageManager pageFactory, int type, PageId pageId) {
-    	this.pageFactory = pageFactory;
+    protected Page(PageManager pageManager, int type, PageId pageId) {
+    	this.pageManager = pageManager;
     	this.type = (short) type;
     	this.pageId = pageId;
-    	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
+    	this.lock = pageManager.getLatchFactory().newReadWriteUpdateLatch();
     }
 
-    protected Page(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-    	this.pageFactory = pageFactory;
-    	this.lock = pageFactory.getLatchFactory().newReadWriteUpdateLatch();
+    protected Page(PageManager pageManager, PageId pageId, ByteBuffer bb) {
+    	this.pageManager = pageManager;
+    	this.lock = pageManager.getLatchFactory().newReadWriteUpdateLatch();
     	this.pageId = pageId;
         type = bb.getShort();
         pageLsn = new Lsn(bb);
     }    
     
+    /**
+     * Returns the type code for the page. The type code is used to retrieve the
+     * relevant {@link PageFactory} implementation from the {@link ObjectRegistry}.
+     * @return page type code
+     */
     public final int getType() {
         return type;
     }
@@ -97,14 +104,30 @@ public abstract class Page implements Storable, Dumpable {
     }
 
     public final void setPageLsn(Lsn lsn) {
-        pageLsn = new Lsn(lsn);
+        pageLsn = lsn;
     }
 
     /**
-     * @see org.simpledbm.rss.api.st.Storable#getStoredLength()
+     * Returns the page's on disk storage size. Cannot be over-ridden by derived classes.
+     * {@inheritDoc}
      */
     public final int getStoredLength() {
-        return pageFactory.getUsablePageSize();
+//        return pageManager.getUsablePageSize();
+//    	throw new UnsupportedOperationException();
+    	return pageManager.getPageSize();
+    }
+    
+    /**
+     * Returns the space available for sub-classes to use.  
+     * @return Space available for sub-classes to use.
+     */
+    public final int getAvailableLength() {
+    	/*
+    	 * Get the usable page size and subtract this page's overhead.
+    	 * The usable page size may be less than the full page size because
+    	 * the PageManager may add additional bits.
+    	 */
+        return pageManager.getUsablePageSize() - SIZE;
     }
 
     public void store(ByteBuffer bb) {

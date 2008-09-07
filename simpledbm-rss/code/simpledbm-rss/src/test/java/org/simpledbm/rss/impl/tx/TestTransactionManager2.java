@@ -962,13 +962,15 @@ public class TestTransactionManager2 extends BaseTestCase {
         
         BitMgrPage(PageManager pageFactory, int type, PageId pageId) {
 			super(pageFactory, type, pageId);
-            int n_bits = super.getStoredLength() - Page.SIZE;
+//            int n_bits = super.getStoredLength() - Page.SIZE;
+            int n_bits = getAvailableLength();
             bits = new byte[n_bits];
 		}
 
 		BitMgrPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 			super(pageFactory, pageId, bb);
-            int n_bits = super.getStoredLength() - Page.SIZE;
+//            int n_bits = super.getStoredLength() - Page.SIZE;
+            int n_bits = getAvailableLength();
             bits = new byte[n_bits];
             bb.get(bits);
 		}

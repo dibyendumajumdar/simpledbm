@@ -162,4 +162,26 @@ public class TestPage extends BaseTestCase {
         storageFactory.delete("testfile.dat");
     }
 
+    public void testCase3() {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath", "testdata/TestPage");
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+            properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
+        StorageManager storageManager = new StorageManagerImpl(properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        PageManager pageFactory = new PageManagerImpl(
+            objectFactory,
+            storageManager,
+            latchFactory,
+            properties);
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
+            1,
+            0));
+        
+        assertEquals(pageFactory.getUsablePageSize() - Page.SIZE, page.getAvailableLength());
+        assertEquals(pageFactory.getPageSize(), page.getStoredLength());
+    }
+    
 }

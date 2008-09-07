@@ -57,13 +57,13 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
 
     public TupleId(TupleId other) {
         super((byte) 'T');
-        pageId = new PageId(other.pageId);
+        pageId = other.pageId;
         slotNumber = other.slotNumber;
     }
 
     public TupleId(PageId pageId, int slotNumber) {
         super((byte) 'T');
-        this.pageId = new PageId(pageId);
+        this.pageId = pageId;
         this.slotNumber = slotNumber;
     }
 

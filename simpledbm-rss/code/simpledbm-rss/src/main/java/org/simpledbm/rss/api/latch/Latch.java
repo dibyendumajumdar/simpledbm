@@ -21,16 +21,17 @@ package org.simpledbm.rss.api.latch;
 
 /**
  * A Latch is an efficient lock that is used by the system
- * to manage concurrent access to physical structures. As put by 
- * Mohan, latches are used to ensure physical consistency of data.
+ * to manage concurrent access to physical structures. As explained by 
+ * C. Mohan, latches are used to ensure physical consistency of data.
  * In some ways, a Latch is similar to a Mutex in purpose, except that a latch 
  * supports additional lock modes, such as Shared locks and
  * Update locks. 
  * <p>
  * An exclusive latch is incompatible with any other latch.
  * Update latches are compatible with Shared latches, but
- * incompatible with other latch modes. Note that Shared latches are
- * incompatible with Update latches. The behaviour
+ * incompatible with other latch modes.
+ * Note that Shared latches are
+ * incompatible with Update latches. The behavior
  * of Update latch is deliberately asymmetric to help avoid deadlocks.
  * See p. 409, section 7.8.2 in Transaction Processing:
  * Concepts and Techniques, for a discussion of why this is so.

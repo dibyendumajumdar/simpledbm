@@ -6095,11 +6095,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 			} else {
 				this.key = null;
 			}
-			if (other.location != null) {
-				this.location = other.location.cloneLocation();
-			} else {
-				this.location = null;
-			}
+			this.location = other.location;
 		}
 
 		public IndexItem(boolean isLeaf, boolean isUnique, int containerId,

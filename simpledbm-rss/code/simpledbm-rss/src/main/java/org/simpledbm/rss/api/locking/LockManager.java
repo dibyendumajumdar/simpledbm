@@ -24,14 +24,15 @@ package org.simpledbm.rss.api.locking;
  * shown below:
  * <p>
  * <pre>
+ * {@code
  * LockMgrFactory factory = new LockMgrFactoryImpl(); 
  * Properties props = new Properties();
  * LockMgr lockmgr = factory.create(props);
  * LockHandle handle = lockmgr.acquire(transaction, row, 
  *  LockMode.SHARED, LockDuration.MANUAL_DURATION, 60);
  * handle.release(false);
+ * }
  * </pre>
- * </p>
  *
  * @author Dibyendu Majumdar
  * @since 26-July-2005
@@ -47,7 +48,7 @@ public interface LockManager {
      * can hold locks on an object simultaneously only if those locks are compatible.
      * For example, Shared locks are compatible with each other, but an Exclusive 
      * lock is not compatible with any other lock mode.
-     * These rules mean that multiple transactons can hold a Shared lock on an
+     * These rules mean that multiple transactions can hold a Shared lock on an
      * object, but only one transaction can obtain an Exclusive lock on the object.
      * <p>
      * Locks are acquired for a duration. If a lock is requested for
@@ -61,9 +62,9 @@ public interface LockManager {
      * <p>The transaction that requested a lock
      * is said to be the owner of the lock. The owner parameter is intentionally an opaque type, to reduce
      * dependency between the Locking module and the Transaction module. Lock owner objects
-     * must implement the {@link Object#equals(Object)} method. 
+     * must implement the {@link Object#equals(Object) equals} method. 
      * <p>The object being locked is also opaque to the Locking sub-system.
-     * Lockable objects must implement the {@link Object#equals} and {@link Object#hashCode()} methods.
+     * Lockable objects must implement the {@link Object#equals equals} and {@link Object#hashCode() hashCode} methods.
      * <p>The locking system supports lock conversions,
      * whereby if the owner already holds a lock on the object in a particular mode,
      * and subsequently requests another lock on the object in a different mode, the existing lock is 
@@ -85,6 +86,7 @@ public interface LockManager {
      * @param duration The duration for which the lock will be held.
      * @param timeout Either -1, 0, or > 0 value indicating wait forever, nowait, wait specified
      * number of seconds.
+     * @param lockInfo A {@link LockInfo} object can be optionally supplied if caller wants to retrieve information about the lock
      * @return A LockHandle that can be used to further manipulate the lock.
      * @throws LockException Thrown if the lock could not be acquired.
      */

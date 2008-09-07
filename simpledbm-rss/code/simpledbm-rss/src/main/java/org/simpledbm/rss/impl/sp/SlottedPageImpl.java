@@ -24,9 +24,9 @@ import java.util.ArrayList;
 
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.st.Storable;
 import org.simpledbm.rss.api.st.StorableFactory;
@@ -71,8 +71,13 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     /**
      * This is the length of fixed length header in each page. 
      */
-    private static final int FIXED_OVERHEAD = Page.SIZE + TypeSize.SHORT
-            * 3 + TypeSize.INTEGER * 3;
+    private static final int SLOTTEDPAGE_OVERHEAD = TypeSize.SHORT
+            * 3 + TypeSize.INTEGER * 3;    
+    
+    /**
+     * This is the length of fixed length header in each page. 
+     */
+    private static final int FIXED_OVERHEAD = Page.SIZE + SLOTTEDPAGE_OVERHEAD;
 
     /**
      * If TESTING is set to true, page space is artificially restricted to 200 bytes.
@@ -307,7 +312,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     @Override
     public final int getSpace() {
         if (!TESTING) {
-            return super.getStoredLength() - FIXED_OVERHEAD;
+//            return super.getStoredLength() - FIXED_OVERHEAD;
+            return getAvailableLength() - SLOTTEDPAGE_OVERHEAD;
         }
         // During testing it is useful to artificially restrict the usable space
         return 200;
