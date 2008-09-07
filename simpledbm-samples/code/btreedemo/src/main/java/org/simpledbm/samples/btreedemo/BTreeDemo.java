@@ -269,7 +269,7 @@ public class BTreeDemo {
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				for (int i = 1; i <= 201; i += 2) {
 					Row row = (Row) keyFactory.newIndexKey(1);
-					row.getColumnValue(0).setInt(i);
+					row.setInt(0, i);
 					RowLocation location = (RowLocation) locationFactory.newLocation();
 					location.setInt(i);
 					// Note that the row must be locked exclusively prior to the insert
@@ -296,7 +296,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.getColumnValue(0).setString(key);
+				row.setString(0, key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
@@ -321,7 +321,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.getColumnValue(0).setString(key);
+				row.setString(0, key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
@@ -343,7 +343,7 @@ public class BTreeDemo {
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
 				Row row = (Row) keyFactory.newIndexKey(1);
-				row.getColumnValue(0).setString(key);
+				row.setString(0, key);
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
 				Location location = locationFactory.newLocation(sloc);
 //				location.parseString(sloc);
