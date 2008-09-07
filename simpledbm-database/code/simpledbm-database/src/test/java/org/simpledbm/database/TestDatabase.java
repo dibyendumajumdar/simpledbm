@@ -128,11 +128,11 @@ public class TestDatabase extends BaseTestCase {
 				Table table = db.getTable(trx, 1);
 				assertNotNull(table);
 				Row tableRow = table.getRow();
-				tableRow.getColumnValue(0).setInt(1);
-				tableRow.getColumnValue(1).setString("Joe");
-				tableRow.getColumnValue(2).setString("Blogg");
-				tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-				tableRow.getColumnValue(6).setString("500.00");
+				tableRow.setInt(0, 1);
+				tableRow.setString(1, "Joe");
+				tableRow.setString(2, "Blogg");
+				tableRow.setDate(5, getDOB(1930, 12, 31));
+				tableRow.setString(6, "500.00");
 
 				table.addRow(trx, tableRow);
 				okay = true;
@@ -156,17 +156,17 @@ public class TestDatabase extends BaseTestCase {
 				Table table = db.getTable(trx, 1);
 				assertNotNull(table);
 				Row tableRow = table.getRow();
-				tableRow.getColumnValue(2).setString("Blogg");
+				tableRow.setString(2, "Blogg");
 				TableScan scan = table.openScan(trx, 1, tableRow, true);
 				try {
 					if (scan.fetchNext()) {
 						Row currentRow = scan.getCurrentRow();
 						Row tr = table.getRow();
-						tr.getColumnValue(0).setInt(1);
-						tr.getColumnValue(1).setString("Joe");
-						tr.getColumnValue(2).setString("Blogg");
-						tr.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-						tr.getColumnValue(6).setString("500.00");
+						tr.setInt(0, 1);
+						tr.setString(1, "Joe");
+						tr.setString(2, "Blogg");
+						tr.setDate(5, getDOB(1930, 12, 31));
+						tr.setString(6, "500.00");
 						
 						assertEquals(tr, currentRow);
 					}
@@ -255,11 +255,11 @@ public class TestDatabase extends BaseTestCase {
 				assertNotNull(table);
 				for (int i = startno; i < (startno + range); i++) {
 					Row tableRow = table.getRow();
-					tableRow.getColumnValue(0).setInt(i);
-					tableRow.getColumnValue(1).setString("Joe" + i);
-					tableRow.getColumnValue(2).setString("Blogg" + i);
-					tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-					tableRow.getColumnValue(6).setInt(1000 + i);
+					tableRow.setInt(0, i);
+					tableRow.setString(1, "Joe" + i);
+					tableRow.setString(2, "Blogg" + i);
+					tableRow.setDate(5, getDOB(1930, 12, 31));
+					tableRow.setInt(6, 1000 + i);
 					// System.out.println("Adding " + tableRow);
 					table.addRow(trx, tableRow);
 				}
@@ -278,47 +278,47 @@ public class TestDatabase extends BaseTestCase {
 		}
 	}
 
-	private void listData(int startno, int range) {
-		Database db = DatabaseFactory.getDatabase(getServerProperties());
-		db.start();
-		try {
-			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
-			boolean okay = false;
-			try {
-				Table table = db.getTable(trx, 1);
-				assertNotNull(table);
-				Row tableRow = table.getRow();
-				tableRow.getColumnValue(2).setString("Blogg");
-				TableScan scan = table.openScan(trx, 0, tableRow, false);
-				try {
-					int i = startno;
-					while (scan.fetchNext() && i < (startno + range)) {
-						Row currentRow = scan.getCurrentRow();
-						Row tr = table.getRow();
-						tr.getColumnValue(0).setInt(i);
-						tr.getColumnValue(1).setString("Joe" + i);
-						tr.getColumnValue(2).setString("Blogg" + i);
-						tr.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-						tr.getColumnValue(6).setInt(1000 + i);
-						assertEquals(tr, currentRow);
-						scan.fetchCompleted(true);
-						i++;
-					}
-				} finally {
-					scan.close();
-				}
-				okay = true;
-			} finally {
-				if (okay) {
-					trx.commit();
-				} else {
-					trx.abort();
-				}
-			}
-		} finally {
-			db.shutdown();
-		}	
-	}
+//	private void listData(int startno, int range) {
+//		Database db = DatabaseFactory.getDatabase(getServerProperties());
+//		db.start();
+//		try {
+//			Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+//			boolean okay = false;
+//			try {
+//				Table table = db.getTable(trx, 1);
+//				assertNotNull(table);
+//				Row tableRow = table.getRow();
+//				tableRow.setString(2, "Blogg");
+//				TableScan scan = table.openScan(trx, 0, tableRow, false);
+//				try {
+//					int i = startno;
+//					while (scan.fetchNext() && i < (startno + range)) {
+//						Row currentRow = scan.getCurrentRow();
+//						Row tr = table.getRow();
+//						tr.setInt(0, i);
+//						tr.setString(1, "Joe" + i);
+//						tr.setString(2, "Blogg" + i);
+//						tr.setDate(5, getDOB(1930, 12, 31));
+//						tr.setInt(6, 1000 + i);
+//						assertEquals(tr, currentRow);
+//						scan.fetchCompleted(true);
+//						i++;
+//					}
+//				} finally {
+//					scan.close();
+//				}
+//				okay = true;
+//			} finally {
+//				if (okay) {
+//					trx.commit();
+//				} else {
+//					trx.abort();
+//				}
+//			}
+//		} finally {
+//			db.shutdown();
+//		}	
+//	}
 
 	private void dumpData() {
 		Database db = DatabaseFactory.getDatabase(getServerProperties());
@@ -402,9 +402,9 @@ public class TestDatabase extends BaseTestCase {
 				try {
 					while (scan.fetchNext()) {
 						Row tr = scan.getCurrentRow();
-						tr.getColumnValue(3).setString("London");
-						tr.getColumnValue(4).setString(tr.getColumnValue(1).getString() + "." + tr.getColumnValue(2).getString() + "@gmail.com");
-						tr.getColumnValue(6).setInt(50000);
+						tr.setString(3, "London");
+						tr.setString(4, tr.getString(1) + "." + tr.getString(2) + "@gmail.com");
+						tr.setInt(6, 50000);
 						scan.updateCurrentRow(tr);
 						scan.fetchCompleted(true);
 					}
@@ -525,12 +525,12 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						Row tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
-						tableRow.getColumnValue(1).setString("Joe" + i);
-						tableRow.getColumnValue(2).setString("Blogg" + i);
-						tableRow.getColumnValue(5).setDate(
+						tableRow.setInt(0, i);
+						tableRow.setString(1, "Joe" + i);
+						tableRow.setString(2, "Blogg" + i);
+						tableRow.setDate(5, 
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(i);
+						tableRow.setInt(6, i);
 						// System.err.println("Adding " + tableRow);
 						table.addRow(trx, tableRow);
 						okay = true;
@@ -562,12 +562,12 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						Row tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
-						tableRow.getColumnValue(1).setString("Joe" + i);
-						tableRow.getColumnValue(2).setString("Blogg" + i);
-						tableRow.getColumnValue(5).setDate(
+						tableRow.setInt(0, i);
+						tableRow.setString(1, "Joe" + i);
+						tableRow.setString(2, "Blogg" + i);
+						tableRow.setDate(5, 
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(i);
+						tableRow.setInt(6, i);
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {
@@ -627,25 +627,24 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
-						tableRow.getColumnValue(1).setString("Joe" + i);
-						tableRow.getColumnValue(2).setString("Blogg" + i);
-						tableRow.getColumnValue(5).setDate(
+						tableRow.setInt(0, i);
+						tableRow.setString(1, "Joe" + i);
+						tableRow.setString(2, "Blogg" + i);
+						tableRow.setDate(5, 
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(i);
+						tableRow.setInt(6, i);
 
 						TableScan scan = table.openScan(trx, 0, tableRow, true);
 						try {
 							if (scan.fetchNext()) {
 								Row tr = scan.getCurrentRow();
-								tr.getColumnValue(3).setString("London");
-								tr.getColumnValue(4).setString(
-										tr.getColumnValue(1).getString()
+								tr.setString(3, "London");
+								tr.setString(4,
+										tr.getString(1)
 												+ "."
-												+ tr.getColumnValue(2)
-														.getString()
+												+ tr.getString(2)
 												+ "@gmail.com");
-								tr.getColumnValue(6).setInt(-i);
+								tr.setInt(6, -i);
 								scan.updateCurrentRow(tr);
 							} else {
 								fail();
@@ -684,18 +683,17 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						Row tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
-						tableRow.getColumnValue(1).setString("Joe" + i);
-						tableRow.getColumnValue(2).setString("Blogg" + i);
-						tableRow.getColumnValue(3).setString("London");
-						tableRow.getColumnValue(4).setString(
-								tableRow.getColumnValue(1).getString()
+						tableRow.setInt(0, i);
+						tableRow.setString(1, "Joe" + i);
+						tableRow.setString(2, "Blogg" + i);
+						tableRow.setString(3, "London");
+						tableRow.setString(4,
+								tableRow.getString(1)
 										+ "."
-										+ tableRow.getColumnValue(2)
-												.getString() + "@gmail.com");
-						tableRow.getColumnValue(5).setDate(
+										+ tableRow.getString(2) + "@gmail.com");
+						tableRow.setDate(5,
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(-i);
+						tableRow.setInt(6, -i);
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {
@@ -758,7 +756,7 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
+						tableRow.setInt(0, i);
 
 						TableScan scan = table.openScan(trx, 0, tableRow, true);
 						try {
@@ -814,18 +812,17 @@ public class TestDatabase extends BaseTestCase {
 						Table table = db.getTable(trx, 1);
 						assertNotNull(table);
 						Row tableRow = table.getRow();
-						tableRow.getColumnValue(0).setInt(i);
-						tableRow.getColumnValue(1).setString("Joe" + i);
-						tableRow.getColumnValue(2).setString("Blogg" + i);
-						tableRow.getColumnValue(3).setString("London");
-						tableRow.getColumnValue(4).setString(
-								tableRow.getColumnValue(1).getString()
+						tableRow.setInt(0, i);
+						tableRow.setString(1, "Joe" + i);
+						tableRow.setString(2, "Blogg" + i);
+						tableRow.setString(3, "London");
+						tableRow.setString(4,
+								tableRow.getString(1)
 										+ "."
-										+ tableRow.getColumnValue(2)
-												.getString() + "@gmail.com");
-						tableRow.getColumnValue(5).setDate(
+										+ tableRow.getString(2) + "@gmail.com");
+						tableRow.setDate(5,
 								getDOB(1930, 12, 31, i));
-						tableRow.getColumnValue(6).setInt(-i);
+						tableRow.setInt(6, -i);
 
 						for (int j = 0; j < table.getDefinition()
 								.getNumberOfIndexes(); j++) {

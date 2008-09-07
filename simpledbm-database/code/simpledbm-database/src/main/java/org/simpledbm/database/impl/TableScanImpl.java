@@ -61,7 +61,7 @@ public class TableScanImpl implements TableScan {
         	 */
         	this.startRow = table.getDefinition().getIndex(indexNo).getRow();
         	for (int i = 0; i < startRow.getNumberOfColumns(); i++) {
-        		startRow.getColumnValue(i).setNegativeInfinity();
+        		startRow.setNegativeInfinity(i);
         	}
         }
         else  {
