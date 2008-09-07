@@ -100,7 +100,6 @@ public abstract class SlottedPage extends Page {
      */
     public abstract void purge(int slotNumber);
 
-
     /**
      * Returns slot data. The client must supply the correct type of
      * Storable factory.

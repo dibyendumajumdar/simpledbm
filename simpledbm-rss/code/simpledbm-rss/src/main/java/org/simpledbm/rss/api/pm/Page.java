@@ -71,6 +71,12 @@ public abstract class Page implements Storable, Dumpable {
      */
     protected final Latch lock;
 
+    /**
+     * Protected constructor for sub-classes to use.
+     * @param pageManager PageManager responsible for managing pages of this type
+     * @param type The 2-byte type code used to identify pages in persistent store
+     * @param pageId The pageId for which the page is being constructed
+     */
     protected Page(PageManager pageManager, int type, PageId pageId) {
     	this.pageManager = pageManager;
     	this.type = (short) type;
@@ -78,6 +84,14 @@ public abstract class Page implements Storable, Dumpable {
     	this.lock = pageManager.getLatchFactory().newReadWriteUpdateLatch();
     }
 
+    /**
+     * Protected constructor for sub-classes to use when reading from a byte stream wrapped by
+     * a ByteBuffer.
+     * 
+     * @param pageManager The PageManager responsible for managing pages of this type
+     * @param pageId The page Id of the page being read
+     * @param bb The ByteBuffer that provides the input data
+     */
     protected Page(PageManager pageManager, PageId pageId, ByteBuffer bb) {
     	this.pageManager = pageManager;
     	this.lock = pageManager.getLatchFactory().newReadWriteUpdateLatch();
@@ -95,6 +109,12 @@ public abstract class Page implements Storable, Dumpable {
         return type;
     }
 
+    /**
+     * Returns the PageId for the page. The pageId identifies the storage container
+     * and the page number.
+     * 
+     * @return {@link PageId}
+     */
     public final PageId getPageId() {
         return pageId;
     }
@@ -112,8 +132,6 @@ public abstract class Page implements Storable, Dumpable {
      * {@inheritDoc}
      */
     public final int getStoredLength() {
-//        return pageManager.getUsablePageSize();
-//    	throw new UnsupportedOperationException();
     	return pageManager.getPageSize();
     }
     
@@ -130,39 +148,67 @@ public abstract class Page implements Storable, Dumpable {
         return pageManager.getUsablePageSize() - SIZE;
     }
 
+    /**
+     * Serialize the contents of the page to the target ByteBuffer.
+     * {@inheritDoc}
+     */
     public void store(ByteBuffer bb) {
         bb.putShort(type);
         pageLsn.store(bb);
     }
 
+    /**
+     * Acquire an exclusive latch on this page. 
+     */
     public final void latchExclusive() {
         lock.exclusiveLock();
     }
 
+    /**
+     * Release an exclusive latch on this page.
+     */
     public final void unlatchExclusive() {
         lock.unlockExclusive();
     }
 
+    /**
+     * Acquire a shared latch on this page.
+     */
     public final void latchShared() {
         lock.sharedLock();
     }
 
+    /**
+     * Release a shared latch on this page.
+     */
     public final void unlatchShared() {
         lock.unlockShared();
     }
 
+    /**
+     * Acquire an update latch on this page.
+     */
     public final void latchUpdate() {
         lock.updateLock();
     }
 
+    /**
+     * Release an update latch on this page.
+     */
     public final void unlatchUpdate() {
         lock.unlockUpdate();
     }
 
+    /**
+     * Promote an update latch to exclusive latch on this page.
+     */
     public final void upgradeUpdate() {
         lock.upgradeUpdateLock();
     }
 
+    /**
+     * Demote an exclusive latch to an update latch on this page.
+     */
     public final void downgradeExclusive() {
         lock.downgradeExclusiveLock();
     }
