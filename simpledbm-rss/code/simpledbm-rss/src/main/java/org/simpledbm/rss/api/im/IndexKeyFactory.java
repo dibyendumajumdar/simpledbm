@@ -32,9 +32,8 @@ public interface IndexKeyFactory {
 
     /**
      * Generates a new (empty) key for the specified
-     * Container. The Container ID is meant to be used as key
-     * for locating information specific to a container; for instance,
-     * the attributes of an Index.
+     * Container. The Container ID can be used to lookup
+     * the index key type for a container.
      * 
      * @param containerId ID of the container for which a key is required
      */
@@ -42,9 +41,8 @@ public interface IndexKeyFactory {
 
     /**
      * Generates a key that represents Infinity - it must be greater than
-     * all possible keys in the domain for the key.  The Container ID is meant to be used as key
-     * for locating information specific to a container; for instance,
-     * the attributes of an Index.
+     * all possible keys in the domain for the key. The Container ID can be used to lookup
+     * the index key type for a container.
      * 
      * @param containerId ID of the container for which a key is required
      */
@@ -52,9 +50,8 @@ public interface IndexKeyFactory {
 
     /**
      * Generates a key that represents negative Infinity - it must be smaller than
-     * all possible keys in the domain for the key. The Container ID is meant to be used as key
-     * for locating information specific to a container; for instance,
-     * the attributes of an Index.
+     * all possible keys in the domain for the key. The Container ID can be used to lookup
+     * the index key type for a container.
      * <p>
      * The key returned by this method can be used as an argument to index scans.
      * The result will be a scan of the index starting from the first key in 
@@ -65,8 +62,11 @@ public interface IndexKeyFactory {
     IndexKey minIndexKey(int containerId);
     
     /**
-     * Reads an index key from the byte stream represented by the ByteBuffer.
-     * The containerId should be used to decide on the key type.
+     * Reconstructs an index key from the byte stream represented by the ByteBuffer.
+     * The Container ID can be used to lookup the index key type for a container.
+     * <p>
+     * The IndexKey implementation must provide a constructor that takes a single
+     * {@link ByteBuffer} parameter.
      * 
      * @param containerId The ID of the container for which the key is being read
      * @param bb ByteBuffer representing the byte stream that contains the key to be read

@@ -19,7 +19,11 @@
  */
 package org.simpledbm.rss.api.bm;
 
+import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.registry.ObjectRegistry;
+import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
@@ -44,7 +48,7 @@ public interface BufferManager {
 
     /**
      * Shuts down the Buffer Manager instance. Any background threads will be
-     * stopped. It is recommended that the Buffer Manager writes all buffered
+     * stopped. It is recommended that the Buffer Manager writes all dirty
      * pages to disk before shutting down.
      */
     public void shutdown();
@@ -86,10 +90,11 @@ public interface BufferManager {
      *            previously saved to disk.
      * @param pagetype
      *            Specifies the type of page to create; only used when isNew is
-     *            set. The pagetype must be associated with a subclass of
-     *            {@link org.simpledbm.rss.api.pm.Page Page} and must have been
+     *            set. The page type must be associated with a subclass of
+     *            {@link Page} and must have a
+     *            {@link PageFactory}
      *            registered with the
-     *            {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
+     *            {@link ObjectRegistry}.
      * @param hint
      *            A hint to indicate which end of the LRU chain the page should
      *            be inserted to. The meaning of the hint is implementation
@@ -105,7 +110,7 @@ public interface BufferManager {
 
     /**
      * Fixes a page in memory, reading it from disk if necessary, and latches
-     * the page in Update mode. A page that is latched in update mode can be
+     * the page in update mode. A page that is latched in update mode can be
      * upgraded to exclusive mode by calling
      * {@link BufferAccessBlock#upgradeUpdateLatch()}. It is an error if the
      * page does not already exist in persistent storage.
@@ -138,7 +143,7 @@ public interface BufferManager {
 
     /**
      * Synchronizes recoveryLsns of pages in the buffer pool with the
-     * {@link org.simpledbm.rss.api.tx.TransactionManager TransactionManager}.
+     * {@link TransactionManager}.
      * Typically this is called at system restart after recovery has been
      * completed.
      * <p>
@@ -166,7 +171,7 @@ public interface BufferManager {
 
     /**
      * Requests that buffers be flushed to disk. Note that this is a hint only;
-     * the buffer manager is not required to honour this request.
+     * the buffer manager is not required to honor this request.
      */
     void writeBuffers();
 }

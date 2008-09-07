@@ -36,8 +36,15 @@ public final class DirtyPageInfo implements Storable, Dumpable {
 
     private static final int SIZE = PageId.SIZE + Lsn.SIZE;
 
+    /**
+     * PageId of the page for which information is obtained.
+     */
     private final PageId pageId;
 
+    /**
+     * The recoveryLsn normally points to the oldest Lsn that may have
+     * updated the page.
+     */
     private Lsn recoveryLsn;
 
     private Lsn realRecoveryLsn;
@@ -86,8 +93,8 @@ public final class DirtyPageInfo implements Storable, Dumpable {
 
     public StringBuilder appendTo(StringBuilder sb) {
         sb.append("DirtyPageInfo(pageId=");
-        pageId.appendTo(sb).append(", recoLsn=");
-        recoveryLsn.appendTo(sb).append(", realRecoLsn=");
+        pageId.appendTo(sb).append(", recoveryLsn=");
+        recoveryLsn.appendTo(sb).append(", realRecoveryLsn=");
         realRecoveryLsn.appendTo(sb).append(")");
         return sb;
     }

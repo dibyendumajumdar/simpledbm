@@ -20,6 +20,8 @@
 package org.simpledbm.rss.api.im;
 
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
@@ -61,7 +63,7 @@ public interface IndexContainer {
     /**
      * Opens a new index scan. The Scan will fetch keys >= the specified key and location.
      * Before returning fetched keys, the associated Location objects will be locked. The lock mode
-     * depends upon the forUpdate flag. The {@link org.simpledbm.rss.api.tx.IsolationMode IsolationMode}
+     * depends upon the forUpdate flag. The {@link IsolationMode}
      * of the transaction determines when lock are released. 
      * <p>
      * Caller must obtain a Shared lock on the Index Container prior to calling this
@@ -70,8 +72,8 @@ public interface IndexContainer {
      * @param trx Transaction that will manage locks obtained by the scan
      * @param key The starting key to be searched for.
      * @param location The starting location to be searched for.
-     * @param forUpdate If this set {@link org.simpledbm.rss.api.locking.LockMode#UPDATE UPDATE} mode locks will be acquired,
-     * else {@link org.simpledbm.rss.api.locking.LockMode#SHARED SHARED} mode locks will be acquired.
+     * @param forUpdate If this set {@link LockMode#UPDATE UPDATE} mode locks will be acquired,
+     * else {@link LockMode#SHARED SHARED} mode locks will be acquired.
      */
     public IndexScan openScan(Transaction trx, IndexKey key, Location location,
             boolean forUpdate);

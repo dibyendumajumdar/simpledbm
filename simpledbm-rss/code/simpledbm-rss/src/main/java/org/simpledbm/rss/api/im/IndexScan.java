@@ -48,7 +48,7 @@ public interface IndexScan {
      * Must be invoked after the data from associated tuple container has been
      * fetched.
      * <p>If the argument matched is set to false, the scan is assumed to have reached
-     * eof of file. The next call to fetchNext() will return false.
+     * end of file. The next call to fetchNext() will return false.
      * 
      * @param matched If set to true indicates that the key satisfies search query
      */

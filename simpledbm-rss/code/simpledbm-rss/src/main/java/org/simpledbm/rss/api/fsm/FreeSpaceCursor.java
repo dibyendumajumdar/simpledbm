@@ -30,9 +30,10 @@ public interface FreeSpaceCursor {
 
     /**
      * Finds the next available page that satisfies the requirements of
-     * SpaceChecker, and then latches the concerned Space Map Page
-     * exclusively. This is meant to be followed by a call to {@link #updateAndLogRedoOnly(Transaction, int, int)}
-     * or {@link #updateAndLogUndoably(Transaction, int, int)} and then by {@link #unfixCurrentSpaceMapPage()}.
+     * {@link FreeSpaceChecker}, and then latches the concerned Space Map Page
+     * exclusively. This is meant to be followed by a call to {@link #updateAndLogRedoOnly(Transaction, int, int) updateAndLogRedoOnly()}
+     * or {@link #updateAndLogUndoably(Transaction, int, int) updateAndLogUndoably()} and then by {@link #unfixCurrentSpaceMapPage()}.
+     * <p>
      * The fixed page becomes the current space map page.
      * <p>
      * For the sake of efficient searches, this method is allowed to cache data,
@@ -40,29 +41,32 @@ public interface FreeSpaceCursor {
      * space map pages before giving up, the order in which the space map pages are 
      * searched is not defined. 
      * 
-     * @param checker SpaceChecker instance
+     * @param checker FreeSpaceChecker instance
      * @return -1 if page was not found, else page number.
      */
     public int findAndFixSpaceMapPageExclusively(FreeSpaceChecker checker);
 
     /**
      * Finds the next available page that satisfies the requirements of
-     * SpaceChecker, and then latches the concerned Space Map Page
-     * in shared mode. The fixed page becomes the current space map page.
+     * FreeSpaceChecker, and then latches the concerned Space Map Page
+     * in shared mode. 
+     * <p>
+     * The fixed page becomes the current space map page.
      * <p>
      * For the sake of efficient searches, this method is allowed to cache data,
      * such as last used space map page. While this method must search all the available
      * space map pages before giving up, the order in which the space map pages are 
      * searched is not defined. 
      * 
-     * @param checker SpaceChecker instance
+     * @param checker FreeSpaceChecker instance
      * @return -1 if page was not found, else page number.
      */
     public int findAndFixSpaceMapPageShared(FreeSpaceChecker checker);
     
     /**
      * Fixes specified Space Map Page exclusively. Note that the space map
-     * page must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}. 
+     * page must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}.
+     * <p> 
      * The fixed page becomes the current space map page.
      */
     public void fixSpaceMapPageExclusively(int spaceMapPageNumber,
@@ -74,14 +78,14 @@ public interface FreeSpaceCursor {
     public FreeSpaceMapPage getCurrentSpaceMapPage();
 
     /**
-     * Updates space allocation data for specfified page within the 
+     * Updates space allocation data for specified page within the 
      * current space map page, and generates a Redo-only log record for the
      * change.
      */
     public void updateAndLogRedoOnly(Transaction trx, int pageNumber, int value);
 
     /**
-     * Updates space allocation data for specfified page within the 
+     * Updates space allocation data for specified page within the 
      * current space map page, and generates a Redo-Undo log record for the
      * change.
      */
