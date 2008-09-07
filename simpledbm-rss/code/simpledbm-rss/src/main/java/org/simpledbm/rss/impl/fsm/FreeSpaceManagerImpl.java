@@ -63,6 +63,8 @@ import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
+import sun.tools.tree.SuperExpression;
+
 public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         implements FreeSpaceManager {
 	
@@ -1889,8 +1891,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      */
     public static abstract class SpaceMapPageImpl extends FreeSpaceMapPage {
 
-        static final int SIZE = Page.SIZE + (Integer.SIZE / Byte.SIZE) * 2;
+        static final int OVERHEAD = (Integer.SIZE / Byte.SIZE) * 2;
 
+        static final int SIZE = Page.SIZE + OVERHEAD;        
+        
         public static boolean TESTING = false;
 
         /**
@@ -1999,7 +2003,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
 
         final int getSpace() {
-            return super.getStoredLength() - SIZE;
+//            return super.getStoredLength() - SIZE;
+        	return getAvailableLength() - OVERHEAD;
         }
 
         final void init() {

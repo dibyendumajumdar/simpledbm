@@ -37,15 +37,14 @@ import org.simpledbm.rss.api.st.StorageException;
 public interface PageManager {
 
     /**
-     * Gets the on-disk page size of all pages managed by this factory. Page sizes can be
+     * Gets the on-disk page size of all pages managed by this PageManager. Page sizes can be
      * upto 32K. 
      */
     int getPageSize();
     
     /**
      * Get the page size that is usable by pages. This is likely to be less
-     * than or equal to {@link #getPageSize()} which returns the actual 
-     * physical page size on disk.
+     * than or equal to {@link #getPageSize()}.
      */
     int getUsablePageSize();
 
