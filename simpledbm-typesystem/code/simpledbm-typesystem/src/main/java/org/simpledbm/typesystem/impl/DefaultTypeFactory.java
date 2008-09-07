@@ -96,17 +96,17 @@ public class DefaultTypeFactory implements TypeFactory {
 		return new VarcharType(maxLength);
 	}
 	
-	private TypeDescriptor getTypeDescriptor(int typecode) {
-        switch (typecode) {
-        case TypeDescriptor.TYPE_VARCHAR: return new VarcharType();
-        case TypeDescriptor.TYPE_INTEGER: return new IntegerType();
-        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongType();
-        case TypeDescriptor.TYPE_NUMBER: return new NumberType();
-        case TypeDescriptor.TYPE_DATETIME: return new DateTimeType();
-        case TypeDescriptor.TYPE_BINARY: return new VarbinaryType();
-        }
-        throw new IllegalArgumentException("Unknown type: " + typecode);
-	}
+//	private TypeDescriptor getTypeDescriptor(int typecode) {
+//        switch (typecode) {
+//        case TypeDescriptor.TYPE_VARCHAR: return new VarcharType();
+//        case TypeDescriptor.TYPE_INTEGER: return new IntegerType();
+//        case TypeDescriptor.TYPE_LONG_INTEGER: return new LongType();
+//        case TypeDescriptor.TYPE_NUMBER: return new NumberType();
+//        case TypeDescriptor.TYPE_DATETIME: return new DateTimeType();
+//        case TypeDescriptor.TYPE_BINARY: return new VarbinaryType();
+//        }
+//        throw new IllegalArgumentException("Unknown type: " + typecode);
+//	}
 
 	private TypeDescriptor getTypeDescriptor(int typecode, ByteBuffer bb) {
         switch (typecode) {

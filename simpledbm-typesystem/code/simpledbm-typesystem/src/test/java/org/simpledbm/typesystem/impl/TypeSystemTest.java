@@ -58,10 +58,10 @@ public class TypeSystemTest extends TestCase {
         Row row = rowFactory.newRow(1);
         assertEquals(row.getNumberOfColumns(), 2);
         System.err.println("Number of fields in row = " + row.getNumberOfColumns());
-        row.getColumnValue(0).setInt(5432);
-        row.getColumnValue(1).setInt(2345);
-        assertEquals(row.getColumnValue(0).getInt(), 5432);
-        assertEquals(row.getColumnValue(1).getInt(), 2345);
+        row.setInt(0, 5432);
+        row.setInt(1, 2345);
+        assertEquals(row.getInt(0), 5432);
+        assertEquals(row.getInt(1), 2345);
         System.err.println("Row contents = " + row);
         Row rowClone = row.cloneMe();
         System.err.println("Cloned Row contents = " + rowClone);
@@ -74,7 +74,7 @@ public class TypeSystemTest extends TestCase {
         assertTrue(row.compareTo(row1) == 0);
         Row row3 = row.cloneMe();
         assertTrue(row.compareTo(row3) == 0);
-        row.getColumnValue(0).setString("9876");
+        row.setString(0, "9876");
         assertTrue(row.compareTo(row3) > 0);
         System.err.println("Row contents = " + row);
         System.err.println("Row3 contents = " + row3);
@@ -83,23 +83,23 @@ public class TypeSystemTest extends TestCase {
         System.err.println("Comparing row3 and row = " + row3.compareTo(row));
         System.err.println("Comparing row3 and row1 = " + row3.compareTo(row1));
         ((GenericRow)row).parseString("300,hello world");
-        assertTrue(row.getColumnValue(0).getInt() == 300);
-        assertTrue(row.getColumnValue(1).getString().equals("hello worl"));
+        assertTrue(row.getInt(0) == 300);
+        assertTrue(row.getString(1).equals("hello worl"));
         System.err.println("Row contents after parse string = " + row);
-        row.getColumnValue(1).setString("a");
-        row3.getColumnValue(1).setString("ab");
-        assertTrue(row.getColumnValue(1).compareTo(row3.getColumnValue(1)) < 0);
-        row3.getColumnValue(1).setNull();
-        assertTrue(row.getColumnValue(1).compareTo(row3.getColumnValue(1)) > 0);
-        assertTrue(row3.getColumnValue(1).isNull());
-        row.getColumnValue(0).setPositiveInfinity();
-        row3.getColumnValue(0).setInt(Integer.MAX_VALUE);
-        assertTrue(row.getColumnValue(0).compareTo(row3.getColumnValue(0)) > 0);
-        assertTrue(!row.getColumnValue(0).isNull());
-        row.getColumnValue(0).setNegativeInfinity();
-        row3.getColumnValue(0).setInt(Integer.MIN_VALUE);
-        assertTrue(row.getColumnValue(0).compareTo(row3.getColumnValue(0)) < 0);
-        assertTrue(!row.getColumnValue(0).isNull());
+        row.setString(1, "a");
+        row3.setString(1, "ab");
+        assertTrue(row.getString(1).compareTo(row3.getString(1)) < 0);
+        row3.setNull(1);
+        assertTrue(row.compareTo(row3, 1) > 0);
+        assertTrue(row3.isNull(1));
+        row.setPositiveInfinity(0);
+        row3.setInt(0, Integer.MAX_VALUE);
+        assertTrue(row.compareTo(row3, 0) > 0);
+        assertTrue(!row.isNull(0));
+        row.setNegativeInfinity(0);
+        row3.setInt(0, Integer.MIN_VALUE);
+        assertTrue(row.compareTo(row3, 0) < 0);
+        assertTrue(!row.isNull(0));
     }
     
     public void testBigDecimal() {

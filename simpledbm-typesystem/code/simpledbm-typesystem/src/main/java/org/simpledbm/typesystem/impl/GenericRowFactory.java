@@ -27,14 +27,11 @@ import java.nio.ByteBuffer;
 import java.util.HashMap;
 
 import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
-
-import sun.reflect.ReflectionFactory.GetReflectionFactoryAction;
 
 public class GenericRowFactory implements RowFactory {
 
@@ -92,8 +89,7 @@ public class GenericRowFactory implements RowFactory {
     public IndexKey maxIndexKey(int keytype) {
     	GenericRow row = (GenericRow) newIndexKey(keytype);
     	for (int i = 0; i < row.getNumberOfColumns(); i++) {
-    		DataValue field = row.getColumnValue(i);
-    		field.setPositiveInfinity();
+    		row.setPositiveInfinity(i);
     	}
     	return row;
     }
@@ -101,8 +97,7 @@ public class GenericRowFactory implements RowFactory {
     public IndexKey minIndexKey(int keytype) {
     	GenericRow row = (GenericRow) newIndexKey(keytype);
     	for (int i = 0; i < row.getNumberOfColumns(); i++) {
-    		DataValue field = row.getColumnValue(i);
-    		field.setNegativeInfinity();
+    		row.setNegativeInfinity(i);
     	}
     	return row;
     }
