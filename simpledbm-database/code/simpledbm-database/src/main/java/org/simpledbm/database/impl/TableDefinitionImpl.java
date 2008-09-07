@@ -249,7 +249,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.getColumns().length; i++) {
-            indexRow.setColumnValue(i, tableRow.getColumnValue(index.getColumns()[i]).cloneMe());
+            indexRow.set(i, tableRow, index.getColumns()[i]);
         }
         return indexRow;
     }

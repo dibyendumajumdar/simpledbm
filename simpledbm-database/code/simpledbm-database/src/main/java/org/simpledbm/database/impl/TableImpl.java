@@ -58,7 +58,7 @@ public class TableImpl implements Table {
         for (IndexDefinition idx : getDefinition().getIndexes()) {
             Row indexRow = getDefinition().getIndexRow(idx, tableRow);
             for (int i = 0; i < indexRow.getNumberOfColumns(); i++) {
-            	if (indexRow.getColumnValue(i).isNull()) {
+            	if (indexRow.isNull(i)) {
             		return false;
             	}
             }
