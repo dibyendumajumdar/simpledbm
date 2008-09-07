@@ -40,7 +40,10 @@ import org.simpledbm.rss.api.wal.Lsn;
  * record that represents the changes, and supply the
  * {@link org.simpledbm.rss.api.wal.Lsn Lsn} of the log record to
  * {@link #setDirty(Lsn) setDirty()}. This will ensure that the log will
- * be flushed upto the Lsn before the page is swapped out.
+ * be flushed up to the Lsn before the page is swapped out.
+ * <p>
+ * A BufferAccessBlock must only be used by one thread at any point in
+ * time.
  * 
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
@@ -48,7 +51,7 @@ import org.simpledbm.rss.api.wal.Lsn;
 public interface BufferAccessBlock {
 
     /**
-     * Marks the page as dirty. Only applicable if the page was obtained with
+     * Marks the page as dirty. Only applicable if the page was obtained for
      * exclusive access.
      * 
      * @param lsn
@@ -86,7 +89,7 @@ public interface BufferAccessBlock {
     public void downgradeExclusiveLatch();
 
     /**
-     * Unfixes and releases latch on the page. It is important that this is
+     * Unfixes the page and releases latch on the page. It is important that this is
      * called for every fix. Failure to do so will cause pages to get stuck in
      * the buffer pool, eventually causing the system to run of slots in the
      * buffer pool.

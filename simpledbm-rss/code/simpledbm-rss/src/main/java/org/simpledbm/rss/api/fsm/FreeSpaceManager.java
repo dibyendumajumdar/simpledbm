@@ -19,11 +19,20 @@
  */
 package org.simpledbm.rss.api.fsm;
 
+import org.simpledbm.rss.api.pm.PageFactory;
+import org.simpledbm.rss.api.pm.PageManager;
+import org.simpledbm.rss.api.registry.ObjectRegistry;
+import org.simpledbm.rss.api.st.StorageContainer;
+import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
- * Space Manager module interface. Supports creating new containers, and extending the size of 
+ * The FreeSpaceManager module interface supports creating new {@link StorageContainer} objects, and extending the size of 
  * existing containers.
+ * <p>
+ * StorageContainers as created by {@link StorageContainerFactory} interface do not have a defined
+ * structure. The {@link PageManager} interface provides page structured view of a raw StorageContainer.
+ * The FreeSpaceManager adds to this view the concept of free space map pages, and data pages. 
  */
 public interface FreeSpaceManager {
 
@@ -33,17 +42,22 @@ public interface FreeSpaceManager {
      * per page. The container space is managed in groups of pages called extents - an extent is the
      * minimum unit of space allocation. Note that a container can have only one type of data page.
      * <p>
-     * Pre-condition 1: caller must have acquired exclusive lock on the container id.
+     * Pre-condition 1: Caller must hold an exclusive lock on the container id.
      * <p>
      * Pre-condition 2: There must exist an open container with ID = 0. This container must contain at
      * least 1 page. 
+     * <p>
      * 
      * @param trx The transaction that will manage this operation
-     * @param containerName Name of the new container - mst be unused
-     * @param containerid The ID to be allocated to the new container - must not be in use.
-     * @param spaceBits The number of bits to be used to represent free space data for an individual page.
-     * @param extentSize Allocation unit - number of pages in the extent.
-     * @param dataPageType The type of data pages this container will hold.
+     * @param containerName Name of the new container - must not conflict with any existing container
+     * @param containerid The ID to be allocated to the new container - must not conflict with any existing container
+     * @param spaceBits The number of bits to be used to represent free space data for an individual page; either 1 or 2.
+     * @param extentSize Allocation unit - number of pages in each extent.
+     * @param dataPageType The type of data pages this container will hold. The page type must have a registered
+     *        {@link PageFactory} implementation.
+     * @see PageFactory
+     * @see PageManager
+     * @see ObjectRegistry
      */
     public void createContainer(Transaction trx, String containerName,
             int containerid, int spaceBits, int extentSize, int dataPageType);
@@ -51,7 +65,7 @@ public interface FreeSpaceManager {
     /**
      * Adds a new extent to the container. New free space map pages will be added if necessary.
      * <p>
-     * Precondition: caller must have a shared lock on the container.
+     * Precondition: caller must hold a shared lock on the container ID.
      *
      * @param trx Transaction that will manage this action.
      * @param containerId ID of the container that will be extended.
@@ -63,6 +77,8 @@ public interface FreeSpaceManager {
      * container in case the transaction is aborted, the actual
      * action of dropping the container is deferred until it is known that the transaction is
      * definitely committing.
+     * <p>
+     * Precondition: Caller must hold an exclusive lock on the container ID.
      *
      * @param trx Transaction that will manage this action.
      * @param containerId ID of the container that will be dropped.

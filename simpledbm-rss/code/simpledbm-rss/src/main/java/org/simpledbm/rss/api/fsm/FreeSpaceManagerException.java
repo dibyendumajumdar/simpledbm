@@ -27,9 +27,7 @@ import org.simpledbm.rss.api.exception.RSSException;
 public class FreeSpaceManagerException extends RSSException {
 
     public static class TestException extends FreeSpaceManagerException {
-
         private static final long serialVersionUID = 1L;
-
     }
 
     private static final long serialVersionUID = 5065727917034813269L;

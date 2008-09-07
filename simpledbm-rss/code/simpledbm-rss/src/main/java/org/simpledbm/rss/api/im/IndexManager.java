@@ -51,14 +51,6 @@ public interface IndexManager extends TransactionalModule {
             boolean unique);
 
     /**
-     * Obtains an existing index with specified container ID. Prior to calling this
-     * method, a Shared lock should be obtained on the container ID to ensure that no other
-     * transaction is simultaneously attempting to create/delete the same container. 
-     * 
-     * @param containerId ID of the container, must have been initialized as an Index prior to this call
-     */
-    // Index getIndex(int containerId);	
-    /**
      * Obtains an existing index with specified container ID. A Shared lock is obtained on 
      * the container ID to ensure that no other transaction is simultaneously attempting to 
      * create/delete the same container. 

@@ -26,7 +26,7 @@ import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
 
 /**
- * Interface definition for Space Map pages. 
+ * Abstract base class for Free Space Map pages. 
  */
 public abstract class FreeSpaceMapPage extends Page {
 	
