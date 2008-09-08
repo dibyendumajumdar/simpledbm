@@ -48,7 +48,10 @@ public abstract class SlottedPage extends Page {
 
 	/**
      * Returns the total space available for slot data, including the 
-     * slot table.
+     * slot table. This is equivalent to Page Size - Overhead in SlottedPage,
+     * or the space available with zero slots in the page.
+     * Note that this does not tell you how much free space is available, 
+     * for that see {@link #getFreeSpace()}.
      * @see #getFreeSpace()
      */
     public abstract int getSpace();

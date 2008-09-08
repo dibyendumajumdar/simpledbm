@@ -156,6 +156,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     private static final short TYPE_DELETE_OPERATION = TYPE_BASE + 11;
     private static final short TYPE_UNDODELETE_OPERATION = TYPE_BASE + 12;
     private static final short TYPE_LOADPAGE_OPERATION = TYPE_BASE + 13;
+    private static final short TYPE_NEWREDISTRIBUTE_OPERATION = TYPE_BASE + 14;
 
     /**
      * Space map value for a used BTree page. The space map can have two possible values - 1 means used, 
@@ -249,6 +250,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 		objectFactory.registerObjectFactory(TYPE_REDISTRIBUTE_OPERATION,
 				new RedistributeOperation.RedistributeOperationFactory(
 						objectFactory));
+		objectFactory.registerObjectFactory(TYPE_NEWREDISTRIBUTE_OPERATION,
+				new NewRedistributeOperation.NewRedistributeOperationFactory(
+						objectFactory));		
 		objectFactory
 				.registerObjectFactory(
 						TYPE_INCREASETREEHEIGHT_OPERATION,
@@ -287,6 +291,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             redoUnlinkOperation(page, (UnlinkOperation) loggable);
         } else if (loggable instanceof RedistributeOperation) {
             redoRedistributeOperation(page, (RedistributeOperation) loggable);
+        } else if (loggable instanceof NewRedistributeOperation) {
+            redoNewRedistributeOperation(page, (NewRedistributeOperation) loggable);
         } else if (loggable instanceof IncreaseTreeHeightOperation) {
             redoIncreaseTreeHeightOperation(
                 page,
@@ -621,6 +627,100 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         node.dump();
     }
 
+    /**
+     * Redo a distribute operation. 
+     * @see BTreeImpl#doNewRedistribute(Transaction, BTreeCursor)
+     * @see NewRedistributeOperation
+     */
+    void redoNewRedistributeOperation(Page page,
+            NewRedistributeOperation redistributeOperation) {
+        SlottedPage p = (SlottedPage) page;
+        BTreeNode node = new BTreeNode(redistributeOperation.getIndexItemFactory(), p);
+        if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
+            // processing Q (left sibling)
+            if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
+                // moving keys left, so keys will be added to the left sibling
+                // the last key of the added keys will become the new high key
+                // FIXME Test case
+            	Trace.event(7, page.getPageId().getContainerId(), page.getPageId().getPageNumber());           	
+            	// if leaf page, delete extra high key
+            	if (node.isLeaf()) {
+                    p.purge(node.header.keyCount);
+                    node.header.keyCount = node.header.keyCount - 1;
+            		node.updateHeader();
+            	}
+            	// now add the keys
+            	int k = 0;
+            	for (IndexItem item: redistributeOperation.items) {
+            		node.header.keyCount = node.header.keyCount + 1;
+            		node.updateHeader();
+            		p.insertAt(
+            				node.header.keyCount, item, true);
+            		k++;
+            	}
+            	// if leaf, then add the extra high key
+                if (node.isLeaf()) {
+            		node.header.keyCount = node.header.keyCount + 1;
+            		node.updateHeader();
+            		p.insertAt(
+            				node.header.keyCount, redistributeOperation.items.getLast(), true);
+                }
+            } else {
+                // moving keys right, therefore must delete from left sibling
+            	Trace.event(8, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+            	// if leaf page, delete extra high key
+            	if (node.isLeaf()) {
+                    p.purge(node.header.keyCount);
+                    node.header.keyCount = node.header.keyCount - 1;
+            		node.updateHeader();
+            	}
+            	// delete the required number of keys from left sibling
+            	int n = redistributeOperation.items.size();
+            	while (n > 0) {
+            		p.purge(node.header.keyCount);
+            		node.header.keyCount = node.header.keyCount - 1;
+            		node.updateHeader();
+            		n--;
+            	}
+            	// if leaf, make the last key the new high key
+                if (node.isLeaf()) {
+                    // last key becomes new high key
+                    IndexItem lastKey = node.getItem(node.header.keyCount);
+               		node.header.keyCount = node.header.keyCount + 1;
+               		node.updateHeader();
+                    p.insertAt(node.header.keyCount, lastKey, true);
+                }
+            }
+        } else {
+            // processing R (right sibling)
+            if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
+                // moving keys left, therefore delete from right sibling
+            	Trace.event(9, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+            	int n = redistributeOperation.items.size();
+            	while (n > 0) {
+            		p.purge(FIRST_KEY_POS);
+            		node.header.keyCount = node.header.keyCount - 1;
+            		node.updateHeader();
+            	}
+            } else {
+                // moving keys right, therefore insert into right sibling
+                // insert new keys starting at position 1
+            	Trace.event(10, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
+            	int k = FIRST_KEY_POS;
+            	for (IndexItem item: redistributeOperation.items) {
+            		p.insertAt(k, item, false);
+            		node.header.keyCount = node.header.keyCount + 1;
+            		node.updateHeader();
+            		k++;
+            	}
+            }
+        }
+        if (Validating) {
+        	node.validate();
+        }
+        node.dump();
+    }
+    
     /**
      * Redo an increase tree height operation.
      * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
@@ -1650,6 +1750,129 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         /**
+         * Redistribute the keys between sibling nodes when the right child is an
+         * indirect child of parent page. Both pages must be latched in UPDATE
+         * mode prior to calling this method. At the end of this operation,
+         * the child page that covers the search key will remain latched in
+         * UPDATE mode. 
+         * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
+         */
+        public final void doNewRedistribute(Transaction trx, BTreeCursor bcursor) {
+
+            final BTreeImpl btree = this;
+
+            assert bcursor.getQ() != null;
+            assert bcursor.getQ().isLatchedForUpdate();
+
+            assert bcursor.getR() != null;
+            assert bcursor.getR().isLatchedForUpdate();
+
+            assert bcursor.searchKey != null;
+
+            Trace.event(37, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
+            bcursor.getQ().upgradeUpdateLatch();
+            BTreeNode leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
+
+            Trace.event(38, bcursor.getR().getPage().getPageId().getContainerId(), bcursor.getR().getPage().getPageId().getPageNumber());
+            bcursor.getR().upgradeUpdateLatch();
+            BTreeNode rightSiblingNode = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+            SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
+
+            NewRedistributeOperation redistributeOperation = new NewRedistributeOperation(
+                BTreeIndexManagerImpl.MODULE_ID,
+                BTreeIndexManagerImpl.TYPE_REDISTRIBUTE_OPERATION,
+                btreeMgr.objectFactory,
+                keyFactoryType,
+                locationFactoryType,
+                leftSiblingNode.isLeaf(),
+                isUnique());
+            
+            redistributeOperation.leftSibling = leftSiblingNode.page
+                .getPageId()
+                .getPageNumber();
+            redistributeOperation.rightSibling = rpage
+                .getPageId()
+                .getPageNumber();
+        	int targetFreeSpace = (leftSiblingNode.page.getFreeSpace() + rpage.getFreeSpace()) / 2;
+            if (leftSiblingNode.page.getFreeSpace() > rpage.getFreeSpace()) {
+                // key moving left
+//            	redistributeOperation.key = rightSiblingNode.getItem(FIRST_KEY_POS);
+            	int n = leftSiblingNode.page.getFreeSpace();
+            	assert n > targetFreeSpace;
+            	int k = FIRST_KEY_POS;
+            	while (n > targetFreeSpace) {
+            		int len = rpage.getSlotLength(k);
+            		if (n - len > targetFreeSpace) {
+            			redistributeOperation.items.add(rightSiblingNode.getItem(k));
+            			n -= len;
+            			k++;
+            		}
+            		else {
+            			break;
+            		}
+            	}
+                redistributeOperation.targetSibling = redistributeOperation.leftSibling;
+            } else {
+                // key moving right
+            	int n = rightSiblingNode.page.getFreeSpace();
+            	int k = leftSiblingNode.getKeyCount();
+            	while (n > targetFreeSpace) {
+            		int len = lpage.getSlotLength(k);
+            		if (n - len > targetFreeSpace) {
+            			n -= len;
+            			k--;
+            		}
+            		else {
+            			break;
+            		}
+            	}
+            	for (; k <= leftSiblingNode.getKeyCount(); k++) {
+            		redistributeOperation.items.add(leftSiblingNode.getItem(k));
+            	}
+//                redistributeOperation.key = leftSiblingNode.getLastKey();
+                redistributeOperation.targetSibling = redistributeOperation.rightSibling;
+            }
+
+            try {
+                Lsn lsn = trx.logInsert(
+                    leftSiblingNode.page,
+                    redistributeOperation);
+
+                btree.btreeMgr
+                    .redo(leftSiblingNode.page, redistributeOperation);
+                bcursor.getQ().setDirty(lsn);
+
+                btree.btreeMgr.redo(rpage, redistributeOperation);
+                bcursor.getR().setDirty(lsn);
+
+                leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                /* Check if Q covers the current search key value */
+                int comp = leftSiblingNode.getHighKey().compareTo(
+                    bcursor.searchKey);
+                if (comp >= 0) {
+                    // new key will stay in current page
+                    // FIXME TEST case
+                	Trace.event(39, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
+                    bcursor.getQ().downgradeExclusiveLatch();
+                    bcursor.unfixR();
+                } else {
+                    // new key will be in the right sibling
+                	Trace.event(40, bcursor.getR().getPage().getPageId().getContainerId(), bcursor.getR().getPage().getPageId().getPageNumber());
+                    bcursor.getR().downgradeExclusiveLatch();
+                    bcursor.unfixQ();
+                    bcursor.setQ(bcursor.removeR());
+                }
+                assert bcursor.getQ() != null;
+                assert bcursor.getQ().isLatchedForUpdate();
+                
+                assert bcursor.getR() == null;
+            } finally {
+                bcursor.unfixR();
+            }
+        }        
+        
+        /**
          * Increase tree height when root page as a sibling page. The root page and its
          * sibling must be latched in UPDATE mode prior to calling this method. After the
          * operation is complete, the latch on the root page is released, but one of the child
@@ -1997,7 +2220,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         doMerge(trx, bcursor);
                     } else {
                         // FIXME TEST case
-                        doRedistribute(trx, bcursor);
+//                        doRedistribute(trx, bcursor);
+                        doNewRedistribute(trx, bcursor);
                     }
                 } else {
                 	Trace.event(55);
@@ -2113,7 +2337,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         doMerge(trx, bcursor);
                     } else {
                         // FIXME TEST case
-                        doRedistribute(trx, bcursor);
+//                        doRedistribute(trx, bcursor);
+                        doNewRedistribute(trx, bcursor);
                     }
                 }
             } else {
@@ -2212,7 +2437,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             doMerge(trx, bcursor);
                         } else {
                             // FIXME Test case
-                            doRedistribute(trx, bcursor);
+//                            doRedistribute(trx, bcursor);
+                            doNewRedistribute(trx, bcursor);
                         }
                         /* Q = L (already true) */
                         assert bcursor.getQ().getPage().getPageId().getPageNumber() == L;
@@ -2281,7 +2507,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         	Trace.event(76);
                             doMerge(trx, bcursor);
                         } else {
-                            doRedistribute(trx, bcursor);
+//                            doRedistribute(trx, bcursor);
+                            doNewRedistribute(trx, bcursor);
                         }
                     }
                 }
@@ -3836,24 +4063,31 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * <pre>
      * Leaf nodes have following structure:
      * [header] [item1] [item2] ... [itemN] [highkey]
-     * item[0] = header 
-     * item[1,header.KeyCount-1] = keys
-     * item[header.keyCount] = high key 
-     * The highkey in a leaf node is an extra item, and may or may not be  
+     * header.keyCount ------------------------^
+     * item[0] = header       
+     * item[1..header.KeyCount-1] = keys
+     * item[header.keyCount] = high key
+     * </pre>The highkey in a leaf node is an extra item, and may or may not be  
      * the same as the last key [itemN] in the page. Operations that change the
      * highkey in leaf pages are Split, Merge and Redistribute. All keys in the
      * page are guaranteed to be &lt;= highkey. 
-     * 
+     * <p>
      * Index nodes have following structure:
+     * <pre>
      * [header] [item1] [item2] ... [itemN]
+     * header.keyCount ----------------^
      * item[0] = header 
-     * item[1,header.KeyCount] = keys
-     * The last key is also the highkey.
+     * item[1..header.KeyCount] = keys
+     * </pre>
+     * In an index node, the last key is also the highkey.
+     * Each item in an index node contains a pointer to a child page.
+     * The child page contains keys that are &lt;= than the item key.
+     * If the high key of a child page is less than the item key in
+     * the parent, then it can be deduced that the page has a right
+     * sibling that is not linked to the parent.
+     * <p>
      * Note that the rightmost index page at any level has a special
      * key as the highkey - this key has a value of INFINITY. 
-     * Each item in an index key contains a pointer to a child page.
-     * The child page contains keys that are &lt;= than the item key.
-     * </pre>
      * @author Dibyendu Majumdar
      * @since 19-Sep-2005
      */
@@ -5688,9 +5922,125 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				return new RedistributeOperation(objectRegistry, buf);
 			}
         }
-
     }
 
+    /**
+     * Unlike the published algorithm we simply transfer one key from the more populated
+     * page to the less populated page. 
+     * 
+     * @author Dibyendu Majumdar
+     * @since 06-Oct-2005
+     */
+    public static final class NewRedistributeOperation extends BTreeLogOperation
+            implements Redoable, MultiPageRedo {
+
+        /**
+         * Pointer to the left sibling.
+         */
+        int leftSibling;
+
+        /**
+         * Pointer to the right sibling.
+         */
+        int rightSibling;
+
+        /**
+         * The items that will be moved.
+         * Does not include highkey in leaf pages.
+         */
+        LinkedList<IndexItem> items;
+        
+        /**
+         * Pointer to the recipient of the key.
+         */
+        int targetSibling;
+
+        public NewRedistributeOperation(ObjectRegistry objectRegistry,
+				ByteBuffer bb) {
+			super(objectRegistry, bb);
+            rightSibling = bb.getInt();
+            leftSibling = bb.getInt();
+            targetSibling = bb.getInt();
+            short numberOfItems = bb.getShort();
+            items = new LinkedList<IndexItem>();
+            for (int i = 0; i < numberOfItems; i++) {
+                IndexItem item = makeNewItem(bb);
+                items.add(item);
+            }
+		}
+
+		public NewRedistributeOperation(int moduleId, int typeCode, ObjectRegistry objectRegistry, 
+        		int keyFactoryType, int locationFactoryType, boolean leaf, boolean unique) {
+			super(moduleId, typeCode, objectRegistry, keyFactoryType, locationFactoryType, leaf, unique);
+		}
+
+		@Override
+        public final int getStoredLength() {
+            int n = super.getStoredLength();
+            n += TypeSize.INTEGER * 3;
+            n += TypeSize.SHORT;
+            for (IndexItem item : items) {
+                n += item.getStoredLength();
+            }
+            return n;
+        }
+
+        @Override
+        public final void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putInt(rightSibling);
+            bb.putInt(leftSibling);
+            bb.putInt(targetSibling);
+            bb.putShort((short) items.size());
+            for (IndexItem item : items) {
+                item.store(bb);
+            }
+        }
+
+        public final PageId[] getPageIds() {
+            return new PageId[] { getPageId(),
+                    new PageId(getPageId().getContainerId(), rightSibling) };
+        }
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("NewRedistributeOperation(leftSibling=").append(leftSibling);
+            sb.append(", rightSibling=").append(rightSibling);
+            sb.append(", targetSibling=").append(targetSibling);
+            sb.append("No of items=").append(items.size()).append(newline);
+            for (IndexItem item : items) {
+                sb.append("  item #=[");
+                item.appendTo(sb);
+                sb.append("]").append(newline);
+            }
+            sb.append(", PageId[]={");
+            for (PageId pageId: getPageIds()) {
+                pageId.appendTo(sb);
+                sb.append(",");
+            }
+            sb.append("})");
+            return sb;
+        }
+        
+        @Override
+        public final String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+        
+        static final class NewRedistributeOperationFactory implements ObjectFactory {
+        	private final ObjectRegistry objectRegistry;
+        	NewRedistributeOperationFactory(ObjectRegistry objectRegistry) {
+        		this.objectRegistry = objectRegistry;
+        	}
+			public Class<?> getType() {
+				return NewRedistributeOperation.class;
+			}
+			public Object newInstance(ByteBuffer buf) {
+				return new NewRedistributeOperation(objectRegistry, buf);
+			}
+        }
+    }
+    
+    
     /**
      * Log record for IncreaseTreeHeight operation.
      * Must be logged as part of the root page update. The log is applied to the
