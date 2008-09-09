@@ -566,6 +566,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * Redo a distribute operation. 
      * @see BTreeImpl#doRedistribute(Transaction, BTreeContext)
      * @see RedistributeOperation
+     * @deprecated
      */
     void redoRedistributeOperation(Page page,
             RedistributeOperation redistributeOperation) {
@@ -647,13 +648,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	if (node.isLeaf()) {
                     p.purge(node.header.keyCount);
                     node.header.keyCount = node.header.keyCount - 1;
-            		node.updateHeader();
             	}
             	// now add the keys
             	int k = 0;
             	for (IndexItem item: redistributeOperation.items) {
             		node.header.keyCount = node.header.keyCount + 1;
-            		node.updateHeader();
             		p.insertAt(
             				node.header.keyCount, item, true);
             		k++;
@@ -661,10 +660,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	// if leaf, then add the extra high key
                 if (node.isLeaf()) {
             		node.header.keyCount = node.header.keyCount + 1;
-            		node.updateHeader();
             		p.insertAt(
             				node.header.keyCount, redistributeOperation.items.getLast(), true);
                 }
+        		node.updateHeader();
             } else {
                 // moving keys right, therefore must delete from left sibling
             	Trace.event(8, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
@@ -672,14 +671,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	if (node.isLeaf()) {
                     p.purge(node.header.keyCount);
                     node.header.keyCount = node.header.keyCount - 1;
-            		node.updateHeader();
             	}
             	// delete the required number of keys from left sibling
             	int n = redistributeOperation.items.size();
             	while (n > 0) {
             		p.purge(node.header.keyCount);
             		node.header.keyCount = node.header.keyCount - 1;
-            		node.updateHeader();
             		n--;
             	}
             	// if leaf, make the last key the new high key
@@ -687,9 +684,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     // last key becomes new high key
                     IndexItem lastKey = node.getItem(node.header.keyCount);
                		node.header.keyCount = node.header.keyCount + 1;
-               		node.updateHeader();
                     p.insertAt(node.header.keyCount, lastKey, true);
                 }
+        		node.updateHeader();
             }
         } else {
             // processing R (right sibling)
@@ -700,8 +697,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	while (n > 0) {
             		p.purge(FIRST_KEY_POS);
             		node.header.keyCount = node.header.keyCount - 1;
-            		node.updateHeader();
+            		n--;
             	}
+        		node.updateHeader();
             } else {
                 // moving keys right, therefore insert into right sibling
                 // insert new keys starting at position 1
@@ -710,9 +708,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	for (IndexItem item: redistributeOperation.items) {
             		p.insertAt(k, item, false);
             		node.header.keyCount = node.header.keyCount + 1;
-            		node.updateHeader();
             		k++;
             	}
+        		node.updateHeader();
             }
         }
         if (Validating) {
@@ -1664,6 +1662,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Unlike the published algorithm we simply transfer one key from the more 
          * densely populated page to the less populated page.
          * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
+         * @deprecated
          */
         public final void doRedistribute(Transaction trx, BTreeContext bcursor) {
 
@@ -4205,7 +4204,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void dump() {
 
-            // dumpAsXml();
+            dumpAsXml();
             if (DiagnosticLogger.getDiagnosticsLevel() == 0) {
                 return;
             }
@@ -5826,6 +5825,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * 
      * @author Dibyendu Majumdar
      * @since 06-Oct-2005
+     * @deprecated
      */
     public static final class RedistributeOperation extends BTreeLogOperation
             implements Redoable, MultiPageRedo {
@@ -5907,6 +5907,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return appendTo(new StringBuilder()).toString();
         }
         
+        /**
+         * @author dibyendumajumdar
+         * @deprecated
+         */
         static final class RedistributeOperationFactory implements ObjectFactory {
         	private final ObjectRegistry objectRegistry;
         	RedistributeOperationFactory(ObjectRegistry objectRegistry) {
@@ -5969,6 +5973,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 		public NewRedistributeOperation(int moduleId, int typeCode, ObjectRegistry objectRegistry, 
         		int keyFactoryType, int locationFactoryType, boolean leaf, boolean unique) {
 			super(moduleId, typeCode, objectRegistry, keyFactoryType, locationFactoryType, leaf, unique);
+            items = new LinkedList<IndexItem>();
 		}
 
 		@Override
