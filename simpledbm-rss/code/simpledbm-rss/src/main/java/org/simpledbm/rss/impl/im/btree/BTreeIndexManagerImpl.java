@@ -4204,7 +4204,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void dump() {
 
-            dumpAsXml();
+            // dumpAsXml();
             if (DiagnosticLogger.getDiagnosticsLevel() == 0) {
                 return;
             }
