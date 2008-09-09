@@ -1,0 +1,75 @@
+<tree>
+	<page containerId="1" pageNumber="2">
+		<header>
+			<locationfactory>25001</locationfactory>
+			<keyfactory>25000</keyfactory>
+			<unique>false</unique>
+			<leaf>yes</leaf>
+			<leftsibling>-1</leftsibling>
+			<rightsibling>3</rightsibling>
+			<smppagenumber>1</smppagenumber>
+			<keycount>4</keycount>
+		</header>
+		<items>
+			<item pos="1">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>a1</key>
+			</item>
+			<item pos="2">
+				<childpagenumber>-1</childpagenumber>
+				<location>10</location>
+				<key>c1</key>
+			</item>
+			<item pos="3">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>d2</key>
+			</item>
+			<item pos="4">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>d2</key>
+			</item>
+		</items>
+	</page>
+	<page containerId="1" pageNumber="3">
+		<header>
+			<locationfactory>25001</locationfactory>
+			<keyfactory>25000</keyfactory>
+			<unique>false</unique>
+			<leaf>yes</leaf>
+			<leftsibling>-1</leftsibling>
+			<rightsibling>-1</rightsibling>
+			<smppagenumber>1</smppagenumber>
+			<keycount>5</keycount>
+		</header>
+		<items>
+			<item pos="1">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>e2</key>
+			</item>
+			<item pos="2">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>f2</key>
+			</item>
+			<item pos="3">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>g2</key>
+			</item>
+			<item pos="4">
+				<childpagenumber>-1</childpagenumber>
+				<location>11</location>
+				<key>h2</key>
+			</item>
+			<item pos="5">
+				<childpagenumber>-1</childpagenumber>
+				<location>999</location>
+				<key>&lt;INFINITY&gt;</key>
+			</item>
+		</items>
+	</page>
+</tree>
