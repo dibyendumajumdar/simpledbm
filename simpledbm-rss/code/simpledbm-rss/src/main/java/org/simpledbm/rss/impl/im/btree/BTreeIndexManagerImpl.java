@@ -374,7 +374,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo a page split operation. 
-     * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see BTreeImpl#doSplit(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeContext)
      * @see SplitOperation
      */
     void redoSplitOperation(Page page, SplitOperation splitOperation) {
@@ -432,7 +432,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo a merge operation.
-     * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor) 
+     * @see BTreeImpl#doMerge(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeContext) 
      * @see MergeOperation
      */
     void redoMergeOperation(Page page, MergeOperation mergeOperation) {
@@ -486,7 +486,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo a link operation
-     * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see BTreeImpl#doLink(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeContext)
      * @see LinkOperation
      */
     void redoLinkOperation(Page page, LinkOperation linkOperation) {
@@ -524,7 +524,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo an unlink operation.
-     * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
+     * @see BTreeImpl#doUnlink(Transaction, BTreeContext)
      * @see UnlinkOperation 
      */
     void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
@@ -564,7 +564,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo a distribute operation. 
-     * @see BTreeImpl#doRedistribute(Transaction, BTreeCursor)
+     * @see BTreeImpl#doRedistribute(Transaction, BTreeContext)
      * @see RedistributeOperation
      */
     void redoRedistributeOperation(Page page,
@@ -629,7 +629,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Redo a distribute operation. 
-     * @see BTreeImpl#doNewRedistribute(Transaction, BTreeCursor)
+     * @see BTreeImpl#doNewRedistribute(Transaction, BTreeContext)
      * @see NewRedistributeOperation
      */
     void redoNewRedistributeOperation(Page page,
@@ -723,7 +723,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     
     /**
      * Redo an increase tree height operation.
-     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeContext)
      * @see IncreaseTreeHeightOperation 
      */
     void redoIncreaseTreeHeightOperation(Page page,
@@ -767,7 +767,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     /**
      * Decrease tree height when root page has only one child and that child does not
      * have a sibling.
-     * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see BTreeImpl#doDecreaseTreeHeight(org.simpledbm.rss.api.tx.Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeContext)
      * @see DecreaseTreeHeightOperation
      */
     void redoDecreaseTreeHeightOperation(Page page,
@@ -817,7 +817,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @param page Page where the insert should take place
      * @param insertOp The log record containing details of the insert operation
      * @see BTreeImpl#doInsert(Transaction, IndexKey, Location)
-     * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeCursor)
+     * @see BTreeImpl#doInsertTraverse(Transaction, org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeContext)
      */
     void redoInsertOperation(Page page, InsertOperation insertOp) {
     	Trace.event(15, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
@@ -883,7 +883,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
 //		}
 
-        BTreeCursor bcursor = new BTreeCursor(this);
+        BTreeContext bcursor = new BTreeContext();
     	Trace.event(17, insertOp.getPageId().getContainerId(), insertOp.getPageId().getPageNumber());
         bcursor.setP(bufmgr.fixExclusive(insertOp.getPageId(), false, -1, 0));
         try {
@@ -1030,7 +1030,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //		log(n, <T, undo-delete, Q, (k, x), m>);
 //		Page-LSN(Q) = n; Undo-Next-LSN(T) = m; unlatch(Q);
 
-        BTreeCursor bcursor = new BTreeCursor(this);
+        BTreeContext bcursor = new BTreeContext();
     	Trace.event(23, deleteOp.getPageId().getContainerId(), deleteOp.getPageId().getPageNumber());
         bcursor.setP(bufmgr.fixExclusive(deleteOp.getPageId(), false, -1, 0));
         try {
@@ -1312,7 +1312,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @param trx Transaction managing the page split operation
          * @param bcursor bcursor.q must be the page that is to be split.
          */
-        public final void doSplit(Transaction trx, BTreeCursor bcursor) {
+        public final void doSplit(Transaction trx, BTreeContext bcursor) {
 
         	assert bcursor.getQ().isLatchedForUpdate();
         	
@@ -1437,7 +1437,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * update. In the interests of high concurrency, the space map page update is
          * handled as a separate redo only action. 
          */
-        public final void doMerge(Transaction trx, BTreeCursor bcursor) {
+        public final void doMerge(Transaction trx, BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -1540,7 +1540,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * }
          * </pre>
          */
-        public final void doLink(Transaction trx, BTreeCursor bcursor) {
+        public final void doLink(Transaction trx, BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -1611,7 +1611,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * }
          * </pre>
          */
-        public final void doUnlink(Transaction trx, BTreeCursor bcursor) {
+        public final void doUnlink(Transaction trx, BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -1665,7 +1665,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * densely populated page to the less populated page.
          * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
          */
-        public final void doRedistribute(Transaction trx, BTreeCursor bcursor) {
+        public final void doRedistribute(Transaction trx, BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -1757,7 +1757,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * UPDATE mode. 
          * @param bcursor bcursor.q must point to left page, and bcursor.r to its right sibling
          */
-        public final void doNewRedistribute(Transaction trx, BTreeCursor bcursor) {
+        public final void doNewRedistribute(Transaction trx, BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -1896,7 +1896,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @param bcursor bcursor.q must point to root page, and bcursor.r to its right sibling
          */
         public final void doIncreaseTreeHeight(Transaction trx,
-                BTreeCursor bcursor) {
+                BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -2040,7 +2040,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @param bcursor bcursor.p must point to root page, and bcursor.q to only child
          */
         public final void doDecreaseTreeHeight(Transaction trx,
-                BTreeCursor bcursor) {
+                BTreeContext bcursor) {
 
             final BTreeImpl btree = this;
 
@@ -2125,7 +2125,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * will be left latched as bcursor.p. Latches on child nodes will remain
          * unchanged.  
          */
-        final void doSplitParent(Transaction trx, BTreeCursor bcursor) {
+        final void doSplitParent(Transaction trx, BTreeContext bcursor) {
             /*
              * doSplit requires Q to point to page that is to be
              * split, so we need to point Q to P temporarily.
@@ -2154,7 +2154,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * are linked the index page.
          */
         public final boolean doRepairPageUnderflow(Transaction trx,
-                BTreeCursor bcursor) {
+                BTreeContext bcursor) {
 
         	Trace.event(50);
             assert bcursor.getP() != null;
@@ -2530,7 +2530,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * are linked the index page.
          */
         public final void repairPageUnderflow(Transaction trx,
-                BTreeCursor bcursor) {
+                BTreeContext bcursor) {
             boolean tryAgain = doRepairPageUnderflow(trx, bcursor);
             while (tryAgain) {
                 // FIXME Test case
@@ -2548,7 +2548,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * <p>This traversal mode is used for inserts and deletes.
          * Corresponds to Update-mode-traverse in btree paper.
          */
-        public final void updateModeTraverse(Transaction trx, BTreeCursor bcursor) {
+        public final void updateModeTraverse(Transaction trx, BTreeContext bcursor) {
             /*
              * Fix root page
              */
@@ -2678,7 +2678,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * contain the search key. bcursor.p will be left in shared latch.
          * Corresponds to read-mode-traverse() in btree paper. 
          */
-        public final void readModeTraverse(BTreeCursor bcursor) {
+        public final void readModeTraverse(BTreeContext bcursor) {
 
             if (log.isDebugEnabled()) {
                 log.debug(
@@ -2738,7 +2738,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @return SearchResult containing information about where to insert the new key
          */
         public final SearchResult doInsertTraverse(Transaction trx,
-                BTreeCursor bcursor) {
+                BTreeContext bcursor) {
             updateModeTraverse(trx, bcursor);
             /* At this point p points to the leaf page where the key is to be inserted */
             assert bcursor.getP() != null;
@@ -2769,7 +2769,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * @return True if insert can proceed, false if lock could not be obtained on next key.
          */
         public final boolean doNextKeyLock(Transaction trx,
-                BTreeCursor bcursor, int nextPageNumber, int nextk,
+                BTreeContext bcursor, int nextPageNumber, int nextk,
                 LockMode mode, LockDuration duration) {
         	
         	assert bcursor.getP() != null;
@@ -2913,7 +2913,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final boolean doInsert(Transaction trx, IndexKey key,
                 Location location) {
 
-            BTreeCursor bcursor = new BTreeCursor(btreeMgr);
+            BTreeContext bcursor = new BTreeContext();
             bcursor.searchKey = new IndexItem(
                 key,
                 location,
@@ -3123,7 +3123,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final boolean doDelete(Transaction trx, IndexKey key,
                 Location location) {
 
-            BTreeCursor bcursor = new BTreeCursor(btreeMgr);
+            BTreeContext bcursor = new BTreeContext();
             bcursor.searchKey = new IndexItem(
                 key,
                 location,
@@ -3559,7 +3559,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         /**
          * Internal use
          */
-        final BTreeCursor bcursor;
+        final BTreeContext bcursor;
 
         /**
          * The lock mode to be used for locking locations retrieved by the scan.
@@ -3598,7 +3598,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         IndexCursorImpl(Transaction trx, BTreeImpl btree, IndexItem startKey,
                 LockMode lockMode) {
             this.btree = btree;
-            this.bcursor = new BTreeCursor(btree.btreeMgr);
+            this.bcursor = new BTreeContext();
             this.trx = trx;
             this.startKey = startKey;
             this.currentKey = startKey; // initial search key
@@ -3891,10 +3891,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
     }
 
-    public static final class BTreeCursor {
+    public static final class BTreeContext {
     	
-    	final BTreeIndexManagerImpl btreemgr;
-
         private BufferAccessBlock q = null;
 
         private BufferAccessBlock r = null;
@@ -3913,8 +3911,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         private Location nextKeyLocation = null;
 
-        public BTreeCursor(BTreeIndexManagerImpl btreemgr) {
-        	this.btreemgr = btreemgr;
+        public BTreeContext() {
         }
 
         public final BufferAccessBlock getP() {
@@ -5751,7 +5748,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
     /**
      * Log record for the Unlink operation. It is applied to the parent page.
-     * @see BTreeImpl#doUnlink(Transaction, BTreeCursor)
+     * @see BTreeImpl#doUnlink(Transaction, BTreeContext)
      * @see BTreeIndexManagerImpl#redoUnlinkOperation(Page, UnlinkOperation) 
      */
     public static final class UnlinkOperation extends BTreeLogOperation
@@ -6047,7 +6044,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * root page and the new child page. It is defined as a Compensation record so that it
      * can be linked back in such a way that if this operation completes, it is treated as 
      * a nested top action.
-     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeImpl#doIncreaseTreeHeight(Transaction, BTreeContext)
      * @see BTreeIndexManagerImpl#redoIncreaseTreeHeightOperation(Page, IncreaseTreeHeightOperation)
      */
     public static final class IncreaseTreeHeightOperation extends
@@ -6198,7 +6195,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     /**
      * Decrease of the height of the tree when root page has only one child.
      * Must be logged as part of the root page update.
-     * @see BTreeIndexManagerImpl.BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeCursor)
+     * @see BTreeIndexManagerImpl.BTreeImpl#doDecreaseTreeHeight(Transaction, BTreeContext)
      * @see BTreeIndexManagerImpl#redoDecreaseTreeHeightOperation(Page, DecreaseTreeHeightOperation)
      */
     public static final class DecreaseTreeHeightOperation extends
