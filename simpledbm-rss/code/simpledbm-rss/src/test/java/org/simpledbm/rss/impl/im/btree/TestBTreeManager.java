@@ -1036,6 +1036,56 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
 
+	void doNewRedistribute(boolean testLeaf) throws Exception {
+		boolean testUnique = false;
+
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
+			try {
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab
+						.getPage());
+				node.dump();
+			} finally {
+				bab.unfix();
+			}
+			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
+			try {
+				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab
+						.getPage());
+				node.dump();
+			} finally {
+				bab.unfix();
+			}
+
+			BTreeContext bcursor = new BTreeContext();
+			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
+			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
+			try {
+				Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+				boolean okay = false;
+				try {
+					bcursor.searchKey = generateKey(btree.indexItemFactory,
+							"da", 5, -1, testLeaf);
+					btree.doNewRedistribute(trx, bcursor);
+				} finally {
+					if (okay)
+						trx.commit();
+					else {
+						trx.abort();
+					}
+				}
+			} finally {
+				bcursor.unfixQ();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+	
+	
 	void doSingleInsert(boolean testUnique, boolean commit, String k, String loc)
 			throws Exception {
 		doSingleInsert(testUnique, commit, k, loc, null, null);
@@ -2260,6 +2310,50 @@ public class TestBTreeManager extends BaseTestCase {
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testRedistributeIssue28.xml");
 	}
 
+	/**
+	 * Test leaf right to left
+	 * @throws Exception
+	 */
+	public void testNewRedistribute1() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data10nul.xml");
+		doNewRedistribute(true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testNewRedistribute.xml");
+	}	
+	
+	/**
+	 * Test leaf left to right
+	 * @throws Exception
+	 */
+	public void testNewRedistribute2() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data11nul.xml");
+		doNewRedistribute(true);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testNewRedistribute.xml");
+	}
+
+	/**
+	 * Test non-leaf right to left
+	 * @throws Exception
+	 */
+	public void testNewRedistribute3() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data10nu.xml");
+		doNewRedistribute(false);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testNewRedistribute_i.xml");
+	}	
+
+	/**
+	 * Test non-leaf left to right
+	 * @throws Exception
+	 */
+	public void testNewRedistribute4() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data11nu.xml");
+		doNewRedistribute(false);
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testNewRedistribute_i.xml");
+	}	
+	
 	public void testSimpleInsertAbort() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data3nul.xml");
