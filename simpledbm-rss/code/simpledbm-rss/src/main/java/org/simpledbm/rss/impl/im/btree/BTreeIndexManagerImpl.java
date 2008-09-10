@@ -3252,6 +3252,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     && node.getPage().getPageLsn().equals(icursor.pageLsn)) {
                 // If this is a call to fetchNext, check if we can avoid searching the node
                 // If page LSN hasn't changed we can used cached values.
+            	Trace.event(129, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 sr = new SearchResult();
                 sr.item = icursor.currentKey;
                 sr.k = icursor.k;
@@ -3266,6 +3267,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         .getItem(sr.k), icursor.currentKey));
                 }
             } else {
+            	Trace.event(130, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 sr = node.search(icursor.currentKey);
             }
 
@@ -3278,13 +3280,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * we are done. Else, we need to move to the next key.
                  */
                 if (sr.k == node.getKeyCount()) {
+                	Trace.event(132, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                     /*
                      * Current key is the last key on this node. Therefore,
                      * move to the node to the right.
                      */
                     return moveToNextNode(icursor, node, sr);
                 } else {
-                    /*
+                	Trace.event(131, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
+                	/*
                      * Move to the next key in the same node
                      */
                     sr.k = sr.k + 1;
@@ -3292,12 +3296,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     sr.item = node.getItem(sr.k);
                 }
             } else if (sr.k == -1) {
+            	Trace.event(133, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 /*
                  * The current key is greater than all keys in this node,
                  * therefore we need to move to the node to our right.
                  */
                 return moveToNextNode(icursor, node, sr);
             } else if (node.header.keyCount == 1) {
+            	Trace.event(134, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 /*
                  * Only one key, which by definition is the high key,
                  * so we are at EOF.
@@ -3321,6 +3327,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // Key to be fetched is in the next page
             int nextPage = node.header.rightSibling;
             if (nextPage == -1) {
+            	Trace.event(135, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 /*
                  * There isn't a node to our right, so we are at EOF.
                  */
@@ -3329,11 +3336,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr.exactMatch = false;
                 sr.item = node.getItem(sr.k);
             } else {
+            	Trace.event(136, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber(), nextPage);
                 PageId nextPageId = new PageId(containerId, nextPage);
                 icursor.bcursor.setQ(icursor.bcursor.removeP());
+            	Trace.event(137, nextPageId.getContainerId(), nextPageId.getPageNumber());
                 icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(nextPageId, 0));
-                node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
                 icursor.bcursor.unfixQ();
+                node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
             }
             return sr;
@@ -4096,19 +4105,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         /**
          * Page being managed.
          */
-        SlottedPage page;
+        final SlottedPage page;
         
         /**
          * Noted pageId of page we are handling.
          * Useful for validation.
          */
-        PageId pageId;
+        final PageId pageId;
         
         /**
          * Noted pageLsn of page we are handling.
          * Useful for validation.
          */
-        Lsn pageLsn;
+        final Lsn pageLsn;
 
         /**
          * Cached header.
@@ -4592,6 +4601,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final SearchResult search(IndexItem key) {
         	sanityCheck();
+        	Trace.event(138, pageId.getContainerId(), pageId.getPageNumber());
             SearchResult result = new SearchResult();
             /*
              * Binary search algorithm
