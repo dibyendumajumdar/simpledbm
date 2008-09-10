@@ -196,7 +196,7 @@ public class Trace {
 		}
 	}
 
-	static String[] messages = new String[129];
+	static String[] messages = new String[139];
 
 	static {
 		traceBuffer = new TraceElement[SIZE];
@@ -343,7 +343,17 @@ public class Trace {
 		messages[126] = "126 TID {0} SEQ {1} btree undo delete: page P ({2},{3}) found after search; but it cannot accomodate deleted key and must be split";
 		messages[127] = "127 TID {0} SEQ {1} tmgr undo insert segment: fixing page ({2},{3}) exclusively";
 		messages[128] = "128 TID {0} SEQ {1} tmgr undo insert segment: updating space info for page {4} to {5} in space page ({2},{3}) ";
-
+		messages[129] = "129 TID {0} SEQ {1} btree do search: fetch next and page ({2},{3}) has not changed, moving to next key in page";
+		messages[130] = "130 TID {0} SEQ {1} btree do search: first fetch or page ({2},{3}) has changed since last fetch, searching for key in page";
+		messages[131] = "131 TID {0} SEQ {1} btree do search: found old key in page ({2},{3}), and not the last key, hence moving to next key in page";
+		messages[132] = "132 TID {0} SEQ {1} btree do search: found old key in page ({2},{3}) but it is the last key in the page, must go to right sibling";
+		messages[133] = "133 TID {0} SEQ {1} btree do search: current key is greater than all keys in the page ({2},{3}), must go to right sibling";
+		messages[134] = "134 TID {0} SEQ {1} btree do search: current key is the only key in the page ({2},{3}), hence at EOF";
+		messages[135] = "135 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has no right sibling, hence at EOF";
+		messages[136] = "136 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has right sibling {4}, moving to sibling node and searching key in node";
+		messages[137] = "137 TID {0} SEQ {1} btree move to right sibling: fixing page ({2},{3}) in SHARED mode";
+		messages[138] = "138 TID {0} SEQ {1} btree node search: searching for key in page ({2},{3})";
+		
 	};
 
 }
