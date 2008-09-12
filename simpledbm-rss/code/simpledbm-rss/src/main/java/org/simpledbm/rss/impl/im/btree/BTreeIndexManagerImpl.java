@@ -3149,7 +3149,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
                 SearchResult sr = node.search(bcursor.searchKey);
                 if (!sr.exactMatch) {
-                	Trace.dump();
                     // key not found?? something is wrong
                     log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage(
                         "EB0004",
@@ -3400,6 +3399,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 Savepoint sp = trx.createSavepoint(false);
                 try {
                     if (sr.item == null) {
+                    	Trace.dump();
                         log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage(
                             "EB0006",
                             icursor.currentKey.toString()));
