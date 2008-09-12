@@ -334,7 +334,7 @@ public class Server {
     public synchronized void shutdown() {
         assertStarted();
         
-        Trace.dump();
+        // Trace.dump();
         
         transactionManager.shutdown();
         bufferManager.shutdown();
