@@ -3660,7 +3660,7 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 
 		public void shutdown() {
-			Trace.dump();
+//			Trace.dump();
 			
 			trxmgr.shutdown();
 			bufmgr.shutdown();
