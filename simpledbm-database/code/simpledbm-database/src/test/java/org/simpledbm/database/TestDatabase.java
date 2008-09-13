@@ -80,7 +80,7 @@ public class TestDatabase extends BaseTestCase {
 		properties.setProperty("log.flush.interval", "30");
 		properties.setProperty("log.disableFlushRequests", "true");
 		properties.setProperty("storage.basePath", "testdata/DatabaseTests");
-		properties.setProperty("bufferpool.numbuffers", "500");
+		properties.setProperty("bufferpool.numbuffers", "1500");
 		properties.setProperty("bufferpool.writerSleepInterval", "60000");
 		properties.setProperty("transaction.ckpt.interval", "60000");
 		properties.setProperty("logging.properties.type", "log4j");
