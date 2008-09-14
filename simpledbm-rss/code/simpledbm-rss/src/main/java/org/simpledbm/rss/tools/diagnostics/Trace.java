@@ -196,7 +196,7 @@ public class Trace {
 		}
 	}
 
-	static String[] messages = new String[139];
+	static String[] messages = new String[140];
 
 	static {
 		traceBuffer = new TraceElement[SIZE];
@@ -353,6 +353,8 @@ public class Trace {
 		messages[136] = "136 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has right sibling {4}, moving to sibling node and searching key in node";
 		messages[137] = "137 TID {0} SEQ {1} btree move to right sibling: fixing page ({2},{3}) in SHARED mode";
 		messages[138] = "138 TID {0} SEQ {1} btree node search: searching for key in page ({2},{3})";
+		messages[139] = "139 TID {0} SEQ {1} btree fetch: unexpected error while searching container {2}";
+		
 		
 	};
 
