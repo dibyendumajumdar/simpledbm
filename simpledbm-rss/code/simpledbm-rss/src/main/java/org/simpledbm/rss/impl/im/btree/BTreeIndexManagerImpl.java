@@ -3242,8 +3242,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Searches for {@link IndexCursorImpl#currentKey} in the leaf node, and
          * positions the cursor on the current key or the next higher key.
          * Handles both fetch() and fetchNext() calls.
+         * <p>
+         * Cursor may hit EOF as a result. Caller must check for EOF condition
+         * after this method returns.
          */
-        final SearchResult doSearch(IndexCursorImpl icursor) {
+        final SearchResult doSearchAtLeafLevel(IndexCursorImpl icursor) {
             BTreeNode node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
             icursor.setEof(false);
             SearchResult sr = null;
@@ -3358,7 +3361,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         private final boolean doFetch(Transaction trx, IndexScan cursor) {
             IndexCursorImpl icursor = (IndexCursorImpl) cursor;
             try {
-                boolean doSearch = false;
+                boolean searchFromRoot = false;
                 BTreeNode node = null; 
                 if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
                     // This is not the first call to fetch
@@ -3369,7 +3372,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
                     if (node.isDeallocated() || !node.isLeaf()) {
                         // The node that contained current key is no longer part of the tree, hence scan is necessary
-                        doSearch = true;
+                        searchFromRoot = true;
                         icursor.bcursor.unfixP();
                     } else {
                         // The node still exists, so we need to check whether the previously returned key is bound to the 
@@ -3380,25 +3383,30 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             .equals(icursor.pageLsn)
                                 && !node.covers(icursor.currentKey)) {
                             // The previous key is no longer bound to the node
-                            doSearch = true;
+                            searchFromRoot = true;
                             icursor.bcursor.unfixP();
                         }
                     }
                 } else {
                     // First call to fetch, hence tree must be scanned.
-                    doSearch = true;
+                    searchFromRoot = true;
                 }
 
-                if (doSearch) {
+                if (searchFromRoot) {
                     icursor.bcursor.setSearchKey(icursor.currentKey);
                     readModeTraverse(icursor.bcursor);
                 }
 
-                SearchResult sr = doSearch(icursor);
+                SearchResult sr = doSearchAtLeafLevel(icursor);
+//                if (icursor.isEof()) {
+//                	// we hit EOF, so we are done
+//                	return true;
+//                }
 
                 Savepoint sp = trx.createSavepoint(false);
                 try {
                     if (sr.item == null) {
+                    	Trace.event(139, icursor.btree.containerId);
                     	Trace.dump();
                     	node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
 
@@ -3465,7 +3473,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     // TODO - could avoid the tree traverse here by checking the old page
                     icursor.bcursor.setSearchKey(icursor.currentKey);
                     readModeTraverse(icursor.bcursor);
-                    SearchResult sr1 = doSearch(icursor);
+                    SearchResult sr1 = doSearchAtLeafLevel(icursor);
                     if (sr1.item.equals(sr.item)) {
                         // we found the same key again
                         icursor.currentKey = sr1.item;
@@ -4069,7 +4077,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public StringBuilder appendTo(StringBuilder sb) {
         	sb.append("SearchResult(k = ").append(k).
         		append(", item = [");
-        	item.appendTo(sb);
+        	if (item != null) {
+        		item.appendTo(sb);
+        	}
         	sb.append("], exactMatch = ").append(exactMatch).append(")");
         	return sb;
         }
