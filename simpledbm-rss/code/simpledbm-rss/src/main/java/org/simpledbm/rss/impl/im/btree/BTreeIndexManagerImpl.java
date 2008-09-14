@@ -3400,6 +3400,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 try {
                     if (sr.item == null) {
                     	Trace.dump();
+                    	node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
+
+                    	log.error(LOG_CLASS_NAME, "doFetch", "Thread ID = " + Thread.currentThread().getId());
+                    	log.error(LOG_CLASS_NAME, "doFetch", "Search key = " + icursor.currentKey.toString());
+                    	log.error(LOG_CLASS_NAME, "doFetch", "Search Result = " + sr.toString());
+                    	log.error(LOG_CLASS_NAME, "doFetch", "Node = " + node.toString());
                         log.error(LOG_CLASS_NAME, "doFetch", mcat.getMessage(
                             "EB0006",
                             icursor.currentKey.toString()));
@@ -4050,7 +4056,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
     }
 
-    public static final class SearchResult {
+    public static final class SearchResult implements Dumpable {
         /**
          * The key number can range from {@link BTreeIndexManagerImpl#FIRST_KEY_POS}
          * to {@link BTreeNode#getKeyCount()}. A value of -1 indicates that the
@@ -4059,6 +4065,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         int k = -1;
         IndexItem item = null;
         boolean exactMatch = false;
+        
+        public StringBuilder appendTo(StringBuilder sb) {
+        	sb.append("SearchResult(k = ").append(k).
+        		append(", item = [");
+        	item.appendTo(sb);
+        	sb.append("], exactMatch = ").append(exactMatch).append(")");
+        	return sb;
+        }
+        public String toString() {
+        	return appendTo(new StringBuilder()).toString();
+        }
     }
 
     /**
@@ -4096,7 +4113,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * @author Dibyendu Majumdar
      * @since 19-Sep-2005
      */
-    public static final class BTreeNode implements StorableFactory {
+    public static final class BTreeNode implements StorableFactory, Dumpable {
 
         static final short NODE_TYPE_LEAF = 1;
         static final short NODE_TREE_UNIQUE = 2;
@@ -4208,6 +4225,40 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             System.out.println("</page>");
         }
 
+        public String toString() {
+        	StringBuilder sb = new StringBuilder();
+        	return appendTo(sb).toString();
+        }
+        
+        public final StringBuilder appendTo(StringBuilder sb) {
+            sb.append("<page containerId=\"").append(page.getPageId().getContainerId()).append("\" pageNumber=\"").append(page.getPageId().getPageNumber()).append("\">").append(Dumpable.newline);
+            sb.append("	<header>").append(Dumpable.newline);
+            sb.append("		<locationfactory>").append(header.locationFactoryType).append("</locationfactory>").append(Dumpable.newline);
+            sb.append("		<keyfactory>").append(header.keyFactoryType).append("</keyfactory>").append(Dumpable.newline);
+            sb.append("		<unique>").append(isUnique() ? "yes" : "false").append("</unique>").append(Dumpable.newline);
+            sb.append("		<leaf>").append(isLeaf() ? "yes" : "false").append("</leaf>").append(Dumpable.newline);
+            sb.append("		<leftsibling>").append(header.leftSibling).append("</leftsibling>").append(Dumpable.newline);
+            sb.append("		<rightsibling>").append(header.rightSibling).append("</rightsibling>").append(Dumpable.newline);
+            sb.append("		<smppagenumber>").append(page.getSpaceMapPageNumber()).append("</smppagenumber>").append(Dumpable.newline);
+            sb.append("		<keycount>").append(header.keyCount).append("</keycount>").append(Dumpable.newline);
+            sb.append("	</header>").append(Dumpable.newline);
+            sb.append("	<items>").append(Dumpable.newline);
+            for (int k = FIRST_KEY_POS; k < page.getNumberOfSlots(); k++) {
+                if (page.isSlotDeleted(k)) {
+                    continue;
+                }
+                IndexItem item = getItem(k);
+                sb.append("		<item pos=\"").append(k).append("\">").append(Dumpable.newline);
+                sb.append("			<childpagenumber>").append(item.childPageNumber).append("</childpagenumber>").append(Dumpable.newline);
+                sb.append("			<location>").append(item.getLocation()).append("</location>").append(Dumpable.newline);
+                sb.append("			<key>").append(item.getKey().toString()).append("</key>").append(Dumpable.newline);
+                sb.append("		</item>").append(Dumpable.newline);
+            }
+            sb.append("	</items>").append(Dumpable.newline);
+            sb.append("</page>").append(Dumpable.newline);
+            return sb;
+        }        
+        
         /**
          * Dumps contents of the BTree node.
          */
