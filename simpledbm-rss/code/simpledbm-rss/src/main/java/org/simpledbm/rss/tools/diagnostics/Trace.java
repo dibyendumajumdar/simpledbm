@@ -95,19 +95,31 @@ public class Trace {
 		 * that is much greater than the current max - to be exact, if the difference
 		 * is greater than Integer.MAX_VALUE/2.
 		 */
-		int max = seq.get();
+//		int max = seq.get();
+//		for (int i = 0; i < traceBuffer.length; i++) {
+//			TraceElement e = traceBuffer[i];
+//			if ((e.seq < max || (e.seq > max && ((e.seq - max) > Integer.MAX_VALUE/2))) && e.msg != -1) {
+//				if (e.msg < 0 || e.msg > messages.length) {
+//					log.debug(Trace.class.getName(), "dump", MessageFormat.format(defaultMessage,
+//							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4, e.msg));
+//				}
+//				else {
+//					String msg = messages[e.msg];
+//					log.debug(Trace.class.getName(), "dump", MessageFormat.format(msg,
+//							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4));
+//				}
+//			}
+//		}
 		for (int i = 0; i < traceBuffer.length; i++) {
 			TraceElement e = traceBuffer[i];
-			if ((e.seq < max || (e.seq > max && ((e.seq - max) > Integer.MAX_VALUE/2))) && e.msg != -1) {
-				if (e.msg < 0 || e.msg > messages.length) {
-					log.debug(Trace.class.getName(), "dump", MessageFormat.format(defaultMessage,
-							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4, e.msg));
-				}
-				else {
-					String msg = messages[e.msg];
-					log.debug(Trace.class.getName(), "dump", MessageFormat.format(msg,
-							e.tid, e.seq, e.d1, e.d2, e.d3, e.d4));
-				}
+			if (e.msg < 0 || e.msg > messages.length) {
+//				log.debug(Trace.class.getName(), "dump", MessageFormat.format(
+//						defaultMessage, e.tid, e.seq, e.d1, e.d2, e.d3, e.d4,
+//						e.msg));
+			} else {
+				String msg = messages[e.msg];
+				log.debug(Trace.class.getName(), "dump", MessageFormat.format(
+						msg, e.tid, e.seq, e.d1, e.d2, e.d3, e.d4));
 			}
 		}
 	}
