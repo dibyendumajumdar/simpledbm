@@ -52,7 +52,11 @@ public class WrappingSequencer extends AtomicInteger {
 	public int getNext() {
 		while (true) {
 			int current = get();
-			int next = (current+1) % range;
+//			int next = (current+1) % range;
+			int next = current + 1;
+			if (next >= range) {
+				next = 0;
+			}
 			if (compareAndSet(current, next)) {
 				return current;
 			}
