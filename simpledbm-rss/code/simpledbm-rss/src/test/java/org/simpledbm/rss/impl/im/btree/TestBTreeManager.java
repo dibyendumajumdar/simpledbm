@@ -36,6 +36,7 @@ import junit.framework.TestSuite;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
+import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexKey;
@@ -51,8 +52,8 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
@@ -74,6 +75,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.BTreeNode;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItemFactory;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.LoadPageOperation;
+import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.SearchResult;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
@@ -90,7 +92,6 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.impl.wal.LogManagerImpl;
-import org.simpledbm.rss.tools.diagnostics.Trace;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.ClassUtils;
 
@@ -1085,6 +1086,39 @@ public class TestBTreeManager extends BaseTestCase {
 		}
 	}
 	
+	/**
+	 * Test case for Issue 64.
+	 */
+	void doSearchIssue64() throws Exception {
+		final boolean testUnique = false;
+
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getSingleton(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
+			IndexKey key = keyFactory.parseIndexKey(1, "zzz");
+			Location location = locationFactory.newLocation();
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			IndexScan scan = btree.openScan(trx, key, location, true);
+			try {
+				if (scan.fetchNext()) {
+					fail("Unexpected result");
+				}
+			} catch (RSSException e) {
+				fail("Unexpected exception " + e.getMessage());
+			} finally {
+				scan.close();
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}	
 	
 	void doSingleInsert(boolean testUnique, boolean commit, String k, String loc)
 			throws Exception {
@@ -2353,6 +2387,12 @@ public class TestBTreeManager extends BaseTestCase {
 		doNewRedistribute(false);
 		doValidateTree("org/simpledbm/rss/impl/im/btree/testNewRedistribute_i.xml");
 	}	
+
+	public void testSearchIssue64() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/dataIssue64.xml");
+		doSearchIssue64();
+	}	
 	
 	public void testSimpleInsertAbort() throws Exception {
 		doInitContainer();
@@ -3455,6 +3495,49 @@ public class TestBTreeManager extends BaseTestCase {
         page.unlatchExclusive();
         compressKeys = false;
 	}
+
+	/**
+	 * Test search operations within a node
+	 */
+	public void testNodeSearch() {
+		compressKeys = true;
+		Properties p = new Properties();
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
+        final StorageManager storageManager = new StorageManagerImpl(p);
+        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        final PageManager pageFactory = new PageManagerImpl(
+            objectFactory,
+            storageManager,
+            latchFactory,
+            p);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+            objectFactory, pageFactory, p);
+		objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
+				new StringKeyFactory());
+		objectFactory.registerSingleton(TYPE_ROWLOCATIONFACTORY,
+				new RowLocationFactory());
+		BTreeIndexManagerImpl.IndexItemFactory indexHelper = new BTreeIndexManagerImpl.IndexItemFactory(new StringKeyFactory(),
+				new RowLocationFactory(), false);
+        SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
+            .getPageType(), new PageId());
+        page.latchExclusive();
+        BTreeIndexManagerImpl.BTreeNode.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique(), 0);
+        BTreeNode node = new BTreeNode(indexHelper, page);
+        for (int i = 1; i < 145; i++) {
+        	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
+        }
+        node.header.keyCount = 144;
+        node.updateHeader();
+        // System.out.println(page);
+		IndexItem key = generateKey(indexHelper, "012345678901234", 0, 0, true);
+		SearchResult sr = node.search(key);
+		assertEquals(1, sr.k);
+		key = generateKey(indexHelper, "ZZZZ", 0, 0, true);
+		sr = node.search(key);
+		assertEquals(-1, sr.k);
+        page.unlatchExclusive();
+        compressKeys = false;
+	}	
 	
 	
 	
