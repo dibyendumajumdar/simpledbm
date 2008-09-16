@@ -3153,7 +3153,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     log.error(LOG_CLASS_NAME, "doDelete", mcat.getMessage(
                         "EB0004",
                         bcursor.searchKey.toString() + " TID " + Thread.currentThread().getId()));
-                    //node.dumpAsXml();
                     throw new IndexException(mcat.getMessage(
                         "EB0004",
                         bcursor.searchKey.toString()));
@@ -3243,8 +3242,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * positions the cursor on the current key or the next higher key.
          * Handles both fetch() and fetchNext() calls.
          * <p>
-         * Cursor may hit EOF as a result. Caller must check for EOF condition
-         * after this method returns.
+         * Cursor may hit EOF as a result. 
          */
         final SearchResult doSearchAtLeafLevel(IndexCursorImpl icursor) {
             BTreeNode node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
@@ -3252,9 +3250,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             SearchResult sr = null;
             if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
                     && node.getPage().getPageLsn().equals(icursor.pageLsn)) {
-                // If this is a call to fetchNext, check if we can avoid searching the node
-                // If page LSN hasn't changed we can used cached values.
-            	Trace.event(129, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
+                /*
+                 * If this is a call to fetchNext, check if we can avoid searching the node
+                 * If page LSN hasn't changed we can used cached values.
+                 */
+                Trace.event(129, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 sr = new SearchResult();
                 sr.item = icursor.currentKey;
                 sr.k = icursor.k;
@@ -3269,11 +3269,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         .getItem(sr.k), icursor.currentKey));
                 }
             } else {
+            	/*
+            	 * Either fetchFirst or page has changed since we last fetched
+            	 * Search within the same page again just in case 
+            	 */
             	Trace.event(130, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 sr = node.search(icursor.currentKey);
             }
 
-            // if (sr.exactMatch && icursor.fetchCount > 0) {
             if (sr.exactMatch
                     && icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER) {
                 /*
@@ -3347,7 +3350,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
                 if (sr.k == -1) {
-                	// hit EOF
+                	/* must have hit EOF, as we should never have to move right more than
+                	 * once at any level of the tree.
+                	 */
+                	assert node.header.rightSibling == -1;
+                	// TODO also assert that the highkey == +infinity
                     icursor.setEof(true);
                     sr.k = node.header.keyCount;
                     sr.exactMatch = false;
@@ -3358,10 +3365,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
         
         /**
-         * Save the cusror position
-         * @param icursor
-         * @param sr
-         * @return
+         * Saves the cursor position
          */
         private boolean saveCursorState(IndexCursorImpl icursor, SearchResult sr) {
             icursor.currentKey = sr.item;
@@ -3374,7 +3378,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 .getPage()
                 .getPageLsn();
             icursor.k = sr.k;
-//          icursor.bcursor.unfixP();
             icursor.fetchCount++;
             icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
         	
@@ -3458,19 +3461,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         sr.item.getLocation(),
                         icursor.lockMode,
                         LockDuration.MANUAL_DURATION);
-//                    icursor.currentKey = sr.item;
-//                    icursor.pageId = icursor.bcursor
-//                        .getP()
-//                        .getPage()
-//                        .getPageId();
-//                    icursor.pageLsn = icursor.bcursor
-//                        .getP()
-//                        .getPage()
-//                        .getPageLsn();
-//                    icursor.k = sr.k;
-//                    icursor.bcursor.unfixP();
-//                    icursor.fetchCount++;
-//                    icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
                     
                     /*
                      * FIXME - If isolationMode is READ_COMMITTED and the current
@@ -3494,7 +3484,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      * Need to unlatch page and retry unconditionally. 
                      */
                     icursor.bcursor.unfixP();
-                    // System.out.println(Thread.currentThread().getName() + ":doFetch: Conditional lock failed, attempt to acquire unconditional lock on " + sr.item.getLocation() + " in mode " + icursor.lockMode);
                     trx.acquireLock(
                         sr.item.getLocation(),
                         icursor.lockMode,
@@ -3509,19 +3498,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     SearchResult sr1 = doSearchAtLeafLevel(icursor);
                     if (sr1.item.equals(sr.item)) {
                         // we found the same key again
-//                        icursor.currentKey = sr1.item;
-//                        icursor.pageId = icursor.bcursor
-//                            .getP()
-//                            .getPage()
-//                            .getPageId();
-//                        icursor.pageLsn = icursor.bcursor
-//                            .getP()
-//                            .getPage()
-//                            .getPageLsn();
-//                        icursor.k = sr.k;
-//                        icursor.bcursor.unfixP();
-//                        icursor.fetchCount++;
-//                        icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
                         /*
                          * FIXME - If isolationMode is READ_COMMITTED and the current
                          * key does not match search criteria (NOT FOUND), then we 
@@ -3530,6 +3506,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          */
                         return saveCursorState(icursor, sr1);
                     }
+                    /*
+                     * Need to restart search as the last location is no longer
+                     * what we want.
+                     */
                     trx.rollback(sp);
                 }
             } finally {
@@ -3541,9 +3521,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return false;
         }
 
+        /**
+         * Fetches the next key.
+         */
         public final void fetch(Transaction trx, IndexScan cursor) {
             boolean success = doFetch(trx, cursor);
             while (!success) {
+            	/*
+            	 * Fetch has to be retried
+            	 */
                 success = doFetch(trx, cursor);
             }
         }
