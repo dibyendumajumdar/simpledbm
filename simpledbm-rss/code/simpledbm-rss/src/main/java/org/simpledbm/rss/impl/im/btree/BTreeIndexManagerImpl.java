@@ -3346,8 +3346,39 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 icursor.bcursor.unfixQ();
                 node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
+                if (sr.k == -1) {
+                	// hit EOF
+                    icursor.setEof(true);
+                    sr.k = node.header.keyCount;
+                    sr.exactMatch = false;
+                    sr.item = node.getItem(sr.k);
+                }
             }
             return sr;
+        }
+        
+        /**
+         * Save the cusror position
+         * @param icursor
+         * @param sr
+         * @return
+         */
+        private boolean saveCursorState(IndexCursorImpl icursor, SearchResult sr) {
+            icursor.currentKey = sr.item;
+            icursor.pageId = icursor.bcursor
+                .getP()
+                .getPage()
+                .getPageId();
+            icursor.pageLsn = icursor.bcursor
+                .getP()
+                .getPage()
+                .getPageLsn();
+            icursor.k = sr.k;
+//          icursor.bcursor.unfixP();
+            icursor.fetchCount++;
+            icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+        	
+        	return true;
         }
 
         /**
@@ -3398,11 +3429,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
 
                 SearchResult sr = doSearchAtLeafLevel(icursor);
-//                if (icursor.isEof()) {
-//                	// we hit EOF, so we are done
-//                	return true;
-//                }
 
+                /*
+                 * Create a savepoint. In case we cannot get the lock conditionally,
+                 * and have to wait for the lock, it is possible that after the
+                 * wait the search is no longer valid. We need to then rollback to the
+                 * savepoint in order to release the lock we don't need any more. 
+                 */
                 Savepoint sp = trx.createSavepoint(false);
                 try {
                     if (sr.item == null) {
@@ -3425,19 +3458,19 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         sr.item.getLocation(),
                         icursor.lockMode,
                         LockDuration.MANUAL_DURATION);
-                    icursor.currentKey = sr.item;
-                    icursor.pageId = icursor.bcursor
-                        .getP()
-                        .getPage()
-                        .getPageId();
-                    icursor.pageLsn = icursor.bcursor
-                        .getP()
-                        .getPage()
-                        .getPageLsn();
-                    icursor.k = sr.k;
-                    icursor.bcursor.unfixP();
-                    icursor.fetchCount++;
-                    icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+//                    icursor.currentKey = sr.item;
+//                    icursor.pageId = icursor.bcursor
+//                        .getP()
+//                        .getPage()
+//                        .getPageId();
+//                    icursor.pageLsn = icursor.bcursor
+//                        .getP()
+//                        .getPage()
+//                        .getPageLsn();
+//                    icursor.k = sr.k;
+//                    icursor.bcursor.unfixP();
+//                    icursor.fetchCount++;
+//                    icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
                     
                     /*
                      * FIXME - If isolationMode is READ_COMMITTED and the current
@@ -3445,7 +3478,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                      * should release the lock on the key here.
                      * At present this is handled by closing the scan.
                      */
-                    return true;
+                    return saveCursorState(icursor, sr);
                 } catch (LockException e) {
 
                     if (log.isDebugEnabled()) {
@@ -3476,26 +3509,26 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     SearchResult sr1 = doSearchAtLeafLevel(icursor);
                     if (sr1.item.equals(sr.item)) {
                         // we found the same key again
-                        icursor.currentKey = sr1.item;
-                        icursor.pageId = icursor.bcursor
-                            .getP()
-                            .getPage()
-                            .getPageId();
-                        icursor.pageLsn = icursor.bcursor
-                            .getP()
-                            .getPage()
-                            .getPageLsn();
-                        icursor.k = sr.k;
-                        icursor.bcursor.unfixP();
-                        icursor.fetchCount++;
-                        icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
+//                        icursor.currentKey = sr1.item;
+//                        icursor.pageId = icursor.bcursor
+//                            .getP()
+//                            .getPage()
+//                            .getPageId();
+//                        icursor.pageLsn = icursor.bcursor
+//                            .getP()
+//                            .getPage()
+//                            .getPageLsn();
+//                        icursor.k = sr.k;
+//                        icursor.bcursor.unfixP();
+//                        icursor.fetchCount++;
+//                        icursor.scanMode = IndexCursorImpl.SCAN_FETCH_GREATER;
                         /*
                          * FIXME - If isolationMode is READ_COMMITTED and the current
                          * key does not match search criteria (NOT FOUND), then we 
                          * should release the lock on the key here.
                          * At present this is handled by closing the scan.
                          */
-                        return true;
+                        return saveCursorState(icursor, sr1);
                     }
                     trx.rollback(sp);
                 }
