@@ -114,7 +114,7 @@ import org.xml.sax.SAXException;
  * tree.</li>
  * <li>A page is considered as safe if it is not about to underflow and is not about to overflow.
  * A page is about to underflow if it is the root node and has 1 child or it is any other node and 
- * has two keys. A page is about to overflow if it cannot accomodate a new key.</li>
+ * has two keys. A page is about to overflow if it cannot accommodate a new key.</li>
  * </ol>
  * 
  * @author Dibyendu Majumdar
@@ -128,10 +128,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * 1. If we want to maintain left sibling pointers in pages,
      * then during merge operations, we need to access the page further to the
      * right of right sibling, and update this page as well. 
-     * 2. When copying
-     * keys from one page to another it is not necessary to instantiate keys. A
-     * more efficient way would be to copy raw data. Current method is
-     * inefficient.
+     * 2. When copying keys from one page to another it is not necessary 
+     * to instantiate keys. A more efficient way would be to copy raw data. 
+     * Current method is inefficient.
      */
 
     static final String LOG_CLASS_NAME = BTreeIndexManagerImpl.class.getName();
@@ -629,7 +628,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     }
 
     /**
-     * Redo a distribute operation. 
+     * Redo a distribute keys operation. keys are distributed approximately 
+     * evenly across the two pages. This implementation takes the place of the
+     * older implementation which move only one key between the pages.
      * @see BTreeImpl#doNewRedistribute(Transaction, BTreeContext)
      * @see NewRedistributeOperation
      */
@@ -642,7 +643,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
                 // moving keys left, so keys will be added to the left sibling
                 // the last key of the added keys will become the new high key
-                // FIXME Test case
             	Trace.event(7, page.getPageId().getContainerId(), page.getPageId().getPageNumber());           	
             	// if leaf page, delete extra high key
             	if (node.isLeaf()) {
@@ -1796,7 +1796,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	int targetFreeSpace = (leftSiblingNode.page.getFreeSpace() + rpage.getFreeSpace()) / 2;
             if (leftSiblingNode.page.getFreeSpace() > rpage.getFreeSpace()) {
                 // key moving left
-//            	redistributeOperation.key = rightSiblingNode.getItem(FIRST_KEY_POS);
             	int n = leftSiblingNode.page.getFreeSpace();
             	assert n > targetFreeSpace;
             	int k = FIRST_KEY_POS;
@@ -1829,7 +1828,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	for (; k <= leftSiblingNode.getKeyCount(); k++) {
             		redistributeOperation.items.add(leftSiblingNode.getItem(k));
             	}
-//                redistributeOperation.key = leftSiblingNode.getLastKey();
                 redistributeOperation.targetSibling = redistributeOperation.rightSibling;
             }
 
