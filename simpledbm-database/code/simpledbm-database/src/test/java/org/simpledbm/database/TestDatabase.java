@@ -896,7 +896,7 @@ public class TestDatabase extends BaseTestCase {
 	
 	public void testStress() throws Exception {
 
-		int numThreads = 4;
+		int numThreads = 8;
 		int range = 10000;
 		int iterations = 1;
 		
