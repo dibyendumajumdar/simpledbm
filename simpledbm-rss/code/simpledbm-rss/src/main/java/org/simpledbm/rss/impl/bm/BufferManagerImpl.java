@@ -25,6 +25,7 @@ import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
@@ -291,7 +292,8 @@ public final class BufferManagerImpl implements BufferManager {
     }
 
     /**
-     * Get an empty frame.
+     * Get an empty frame (slot in bufferpool), removing the LRU page from the
+     * buffer pool.
      * <p>
      * Algorithm:
      * <ol>
@@ -346,18 +348,18 @@ public final class BufferManagerImpl implements BufferManager {
 							&& (nextBcb.isInUse() || nextBcb.isBeingRead() || nextBcb
 									.isBeingWritten())) {
 						if (log.isDebugEnabled()) {
-							log
-									.debug(
-											this.getClass().getName(),
-											"getFrame",
-											"SIMPLEDBM-DEBUG: Skipping bcb "
-													+ nextBcb
-													+ " because fixCount > 0 or IO in progress");
+							log.debug(
+								this.getClass().getName(),
+								"getFrame",
+								"SIMPLEDBM-DEBUG: Skipping bcb "
+								+ nextBcb
+								+ " because fixCount > 0 or IO in progress");
 						}
 						continue;
 					} else {
 						/*
-						 * Found a victim
+						 * Found a victim. If it is a valid page and is dirty
+						 * we will have to flush it to disk.
 						 */
 						victim = nextBcb;
 						if (victim.isValid() && victim.isDirty()) {
@@ -367,7 +369,9 @@ public final class BufferManagerImpl implements BufferManager {
 							doWrite = true;
 						}
 						/*
-						 * Tell others that we are about to use this page. This stops others from
+						 * Regardless of whether we need to write this page or not,
+						 * we need to tell others that we are about to use this page.
+						 * We set a flag to say that IO is in progress; this stops others from
 						 * messing around with this BCB.
 						 */
 						victim.setBeingWritten(true);
@@ -388,6 +392,12 @@ public final class BufferManagerImpl implements BufferManager {
 			return -1;
 		}
 		
+		/*
+		 * Flush the page to disk if necessary.
+		 * We could use a blocking queue here to pass on the write
+		 * request to the BufferWriter, but for now, we will do the 
+		 * write ourselves.
+		 */
 		if (doWrite) {
 			clean(victim);
 		}
@@ -415,17 +425,12 @@ public final class BufferManagerImpl implements BufferManager {
 				try {
 					victim.setRecoveryLsn(new Lsn());
 					victim.setDirty(false);
-					if (doWrite) {
-						victim.setBeingWritten(false);
-						decrementDirtyBuffersCount();
-					}
 					/* Remove BCB from LRU Chain */
-					if (!victim.isMember()) {
-						throw new RuntimeException("Unexpected error while writing page " + victim.pageId);
-					}
 					lru.remove(victim);
 					/* Remove BCB from Hash Chain */
 					bucket.chain.remove(victim);
+					victim.setBeingWritten(false);
+					victim.signalIOCompleted();
 					bufferpool[victim.getFrameIndex()] = null;
 					return victim.getFrameIndex();
 				} finally {
@@ -599,6 +604,7 @@ public final class BufferManagerImpl implements BufferManager {
         nextBcb.lock();
         try {
             nextBcb.setFrameIndex(frameNo);
+            nextBcb.signalIOCompleted();
         } finally {
             nextBcb.unlock();
         }
@@ -630,7 +636,6 @@ public final class BufferManagerImpl implements BufferManager {
         BufferControlBlock nextBcb = null;
         int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
         BufferHashBucket bucket = bufferHash[h];
-        BufferAccessBlockImpl bab = null;
 
         for (;;) {
             
@@ -662,64 +667,7 @@ public final class BufferManagerImpl implements BufferManager {
 								 * exclusively or not.
 								 */
 								if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
-
-									nextBcb = bcb;
-
-									if (nextBcb.isNewBuffer()) {
-										/*
-										 * Page has just been read, so we do not
-										 * need to increment fix count. Reset
-										 * this flag for next time.
-										 */
-										nextBcb.setNewBuffer(false);
-									} else {
-										/*
-										 * Increment fix count while holding the
-										 * bucket lock.
-										 */
-										nextBcb.incrementFixCount();
-									}
-									/*
-									 * we leave the BCB exclusively latched and
-									 * bucket latched in shared mode
-									 */
-
-									/*
-									 * At this point the Hash chain should be
-									 * latched in SHARED mode and BCB should be
-									 * latched in EXCLUSIVE mode
-									 */
-
-									assert nextBcb.getFrameIndex() != -1;
-									assert nextBcb.getPageId().equals(pageid);
-									// assert
-									// bucket.latch.isHeldByCurrentThread();
-									assert nextBcb.isInUse();
-
-									/*
-									 * ISSUE: 17-Sep-05 We set the recoveryLsn
-									 * if an update mode access is requested
-									 * because we do not know whether the page
-									 * will subsequently be latched exclusively
-									 * or not.
-									 */
-									if (latchMode == LATCH_EXCLUSIVE
-											|| latchMode == LATCH_UPDATE) {
-										if (nextBcb.getRecoveryLsn().isNull()
-												&& logMgr != null) {
-											nextBcb.setRecoveryLsn(logMgr
-													.getMaxLsn());
-										}
-									}
-									/*
-									 * Allocate a Buffer Access Block and
-									 * initialize it
-									 */
-									bab = new BufferAccessBlockImpl(this,
-											nextBcb, bufferpool[nextBcb
-													.getFrameIndex()]);
-
-									return bab;
+									return useBCB(pageid, latchMode, bcb);
 								} else {
 									// System.err.println("BUSY");
 									pendingIO = true;
@@ -759,6 +707,69 @@ public final class BufferManagerImpl implements BufferManager {
             }
         }        
     }
+
+	private BufferAccessBlockImpl useBCB(PageId pageid, int latchMode,
+			BufferControlBlock bcb) {
+		BufferControlBlock nextBcb;
+		BufferAccessBlockImpl bab;
+		nextBcb = bcb;
+
+		if (nextBcb.isNewBuffer()) {
+			/*
+			 * Page has just been read, so we do not
+			 * need to increment fix count. Reset
+			 * this flag for next time.
+			 */
+			nextBcb.setNewBuffer(false);
+		} else {
+			/*
+			 * Increment fix count while holding the
+			 * bucket lock.
+			 */
+			nextBcb.incrementFixCount();
+		}
+		/*
+		 * we leave the BCB exclusively latched and
+		 * bucket latched in shared mode
+		 */
+
+		/*
+		 * At this point the Hash chain should be
+		 * latched in SHARED mode and BCB should be
+		 * latched in EXCLUSIVE mode
+		 */
+
+		assert nextBcb.getFrameIndex() != -1;
+		assert nextBcb.getPageId().equals(pageid);
+		// assert
+		// bucket.latch.isHeldByCurrentThread();
+		assert nextBcb.isInUse();
+
+		/*
+		 * ISSUE: 17-Sep-05 We set the recoveryLsn
+		 * if an update mode access is requested
+		 * because we do not know whether the page
+		 * will subsequently be latched exclusively
+		 * or not.
+		 */
+		if (latchMode == LATCH_EXCLUSIVE
+				|| latchMode == LATCH_UPDATE) {
+			if (nextBcb.getRecoveryLsn().isNull()
+					&& logMgr != null) {
+				nextBcb.setRecoveryLsn(logMgr
+						.getMaxLsn());
+			}
+		}
+		/*
+		 * Allocate a Buffer Access Block and
+		 * initialize it
+		 */
+		bab = new BufferAccessBlockImpl(this,
+				nextBcb, bufferpool[nextBcb
+						.getFrameIndex()]);
+
+		return bab;
+	}
     
     /**
      * Fix and lock a page in buffer pool. Algorithm: 
@@ -1042,6 +1053,7 @@ public final class BufferManagerImpl implements BufferManager {
 			logMgr.flush(lsn);
 		}
 		pageFactory.store(page);
+		decrementDirtyBuffersCount();
 	}
     
     
@@ -1089,7 +1101,7 @@ public final class BufferManagerImpl implements BufferManager {
 				bcb.setRecoveryLsn(new Lsn());
 				bcb.setDirty(false);
 				bcb.setBeingWritten(false);
-				decrementDirtyBuffersCount();
+				bcb.signalIOCompleted();
 			} finally {
 				bcb.unlock();
 			}		
@@ -1242,6 +1254,11 @@ public final class BufferManagerImpl implements BufferManager {
          */
         private Lock lock = new ReentrantLock();
         
+        /**
+         * Condition to signal completion of IO.
+         */
+        private Condition ioDone = lock.newCondition();
+        
         BufferControlBlock(PageId pageId) {
             this.pageId = pageId;
         }
@@ -1363,6 +1380,22 @@ public final class BufferManagerImpl implements BufferManager {
         	lock.unlock();
         }
         
+        /**
+         * Caller must hold the lock on the BCB before invoking this.
+         */
+        final void awaitIOCompletion() {
+        	try {
+				ioDone.wait();
+			} catch (InterruptedException e) {
+			}
+        }
+        
+        /**
+         * Caller must hold the lock on the BCB before invoking this.
+         */
+        final void signalIOCompleted() {
+        	ioDone.signalAll();
+        }
     }
 
     /**
