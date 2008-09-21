@@ -481,7 +481,7 @@ public final class BufferManagerImpl implements BufferManager {
      *
      * @return The newly allocated BufferControlBlock or null to indicate that the caller must retry.
      */
-    private BufferControlBlock locatePage(PageId pageId, int hashCode,
+    private BufferAccessBlockImpl locatePage(PageId pageId, int hashCode,
             boolean isNew, int pagetype, int latchMode) {
 
         BufferControlBlock nextBcb = new BufferControlBlock(pageId);
@@ -543,7 +543,7 @@ public final class BufferManagerImpl implements BufferManager {
 															+ pageId
 															+ " has been read in the meantime");
 								}
-								return bcb;
+								return useBCB(pageId, latchMode, bcb);
 							}
 						}
 					} finally {
@@ -644,11 +644,10 @@ public final class BufferManagerImpl implements BufferManager {
         try {
             nextBcb.setFrameIndex(frameNo);
             nextBcb.signalIOCompleted();
+            return useBCB(pageId, latchMode, nextBcb);
         } finally {
             nextBcb.unlock();
         }
-
-        return nextBcb;
     }
 
     /**
@@ -668,86 +667,54 @@ public final class BufferManagerImpl implements BufferManager {
         } catch (InterruptedException e) {}
     }
     
-    private BufferAccessBlockImpl getBCB(PageId pageid, 
-            boolean isNew, int pagetype, int latchMode) {
-        
-        boolean found = false;
-        BufferControlBlock nextBcb = null;
-        int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
-        BufferHashBucket bucket = bufferHash[h];
+    private BufferAccessBlockImpl getBCB(PageId pageid, boolean isNew,
+			int pagetype, int latchMode) {
 
-        for (;;) {
-            
-            boolean pendingIO = false;
-            do {
-                found = false;
-                pendingIO = false;
-                BufferControlBlock toWaitFor = null;
-                bucket.lockShared();
-                try {
-                    for (BufferControlBlock bcb : bucket.chain) {
-                        /*
-                         * Ignore invalid pages.
-                         */
-                    	bcb.lock();
-                    	try {
-							if (bcb.isValid() && bcb.getPageId().equals(pageid)) {
-								found = true;
-								/*
-								 * A frameIndex of -1 indicates that the page is
-								 * being read in. We must wait if this is the
-								 * case. If the page is being written out
-								 * (writeInProgress == true) we must not allow
-								 * exclusive access to it until the IO is
-								 * complete. However, a non-exclusive access
-								 * (for reading) is permitted. ISSUE: 17-Sep-05
-								 * We treat an update mode access as an
-								 * exclusive request because we do not know
-								 * whether the page will subsequently be latched
-								 * exclusively or not.
-								 */
-								if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
-									return useBCB(pageid, latchMode, bcb);
-								} else {
-									toWaitFor = bcb;
-									pendingIO = true;
-								}
-								break;
+		int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
+		BufferHashBucket bucket = bufferHash[h];
+
+		boolean pendingIO = false;
+		do {
+			pendingIO = false;
+			BufferControlBlock toWaitFor = null;
+			bucket.lockShared();
+			try {
+				for (BufferControlBlock bcb : bucket.chain) {
+					/*
+					 * Ignore invalid pages.
+					 */
+					bcb.lock();
+					try {
+						if (bcb.isValid() && bcb.getPageId().equals(pageid)) {
+							/*
+							 * If the page is being read or written we must wait for
+							 * the IO to be completed.
+							 */
+							if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
+								return useBCB(pageid, latchMode, bcb);
+							} else {
+								toWaitFor = bcb;
+								pendingIO = true;
 							}
-						} finally {
-							bcb.unlock();
+							break;
 						}
-                    }
-                } finally {
-                    bucket.unlockShared();
-                }
-                if (pendingIO) {
-                	waitIfBusy(toWaitFor);
-                }
-            } while (pendingIO);
-            
-            if (!found) {
-                /*
-                 * Page not found - must read it in
-                 */
-                nextBcb = null;
-                while (nextBcb == null && !stop) {
-                    nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
-                    assert nextBcb != null;
-                    if (nextBcb == null && !stop) {
-                        pause();
-                    }
-                }
-                if (stop || nextBcb == null) {
-                    log.error(this.getClass().getName(), "fix", mcat
-                            .getMessage("EM0006", pageid));
-                    throw new BufferManagerException(mcat.getMessage(
-                            "EM0006",
-                            pageid));
-                }
-            }
-        }        
-    }
+					} finally {
+						bcb.unlock();
+					}
+				}
+			} finally {
+				bucket.unlockShared();
+			}
+			if (pendingIO) {
+				/*
+				 * Wait for the pending IO to complete
+				 */
+				waitIfBusy(toWaitFor);
+			}
+		} while (pendingIO);
+
+		return locatePage(pageid, h, isNew, pagetype, latchMode);
+	}
 
 	private BufferAccessBlockImpl useBCB(PageId pageid, int latchMode,
 			BufferControlBlock bcb) {
