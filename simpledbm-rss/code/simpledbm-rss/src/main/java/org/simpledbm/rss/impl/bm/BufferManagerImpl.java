@@ -187,6 +187,8 @@ public final class BufferManagerImpl implements BufferManager {
 
     /**
      * Initialize the Buffer Manager instance.
+     * The hash table size is automatically determined based upon
+     * the bufferpool size.
      */
     private void init(LogManager logMgr, PageManager pageFactory,
             int bufferpoolsize) {
@@ -250,7 +252,9 @@ public final class BufferManagerImpl implements BufferManager {
      * @see org.simpledbm.rss.bm.BufMgr#start()
      */
     public void start() {
-        // Setup background thread for writer
+        /* 
+         * Setup background thread for buffer writer.
+         */
         bufferWriter = new Thread(new BufferWriter(this), "BufferWriter");
         bufferWriter.start();
     }
@@ -366,6 +370,9 @@ public final class BufferManagerImpl implements BufferManager {
 							assert !victim.isBeingWritten();
 							assert !victim.isInUse();
 							assert !victim.isBeingRead();
+							/*
+							 * Needs to be flushed.
+							 */
 							doWrite = true;
 						}
 						/*
@@ -403,7 +410,9 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 
 		/*
-		 * Now lets remove the victim from the LRU chain and the Hash Table
+		 * Now lets remove the victim from the LRU chain and the Hash Table.
+		 * As we have set the IO flag on the BCB, it will be unmolested even
+		 * though we haven't got a lock on it.
 		 */
 		lruLatch.writeLock().lock();
 		try {
@@ -443,6 +452,18 @@ public final class BufferManagerImpl implements BufferManager {
 			lruLatch.writeLock().unlock();
 		}
 	}
+    
+    private void waitIfBusy(BufferControlBlock bcb) {
+    	bcb.lock();
+    	try {
+    		if (bcb.isValid() && (bcb.isBeingRead() || bcb.isBeingWritten())) {
+    			bcb.awaitIOCompletion();
+    		}
+    	}
+    	finally {
+    		bcb.unlock();
+    	}
+    }
 
     /**
      * Read a page into the Buffer Cache. Algorithm: 
@@ -465,82 +486,100 @@ public final class BufferManagerImpl implements BufferManager {
 
         BufferControlBlock nextBcb = new BufferControlBlock(pageId);
         BufferHashBucket bucket = bufferHash[hashCode];
-        bucket.lockExclusive();
-        try {
+        
+        boolean busy = false;
+        do {
+        	BufferControlBlock toWaitFor = null;
+        	busy = false;
+        	
+			bucket.lockExclusive();
+			try {
 
-            /**
-             * 16-feb-03: The gap between releasing the bucket lock and
-             * re-acquiring it here means that some other thread
-             * may have read the page we are trying to read. 
-             * To work around this situation, we check the
-             * the hash chain again.
-             * Dec-2006: We need to additionally check whether the page is
-             * currently being read or written, in which case, we need to retry.
-             */
+				/**
+				 * 16-feb-03: The gap between releasing the bucket lock and
+				 * re-acquiring it here means that some other thread may have
+				 * read the page we are trying to read. To work around this
+				 * situation, we check the the hash chain again. Dec-2006: We
+				 * need to additionally check whether the page is currently
+				 * being read or written, in which case, we need to retry.
+				 */
 
-            for (BufferControlBlock bcb : bucket.chain) {
-				bcb.lock();
-				try {
-					if (bcb.isValid() && bcb.getPageId().equals(pageId)) {
-						// Bug discovered when testing on Intel CoreDuo (3 Dec
-						// 2006) - if the page is being read
-						// we need to wait for the read to be over. Since we
-						// need to give up latches
-						// easiest option is to retry.
-						// For now, we return null to the caller indicate that
-						// this must be retried
-						// FIXME - need to do this in a better way
-						// Another bug: 16 Dec 2006
-						// We need to check for writeInProgress as well.
-						// Exception: we allow SHARED access if writeInProgress
-						// is true.
-						if (bcb.isBeingRead() || bcb.isBeingWritten()) {
-							if (log.isDebugEnabled()) {
-								log.debug(this.getClass().getName(),
-										"locatePage",
-										"SIMPLEDBM-DEBUG: Another thread is attempting to read/write page "
-												+ pageId
-												+ ", therefore retrying");
+				for (BufferControlBlock bcb : bucket.chain) {
+					bcb.lock();
+					try {
+						if (bcb.isValid() && bcb.getPageId().equals(pageId)) {
+							// Bug discovered when testing on Intel CoreDuo (3
+							// Dec
+							// 2006) - if the page is being read
+							// we need to wait for the read to be over. Since we
+							// need to give up latches
+							// easiest option is to retry.
+							// For now, we return null to the caller indicate
+							// that
+							// this must be retried
+							// FIXME - need to do this in a better way
+							// Another bug: 16 Dec 2006
+							// We need to check for writeInProgress as well.
+							// Exception: we allow SHARED access if
+							// writeInProgress
+							// is true.
+							if (bcb.isBeingRead() || bcb.isBeingWritten()) {
+								if (log.isDebugEnabled()) {
+									log.debug(this.getClass().getName(),
+											"locatePage",
+											"SIMPLEDBM-DEBUG: Another thread is attempting to read/write page "
+													+ pageId
+													+ ", therefore retrying");
+								}
+								toWaitFor = bcb;
+								busy = true;
+							} else {
+								if (log.isDebugEnabled()) {
+									log
+											.debug(
+													this.getClass().getName(),
+													"locatePage",
+													"SIMPLEDBM-DEBUG: Page "
+															+ pageId
+															+ " has been read in the meantime");
+								}
+								return bcb;
 							}
-							return null;
-						} else {
-							if (log.isDebugEnabled()) {
-								log
-										.debug(
-												this.getClass().getName(),
-												"locatePage",
-												"SIMPLEDBM-DEBUG: Page "
-														+ pageId
-														+ " has been read in the meantime");
-							}
-							return bcb;
 						}
+					} finally {
+						bcb.unlock();
 					}
-				} finally {
-					bcb.unlock();
 				}
-			}
 
-            /*
-             * frameIndex set to -1 indicates that the page is being read in.
-             */
-            nextBcb.setFrameIndex(-1);
-            
-            bucket.chain.addFirst(nextBcb);
-            /*
-             * At this point, the new BCB is in the hash table but not in
-             * the LRU list. 
-             * The BCB should have frameIndex set to -1 and fixcount = 1.
-             * This will prevent the page from being evicted.
-             */    
-            assert nextBcb.isBeingRead();
-            assert nextBcb.isInUse();
-            assert nextBcb.isValid();
-            assert nextBcb.isNewBuffer();
-        } 
-        finally {
-            bucket.unlockExclusive();
-        }
+				if (!busy) {
+					/* This means we haven't found the page in the hash table.
+					 * frameIndex set to -1 indicates that the page is being
+					 * read in.
+					 */
+					nextBcb.setFrameIndex(-1);
+
+					bucket.chain.addFirst(nextBcb);
+					/*
+					 * At this point, the new BCB is in the hash table but not
+					 * in the LRU list. The BCB should have frameIndex set to -1
+					 * and fixcount = 1. This will prevent the page from being
+					 * evicted.
+					 */
+					assert nextBcb.isBeingRead();
+					assert nextBcb.isInUse();
+					assert nextBcb.isValid();
+					assert nextBcb.isNewBuffer();
+				}
+			} finally {
+				bucket.unlockExclusive();
+			}
+			
+			if (toWaitFor != null && busy) {
+				waitIfBusy(toWaitFor);
+			}
+			
+		} while (busy);
+        
 
         /*
          * If any other thread attempts to read the same page, they will find
@@ -643,6 +682,7 @@ public final class BufferManagerImpl implements BufferManager {
             do {
                 found = false;
                 pendingIO = false;
+                BufferControlBlock toWaitFor = null;
                 bucket.lockShared();
                 try {
                     for (BufferControlBlock bcb : bucket.chain) {
@@ -669,7 +709,7 @@ public final class BufferManagerImpl implements BufferManager {
 								if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
 									return useBCB(pageid, latchMode, bcb);
 								} else {
-									// System.err.println("BUSY");
+									toWaitFor = bcb;
 									pendingIO = true;
 								}
 								break;
@@ -682,7 +722,7 @@ public final class BufferManagerImpl implements BufferManager {
                     bucket.unlockShared();
                 }
                 if (pendingIO) {
-                    pause();
+                	waitIfBusy(toWaitFor);
                 }
             } while (pendingIO);
             
@@ -693,6 +733,7 @@ public final class BufferManagerImpl implements BufferManager {
                 nextBcb = null;
                 while (nextBcb == null && !stop) {
                     nextBcb = locatePage(pageid, h, isNew, pagetype, latchMode);
+                    assert nextBcb != null;
                     if (nextBcb == null && !stop) {
                         pause();
                     }
@@ -1382,10 +1423,12 @@ public final class BufferManagerImpl implements BufferManager {
         
         /**
          * Caller must hold the lock on the BCB before invoking this.
+         * The wait is time limited and interruptible, therefore caller must
+         * re-test conditions after this method returns.
          */
         final void awaitIOCompletion() {
         	try {
-				ioDone.wait();
+				ioDone.await(1, TimeUnit.SECONDS);
 			} catch (InterruptedException e) {
 			}
         }
