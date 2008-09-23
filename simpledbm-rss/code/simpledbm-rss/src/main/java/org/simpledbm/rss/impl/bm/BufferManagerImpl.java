@@ -79,6 +79,8 @@ public final class BufferManagerImpl implements BufferManager {
 
     private static final int LATCH_SHARED = 1;
 
+    static BufferManagerStatistics statistics = new BufferManagerStatistics();
+    
     /**
      * Buffer Manager does not directly depend upon the Storage Manager, but
      * if it has access to the StorageManager then it can validate page fix requests.
@@ -213,6 +215,9 @@ public final class BufferManagerImpl implements BufferManager {
         for (int i = 0; i < hashsize; i++) {
             bufferHash[i] = new BufferHashBucket();
         }
+        statistics.bufferpoolsize = bufferpoolsize;
+        statistics.hashTableSize = hashsize;
+        statistics.writersleepinterval = bufferWriterSleepInterval;
     }
 
     /**
@@ -296,6 +301,7 @@ public final class BufferManagerImpl implements BufferManager {
                 .getMessage("EM0001"), e);
         }
         writeBuffers();
+        dumpStatistics();
     }
 
     /**
@@ -552,6 +558,7 @@ public final class BufferManagerImpl implements BufferManager {
 								/*
 								 * Okay, we have the page we want, so we are done.
 								 */
+								statistics.cachehits++;
 								return useBCB(pageId, latchMode, bcb);
 							}
 						}
@@ -735,6 +742,7 @@ public final class BufferManagerImpl implements BufferManager {
 							 * the IO to be completed.
 							 */
 							if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
+								statistics.cachehits++;
 								return useBCB(pageid, latchMode, bcb);
 							} else {
 								toWaitFor = bcb;
@@ -834,6 +842,8 @@ public final class BufferManagerImpl implements BufferManager {
     private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype,
             int latchMode, int hint) {
 
+    	statistics.fixcount++;
+    	
         checkStatus();
 
         if (storageManager != null) {
@@ -868,14 +878,14 @@ public final class BufferManagerImpl implements BufferManager {
 			try {
 				if (hint == 0) {
 					if (lru.getLast() != nextBcb) {
-						if (nextBcb.isMember()) {
+						if (nextBcb.isMemberOf(lru)) {
 							lru.remove(nextBcb);
 						}
 						lru.addLast(nextBcb);
 					}
 				} else {
 					if (lru.getFirst() != nextBcb) {
-						if (nextBcb.isMember()) {
+						if (nextBcb.isMemberOf(lru)) {
 							lru.remove(nextBcb);
 						}
 						lru.addFirst(nextBcb);
@@ -932,10 +942,12 @@ public final class BufferManagerImpl implements BufferManager {
 
     private void incrementDirtyBuffersCount() {
         dirtyBuffersCount.incrementAndGet();
+        statistics.dirtybuffers++;
     }
 
     private void decrementDirtyBuffersCount() {
         dirtyBuffersCount.decrementAndGet();
+        statistics.dirtybuffers--;
     }
 
     /**
@@ -1698,5 +1710,30 @@ public final class BufferManagerImpl implements BufferManager {
     int getDirtyBuffersCount() {
         return dirtyBuffersCount.get();
     }
+    
+    final static class BufferManagerStatistics {
+    	int bufferpoolsize;
+    	volatile int dirtybuffers;
+    	volatile int fixcount;
+    	volatile int cachehits;
+    	int writersleepinterval;
+    	int hashTableSize;
+    	
+    	Properties getStatistics() {
+    		Properties p = new Properties();
+    		p.setProperty("bufferpoolsize", Integer.toString(bufferpoolsize));
+    		p.setProperty("dirtybuffers", Integer.toString(dirtybuffers));
+    		p.setProperty("fixcount", Integer.toString(fixcount));
+    		p.setProperty("cachehits", Integer.toString(cachehits));
+    		p.setProperty("writersleepinterval", Integer.toString(writersleepinterval));
+    		p.setProperty("hashtablesize", Integer.toString(hashTableSize));
+    		return p;
+    	}
+    }
 
+    void dumpStatistics() {
+    	System.err.println("BufferManager Statistics:");
+    	System.err.println(statistics.getStatistics());
+    }
+    
 }
