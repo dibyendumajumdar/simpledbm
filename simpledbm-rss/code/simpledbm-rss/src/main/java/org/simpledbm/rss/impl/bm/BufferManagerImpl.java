@@ -221,10 +221,10 @@ public final class BufferManagerImpl implements BufferManager {
      * @param logMgr Log Manager instance, may be null for testing purposes.
      * @param pageFactory PageFactory instance, required.
      * @param bufferpoolsize The size of the buffer pool.
-     * @param hashsize Size of the hash table, should preferably be a prime number.
+     * @param unused Not used
      */
     public BufferManagerImpl(LogManager logMgr, PageManager pageFactory,
-            int bufferpoolsize, int hashsize) {
+            int bufferpoolsize, int unused) {
         init(logMgr, pageFactory, bufferpoolsize);
     }
 
@@ -260,17 +260,18 @@ public final class BufferManagerImpl implements BufferManager {
     }
 
     /**
-     * Wakes up the Buffer Writer thread if necesary, and waits for it to
-     * finish.
+     * Wakes up the Buffer Writer thread.
      */
-    public void signalBufferWriter() {
+    void signalBufferWriter() {
         if (log.isTraceEnabled()) {
             log.trace(
                 this.getClass().getName(),
                 "signalBufferWriter",
                 "SIMPLEDBM-DEBUG: SIGNALLING Buffer Writer");
         }
-        LockSupport.unpark(bufferWriter);
+        if (bufferWriter != null && bufferWriter.isAlive()) {
+        	LockSupport.unpark(bufferWriter);
+        }
     }
 
     /**
@@ -287,7 +288,9 @@ public final class BufferManagerImpl implements BufferManager {
         setStop();
         signalBufferWriter();
         try {
-            bufferWriter.join();
+        	if (bufferWriter != null && bufferWriter.isAlive()) {
+        		bufferWriter.join();
+        	}
         } catch (InterruptedException e) {
             log.error(this.getClass().getName(), "shutdown", mcat
                 .getMessage("EM0001"), e);
@@ -296,19 +299,20 @@ public final class BufferManagerImpl implements BufferManager {
     }
 
     /**
-     * Get an empty frame (slot in bufferpool), removing the LRU page from the
-     * buffer pool.
+     * Get an empty frame (slot in bufferpool); if necessary, evict the LRU page from the
+     * buffer pool to make space.
      * <p>
      * Algorithm:
      * <ol>
      * <li> First, check if there is an unused frame that can be used. </li>
      * <li> If not, we need to identify a page that can be replaced. This page
      * should be the least recently used page which is not in use. 
-     * Pages that are marked busy (pending IO) cannot be evicted.
+     * Pages that are marked as in use or busy (pending IO) cannot be evicted.
      * Scan the LRU list for a page that qualifies for replacement. </li>
-     * <li> If found, write the page if it is dirty, 
-     * remove the page BCB from the Hash chain, and from the LRU
-     * list, and return frame index previously occupied by the page. </li>
+     * <li>If the page identified for eviction is dirty, flush it to disk,
+     * following the Write Ahead Log protocol. Remove the page BCB from the 
+     * Hash chain, and from the LRU list, and return frame index previously 
+     * occupied by the page. </li>
      * </ol>
      * <p>
      * TEST CASE: test the free frames array, a) until it is exhausted, and b)
@@ -376,7 +380,7 @@ public final class BufferManagerImpl implements BufferManager {
 							doWrite = true;
 						}
 						/*
-						 * Regardless of whether we need to write this page or not,
+						 * Regardless of whether we need to flush this page or not,
 						 * we need to tell others that we are about to use this page.
 						 * We set a flag to say that IO is in progress; this stops others from
 						 * messing around with this BCB.
@@ -400,13 +404,13 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 		
 		/*
-		 * Flush the page to disk if necessary.
+		 * Flush the page to disk if necessary, using the write ahead log protocol.
 		 * We could use a blocking queue here to pass on the write
 		 * request to the BufferWriter, but for now, we will do the 
 		 * write ourselves.
 		 */
 		if (doWrite) {
-			clean(victim);
+			flushUsingWriteAheadLogProtocol(victim);
 		}
 
 		/*
@@ -421,7 +425,7 @@ public final class BufferManagerImpl implements BufferManager {
 			final BufferHashBucket bucket = bufferHash[h];
 
 			/*
-			 * The LRU latch always obtained before the bucket latch. Hence it
+			 * The LRU latch is always obtained before the bucket latch. Hence it
 			 * is safe to wait unconditionally for the bucket k.
 			 */
 			bucket.lockExclusive();
@@ -432,15 +436,20 @@ public final class BufferManagerImpl implements BufferManager {
 				 */
 				victim.lock();
 				try {
-					victim.setRecoveryLsn(new Lsn());
-					victim.setDirty(false);
 					/* Remove BCB from LRU Chain */
 					lru.remove(victim);
 					/* Remove BCB from Hash Chain */
 					bucket.chain.remove(victim);
+					victim.setRecoveryLsn(new Lsn());
+					victim.setDirty(false);
 					victim.setBeingWritten(false);
 					victim.signalIOCompleted();
+					victim.setInvalid(true);
 					bufferpool[victim.getFrameIndex()] = null;
+					/*
+					 * The frame previously occupied by the victim is now
+					 * free for use.
+					 */
 					return victim.getFrameIndex();
 				} finally {
 					victim.unlock();
@@ -453,6 +462,10 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 	}
     
+    /**
+     * Wait for pending IO to be completed
+     * @param bcb The BufferControlBlock that is blocked due to IO
+     */
     private void waitIfBusy(BufferControlBlock bcb) {
     	bcb.lock();
     	try {
@@ -468,10 +481,14 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Read a page into the Buffer Cache. Algorithm: 
      * <ol>
-     * <li>Allocate a new Buffer Control Block.</li>
-     * <li>Initialize it and attach to the appropriate Hash chain.</li>
+     * <li>First check that the page in question hasn't been read in the gap
+     * before the call to this method.</li>
+     * <li>Allocate a new BufferControlBlock.</li>
+     * <li>Initialize it and attach to the appropriate Hash chain. The BCB must be marked inUse
+     * to avoid getting swapped out.</li>
      * <li>Obtain a frame (slot) for the page by calling {@link #getFrame()}.</li>
      * <li>If the page is new, instantiate a new page, else, read it from the disk.</li>
+     * <li>Return the page wrapped in a new <{@link BufferAccessBlock}</li>.
      * </ol>
      * <p>
      * Latching: No latches should be held when this method is called.
@@ -479,7 +496,7 @@ public final class BufferManagerImpl implements BufferManager {
      * No latches held during IO.
      * No latches held when this method returns.
      *
-     * @return The newly allocated BufferControlBlock or null to indicate that the caller must retry.
+     * @return The newly allocated BufferAccessBlock
      */
     private BufferAccessBlockImpl locatePage(PageId pageId, int hashCode,
             boolean isNew, int pagetype, int latchMode) {
@@ -495,34 +512,24 @@ public final class BufferManagerImpl implements BufferManager {
 			bucket.lockExclusive();
 			try {
 
-				/**
-				 * 16-feb-03: The gap between releasing the bucket lock and
-				 * re-acquiring it here means that some other thread may have
-				 * read the page we are trying to read. To work around this
-				 * situation, we check the the hash chain again. Dec-2006: We
-				 * need to additionally check whether the page is currently
-				 * being read or written, in which case, we need to retry.
+				/*
+				 * 16-feb-03: As we do not hold any latches when this method is
+				 * called, it is possible that some other thread has read
+				 * the page we are trying to read. We therefore need to check whether the
+				 * page is now available. 
+				 * Dec-2006: We need to additionally check whether the page is currently
+				 * being read or written, in which case, we need to wait for IO to be
+				 * completed.
 				 */
 
 				for (BufferControlBlock bcb : bucket.chain) {
 					bcb.lock();
 					try {
 						if (bcb.isValid() && bcb.getPageId().equals(pageId)) {
-							// Bug discovered when testing on Intel CoreDuo (3
-							// Dec
-							// 2006) - if the page is being read
-							// we need to wait for the read to be over. Since we
-							// need to give up latches
-							// easiest option is to retry.
-							// For now, we return null to the caller indicate
-							// that
-							// this must be retried
-							// FIXME - need to do this in a better way
-							// Another bug: 16 Dec 2006
-							// We need to check for writeInProgress as well.
-							// Exception: we allow SHARED access if
-							// writeInProgress
-							// is true.
+							/* 
+							 * if the page is being read
+							 * we need to wait for the read to be over.
+							 */
 							if (bcb.isBeingRead() || bcb.isBeingWritten()) {
 								if (log.isDebugEnabled()) {
 									log.debug(this.getClass().getName(),
@@ -535,14 +542,16 @@ public final class BufferManagerImpl implements BufferManager {
 								busy = true;
 							} else {
 								if (log.isDebugEnabled()) {
-									log
-											.debug(
-													this.getClass().getName(),
-													"locatePage",
-													"SIMPLEDBM-DEBUG: Page "
-															+ pageId
-															+ " has been read in the meantime");
+									log.debug(
+										this.getClass().getName(),
+										"locatePage",
+										"SIMPLEDBM-DEBUG: Page "
+										+ pageId
+										+ " has been read in the meantime");
 								}
+								/*
+								 * Okay, we have the page we want, so we are done.
+								 */
 								return useBCB(pageId, latchMode, bcb);
 							}
 						}
@@ -574,6 +583,12 @@ public final class BufferManagerImpl implements BufferManager {
 				bucket.unlockExclusive();
 			}
 			
+			/*
+			 * If the page we are looking for is being read/written, then
+			 * we need to wait for the IO to be completed. We have to do this
+			 * here because we must not hold any latches during the wait.
+			 * We will retry once the IO wait is over.
+			 */
 			if (toWaitFor != null && busy) {
 				waitIfBusy(toWaitFor);
 			}
@@ -591,7 +606,12 @@ public final class BufferManagerImpl implements BufferManager {
         int frameNo = getFrame();
 
         if (frameNo == -1) {
-            // Failed to obtain a frame
+            /*
+             * Failed to obtain a frame, a fatal error.
+             * This can happen if there aren't enough pages in the bufferpool
+             * to satisfy all concurrent requests or if the system is leaking
+             * pages (i.e., failing to unfix() pages are use).
+             */
             setStop();
             log.error(this.getClass().getName(), "locatePage", mcat.getMessage(
                 "EM0004",
@@ -602,7 +622,9 @@ public final class BufferManagerImpl implements BufferManager {
         assert bufferpool[frameNo] == null;
 
         if (isNew) {
-            // If it is a new page, we do not need to read the page.
+            /*
+             *  If it is a new page, we do not need to read the page.
+             */
             bufferpool[frameNo] = pageFactory.getInstance(pagetype, pageId);
         } else {
             boolean readOk = false;
@@ -644,6 +666,9 @@ public final class BufferManagerImpl implements BufferManager {
         try {
             nextBcb.setFrameIndex(frameNo);
             nextBcb.signalIOCompleted();
+            /*
+             * We are done, so return a BufferAccessControl wrapper.
+             */
             return useBCB(pageId, latchMode, nextBcb);
         } finally {
             nextBcb.unlock();
@@ -661,18 +686,37 @@ public final class BufferManagerImpl implements BufferManager {
         }
     }
 
+    /**
+     * Pause for a short while.
+     */
     private void pause() {
 //      Thread.yield();
         try { Thread.sleep(1, 0);
         } catch (InterruptedException e) {}
     }
     
+    /**
+     * Search for a page in the buffer cache. If not found,
+     * read it from disk by calling {@link #locatePage(PageId, int, boolean, int, int) locatePage()}.
+     * 
+     * @param pageid ID of the page being searched
+     * @param isNew A flag to indicate that the page should not be read from disk
+     * @param pagetype The typecode for the page, so that the correct page can be instantiated
+     * @param latchMode The desired latch mode
+     * @return
+     */
     private BufferAccessBlockImpl getBCB(PageId pageid, boolean isNew,
 			int pagetype, int latchMode) {
 
 		int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
 		BufferHashBucket bucket = bufferHash[h];
 
+		/*
+		 * During the search we may find that the page we are looking for is in the
+		 * process of being read from disk or written to disk. When this
+		 * happens, we have to wait for the pending IO to be completed
+		 * before resuming the search. 
+		 */
 		boolean pendingIO = false;
 		do {
 			pendingIO = false;
@@ -680,11 +724,11 @@ public final class BufferManagerImpl implements BufferManager {
 			bucket.lockShared();
 			try {
 				for (BufferControlBlock bcb : bucket.chain) {
-					/*
-					 * Ignore invalid pages.
-					 */
 					bcb.lock();
 					try {
+						/*
+						 * Ignore invalid pages.
+						 */
 						if (bcb.isValid() && bcb.getPageId().equals(pageid)) {
 							/*
 							 * If the page is being read or written we must wait for
@@ -713,14 +757,24 @@ public final class BufferManagerImpl implements BufferManager {
 			}
 		} while (pendingIO);
 
+		/*
+		 * Page not found in the memory cache, therefore must be
+		 * read in.
+		 */
 		return locatePage(pageid, h, isNew, pagetype, latchMode);
 	}
 
+    /**
+     * Prepare this BCB for use - and wrap it in a BufferAccessBlock.
+     * <p>Latching: The BCB must be locked prior to this call.
+     * 
+     * @param pageid ID of the page we are returning
+     * @param latchMode The latch mode
+     * @param nextBcb The BCB that is being returned
+     */
 	private BufferAccessBlockImpl useBCB(PageId pageid, int latchMode,
-			BufferControlBlock bcb) {
-		BufferControlBlock nextBcb;
+			BufferControlBlock nextBcb) {
 		BufferAccessBlockImpl bab;
-		nextBcb = bcb;
 
 		if (nextBcb.isNewBuffer()) {
 			/*
@@ -736,21 +790,9 @@ public final class BufferManagerImpl implements BufferManager {
 			 */
 			nextBcb.incrementFixCount();
 		}
-		/*
-		 * we leave the BCB exclusively latched and
-		 * bucket latched in shared mode
-		 */
-
-		/*
-		 * At this point the Hash chain should be
-		 * latched in SHARED mode and BCB should be
-		 * latched in EXCLUSIVE mode
-		 */
 
 		assert nextBcb.getFrameIndex() != -1;
 		assert nextBcb.getPageId().equals(pageid);
-		// assert
-		// bucket.latch.isHeldByCurrentThread();
 		assert nextBcb.isInUse();
 
 		/*
@@ -775,19 +817,19 @@ public final class BufferManagerImpl implements BufferManager {
 		bab = new BufferAccessBlockImpl(this,
 				nextBcb, bufferpool[nextBcb
 						.getFrameIndex()]);
-
 		return bab;
 	}
     
     /**
-     * Fix and lock a page in buffer pool. Algorithm: 
+     * Fix and lock a page in buffer pool. 
+     * <p>Algorithm: 
      * <ol>
-     * <li>Check if the requested page is already present in the buffer pool.</li>
-     * <li>If not, call {@link #locatePage} to read the page in.</li>
-     * <li>Allocate a new Buffer Access Block.</li>
-     * <li>Add the BCB to the LRU chain</li>
+     * <li>Call {@link getBCB} to search for the page in the buffer pool and
+     * read it in if necessary.</li>
+     * <li>Make the BCB the MRU page in the LRU chain</li>
      * <li>Acquire page latch as requested.</li>
      * </ol>
+     * {@inheritDoc}
      */
     private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype,
             int latchMode, int hint) {
@@ -795,7 +837,9 @@ public final class BufferManagerImpl implements BufferManager {
         checkStatus();
 
         if (storageManager != null) {
-            // Validate that we are fixing page for a container that exists.
+            /*
+             * Validate that we are fixing page for a container that exists.
+             */
             StorageContainer sc = storageManager.getInstance(pageid
                 .getContainerId());
             assert sc != null;
@@ -846,10 +890,7 @@ public final class BufferManagerImpl implements BufferManager {
 
         /*
          * All latches must be released before we acquire the user requested
-         * page latch
-         */
-
-        /*
+         * page latch.
          * Latch the page as requested.
          */
         if (latchMode == LATCH_EXCLUSIVE) {
@@ -898,7 +939,8 @@ public final class BufferManagerImpl implements BufferManager {
     }
 
     /**
-     * Unfix a Buffer. Algorithm:
+     * Unfix a page. 
+     * <p>Algorithm:
      * <ol>
      * <li>Release page latch.</li>
      * <li>Set dirty flag.</li>
@@ -1049,7 +1091,7 @@ public final class BufferManagerImpl implements BufferManager {
 	 * 
 	 * @param bcb
 	 */
-	private void clean(BufferControlBlock bcb) {
+	private void flushUsingWriteAheadLogProtocol(BufferControlBlock bcb) {
 		Page page = bufferpool[bcb.getFrameIndex()];
 		assert bcb.getPageId().equals(page.getPageId());
 		Lsn lsn = page.getPageLsn();
@@ -1098,7 +1140,7 @@ public final class BufferManagerImpl implements BufferManager {
 		}
 
 		if (doWrite) {
-			clean(bcb);
+			flushUsingWriteAheadLogProtocol(bcb);
 			bcb.lock();
 			try {
 				if (log.isTraceEnabled()) {
