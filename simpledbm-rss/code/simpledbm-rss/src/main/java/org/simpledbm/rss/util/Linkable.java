@@ -35,7 +35,7 @@ public abstract class Linkable {
     /**
      * Notes that the element is a member of a list.
      */
-    boolean member;
+    Object owner;
 
     Linkable getNext() {
         return next;
@@ -53,11 +53,11 @@ public abstract class Linkable {
         prev = link;
     }
 
-    public final boolean isMember() {
-        return member;
+    public final boolean isMemberOf(SimpleLinkedList<? extends Linkable> list) {
+        return this.owner == list;
     }
 
-    final void setMember(boolean member) {
-        this.member = member;
+    final void setOwner(SimpleLinkedList<? extends Linkable> list) {
+        this.owner = list;
     }
 }

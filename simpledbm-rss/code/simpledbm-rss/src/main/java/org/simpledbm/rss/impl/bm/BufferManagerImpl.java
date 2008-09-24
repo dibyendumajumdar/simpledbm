@@ -340,131 +340,154 @@ public final class BufferManagerImpl implements BufferManager {
 			}
 		}
 
-		/*
-		 * Find a replacement victim - this should be the Least Recently Used
-		 * Buffer that is not in use.
-		 */
-		BufferControlBlock victim = null;
-		boolean doWrite = false;
-
-		/*
-		 * Search for a victim starting from the LRU end
-		 */
-		lruLatch.readLock().lock();
-		try {
-			for (BufferControlBlock nextBcb : lru) {
-				nextBcb.lock();
-				try {
-					/*
-					 * If the buffer is pinned or is waiting for IO, then skip
-					 */
-					if (nextBcb.isValid()
-							&& (nextBcb.isInUse() || nextBcb.isBeingRead() || nextBcb
-									.isBeingWritten())) {
-						if (log.isDebugEnabled()) {
-							log.debug(
-								this.getClass().getName(),
-								"getFrame",
-								"SIMPLEDBM-DEBUG: Skipping bcb "
-								+ nextBcb
-								+ " because fixCount > 0 or IO in progress");
-						}
-						continue;
-					} else {
-						/*
-						 * Found a victim. If it is a valid page and is dirty
-						 * we will have to flush it to disk.
-						 */
-						victim = nextBcb;
-						if (victim.isValid() && victim.isDirty()) {
-							assert !victim.isBeingWritten();
-							assert !victim.isInUse();
-							assert !victim.isBeingRead();
-							/*
-							 * Needs to be flushed.
-							 */
-							doWrite = true;
-						}
-						/*
-						 * Regardless of whether we need to flush this page or not,
-						 * we need to tell others that we are about to use this page.
-						 * We set a flag to say that IO is in progress; this stops others from
-						 * messing around with this BCB.
-						 */
-						victim.setBeingWritten(true);
-						break;
-					}
-				} finally {
-					nextBcb.unlock();
-				}
-			}
-		} finally {
-			lruLatch.readLock().unlock();
-		}
-
-		if (victim == null) {
-			/*
-			 * All pages are in use? 
-			 */
-			return -1;
-		}
 		
-		/*
-		 * Flush the page to disk if necessary, using the write ahead log protocol.
-		 * We could use a blocking queue here to pass on the write
-		 * request to the BufferWriter, but for now, we will do the 
-		 * write ourselves.
-		 */
-		if (doWrite) {
-			flushUsingWriteAheadLogProtocol(victim);
-		}
-
-		/*
-		 * Now lets remove the victim from the LRU chain and the Hash Table.
-		 * As we have set the IO flag on the BCB, it will be unmolested even
-		 * though we haven't got a lock on it.
-		 */
-		lruLatch.writeLock().lock();
-		try {
-			final PageId pageid = victim.getPageId();
-			final int h = (pageid.hashCode() & 0x7FFFFFFF) % bufferHash.length;
-			final BufferHashBucket bucket = bufferHash[h];
+		for (;;) {
+			/*
+			 * Find a replacement victim - this should be the Least Recently
+			 * Used Buffer that is not in use.
+			 */
+			BufferControlBlock victim = null;
+			boolean doWrite = false;
 
 			/*
-			 * The LRU latch is always obtained before the bucket latch. Hence it
-			 * is safe to wait unconditionally for the bucket k.
+			 * Search for a victim starting from the LRU end
 			 */
-			bucket.lockExclusive();
+			lruLatch.readLock().lock();
 			try {
-				/*
-				 * Reset the BCB because it may have also been picked up by the
-				 * BufferWriter thread as a dirty buffer
-				 */
-				victim.lock();
-				try {
-					/* Remove BCB from LRU Chain */
-					lru.remove(victim);
-					/* Remove BCB from Hash Chain */
-					bucket.chain.remove(victim);
-					victim.setRecoveryLsn(new Lsn());
-					victim.setDirty(false);
-					victim.setBeingWritten(false);
-					victim.signalIOCompleted();
-					victim.setInvalid(true);
-					bufferpool[victim.getFrameIndex()] = null;
-					/*
-					 * The frame previously occupied by the victim is now
-					 * free for use.
-					 */
-					return victim.getFrameIndex();
-				} finally {
-					victim.unlock();
+				for (BufferControlBlock nextBcb : lru) {
+					nextBcb.lock();
+					try {
+						/*
+						 * If the buffer is pinned or is waiting for IO, then
+						 * skip
+						 */
+						if (nextBcb.isValid()
+								&& (nextBcb.isInUse() || nextBcb.isBeingRead() || nextBcb
+										.isBeingWritten())) {
+							if (log.isDebugEnabled()) {
+								log
+										.debug(
+												this.getClass().getName(),
+												"getFrame",
+												"SIMPLEDBM-DEBUG: Skipping bcb "
+														+ nextBcb
+														+ " because fixCount > 0 or IO in progress");
+							}
+							continue;
+						} else {
+							/*
+							 * Found a victim. If it is a valid page and is
+							 * dirty we will have to flush it to disk.
+							 */
+							victim = nextBcb;
+							if (victim.isValid() && victim.isDirty()) {
+								assert !victim.isBeingWritten();
+								assert !victim.isInUse();
+								assert !victim.isBeingRead();
+								/*
+								 * Needs to be flushed.
+								 */
+								doWrite = true;
+							}
+							/*
+							 * Regardless of whether we need to flush this page
+							 * or not, we need to tell others that we are about
+							 * to use this page. We set a flag to say that IO is
+							 * in progress; this stops others from messing
+							 * around with this BCB.
+							 */
+							victim.setBeingWritten(true);
+							break;
+						}
+					} finally {
+						nextBcb.unlock();
+					}
 				}
 			} finally {
-				bucket.unlockExclusive();
+				lruLatch.readLock().unlock();
 			}
-		} finally {
-			lruLatch.writeLock().unlock();
+
+			if (victim == null) {
+				/*
+				 * All pages are in use?
+				 */
+				return -1;
+			}
+
+			/*
+			 * Flush the page to disk if necessary, using the write ahead log
+			 * protocol. We could use a blocking queue here to pass on the write
+			 * request to the BufferWriter, but for now, we will do the write
+			 * ourselves.
+			 */
+			if (doWrite) {
+				flushUsingWriteAheadLogProtocol(victim);
+			}
+
+			/*
+			 * Now lets remove the victim from the LRU chain and the Hash Table.
+			 * As we have set the IO flag on the BCB, it will be unmolested even
+			 * though we haven't got a lock on it.
+			 */
+			lruLatch.writeLock().lock();
+			try {
+				final PageId pageid = victim.getPageId();
+				final int h = (pageid.hashCode() & 0x7FFFFFFF)
+						% bufferHash.length;
+				final BufferHashBucket bucket = bufferHash[h];
+
+				/*
+				 * The LRU latch is always obtained before the bucket latch.
+				 * Hence it is safe to wait unconditionally for the bucket k.
+				 */
+				bucket.lockExclusive();
+				try {
+					/*
+					 * Reset the BCB because it may have also been picked up by
+					 * the BufferWriter thread as a dirty buffer
+					 */
+					victim.lock();
+					try {
+						/*
+						 * In the interest of increasing concurrency we allow
+						 * readers to access pages while they are being written out.
+						 * So we need to check the fixcount here in case a reader
+						 * got the page while we were writing it out.
+						 */
+						if (victim.isInUse()) {
+							/*
+							 * Okay, someone else has booked this page.
+							 * We need to reset the flag we set and look for another page.
+							 */
+							victim.setBeingWritten(false);
+							victim.signalIOCompleted();
+							continue;
+						}
+						
+						/* Remove BCB from LRU Chain */
+						lru.remove(victim);
+						/* Remove BCB from Hash Chain */
+						bucket.chain.remove(victim);
+						victim.setRecoveryLsn(new Lsn());
+						victim.setDirty(false);
+						victim.setBeingWritten(false);
+						victim.signalIOCompleted();
+						victim.setInvalid(true);
+						bufferpool[victim.getFrameIndex()] = null;
+						/*
+						 * The frame previously occupied by the victim is now
+						 * free for use.
+						 */
+						return victim.getFrameIndex();
+					} finally {
+						victim.unlock();
+					}
+				} finally {
+					bucket.unlockExclusive();
+				}
+			} finally {
+				lruLatch.writeLock().unlock();
+			}
 		}
 	}
     
@@ -536,7 +559,7 @@ public final class BufferManagerImpl implements BufferManager {
 							 * if the page is being read
 							 * we need to wait for the read to be over.
 							 */
-							if (bcb.isBeingRead() || bcb.isBeingWritten()) {
+							if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
 								if (log.isDebugEnabled()) {
 									log.debug(this.getClass().getName(),
 											"locatePage",
@@ -741,12 +764,20 @@ public final class BufferManagerImpl implements BufferManager {
 							 * If the page is being read or written we must wait for
 							 * the IO to be completed.
 							 */
-							if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
-								statistics.cachehits++;
-								return useBCB(pageid, latchMode, bcb);
-							} else {
+//							if (!bcb.isBeingRead() && !bcb.isBeingWritten()) {
+//								statistics.cachehits++;
+//								return useBCB(pageid, latchMode, bcb);
+//							} else {
+//								toWaitFor = bcb;
+//								pendingIO = true;
+//							}
+							if (bcb.isBeingRead() || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
 								toWaitFor = bcb;
 								pendingIO = true;
+							}
+							else {
+								statistics.cachehits++;
+								return useBCB(pageid, latchMode, bcb);
 							}
 							break;
 						}
