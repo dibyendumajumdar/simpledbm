@@ -449,7 +449,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			}
 			CreateTableDefinition ctd = new CreateTableDefinition(MODULE_ID,
 							TYPE_CREATE_TABLE_DEFINITION, this);
-//			ctd.database = this;
 			ctd.table = tableDefinition;
 			trx.schedulePostCommitAction(ctd);
 			success = true;
@@ -568,7 +567,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
 			table = new TableDefinitionImpl(this, bb);
-//			table.retrieve(bb);
 		} finally {
 			sc.close();
 		}
@@ -635,21 +633,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			return n;
 		}
 
-//		/* (non-Javadoc)
-//		 * @see org.simpledbm.rss.api.tx.BaseLoggable#retrieve(java.nio.ByteBuffer)
-//		 */
-//		@Override
-//		public void retrieve(ByteBuffer bb) {
-//			if (database == null) {
-//				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
-//				throw new DatabaseException(mcat.getMessage("ED0009"));
-//			}
-//			super.retrieve(bb);
-//			actionId = bb.getInt();
-//			table = new TableDefinitionImpl(database);
-//			table.retrieve(bb);
-//		}
-
 		/* (non-Javadoc)
 		 * @see org.simpledbm.rss.api.tx.BaseLoggable#store(java.nio.ByteBuffer)
 		 */
@@ -665,19 +648,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			return appendTo(new StringBuilder()).toString();
 		}
 
-//		/* (non-Javadoc)
-//		 * @see org.simpledbm.rss.api.registry.ObjectRegistryAware#setObjectFactory(org.simpledbm.rss.api.registry.ObjectRegistry)
-//		 */
-//		public void setObjectFactory(ObjectRegistry objectFactory) {
-//			this.objectRegistry = objectFactory;
-//			database = (Database) objectRegistry
-//					.getInstance(DatabaseImpl.MODULE_ID);
-//			if (database == null) {
-//				log.error(getClass().getName(), "retrieve", mcat.getMessage("ED0009"));
-//				throw new DatabaseException(mcat.getMessage("ED0009"));
-//			}		
-//		}
-		
 		static final class CreateTableDefinitionFactory implements ObjectFactory {
 			private final Database database;
 			CreateTableDefinitionFactory(Database database) {
@@ -686,9 +656,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			public Class<?> getType() {
 				return CreateTableDefinition.class;
 			}
-//			public Object newInstance() {
-//				return new CreateTableDefinition(database);
-//			}
 			public Object newInstance(ByteBuffer bb) {
 				return new CreateTableDefinition(database, bb);
 			}

@@ -216,37 +216,6 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return n;
     }
 
-//    /* (non-Javadoc)
-//     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
-//     */
-//    public void retrieve(ByteBuffer bb) {
-//        ByteString s = new ByteString();
-//        containerId = bb.getInt();
-//        s.retrieve(bb);
-//        name = s.toString();
-//        byte b = bb.get();
-//        if (b == 1) {
-//            primary = true;
-//        } else {
-//            primary = false;
-//        }
-//        b = bb.get();
-//        if (b == 1 || primary) {
-//            unique = true;
-//        } else {
-//            unique = false;
-//        }
-//        int n = bb.getShort();
-//        columns = new int[n];
-//        for (int i = 0; i < n; i++) {
-//            columns[i] = bb.getShort();
-//        }
-//        rowType = new TypeDescriptor[columns.length];
-//        for (int i = 0; i < columns.length; i++) {
-//            rowType[i] = table.getRowType()[columns[i]];
-//        }
-//    }
-
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.st.Storable#store(java.nio.ByteBuffer)
      */
