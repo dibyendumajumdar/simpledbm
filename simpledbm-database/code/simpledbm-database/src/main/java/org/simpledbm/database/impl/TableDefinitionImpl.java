@@ -160,24 +160,6 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         return n;
     }
 
-//    /* (non-Javadoc)
-//     * @see org.simpledbm.rss.api.st.Storable#retrieve(java.nio.ByteBuffer)
-//     */
-//    public void retrieve(ByteBuffer bb) {
-//        containerId = bb.getInt();
-//        ByteString s = new ByteString();
-//        s.retrieve(bb);
-//        name = s.toString();
-//        rowType = database.getTypeFactory().retrieve(bb);
-//        int n = bb.getShort();
-//        indexes = new ArrayList<IndexDefinition>();
-//        for (int i = 0; i < n; i++) {
-//            IndexDefinitionImpl idx = new IndexDefinitionImpl(this);
-//            idx.retrieve(bb);
-//            indexes.add(idx);
-//        }
-//    }
-
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.st.Storable#store(java.nio.ByteBuffer)
      */
