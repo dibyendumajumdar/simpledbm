@@ -1,4 +1,4 @@
-digraph SplitLeaf2 {
+digraph ComponentModel {
     node[shape=box]
     {
 	rank=same;
@@ -12,8 +12,11 @@ digraph SplitLeaf2 {
     }
     {
 	rank=same;
-	page_factory[label="PageFactory"];
-/*	slotted_page_manager[label="SlottedPageManager"]; */
+	page_factory[label="PageManager"];
+    }
+    {
+    rank=same;
+	slotted_page_manager[label="SlottedPageManager"]; 
     }
     {
 	rank=same;
@@ -39,7 +42,9 @@ digraph SplitLeaf2 {
     page_factory -> object_registry;
     page_factory -> storage_manager;
     page_factory -> latch_factory;
-/*    slotted_page_manager -> object_registry; */
+    slotted_page_manager -> object_registry;
+    slotted_page_manager -> page_factory;
+    lock_manager -> latch_factory;
     loggable_factory -> object_registry;
     log_manager -> storage_factory;
     buffer_manager -> log_manager;
@@ -66,13 +71,13 @@ digraph SplitLeaf2 {
     index_manager -> loggable_factory;
     index_manager -> space_manager;
     index_manager -> buffer_manager;
-/*    index_manager -> slotted_page_manager; */
+    index_manager -> slotted_page_manager;
     index_manager -> module_registry;
     tuple_manager -> object_registry;
     tuple_manager -> loggable_factory;
     tuple_manager -> space_manager;
     tuple_manager -> buffer_manager;
-/*    tuple_manager -> slotted_page_manager; */
+    tuple_manager -> slotted_page_manager;
     tuple_manager -> module_registry;
     tuple_manager -> page_factory;
 }
