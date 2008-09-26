@@ -6,8 +6,8 @@ SimpleDBM RSS Developers's Guide
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Date: 17 July 2008
-:Version: 1.0.9
+:Date: 26 September 2008
+:Version: 1.0.12
 :Copyright: Copyright by Dibyendu Majumdar, 2005-2008
 
 .. contents::
@@ -24,11 +24,37 @@ Manager in Java.
 
 .. _SimpleDBM: http://www.simpledbm.org
 
+.. _System-R: http://www.mcjones.org/System_R/index.html
+
 It is anticipated that there will be two major sub-systems in the
 dbms backend. The Data Manager subsystem (Relational Storage System
-or RSS in System R parlance) will be responsible for implementing
+or RSS in System-R_ parlance) will be responsible for implementing
 low-level stuff such as transactions, locking, buffer management,
-table and index management. This is currently implemented.
+table and index management. The functions of the SimpleDBM RSS module 
+are based upon the description of the System-R RSS component in [ASTRA-76]_.
+
+   The Relational Storage Interface (RSI) is an internal interface
+   which handles access to single tuples of base relations. This 
+   interface and its supporting system, the Relational Storage 
+   System (RSS), is actually a complete storage subsystem in that
+   it manages devices, space allocation, storage buffers, transaction
+   consistency and locking, deadlock detection, backout, transaction
+   recovery, and system recovery. Furthermore, it maintains indexes
+   on selected fields of base relations, and pointer chains across
+   relations. 
+
+This RSS sub-system is currently in early BETA.
+
+As RSS is fairly low level, two add-on modules are available that
+make it more user friendly by adding certain features.
+
+Type-System
+  This adds the concept of scalar types, such as VarChar, Number,
+  DateTime, etc.
+  
+Database-API
+  This adds a Data Dictionary, and easy to use high level API for
+  creating tables and indexes, and data manipulation.
 
 The second major sub-system will be called SQL Manager (Relational
 Data System or RDS). Its job will be to parse SQL statements,
@@ -37,24 +63,27 @@ of the SQL Manager sub-system has not started yet.
 
 Technology
 ==========
-SimpleDBM_ is written in Java and uses features available since version 5.0
+SimpleDBM is written in Java and uses features available since version 5.0
 of this language.
 
 Third party libraries
 ---------------------
-To void license compatibility issues, and to reduce dependency on
-third-party libraries, SimpleDBM_ makes little or no use of any
+To avoid license compatibility issues, and to reduce dependency on
+third-party libraries, SimpleDBM makes little or no use of any
 external libraries. A custom wrapper is used for logging, which uses
-the Java logging API by default, but can use Log4J if available.
+the Java logging API by default, but can use Log4J_ if available.
+
+.. _Log4J: http://logging.apache.org/log4j/1.2/index.html
 
 Obtaining SimpleDBM
 -------------------
-SimpleDBM_ source can be obtained from the SimpleDBM_ Google project
-site http://code.google.com/p/simpledbm/. Source code is maintained in
-a Subversion repository, so you will need a subversion client on
-your PC.
+SimpleDBM source code can be obtained from the `SimpleDBM Google project
+site`_. Source code is maintained in a Subversion repository, so you will 
+need a subversion client on your PC.
 
-The SimpleDBM_ SVN repository is organized as follows:
+.. _SimpleDBM Google project site: http://code.google.com/p/simpledbm/
+
+The SimpleDBM SVN repository is organized as follows:
 
 ::
 
@@ -71,7 +100,7 @@ The SimpleDBM_ SVN repository is organized as follows:
           +--- simpledbm-samples      This contains some sample programs
           |                           that demonstrate how to use SimpleDBM.
           |
-          +--- simpledbm-docs         Contains the documentation sources.                           
+          +--- docs                   Contains the documentation sources.                           
 
 Under each of the top-level folders, there is the following structure.
 
@@ -90,32 +119,32 @@ In the code sub-directory, there is a top-level directory for each project.
 SVN URLs
 --------
 
-Here are the SVN URLs for the various SimpleDBM_ sub-systems.
+Here are the SVN URLs for the various SimpleDBM sub-systems.
 
 Base URL
   http://simpledbm.googlecode.com/svn/trunk
 
 SimpleDBM-RSS
-  ./simpledbm-rss/code/simpledbm-rss
+  .../simpledbm-rss/code/simpledbm-rss
 
 SimpleDBM-TypeSystem
-  ./simpledbm-typesystem/code/simpledbm-typesystem
+  .../simpledbm-typesystem/code/simpledbm-typesystem
 
 SimpleDBM-Database
-  ./simpledbm-database/code/simpledbm-database
+  .../simpledbm-database/code/simpledbm-database
 
 TupleDemo sample
-  ./simpledbm-samples/code/tupledemo
+  .../simpledbm-samples/code/tupledemo
 
 B-TreeDemo sample
-  ./simpledbm-samples/code/btreedemo
+  .../simpledbm-samples/code/btreedemo
 
 If you are a committer, you need to use ``https`` instead of ``http``.
 
 Pre-requisites
 --------------
 
-SimpleDBM_ uses Maven_ for build management. You will need to obtain a
+SimpleDBM uses Maven_ for build management. You will need to obtain a
 copy of Maven 2. Install Maven and set up your PATH so that Maven can be
 executed by typing the following command.
 
@@ -125,21 +154,18 @@ executed by typing the following command.
 
 .. _Maven: http://maven.apache.org.
 
-SimpleDBM_ development is done using Eclipse 3.2. You can use any IDE
+SimpleDBM development is being done using Eclipse 3.x. You can use any IDE
 of your choice, but you may need to find ways of converting the maven
 projects to the format recognized by your IDE.
 
 You will need a Subversion client in order to checkout the code for
-SimpleDBM_. The following URL can be used to download the Eclipse subclipse
-plugin through the Eclipse Update Manager.
+SimpleDBM. 
 
-  http://subclipse.tigris.org/update_1.2.x
-
-SimpleDBM_ requires Java SE 5.0 or above. Java SE 6.0 is recommended.
+SimpleDBM requires Java SE 5.0 or above. Java SE 6.0 is recommended.
 On the Mac, Java SE 5.0 is available for Mac OS X Tiger.
 
 Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
-SimpleDBM_ code will not compile.
+SimpleDBM code will not compile.
 
 Instructions for Eclipse
 ------------------------
@@ -147,27 +173,29 @@ The following instructions are for the simpledbm-rss project.
 However, the same instructions apply for the other projects, simply
 change the SVN URL as appropriate.
 
-1. Create a new classpath variable named ``M2_REPO`` inside
-Eclipse. From the menu bar, select Window > Preferences. Select the Java
-> Build Path > Classpath Variables page. The ``M2_REPO`` variable should
-contain the path to your local Maven 2 repository. Usually this is
-``<Your Home Directory>/.m2/repository``.
+1. Create a new ``classpath`` variable named ``M2_REPO`` inside
+   Eclipse. From the menu bar, select Window > Preferences. Select the Java
+   > Build Path > Classpath Variables page. The ``M2_REPO`` variable should
+   contain the path to your local Maven 2 repository. Usually this is::
 
-2. Create a new SVN repository location in Eclipse
-http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code.
-If you are a committer, use https instead of http.
+    <Your Home Directory>/.m2/repository
+
+2. Create a new SVN repository location in Eclipse (If you are a committer, 
+   use https instead of http).::
+   
+     http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code
 
 3. Checkout the folder simpledbm-rss as a project in the
-workspace.
+   workspace.
 
 4. Start a command shell. Cd to the project directory.
 
 5. Run ``mvn eclipse:clean``, followed by ``mvn eclipse:eclipse``.
 
 6. Switch back to Eclipse and refresh the project. It should now
-display a small J against the project showing that it is a Java project. Eclipse
-is now setup to automatically rebuild SimpleDBM_ whenever you change any
-code.
+   display a small J against the project showing that it is a Java project. Eclipse
+   is now setup to automatically rebuild SimpleDBM whenever you change any
+   code.
 
 Maven commands 
 --------------
@@ -186,44 +214,8 @@ To create the package and install it in the local repository.
 
   mvn install
 
-Test Code Coverage
-------------------
-I use Clover Code Coverage tool to analyze the coverage of unit test cases.
-
-Installing Clover plug-in in Eclipse
--------------------------------------
-
-The Clover plugin for Eclipse can be downloaded from the Clover
-website ``http://www.atlassian.com/software/clover/``. After
-downloading, extract the zip file and place contents in your Eclipse
-plugins folder. You will need to separately download and install a
-license file in the top-level Clover plugin directory. Restart Eclipse
-to enable Clover.
-
-Open the Project Properties window, and navigate to the Clover
-tab. Click Enable Clover plugin in this project. Click on the
-Compilation tab. Enable Fork compiler into separate JVM. Enter the Java
-5.0 JDK installation directory in the ``JDK_HOME`` field, and set the Heap
-size of the compiler JVM to 64 MB.
-
-In the Clover View, select SimpleDBM_ project, and click on the
-button Toggle Compiling with Clover. Now when you build SimpleDBM_ or run
-any of the unit tests, Clover will automatically produce coverage data.
-
-Clover support in Maven builds
-------------------------------
-
-The SimpleDBM_ Maven build script is already configured for
-Clover. You must save the Clover license file to
-``src/test/clover/clover.license`` prior to executing mvn.
-
-To build SimpleDBM_ with Clover enabled, and to produce a coverage
-report, run: 
-::
-
- mvn clover:instrument clover:clover
-
-The report will be produced in the folder ``target/site/clover``.
+Please visit the SimpleDBM project Wiki pages for additional platform
+specific instructions.
 
 ============================
 Coding and Design Principles
@@ -232,8 +224,8 @@ Coding and Design Principles
 Modular design
 ==============
 
-SimpleDBM_ is broken down into modules. Each module implements a
-particular sub-system, and is contained in its own package.
+SimpleDBM RSS is made up of several modules. Each module implements a
+particular component, and is contained in its own package.
 
 Each module has a public API, which is specified via a set of Java
 interfaces. Classes are generally not used as part of the public API,
@@ -242,52 +234,57 @@ though there are a few exceptional cases.
 To make the modules reusable and as independent of each other as
 possible, the interface of a module is deliberately specified in
 general terms. Where possible, direct dependence between modules is
-avoided. If two modules are dependent, then the only permissible way
-for one module to interact with another is to go via the public
-interfaces of the respective modules. Modules are not allowed to
-depend upon implementation specifics of other modules.
+avoided. The only permissible way for one module to interact with 
+another is to go via the public interfaces of the other module. 
+Modules are not allowed to depend upon implementation specifics of 
+other modules.
 
-SimpleDBM_ uses constructor based dependency injection to link
+A strict rule is that two modules cannot have cyclic dependency.
+Module dependencies are one-way only, higher level modules depend
+upon lower level modules. This is illustrated below.
+
+.. image:: images/component-model.png
+   :scale: 30
+
+SimpleDBM uses constructor based dependency injection to link
 modules. It is being designed in such a way that a third-party IoC
 (Inversion of Control) container may be used to manage the
 dependencies.
 
-Documentation
-=============
-
-Most of the design documentation for SimpleDBM_ is incorporated as
-Javadoc comments within the source code, and in package and overview
-documents. The aim is to keep the documentation as close to the
-source code as possible.
-
-Being an educational project, producing good documentation is high
-priority.
-
 Java coding standards
 =====================
 
-Heavy use is made of the new concurrency packages in Java 5.0. Enums
-are used where appropriate. SimpleDBM_ does not define any Generic
-classes itself, but makes liberal use of Java 5.0 Generic classes.
+Where possible, classes are made immutable. This helps in 
+improving the robustness of the system. The serialization mechanism
+used by SimpleDBM is designed to work with immutable objects.
 
-Fine grained thread locking is used to maximize concurrency. Using
-coarse grained locking would have simplified the code, but would not
-have provided an opportunity for exploring various techniques for
-fine-grained locking. Deadlock is avoided by careful ordering of
-locks.
+In the interest of concurrency, fine-grained locking is used as 
+opposed to coarse-grained synchronization. This makes the code complex
+in some cases, as careful ordering of locks is required for deadlock
+avoidance. Also, the correctness of synchronization logic is of 
+paramount importance.
 
-Memory management is left to the Garbage Collector. Rather than
-using Object pools, SimpleDBM_ encourages the use of short-lived
+Unchecked exceptions are used throughout. Due to the nature of 
+unchecked exceptions, the code that throws the exception has the 
+responsibility of logging an error message at the point where the
+exception is thrown. This ensures that even if the exception is not
+caught by the client, at least an error message is logged to indicate 
+the nature of the error.
+
+All error messages are given unique error codes.
+
+The code relies upon the efficiency of modern garbage collectors
+and does not attempt to manage memory. Rather than
+using Object pools, SimpleDBM encourages the use of short-lived
 objects, on the basis that this aids the garbage collector in
 reclaiming space more quickly. The aim is to keep permanently
 occupied memory to a low level.
 
-Unchecked Exceptions are used. An error message is always logged
-before an exception is thrown. This ensures that even if the
-exception is not handled by the caller, its occurrence is visible in
-the logs.
-
-All error messages are given unique error codes.
+JUnit based test cases are being added constantly to improve the
+test coverage. Simple code coverage is not a good indicator of the
+usefulness of test cases, due to the multi-threaded nature of most
+SimpleDBM components. Where possible, test cases are created to simulate
+specific thread interactions, covering common scenarios. 
 
 Particular attention is paid to cleaning up of resources. To ensure
 that resources are cleaned up during normal as well as exceptional
@@ -297,10 +294,28 @@ Debug messages are used liberally - and are executed conditionally
 so that if debug is switched off, there is minimal impact on
 performance.
 
-Test Cases
-==========
+A special Trace module is used to capture runtime trace. This module
+is designed to be lock-free, and is very low overhead, so that trace
+can be collected with negligible overhead. This feature is still being
+implemented across modules; the intention is that when fatal errors
+occur, the last 5000 trace messages will be dumped to help debug the
+error condition.
 
-Each module is accompanied with JUnit test cases.
+Documentation
+=============
+
+The design of SimpleDBM RSS sub-system is covered in this document.
+There is a generous amount of comments in the source code as well. 
+
+Being an educational project, producing good documentation is high
+priority.
+
+The design of most modules is based upon published research. References
+are provided in appropriate places, both in this document, and in the
+source code. This acts as another source of information.
+
+I know of no other database project that is as well documented as
+SimpleDBM.
 
 Release schedule
 ================
@@ -321,7 +336,7 @@ components listed in the table given below.
 |Module Name |Description                                 |
 |            |                                            |
 +============+============================================+
-|Logging     |Provides a Logger implmentation that hides  |
+|Logging     |Provides a Logger interface that hides the  |
 |            |implementation details. Can wrap either JDK |
 |            |logging or Log4J.                           |
 +------------+--------------------------------------------+
@@ -331,8 +346,8 @@ components listed in the table given below.
 |            |factory for creating objects based on type  |
 |            |code.                                       |
 +------------+--------------------------------------------+
-|Storage     |Povides an abstraction for input/output of  |
-|Manager     |storage conainers similar to files.         |
+|Storage     |Provides an abstraction for input/output of |
+|Manager     |storage containers similar to files.        |
 +------------+--------------------------------------------+
 |Latch       |Provides read/write latches that can be used|
 |            |to manage concurrency.                      |
@@ -347,7 +362,7 @@ components listed in the table given below.
 +------------+--------------------------------------------+
 |Buffer      |The Buffer Manager module implements the    |
 |Manager     |Page Cache where recently accessed pages are|
-|            |stoed temporarily.                          |
+|            |stored temporarily.                         |
 +------------+--------------------------------------------+
 |Log Manager |The Write Ahead Log Manager is used for     |
 |            |recording changes made to the database for  |
@@ -357,7 +372,7 @@ components listed in the table given below.
 |Manager     |transactions, system restart and recovery.  |
 |            |                                            |
 +------------+--------------------------------------------+
-|Free Space  |The Free Space Maager is responsible for    |
+|Free Space  |The Free Space Manager is responsible for   |
 |Manager     |managing free space information in storage  |
 |            |containers.                                 |
 +------------+--------------------------------------------+
@@ -368,7 +383,7 @@ components listed in the table given below.
 |            |allows records to be moved within the page  |
 |            |without affecting clients.                  |
 +------------+--------------------------------------------+
-|Location    |The Location module specifices the inteface |
+|Location    |The Location module specifies the interface |
 |            |for identifying lockable records in storage |
 |            |containers.                                 |
 +------------+--------------------------------------------+
@@ -3436,6 +3451,12 @@ page update is logged first, followed by data page
 update. Note that this does not change the latch
 ordering.
 
+.. [ASTRA-76] M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,
+   K.P.Eswaran, J.N.Gray, P.P.Griffiths, W.F.King, R.A.Lorie,
+   P.R.McJones, J.W.Mehl, G.R.Putzolu, I.L.Traiger, B.W.Wade
+   AND V.Watson. System R: Relational Approach to Database
+   Management, ACM, Copyright 1976, ACM Transactions on
+   Database Systems, Vol 1, No. 2, June 1976, Pages 97-137.
 
 .. [JALUTA-05] Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen. 
    Concurrency control and recovery for balanced B-link trees. 
