@@ -406,62 +406,242 @@ Object Registry
 
 Overview
 ========
-In any object oriented persistence system, there has to be a
-mechanism for creating objects dynamically, given some form of type
-identification. SimpleDBM_ uses a simple Object Registry database for
-this purpose. Each class that may be dynamically instantiated is
-assigned a unique type code. The type code and the associated class
-name is registered in the SimpleDBM_ Object Registry. The typecode
-can subsequently be used to request an object of the specified
-class.
+SimpleDBM uses a custom serialization mechanism for marshalling
+and unmarshalling data types to/from byte streams. When a data type is persisted, a two-byte 
+type code is stored in the first two bytes of the byte stream [1]_. When
+reading back, the type code is used to lookup a factory for
+creating the object of the correct type.
 
-Registering a class
-===================
+.. [1] In some cases the type code is not stored, as it can be
+       determined through some other means. For instance, a data 
+       dictionary may be available with type information that allows
+       table rows to be correctly parsed.
 
-Before an object of a particular type can be instantiated, its class
-must be registered with the Object Registry. An example of how this
-is done is shown below::
+The SimpleDBM serialization mechanism does not use the Java
+Serialization framework.
 
- ObjectFactory objectFactory = new ObjectFactoryImpl();
- objectFactory.registerType(1, String.class.getName());
+Central to the SimpleDBM serialization mechanism is the ``ObjectRegistry``
+module. The ``ObjectRegistry`` is important because it provides
+coupling between SimpleDBM and clients. For instance, index key
+types, table row types, etc. can be registered in SimpleDBM's
+``ObjectRegistry`` and thereby made available to SimpleDBM. You will
+see how this is done when we discuss Tables_ and 
+Indexes_.
 
-Above registers the ``String`` class with the Object Registry. It
-assigns the type code 1 to the ``String`` class. Objects of the
-registered classes may be instantiated using their type codes::
+To allow SimpleDBM to access a particular type, you must assign a
+unique 2-byte (short) type code to the type, and register a factory class with the
+``ObjectRegistry``. Note that because the type code is recorded in
+persistent storage, it must be stable, i.e., once registered, the
+type code association must remain the same for the life span of the
+the database. 
 
- String t = (String) objectFactory.getInstance(1);
+An important consideration is to ensure that all the required types
+are available to a SimpleDBM RSS instance at startup. 
 
-For a class to be eligible for registration, it must implement the
-default no-argument constructor.
+A limitation of the current design is that the type registrations are
+not held in persistent storage. Since all types must be available
+to SimpleDBM server when it is starting up, as these may be involved
+in recovery, you need to ensure that custom types are registered
+to SimpleDBM immediately after the server instance is created, but 
+before the server is started. Typically this is handled by requiring
+each module to register its own types.
+
+Type codes between the range 0-1000 are reserved for use by
+SimpleDBM.
+
+Two Use cases
+=============
+
+The ``ObjectRegistry`` supports two use cases.
+
+- The first use case is where the client registers an ``ObjectFactory``
+  implementation. In this case, ``ObjectRegistry`` can construct the 
+  correct object from a byte stream on request. By taking care of the
+  common case, the client code is simplified.
+  
+- The second case is when the client has a more complex requirement
+  and wants to manage the instantiation of objects. In this scenario,
+  the client registers a singleton class and associates this with the
+  type code. The ``ObjectRegistry`` will return the registered singleton 
+  object when requested. 
+
+Registering an ObjectFactory
+============================
+
+In the simple case, an ``ObjectFactory`` implementation needs to be
+registered for a particular type code. 
+
+In the example shown below, objects of the class ``MyObject`` 
+are to be persisted::
+
+ public final class MyObject {
+   final int value;
+   
+   /**
+    * Constructs a MyObject from a byte stream.
+    */
+   public MyObject(ByteBuffer buf) {
+     // skip the type code
+     buf.getShort();
+     // now get the value
+     value = buf.getInt();
+   }
+ }
+ 
+Points worth noting are:
+
+- The ``MyObject`` class provides a constructor that takes a ``ByteBuffer``
+  as the sole argument. This is important as it allows the object to
+  use final fields, making the class immutable.
+ 
+- The constructor skips the first two bytes which contain the type code.
+
+We need an ``ObjectFactory`` implementation that constructs the ``MyObject``
+instances. The implementation is relatively straightforward::
+
+ class MyObjectFactory implements ObjectFactory {
+   Object getInstance(ByteBuffer buf) {
+     return new MyObject(buf);
+   }
+ }
+ 
+Next, we register the ``ObjectFactory`` implementation with the ``ObjectRegistry``.::
+
+ objectRegistry.registerObjectFactory(1, new MyObjectFactory());
+
+Given above registration, it is possible to
+construct MyObject instances as follows::
+
+ ByteBuffer buf = ...;
+ MyObject o = (MyObject) objectRegistry.getInstance(buf);
+
+This pattern is used throughout SimpleDBM RSS.
+
+Asymmetry between retrieving and storing objects
+================================================
+
+The reader may have noticed that the ``ObjectFactory`` says
+nothing about how objects are marshalled into a byte stream.
+It only deals with the unmarshalling of objects. 
+
+The marshalling is handled by the object itself. All
+objects that support marshalling are required to implement
+the Storable interface.
+
+Storable Interface and Object serialization
+===========================================
+
+SimpleDBM provides the ``org.simpledbm.rss.api.st.Storable``
+interface as a substitute for ``java.io.Serializable``
+interface. The ``Storable`` interface requires the implementation
+to be able to predict its persistent size in bytes when the
+``getStoredLength()`` method is invoked. It also requires the
+implementation to be able to stream itself to a ``ByteBuffer``
+object.
+
+The Storable interface specification is as follows: ::
+
+ /**
+  * A Storable object can be written to (stored into) or 
+  * read from (retrieved from) a ByteBuffer. The object 
+  * must be able to predict its length in bytes;
+  * this not only allows clients to allocate ByteBuffer 
+  * objects of suitable size, it is also be used by a 
+  * StorageContainer to ensure that objects can be
+  * restored from secondary storage.
+  */
+ public interface Storable {
+ 
+   /**
+    * Store this object into the supplied ByteBuffer in 
+    * a format that can be subsequently used to reconstruct the
+    * object. ByteBuffer is assumed to be setup 
+    * correctly for writing.
+    * 
+    * @param bb ByteBuffer that will contain a stored 
+    *           representation of the object.
+    */
+   void store(ByteBuffer bb);
+
+   /**
+    * Predict the length of this object in bytes when 
+    * stored in a ByteBuffer.
+    * 
+    * @return The length of this object when stored in 
+    *         a ByteBuffer.
+    */
+   int getStoredLength();
+ }
+
+The implementation of the ``store()`` method is the inverse
+of the constructor that takes the ``ByteBuffer`` argument.
+
+A complete example of the ``MyObject`` class will look like
+this::
+
+ public final class MyObject implements Storable {
+   final int value;
+   
+   /**
+    * Constructs a MyObject from a byte stream.
+    */
+   public MyObject(ByteBuffer buf) {
+     // skip the type code
+     buf.getShort();
+     // now get the value
+     value = buf.getInt();
+   }
+
+   public int getStoredLength() {
+     return 6;
+   }
+     
+   public void store(ByteBuffer bb) {
+     bb.putShort((short) 1);
+     bb.putInt(value);
+   }
+ }
+
 
 Registering Singletons
 ======================
 
-SimpleDBM_'s object registry also supports registration of
-singletons. Example::
+In some cases, the requirements for constructing objects are complex
+enough for the client to manage it itself. In this case, the client
+provides a singleton object that is registered with the ``ObjectRegistry``.
 
- ObjectFactory objectFactory = new ObjectFactoryImpl();
- objectFactory.registerSingleton(1, new String("hello"));
+Historical Note
+===============
+The initial design of SimpleDBM's ``ObjectRegistry`` used reflection
+to create instances of objects. Instead of registering factory classes,
+the name of the target class would be registered. This method had following
+problems.
 
-Object Registry aware classes
-=============================
+- Firstly, it required that all classes that participated in the
+  persistence mechanism had to support a no-arg constructor.
+  
+- Fields could not be final, as the fields needed to be initialized post
+  construction. As a result, persistent classes could not be immutable.
+  
+- It was difficult to supply additional arguments (context information)
+  to the constructed objects. 
 
-Some objects may need to obtain instances of other classes. To do
-this, objects of such classes need access to the Object Registry. If
-a class implements the ``ObjectFactoryAware`` interface, then it
-will be injected with the appropriate Object Registry object at the
-time of initialisation.
+The current method overcomes these problems, and has resulted in
+more robust code.
 
-Example::
+Comparison with Apache Derby
+============================
 
- class MyObject implements ObjectFactoryAware {
-   ObjectFactory objectFactory;
-   public void setObjectFactory(ObjectFactory factory) {
-     this.objectFactory = factory;
-   }
-   public MyObject() {
-   }
- }
+Apache Derby has a similar requirement. The solution used by Derby
+is different from SimpleDBM in following ways.
+
+- It uses a custom implementation of the Java Serialization mechanism.
+  
+- Reflection is used to obtain instances of objects.
+
+- The type code database is hard-coded in a static class. In SimpleDBM,
+  types are added by each module; there is no central hard-coded list of
+  types.
 
 ===============
 Storage Manager
