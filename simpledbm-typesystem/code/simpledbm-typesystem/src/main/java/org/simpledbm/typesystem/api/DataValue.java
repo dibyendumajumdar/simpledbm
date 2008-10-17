@@ -27,7 +27,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.util.Dumpable;
 
 /**

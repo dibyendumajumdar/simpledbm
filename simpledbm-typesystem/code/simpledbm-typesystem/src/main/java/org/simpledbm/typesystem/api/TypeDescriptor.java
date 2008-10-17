@@ -22,7 +22,7 @@ package org.simpledbm.typesystem.api;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.util.Dumpable;
 
 /**
