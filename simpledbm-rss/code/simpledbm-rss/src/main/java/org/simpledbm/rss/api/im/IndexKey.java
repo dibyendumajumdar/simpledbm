@@ -21,7 +21,7 @@ package org.simpledbm.rss.api.im;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 
 /**
  * Specifies the requirements to be met by Index Keys. Index Keys

@@ -26,7 +26,7 @@ import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 
 /**
  * Test cases for the Object Registry module.

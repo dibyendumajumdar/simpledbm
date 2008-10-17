@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.st;
+package org.simpledbm.rss.api.registry;
 
 import java.nio.ByteBuffer;
 
