@@ -24,7 +24,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import org.simpledbm.rss.api.exception.RSSException;
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 
 /**
  * A format for String objects that is easier to persist. 

@@ -20,7 +20,7 @@
 package org.simpledbm.rss.api.tx;
 
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**

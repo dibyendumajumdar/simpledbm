@@ -26,7 +26,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.simpledbm.junit.BaseTestCase;
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.LogReader;

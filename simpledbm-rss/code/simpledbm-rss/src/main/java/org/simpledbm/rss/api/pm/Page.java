@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.st.Storable;
+import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;

@@ -24,8 +24,8 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.st.Storable;
-import org.simpledbm.rss.api.st.StorableFactory;
+import org.simpledbm.rss.api.registry.Storable;
+import org.simpledbm.rss.api.registry.StorableFactory;
 
 /**
  * A SlottedPage is named as such because it contains a slot table, and supports
