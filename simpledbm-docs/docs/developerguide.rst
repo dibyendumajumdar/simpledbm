@@ -27,11 +27,11 @@ Manager in Java.
 .. _System-R: http://www.mcjones.org/System_R/index.html
 
 It is anticipated that there will be two major sub-systems in the
-dbms backend. The Data Manager subsystem (Relational Storage System
-or RSS in System-R_ parlance) will be responsible for implementing
-low-level stuff such as transactions, locking, buffer management,
-table and index management. The functions of the SimpleDBM RSS module 
-are based upon the description of the System-R RSS component in [ASTRA-76]_.
+dbms backend. The RSS subsystem (Relational Storage System) will be 
+responsible for implementing low-level stuff such as transactions, 
+locking, buffer management, table and index management. The functions 
+of the RSS subsystem will be based upon the description of the System-R_ 
+RSS component in [ASTRA-76]_.
 
    The Relational Storage Interface (RSI) is an internal interface
    which handles access to single tuples of base relations. This 
@@ -43,9 +43,9 @@ are based upon the description of the System-R RSS component in [ASTRA-76]_.
    on selected fields of base relations, and pointer chains across
    relations. 
 
-This RSS sub-system is currently in early BETA.
+The RSS sub-system is currently in early BETA.
 
-As RSS is fairly low level, two add-on modules are available that
+As the RSS is fairly low level, two add-on modules are available that
 make it more user friendly by adding certain features.
 
 Type-System
@@ -56,10 +56,10 @@ Database-API
   This adds a Data Dictionary, and easy to use high level API for
   creating tables and indexes, and data manipulation.
 
-The second major sub-system will be called SQL Manager (Relational
-Data System or RDS). Its job will be to parse SQL statements,
+The second major sub-system will be called RDS (Relational
+Data System). Its job will be to parse SQL statements,
 produce optimum execution plans, and execute SQL statements. Development
-of the SQL Manager sub-system has not started yet.
+of the RDS sub-system has not started yet.
 
 Technology
 ==========
@@ -268,20 +268,20 @@ Unchecked exceptions are used throughout. Due to the nature of
 unchecked exceptions, the code that throws the exception has the 
 responsibility of logging an error message at the point where the
 exception is thrown. This ensures that even if the exception is not
-caught by the client, at least an error message is logged to indicate 
+caught by the client, an error message will be logged to indicate 
 the nature of the error.
 
 All error messages are given unique error codes.
 
 The code relies upon the efficiency of modern garbage collectors
 and does not attempt to manage memory. Rather than
-using Object pools, SimpleDBM encourages the use of short-lived
+using object pools, SimpleDBM encourages the use of short-lived
 objects, on the basis that this aids the garbage collector in
 reclaiming space more quickly. The aim is to keep permanently
 occupied memory to a low level.
 
 JUnit based test cases are being added constantly to improve the
-test coverage. Simple code coverage is not a good indicator of the
+test coverage. Simple code coverage statistics are not a good indicator of the
 usefulness of test cases, due to the multi-threaded nature of most
 SimpleDBM components. Where possible, test cases are created to simulate
 specific thread interactions, covering common scenarios. 
@@ -349,7 +349,7 @@ components listed in the table given below.
 |Storage     |Provides an abstraction for input/output of |
 |Manager     |storage containers similar to files.        |
 +------------+--------------------------------------------+
-|Latch       |Provides read/write latches that can be used|
+|Latch       |Provides read/write locks that can be used  |
 |            |to manage concurrency.                      |
 +------------+--------------------------------------------+
 |Lock Manager|Implements a Lock Scheduler that allows     |
@@ -377,7 +377,7 @@ components listed in the table given below.
 |            |containers.                                 |
 +------------+--------------------------------------------+
 |Slotted Page|The Slotted Page Manager provides an common |
-|Manager     |implementation of page containing multiple  |
+|Manager     |implementation of pages containing multiple |
 |            |records. A slot table is used to provide a  |
 |            |level of indirection to the records. This   |
 |            |allows records to be moved within the page  |
@@ -397,7 +397,7 @@ components listed in the table given below.
 +------------+--------------------------------------------+
 |Server      |This brings together all the other modules  |
 |            |and provides overall management of the      |
-|            |SimpleDBM database engine.                  |
+|            |SimpleDBM RSS database engine.              |
 +------------+--------------------------------------------+
 
 ===============
@@ -407,42 +407,42 @@ Object Registry
 Overview
 ========
 SimpleDBM uses a custom serialization mechanism for marshalling
-and unmarshalling data types to/from byte streams. When a data type is persisted, a two-byte 
-type code is stored in the first two bytes of the byte stream [1]_. When
-reading back, the type code is used to lookup a factory for
-creating the object of the correct type.
+and unmarshalling objects to/from byte streams. When an object 
+is marshalled, a two-byte code is stored in the first two bytes of 
+the byte stream [1]_. This identifies the class of the stored object.
+When reading back, the type code is used to lookup a factory for
+creating the object of the correct class.
 
 .. [1] In some cases the type code is not stored, as it can be
-       determined through some other means. For instance, a data 
-       dictionary may be available with type information that allows
-       table rows to be correctly parsed.
+       determined through some other means. 
 
 The SimpleDBM serialization mechanism does not use the Java
 Serialization framework.
 
 Central to the SimpleDBM serialization mechanism is the ``ObjectRegistry``
-module. The ``ObjectRegistry`` is important because it provides
-coupling between SimpleDBM and clients. For instance, index key
-types, table row types, etc. can be registered in SimpleDBM's
+module. The ``ObjectRegistry`` provides the coupling between SimpleDBM 
+serialization mechanism and its clients. For instance, index key
+types, table row types, etc. are registered in SimpleDBM's
 ``ObjectRegistry`` and thereby made available to SimpleDBM. You will
 see how this is done when we discuss Tables_ and 
 Indexes_.
 
-To allow SimpleDBM to access a particular type, you must assign a
-unique 2-byte (short) type code to the type, and register a factory class with the
-``ObjectRegistry``. Note that because the type code is recorded in
-persistent storage, it must be stable, i.e., once registered, the
-type code association must remain the same for the life span of the
+To allow SimpleDBM to deserialize (unmarshall) an object from a byte-stream, 
+you must assign a unique 2-byte (short) type code to the class, 
+and register a ``ObjectFactory`` implementation with the ``ObjectRegistry``. 
+Because the type code gets recorded in persistent storage, 
+it must be stable, i.e., once registered, the type code association 
+for a class must remain constant for the life span of the
 the database. 
 
-An important consideration is to ensure that all the required types
-are available to a SimpleDBM RSS instance at startup. 
+An important consideration is to ensure that all the required classes
+are available to a SimpleDBM RSS instance at startup.  
 
 A limitation of the current design is that the type registrations are
 not held in persistent storage. Since all types must be available
-to SimpleDBM server when it is starting up, as these may be involved
-in recovery, you need to ensure that custom types are registered
-to SimpleDBM immediately after the server instance is created, but 
+to SimpleDBM server when it is starting up (as these may be involved
+in recovery) you need to ensure that custom types are registered
+to the ``ObjectRegistry`` immediately after the server instance is created, but 
 before the server is started. Typically this is handled by requiring
 each module to register its own types.
 
@@ -492,7 +492,7 @@ Points worth noting are:
 
 - The ``MyObject`` class provides a constructor that takes a ``ByteBuffer``
   as the sole argument. This is important as it allows the object to
-  use final fields, making the class immutable.
+  use final fields, allowing the class to be immutable.
  
 - The constructor skips the first two bytes which contain the type code.
 
@@ -531,13 +531,14 @@ the Storable interface.
 Storable Interface and Object serialization
 ===========================================
 
-SimpleDBM provides the ``org.simpledbm.rss.api.st.Storable``
-interface as a substitute for ``java.io.Serializable``
-interface. The ``Storable`` interface requires the implementation
+Classes that need serialization support should implement
+the interface ``org.simpledbm.rss.api.registry.Storable``. 
+The ``Storable`` interface requires the object
 to be able to predict its persistent size in bytes when the
 ``getStoredLength()`` method is invoked. It also requires the
 implementation to be able to stream itself to a ``ByteBuffer``
-object.
+object in a format that matches the expected format by the
+``ObjectFactory`` implementation. 
 
 The Storable interface specification is as follows: ::
 
