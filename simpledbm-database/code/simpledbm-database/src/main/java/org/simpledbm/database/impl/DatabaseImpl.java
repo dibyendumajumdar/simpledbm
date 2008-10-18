@@ -29,8 +29,10 @@ import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
+import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
+import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -38,10 +40,9 @@ import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.IsolationMode;
-import org.simpledbm.rss.api.tx.Loggable;
-import org.simpledbm.rss.api.tx.PostCommitAction;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
@@ -438,6 +439,25 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 					throw new DatabaseException(mcat.getMessage("ED0008", tableDefinition.getName()));
 				}
 			}
+
+			CreateTableDefinition ctd = new CreateTableDefinition(MODULE_ID,
+					TYPE_CREATE_TABLE_DEFINITION, this);
+			ctd.table = tableDefinition;
+			/*
+			 * Normal redo log records must be logged against a page. As we do not
+			 * have a page for the data dictionary entry - we log it against the
+			 * virtual table page (0,0).
+			 */
+			BufferAccessBlock bab = server.getBufferManager().fixExclusive(
+					new PageId(0, 0), false, server.getPageFactory().getRawPageType(), 0);
+			try {
+				redo(bab.getPage(), ctd);
+				Lsn lsn = trx.logInsert(bab.getPage(), ctd);
+				bab.setDirty(lsn);
+			}
+			finally {
+				bab.unfix();
+			}
 			/*
 			 * Following will obtain a lock on the containerID.
 			 */
@@ -447,10 +467,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 				server.createIndex(trx, idx.getName(), idx.getContainerId(), 8,
 						ROW_FACTORY_TYPE_ID, idx.isUnique());
 			}
-			CreateTableDefinition ctd = new CreateTableDefinition(MODULE_ID,
-							TYPE_CREATE_TABLE_DEFINITION, this);
-			ctd.table = tableDefinition;
-			trx.schedulePostCommitAction(ctd);
 			success = true;
 		} finally {
 			if (success) {
@@ -463,15 +479,11 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
 	@Override
 	public void redo(Page page, Redoable loggable) {
-		/* No Op */
-	}
-
-	@Override
-	public void redo(Loggable loggable) {
 		if (loggable instanceof CreateTableDefinition) {
 			CreateTableDefinition ctd = (CreateTableDefinition) loggable;
+			System.err.println("Redoing " + ctd);
 			storeTableDefinition(ctd.table);
-		}
+		}	
 	}
 
 	/**
@@ -586,7 +598,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * @since 29 Dec 2007
 	 */
 	public static final class CreateTableDefinition extends BaseLoggable
-			implements PostCommitAction {
+			implements Redoable {
 
 		int actionId;
 		TableDefinition table;
@@ -619,6 +631,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			sb.append(", actionId=");
 			sb.append(actionId);
 			sb.append(", table=");
+			table.appendTo(sb);
+			sb.append(")");
 			return sb;
 		}
 

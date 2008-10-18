@@ -107,7 +107,7 @@ public class TestDatabase extends BaseTestCase {
 		c.add(Calendar.DATE, add);
 		return c.getTime();
 	}
-	
+
 	public void testBasicFunctions() throws Exception {
 
 		createTestDatabase(getServerProperties());
