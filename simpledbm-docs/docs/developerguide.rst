@@ -424,25 +424,37 @@ module. The ``ObjectRegistry`` provides the coupling between SimpleDBM
 serialization mechanism and its clients. For instance, index key
 types, table row types, etc. are registered in SimpleDBM's
 ``ObjectRegistry`` and thereby made available to SimpleDBM. You will
-see how this is done when we discuss Tables_ and 
-Indexes_.
+see how this is done when we discuss Tables and 
+Indexes.
 
-To allow SimpleDBM to deserialize (unmarshall) an object from a byte-stream, 
-you must assign a unique 2-byte (short) type code to the class, 
-and register a ``ObjectFactory`` implementation with the ``ObjectRegistry``. 
-Because the type code gets recorded in persistent storage, 
-it must be stable, i.e., once registered, the type code association 
-for a class must remain constant for the life span of the
-the database. 
+To allow SimpleDBM to serialize and deserialize an object from a byte-stream, 
+you must:
+
+1. Assign a unique 2-byte (short) type code to the class. Because the type 
+   code gets recorded in persistent storage, 
+   it must be stable, i.e., once registered, the type code association 
+   for a class must remain constant for the life span of the
+   the database. 
+
+2. Ensure that the class implements a constructor that takes a 
+   ByteBuffer argument. The constructor should expect the first two bytes
+   to contain the typecode for the class.
+
+3. Ensure that the class implements the Storable interface. The 
+   stored length of an object of the class must allow for the 2-byte
+   type code.
+
+4. Provide an implementation of the ``org.simpledbm.rss.api.registry.ObjectFactory``
+   interface, and register this implementation with the ``ObjectRegistry``.
 
 An important consideration is to ensure that all the required classes
 are available to a SimpleDBM RSS instance at startup.  
 
 A limitation of the current design is that the type registrations are
-not held in persistent storage. Since all types must be available
+not held in persistent storage. Since all type mappings must be available
 to SimpleDBM server when it is starting up (as these may be involved
-in recovery) you need to ensure that custom types are registered
-to the ``ObjectRegistry`` immediately after the server instance is created, but 
+in recovery) you need to ensure that custom type mappings are registered
+to the ``ObjectRegistry`` immediately after the server instance is constructed, but 
 before the server is started. Typically this is handled by requiring
 each module to register its own types.
 
@@ -474,7 +486,7 @@ registered for a particular type code.
 In the example shown below, objects of the class ``MyObject`` 
 are to be persisted::
 
- public final class MyObject {
+ public final class MyObject implements Storable {
    final int value;
    
    /**
@@ -486,12 +498,14 @@ are to be persisted::
      // now get the value
      value = buf.getInt();
    }
+   
+   /* Storable methods not shown */
  }
  
 Points worth noting are:
 
 - The ``MyObject`` class provides a constructor that takes a ``ByteBuffer``
-  as the sole argument. This is important as it allows the object to
+  as an argument. This is important as it allows the object to
   use final fields, allowing the class to be immutable.
  
 - The constructor skips the first two bytes which contain the type code.
@@ -536,11 +550,9 @@ the interface ``org.simpledbm.rss.api.registry.Storable``.
 The ``Storable`` interface requires the object
 to be able to predict its persistent size in bytes when the
 ``getStoredLength()`` method is invoked. It also requires the
-implementation to be able to stream itself to a ``ByteBuffer``
-object in a format that matches the expected format by the
-``ObjectFactory`` implementation. 
+implementation to be able to stream itself to a ``ByteBuffer``.
 
-The Storable interface specification is as follows: ::
+The Storable interface specification is as follows::
 
  /**
   * A Storable object can be written to (stored into) or 
@@ -574,7 +586,7 @@ The Storable interface specification is as follows: ::
    int getStoredLength();
  }
 
-The implementation of the ``store()`` method is the inverse
+The implementation of the ``store()`` method must be the inverse
 of the constructor that takes the ``ByteBuffer`` argument.
 
 A complete example of the ``MyObject`` class will look like
@@ -596,7 +608,10 @@ this::
    public int getStoredLength() {
      return 6;
    }
-     
+
+   /**
+    * Serialize to a ByteBuffer object.
+    */     
    public void store(ByteBuffer bb) {
      bb.putShort((short) 1);
      bb.putInt(value);
@@ -610,13 +625,22 @@ Registering Singletons
 In some cases, the requirements for constructing objects are complex
 enough for the client to manage it itself. In this case, the client
 provides a singleton object that is registered with the ``ObjectRegistry``.
+The ``ObjectRegistry.getSingleton(int typecode)`` method retrieves the
+Singleton object.
 
 Historical Note
 ===============
 The initial design of SimpleDBM's ``ObjectRegistry`` used reflection
 to create instances of objects. Instead of registering factory classes,
-the name of the target class would be registered. This method had following
-problems.
+the name of the target class would be registered. 
+
+The unmarshalling of objects was performed in two steps. First, the 
+no-arg constructor would be invoked to construct the object. Then a 
+method on the Storable interface would be invoked to deserialize the
+object's fields from the ByteBuffer.
+
+This method was abandoned in favour of the current approach due to
+following problems. 
 
 - Firstly, it required that all classes that participated in the
   persistence mechanism had to support a no-arg constructor.
@@ -627,13 +651,16 @@ problems.
 - It was difficult to supply additional arguments (context information)
   to the constructed objects. 
 
+- It used reflection to construct objects. 
+
 The current method overcomes these problems, and has resulted in
-more robust code.
+more robust code. 
 
 Comparison with Apache Derby
 ============================
 
-Apache Derby has a similar requirement. The solution used by Derby
+Apache Derby has a similar requirement to marshall and unmarshall objects
+to/from a byte stream. The solution used by Derby
 is different from SimpleDBM in following ways.
 
 - It uses a custom implementation of the Java Serialization mechanism.
