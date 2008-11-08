@@ -626,32 +626,34 @@ In some cases, the requirements for constructing objects are complex
 enough for the client to manage it itself. In this case, the client
 provides a singleton object that is registered with the ``ObjectRegistry``.
 The ``ObjectRegistry.getSingleton(int typecode)`` method retrieves the
-Singleton object.
+Singleton object. Typically, the singleton is a factory class that can
+be used to create new instances of objects.
 
 Historical Note
 ===============
 The initial design of SimpleDBM's ``ObjectRegistry`` used reflection
 to create instances of objects. Instead of registering factory classes,
-the name of the target class would be registered. 
+the name of the target class was registered. 
 
 The unmarshalling of objects was performed in two steps. First, the 
-no-arg constructor would be invoked to construct the object. Then a 
-method on the Storable interface would be invoked to deserialize the
+no-arg constructor was invoked to construct the object. Then a 
+method on the Storable interface was invoked to deserialize the
 object's fields from the ByteBuffer.
 
 This method was abandoned in favour of the current approach due to
 following problems. 
 
 - Firstly, it required that all classes that participated in the
-  persistence mechanism had to support a no-arg constructor.
+  persistence mechanism support a no-arg constructor.
   
 - Fields could not be final, as the fields needed to be initialized post
   construction. As a result, persistent classes could not be immutable.
   
 - It was difficult to supply additional arguments (context information)
-  to the constructed objects. 
+  to the constructed objects. This was because the object was constructed
+  by a third-party, which had no knowledge about the object. 
 
-- It used reflection to construct objects. 
+- It used reflection to construct objects.
 
 The current method overcomes these problems, and has resulted in
 more robust code. 
@@ -672,20 +674,20 @@ is different from SimpleDBM in following ways.
   types.
 
 ===============
-Storage Manager
+Storage Factory
 ===============
 
 Overview
 ========
 Database Managers typically use files to store various types of
-data, such as, log files, data files, etc. However, from the
+data, such as log files, data files, etc.. However, from the
 perspective of a DBMS, the concept of a file is a logical one; all
 the DBMS cares about is a named storage container that supports
 random positioned IO. As long as this requirement is met, it is not
 important whether a container maps to a file or to some other
 device.
 
-The objective of this package is to provide a level of abstraction
+The objective of the StorageFactory package is to provide a level of abstraction
 to the rest of the DBMS so that the mapping of a container to a file
 becomes an implementation artefact. If desired, containers may be
 mapped to raw devices, or to segments within a file.
@@ -695,8 +697,12 @@ Storage Containers
 
 A Storage Container is a named entity that supports positioned
 (random) Input/Output. The default implementation maps a container
-to a file, but this is an implementation detail. The rest of the
-system does not need to know what the storage container maps to.
+to a file, but this is an implementation detail, and not a requirement. 
+The rest of the system does not need to know what the storage 
+container maps to.
+
+The operations on storage containers are similar to those that can
+be performed on files.
 
 In SimpleDBM_, each table or index maps to a single storage
 container. The Write Ahead Log also uses storage containers to store
@@ -735,26 +741,39 @@ modules may obtain access to the storage container as follows:
 
  StorageContainer sc = storageManager.getInstance(0);
 
-Storable Interface and Object serialization
-===========================================
+Default Implementation
+======================
 
-SimpleDBM_ requires some way of serializing and de-serializing
-objects from a byte stream. Java provides the java.io.Serializable
-interface and associated technology for this, however, the default
-mechanism is unsuitable for use in SimpleDBM_. The problem with the
-default method is that the language decides how to map type
-information to the stream. Since this has to be done in a generic
-manner, it cannot be optimised for space. In contrast, SimpleDBM_ can
-use the 2-byte short integer type code used in the Object Registry
-module to efficiently store type information.
+The default implementation of the StorageFactory uses a 
+``RandomAccessFile`` as the underlying container. A few 
+configuration options are supported to allow changing the
+behaviour of certain performance sensitive operations. These
+are listed below.
 
-SimpleDBM_ provides the ``org.simpledbm.rss.api.st.Storable``
-interface as a substitute for ``java.io.Serializable`` interface.
-``Storable`` interface requires the object to be able to predict
-its stored size in bytes via the ``getStoredLength()`` method. It
-also requires the object to be able to stream itself to a
-``ByteBuffer`` object, and also restore its contents from a
-``ByteBuffer`` object.
++--------------------+----------------------------------------------+
+| Option             | Description                                  |
++====================+==============================================+
+| storage.basePath   | This is used to specify the base directory   |
+|                    | relative to which all storage container      |
+|                    | instances are to be created.                 |
++--------------------+----------------------------------------------+
+| storage.createMode | This is used to set the ``RandomAccessFile`` |    
+|                    | mode that is used when creating a container. |
++--------------------+----------------------------------------------+
+| storage.openMode   | This is used to set the ``RandomAccessFile`` |
+|                    | mode when a container is opened.             |
++--------------------+----------------------------------------------+
+| storage.flushMode  | The flushMode has two values:                |
+|                    | force.true causes force(true) to be invoked  |
+|                    | on the file channel when the container is    |
+|                    | flushed.                                     |
+|                    | force.false causes force(false) to be        |
+|                    | ivoked. A missing flushMode causes the call  |
+|                    | to force() to do nothing.                    |
++--------------------+----------------------------------------------+
+
+Note that some of the modes can have a big impact on performance of
+SimpleDBM. 
 
 =============
 Latch Manager
@@ -796,11 +815,17 @@ Implementation and Performance Notes
 ====================================
 
 The SimpleDBM_ Latch interface is designed to be compatible with the
-Java 5.0 ReentrantReadWriteLock interface. This allows the ReadWrite
+Java 5.0 ``ReentrantReadWriteLock`` interface. This allows the ``ReadWrite``
 Latch implementation to be based upon the Java primitive.
 
-The ReadWrite Latch is likely to be more efficient than the
-ReadWriteUpdate Latch.
+The ``ReadWrite`` Latch is likely to be more efficient than the
+``ReadWriteUpdate`` Latch.
+
+The ``ReadWriteUpdate`` latch uses a subset of the ``LockManager`` implementation
+described later in this document. Unlike a Lock, which has to be
+looked up dynamically in a hash table, a latch is known to its client,
+and no lookup is necessary. This is the main difference between the Latch
+implementation of the ``LockManager`` code.
 
 Obtaining a latch instance
 ==========================
