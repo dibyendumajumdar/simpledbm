@@ -288,7 +288,7 @@ public final class LockManagerImpl implements LockManager {
     }
 
     /**
-     * Holds parameters supplied to acquire, release or find APIs. 
+     * Holds parameters supplied to aquire, release or find APIs. 
      */
     static final class LockParameters {
         Object owner;
@@ -1885,7 +1885,7 @@ public final class LockManagerImpl implements LockManager {
     }
 
     /**
-     * Describe the status of a lock acquistion request.
+     * Describe the status of a lock acquisition request.
      * 
      * @author Dibyendu Majumdar
      */
