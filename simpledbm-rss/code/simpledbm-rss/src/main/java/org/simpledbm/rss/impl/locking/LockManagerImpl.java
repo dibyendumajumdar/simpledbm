@@ -245,12 +245,12 @@ public final class LockManagerImpl implements LockManager {
 							continue;
 						}
 						log.info(getClass().getName(), "dumpLockTable",
-								mcat.getMessage("IC0014", item));
+								mcat.getMessage("IC0015", item));
 					}
 				}
 			}
 		} finally {
-			globalLock.unlockExclusive();
+			globalLock.unlockShared();
 		}
 	}
     
@@ -288,7 +288,7 @@ public final class LockManagerImpl implements LockManager {
     }
 
     /**
-     * Holds parameters supplied to aquire, release or find APIs. 
+     * Holds parameters supplied to acquire, release or find APIs. 
      */
     static final class LockParameters {
         Object owner;
