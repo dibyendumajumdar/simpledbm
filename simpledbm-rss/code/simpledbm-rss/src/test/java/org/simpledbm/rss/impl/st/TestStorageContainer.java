@@ -63,27 +63,20 @@ public class TestStorageContainer extends BaseTestCase {
 		sc.close();
 		assertTrue(file.exists());
 		assertTrue(file.length() == 10);
-                try {
-                    sc = factory.createIfNotExisting(name);
-                    fail("Error: should fail to create a container if it already exists");
-                }
-                catch (StorageException e) {
-                    assertTrue(e.getMessage().contains("ES0017"));
-                }
-//		sc.close();
+		try {
+			sc = factory.createIfNotExisting(name);
+			fail("Error: should fail to create a container if it already exists");
+		} catch (StorageException e) {
+			assertTrue(e.getMessage().contains("ES0017"));
+		}
 		assertTrue(file.exists());
 		assertTrue(file.length() == 10);
 		file.delete();
-		boolean caughtException = false;
 		try {
 			sc = factory.open(name);
-                        fail("Error: should fail as the container has been deleted");
-//			sc.close();
+			fail("Error: should fail as the container has been deleted");
 		} catch (Exception e) {
-			// e.printStackTrace();
-//			caughtException = true;
 		}
-//		assertTrue(caughtException);
 	}
 
 	public void testCase2() throws Exception {
