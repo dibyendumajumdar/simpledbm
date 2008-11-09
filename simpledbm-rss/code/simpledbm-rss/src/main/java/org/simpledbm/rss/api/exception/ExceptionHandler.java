@@ -25,7 +25,7 @@ public class ExceptionHandler {
 
 	final Logger log;
 	
-	public ExceptionHandler(Logger log) {
+	ExceptionHandler(Logger log) {
 		this.log = log;
 	}
 	
@@ -51,6 +51,10 @@ public class ExceptionHandler {
 	public void warnAndThrow(String sourceClass, String sourceMethod, RSSException e) {
 		log.warn(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
+	}
+	
+	public static ExceptionHandler getExceptionHandler(Logger log) {
+		return new ExceptionHandler(log);
 	}
 	
 }
