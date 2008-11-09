@@ -57,7 +57,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * A benefit of this implementation is that lock attempts timeout in 10 seconds
      * which is a simple way of detecting latch deadlocks.
      * 
-     * The reason for creating this new implementation was the realisation that
+     * The reason for creating this new implementation was the realization that
      * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
      * properly. This is because in both implementation details of shared requests
      * are not kept. This implementation naturally is less efficient compared to the
