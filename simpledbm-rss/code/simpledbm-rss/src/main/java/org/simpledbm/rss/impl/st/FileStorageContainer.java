@@ -25,6 +25,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.util.Dumpable;
@@ -42,6 +43,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     private static final Logger log = Logger
         .getLogger(FileStorageContainer.class.getPackage().getName());
 
+    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    
     private static final MessageCatalog mcat = new MessageCatalog();
 
     /**
@@ -72,10 +75,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
      */
     private void isValid() throws StorageException {
         if (file == null || !file.getChannel().isOpen()) {
-            log.error(this.getClass().getName(), "isValid", mcat.getMessage(
-                "ES0001",
-                name));
-            throw new StorageException(mcat.getMessage("ES0001", name));
+            exceptionHandler.errorThrow(this.getClass().getName(), "isValid", 
+            		new StorageException(mcat.getMessage("ES0001", name)));
         }
     }
 
@@ -90,10 +91,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             file.seek(position);
             file.write(data, offset, length);
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "write", mcat.getMessage(
-                "ES0003",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0003", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "write", 
+            		new StorageException(mcat.getMessage("ES0003", name), e));
         }
     }
 
@@ -109,10 +108,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             file.seek(position);
             n = file.read(data, offset, length);
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "read", mcat.getMessage(
-                "ES0004",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0004", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "read", 
+            		new StorageException(mcat.getMessage("ES0004", name), e));
         }
         return n;
     }
@@ -132,10 +129,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
         		file.getChannel().force(false);
         	}
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "flush", mcat.getMessage(
-                "ES0005",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0005", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "flush", 
+            		new StorageException(mcat.getMessage("ES0005", name), e));
         }
     }
 
@@ -147,21 +142,17 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
         isValid();
         try {
             file.close();
-        } catch (IOException e) {
-            log.error(this.getClass().getName(), "close", mcat.getMessage(
-                "ES0006",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0006", name), e);
+        } catch (IOException e) {       	
+            exceptionHandler.errorThrow(this.getClass().getName(), "close", 
+            		new StorageException(mcat.getMessage("ES0006", name), e));
         }
     }
 
     public final synchronized void lock() {
         isValid();
         if (lock != null) {
-            log.error(this.getClass().getName(), "lock", mcat.getMessage(
-                "ES0007",
-                name));
-            throw new StorageException(mcat.getMessage("ES0007", name));
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
+            		new StorageException(mcat.getMessage("ES0007", name)));
         }
         try {
             FileChannel channel = file.getChannel();
@@ -171,35 +162,27 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
                 // ignore this error
             }
             if (lock == null) {
-                log.error(this.getClass().getName(), "lock", mcat.getMessage(
-                    "ES0008",
-                    name));
-                throw new StorageException(mcat.getMessage("ES0008", name));
+                exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
+                		new StorageException(mcat.getMessage("ES0008", name)));
             }
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "lock", mcat.getMessage(
-                "ES0008",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0008", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
+            		new StorageException(mcat.getMessage("ES0008", name), e));
         }
     }
 
     public final synchronized void unlock() {
         isValid();
         if (lock == null) {
-            log.error(this.getClass().getName(), "lock", mcat.getMessage(
-                "ES0009",
-                name));
-            throw new StorageException(mcat.getMessage("ES0009", name));
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
+            		new StorageException(mcat.getMessage("ES0009", name)));
         }
         try {
             lock.release();
             lock = null;
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "lock", mcat.getMessage(
-                "ES0010",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0010", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
+            		new StorageException(mcat.getMessage("ES0010", name), e));
         }
     }
 
@@ -208,8 +191,7 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     }
 
     public final StringBuilder appendTo(StringBuilder sb) {
-        sb
-            .append("FileStorageContainer(name=")
+        sb.append("FileStorageContainer(name=")
             .append(name)
             .append(", file=")
             .append(file)

@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
@@ -46,6 +47,8 @@ public final class FileStorageContainerFactory implements
     static final Logger log = Logger
         .getLogger(FileStorageContainerFactory.class.getPackage().getName());
 
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    
     /**
      * Mode for creating new container objects. This should be
      * configurable.
@@ -55,7 +58,7 @@ public final class FileStorageContainerFactory implements
     private static final String defaultCreateMode = "rws";
 
     /**
-     * Mode for openeing existing container objects. This should be 
+     * Mode for opening existing container objects. This should be 
      * configurable.
      */
     private final String openMode;
@@ -119,12 +122,9 @@ public final class FileStorageContainerFactory implements
         File file = new File(basePath);
         if (!file.exists()) {
             if (!create) {
-                log.error(this.getClass().getName(), "checkBasePath", mcat
-                    .getMessage("ES0011", BASE_PATH, basePath));
-                throw new StorageException(mcat.getMessage(
-                    "ES0011",
-                    BASE_PATH,
-                    basePath));
+            	exceptionHandler.errorThrow(this.getClass().getName(),
+						"checkBasePath", new StorageException(mcat.getMessage(
+								"ES0011", BASE_PATH, basePath)));
             }
             if (log.isDebugEnabled()) {
                 log.debug(
@@ -133,22 +133,16 @@ public final class FileStorageContainerFactory implements
                     "SIMPLEDBM-DEBUG: Creating base path " + basePath);
             }
             if (!file.mkdirs()) {
-                log.error(this.getClass().getName(), "checkBasePath", mcat
-                    .getMessage("ES0012", BASE_PATH, basePath));
-                throw new StorageException(mcat.getMessage(
-                    "ES0012",
-                    BASE_PATH,
-                    basePath));
-            }
+				exceptionHandler.errorThrow(this.getClass().getName(),
+						"checkBasePath", new StorageException(mcat.getMessage(
+								"ES0012", BASE_PATH, basePath)));
+			}
         }
         if (!file.isDirectory() || !file.canRead() || !file.canWrite()) {
-            log.error(this.getClass().getName(), "checkBasePath", mcat
-                .getMessage("ES0013", BASE_PATH, basePath));
-            throw new StorageException(mcat.getMessage(
-                "ES0013",
-                BASE_PATH,
-                basePath));
-        }
+			exceptionHandler.errorThrow(this.getClass().getName(),
+					"checkBasePath", new StorageException(mcat.getMessage(
+							"ES0013", BASE_PATH, basePath)));
+		}
         basePathVerified = true;
     }
 
@@ -165,11 +159,10 @@ public final class FileStorageContainerFactory implements
             if (parentFile.exists()) {
                 if (!parentFile.isDirectory() || !parentFile.canWrite()
                         || !parentFile.canRead()) {
-                    log.error(this.getClass().getName(), "getFileName", mcat
-                        .getMessage("ES0014", parentFile.getPath()));
-                    throw new StorageException(mcat.getMessage(
-                        "ES0014",
-                        parentFile.getPath()));
+                    exceptionHandler.errorThrow(this.getClass().getName(),
+							"getFileName",
+							new StorageException(mcat.getMessage("ES0014",
+									parentFile.getPath())));
                 }
             } else {
                 if (log.isDebugEnabled()) {
@@ -180,11 +173,10 @@ public final class FileStorageContainerFactory implements
                                 + parentFile.getPath());
                 }
                 if (!parentFile.mkdirs()) {
-                    log.error(this.getClass().getName(), "getFileName", mcat
-                        .getMessage("ES0015", parentFile.getPath()));
-                    throw new StorageException(mcat.getMessage(
-                        "ES0015",
-                        parentFile.getPath()));
+                    exceptionHandler.errorThrow(this.getClass().getName(),
+							"getFileName",
+							new StorageException(mcat.getMessage("ES0015",
+									parentFile.getPath())));
                 }
             }
         }
@@ -211,18 +203,15 @@ public final class FileStorageContainerFactory implements
         try {
             // Create the file atomically.
             if (!file.createNewFile()) {
-                log.error(this.getClass().getName(), "create", mcat
-                        .getMessage("ES0017", name));
-                throw new StorageException(mcat.getMessage(
+                exceptionHandler.errorThrow(this.getClass().getName(), "create", 
+                		new StorageException(mcat.getMessage(
                         "ES0017",
-                        name));
+                        name)));
             }
             rafile = new RandomAccessFile(name, createMode);
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "create", mcat.getMessage(
-                "ES0018",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0018", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "create",
+					new StorageException(mcat.getMessage("ES0018", name), e));
         }
         return new FileStorageContainer(logicalName, rafile, flushMode);
     }
@@ -248,24 +237,20 @@ public final class FileStorageContainerFactory implements
             if (file.exists()) {
                 if (file.isFile()) {
                     if (!file.delete()) {
-                        log.error(this.getClass().getName(), "create", mcat
-                            .getMessage("ES0016", name));
-                        throw new StorageException(mcat.getMessage(
-                            "ES0016",
-                            name));
+                        exceptionHandler.errorThrow(this.getClass().getName(),
+								"create", new StorageException(mcat.getMessage(
+										"ES0016", name)));
                     }
                 } else {
-                    log.error(this.getClass().getName(), "create", mcat
-                        .getMessage("ES0017", name));
-                    throw new StorageException(mcat.getMessage("ES0017", name));
+                    exceptionHandler.errorThrow(this.getClass().getName(),
+							"create", new StorageException(mcat.getMessage(
+									"ES0017", name)));
                 }
             }
             rafile = new RandomAccessFile(name, createMode);
         } catch (IOException e) {
-            log.error(this.getClass().getName(), "create", mcat.getMessage(
-                "ES0018",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0018", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "create", 
+            		new StorageException(mcat.getMessage("ES0018", name), e));
         }
         return new FileStorageContainer(logicalName, rafile, flushMode);
     }
@@ -287,17 +272,13 @@ public final class FileStorageContainerFactory implements
         try {
             if (!file.exists() || !file.isFile() || !file.canRead()
                     || !file.canWrite()) {
-                log.error(this.getClass().getName(), "open", mcat.getMessage(
-                    "ES0019",
-                    name));
-                throw new StorageException(mcat.getMessage("ES0019", name));
+                exceptionHandler.errorThrow(this.getClass().getName(), "open", 
+                		new StorageException(mcat.getMessage("ES0019", name)));
             }
             rafile = new RandomAccessFile(name, openMode);
         } catch (FileNotFoundException e) {
-            log.error(this.getClass().getName(), "open", mcat.getMessage(
-                "ES0020",
-                name), e);
-            throw new StorageException(mcat.getMessage("ES0020", name), e);
+            exceptionHandler.errorThrow(this.getClass().getName(), "open", 
+            		new StorageException(mcat.getMessage("ES0020", name), e));
         }
         return new FileStorageContainer(logicalName, rafile, flushMode);
     }
@@ -312,15 +293,12 @@ public final class FileStorageContainerFactory implements
         if (file.exists()) {
             if (file.isFile()) {
                 if (!file.delete()) {
-                    log.error(this.getClass().getName(), "delete", mcat
-                        .getMessage("ES0016", name));
-                    throw new StorageException(mcat.getMessage("ES0016", name));
+                    exceptionHandler.errorThrow(this.getClass().getName(), "delete", 
+                    		new StorageException(mcat.getMessage("ES0016", name)));
                 }
             } else {
-                log.error(this.getClass().getName(), "delete", mcat.getMessage(
-                    "ES0021",
-                    name));
-                throw new StorageException(mcat.getMessage("ES0021", name));
+                exceptionHandler.errorThrow(this.getClass().getName(), "delete", 
+                		new StorageException(mcat.getMessage("ES0021", name)));
             }
         }
     }
@@ -349,11 +327,9 @@ public final class FileStorageContainerFactory implements
 			                "SIMPLEDBM-DEBUG: Deleting " + file.getAbsolutePath());
 			        }
 					if (!file.delete()) {
-						log.error(this.getClass().getName(),
-								"deleteRecursively", mcat.getMessage("ES0016",
-										file.getAbsolutePath()));
-						throw new StorageException(mcat.getMessage("ES0016",
-								file.getAbsolutePath()));
+						exceptionHandler.errorThrow(this.getClass().getName(),
+								"deleteRecursively", new StorageException(mcat.getMessage("ES0016",
+								file.getAbsolutePath())));
 					}
 				}
 			}
@@ -365,10 +341,9 @@ public final class FileStorageContainerFactory implements
                 "SIMPLEDBM-DEBUG: Deleting " + dir.getAbsolutePath());
         }
 		if (!dir.delete()) {
-			log.error(this.getClass().getName(), "deleteRecursively", mcat
-					.getMessage("ES0024", dir.getAbsolutePath()));
-			throw new StorageException(mcat.getMessage("ES0024", dir
-					.getAbsolutePath()));
+			exceptionHandler.errorThrow(this.getClass().getName(), "deleteRecursively", 
+					new StorageException(mcat.getMessage("ES0024", dir
+					.getAbsolutePath())));
 		}
 	}
 	
