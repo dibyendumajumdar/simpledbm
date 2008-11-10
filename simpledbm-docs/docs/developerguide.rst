@@ -821,11 +821,29 @@ Latch implementation to be based upon the Java primitive.
 The ``ReadWrite`` Latch is likely to be more efficient than the
 ``ReadWriteUpdate`` Latch.
 
-The ``ReadWriteUpdate`` latch uses a subset of the ``LockManager`` implementation
-described later in this document. Unlike a Lock, which has to be
-looked up dynamically in a hash table, a latch is known to its client,
-and no lookup is necessary. This is the main difference between the Latch
-implementation of the ``LockManager`` code.
+The ``ReadWriteUpdate`` latch implementation uses a subset of the ``LockManager`` implementation
+described later in this document. There are a few differences between the two 
+implementations:
+
+- Unlike a Lock, which has to be looked up dynamically in a hash table, a latch is known to its client,
+  and hence no lookup is necessary. Each instance of a latch is a lock. Clients hold a reference
+  to the latch.
+- There is no support for various lock durations as these do not make
+  sense here.
+- Apart from lock conversions and downgrades, we also support lock upgrades.
+  An upgrade is like a conversion except that it is explicitly requested and does
+  not cause the reference count to go up. Hence the difference is primarily in the way
+  clients use locks. For normal lock conversions, clients are expected to treat
+  each request as a separate request, and therefore release the lock as many
+  times as requested. Upgrade (and downgrade) requests do not modify the reference
+  count.
+- Unlike Lock Manager, the owner for latches is predefined - it is always the
+  requesting thread. Hence there is no need to supply an owner.
+- Latches do not support deadlock detection. The implementation uses a timeout of 
+  10 seconds which is a simple way of detecting latch deadlocks. Note that Latch 
+  deadlocks are always due to bugs in the code, and should never occur at runtime. 
+  Such deadlocks are avoided by ensuring that latches are acquired and released in a specific order.
+
 
 Obtaining a latch instance
 ==========================
@@ -1492,6 +1510,186 @@ lock, which can be used subsequently to release the lock. Example::
     // do some work
     handle.release(false);
 
+Algorithm
+---------
+
+The main algorithm for the lock manager is shown in the form of use cases.
+The description here is inspired by a similar description in [COCKBURN]_.
+
+a001 - lock acquire
+*******************
+
+Main Success Scenario
+.....................
+
+1) Search for the lock header
+2) Lock header not found
+3) Allocate new lock header
+4) Allocate new lock request
+5) Append lock request to queue with status = GRANTED and reference count of 1.
+6) Set lock granted mode to GRANTED
+
+Extensions
+..........
+
+2. a) Lock header found but client has no prior request for the lock.
+
+      1. Do `a003 - handle new request`_.
+
+   b)  Lock header found and client has a prior GRANTED lock request
+
+      1. Do `a002 - handle lock conversion`_.
+
+
+a002 - handle lock conversion
+*****************************
+
+Main Success Scenario
+.....................
+
+1) Check lock compatibility
+2) Lock request is compatible with granted group
+3) Grant lock request, and update granted mode for the request.
+
+Extensions
+..........
+
+2. a) Lock request is incompatible with granted group
+
+      1. Do `a004 - lock wait`_.
+
+a003 - handle new request
+*************************
+
+Main Success Scenario
+.....................
+
+1) There are no waiting requests and lock request is compatible with
+   granted mode
+2) Allocate new request
+3) Append lock request to queue with status = GRANTED and reference count of 1
+4) Set lock's granted mode to maximum of this request and existing granted mode.
+5) Success.
+
+Extensions
+..........
+
+1. a) There are waiting requests or lock request is not compatible with
+      granted mode.
+      
+      1. Do `a004 - lock wait`_.
+
+a004 - lock wait
+****************
+
+Main Success Scenario
+.....................
+
+1) Wait for lock 
+2) Lock granted
+3) Success
+
+Extensions
+..........
+
+2. a) Lock was not granted
+
+     1. Failure!
+
+b001 - release lock
+*******************
+
+Main Success Scenario
+.....................
+
+1) Decrease reference count.
+2) Sole lock request and reference count is zero.
+3) Remove lock header from hash table.
+4) Success.
+
+Extensions
+..........
+
+2. a) Reference count greater than zero.
+
+      1. Success
+
+2. b) Reference count is zero and there are other requests on the lock.
+
+      1. Remove request from the queue.
+      2. Do `b002 - grant waiters`_.
+
+b002 - grant waiters
+********************
+
+Main Success Scenario
+.....................
+
+1) Get next granted lock.
+2) Recalculate granted mode.
+3) Repeat from 1) until no more granted requests.
+4) Get next waiting request
+5) Request is compatible with granted mode.
+6) Grant request and wake up thread waiting for the lock. Increment reference count of
+   the granted request and set granted mode to maximum of current mode and granted request.
+7) Repeat from 4) until no more waiting requests.
+
+Extensions
+..........
+
+1. a) Conversion request
+      
+      1. Do `b003 - grant conversion request`_.
+      2. Resume from 2)
+
+4. a) "conversion pending" is set (via b003).
+      
+      1. Done.
+
+5. a) Request is incompatible with granted mode
+      
+      1. Done
+
+
+b003 - grant conversion request
+*******************************
+
+Main Success Scenario
+.....................
+
+1) Do `c001 - check request compatible with granted group`_.
+2) Request is compatible.
+3) Grant conversion request
+
+Extensions
+..........
+
+2. a) Conversion request incompatible with granted group.
+    
+      1. Set "conversion pending" flag.
+
+c001 - check request compatible with granted group
+**************************************************
+
+Main Success Scenario
+.....................
+
+1) Get next granted request
+2) Request is compatible with this request.
+3) Repeat from 1) until no more granted requests.
+
+Extensions
+..........
+
+1. a) Request belongs to the caller.
+
+      1. Resume from step 3)
+
+2. a) Request is incompatible with this request
+      
+      1. Failure
+
+
 Deadlock Detector
 -----------------
 The Lock Manager contains a simple Deadlock Detector implemented
@@ -1880,7 +2078,7 @@ following assumptions about the rest of the system:
   the last log record that made changes to the page.
 
 * During checkpoints the Transaction Manager does not flush all 
-  pages, instead it writes the Buffer Manager's ``table of contents'' 
+  pages, instead it writes the Buffer Manager's "table of contents" 
   to the Log. The table of contents is the list of dirty pages in 
   the Buffer Pool, along with their Recovery LSNs. The Recovery 
   LSN is the LSN of the oldest log record that could potentially 
@@ -3742,3 +3940,5 @@ ordering.
    Effective and Efficient Free Space Management. ACM SIGMOD Record. 
    Proceedings of the 1996 ACM SIGMOD international conference on 
    Management of Data, June 1996. 
+
+.. [COCKBURN] Alistair Cockburn. Writing Effective Use Cases.
