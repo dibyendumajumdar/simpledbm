@@ -35,6 +35,7 @@ import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -71,6 +72,8 @@ public final class BufferManagerImpl implements BufferManager {
         .getPackage()
         .getName());
 
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    
     final MessageCatalog mcat = new MessageCatalog();
 
     private static final int LATCH_EXCLUSIVE = 2;
@@ -643,10 +646,8 @@ public final class BufferManagerImpl implements BufferManager {
              * pages (i.e., failing to unfix() pages are use).
              */
             setStop();
-            log.error(this.getClass().getName(), "locatePage", mcat.getMessage(
-                "EM0004",
-                pageId));
-            throw new BufferManagerException(mcat.getMessage("EM0004", pageId));
+            exceptionHandler.errorThrow(this.getClass().getName(), "locatePage", 
+            		new BufferManagerException(mcat.getMessage("EM0004", pageId)));
         }
 
         assert bufferpool[frameNo] == null;
@@ -710,9 +711,8 @@ public final class BufferManagerImpl implements BufferManager {
      */
     private void checkStatus() {
         if (stop) {
-            log.error(this.getClass().getName(), "checkStatus", mcat
-                .getMessage("EM0005"));
-            throw new BufferManagerException(mcat.getMessage("EM0005"));
+            exceptionHandler.errorThrow(this.getClass().getName(), "checkStatus", 
+            		new BufferManagerException(mcat.getMessage("EM0005")));
         }
     }
 
