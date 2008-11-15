@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.registry;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -42,6 +43,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     private static final Logger log = Logger.getLogger(ObjectRegistryImpl.class
         .getPackage()
         .getName());
+    
+    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
@@ -83,10 +86,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 						typecode));
 				return;
 			}
-			log.error(this.getClass().getName(), "register", mcat.getMessage(
-					"ER0002", typecode, od.getClassName(), classname));
-			throw new ObjectCreationException(mcat.getMessage("ER0002",
-					typecode, od.getClassName(), classname));
+			exceptionHandler.errorThrow(this.getClass().getName(), "register", 
+					new ObjectCreationException(mcat.getMessage("ER0002",
+					typecode, od.getClassName(), classname)));
 		}
 		typeRegistry.put(typecode, new FactoryObjectDefinition(typecode,
 				objectFactory));
@@ -111,16 +113,12 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
                     typecode));
                 return;
             }
-            log.error(this.getClass().getName(), "register", mcat.getMessage(
+            exceptionHandler.errorThrow(this.getClass().getName(), "register", 
+            	new ObjectCreationException(mcat.getMessage(
                 "ER0004",
                 typecode,
                 od.getInstance(),
-                object));
-            throw new ObjectCreationException(mcat.getMessage(
-                "ER0004",
-                typecode,
-                od.getInstance(),
-                object));
+                object)));
         }
         typeRegistry.put(typecode, new SingletonObjectDefinition(
             typecode,
@@ -135,10 +133,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     public Object getSingleton(int typecode) {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {
-            log.error(this.getClass().getName(), "getInstance", mcat
-                .getMessage("ER0006", typecode));
-            throw new ObjectCreationException.UnknownTypeException(mcat
-                .getMessage("ER0006", typecode));
+            exceptionHandler.errorThrow(this.getClass().getName(), "getInstance", 
+            	new ObjectCreationException.UnknownTypeException(mcat
+            			.getMessage("ER0006", typecode)));
         }
         return od.getInstance();
     }
@@ -157,10 +154,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     public Object getInstance(int typecode, ByteBuffer buf) {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {
-            log.error(this.getClass().getName(), "getInstance", mcat
-                .getMessage("ER0006", typecode));
-            throw new ObjectCreationException.UnknownTypeException(mcat
-                .getMessage("ER0006", typecode));
+            exceptionHandler.errorThrow(this.getClass().getName(), "getInstance", 
+            	new ObjectCreationException.UnknownTypeException(mcat
+            			.getMessage("ER0006", typecode)));
         }
         return od.getInstance(buf);
 	}
@@ -176,7 +172,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 	}
 
 	/**
-     * Holds the definition of a type, either its class or if it is a simgleton,
+     * Holds the definition of a type, either its class or if it is a singleton,
      * then the object itself.
      */
     static abstract class ObjectDefinition {
@@ -244,7 +240,6 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
 		@Override
 		Object getInstance() {
-//			return objectFactory.newInstance();
 			throw new UnsupportedOperationException();
 		}
 
