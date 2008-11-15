@@ -29,6 +29,7 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -65,6 +66,8 @@ public final class LockManagerImpl implements LockManager {
     private static final Logger log = Logger.getLogger(LockManagerImpl.class
         .getPackage()
         .getName());
+    
+    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
@@ -629,12 +632,11 @@ public final class LockManagerImpl implements LockManager {
 	
 	    else if (!can_grant && context.parms.timeout == 0) {
 	        /* 7. Otherwise, if nowait was specified, return failure. */
-	        log.debug(this.getClass().getName(), "handleNewRequest", mcat
-	            .getMessage("WC0004", context.parms, context.lockitem));
-	        throw new LockTimeoutException(mcat.getMessage(
-	            "WC0004",
-	            context.parms,
-	            context.lockitem));
+	        exceptionHandler.warnAndThrow(this.getClass().getName(), "handleNewRequest", 
+	        		new LockTimeoutException(mcat.getMessage(
+	        				"WC0004",
+	        				context.parms,
+	        				context.lockitem)));
 	    }
 	
 	    /* Allocate new lock request */
@@ -688,17 +690,12 @@ public final class LockManagerImpl implements LockManager {
 	     */
 	    if (context.lockRequest.status == LockRequestStatus.CONVERTING
 	            || context.lockRequest.status == LockRequestStatus.WAITING) {
-	        log.error(
+	        exceptionHandler.errorThrow(
 	            this.getClass().getName(),
 	            "handleConversionRequest",
-	            mcat.getMessage(
-	                "EC0003",
-	                context.parms.lockable,
-	                context.parms.owner));
-	        throw new LockException(mcat.getMessage(
-	            "EC0003",
-	            context.parms.lockable,
-	            context.parms.owner));
+	            	new LockException(mcat.getMessage(
+	            			"EC0003", context.parms.lockable,
+	            			context.parms.owner)));
 	    }
 	
 	    else if (context.lockRequest.status == LockRequestStatus.GRANTED) {
@@ -779,17 +776,13 @@ public final class LockManagerImpl implements LockManager {
 	
 	            else if (!can_grant && context.parms.timeout == 0) {
 	                /* 15. If not, and nowait specified, return failure. */
-	                log.debug(
+	                exceptionHandler.warnAndThrow(
 	                    this.getClass().getName(),
 	                    "handleConversionRequest",
-	                    mcat.getMessage(
-	                        "WC0004",
-	                        context.parms,
-	                        context.lockitem));
-	                throw new LockTimeoutException(mcat.getMessage(
-	                    "WC0004",
-	                    context.parms,
-	                    context.lockitem));
+	                    new LockTimeoutException(mcat.getMessage(
+	                    		"WC0004",
+	                    		context.parms,
+	                    		context.lockitem)));
 	            }
 	
 	            else {
@@ -798,12 +791,12 @@ public final class LockManagerImpl implements LockManager {
 	            }
 	        }
 	    } else {
-	        log.error(
+	        exceptionHandler.errorThrow(
 	            this.getClass().getName(),
 	            "handleConversionRequest",
-	            mcat.getMessage("EC0005"));
-	        throw new LockException(mcat.getMessage("EC0005"));
+	            new LockException(mcat.getMessage("EC0005")));
 	    }
+	    return false;
 	}
 
 	/**
@@ -901,21 +894,17 @@ public final class LockManagerImpl implements LockManager {
                 context.parms.lockInfo);
         }
         if (context.getStatus() == LockStatus.TIMEOUT) {
-            log.warn(this.getClass().getName(), "handleWaitResult", mcat
-                .getMessage("EC0001", context.parms));
-            throw new LockTimeoutException(mcat.getMessage(
-                "EC0001",
-                context.parms));
+            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
+            		new LockTimeoutException(mcat.getMessage("EC0001",
+            				context.parms)));
         } else if (context.getStatus() == LockStatus.DEADLOCK) {
-            log.warn(this.getClass().getName(), "handleWaitResult", mcat
-                .getMessage("WC0002", context.parms));
-            throw new LockDeadlockException(mcat.getMessage(
-                "WC0002",
-                context.parms));
+            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
+            		new LockDeadlockException(mcat.getMessage(
+            				"WC0002",
+            				context.parms)));
         } else {
-            log.warn(this.getClass().getName(), "handleWaitResult", mcat
-                .getMessage("EC0003", context.parms));
-            throw new LockException(mcat.getMessage("EC0099", context.parms));
+            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
+            		new LockException(mcat.getMessage("EC0099", context.parms)));
         }
     }
 
@@ -1108,11 +1097,10 @@ public final class LockManagerImpl implements LockManager {
         if (context.lockRequest.status == LockRequestStatus.CONVERTING
                 || context.lockRequest.status == LockRequestStatus.WAITING) {
             /* 5. If lock in invalid state, return error. */
-            log.error(this.getClass().getName(), "releaseLock", mcat
-                .getMessage("EC0008", context.lockRequest));
-            throw new LockException(mcat.getMessage(
-                "EC0008",
-                context.lockRequest));
+            exceptionHandler.errorThrow(this.getClass().getName(), "releaseLock", 
+            		new LockException(mcat.getMessage(
+            				"EC0008",
+            				context.lockRequest)));
         }
 
         if (context.parms.action == ReleaseAction.DOWNGRADE
@@ -1219,15 +1207,11 @@ public final class LockManagerImpl implements LockManager {
                 }
                 context.lockRequest.convertMode = context.lockRequest.mode = context.parms.downgradeMode;
             } else {
-                log.error(this.getClass().getName(), "releaseLock", mcat
-                    .getMessage(
-                        "EC0009",
-                        context.lockRequest.mode,
-                        context.parms.downgradeMode));
-                throw new LockException(mcat.getMessage(
-                    "EC0009",
-                    context.lockRequest.mode,
-                    context.parms.downgradeMode));
+                exceptionHandler.errorThrow(this.getClass().getName(), "releaseLock", 
+                		new LockException(mcat.getMessage(
+                				"EC0009",
+                				context.lockRequest.mode,
+                				context.parms.downgradeMode)));
             }
             released = false;
         }
@@ -1807,8 +1791,9 @@ public final class LockManagerImpl implements LockManager {
 
         public final LockMode getCurrentMode() {
             if (lockRequest == null) {
-                throw new IllegalStateException(
-                    "Invalid call: no lock request associated with this handle");
+                exceptionHandler.errorThrow(this.getClass().getName(), "getCurrentMode",
+                		new IllegalStateException(
+                    "Invalid call: no lock request associated with this handle"));
             }
             return lockRequest.mode;
         }
