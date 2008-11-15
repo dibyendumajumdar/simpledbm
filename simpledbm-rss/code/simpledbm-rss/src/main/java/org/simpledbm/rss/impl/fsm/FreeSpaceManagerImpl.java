@@ -27,6 +27,7 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -78,6 +79,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     static final Logger log = Logger.getLogger(FreeSpaceManagerImpl.class
         .getPackage()
         .getName());
+    
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     static final MessageCatalog mcat = new MessageCatalog();
 
@@ -227,10 +230,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             clr.oldNextSpaceMapPage = logrec.oldNextSpaceMapPage;
             return clr;
         }
-        log.error(FreeSpaceManagerImpl.class.getName(), "generateCompensation", mcat.getMessage(
-            "EF0003",
-            undoable));
-        throw new FreeSpaceManagerException(mcat.getMessage("EF0003", undoable));
+        exceptionHandler.errorThrow(FreeSpaceManagerImpl.class.getName(), 
+        		"generateCompensation", 
+        		new FreeSpaceManagerException(mcat.getMessage("EF0003", undoable)));
+        return null;
     }
 
     @Override
@@ -347,12 +350,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         if (spaceBits == 2) {
             spaceMapType = FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE;
         } else if (spaceBits != 1) {
-            log.error(FreeSpaceManagerImpl.class.getName(), "createContainer", mcat.getMessage(
-                "EF0001",
-                spaceBits));
-            throw new FreeSpaceManagerException(mcat.getMessage(
-                "EF0001",
-                spaceBits));
+            exceptionHandler.errorThrow(
+            		FreeSpaceManagerImpl.class.getName(), 
+            		"createContainer", 
+            		new FreeSpaceManagerException(
+            				mcat.getMessage("EF0001", spaceBits)));
         }
         SpaceMapPageImpl smpPage = (SpaceMapPageImpl) pageFactory.getInstance(
             spaceMapType,
@@ -676,12 +678,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         StorageContainer sc;
         sc = storageManager.getInstance(containerId);
         if (sc == null) {
-            log.error(FreeSpaceManagerImpl.class.getName(), "dropContainer", mcat.getMessage(
-                "EF0002",
-                containerId));
-            throw new FreeSpaceManagerException(mcat.getMessage(
-                "EF0002",
-                containerId));
+            exceptionHandler.errorThrow(FreeSpaceManagerImpl.class.getName(), 
+            		"dropContainer", 
+            		new FreeSpaceManagerException(
+            				mcat.getMessage("EF0002", containerId)));
         } else {
             logrec.setContainerId(containerId);
             logrec.setName(sc.getName());
@@ -1974,14 +1974,11 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (contains(pageNumber)) {
                 return get(convertPageNumberToOffset(pageNumber));
             }
-            log.error(SpaceMapPageImpl.class.getName(), "getSpaceBits", mcat.getMessage(
-                "EF0004",
-                pageNumber,
-                this));
-            throw new FreeSpaceManagerException(mcat.getMessage(
-                "EF0004",
-                pageNumber,
-                this));
+            exceptionHandler.errorThrow(SpaceMapPageImpl.class.getName(), 
+            		"getSpaceBits", 
+            		new FreeSpaceManagerException(
+            				mcat.getMessage("EF0004",pageNumber,this)));
+            return 0;
         }
 
         @Override
@@ -1989,19 +1986,14 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (contains(pageNumber)) {
                 set(convertPageNumberToOffset(pageNumber), value);
             } else {
-                log.error(SpaceMapPageImpl.class.getName(), "setSpaceBits", mcat.getMessage(
-                    "EF0004",
-                    pageNumber,
-                    this));
-                throw new FreeSpaceManagerException(mcat.getMessage(
-                    "EF0004",
-                    pageNumber,
-                    this));
+                exceptionHandler.errorThrow(SpaceMapPageImpl.class.getName(), 
+                		"setSpaceBits", 
+                		new FreeSpaceManagerException(
+                				mcat.getMessage("EF0004",pageNumber,this)));
             }
         }
 
         final int getSpace() {
-//            return super.getStoredLength() - SIZE;
         	return getAvailableLength() - OVERHEAD;
         }
 
@@ -2483,9 +2475,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         public final void fixSpaceMapPageExclusively(int spaceMapPageNumber,
                 int pageNumber) {
             if (bab != null) {
-                log.error(SpaceCursorImpl.class.getName(), "fixSpaceMapPageExclusively", mcat
-                    .getMessage("EF0005"));
-                throw new IllegalStateException(mcat.getMessage("EF0005"));
+            	exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
+            			"fixSpaceMapPageExclusively", 
+            			new IllegalStateException(mcat.getMessage("EF0005")));
             }
             PageId smpPageId = new PageId(containerId, spaceMapPageNumber);
             bab = spacemgr.bufmgr.fixExclusive(smpPageId, false, -1, 0);
@@ -2493,12 +2485,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (!smpPage.contains(pageNumber)) {
                 bab.unfix();
                 bab = null;
-                log.error(SpaceCursorImpl.class.getName(), "fixSpaceMapPageExclusively", mcat
-                    .getMessage("EF0004", pageNumber, smpPage));
-                throw new FreeSpaceManagerException(mcat.getMessage(
-                    "EF0004",
-                    pageNumber,
-                    smpPage));
+                exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
+                		"fixSpaceMapPageExclusively", 
+                		new FreeSpaceManagerException(
+                				mcat.getMessage("EF0004",pageNumber,smpPage)));
             }
             currentSMP = spaceMapPageNumber;
             currentPageNumber = pageNumber;
@@ -2522,9 +2512,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
          */
         public final FreeSpaceMapPage getCurrentSpaceMapPage() {
             if (bab == null) {
-                log.error(SpaceCursorImpl.class.getName(), "getCurrentSpaceMapPage", mcat
-                    .getMessage("EF0006"));
-                throw new IllegalStateException(mcat.getMessage("EF0006"));
+                exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
+                		"getCurrentSpaceMapPage", 
+                		new IllegalStateException(mcat.getMessage("EF0006")));
             }
             return (FreeSpaceMapPage) bab.getPage();
         }
@@ -2540,9 +2530,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         final void doUpdateAndLogRedoOnly(Transaction trx, int pageNumber,
                 int value) {
             if (bab == null) {
-                log.error(SpaceCursorImpl.class.getName(), "doUpdateAndLogRedoOnly", mcat
-                    .getMessage("EF0006"));
-                throw new IllegalStateException(mcat.getMessage("EF0006"));
+                exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
+                		"doUpdateAndLogRedoOnly", 
+                		new IllegalStateException(mcat.getMessage("EF0006")));
             }
             UpdateSpaceMapPage updateSpaceMapLog = new UpdateSpaceMapPage(
                 MODULE_ID,
@@ -2566,9 +2556,9 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         final void doUpdateAndLogUndoably(Transaction trx, int pageNumber,
                 int value) {
             if (bab == null) {
-                log.error(SpaceCursorImpl.class.getName(), "doUpdateAndLogUndoably", mcat
-                    .getMessage("EF0006"));
-                throw new IllegalStateException(mcat.getMessage("EF0006"));
+                exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
+                		"doUpdateAndLogUndoably", 
+                		new IllegalStateException(mcat.getMessage("EF0006")));
             }
             UndoableUpdateSpaceMapPage updateSpaceMapLog = new UndoableUpdateSpaceMapPage(
                 MODULE_ID,
