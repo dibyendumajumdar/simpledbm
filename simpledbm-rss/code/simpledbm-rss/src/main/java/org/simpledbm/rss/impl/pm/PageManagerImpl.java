@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.pm;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
@@ -53,6 +54,8 @@ public final class PageManagerImpl implements PageManager {
     private static Logger log = Logger.getLogger(PageManagerImpl.class
         .getPackage()
         .getName());
+    
+    private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     /**
      * Default page size is 8 KB.
@@ -133,35 +136,28 @@ public final class PageManagerImpl implements PageManager {
         StorageContainer container = storageManager.getInstance(pageId
             .getContainerId());
         if (container == null) {
-            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
-                "EP0002",
-                pageId));
-            throw new PageException(mcat.getMessage("EP0002", pageId));
+            exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
+            		new PageException(mcat.getMessage("EP0002", pageId)));
         }
         long offset = pageId.getPageNumber() * pageSize;
         byte[] data = new byte[pageSize];
         int n = container.read(offset, data, 0, pageSize);
         if (n != pageSize) {
-            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
-                "EP0001",
-                pageId,
-                n,
-                pageSize));
-            throw new PageReadException(mcat.getMessage(
-                "EP0001",
-                pageId,
-                n,
-                pageSize));
+            exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
+            	new PageReadException(mcat.getMessage(
+            			"EP0001",
+            			pageId,
+            			n,
+            			pageSize)));
         }
         long checksumCalculated = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
         ByteBuffer bb = ByteBuffer.wrap(data);
         long checksumOnPage = bb.getLong();
         if (checksumOnPage != checksumCalculated) {
-        	log.error(this.getClass().getName(),"retrieve", mcat.getMessage("EP0004",
-                    pageId));
-            throw new PageReadException(mcat.getMessage(
-                    "EP0004",
-                    pageId));
+        	exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
+        			new PageReadException(mcat.getMessage(
+        					"EP0004",
+        					pageId)));
         }
         return getInstance(pageId, bb);
     }
@@ -174,10 +170,8 @@ public final class PageManagerImpl implements PageManager {
             .getPageId()
             .getContainerId());
         if (container == null) {
-            log.error(this.getClass().getName(), "retrieve", mcat.getMessage(
-                "EP0003",
-                page.getPageId()));
-            throw new PageException(mcat.getMessage("EP0003", page.getPageId()));
+            exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
+            		new PageException(mcat.getMessage("EP0003", page.getPageId())));
         }
         long offset = page.getPageId().getPageNumber() * pageSize;
         byte[] data = new byte[pageSize];
