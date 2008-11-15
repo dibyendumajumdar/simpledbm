@@ -1588,10 +1588,9 @@ public final class BufferManagerImpl implements BufferManager {
             } else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
                 page.unlatchShared();
             } else {
-                log.error(this.getClass().getName(), "unlatch", bufMgr.mcat
-                    .getMessage("EM0007"));
-                throw new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0007"));
+            	exceptionHandler.errorThrow(this.getClass().getName(), 
+            			"unlatch", new IllegalStateException(bufMgr.mcat
+                    .getMessage("EM0007")));
             }
             latchMode = 0;
         }
@@ -1616,10 +1615,9 @@ public final class BufferManagerImpl implements BufferManager {
                 dirty = true;
                 page.setPageLsn(lsn);
             } else {
-                log.error(this.getClass().getName(), "setDirty", bufMgr.mcat
-                    .getMessage("EM0008"));
-                throw new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0008"));
+            	exceptionHandler.errorThrow(this.getClass().getName(), 
+            			"setDirty", new IllegalStateException(bufMgr.mcat
+                    .getMessage("EM0008")));
             }
         }
 
@@ -1642,12 +1640,10 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void upgradeUpdateLatch() {
             if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-                log.error(
+            	exceptionHandler.errorThrow(
                     this.getClass().getName(),
-                    "upgradeUpdateLatch",
-                    bufMgr.mcat.getMessage("EM0009"));
-                throw new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0009"));
+                    "upgradeUpdateLatch",new IllegalStateException(bufMgr.mcat
+                    .getMessage("EM0009")));
             }
             page.upgradeUpdate();
             latchMode = BufferManagerImpl.LATCH_EXCLUSIVE;
@@ -1658,12 +1654,11 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void downgradeExclusiveLatch() {
             if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-                log.error(
+                exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "downgradeExclusiveLatch",
-                    bufMgr.mcat.getMessage("EM0010"));
-                throw new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0010"));
+                    new IllegalStateException(bufMgr.mcat
+                    .getMessage("EM0010")));
             }
             page.downgradeExclusive();
             latchMode = BufferManagerImpl.LATCH_UPDATE;
