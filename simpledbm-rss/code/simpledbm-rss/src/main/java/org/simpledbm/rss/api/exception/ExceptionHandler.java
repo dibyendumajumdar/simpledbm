@@ -19,6 +19,7 @@
  */
 package org.simpledbm.rss.api.exception;
 
+import org.simpledbm.rss.tools.diagnostics.Trace;
 import org.simpledbm.rss.util.logging.Logger;
 
 public class ExceptionHandler {
@@ -36,10 +37,24 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void errorThrow(String sourceClass, String sourceMethod, RSSException e) {
+	public void errorThrow(String sourceClass, String sourceMethod, RuntimeException e) {
 		log.error(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
 	}
+
+	/**
+	 * Logs an error message and throws the supplied exception. The exception will be logged
+	 * with the error message. Also dumps the trace messages.
+	 * @param sourceClass The name of the class where the exception was raised
+	 * @param sourceMethod The method where the exception was raised
+	 * @param e The exception to throw
+	 */
+	public void unexpectedErrorThrow(String sourceClass, String sourceMethod, RuntimeException e) {
+		log.error(sourceClass, sourceMethod, e.getMessage(), e);
+		Trace.dump();
+		throw e;
+	}
+	
 	
 	/**
 	 * Logs a warning message and throws the supplied exception. The exception will be logged
@@ -48,11 +63,16 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void warnAndThrow(String sourceClass, String sourceMethod, RSSException e) {
+	public void warnAndThrow(String sourceClass, String sourceMethod, RuntimeException e) {
 		log.warn(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
 	}
 	
+	
+	
+	/**
+	 * Returns an ExceptionHandler object that is tied to the logger.
+	 */
 	public static ExceptionHandler getExceptionHandler(Logger log) {
 		return new ExceptionHandler(log);
 	}
