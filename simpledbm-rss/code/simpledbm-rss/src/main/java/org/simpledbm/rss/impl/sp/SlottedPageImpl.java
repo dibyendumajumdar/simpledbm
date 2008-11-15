@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.sp;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
@@ -65,6 +66,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     static final Logger log = Logger.getLogger(SlottedPageImpl.class
         .getPackage()
         .getName());
+    
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     static final MessageCatalog mcat = new MessageCatalog();
 
@@ -279,9 +282,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         if (numberOfSlots < 0 || numberOfSlots > getMaximumSlots()
                 || freeSpace < 0 || freeSpace > getSpace() || highWaterMark < 0
                 || highWaterMark > getSpace()) {
-            log.error(this.getClass().getName(), "validate", mcat
-                .getMessage("EO0005"));
-            throw new PageException(mcat.getMessage("EO0005") + this);
+            exceptionHandler.errorThrow(this.getClass().getName(), "validate", 
+            		new PageException(mcat.getMessage("EO0005") + this));
         }
     }
 
@@ -292,9 +294,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         length += freeSpace;
         if (length != getSpace()) {
-            log.error(this.getClass().getName(), "validatePageSize", mcat
-                .getMessage("EO0005"));
-            throw new PageException(mcat.getMessage("EO0005") + this);
+            exceptionHandler.errorThrow(this.getClass().getName(), "validatePageSize", 
+            		new PageException(mcat.getMessage("EO0005") + this));
         }
     }
 
@@ -386,9 +387,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
                 }
             }
             if (slotNumber != numberOfSlots) {
-                log.error(this.getClass().getName(), "findInsertionPoint", mcat
-                    .getMessage("EO0006"));
-                throw new PageException(mcat.getMessage("EO0006"));
+                exceptionHandler.errorThrow(this.getClass().getName(), "findInsertionPoint", 
+                		new PageException(mcat.getMessage("EO0006")));
             }
         } else {
             slotNumber = numberOfSlots;
@@ -518,11 +518,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         int len = item.getStoredLength();
         int slotNumber = findInsertionPoint();
         if (!hasSpace(slotNumber, len)) {
-            log.error(this.getClass().getName(), "insert", mcat.getMessage(
-                "EO0001",
-                item,
-                this));
-            throw new PageException(mcat.getMessage("EO0001", item, this));
+            exceptionHandler.errorThrow(this.getClass().getName(), "insert", 
+            		new PageException(mcat.getMessage("EO0001", item, this)));
         }
         /* find contiguous space */
         Slot slot = findSpace(slotNumber, len, 0);
@@ -571,18 +568,13 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         // Do we have enough space in the page?
         if (freeSpace < requiredSpace) {
-            log.error(this.getClass().getName(), "insertAt", mcat.getMessage(
+            exceptionHandler.errorThrow(this.getClass().getName(), "insertAt", 
+            	new PageException(mcat.getMessage(
                 "EO0002",
                 item,
                 this,
                 slotNumber,
-                requiredSpace));
-            throw new PageException(mcat.getMessage(
-                "EO0002",
-                item,
-                this,
-                slotNumber,
-                requiredSpace));
+                requiredSpace)));
         }
 
         int savedFlags = 0;
@@ -658,12 +650,11 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
      */
     private final void validateSlotNumber(int slotNumber, boolean adding) {
         if (slotNumber < 0 || slotNumber > (numberOfSlots - (adding ? 0 : 1))) {
-            log.error(this.getClass().getName(), "validateSlotNumber", mcat
-                .getMessage("EO0003", slotNumber, numberOfSlots));
-            throw new PageException(mcat.getMessage(
+            exceptionHandler.errorThrow(this.getClass().getName(), "validateSlotNumber", 
+            	new PageException(mcat.getMessage(
                 "EO0003",
                 slotNumber,
-                numberOfSlots));
+                numberOfSlots)));
         }
     }
 
@@ -672,9 +663,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
      */
     private final void validateLatchHeldExclusively() {
         if (!lock.isLatchedExclusively()) {
-            log.error(this.getClass().getName(), "validateLatchMode", mcat
-                .getMessage("EO0004"));
-            throw new PageException(mcat.getMessage("EO0004"));
+            exceptionHandler.errorThrow(this.getClass().getName(), "validateLatchMode", 
+            	new PageException(mcat.getMessage("EO0004")));
         }
     }
 
