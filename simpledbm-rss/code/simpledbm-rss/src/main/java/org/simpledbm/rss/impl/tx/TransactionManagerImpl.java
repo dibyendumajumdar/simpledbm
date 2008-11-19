@@ -33,6 +33,7 @@ import java.util.concurrent.locks.LockSupport;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
@@ -149,6 +150,7 @@ public final class TransactionManagerImpl implements TransactionManager {
     static final Logger log = Logger.getLogger(TransactionManagerImpl.class
         .getPackage()
         .getName());
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     static final MessageCatalog mcat = new MessageCatalog();
 
     private static final short MODULE_ID = 1;
@@ -498,11 +500,10 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
         if (null != errCode) {
-            log.error(
+            exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "validateLoggableHierarchy",
-                mcat.getMessage(errCode, loggable));
-            throw new TransactionException(mcat.getMessage(errCode, loggable));
+                new TransactionException(mcat.getMessage(errCode, loggable)));
         }
     }
 
@@ -533,16 +534,13 @@ public final class TransactionManagerImpl implements TransactionManager {
         if (operation instanceof NonTransactionRelatedOperation) {
             return doLogInsert(operation);
         } else {
-            log.error(
+            exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "logNonTransactionRelatedOperation",
-                mcat.getMessage(
-                    "EX0009",
-                    operation.getClass().getName(),
-                    NonTransactionRelatedOperation.class.getName()));
-            throw new TransactionException(mcat.getMessage("EX0009", operation
-                .getClass()
-                .getName(), NonTransactionRelatedOperation.class.getName()));
+                new TransactionException(mcat.getMessage("EX0009", 
+                	operation.getClass().getName(), 
+                	NonTransactionRelatedOperation.class.getName())));
+            return null;
         }
     }
 
@@ -705,19 +703,14 @@ public final class TransactionManagerImpl implements TransactionManager {
             } else {
                 if (!sc.getName().equals(
                     getActiveContainers()[i].name.toString())) {
-                    log.error(
+                    exceptionHandler.errorThrow(
                         this.getClass().getName(),
                         "reopenActiveContainers",
-                        mcat.getMessage(
-                            "EX0010",
-                            getActiveContainers()[i].containerId,
-                            sc.getName(),
-                            getActiveContainers()[i].name.toString()));
-                    throw new TransactionException(mcat.getMessage(
+                        new TransactionException(mcat.getMessage(
                         "EX0010",
                         getActiveContainers()[i].containerId,
                         sc.getName(),
-                        getActiveContainers()[i].name.toString()));
+                        getActiveContainers()[i].name.toString())));
                 }
             }
         }
@@ -740,9 +733,8 @@ public final class TransactionManagerImpl implements TransactionManager {
         LogReader reader = logmgr.getForwardScanningReader(scanLsn);
         LogRecord logrec = reader.getNext();
         if (logrec == null) {
-            log.error(this.getClass().getName(), "readCheckpoint", mcat
-                .getMessage("EX0011"));
-            throw new TransactionException(mcat.getMessage("EX0011"));
+            exceptionHandler.errorThrow(this.getClass().getName(), "readCheckpoint", 
+            		new TransactionException(mcat.getMessage("EX0011")));
         }
         CheckpointBegin checkpointBegin = (CheckpointBegin) loggableFactory
             .getInstance(logrec);
@@ -750,9 +742,8 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         logrec = reader.getNext();
         if (logrec == null) {
-            log.error(this.getClass().getName(), "readCheckpoint", mcat
-                .getMessage("EX0011"));
-            throw new TransactionException(mcat.getMessage("EX0011"));
+            exceptionHandler.errorThrow(this.getClass().getName(), "readCheckpoint", 
+            		new TransactionException(mcat.getMessage("EX0011")));
         }
         CheckpointEnd checkpointBody = (CheckpointEnd) loggableFactory
             .getInstance(logrec);
@@ -2179,15 +2170,11 @@ public final class TransactionManagerImpl implements TransactionManager {
          */
         public synchronized final void startNestedTopAction() {
             if (dummyCLR != null) {
-                log.error(
+                exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "startNestedTopAction",
-                    mcat.getMessage("EX0016"));
-                throw new TransactionException(mcat.getMessage("EX0016"));
+                    new TransactionException(mcat.getMessage("EX0016")));
             }
-//            dummyCLR = (DummyCLR) getTrxmgr().loggableFactory.getInstance(
-//                TransactionManagerImpl.MODULE_ID,
-//                TransactionManagerImpl.TYPE_DUMMYCLR);
             dummyCLR = new DummyCLR(
                     TransactionManagerImpl.MODULE_ID,
                     TransactionManagerImpl.TYPE_DUMMYCLR);
@@ -2199,11 +2186,10 @@ public final class TransactionManagerImpl implements TransactionManager {
          */
         public synchronized final void completeNestedTopAction() {
             if (dummyCLR == null) {
-                log.error(
+                exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "startNestedTopAction",
-                    mcat.getMessage("EX0017"));
-                throw new TransactionException(mcat.getMessage("EX0017"));
+                    new TransactionException(mcat.getMessage("EX0017")));
             }
             logInsert(null, dummyCLR);
             resetNestedTopAction();
