@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.st.StorageException;
@@ -42,6 +43,8 @@ public final class StorageManagerImpl implements StorageManager {
     private static final Logger log = Logger.getLogger(StorageManagerImpl.class
         .getPackage()
         .getName());
+    
+    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
 
@@ -96,9 +99,8 @@ public final class StorageManagerImpl implements StorageManager {
                 try {
                     remove(sc.getContainerId());
                 } catch (StorageException e) {
-                    log.error(this.getClass().getName(), "shutdown", mcat
-                        .getMessage("ES0023", sc), e);
-                    throw new StorageException(mcat.getMessage("ES0023", sc), e);
+                    log.error(this.getClass().getName(), "shutdown", 
+                    		mcat.getMessage("ES0023", sc), e);
                 }
             }
         }
