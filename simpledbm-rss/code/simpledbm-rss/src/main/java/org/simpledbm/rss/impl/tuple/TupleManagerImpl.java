@@ -30,6 +30,7 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -150,6 +151,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     static final Logger log = Logger.getLogger(TupleManagerImpl.class
         .getPackage()
         .getName());
+    
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     private static final short MODULE_ID = 6;
 
@@ -634,11 +637,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 							.findAndFixSpaceMapPageShared(new TwoBitSpaceCheckerImpl(
 									maxPageSpace, requiredSpace));
 					if (pageNumber == -1) {
-						log.error(this.getClass().getName(),
-								"doCompleteInsert", mcat.getMessage(
-										"ET0004", containerId));
-						throw new TupleException(mcat.getMessage("ET0004",
-								containerId));
+						exceptionHandler.errorThrow(this.getClass().getName(),
+								"doCompleteInsert", new TupleException(mcat.getMessage("ET0004",
+								containerId)));
 					}
 					previouslySeenPageNumber = -1;
 				}
@@ -1355,9 +1356,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         public void completeInsert() {
             if (!proceedWithInsert) {
-                log.error(this.getClass().getName(), "completInsert", mcat
-                    .getMessage("ET0007"));
-                throw new TupleException(mcat.getMessage("ET0007"));
+                exceptionHandler.errorThrow(this.getClass().getName(), "completInsert", 
+                		new TupleException(mcat.getMessage("ET0007")));
             }
             boolean success = false;
             try {
@@ -1412,9 +1412,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doDelete(Transaction trx, Location location) {
 
             if (location.getContainerId() != containerId) {
-                log.error(this.getClass().getName(), "doDelete", mcat
-                    .getMessage("ET0005", location));
-                throw new TupleException(mcat.getMessage("ET0005", location));
+                exceptionHandler.errorThrow(this.getClass().getName(), "doDelete", 
+                		new TupleException(mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1447,13 +1446,12 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || TupleHelper.isDeleted(page, slotNumber)
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                     .isFirstSegment(page, slotNumber))) {
-                            log.error(
+                            exceptionHandler.errorThrow(
                                 this.getClass().getName(),
                                 "doDelete",
-                                mcat.getMessage("ET0005", location));
-                            throw new TupleException(mcat.getMessage(
+                                new TupleException(mcat.getMessage(
                                 "ET0005",
-                                location));
+                                location)));
                         }
                         validated = true;
                     }
@@ -1522,10 +1520,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public byte[] read(Location location) {
 
             if (location.getContainerId() != containerId) {
-                log.error(this.getClass().getName(), "doRead", mcat.getMessage(
-                    "ET0005",
-                    location));
-                throw new TupleException(mcat.getMessage("ET0005", location));
+                exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                		new TupleException(mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1551,11 +1547,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || TupleHelper.isDeleted(page, slotNumber)
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                     .isFirstSegment(page, slotNumber))) {
-                            log.error(this.getClass().getName(), "doRead", mcat
-                                .getMessage("ET0005", location));
-                            throw new TupleException(mcat.getMessage(
+                            exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                            	new TupleException(mcat.getMessage(
                                 "ET0005",
-                                location));
+                                location)));
                         }
                         validated = true;
                     }
@@ -1564,9 +1559,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     try {
                         os.write(ts.data);
                     } catch (IOException e) {
-                        log.error(this.getClass().getName(), "doRead", mcat
-                            .getMessage("ET0006"), e);
-                        throw new TupleException(mcat.getMessage("ET0006"), e);
+                        exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                        		new TupleException(mcat.getMessage("ET0006"), e));
                     }
 
                     if (TupleHelper.isSegmented(page, slotNumber)) {
@@ -1607,10 +1601,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doUpdate(Transaction trx, Location location, Storable newTuple) {
 
             if (location.getContainerId() != containerId) {
-                log.error(this.getClass().getName(), "doRead", mcat.getMessage(
-                    "ET0005",
-                    location));
-                throw new TupleException(mcat.getMessage("ET0005", location));
+                exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                		new TupleException(mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
