@@ -22,6 +22,7 @@ package org.simpledbm.rss.main;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.bm.BufferManager;
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
@@ -85,6 +86,7 @@ public class Server {
     private static Logger log = Logger.getLogger(Server.class
         .getPackage()
         .getName());
+    private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     private static final String VIRTUAL_TABLE = "_internal/dual";
     private static final String LOCK_TABLE = "_internal/lock";
@@ -113,13 +115,15 @@ public class Server {
 
     private void assertNotStarted() {
         if (started) {
-            throw new RSSException(mcat.getMessage("EV0003"));
+            exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
+            	new RSSException(mcat.getMessage("EV0003")));
         }
     }
 
     private void assertStarted() {
         if (!started) {
-            throw new RSSException(mcat.getMessage("EV0004"));
+        	exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
+        		new RSSException(mcat.getMessage("EV0004")));
         }
     }
 
@@ -145,8 +149,8 @@ public class Server {
             lock.lock();
             lockObtained = true;
         } catch (StorageException e) {
-            log.error(LOG_CLASS_NAME, "start", mcat.getMessage("EV0005"), e);
-            throw new RSSException(mcat.getMessage("EV0005", e.getMessage()), e);
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "start", 
+            	new RSSException(mcat.getMessage("EV0005", e.getMessage()), e));
         } finally {
             if (!lockObtained) {
                 if (lock != null) {
