@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -152,6 +153,8 @@ public final class LogManagerImpl implements LogManager {
     private static final String LOG_CLASS_NAME = LogManagerImpl.class.getName();
 
     static final Logger logger = Logger.getLogger(LogManagerImpl.class.getPackage().getName());
+    
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(logger);
 
     static final String DEFAULT_GROUP_PATH = ".";
 
@@ -472,14 +475,11 @@ public final class LogManagerImpl implements LogManager {
         assertIsOpen();
         int reclen = calculateLogRecordSize(length);
         if (reclen > getMaxLogRecSize()) {
-            logger.error(LOG_CLASS_NAME, "insert", mcat.getMessage(
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "insert", 
+            	new LogException(mcat.getMessage(
                 "EW0001",
                 reclen,
-                getMaxLogRecSize()));
-            throw new LogException(mcat.getMessage(
-                "EW0001",
-                reclen,
-                getMaxLogRecSize()));
+                getMaxLogRecSize())));
         }
         bufferLock.lock();
         /*
@@ -588,8 +588,8 @@ public final class LogManagerImpl implements LogManager {
          * for details of why this is necessary.
          */
         if (started || errored) {
-            logger.error(LOG_CLASS_NAME, "start", mcat.getMessage("EW0003"));
-            throw new LogException(mcat.getMessage("EW0003"));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "start", 
+            		new LogException(mcat.getMessage("EW0003")));
         }
         openCtlFiles();
         openLogFiles();
@@ -726,9 +726,8 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     logFilesSemaphore.acquire();
                 } catch (InterruptedException e) {
-                    logger.error(LOG_CLASS_NAME, "setupBackgroundThreads", mcat
-                        .getMessage("EW0005"), e);
-                    throw new LogException(mcat.getMessage("EW0005"), e);
+                    exceptionHandler.errorThrow(LOG_CLASS_NAME, "setupBackgroundThreads", 
+                    	new LogException(mcat.getMessage("EW0005"), e));
                 }
             }
         }
@@ -823,14 +822,11 @@ public final class LogManagerImpl implements LogManager {
      */
     final void setCtlFiles(String files[]) {
         if (files.length > MAX_CTL_FILES) {
-            logger.error(LOG_CLASS_NAME, "setCtlFiles", mcat.getMessage(
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "setCtlFiles", 
+            	new LogException(mcat.getMessage(
                 "EW0006",
                 files.length,
-                MAX_CTL_FILES));
-            throw new LogException(mcat.getMessage(
-                "EW0006",
-                files.length,
-                MAX_CTL_FILES));
+                MAX_CTL_FILES)));
         }
         for (int i = 0; i < files.length; i++) {
             anchor.ctlFiles[i] = new ByteString(files[i]);
@@ -848,24 +844,18 @@ public final class LogManagerImpl implements LogManager {
     final void setLogFiles(String groupPaths[], short n_LogFiles) {
         int n_LogGroups = groupPaths.length;
         if (n_LogGroups > MAX_LOG_GROUPS) {
-            logger.error(LOG_CLASS_NAME, "setLogFiles", mcat.getMessage(
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "setLogFiles", 
+            	new LogException(mcat.getMessage(
                 "EW0007",
                 n_LogGroups,
-                MAX_LOG_GROUPS));
-            throw new LogException(mcat.getMessage(
-                "EW0007",
-                n_LogGroups,
-                MAX_LOG_GROUPS));
+                MAX_LOG_GROUPS)));
         }
         if (n_LogFiles > MAX_LOG_FILES) {
-            logger.error(LOG_CLASS_NAME, "setLogFiles", mcat.getMessage(
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "setLogFiles", 
+            	new LogException(mcat.getMessage(
                 "EW0008",
                 n_LogFiles,
-                MAX_LOG_FILES));
-            throw new LogException(mcat.getMessage(
-                "EW0008",
-                n_LogFiles,
-                MAX_LOG_FILES));
+                MAX_LOG_FILES)));
         }
         anchor.n_LogGroups = (short) n_LogGroups;
         anchor.n_LogFiles = n_LogFiles;
@@ -993,9 +983,8 @@ public final class LogManagerImpl implements LogManager {
         byte bufh[] = new byte[TypeSize.INTEGER + TypeSize.LONG];
         long position = 0;
         if (container.read(position, bufh, 0, bufh.length) != bufh.length) {
-            logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat
-                .getMessage("EW0009"));
-            throw new LogException(mcat.getMessage("EW0009"));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "readLogAnchor", 
+            	new LogException(mcat.getMessage("EW0009")));
         }
         position += bufh.length;
         ByteBuffer bh = ByteBuffer.wrap(bufh);
@@ -1003,19 +992,15 @@ public final class LogManagerImpl implements LogManager {
         checksum = bh.getLong();
         byte bufb[] = new byte[n];
         if (container.read(position, bufb, 0, n) != n) {
-            logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat
-                .getMessage("EW0010"));
-            throw new LogException(mcat.getMessage("EW0010"));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "readLogAnchor", 
+            	new LogException(mcat.getMessage("EW0010")));
         }
         long newChecksum = ChecksumCalculator.compute(bufb, 0, n);
         if (newChecksum != checksum) {
-            logger.error(LOG_CLASS_NAME, "readLogAnchor", mcat
-                .getMessage("EW0011"));
-            throw new LogException(mcat.getMessage("EW0011"));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "readLogAnchor", 
+            	new LogException(mcat.getMessage("EW0011")));
         }
         ByteBuffer bb = ByteBuffer.wrap(bufb);
-//        LogAnchor anchor = new LogAnchor();
-//        anchor.retrieve(bb);
         LogAnchor anchor = new LogAnchor(bb);
         return anchor;
     }
@@ -1202,29 +1187,22 @@ public final class LogManagerImpl implements LogManager {
      * @param fileno
      */
     private void openLogFile(int groupno, int fileno) {
-//        LogFileHeader fh = new LogFileHeader();
-//        byte[] bufh = new byte[fh.getStoredLength()];
         byte[] bufh = new byte[LogFileHeader.SIZE];
         files[groupno][fileno] = storageFactory
             .open(anchor.groups[groupno].files[fileno].toString());
         if (anchor.fileStatus[fileno] != LOG_FILE_UNUSED) {
 			if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
-				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
-						"EW0012", anchor.groups[groupno].files[fileno]
-								.toString()));
-				throw new LogException(mcat.getMessage("EW0012",
-						anchor.groups[groupno].files[fileno].toString()));
+				exceptionHandler.errorThrow(LOG_CLASS_NAME, "openLogFile", 
+					new LogException(mcat.getMessage("EW0012",
+						anchor.groups[groupno].files[fileno].toString())));
 			}
 			ByteBuffer bh = ByteBuffer.wrap(bufh);
 			LogFileHeader fh = new LogFileHeader(bh);
-//			fh.retrieve(bh);
 			if (fh.id != LOG_GROUP_IDS[groupno]
 					|| fh.index != anchor.logIndexes[fileno]) {
-				logger.error(LOG_CLASS_NAME, "openLogFile", mcat.getMessage(
-						"EW0013", anchor.groups[groupno].files[fileno]
-								.toString()));
-				throw new LogException(mcat.getMessage("EW0013",
-						anchor.groups[groupno].files[fileno].toString()));
+				exceptionHandler.errorThrow(LOG_CLASS_NAME, "openLogFile", 
+					new LogException(mcat.getMessage("EW0013",
+						anchor.groups[groupno].files[fileno].toString())));
 			}
 		}
     }
@@ -1321,9 +1299,8 @@ public final class LogManagerImpl implements LogManager {
 
     private void assertIsOpen() {
         if (!started || errored) {
-            logger.error(LOG_CLASS_NAME, "assertIsOpen", mcat
-                .getMessage("EW0016"));
-            throw new LogException(mcat.getMessage("EW0016"));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "assertIsOpen", 
+            	new LogException(mcat.getMessage("EW0016")));
         }
     }
 
@@ -1379,14 +1356,11 @@ public final class LogManagerImpl implements LogManager {
         anchorLock.lock();
         try {
             if (anchor.fileStatus[anchor.currentLogFile] != LOG_FILE_CURRENT) {
-                logger.error(LOG_CLASS_NAME, "logSwitch", mcat.getMessage(
+                exceptionHandler.errorThrow(LOG_CLASS_NAME, "logSwitch", 
+                	new LogException(mcat.getMessage(
                     "EW0017",
                     anchor.currentLogFile,
-                    anchor.fileStatus[anchor.currentLogFile]));
-                throw new LogException(mcat.getMessage(
-                    "EW0017",
-                    anchor.currentLogFile,
-                    anchor.fileStatus[anchor.currentLogFile]));
+                    anchor.fileStatus[anchor.currentLogFile])));
             }
 
             // System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + anchor.currentLogFile + " CHANGED TO FULL");
@@ -1405,12 +1379,10 @@ public final class LogManagerImpl implements LogManager {
         try {
             logFilesSemaphore.acquire();
         } catch (InterruptedException e) {
-            logger.error(
+            exceptionHandler.errorThrow(
                 LOG_CLASS_NAME,
                 "logSwitch",
-                mcat.getMessage("EW0018"),
-                e);
-            throw new LogException(mcat.getMessage("EW0018"), e);
+                new LogException(mcat.getMessage("EW0018"), e));
         }
 
         ByteBuffer bb = null;
@@ -1441,9 +1413,8 @@ public final class LogManagerImpl implements LogManager {
                     //for (int j = 0; j < anchor.n_LogFiles; j++) {
                     //	System.err.println("FileStatus[" + j + "]=" + anchor.fileStatus[j]);
                     //}
-                    logger.error(LOG_CLASS_NAME, "logSwitch", mcat
-                        .getMessage("EW0018"));
-                    throw new LogException(mcat.getMessage("EW0018"));
+                    exceptionHandler.errorThrow(LOG_CLASS_NAME, "logSwitch", 
+                    	new LogException(mcat.getMessage("EW0018")));
                 } else {
                     anchor.currentLogIndex++;
                     //System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + next_log_file + " CHANGED TO CURRENT");
@@ -1747,9 +1718,8 @@ public final class LogManagerImpl implements LogManager {
                 n = files[0][f].read(position, buf, 0, buf.length);
             }
             if (position != anchor.logFileSize) {
-                logger.error(LOG_CLASS_NAME, "archiveLogFile", mcat
-                    .getMessage("EW0019"));
-                throw new LogException(mcat.getMessage("EW0019"));
+                exceptionHandler.errorThrow(LOG_CLASS_NAME, "archiveLogFile", 
+                	new LogException(mcat.getMessage("EW0019")));
             }
             archive.flush();
         } finally {
@@ -1777,17 +1747,13 @@ public final class LogManagerImpl implements LogManager {
             } else {
                 if (request.logIndex != lastArchivedFile + 1) {
                     this.errored = true;
-                    logger.error(
+                    exceptionHandler.errorThrow(
                         LOG_CLASS_NAME,
                         "handleNextArchiveRequest",
-                        mcat.getMessage(
-                            "EW0020",
-                            lastArchivedFile + 1,
-                            request.logIndex));
-                    throw new LogException(mcat.getMessage(
+                        new LogException(mcat.getMessage(
                         "EW0020",
                         lastArchivedFile + 1,
-                        request.logIndex));
+                        request.logIndex)));
                 }
                 lastArchivedFile = request.logIndex;
             }
@@ -1876,12 +1842,8 @@ public final class LogManagerImpl implements LogManager {
         int length = bb.getInt();
         int dataLength = length - LOGREC_HEADER_SIZE;
         LogRecordImpl logrec = new LogRecordImpl(dataLength);
-//        Lsn lsn = new Lsn();
-//        lsn.retrieve(bb);
         Lsn lsn = new Lsn(bb);
         logrec.lsn = lsn;
-//        Lsn prevLsn = new Lsn();
-//        prevLsn.retrieve(bb);
         Lsn prevLsn = new Lsn(bb);
         logrec.prevLsn = prevLsn;
         if (dataLength > 0) {
@@ -1895,10 +1857,8 @@ public final class LogManagerImpl implements LogManager {
                 - offset);
         long checksum = bb.getLong();
         if (!lsn.equals(readLsn) || checksum != ck) {
-            logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage(
-                "EW0021",
-                readLsn));
-            throw new LogException(mcat.getMessage("EW0021", readLsn));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+            	new LogException(mcat.getMessage("EW0021", readLsn)));
         }
         return logrec;
     }
@@ -1912,30 +1872,23 @@ public final class LogManagerImpl implements LogManager {
         byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
         int n = container.read(position, lbytes, 0, lbytes.length);
         if (n != lbytes.length) {
-            logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage(
-                "EW0023",
-                lsn));
-            throw new LogException(mcat.getMessage("EW0023", lsn));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+            	new LogException(mcat.getMessage("EW0023", lsn)));
         }
         position += lbytes.length;
         ByteBuffer bb = ByteBuffer.wrap(lbytes);
         int length = bb.getInt();
         if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-            logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage(
-                "EW0024",
-                lsn,
-                length));
-            throw new LogException(mcat.getMessage("EW0024", lsn, length));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+            	new LogException(mcat.getMessage("EW0024", lsn, length)));
         }
         byte[] bytes = new byte[length];
         System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
         n = container.read(position, bytes, lbytes.length, bytes.length
                 - lbytes.length);
         if (n != (bytes.length - lbytes.length)) {
-            logger.error(LOG_CLASS_NAME, "doRead", mcat.getMessage(
-                "EW0025",
-                lsn));
-            throw new LogException(mcat.getMessage("EW0025", lsn));
+            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+            	new LogException(mcat.getMessage("EW0025", lsn)));
         }
         return bytes;
     }
@@ -2004,11 +1957,10 @@ public final class LogManagerImpl implements LogManager {
                             }
                         }
                         if (fileno == -1) {
-                            logger.error(LOG_CLASS_NAME, "doRead", mcat
-                                .getMessage("EW0022", lsn));
-                            throw new LogException(mcat.getMessage(
+                            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+                            	new LogException(mcat.getMessage(
                                 "EW0022",
-                                lsn));
+                                lsn)));
                         }
                         /*
                          * Try to obtain a read lock on the file without
