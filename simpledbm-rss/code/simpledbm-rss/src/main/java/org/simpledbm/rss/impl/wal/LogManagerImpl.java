@@ -1857,8 +1857,9 @@ public final class LogManagerImpl implements LogManager {
                 - offset);
         long checksum = bb.getLong();
         if (!lsn.equals(readLsn) || checksum != ck) {
-            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
-            	new LogException(mcat.getMessage("EW0021", readLsn)));
+//            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+//            	new LogException(mcat.getMessage("EW0021", readLsn)));
+            throw new LogException(mcat.getMessage("EW0021", readLsn));
         }
         return logrec;
     }
@@ -1872,23 +1873,26 @@ public final class LogManagerImpl implements LogManager {
         byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
         int n = container.read(position, lbytes, 0, lbytes.length);
         if (n != lbytes.length) {
-            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
-            	new LogException(mcat.getMessage("EW0023", lsn)));
+//            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+//            	new LogException(mcat.getMessage("EW0023", lsn)));
+            throw new LogException(mcat.getMessage("EW0023", lsn));
         }
         position += lbytes.length;
         ByteBuffer bb = ByteBuffer.wrap(lbytes);
         int length = bb.getInt();
         if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
-            	new LogException(mcat.getMessage("EW0024", lsn, length)));
+//            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+//            	new LogException(mcat.getMessage("EW0024", lsn, length)));
+        	throw new LogException(mcat.getMessage("EW0024", lsn, length));
         }
         byte[] bytes = new byte[length];
         System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
         n = container.read(position, bytes, lbytes.length, bytes.length
                 - lbytes.length);
         if (n != (bytes.length - lbytes.length)) {
-            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
-            	new LogException(mcat.getMessage("EW0025", lsn)));
+//            exceptionHandler.errorThrow(LOG_CLASS_NAME, "doRead", 
+//            	new LogException(mcat.getMessage("EW0025", lsn)));
+        	throw new LogException(mcat.getMessage("EW0025", lsn));
         }
         return bytes;
     }
