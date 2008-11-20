@@ -3004,9 +3004,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                 	Trace.event(109, loc.getContainerId(), loc.getX(), loc.getY());
                                     trx.releaseLock(loc);
                                 }
-                                exceptionHandler.warnAndThrow(LOG_CLASS_NAME, "doInsert", 
-                                		new UniqueConstraintViolationException(
-                                    mcat.getMessage("WB0003", key, location)));
+//                                exceptionHandler.warnAndThrow(LOG_CLASS_NAME, "doInsert", 
+//                                		new UniqueConstraintViolationException(
+//                                    mcat.getMessage("WB0003", key, location)));
+                                throw new UniqueConstraintViolationException(
+                                    mcat.getMessage("WB0003", key, location));
+
                             }
                             /*
                              * Key has been deleted or has been rolled back in the meantime
