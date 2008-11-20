@@ -324,8 +324,8 @@ public class MessageCatalog {
                 "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
         msgs
             .put(
-                "EH0004",
-                "SIMPLEDBM-EH0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
+                "WH0004",
+                "SIMPLEDBM-WH0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
         msgs
             .put(
                 "EH0005",
