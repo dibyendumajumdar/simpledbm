@@ -351,9 +351,11 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         if (!can_grant && lockState.parms.timeout == 0) {
             /* 7. Otherwise, if nowait was specified, return failure. */
-            exceptionHandler.warnAndThrow(LOG_CLASS_NAME, "handleNewRequest", 
-            		new LatchException(mcat.getMessage("WH0002",
-                this, lockState.parms.mode)));
+//            exceptionHandler.warnAndThrow(LOG_CLASS_NAME, "handleNewRequest", 
+//            		new LatchException(mcat.getMessage("WH0002",
+//                this, lockState.parms.mode)));
+            throw new LatchException(mcat.getMessage("WH0002",
+                    this, lockState.parms.mode));
         }
 
         /* Allocate new lock request */
@@ -461,13 +463,17 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
                 else if (!can_grant && lockState.parms.timeout == 0) {
                     /* 15. If not, and nowait specified, return failure. */
-                    exceptionHandler.warnAndThrow(
-                        this.getClass().getName(),
-                        "handleConversionRequest",
-                        new LatchException(mcat.getMessage(
-                        "EH0004",
-                        lockState.parms,
-                        this)));
+//                    exceptionHandler.warnAndThrow(
+//                        this.getClass().getName(),
+//                        "handleConversionRequest",
+//                        new LatchException(mcat.getMessage(
+//                        "WH0004",
+//                        lockState.parms,
+//                        this)));
+                    throw new LatchException(mcat.getMessage(
+                            "WH0004",
+                            lockState.parms,
+                            this));
                 }
 
                 else {
