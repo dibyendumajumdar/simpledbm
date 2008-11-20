@@ -632,11 +632,15 @@ public final class LockManagerImpl implements LockManager {
 	
 	    else if (!can_grant && context.parms.timeout == 0) {
 	        /* 7. Otherwise, if nowait was specified, return failure. */
-	        exceptionHandler.warnAndThrow(this.getClass().getName(), "handleNewRequest", 
-	        		new LockTimeoutException(mcat.getMessage(
-	        				"WC0004",
-	        				context.parms,
-	        				context.lockitem)));
+//	        exceptionHandler.warnAndThrow(this.getClass().getName(), "handleNewRequest", 
+//	        		new LockTimeoutException(mcat.getMessage(
+//	        				"WC0004",
+//	        				context.parms,
+//	        				context.lockitem)));
+	        throw new LockTimeoutException(mcat.getMessage(
+    				"WC0004",
+    				context.parms,
+    				context.lockitem));
 	    }
 	
 	    /* Allocate new lock request */
@@ -776,13 +780,17 @@ public final class LockManagerImpl implements LockManager {
 	
 	            else if (!can_grant && context.parms.timeout == 0) {
 	                /* 15. If not, and nowait specified, return failure. */
-	                exceptionHandler.warnAndThrow(
-	                    this.getClass().getName(),
-	                    "handleConversionRequest",
-	                    new LockTimeoutException(mcat.getMessage(
-	                    		"WC0004",
-	                    		context.parms,
-	                    		context.lockitem)));
+//	                exceptionHandler.warnAndThrow(
+//	                    this.getClass().getName(),
+//	                    "handleConversionRequest",
+//	                    new LockTimeoutException(mcat.getMessage(
+//	                    		"WC0004",
+//	                    		context.parms,
+//	                    		context.lockitem)));
+	                throw new LockTimeoutException(mcat.getMessage(
+                    		"WC0004",
+                    		context.parms,
+                    		context.lockitem));
 	            }
 	
 	            else {
@@ -898,10 +906,13 @@ public final class LockManagerImpl implements LockManager {
             		new LockTimeoutException(mcat.getMessage("EC0001",
             				context.parms)));
         } else if (context.getStatus() == LockStatus.DEADLOCK) {
-            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
-            		new LockDeadlockException(mcat.getMessage(
-            				"WC0002",
-            				context.parms)));
+//            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
+//            		new LockDeadlockException(mcat.getMessage(
+//            				"WC0002",
+//            				context.parms)));
+            throw new LockDeadlockException(mcat.getMessage(
+    				"WC0002",
+    				context.parms));
         } else {
             exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
             		new LockException(mcat.getMessage("EC0099", context.parms)));
