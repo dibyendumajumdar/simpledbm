@@ -26,7 +26,8 @@ import org.simpledbm.rss.api.st.StorageException;
  * The PageManager is responsible for instantiating new Pages of various 
  * types, as well as for storing and retrieving pages from storage containers.
  * Each page type must have a PageFactory registered with the ObjectRegistry.
- * The PageManager uses the PageFactory objects to create pages. This division
+ * The PageManager delegates the actual reading/writing of pages to the 
+ * PageFactory implementations. This division
  * of responsibility allows the PageManager to manage all pages without knowing
  * how to instantiate individual page types. It allows new page types to be added
  * without requiring changes to the PageManager.

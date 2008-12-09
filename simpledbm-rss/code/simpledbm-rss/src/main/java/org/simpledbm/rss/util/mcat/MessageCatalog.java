@@ -390,7 +390,7 @@ public class MessageCatalog {
         msgs.put("IC0014", "SIMPLEDBM-IC0014: Dumping lock table");
         msgs.put("IC0015", "SIMPLEDBM-IC0015: LockItem = {0}");
 
-        // Page factory messages
+        // Page Manager messages
         msgs
             .put(
                 "EP0001",
@@ -407,6 +407,7 @@ public class MessageCatalog {
         	.put(
         	    "EP0004",
                 "SIMPLEDBM-EP0004: Error occurred while reading page {0}: checksum invalid");
+        msgs.put("EP0005", "SIMPLEDBM-EP0005: A PageFactory was not available to handle page type {0}");
 
         // Object Registry messages
         msgs.put(
