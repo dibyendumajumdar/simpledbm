@@ -39,8 +39,9 @@ import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
- * Default implementation of PageFactory.
- * 
+ * The PageManager handles the reading and writing of pages. The actual reading/writing
+ * of a particular Page type is delegated to appropriate PageFactory implementation.
+ *  
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
@@ -62,68 +63,105 @@ public final class PageManagerImpl implements PageManager {
      */
     private static final int DEFAULT_PAGE_SIZE = 8 * 1024;
 
+    /**
+     * The size of all pages managed by the PageManager is fixed at
+     * the time of construction. 
+     */
     private final int pageSize; // default page size is 8K
 
     /**
-     * An ObjectFactory instance is required for instantiating various page types.
+     * An ObjectRegistry instance is required for obtaining access to PageFactory
+     * implementations for various page types.
      */
-    private final ObjectRegistry objectFactory;
+    private final ObjectRegistry objectRegistry;
 
+    /**
+     * StorageManager provides access to the StorageContainers by their
+     * container Id.
+     */
     private final StorageManager storageManager;
 
+    /**
+     * LatchFactory is used to create latches that are assigned to pages.
+     */
     private final LatchFactory latchFactory;
 
-    public LatchFactory getLatchFactory() {
-		return latchFactory;
-	}
-
 	private final MessageCatalog mcat = new MessageCatalog();
-
-    public PageManagerImpl(int pageSize, ObjectRegistry objectFactory,
+	
+    public PageManagerImpl(int pageSize, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
         this.pageSize = pageSize;
-        this.objectFactory = objectFactory;
+        this.objectRegistry = objectRegistry;
         this.storageManager = storageManager;
         this.latchFactory = latchFactory;
-        objectFactory.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
+        objectRegistry.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
     }
 
-    public PageManagerImpl(ObjectRegistry objectFactory,
+    public PageManagerImpl(ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
-        this(DEFAULT_PAGE_SIZE, objectFactory, storageManager, latchFactory, p);
+        this(DEFAULT_PAGE_SIZE, objectRegistry, storageManager, latchFactory, p);
     }
 
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.pm.PageManager#getPageSize()
+     */
     public final int getPageSize() {
         return pageSize;
     }
     
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.pm.PageManager#getUsablePageSize()
+     */
     public final int getUsablePageSize() {
+    	/*
+    	 * The usable page size is somewhat less than the actual page size, because
+    	 * we use 4 bytes to store a checksum in the page.
+    	 */
     	return pageSize - TypeSize.LONG;
     }
 
+    private PageFactory getPageFactory(int pagetype) {
+    	PageFactory pf = (PageFactory) objectRegistry.getSingleton(pagetype);
+    	if (null == pf) {
+            exceptionHandler.errorThrow(this.getClass().getName(), "getPageFactory", 
+            		new PageException(mcat.getMessage("EP0005", pagetype)));
+    	}
+    	return pf;
+    }
+    
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.pm.PageFactory#getInstance(int, org.simpledbm.rss.api.pm.PageId)
      */
     public final Page getInstance(int pagetype, PageId pageId) {
-    	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
+    	PageFactory pf = getPageFactory(pagetype);
     	Page page = pf.getInstance(pagetype, pageId);
         return page;
     }
 
     /**
-     * Converts a byte stream to a page. 
-     * First two bytes must contain the type
-     * information for the page. This is used to obtain the correct Page implementation
+     * Unmarshalls a byte stream to a page. 
+     * First two bytes must contain the page type information for the page. 
+     * This is used to obtain the correct PageFactory implementation
      * from the Object Registry. 
      * 
+     * @param pageId The ID of the page to be unmarshalled
      * @param bb The ByteBuffer that provides access to the byte stream
      * @return Page instance initialized with the contents of the byte stream
      */
     private Page getInstance(PageId pageId, ByteBuffer bb) {
+    	/*
+    	 * Get the page type
+    	 */
         bb.mark();
         short pagetype = bb.getShort();
         bb.reset();
-    	PageFactory pf = (PageFactory) objectFactory.getSingleton(pagetype);
+        /*
+         * Obtain the relevant PageFactory implementation
+         */
+    	PageFactory pf = getPageFactory(pagetype);
+    	/*
+    	 * Instantiate the page
+    	 */
     	Page page = pf.getInstance(pageId, bb);
         return page;
     }
@@ -150,6 +188,11 @@ public final class PageManagerImpl implements PageManager {
             			n,
             			pageSize)));
         }
+        /*
+         * The first 4 bytes of a page contains a checksum calculated over the
+         * rest of the page data. We need to validate that the checksum obtained
+         * from the page matches the calculated checksum of the page data.
+         */
         long checksumCalculated = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);
         ByteBuffer bb = ByteBuffer.wrap(data);
         long checksumOnPage = bb.getLong();
@@ -173,20 +216,36 @@ public final class PageManagerImpl implements PageManager {
             exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
             		new PageException(mcat.getMessage("EP0003", page.getPageId())));
         }
-        long offset = page.getPageId().getPageNumber() * pageSize;
+
         byte[] data = new byte[pageSize];
         ByteBuffer bb = ByteBuffer.wrap(data);
         bb.mark();
+        /*
+         * The first 4 bytes of a page contains a checksum calculated over the
+         * rest of the page data. 
+         * As we do not know the checksum yet, we insert a place holder.
+         */
         bb.putLong(0);
         page.store(bb);
+        /*
+         * Calculate the checksum and store it in the first 4 bytes.
+         */
         long checksum = ChecksumCalculator.compute(data, TypeSize.LONG, pageSize-TypeSize.LONG);      
         bb.reset();
         bb.putLong(checksum);
+        /*
+         * Now we can persist the page.
+         */
+        long offset = page.getPageId().getPageNumber() * pageSize;
         container.write(offset, data, 0, pageSize);
     }
 
     public int getRawPageType() {
         return TYPE_RAW_PAGE;
     }
+
+    public LatchFactory getLatchFactory() {
+		return latchFactory;
+	}
 
 }

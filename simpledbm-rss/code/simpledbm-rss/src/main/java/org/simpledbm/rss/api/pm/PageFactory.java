@@ -23,7 +23,10 @@ import java.nio.ByteBuffer;
 
 /**
  * The PageFactory handles instantiation of pages, both in memory and from
- * bytestreams wrapped in ByteBuffer instances.
+ * bytestreams wrapped in ByteBuffer instances. Each Page type must have an
+ * associated PageFactory implementation, which should be registered with
+ * ObjectRegistry. The PageManager looks up PageFactory implementations in the
+ * ObjectRegistry.
  * 
  * @author dibyendumajumdar
  */

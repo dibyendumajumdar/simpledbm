@@ -75,7 +75,7 @@ public interface BufferManager {
      * Fixes a page in memory, reading it from disk if necessary, and latches it
      * in exclusive mode.
      * <p>
-     * A exclusive latch on the page may be downgraded to an update latch by
+     * An exclusive latch on the page may be downgraded to an update latch by
      * calling {@link BufferAccessBlock#downgradeExclusiveLatch()}.
      * <p>
      * Unless the request is being made to fix a new page, the page must already
