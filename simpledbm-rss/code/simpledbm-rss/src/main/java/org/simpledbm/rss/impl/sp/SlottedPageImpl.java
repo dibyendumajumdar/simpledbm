@@ -813,15 +813,15 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
     
     public static final class SlottedPageImplFactory implements PageFactory {
-    	final PageManager pageFactory;
-    	public SlottedPageImplFactory(PageManager pageFactory) {
-    		this.pageFactory = pageFactory;
+    	final PageManager pageManager;
+    	public SlottedPageImplFactory(PageManager pageManager) {
+    		this.pageManager = pageManager;
     	}
 		public Page getInstance(int type, PageId pageId) {
-			return new SlottedPageImpl(pageFactory, type, pageId);
+			return new SlottedPageImpl(pageManager, type, pageId);
 		}
 		public Page getInstance(PageId pageId, ByteBuffer bb) {
-			return new SlottedPageImpl(pageFactory, pageId, bb);
+			return new SlottedPageImpl(pageManager, pageId, bb);
 		}
 		public int getPageType() {
 			return SlottedPageManagerImpl.TYPE_SLOTTEDPAGE;
