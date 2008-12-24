@@ -990,15 +990,15 @@ public class TestTransactionManager2 extends BaseTestCase {
         }
 
         static final class BitMgrPageFactory implements PageFactory {
-        	private final PageManager pageFactory;
-        	BitMgrPageFactory(PageManager pageFactory) {
-        		this.pageFactory = pageFactory;
+        	private final PageManager pageManager;
+        	BitMgrPageFactory(PageManager pageManager) {
+        		this.pageManager = pageManager;
         	}
 			public Page getInstance(int type, PageId pageId) {
-				return new BitMgrPage(pageFactory, type, pageId);
+				return new BitMgrPage(pageManager, type, pageId);
 			}
 			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new BitMgrPage(pageFactory, pageId, bb);
+				return new BitMgrPage(pageManager, pageId, bb);
 			}
 			public int getPageType() {
 				return TYPE_BITMGRPAGE;
