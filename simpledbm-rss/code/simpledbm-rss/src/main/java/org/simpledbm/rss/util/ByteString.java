@@ -90,16 +90,6 @@ public final class ByteString implements Storable, Comparable<ByteString> {
         }
     }
 
-//    public void retrieve(ByteBuffer bb) {
-//        short n = bb.getShort();
-//        if (n > 0) {
-//            bytes = new byte[n];
-//            bb.get(bytes);
-//        } else {
-//            bytes = new byte[0];
-//        }
-//    }
-
     public int compareTo(ByteString o) {
         int len = (bytes.length <= o.bytes.length) ? bytes.length
                 : o.bytes.length;
