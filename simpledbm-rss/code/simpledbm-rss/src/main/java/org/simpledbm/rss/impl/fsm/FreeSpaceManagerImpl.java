@@ -1868,15 +1868,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static class HeaderPageFactory implements PageFactory {
-        	final PageManager pageFactory;
-        	public HeaderPageFactory(PageManager pageFactory) {
-        		this.pageFactory = pageFactory;
+        	final PageManager pageManager;
+        	public HeaderPageFactory(PageManager pageManager) {
+        		this.pageManager = pageManager;
         	}
 			public Page getInstance(int type, PageId pageId) {
-				return new HeaderPage(pageFactory, type, pageId);
+				return new HeaderPage(pageManager, type, pageId);
 			}
 			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new HeaderPage(pageFactory, pageId, bb);
+				return new HeaderPage(pageManager, pageId, bb);
 			}
 			public int getPageType() {
 				return FreeSpaceManagerImpl.TYPE_HEADERPAGE;
@@ -2085,15 +2085,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static final class TwoBitSpaceMapPageFactory implements PageFactory {
-        	private final PageManager pageFactory;
-        	public TwoBitSpaceMapPageFactory(PageManager pageFactory) {
-        		this.pageFactory = pageFactory;
+        	private final PageManager pageManager;
+        	public TwoBitSpaceMapPageFactory(PageManager pageManager) {
+        		this.pageManager = pageManager;
         	}
 			public Page getInstance(int type, PageId pageId) {
-				return new TwoBitSpaceMapPage(pageFactory, type, pageId);
+				return new TwoBitSpaceMapPage(pageManager, type, pageId);
 			}
 			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new TwoBitSpaceMapPage(pageFactory, pageId, bb);
+				return new TwoBitSpaceMapPage(pageManager, pageId, bb);
 			}
 			public int getPageType() {
 				return FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE;
@@ -2156,15 +2156,15 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         
         static final class OneBitSpaceMapPageFactory implements PageFactory {
-        	private final PageManager pageFactory;
-        	OneBitSpaceMapPageFactory(PageManager pageFactory) {
-        		this.pageFactory = pageFactory;
+        	private final PageManager pageManager;
+        	OneBitSpaceMapPageFactory(PageManager pageManager) {
+        		this.pageManager = pageManager;
         	}
 			public Page getInstance(int type, PageId pageId) {
-				return new OneBitSpaceMapPage(pageFactory, type, pageId);
+				return new OneBitSpaceMapPage(pageManager, type, pageId);
 			}
 			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new OneBitSpaceMapPage(pageFactory, pageId, bb);
+				return new OneBitSpaceMapPage(pageManager, pageId, bb);
 			}
 			public int getPageType() {
 				return FreeSpaceManagerImpl.TYPE_ONEBITSPACEMAPPAGE;
