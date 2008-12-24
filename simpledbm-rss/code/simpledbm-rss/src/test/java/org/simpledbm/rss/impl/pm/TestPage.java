@@ -107,17 +107,17 @@ public class TestPage extends BaseTestCase {
         
         static class MyPageFactory implements PageFactory {
 
-        	final PageManager pageFactory;
+        	final PageManager pageManager;
         	
-        	public MyPageFactory(PageManager pageFactory) {
-        		this.pageFactory = pageFactory;
+        	public MyPageFactory(PageManager pageManager) {
+        		this.pageManager = pageManager;
         	}
 			public Page getInstance(int type, PageId pageId) {
-				return new MyPage(pageFactory, type, pageId);
+				return new MyPage(pageManager, type, pageId);
 			}
 
 			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new MyPage(pageFactory, pageId, bb);
+				return new MyPage(pageManager, pageId, bb);
 			}
 
 			public int getPageType() {
