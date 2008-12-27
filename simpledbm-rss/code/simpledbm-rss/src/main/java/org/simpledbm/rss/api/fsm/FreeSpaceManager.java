@@ -35,6 +35,8 @@ import org.simpledbm.rss.api.tx.Transaction;
  * The FreeSpaceManager adds to this view the concept of free space map pages, and data pages. 
  */
 public interface FreeSpaceManager {
+	
+	public final String LOGGER_NAME = "org.simpledbm.freespacemgr";
 
     /**
      * Creates a new Container with the specified name and registers it with the specified id.

@@ -76,9 +76,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 	 * to the base Page class.
 	 */
 	
-    static final Logger log = Logger.getLogger(FreeSpaceManagerImpl.class
-        .getPackage()
-        .getName());
+    static final Logger log = Logger.getLogger(FreeSpaceManager.LOGGER_NAME);
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
