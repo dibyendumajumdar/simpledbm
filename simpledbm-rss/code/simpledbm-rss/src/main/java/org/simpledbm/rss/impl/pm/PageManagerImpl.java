@@ -52,9 +52,7 @@ public final class PageManagerImpl implements PageManager {
     static final int TYPE_BASE = 10;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
 
-    private static Logger log = Logger.getLogger(PageManagerImpl.class
-        .getPackage()
-        .getName());
+    private static Logger log = Logger.getLogger(PageManager.LOGGER_NAME);
     
     private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 

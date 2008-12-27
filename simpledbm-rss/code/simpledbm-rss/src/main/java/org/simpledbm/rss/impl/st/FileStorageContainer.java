@@ -27,6 +27,7 @@ import java.nio.channels.OverlappingFileLockException;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.st.StorageContainer;
+import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.logging.Logger;
@@ -41,7 +42,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class FileStorageContainer implements StorageContainer, Dumpable {
 
     private static final Logger log = Logger
-        .getLogger(FileStorageContainer.class.getPackage().getName());
+        .getLogger(StorageContainerFactory.LOGGER_NAME);
 
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     

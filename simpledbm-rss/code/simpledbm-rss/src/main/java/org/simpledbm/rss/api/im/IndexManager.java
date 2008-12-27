@@ -30,6 +30,8 @@ import org.simpledbm.rss.api.tx.TransactionalModule;
  * @author Dibyendu Majumdar
  */
 public interface IndexManager extends TransactionalModule {
+	
+	public final String LOGGER_NAME = "org.simpledbm.indexmgr";
 
     /**
      * Creates a new index with specified container name and ID. Prior to calling this

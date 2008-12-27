@@ -37,6 +37,8 @@ import org.simpledbm.rss.api.st.StorageException;
  */
 public interface PageManager {
 
+	public final String LOGGER_NAME = "org.simpledbm.pagemgr";
+	
     /**
      * Gets the on-disk page size of all pages managed by this PageManager. Page sizes can be
      * upto 32K. 

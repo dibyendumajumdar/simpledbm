@@ -60,12 +60,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class LockManagerImpl implements LockManager {
 
-    private static final String LOG_CLASS_NAME = LockManagerImpl.class
-        .getName();
-
-    private static final Logger log = Logger.getLogger(LockManagerImpl.class
-        .getPackage()
-        .getName());
+    private static final Logger log = Logger.getLogger(LockManager.LOGGER_NAME);
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
@@ -468,7 +463,7 @@ public final class LockManagerImpl implements LockManager {
 	private LockHandleImpl doAcquire(LockContext context) {
 
 		if (log.isDebugEnabled()) {
-			log.debug(LOG_CLASS_NAME, "acquire",
+			log.debug(getClass().getName(), "acquire",
 					"SIMPLEDBM-DEBUG: Lock requested by " + context.parms.owner
 							+ " for " + context.parms.lockable + ", mode="
 							+ context.parms.mode + ", duration="
@@ -565,7 +560,7 @@ public final class LockManagerImpl implements LockManager {
         if (log.isDebugEnabled()) {
             log
                 .debug(
-                    LOG_CLASS_NAME,
+                    getClass().getName(),
                     "acquire",
                     "SIMPLEDBM-DEBUG: Lock not found, therefore granting immediately");
         }
@@ -605,7 +600,7 @@ public final class LockManagerImpl implements LockManager {
 	    /* 4. If not, this is the first request by the transaction. */
 	    if (log.isDebugEnabled()) {
 	        log.debug(
-	            LOG_CLASS_NAME,
+	            getClass().getName(),
 	            "handleNewRequest",
 	            "SIMPLEDBM-DEBUG: New request by transaction "
 	                    + context.parms.owner + " for target "
@@ -655,7 +650,7 @@ public final class LockManagerImpl implements LockManager {
 	        /* 6. If yes, grant the lock and return success. */
 	        if (log.isDebugEnabled()) {
 	            log.debug(
-	                LOG_CLASS_NAME,
+	                getClass().getName(),
 	                "handleNewRequest",
 	                "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
 	                        + context.lockitem + ", therefore granting lock");
@@ -681,7 +676,7 @@ public final class LockManagerImpl implements LockManager {
 	     */
 	    if (log.isTraceEnabled()) {
 	        log.trace(
-	            LOG_CLASS_NAME,
+	            getClass().getName(),
 	            "handleConversionRequest",
 	            "SIMPLEDBM-DEBUG: Lock conversion request by transaction "
 	                    + context.parms.owner + " for target "
@@ -716,7 +711,7 @@ public final class LockManagerImpl implements LockManager {
 	            if (log.isDebugEnabled()) {
 	                log
 	                    .debug(
-	                        LOG_CLASS_NAME,
+	                        getClass().getName(),
 	                        "handleConversionRequest",
 	                        "SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
 	            }
@@ -755,7 +750,7 @@ public final class LockManagerImpl implements LockManager {
 	                /* 13. If so, grant lock and return. */
 	                if (log.isDebugEnabled()) {
 	                    log.debug(
-	                        LOG_CLASS_NAME,
+	                        getClass().getName(),
 	                        "handleConversionRequest",
 	                        "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
 	                                + context.lockitem
@@ -815,7 +810,7 @@ public final class LockManagerImpl implements LockManager {
 	    if (!context.converting) {
 	        if (log.isDebugEnabled()) {
 	            log.debug(
-	                LOG_CLASS_NAME,
+	                getClass().getName(),
 	                "prepareToWait",
 	                "SIMPLEDBM-DEBUG: Waiting for lock to be free");
 	        }
@@ -824,7 +819,7 @@ public final class LockManagerImpl implements LockManager {
 	        if (log.isDebugEnabled()) {
 	            log
 	                .debug(
-	                    LOG_CLASS_NAME,
+	                    getClass().getName(),
 	                    "prepareToWait",
 	                    "SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
 	        }
@@ -856,7 +851,7 @@ public final class LockManagerImpl implements LockManager {
              */
             if (log.isDebugEnabled()) {
                 log.debug(
-                    LOG_CLASS_NAME,
+                    getClass().getName(),
                     "handleWaitResult",
                     "SIMPLEDBM-DEBUG: Woken up, and lock granted");
             }
@@ -871,7 +866,7 @@ public final class LockManagerImpl implements LockManager {
         /* 10. Else return failure. */
         if (log.isDebugEnabled()) {
             log.debug(
-                LOG_CLASS_NAME,
+                getClass().getName(),
                 "handleWaitResult",
                 "SIMPLEDBM-DEBUG: Woken up, and lock failed");
         }
@@ -1019,7 +1014,7 @@ public final class LockManagerImpl implements LockManager {
 	
 	    if (log.isDebugEnabled()) {
 	        log.debug(
-	            LOG_CLASS_NAME,
+	            getClass().getName(),
 	            "doReleaseInternal",
 	            "SIMPLEDBM-DEBUG: Request by " + context.parms.owner
 	                    + " to release lock for " + context.parms.lockable);
@@ -1098,7 +1093,7 @@ public final class LockManagerImpl implements LockManager {
              */
             if (log.isDebugEnabled()) {
                 log.debug(
-                    LOG_CLASS_NAME,
+                    getClass().getName(),
                     "release",
                     "SIMPLEDBM-DEBUG: request not found, returning success");
             }
@@ -1132,7 +1127,7 @@ public final class LockManagerImpl implements LockManager {
             if (log.isDebugEnabled()) {
                 log
                     .debug(
-                        LOG_CLASS_NAME,
+                        getClass().getName(),
                         "release",
                         "SIMPLEDBM-DEBUG: Lock not released as it is held for commit duration");
             }
@@ -1148,7 +1143,7 @@ public final class LockManagerImpl implements LockManager {
              */
             if (log.isDebugEnabled()) {
                 log.debug(
-                    LOG_CLASS_NAME,
+                    getClass().getName(),
                     "release",
                     "SIMPLEDBM-DEBUG: Count decremented but lock not released");
             }
@@ -1168,7 +1163,7 @@ public final class LockManagerImpl implements LockManager {
             if (log.isDebugEnabled()) {
                 log
                     .debug(
-                        LOG_CLASS_NAME,
+                        getClass().getName(),
                         "release",
                         "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
             }
@@ -1185,7 +1180,7 @@ public final class LockManagerImpl implements LockManager {
         if (context.parms.action != ReleaseAction.DOWNGRADE) {
             if (log.isDebugEnabled()) {
                 log.debug(
-                    LOG_CLASS_NAME,
+                    getClass().getName(),
                     "release",
                     "SIMPLEDBM-DEBUG: Removing lock request "
                             + context.lockRequest
@@ -1204,7 +1199,7 @@ public final class LockManagerImpl implements LockManager {
             if (mode == context.lockRequest.mode) {
                 if (log.isDebugEnabled()) {
                     log.debug(
-                        LOG_CLASS_NAME,
+                        getClass().getName(),
                         "release",
                         "SIMPLEDBM-DEBUG: Downgrading " + context.lockRequest
                                 + " to " + context.parms.downgradeMode
@@ -1287,7 +1282,7 @@ public final class LockManagerImpl implements LockManager {
                 if (can_grant) {
                     if (log.isDebugEnabled()) {
                         log.debug(
-                            LOG_CLASS_NAME,
+                            getClass().getName(),
                             "release",
                             "SIMPLEDBM-DEBUG: Granting conversion request " + r
                                     + " because request is compatible with "
@@ -1328,7 +1323,7 @@ public final class LockManagerImpl implements LockManager {
                     if (log.isDebugEnabled()) {
                         log
                             .debug(
-                                LOG_CLASS_NAME,
+                                getClass().getName(),
                                 "release",
                                 "SIMPLEDBM-DEBUG: Granting waiting request "
                                         + r
@@ -1343,7 +1338,7 @@ public final class LockManagerImpl implements LockManager {
                     if (log.isDebugEnabled() && converting) {
                         log
                             .debug(
-                                LOG_CLASS_NAME,
+                                getClass().getName(),
                                 "release",
                                 "SIMPLEDBM-DEBUG: Cannot grant waiting request "
                                         + r

@@ -24,6 +24,8 @@ package org.simpledbm.rss.api.latch;
  * @author Dibyendu Majumdar
  */
 public interface LatchFactory {
+	
+	public final String LOGGER_NAME = "org.simpledbm.latchmgr";
 
     /**
      * Creates a new ReadWrite Latch. A ReadWrite latch supports

@@ -25,6 +25,7 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.st.StorageContainer;
+import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
@@ -40,9 +41,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class StorageManagerImpl implements StorageManager {
 
-    private static final Logger log = Logger.getLogger(StorageManagerImpl.class
-        .getPackage()
-        .getName());
+    private static final Logger log = Logger.getLogger(StorageContainerFactory.LOGGER_NAME);
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 

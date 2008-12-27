@@ -38,6 +38,8 @@ package org.simpledbm.rss.api.locking;
  * @since 26-July-2005
  */
 public interface LockManager {
+	
+	public final String LOGGER_NAME = "org.simpledbm.lockmgr";
 
     /**
      * Acquires a lock on an object in the specified mode. 
