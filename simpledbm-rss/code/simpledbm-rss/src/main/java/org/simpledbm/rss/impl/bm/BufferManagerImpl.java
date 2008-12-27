@@ -68,9 +68,7 @@ public final class BufferManagerImpl implements BufferManager {
     private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
     private static final String BUFFER_WRITER_WAIT = "bufferpool.writerSleepInterval";
 
-    static final Logger log = Logger.getLogger(BufferManagerImpl.class
-        .getPackage()
-        .getName());
+    static final Logger log = Logger.getLogger(BufferManager.LOGGER_NAME);
 
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     

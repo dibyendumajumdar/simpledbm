@@ -40,6 +40,8 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public interface BufferManager {
 
+	public final static String LOGGER_NAME = "org.simpledbm.bufmgr";
+
     /**
      * Starts the Buffer Manager instance. This may cause background threads to
      * be started.
