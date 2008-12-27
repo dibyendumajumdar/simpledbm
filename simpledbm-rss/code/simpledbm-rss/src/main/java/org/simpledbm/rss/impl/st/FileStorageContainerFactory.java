@@ -41,11 +41,8 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class FileStorageContainerFactory implements
         StorageContainerFactory {
 
-    static final String LOG_CLASS_NAME = FileStorageContainerFactory.class
-        .getName();
-
     static final Logger log = Logger
-        .getLogger(FileStorageContainerFactory.class.getPackage().getName());
+        .getLogger(StorageContainerFactory.LOGGER_NAME);
 
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     

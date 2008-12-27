@@ -26,6 +26,8 @@ package org.simpledbm.rss.api.st;
  * @since 18-Jun-2005
  */
 public interface StorageContainerFactory {
+	
+	public final String LOGGER_NAME = "org.simpledbm.storagemgr";
 
     /**
      * Creates a new StorageContainer of the specified name. Note that the

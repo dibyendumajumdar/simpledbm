@@ -38,11 +38,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class ObjectRegistryImpl implements ObjectRegistry {
 
-    private static final String LOG_CLASS_NAME = ObjectRegistry.class.getName();
-
-    private static final Logger log = Logger.getLogger(ObjectRegistryImpl.class
-        .getPackage()
-        .getName());
+	private static final Logger log = Logger.getLogger(ObjectRegistry.LOGGER_NAME);
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
@@ -82,7 +78,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 		ObjectDefinition od = typeRegistry.get(typecode);
 		if (od != null) {
 			if (!od.isSingleton() && od.getClassName().equals(classname)) {
-				log.warn(LOG_CLASS_NAME, "register", mcat.getMessage("WR0001",
+				log.warn(getClass().getName(), "register", mcat.getMessage("WR0001",
 						typecode));
 				return;
 			}
@@ -108,7 +104,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         ObjectDefinition od = typeRegistry.get(typecode);
         if (od != null) {
             if (od.isSingleton() && od.getInstance() == object) {
-                log.warn(LOG_CLASS_NAME, "register", mcat.getMessage(
+                log.warn(getClass().getName(), "register", mcat.getMessage(
                     "WR0003",
                     typecode));
                 return;

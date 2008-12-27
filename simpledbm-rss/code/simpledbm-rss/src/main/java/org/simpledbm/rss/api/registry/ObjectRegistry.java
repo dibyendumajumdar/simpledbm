@@ -39,6 +39,8 @@ import java.nio.ByteBuffer;
  * @since 07-Aug-2005
  */
 public interface ObjectRegistry {
+	
+	public final String LOGGER_NAME = "org.simpledbm.registry";
 
     /**
      * Registers a type to the Object Registry. An ObjectFactory must be

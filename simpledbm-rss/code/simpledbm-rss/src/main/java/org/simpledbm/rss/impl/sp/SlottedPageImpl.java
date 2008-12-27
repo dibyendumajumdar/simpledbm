@@ -31,6 +31,7 @@ import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.registry.StorableFactory;
 import org.simpledbm.rss.api.sp.SlottedPage;
+import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
@@ -63,9 +64,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
-    static final Logger log = Logger.getLogger(SlottedPageImpl.class
-        .getPackage()
-        .getName());
+    static final Logger log = Logger.getLogger(SlottedPageManager.LOGGER_NAME);
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
