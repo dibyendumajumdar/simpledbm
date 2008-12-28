@@ -653,4 +653,8 @@ public class MessageCatalog {
         }
         return "SIMPLEDBM-U9999: Unknown message key - " + key;
     }
+    
+    public static MessageCatalog getMessageCatalog() {
+    	return new MessageCatalog();
+    }
 }

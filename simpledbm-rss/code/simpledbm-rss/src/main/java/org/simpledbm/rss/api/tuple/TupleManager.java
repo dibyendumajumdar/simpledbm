@@ -41,6 +41,8 @@ import org.simpledbm.rss.api.tx.TransactionalModule;
  */
 public interface TupleManager extends TransactionalModule {
 
+	public final String LOGGER_NAME = "org.simpledbm.tuplemgr";
+	
 	
 	/**
 	 * Locks a tuple container in specified mode for COMMIT duration.

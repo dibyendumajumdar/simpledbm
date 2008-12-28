@@ -148,9 +148,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public class TupleManagerImpl extends BaseTransactionalModule implements
         TupleManager {
 
-    static final Logger log = Logger.getLogger(TupleManagerImpl.class
-        .getPackage()
-        .getName());
+    static final Logger log = Logger.getLogger(TupleManager.LOGGER_NAME);
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 

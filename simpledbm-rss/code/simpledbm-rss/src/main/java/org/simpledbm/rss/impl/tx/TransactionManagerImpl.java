@@ -147,9 +147,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class TransactionManagerImpl implements TransactionManager {
 
-    static final Logger log = Logger.getLogger(TransactionManagerImpl.class
-        .getPackage()
-        .getName());
+    static final Logger log = Logger.getLogger(TransactionManager.LOGGER_NAME);
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     static final MessageCatalog mcat = new MessageCatalog();
 

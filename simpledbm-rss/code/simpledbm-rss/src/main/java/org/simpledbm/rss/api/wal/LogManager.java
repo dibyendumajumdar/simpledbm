@@ -63,6 +63,9 @@ package org.simpledbm.rss.api.wal;
  * @see LogReader
  */
 public interface LogManager {
+	
+	
+	public final String LOGGER_NAME = "org.simpledbm.walogmgr";
 
     /**
      * Start the LogMgr instance. This may initiate background threads.
