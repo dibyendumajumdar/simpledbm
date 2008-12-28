@@ -38,8 +38,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class ClassUtils {
 
     private static final Logger log = Logger.getLogger("org.simpledbm.util");
-
-    static final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     /**
      * Get the ClassLoader to use. We always use the current Thread's

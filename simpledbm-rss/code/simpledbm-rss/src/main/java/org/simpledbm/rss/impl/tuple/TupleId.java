@@ -21,9 +21,11 @@ package org.simpledbm.rss.impl.tuple;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.tuple.TupleException;
+import org.simpledbm.rss.api.tuple.TupleManager;
 import org.simpledbm.rss.api.tx.BaseLockable;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
@@ -41,10 +43,9 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class TupleId extends BaseLockable implements Location, Dumpable {
 
-    private static final Logger log = Logger.getLogger(TupleId.class
-        .getPackage()
-        .getName());
-    private static final MessageCatalog mcat = new MessageCatalog();
+    private static final Logger log = Logger.getLogger(TupleManager.LOGGER_NAME);
+    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     private final PageId pageId;
     private final int slotNumber;
@@ -75,9 +76,10 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
 
     public TupleId(String string) {
         super((byte) 'T');
-        log.error(this.getClass().getName(), "TupleId", mcat
-                .getMessage("ET0001"));
-        throw new TupleException(mcat.getMessage("ET0001"));
+        pageId = new PageId();
+        slotNumber = -1;
+        exceptionHandler.errorThrow(this.getClass().getName(), "TupleId", 
+        		new TupleException(mcat.getMessage("ET0001")));
     }    
     
     public Location cloneLocation() {

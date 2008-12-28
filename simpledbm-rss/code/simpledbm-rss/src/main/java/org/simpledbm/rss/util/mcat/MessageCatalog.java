@@ -629,6 +629,9 @@ public class MessageCatalog {
 
     }
 
+    private MessageCatalog() {
+    }
+    
     /**
      * Add a key/message to the message catalog.
      * @param key A key to identify the message
@@ -654,7 +657,12 @@ public class MessageCatalog {
         return "SIMPLEDBM-U9999: Unknown message key - " + key;
     }
     
-    public static MessageCatalog getMessageCatalog() {
-    	return new MessageCatalog();
+    static MessageCatalog messageCatalog;
+    
+    public static synchronized MessageCatalog getMessageCatalog() {
+    	if (messageCatalog == null) {
+    		messageCatalog = new MessageCatalog();
+    	}
+    	return messageCatalog;
     }
 }

@@ -149,7 +149,7 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     static final Logger log = Logger.getLogger(TransactionManager.LOGGER_NAME);
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
-    static final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     private static final short MODULE_ID = 1;
 

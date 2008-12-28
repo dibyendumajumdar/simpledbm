@@ -64,6 +64,8 @@ public final class LockManagerImpl implements LockManager {
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+ 
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
 
@@ -109,8 +111,6 @@ public final class LockManagerImpl implements LockManager {
      */
     private final Map<Object, LockWaiter> waiters = Collections
         .synchronizedMap(new HashMap<Object, LockWaiter>());
-
-    private MessageCatalog mcat = new MessageCatalog();
 
     /**
      * To keep the algorithm simple, the deadlock detector uses a global exclusive lock
@@ -1855,7 +1855,7 @@ public final class LockManagerImpl implements LockManager {
         }
 
         public void run() {
-            log.info(this.getClass().getName(), "run", lockManager.mcat
+            log.info(this.getClass().getName(), "run", LockManagerImpl.mcat
                 .getMessage("IC0012"));
             while (!lockManager.stop) {
                 lockManager.detectDeadlocks();
@@ -1866,7 +1866,7 @@ public final class LockManagerImpl implements LockManager {
                     break;
                 }
             }
-            log.info(this.getClass().getName(), "run", lockManager.mcat
+            log.info(this.getClass().getName(), "run", LockManagerImpl.mcat
                 .getMessage("IC0013"));
         }
     }

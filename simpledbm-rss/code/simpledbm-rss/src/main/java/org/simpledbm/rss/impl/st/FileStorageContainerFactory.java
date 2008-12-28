@@ -46,6 +46,8 @@ public final class FileStorageContainerFactory implements
 
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     /**
      * Mode for creating new container objects. This should be
      * configurable.
@@ -92,8 +94,6 @@ public final class FileStorageContainerFactory implements
      */
     private static final String FLUSH_MODE = "storage.flushMode";
     private static final String DEFAULT_FLUSH_MODE = "force.true";
-    
-    private static final MessageCatalog mcat = new MessageCatalog();
 
     public FileStorageContainerFactory(Properties props) {
         basePath = props.getProperty(BASE_PATH, defaultBasePath);

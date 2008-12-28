@@ -68,7 +68,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
-    static final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     /**
      * This is the length of fixed length header in each page. 

@@ -34,7 +34,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public abstract class Logger {
 
-    private static final MessageCatalog mcat = new MessageCatalog();
+    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
     /**
      * LoggerFactory for creating Loggers. By default, a JDK1.4 Logger
      * Factory will be used.
