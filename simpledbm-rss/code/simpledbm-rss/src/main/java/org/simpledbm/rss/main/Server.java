@@ -81,10 +81,8 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public class Server {
 
-    private static String LOG_CLASS_NAME = Server.class.getName();
-    private static Logger log = Logger.getLogger(Server.class
-        .getPackage()
-        .getName());
+	public static final String LOGGER_NAME = "org.simpledbm.server";
+    private static Logger log = Logger.getLogger(Server.LOGGER_NAME);
     private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     private static final String VIRTUAL_TABLE = "_internal/dual";
@@ -148,7 +146,7 @@ public class Server {
             lock.lock();
             lockObtained = true;
         } catch (StorageException e) {
-            exceptionHandler.errorThrow(LOG_CLASS_NAME, "start", 
+            exceptionHandler.errorThrow(getClass().getName(), "start", 
             	new RSSException(mcat.getMessage("EV0005", e.getMessage()), e));
         } finally {
             if (!lockObtained) {
@@ -224,9 +222,7 @@ public class Server {
     public Server(Properties props) {
 
         Logger.configure(props);
-        log = Logger.getLogger(Server.class
-                .getPackage()
-                .getName());
+        log = Logger.getLogger(Server.LOGGER_NAME);
 
         final LogFactory logFactory = new LogFactoryImpl();
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
@@ -315,7 +311,7 @@ public class Server {
         logManager.start();
         bufferManager.start();
         transactionManager.start();
-        log.info(LOG_CLASS_NAME, "start", mcat.getMessage("IV0001"));
+        log.info(getClass().getName(), "start", mcat.getMessage("IV0001"));
         started = true;
     }
 
@@ -345,7 +341,7 @@ public class Server {
         storageManager.shutdown();
         lockManager.shutdown();
         unlockServerInstance();
-        log.info(LOG_CLASS_NAME, "shutdown", mcat.getMessage("IV0002"));
+        log.info(getClass().getName(), "shutdown", mcat.getMessage("IV0002"));
     }
 
     public synchronized final IndexManager getIndexManager() {

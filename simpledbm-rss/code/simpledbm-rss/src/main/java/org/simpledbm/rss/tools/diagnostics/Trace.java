@@ -43,7 +43,9 @@ import org.simpledbm.rss.util.logging.Logger;
  */
 public class Trace {
 
-	static final Logger log = Logger.getLogger("org.simpledbm.rss.trace");
+	public static final String LOGGER_NAME = "org.simpledbm.trace";
+	
+	static final Logger log = Logger.getLogger(Trace.LOGGER_NAME);
 
 	/**
 	 * A atomic sequence number. 

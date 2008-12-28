@@ -37,10 +37,7 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class ClassUtils {
 
-    private static final String LOG_CLASS_NAME = ClassUtils.class.getName();
-    private static final Logger log = Logger.getLogger(ClassUtils.class
-        .getPackage()
-        .getName());
+    private static final Logger log = Logger.getLogger("org.simpledbm.util");
 
     static final MessageCatalog mcat = new MessageCatalog();
 
@@ -69,7 +66,7 @@ public final class ClassUtils {
         Class<?> clazz = null;
         if (log.isDebugEnabled()) {
             log.debug(
-                LOG_CLASS_NAME,
+                ClassUtils.class.getName(),
                 "forName",
                 "SIMPLEDBM-DEBUG: Loading class " + name
                         + " using ClassLoader " + cl.toString());
@@ -94,7 +91,7 @@ public final class ClassUtils {
         }
         if (log.isDebugEnabled()) {
             log.debug(
-                LOG_CLASS_NAME,
+                ClassUtils.class.getName(),
                 "getResourceAsStream",
                 "SIMPLEDBM-DEBUG: Opened resource " + name);
         }
@@ -123,7 +120,7 @@ public final class ClassUtils {
         }
         if (log.isDebugEnabled()) {
             log.debug(
-                LOG_CLASS_NAME,
+                ClassUtils.class.getName(),
                 "getResourceAsProperties",
                 "SIMPLEDBM-DEBUG: Loaded properties = " + props
                         + " from resource " + name);

@@ -28,6 +28,8 @@ import org.simpledbm.rss.api.wal.Lsn;
  * @since 23-Aug-2005
  */
 public interface TransactionManager {
+	
+	public final String LOGGER_NAME = "org.simpledbm.transactionmgr";
 
     /** 
      * Begins a new transaction.
