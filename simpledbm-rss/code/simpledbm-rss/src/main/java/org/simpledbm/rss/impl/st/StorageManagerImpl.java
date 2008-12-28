@@ -45,9 +45,9 @@ public final class StorageManagerImpl implements StorageManager {
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
+    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
-
-    private static final MessageCatalog mcat = new MessageCatalog();
 
     public StorageManagerImpl(Properties properties) {
     }

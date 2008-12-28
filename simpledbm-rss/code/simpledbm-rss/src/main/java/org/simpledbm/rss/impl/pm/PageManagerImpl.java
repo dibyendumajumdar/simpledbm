@@ -56,7 +56,9 @@ public final class PageManagerImpl implements PageManager {
     
     private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
-    /**
+	static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+
+	/**
      * Default page size is 8 KB.
      */
     private static final int DEFAULT_PAGE_SIZE = 8 * 1024;
@@ -84,8 +86,6 @@ public final class PageManagerImpl implements PageManager {
      */
     private final LatchFactory latchFactory;
 
-	private final MessageCatalog mcat = new MessageCatalog();
-	
     public PageManagerImpl(int pageSize, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
         this.pageSize = pageSize;

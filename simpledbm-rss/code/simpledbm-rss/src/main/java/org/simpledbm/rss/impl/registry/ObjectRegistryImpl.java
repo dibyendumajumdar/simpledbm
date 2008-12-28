@@ -42,6 +42,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
+    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
 
@@ -59,8 +61,6 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
      */
 //    private final HashMap<Short, ObjectDefinition> typeRegistry = new HashMap<Short, ObjectDefinition>();
     TypeRegistry typeRegistry = new TypeRegistry();
-    
-    private static final MessageCatalog mcat = new MessageCatalog();
 
     public ObjectRegistryImpl(Properties properties) {
     }

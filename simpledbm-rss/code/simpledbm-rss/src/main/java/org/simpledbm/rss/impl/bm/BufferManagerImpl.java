@@ -72,7 +72,7 @@ public final class BufferManagerImpl implements BufferManager {
 
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
-    final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     private static final int LATCH_EXCLUSIVE = 2;
 
@@ -1587,7 +1587,7 @@ public final class BufferManagerImpl implements BufferManager {
                 page.unlatchShared();
             } else {
             	exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"unlatch", new IllegalStateException(bufMgr.mcat
+            			"unlatch", new IllegalStateException(BufferManagerImpl.mcat
                     .getMessage("EM0007")));
             }
             latchMode = 0;
@@ -1614,7 +1614,7 @@ public final class BufferManagerImpl implements BufferManager {
                 page.setPageLsn(lsn);
             } else {
             	exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"setDirty", new IllegalStateException(bufMgr.mcat
+            			"setDirty", new IllegalStateException(BufferManagerImpl.mcat
                     .getMessage("EM0008")));
             }
         }
@@ -1640,7 +1640,7 @@ public final class BufferManagerImpl implements BufferManager {
             if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
             	exceptionHandler.errorThrow(
                     this.getClass().getName(),
-                    "upgradeUpdateLatch",new IllegalStateException(bufMgr.mcat
+                    "upgradeUpdateLatch",new IllegalStateException(BufferManagerImpl.mcat
                     .getMessage("EM0009")));
             }
             page.upgradeUpdate();
@@ -1655,7 +1655,7 @@ public final class BufferManagerImpl implements BufferManager {
                 exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "downgradeExclusiveLatch",
-                    new IllegalStateException(bufMgr.mcat
+                    new IllegalStateException(BufferManagerImpl.mcat
                     .getMessage("EM0010")));
             }
             page.downgradeExclusive();
@@ -1682,7 +1682,7 @@ public final class BufferManagerImpl implements BufferManager {
         }
 
         public final void run() {
-            log.info(this.getClass().getName(), "run", bufmgr.mcat
+            log.info(this.getClass().getName(), "run", BufferManagerImpl.mcat
                 .getMessage("IM0011"));
             for (;;) {
                 LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
@@ -1714,7 +1714,7 @@ public final class BufferManagerImpl implements BufferManager {
                                         + " millisecs to complete writing pages to disk");
                     }
                 } catch (Exception e) {
-                    log.error(this.getClass().getName(), "run", bufmgr.mcat
+                    log.error(this.getClass().getName(), "run", BufferManagerImpl.mcat
                         .getMessage("EM0003"), e);
                     bufmgr.setStop();
                 }
@@ -1722,7 +1722,7 @@ public final class BufferManagerImpl implements BufferManager {
                     break;
                 }
             }
-            log.info(this.getClass().getName(), "run", bufmgr.mcat
+            log.info(this.getClass().getName(), "run", BufferManagerImpl.mcat
                 .getMessage("IM0012"));
         }
     }

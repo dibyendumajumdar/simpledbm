@@ -46,7 +46,7 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
 
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
-    private static final MessageCatalog mcat = new MessageCatalog();
+    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     /**
      * The underlying file object.

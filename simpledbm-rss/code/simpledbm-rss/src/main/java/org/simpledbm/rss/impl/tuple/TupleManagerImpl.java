@@ -152,6 +152,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     private static final short MODULE_ID = 6;
 
     private static final short TYPE_BASE = 60;
@@ -187,8 +189,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     final TupleIdFactory locationFactory;
 
     final LockAdaptor lockAdaptor;
-
-    static final MessageCatalog mcat = new MessageCatalog();
     
     private final SlottedPage emptyPage;
 

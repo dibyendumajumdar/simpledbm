@@ -154,6 +154,8 @@ public final class LogManagerImpl implements LogManager {
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(logger);
 
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     static final String DEFAULT_GROUP_PATH = ".";
 
     static final String DEFAULT_ARCHIVE_PATH = ".";
@@ -463,8 +465,6 @@ public final class LogManagerImpl implements LogManager {
      * Specifies the interval between log flushes in seconds. Thread safe.
      */
     private final int logFlushInterval;    
-    
-    MessageCatalog mcat = new MessageCatalog();
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.wal.LogManager#insert(byte[], int)

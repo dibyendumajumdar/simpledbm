@@ -22,7 +22,9 @@ package org.simpledbm.rss.impl.tx;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.tx.TransactionException;
+import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModule;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.util.logging.Logger;
@@ -32,8 +34,9 @@ public final class TransactionalModuleRegistryImpl implements
         TransactionalModuleRegistry {
 
     static final Logger log = Logger
-        .getLogger(TransactionalModuleRegistryImpl.class.getPackage().getName());
-    static final MessageCatalog mcat = new MessageCatalog();
+        .getLogger(TransactionManager.LOGGER_NAME);
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
     private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
 
@@ -48,10 +51,8 @@ public final class TransactionalModuleRegistryImpl implements
     public final synchronized TransactionalModule getModule(int moduleId) {
         TransactionalModule module = moduleMap.get((short) moduleId);
         if (module == null) {
-            log.error(this.getClass().getName(), "getModule", mcat.getMessage(
-                "EX0001",
-                moduleId));
-            throw new TransactionException(mcat.getMessage("EX0001", moduleId));
+            exceptionHandler.errorThrow(this.getClass().getName(), "getModule", 
+            		new TransactionException(mcat.getMessage("EX0001", moduleId)));
         }
         return module;
     }

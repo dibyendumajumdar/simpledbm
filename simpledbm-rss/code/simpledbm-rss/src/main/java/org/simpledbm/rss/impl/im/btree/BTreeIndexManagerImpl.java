@@ -138,7 +138,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
-    static final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
     
     private static final short MODULE_ID = 4;
 

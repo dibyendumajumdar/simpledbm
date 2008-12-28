@@ -84,7 +84,8 @@ public class Server {
 	public static final String LOGGER_NAME = "org.simpledbm.server";
     private static Logger log = Logger.getLogger(Server.LOGGER_NAME);
     private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
-
+    private static MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    
     private static final String VIRTUAL_TABLE = "_internal/dual";
     private static final String LOCK_TABLE = "_internal/lock";
     private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
@@ -105,7 +106,6 @@ public class Server {
     final private IndexManager indexManager;
     final private TupleManager tupleManager;
 
-    final private static MessageCatalog mcat = new MessageCatalog();
     private StorageContainer lock;
 
     private boolean started = false;

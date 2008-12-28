@@ -76,6 +76,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
     private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
     
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();    
+    
     /**
      * Queue of latch requests, contains granted or conversion requests followed
      * by waiting requests.
@@ -92,7 +94,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     boolean waiting = false;
 
-    MessageCatalog mcat = new MessageCatalog();
 
     /**
      * Defines the various lock release methods.

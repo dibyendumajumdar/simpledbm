@@ -80,7 +80,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     
     static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
 
-    static final MessageCatalog mcat = new MessageCatalog();
+    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     final PageManager pageFactory;
 
