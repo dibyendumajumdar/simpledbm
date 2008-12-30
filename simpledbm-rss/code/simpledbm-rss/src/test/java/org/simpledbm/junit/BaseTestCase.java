@@ -24,11 +24,14 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 public abstract class BaseTestCase extends TestCase {
 
     Vector<ThreadFailure> threadFailureExceptions;
+    
+    protected Platform platform;
 
     public BaseTestCase() {
     }
@@ -48,7 +51,8 @@ public abstract class BaseTestCase extends TestCase {
         Properties properties = new Properties();
         properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Logger.configure(properties);
+        platform = new PlatformImpl(properties);
+//        Logger.configure(properties);
     }
 
     @Override

@@ -40,6 +40,8 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.SimpleTimer;
 import org.simpledbm.rss.util.logging.Logger;
@@ -60,11 +62,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class LockManagerImpl implements LockManager {
 
-    private static final Logger log = Logger.getLogger(LockManager.LOGGER_NAME);
+    final Logger log;
     
-    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
 
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
  
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
@@ -186,7 +188,11 @@ public final class LockManagerImpl implements LockManager {
     /**
 	 * Creates a new LockMgrImpl, ready for use.
 	 */
-	public LockManagerImpl(LatchFactory latchFactory, Properties p) {
+	public LockManagerImpl(Platform platform, LatchFactory latchFactory, Properties p) {
+		PlatformObjects po = platform.getPlatformObjects(LockManager.LOGGER_NAME);
+		log = po.getLogger();
+		exceptionHandler = po.getExceptionHandler();
+		mcat = po.getMessageCatalog();
 		globalLock = latchFactory.newReadWriteLatch();
 	    htsz = 0;
 	    count = 0;
@@ -1797,7 +1803,7 @@ public final class LockManagerImpl implements LockManager {
 
         public final LockMode getCurrentMode() {
             if (lockRequest == null) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "getCurrentMode",
+                lockMgr.exceptionHandler.errorThrow(this.getClass().getName(), "getCurrentMode",
                 		new IllegalStateException(
                     "Invalid call: no lock request associated with this handle"));
             }
@@ -1855,7 +1861,7 @@ public final class LockManagerImpl implements LockManager {
         }
 
         public void run() {
-            log.info(this.getClass().getName(), "run", LockManagerImpl.mcat
+            lockManager.log.info(this.getClass().getName(), "run", lockManager.mcat
                 .getMessage("IC0012"));
             while (!lockManager.stop) {
                 lockManager.detectDeadlocks();
@@ -1866,7 +1872,7 @@ public final class LockManagerImpl implements LockManager {
                     break;
                 }
             }
-            log.info(this.getClass().getName(), "run", LockManagerImpl.mcat
+            lockManager.log.info(this.getClass().getName(), "run", lockManager.mcat
                 .getMessage("IC0013"));
         }
     }

@@ -23,6 +23,8 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -38,11 +40,13 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class ObjectRegistryImpl implements ObjectRegistry {
 
-	private static final Logger log = Logger.getLogger(ObjectRegistry.LOGGER_NAME);
+	private final Logger log;
     
-    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    private final ExceptionHandler exceptionHandler;
     
-    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    private final MessageCatalog mcat;
+    
+    private final Platform platform;
     
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
@@ -62,7 +66,12 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 //    private final HashMap<Short, ObjectDefinition> typeRegistry = new HashMap<Short, ObjectDefinition>();
     TypeRegistry typeRegistry = new TypeRegistry();
 
-    public ObjectRegistryImpl(Properties properties) {
+    public ObjectRegistryImpl(Platform platform, Properties properties) {
+    	this.platform = platform;
+    	PlatformObjects po = platform.getPlatformObjects(ObjectRegistry.LOGGER_NAME);
+    	log = po.getLogger();
+    	exceptionHandler = po.getExceptionHandler();
+    	mcat = po.getMessageCatalog();
     }
     
     public synchronized final void registerObjectFactory(int tc,

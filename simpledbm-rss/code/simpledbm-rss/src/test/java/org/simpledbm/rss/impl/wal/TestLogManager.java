@@ -26,12 +26,16 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.registry.Storable;
+import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.LogReader;
 import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
+import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 
 /**
  * Test cases for the Log Manager (Write Ahead Log) module.
@@ -48,12 +52,15 @@ public class TestLogManager extends BaseTestCase {
     public void testCreate() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        factory.createLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        factory.createLog(storageFactory, properties);
     }
 
     public void testCreate2() throws Exception {
-        LogFactory factory = new LogFactoryImpl();
         Properties properties = new Properties();
         properties.setProperty("log.ctl.1", "ctl.a");
         properties.setProperty("log.ctl.2", "ctl.b");
@@ -65,14 +72,23 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("log.buffer.limit", "4");
         properties.setProperty("log.flush.interval", "30");
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        factory.createLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        factory.createLog(storageFactory, properties);
     }
 
     public void testOpen() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         log.shutdown();
     }
@@ -80,8 +96,12 @@ public class TestLogManager extends BaseTestCase {
     public void testInsertOne() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         try {
             String s = "hello world!";
@@ -97,8 +117,12 @@ public class TestLogManager extends BaseTestCase {
     public void testReadOne() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         try {
             LogReader reader = log.getForwardScanningReader(null);
@@ -117,8 +141,12 @@ public class TestLogManager extends BaseTestCase {
     public void testLogSwitch() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         int n = ((2048 / 50) * 2) + 2; // just enough to go beyond two log
         // files
@@ -140,8 +168,12 @@ public class TestLogManager extends BaseTestCase {
     public void testReadAfterLogSwitch() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         try {
             LogReader reader = log.getForwardScanningReader(null);
@@ -246,8 +278,12 @@ public class TestLogManager extends BaseTestCase {
 
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestLogManager");
-        LogFactory factory = new LogFactoryImpl();
-        LogManager log = factory.getLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+        LogFactory factory = new LogFactoryImpl(platform, properties);
+        StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, properties);
+        LogManager log = factory.getLog(storageFactory, properties);
         log.start();
         try {
             LastRecordReader reader1 = new LastRecordReader(log, this);

@@ -49,7 +49,7 @@ public class TestStorageContainer extends BaseTestCase {
 		Properties properties = new Properties();
 		properties.setProperty("storage.basePath",
 				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(
+		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
 				properties);
 		StorageContainer sc = factory.create(name);
 		sc.write(0, new byte[10], 0, 10);
@@ -83,9 +83,9 @@ public class TestStorageContainer extends BaseTestCase {
 		Properties properties = new Properties();
 		properties.setProperty("storage.basePath",
 				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(
+		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
 				properties);
-		StorageManager storageManager = new StorageManagerImpl(properties);
+		StorageManager storageManager = new StorageManagerImpl(platform, properties);
 		String name = "testfile";
 		File file = new File("testdata/TestStorageContainer/" + name);
 		file.delete();
@@ -111,7 +111,7 @@ public class TestStorageContainer extends BaseTestCase {
 		Properties properties = new Properties();
 		properties.setProperty("storage.basePath",
 				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(
+		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
 				properties);
 		factory.create("testfile1").close();
 		factory.create("./testfile2").close();
@@ -126,7 +126,7 @@ public class TestStorageContainer extends BaseTestCase {
 		Properties properties = new Properties();
 		properties.setProperty("storage.basePath",
 				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(
+		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
 				properties);
 		factory.create("lockfile").close();
 		try {

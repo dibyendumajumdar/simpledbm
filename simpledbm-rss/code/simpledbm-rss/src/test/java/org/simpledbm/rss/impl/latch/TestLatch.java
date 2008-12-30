@@ -24,6 +24,8 @@ import java.util.Properties;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 /**
  * 
@@ -32,8 +34,19 @@ import org.simpledbm.rss.api.latch.LatchFactory;
  */
 public class TestLatch extends BaseTestCase {
 
-	static LatchFactory latchFactory = new LatchFactoryImpl(new Properties());
+    static Properties properties;
+	static Platform platform;
+	static LatchFactory latchFactory;
 
+	static {
+		properties = new Properties();
+		properties.setProperty("logging.properties.file",
+				"classpath:simpledbm.logging.properties");
+		properties.setProperty("logging.properties.type", "log4j");
+		platform = new PlatformImpl(properties);
+		latchFactory = new LatchFactoryImpl(platform, properties);
+	}
+	
 	public TestLatch(String arg0) {
 		super(arg0);
 	}

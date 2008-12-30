@@ -28,16 +28,18 @@ import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
@@ -116,17 +118,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        StorageManager storageManager = new StorageManagerImpl(properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        BufferManagerImpl bufmgr = new BufferManagerImpl(
+        BufferManagerImpl bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,
@@ -165,7 +171,7 @@ public class TestBufferManager extends BaseTestCase {
 
         sc = storageFactory.open(name);
         storageManager.register(1, sc);
-        bufmgr = new BufferManagerImpl(null, pageFactory, 3, 11);
+        bufmgr = new BufferManagerImpl(platform, null, pageFactory, 3, 11);
         bufmgr.start();
         bab = bufmgr.fixShared(new PageId(1, 0), 0);
         page = (MyPage) bab.getPage();
@@ -184,17 +190,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,
@@ -292,17 +302,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,
@@ -427,17 +441,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,
@@ -516,17 +534,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,
@@ -601,17 +623,21 @@ public class TestBufferManager extends BaseTestCase {
         Properties properties = new Properties();
         properties
             .setProperty("storage.basePath", "testdata/TestBufferManager");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             null,
             pageFactory,
             3,

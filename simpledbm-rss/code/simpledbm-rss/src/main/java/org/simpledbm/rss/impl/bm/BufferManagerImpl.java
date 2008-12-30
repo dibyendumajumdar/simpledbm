@@ -36,6 +36,7 @@ import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -68,11 +69,11 @@ public final class BufferManagerImpl implements BufferManager {
     private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
     private static final String BUFFER_WRITER_WAIT = "bufferpool.writerSleepInterval";
 
-    static final Logger log = Logger.getLogger(BufferManager.LOGGER_NAME);
+    final Logger log;
 
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
     
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
 
     private static final int LATCH_EXCLUSIVE = 2;
 
@@ -81,6 +82,8 @@ public final class BufferManagerImpl implements BufferManager {
     private static final int LATCH_SHARED = 1;
 
     static BufferManagerStatistics statistics = new BufferManagerStatistics();
+    
+    final Platform platform;
     
     /**
      * Buffer Manager does not directly depend upon the Storage Manager, but
@@ -229,8 +232,12 @@ public final class BufferManagerImpl implements BufferManager {
      * @param bufferpoolsize The size of the buffer pool.
      * @param unused Not used
      */
-    public BufferManagerImpl(LogManager logMgr, PageManager pageFactory,
+    public BufferManagerImpl(Platform platform, LogManager logMgr, PageManager pageFactory,
             int bufferpoolsize, int unused) {
+    	this.log = platform.getLogger(BufferManager.LOGGER_NAME);
+    	this.mcat = platform.getMessageCatalog();
+    	this.exceptionHandler = platform.getExceptionHandler(log);
+    	this.platform = platform;
         init(logMgr, pageFactory, bufferpoolsize);
     }
 
@@ -241,8 +248,12 @@ public final class BufferManagerImpl implements BufferManager {
      * @param pageFactory PageFactory instance, required.
      * @param props Properties that specify how the Buffer Manager should be configured
      */
-    public BufferManagerImpl(LogManager logMgr, PageManager pageFactory,
+    public BufferManagerImpl(Platform platform, LogManager logMgr, PageManager pageFactory,
             Properties props) {
+    	this.log = platform.getLogger(BufferManager.LOGGER_NAME);
+    	this.mcat = platform.getMessageCatalog();
+    	this.exceptionHandler = platform.getExceptionHandler(log);
+    	this.platform = platform;
         int bufferpoolsize = getNumericProperty(
             props,
             BUFFERPOOL_NUMBUFFERS,
@@ -1586,8 +1597,8 @@ public final class BufferManagerImpl implements BufferManager {
             } else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
                 page.unlatchShared();
             } else {
-            	exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"unlatch", new IllegalStateException(BufferManagerImpl.mcat
+            	bufMgr.exceptionHandler.errorThrow(this.getClass().getName(), 
+            			"unlatch", new IllegalStateException(bufMgr.mcat
                     .getMessage("EM0007")));
             }
             latchMode = 0;
@@ -1613,8 +1624,8 @@ public final class BufferManagerImpl implements BufferManager {
                 dirty = true;
                 page.setPageLsn(lsn);
             } else {
-            	exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"setDirty", new IllegalStateException(BufferManagerImpl.mcat
+            	bufMgr.exceptionHandler.errorThrow(this.getClass().getName(), 
+            			"setDirty", new IllegalStateException(bufMgr.mcat
                     .getMessage("EM0008")));
             }
         }
@@ -1638,9 +1649,9 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void upgradeUpdateLatch() {
             if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-            	exceptionHandler.errorThrow(
+            	bufMgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
-                    "upgradeUpdateLatch",new IllegalStateException(BufferManagerImpl.mcat
+                    "upgradeUpdateLatch",new IllegalStateException(bufMgr.mcat
                     .getMessage("EM0009")));
             }
             page.upgradeUpdate();
@@ -1652,10 +1663,10 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void downgradeExclusiveLatch() {
             if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-                exceptionHandler.errorThrow(
+                bufMgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "downgradeExclusiveLatch",
-                    new IllegalStateException(BufferManagerImpl.mcat
+                    new IllegalStateException(bufMgr.mcat
                     .getMessage("EM0010")));
             }
             page.downgradeExclusive();
@@ -1682,15 +1693,15 @@ public final class BufferManagerImpl implements BufferManager {
         }
 
         public final void run() {
-            log.info(this.getClass().getName(), "run", BufferManagerImpl.mcat
+            bufmgr.log.info(this.getClass().getName(), "run", bufmgr.mcat
                 .getMessage("IM0011"));
             for (;;) {
                 LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
                     bufmgr.bufferWriterSleepInterval,
                     TimeUnit.MILLISECONDS));
                 try {
-                    if (log.isTraceEnabled()) {
-                        log.trace(
+                    if (bufmgr.log.isTraceEnabled()) {
+                    	bufmgr.log.trace(
                             this.getClass().getName(),
                             "run",
                             "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = "
@@ -1699,13 +1710,13 @@ public final class BufferManagerImpl implements BufferManager {
                     long start = System.currentTimeMillis();
                     bufmgr.writeBuffers();
                     long end = System.currentTimeMillis();
-                    if (log.isTraceEnabled()) {
-                        log.trace(
+                    if (bufmgr.log.isTraceEnabled()) {
+                    	bufmgr.log.trace(
                             this.getClass().getName(),
                             "run",
                             "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = "
                                     + bufmgr.getDirtyBuffersCount());
-                        log
+                    	bufmgr.log
                             .trace(
                                 this.getClass().getName(),
                                 "run",
@@ -1714,7 +1725,7 @@ public final class BufferManagerImpl implements BufferManager {
                                         + " millisecs to complete writing pages to disk");
                     }
                 } catch (Exception e) {
-                    log.error(this.getClass().getName(), "run", BufferManagerImpl.mcat
+                	bufmgr.log.error(this.getClass().getName(), "run", bufmgr.mcat
                         .getMessage("EM0003"), e);
                     bufmgr.setStop();
                 }
@@ -1722,7 +1733,7 @@ public final class BufferManagerImpl implements BufferManager {
                     break;
                 }
             }
-            log.info(this.getClass().getName(), "run", BufferManagerImpl.mcat
+            bufmgr.log.info(this.getClass().getName(), "run", bufmgr.mcat
                 .getMessage("IM0012"));
         }
     }

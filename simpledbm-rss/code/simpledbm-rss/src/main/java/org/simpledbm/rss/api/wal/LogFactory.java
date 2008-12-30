@@ -38,7 +38,7 @@ public interface LogFactory {
      * @throws LogException Thrown if there is an error while creating the Log
      * @throws LogException.StorageException Thrown if there is an IO error
      */
-    void createLog(Properties props);
+//    void createLog(Properties props);
 
     void createLog(StorageContainerFactory storageFactory, Properties props);
 
@@ -49,7 +49,7 @@ public interface LogFactory {
      * @throws LogException Thrown if there is an error while opening the Log
      * @throws LogException.StorageException Thrown if there is an IO error
      */
-    LogManager getLog(Properties props);
+//    LogManager getLog(Properties props);
 
     LogManager getLog(StorageContainerFactory storageFactory, Properties props);
 

@@ -22,11 +22,11 @@ package org.simpledbm.rss.impl.wal;
 import java.util.ArrayList;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
-import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 
 /**
  * Factory for creating LogMgr instances. The following parameters can specified
@@ -83,11 +83,19 @@ import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
  * @since 26-Jun-2005
  */
 public final class LogFactoryImpl implements LogFactory {
+	
+	final Platform platform;
+	
+	public LogFactoryImpl(Platform platform, Properties props) {
+		this.platform = platform;
+	}
 
     public final void createLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(storageFactory, parms.logBufferSize, parms.maxLogBuffers, parms.logFlushInterval, parms.disableExplicitFlushRequests);
+        LogManagerImpl logmgr = new LogManagerImpl(platform, storageFactory, 
+        		parms.logBufferSize, parms.maxLogBuffers, 
+        		parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         logmgr.setArchivePath(parms.archivePath);
         logmgr.setArchiveMode(true);
@@ -99,32 +107,16 @@ public final class LogFactoryImpl implements LogFactory {
     /*
      * (non-Javadoc)
      * 
-     * @see org.simpledbm.log.LogFactory#createLog(java.lang.String)
-     */
-    public final void createLog(Properties props) throws LogException {
-        createLog(new FileStorageContainerFactory(props), props);
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
      * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
      */
     public final LogManager getLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(storageFactory, parms.logBufferSize, parms.maxLogBuffers, parms.logFlushInterval, parms.disableExplicitFlushRequests);
+        LogManagerImpl logmgr = new LogManagerImpl(platform, storageFactory, 
+        		parms.logBufferSize, parms.maxLogBuffers, 
+        		parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         return logmgr;
-    }
-
-    /*
-     * (non-Javadoc)
-     * 
-     * @see org.simpledbm.log.LogFactory#openLog(java.lang.String)
-     */
-    public final LogManager getLog(Properties props) throws LogException {
-        return getLog(new FileStorageContainerFactory(props), props);
     }
 
     /**

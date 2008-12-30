@@ -23,6 +23,8 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModule;
@@ -33,14 +35,17 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class TransactionalModuleRegistryImpl implements
         TransactionalModuleRegistry {
 
-    static final Logger log = Logger
-        .getLogger(TransactionManager.LOGGER_NAME);
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final Logger log;
+    final MessageCatalog mcat;
+    final ExceptionHandler exceptionHandler;
 
     private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
 
-    public TransactionalModuleRegistryImpl(Properties p) {
+    public TransactionalModuleRegistryImpl(Platform platform, Properties p) {
+    	PlatformObjects po = platform.getPlatformObjects(TransactionManager.LOGGER_NAME);
+    	log = po.getLogger();
+    	exceptionHandler = po.getExceptionHandler();
+    	mcat = po.getMessageCatalog();
     }
     
     public final synchronized void registerModule(int moduleId,

@@ -32,7 +32,9 @@ import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 /**
  * Test cases for Lock Manager module.
@@ -1378,9 +1380,12 @@ public class TestLockManager extends BaseTestCase {
     }
 
     private static LockManager createLockManager() {
-    	Properties p = new Properties();
-    	LatchFactory latchFactory = new LatchFactoryImpl(p);
-        LockManager lockmgr = new LockManagerImpl(latchFactory, p);
+    	Properties properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        Platform platform = new PlatformImpl(properties);
+    	LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
+        LockManager lockmgr = new LockManagerImpl(platform, latchFactory, properties);
         return lockmgr;
     }
 

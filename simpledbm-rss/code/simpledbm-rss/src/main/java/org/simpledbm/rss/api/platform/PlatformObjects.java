@@ -23,31 +23,12 @@ import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
-/**
- * The Platform is an abstraction of the runtime environment.
- * It provides access to basic facilities such as logging, event publication,
- * exception management.
- * 
- * @author dibyendumajumdar
- */
-public interface Platform {
+public interface PlatformObjects {
+
+	Logger getLogger();
 	
-	/**
-	 * Retrieves a logger by name.
-	 */
-	Logger getLogger(String loggerName);
+	ExceptionHandler getExceptionHandler();
 	
-	/**
-	 * Retrieves the message catalog.
-	 */
 	MessageCatalog getMessageCatalog();
-
-	/**
-	 * Returns an ExceptionHandler that is har wired to the logger
-	 * object.
-	 */
-	ExceptionHandler getExceptionHandler(Logger log);
-
-	PlatformObjects getPlatformObjects(String loggerName);
 	
 }

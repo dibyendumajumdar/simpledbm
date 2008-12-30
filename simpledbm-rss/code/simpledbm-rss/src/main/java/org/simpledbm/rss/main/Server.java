@@ -32,6 +32,7 @@ import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -56,6 +57,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
@@ -90,6 +92,7 @@ public class Server {
     private static final String LOCK_TABLE = "_internal/lock";
     private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
 
+    final private Platform platform;
     final private ObjectRegistry objectRegistry;
     final private StorageContainerFactory storageFactory;
     final private StorageManager storageManager;
@@ -179,7 +182,7 @@ public class Server {
     public static void create(Properties props) {
         // TODO Need to ensure that we do not overwrite an existing database without warning
         Server server = new Server(props);
-        final LogFactory logFactory = new LogFactoryImpl();
+        final LogFactory logFactory = new LogFactoryImpl(server.platform, props);
         server.lockServerInstance();
         logFactory.createLog(server.storageFactory, props);
         // SimpleDBM components expect a virtual container to exist with
@@ -221,29 +224,33 @@ public class Server {
      */
     public Server(Properties props) {
 
-        Logger.configure(props);
+    	platform = new PlatformImpl(props);
+    	
+//        Logger.configure(props);
         log = Logger.getLogger(Server.LOGGER_NAME);
 
-        final LogFactory logFactory = new LogFactoryImpl();
-        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl();
+        final LogFactory logFactory = new LogFactoryImpl(platform, props);
+        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);
 
-        LockAdaptor lockAdaptor = new DefaultLockAdaptor(props);
-        objectRegistry = new ObjectRegistryImpl(props);
-        storageFactory = new FileStorageContainerFactory(props);
-        storageManager = new StorageManagerImpl(props);
-        latchFactory = new LatchFactoryImpl(props);
+        LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform, props);
+        objectRegistry = new ObjectRegistryImpl(platform, props);
+        storageFactory = new FileStorageContainerFactory(platform, props);
+        storageManager = new StorageManagerImpl(platform, props);
+        latchFactory = new LatchFactoryImpl(platform, props);
         pageFactory = new PageManagerImpl(
+        	platform,
             objectRegistry,
             storageManager,
             latchFactory,
             props);
-        slottedPageManager = new SlottedPageManagerImpl(objectRegistry, pageFactory, props);
-        loggableFactory = new LoggableFactoryImpl(objectRegistry, props);
-        moduleRegistry = new TransactionalModuleRegistryImpl(props);
+        slottedPageManager = new SlottedPageManagerImpl(platform, objectRegistry, pageFactory, props);
+        loggableFactory = new LoggableFactoryImpl(platform, objectRegistry, props);
+        moduleRegistry = new TransactionalModuleRegistryImpl(platform, props);
         lockManager = lockMgrFactory.create(latchFactory, props);
         logManager = logFactory.getLog(storageFactory, props);
-        bufferManager = new BufferManagerImpl(logManager, pageFactory, props);
+        bufferManager = new BufferManagerImpl(platform, logManager, pageFactory, props);
         transactionManager = new TransactionManagerImpl(
+        	platform,
             logManager,
             storageFactory,
             storageManager,
@@ -255,6 +262,7 @@ public class Server {
             moduleRegistry,
             props);
         spaceManager = new FreeSpaceManagerImpl(
+        	platform,
             objectRegistry,
             pageFactory,
             logManager,
@@ -266,6 +274,7 @@ public class Server {
             moduleRegistry,
             props);
         indexManager = new BTreeIndexManagerImpl(
+        	platform,
             objectRegistry,
             loggableFactory,
             spaceManager,
