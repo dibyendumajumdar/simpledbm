@@ -33,6 +33,7 @@ import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -84,9 +85,10 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public class Server {
 
 	public static final String LOGGER_NAME = "org.simpledbm.server";
-    private static Logger log = Logger.getLogger(Server.LOGGER_NAME);
-    private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
-    private static MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+	
+    final Logger log;
+    final ExceptionHandler exceptionHandler;
+    final MessageCatalog mcat;
     
     private static final String VIRTUAL_TABLE = "_internal/dual";
     private static final String LOCK_TABLE = "_internal/lock";
@@ -225,9 +227,10 @@ public class Server {
     public Server(Properties props) {
 
     	platform = new PlatformImpl(props);
-    	
-//        Logger.configure(props);
-        log = Logger.getLogger(Server.LOGGER_NAME);
+    	PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
+        log = po.getLogger();
+        exceptionHandler = po.getExceptionHandler();
+        mcat = po.getMessageCatalog();
 
         final LogFactory logFactory = new LogFactoryImpl(platform, props);
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);
@@ -284,6 +287,7 @@ public class Server {
             lockAdaptor,
             props);
         tupleManager = new TupleManagerImpl(
+        	platform,
             objectRegistry,
             loggableFactory,
             spaceManager,

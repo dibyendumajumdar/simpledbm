@@ -42,9 +42,11 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.Storable;
@@ -148,11 +150,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public class TupleManagerImpl extends BaseTransactionalModule implements
         TupleManager {
 
-    static final Logger log = Logger.getLogger(TupleManager.LOGGER_NAME);
+    final Logger log;
     
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
 
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
     
     private static final short MODULE_ID = 6;
 
@@ -192,12 +194,16 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     
     private final SlottedPage emptyPage;
 
-    public TupleManagerImpl(ObjectRegistry objectFactory,
+    public TupleManagerImpl(Platform platform, ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
             TransactionalModuleRegistry moduleRegistry, PageManager pageFactory,
             LockAdaptor lockAdaptor, Properties p) {
 
+    	PlatformObjects po = platform.getPlatformObjects(TupleManager.LOGGER_NAME);
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.mcat = po.getMessageCatalog();
     	this.lockAdaptor = lockAdaptor;
         this.locationFactory = new TupleIdFactory();
         this.objectFactory = objectFactory;
@@ -920,8 +926,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                  * We have the tentative tuple id.
                  */
                 location = new TupleId(page.getPageId(), slotNumber);
-                if (log.isDebugEnabled()) {
-                    log.debug(
+                if (tuplemgr.log.isDebugEnabled()) {
+                	tuplemgr.log.debug(
                         this.getClass().getName(),
                         "startInsert",
                         "SIMPLEDBM-DEBUG: Tentative location for new tuple will be "
@@ -939,8 +945,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         LockDuration.COMMIT_DURATION);
                     locked = true;
                 } catch (LockException e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug(
+                    if (tuplemgr.log.isDebugEnabled()) {
+                    	tuplemgr.log.debug(
                             this.getClass().getName(),
                             "startInsert",
                             "SIMPLEDBM-DEBUG: Failed to obtain conditional lock on location "
@@ -988,8 +994,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                  * Release lock on previous slot and try another slot.
                                  */
                                 trx.rollback(sp);
-                                if (log.isDebugEnabled()) {
-                                    log
+                                if (tuplemgr.log.isDebugEnabled()) {
+                                	tuplemgr.log
                                         .debug(
                                             this.getClass().getName(),
                                             "startInsert",
@@ -1021,8 +1027,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                  * Cannot use the page or the slot originally identified due
                  * to lack of space. Must restart the insert
                  */
-                if (log.isDebugEnabled()) {
-                    log
+                if (tuplemgr.log.isDebugEnabled()) {
+                	tuplemgr.log
                         .debug(
                             this.getClass().getName(),
                             "startInsert",
@@ -1070,8 +1076,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             assert bab != null;
             assert bab.isLatchedExclusively();
             
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (tuplemgr.log.isDebugEnabled()) {
+            	tuplemgr.log.debug(
                     this.getClass().getName(),
                     "startInsert",
                     "SIMPLEDBM-DEBUG: Page number " + pageNumber
@@ -1354,8 +1360,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         public void completeInsert() {
             if (!proceedWithInsert) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "completInsert", 
-                		new TupleException(mcat.getMessage("ET0007")));
+            	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "completInsert", 
+                		new TupleException(tuplemgr.mcat.getMessage("ET0007")));
             }
             boolean success = false;
             try {
@@ -1410,8 +1416,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doDelete(Transaction trx, Location location) {
 
             if (location.getContainerId() != containerId) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "doDelete", 
-                		new TupleException(mcat.getMessage("ET0005", location)));
+            	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doDelete", 
+                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1444,10 +1450,10 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || TupleHelper.isDeleted(page, slotNumber)
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                     .isFirstSegment(page, slotNumber))) {
-                            exceptionHandler.errorThrow(
+                        	tuplemgr.exceptionHandler.errorThrow(
                                 this.getClass().getName(),
                                 "doDelete",
-                                new TupleException(mcat.getMessage(
+                                new TupleException(tuplemgr.mcat.getMessage(
                                 "ET0005",
                                 location)));
                         }
@@ -1518,8 +1524,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public byte[] read(Location location) {
 
             if (location.getContainerId() != containerId) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                		new TupleException(mcat.getMessage("ET0005", location)));
+            	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1545,8 +1551,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || TupleHelper.isDeleted(page, slotNumber)
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                     .isFirstSegment(page, slotNumber))) {
-                            exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                            	new TupleException(mcat.getMessage(
+                        	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                            	new TupleException(tuplemgr.mcat.getMessage(
                                 "ET0005",
                                 location)));
                         }
@@ -1557,8 +1563,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     try {
                         os.write(ts.data);
                     } catch (IOException e) {
-                        exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                        		new TupleException(mcat.getMessage("ET0006"), e));
+                    	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                        		new TupleException(tuplemgr.mcat.getMessage("ET0006"), e));
                     }
 
                     if (TupleHelper.isSegmented(page, slotNumber)) {
@@ -1599,8 +1605,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doUpdate(Transaction trx, Location location, Storable newTuple) {
 
             if (location.getContainerId() != containerId) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                		new TupleException(mcat.getMessage("ET0005", location)));
+            	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
+                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1737,6 +1743,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
     public static class TupleScanImpl implements TupleScan {
 
+    	final TupleManagerImpl tuplemgr;
+    	
         final TupleContainerImpl tupleContainer;
 
         final Transaction trx;
@@ -1777,6 +1785,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public TupleScanImpl(TupleContainerImpl tupleContainer,
                 Transaction trx, LockMode lockMode) {
             this.tupleContainer = tupleContainer;
+            this.tuplemgr = tupleContainer.tuplemgr;
             this.trx = trx;
             this.lockMode = lockMode;
         }
@@ -1787,8 +1796,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     LockMode lockMode = trx.hasLock(previousLocation);
                     if (lockMode == LockMode.SHARED
                             || lockMode == LockMode.UPDATE) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(
+                        if (tuplemgr.log.isDebugEnabled()) {
+                        	tuplemgr.log.debug(
                                 this.getClass().getName(),
                                 "fetchNext",
                                 "SIMPLEDBM-DEBUG: Releasing lock on previous row "
@@ -1806,8 +1815,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                      */
                     LockMode lockMode = trx.hasLock(previousLocation);
                     if (lockMode == LockMode.UPDATE) {
-                        if (log.isDebugEnabled()) {
-                            log.debug(
+                        if (tuplemgr.log.isDebugEnabled()) {
+                        	tuplemgr.log.debug(
                                 this.getClass().getName(),
                                 "fetchNext",
                                 "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
@@ -1986,8 +1995,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                  * The tuple is no longer valid, so we release the lock on the tuple
                                  * and start the search again.
                                  */
-                                if (log.isDebugEnabled()) {
-                                    log
+                                if (tuplemgr.log.isDebugEnabled()) {
+                                	tuplemgr.log
                                         .debug(
                                             this.getClass().getName(),
                                             "doFetchNext",
@@ -2034,8 +2043,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     LockMode lockMode = trx.hasLock(currentLocation);
                     if (lockMode == LockMode.SHARED
                             || lockMode == LockMode.UPDATE) {
-                        if (log.isDebugEnabled()) {
-                            log
+                        if (tuplemgr.log.isDebugEnabled()) {
+                        	tuplemgr.log
                                 .debug(
                                     this.getClass().getName(),
                                     "close",
