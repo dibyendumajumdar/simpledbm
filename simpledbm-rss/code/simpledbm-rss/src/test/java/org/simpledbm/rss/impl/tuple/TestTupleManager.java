@@ -650,6 +650,7 @@ public class TestTupleManager extends BaseTestCase {
                 lockAdaptor,
                 props);
             tuplemgr = new TupleManagerImpl(
+            	platform,
                 objectFactory,
                 loggableFactory,
                 spacemgr,
