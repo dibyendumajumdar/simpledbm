@@ -48,6 +48,8 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.registry.ObjectFactory;
@@ -134,12 +136,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
      * Current method is inefficient.
      */
 
-    static final Logger log = Logger.getLogger(IndexManager.LOGGER_NAME);
-    
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
-
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
-    
     private static final short MODULE_ID = 4;
 
     private static final short TYPE_BASE = 40;
@@ -197,7 +193,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     final SlottedPageManager spMgr;
 
     final LockAdaptor lockAdaptor;
+    
+    final PlatformObjects po;
 
+    final Logger log;
+    
+    final ExceptionHandler exceptionHandler;
+
+    final MessageCatalog mcat;
+    
     /**
      * Setting this flag to 1 artificially limits the number
      * of keys in each page. This is useful for forcing page splits etc.
@@ -225,11 +229,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 	private static final boolean Validating = false;
 	private static final boolean QuickValidate = false;
 
-    public BTreeIndexManagerImpl(ObjectRegistry objectFactory,
+    public BTreeIndexManagerImpl(Platform platform, ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
             TransactionalModuleRegistry moduleRegistry,
             LockAdaptor lockAdaptor, Properties p) {
+    	this.po = platform.getPlatformObjects(IndexManager.LOGGER_NAME);
+    	this.log = po.getLogger();
+    	this.exceptionHandler = po.getExceptionHandler();
+    	this.mcat = po.getMessageCatalog();
         this.objectFactory = objectFactory;
         this.loggableFactory = loggableFactory;
         this.spaceMgr = spaceMgr;
@@ -357,7 +365,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             BTreeNode.formatPage(r, loadPageOp.getKeyFactoryType(), loadPageOp
                     .getLocationFactoryType(), loadPageOp.isLeaf(), loadPageOp
                     .isUnique(), loadPageOp.getSpaceMapPageNumber());
-            BTreeNode node = new BTreeNode(loadPageOp.getIndexItemFactory(), r);
+            BTreeNode node = new BTreeNode(po, loadPageOp.getIndexItemFactory(), r);
             int k = FIRST_KEY_POS; // 0 is position of header item
             for (IndexItem item : loadPageOp.items) {
                 node.replace(k++, item);
@@ -381,7 +389,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // q is the page to be split
         	Trace.event(0, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
             SlottedPage q = (SlottedPage) page;
-            BTreeNode leftSibling = new BTreeNode(splitOperation.getIndexItemFactory(), q);
+            BTreeNode leftSibling = new BTreeNode(po, splitOperation.getIndexItemFactory(), q);
             leftSibling.header.rightSibling = splitOperation.newSiblingPageNumber;
             leftSibling.header.keyCount = splitOperation.newKeyCount;
             // get rid of the keys that will move to the
@@ -411,7 +419,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     splitOperation.isLeaf(),
                     splitOperation.isUnique(),
                     splitOperation.spaceMapPageNumber);
-            BTreeNode newSiblingNode = new BTreeNode(splitOperation.getIndexItemFactory(), r);
+            BTreeNode newSiblingNode = new BTreeNode(po, splitOperation.getIndexItemFactory(), r);
             newSiblingNode.header.leftSibling = splitOperation
                 .getPageId()
                 .getPageNumber();
@@ -446,7 +454,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // left sibling - this page will aborb contents of right sibling.
         	Trace.event(3, page.getPageId().getContainerId(), page.getPageId().getPageNumber(), mergeOperation.rightSibling);
             SlottedPage q = (SlottedPage) page;
-            BTreeNode leftSibling = new BTreeNode(mergeOperation.getIndexItemFactory(), q);
+            BTreeNode leftSibling = new BTreeNode(po, mergeOperation.getIndexItemFactory(), q);
             int k;
             /*
              * FIXME - in the code below, we should use the methods
@@ -491,7 +499,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoLinkOperation(Page page, LinkOperation linkOperation) {
     	Trace.event(5, linkOperation.rightSibling, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
-        BTreeNode parent = new BTreeNode(linkOperation.getIndexItemFactory(), p);
+        BTreeNode parent = new BTreeNode(po, linkOperation.getIndexItemFactory(), p);
         int k = 0;
         k = parent.findPosition(linkOperation.leftSibling);
         if (k == -1 || k > parent.header.keyCount) {
@@ -528,7 +536,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoUnlinkOperation(Page page, UnlinkOperation unlinkOperation) {
     	Trace.event(6, unlinkOperation.rightSibling, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
-        BTreeNode parent = new BTreeNode(unlinkOperation.getIndexItemFactory(), p);
+        BTreeNode parent = new BTreeNode(po, unlinkOperation.getIndexItemFactory(), p);
         int k = 0;
         k = parent.findPosition(unlinkOperation.leftSibling);
         if (k == -1 || k > parent.header.keyCount) {
@@ -567,7 +575,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoRedistributeOperation(Page page,
             RedistributeOperation redistributeOperation) {
         SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(redistributeOperation.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, redistributeOperation.getIndexItemFactory(), p);
         if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
             // processing Q
             if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
@@ -634,7 +642,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoNewRedistributeOperation(Page page,
             NewRedistributeOperation redistributeOperation) {
         SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(redistributeOperation.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, redistributeOperation.getIndexItemFactory(), p);
         if (page.getPageId().getPageNumber() == redistributeOperation.leftSibling) {
             // processing Q (left sibling)
             if (redistributeOperation.targetSibling == redistributeOperation.leftSibling) {
@@ -732,7 +740,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             int savedPageNumber = p.getSpaceMapPageNumber();
             BTreeNode.formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
                     .getLocationFactoryType(), false, ithOperation.isUnique(), savedPageNumber);
-            node = new BTreeNode(ithOperation.getIndexItemFactory(), p);
+            node = new BTreeNode(po, ithOperation.getIndexItemFactory(), p);
             // insert new items
             node.insert(1, ithOperation.rootItems.get(0));
             node.insert(2, ithOperation.rootItems.get(1));
@@ -744,7 +752,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             BTreeNode.formatPage(p, ithOperation.getKeyFactoryType(), ithOperation
                     .getLocationFactoryType(), ithOperation.isLeaf(), ithOperation
                     .isUnique(), ithOperation.spaceMapPageNumber);
-            node = new BTreeNode(ithOperation.getIndexItemFactory(), p);
+            node = new BTreeNode(po, ithOperation.getIndexItemFactory(), p);
             int k = FIRST_KEY_POS; // 0 is position of header item
             for (IndexItem item : ithOperation.items) {
                 node.replace(k++, item);
@@ -786,7 +794,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             BTreeNode.formatPage(p, dthOperation.getKeyFactoryType(), dthOperation
                 .getLocationFactoryType(), dthOperation.isLeaf(), dthOperation
                 .isUnique(), savedPageNumber);
-            BTreeNode node = new BTreeNode(dthOperation.getIndexItemFactory(), p);
+            BTreeNode node = new BTreeNode(po, dthOperation.getIndexItemFactory(), p);
             int k = FIRST_KEY_POS;
             // add the keys from child page
             for (IndexItem item : dthOperation.items) {
@@ -817,7 +825,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoInsertOperation(Page page, InsertOperation insertOp) {
     	Trace.event(15, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(insertOp.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, insertOp.getIndexItemFactory(), p);
         SearchResult sr = node.search(insertOp.getItem());
         assert !sr.exactMatch;
         if (sr.k == -1) {
@@ -847,7 +855,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             UndoInsertOperation undoInsertOp) {
     	Trace.event(16, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(undoInsertOp.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, undoInsertOp.getIndexItemFactory(), p);
         if (QuickValidate) {
         	assert node.getItem(undoInsertOp.getPosition()).equals(undoInsertOp.getItem());
         	node.validateItemAt(undoInsertOp.getPosition());
@@ -883,7 +891,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         bcursor.setP(bufmgr.fixExclusive(insertOp.getPageId(), false, -1, 0));
         try {
             SlottedPage p = (SlottedPage) bcursor.getP().getPage();
-            BTreeNode node = new BTreeNode(insertOp.getIndexItemFactory(), p);
+            BTreeNode node = new BTreeNode(po, insertOp.getIndexItemFactory(), p);
             SearchResult sr = null;
             boolean doSearch = false;
             /*
@@ -933,7 +941,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	Trace.event(20, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
                 bcursor.getP().upgradeUpdateLatch();
                 p = (SlottedPage) bcursor.getP().getPage();
-                node = new BTreeNode(insertOp.getIndexItemFactory(), p);
+                node = new BTreeNode(po, insertOp.getIndexItemFactory(), p);
                 assert node.isLeaf();
                 assert !node.isDeallocated();
 
@@ -970,7 +978,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     void redoDeleteOperation(Page page, DeleteOperation deleteOp) {
     	Trace.event(21, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
     	SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(deleteOp.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, deleteOp.getIndexItemFactory(), p);
         SearchResult sr = node.search(deleteOp.getItem());
         assert sr.exactMatch;
         if (QuickValidate) {
@@ -994,7 +1002,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             UndoDeleteOperation undoDeleteOp) {
     	Trace.event(22, page.getPageId().getContainerId(), page.getPageId().getPageNumber());
         SlottedPage p = (SlottedPage) page;
-        BTreeNode node = new BTreeNode(undoDeleteOp.getIndexItemFactory(), p);
+        BTreeNode node = new BTreeNode(po, undoDeleteOp.getIndexItemFactory(), p);
         node.insert(undoDeleteOp.getPosition(), undoDeleteOp.getItem());
         if (QuickValidate) {
         	node.validateItemAt(undoDeleteOp.getPosition());
@@ -1030,7 +1038,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         bcursor.setP(bufmgr.fixExclusive(deleteOp.getPageId(), false, -1, 0));
         try {
             SlottedPage p = (SlottedPage) bcursor.getP().getPage();
-            BTreeNode node = new BTreeNode(deleteOp.getIndexItemFactory(), p);
+            BTreeNode node = new BTreeNode(po, deleteOp.getIndexItemFactory(), p);
             /*
              * There is no easy way of knowing whether a page still covers r, since pages may
              * have been merged and split since the key was originally deleted. We take a cautious
@@ -1061,7 +1069,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 assert bcursor.getP() != null;
                 assert bcursor.getP().isLatchedForUpdate();
                 p = (SlottedPage) bcursor.getP().getPage();
-                node = new BTreeNode(deleteOp.getIndexItemFactory(), p);
+                node = new BTreeNode(po, deleteOp.getIndexItemFactory(), p);
                 if (!node.canAccomodate(bcursor.searchKey)) {
                 	Trace.event(126, p.getPageId().getContainerId(), p.getPageId().getPageNumber());
                     bcursor.setQ(bcursor.removeP());
@@ -1072,7 +1080,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 Trace.event(25, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
                 bcursor.getP().upgradeUpdateLatch();
                 p = (SlottedPage) bcursor.getP().getPage();
-                node = new BTreeNode(deleteOp.getIndexItemFactory(), p);
+                node = new BTreeNode(po, deleteOp.getIndexItemFactory(), p);
                 assert node.isLeaf();
                 assert !node.isDeallocated();
             }
@@ -1259,10 +1267,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         boolean unique;
         
         final IndexItemFactory indexItemFactory;
+        final PlatformObjects po;
 
         BTreeImpl(BTreeIndexManagerImpl btreeMgr, int containerId,
                 int keyFactoryType, int locationFactoryType, boolean unique) {
             this.btreeMgr = btreeMgr;
+            this.po = btreeMgr.po;
             this.containerId = containerId;
             this.keyFactoryType = keyFactoryType;
             this.locationFactoryType = locationFactoryType;
@@ -1328,8 +1338,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     newSiblingPageNumber = btree.spaceCursor
                         .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
                     if (newSiblingPageNumber == -1) {
-                        exceptionHandler.unexpectedErrorThrow(getClass().getName(), 
-                        		"doSplit", new IndexException(mcat.getMessage("EB0002")));
+                        po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), 
+                        		"doSplit", new IndexException(po.getMessageCatalog().getMessage("EB0002")));
                     }
                 }
                 undoNextLsn = trx.getLastLsn();
@@ -1350,7 +1360,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             Trace.event(27, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
             bcursor.getQ().upgradeUpdateLatch();
             assert bcursor.getQ().isLatchedExclusively();
-            BTreeNode leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
 
             PageId newSiblingPageId = new PageId(
                 btree.containerId,
@@ -1443,11 +1453,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             Trace.event(31, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
             bcursor.getQ().upgradeUpdateLatch();
-            BTreeNode leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
 
             Trace.event(32, bcursor.getR().getPage().getPageId().getContainerId(), bcursor.getR().getPage().getPageId().getPageNumber());
             bcursor.getR().upgradeUpdateLatch();
-            BTreeNode rnode = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+            BTreeNode rnode = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
 
             assert leftSiblingNode.header.rightSibling == rnode.page
                 .getPageId()
@@ -1547,8 +1557,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             Trace.event(34, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
             bcursor.getP().upgradeUpdateLatch();
             try {
-				BTreeNode parentNode = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
-				BTreeNode lnode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+				BTreeNode parentNode = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
+				BTreeNode lnode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
 				SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
 
 				if (Validating) {
@@ -1621,7 +1631,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             Trace.event(36, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
             bcursor.getP().upgradeUpdateLatch();
             try {
-				BTreeNode parentNode = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+				BTreeNode parentNode = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
 				UnlinkOperation unlinkOperation = new UnlinkOperation(BTreeIndexManagerImpl.MODULE_ID,
 						BTreeIndexManagerImpl.TYPE_UNLINK_OPERATION,
 						btreeMgr.objectFactory, 
@@ -1674,11 +1684,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             Trace.event(37, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
             bcursor.getQ().upgradeUpdateLatch();
-            BTreeNode leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
 
             Trace.event(38, bcursor.getR().getPage().getPageId().getContainerId(), bcursor.getR().getPage().getPageId().getPageNumber());
             bcursor.getR().upgradeUpdateLatch();
-            BTreeNode rightSiblingNode = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+            BTreeNode rightSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
             SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
 
             RedistributeOperation redistributeOperation = new RedistributeOperation(
@@ -1718,7 +1728,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 btree.btreeMgr.redo(rpage, redistributeOperation);
                 bcursor.getR().setDirty(lsn);
 
-                leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                 /* Check if Q covers the current search key value */
                 int comp = leftSiblingNode.getHighKey().compareTo(
                     bcursor.searchKey);
@@ -1766,12 +1776,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
             Trace.event(37, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
             bcursor.getQ().upgradeUpdateLatch();
-            BTreeNode leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
             SlottedPage lpage = (SlottedPage) bcursor.getQ().getPage();
 
             Trace.event(38, bcursor.getR().getPage().getPageId().getContainerId(), bcursor.getR().getPage().getPageId().getPageNumber());
             bcursor.getR().upgradeUpdateLatch();
-            BTreeNode rightSiblingNode = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+            BTreeNode rightSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
             SlottedPage rpage = (SlottedPage) bcursor.getR().getPage();
 
             NewRedistributeOperation redistributeOperation = new NewRedistributeOperation(
@@ -1839,7 +1849,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 btree.btreeMgr.redo(rpage, redistributeOperation);
                 bcursor.getR().setDirty(lsn);
 
-                leftSiblingNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                leftSiblingNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                 /* Check if Q covers the current search key value */
                 int comp = leftSiblingNode.getHighKey().compareTo(
                     bcursor.searchKey);
@@ -1919,9 +1929,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     newSiblingPageNumber = btree.spaceCursor
                         .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
                     if (newSiblingPageNumber == -1) {
-                        exceptionHandler.unexpectedErrorThrow(getClass().getName(), 
+                    	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), 
                         		"doIncreaseTreeHeight", 
-                        		new IndexException(mcat.getMessage("EB0002")));
+                        		new IndexException(po.getMessageCatalog().getMessage("EB0002")));
                     }
                 }
                 // Make a note of current lsn so that we can link the Compensation record to it.
@@ -1945,7 +1955,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getP().isLatchedForUpdate();
             Trace.event(42, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
             bcursor.getP().upgradeUpdateLatch();
-            BTreeNode rootNode = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode rootNode = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
 
             IncreaseTreeHeightOperation ithOperation = new IncreaseTreeHeightOperation(
                 BTreeIndexManagerImpl.MODULE_ID,
@@ -2046,12 +2056,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             // root page
             Trace.event(46, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
             bcursor.getP().upgradeUpdateLatch();
-            BTreeNode rootNode = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode rootNode = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
 
             // child page
             Trace.event(47, bcursor.getQ().getPage().getPageId().getContainerId(), bcursor.getQ().getPage().getPageId().getPageNumber());
             bcursor.getQ().upgradeUpdateLatch();
-            BTreeNode childNode = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode childNode = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
 
             // root will inherit the leaf status of child node
             DecreaseTreeHeightOperation dthOperation = new DecreaseTreeHeightOperation(
@@ -2156,8 +2166,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             assert bcursor.getQ() != null;
             assert bcursor.getQ().isLatchedForUpdate();
 
-            BTreeNode q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
-            BTreeNode p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             BTreeNode r = null;
 
             int Q = q.page.getPageId().getPageNumber();
@@ -2189,7 +2199,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 PageId rightPageId = new PageId(containerId,R);
                 Trace.event(52, rightPageId.getContainerId(), rightPageId.getPageNumber());
                 bcursor.setR(btreeMgr.bufmgr.fixForUpdate(rightPageId, 0));
-                r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
                 /*
                  * If the high key of Q is less than the index key in P associated with Q,
                  * then R must be an indirect child of Q.
@@ -2267,7 +2277,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             /*
                              * P might have changed as a result of the split of old P
                              */
-                            p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                            p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                             if (Validating) {
                             	assert p.findIndexItem(Q) != null;
                             }
@@ -2305,11 +2315,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          * In the paper the unlink of R and merge of Q and R is here,
                          * but we do this in the common section below.
                          */
-                        p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                        p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                         assert p.findIndexItem(S) != null;
                     }
 
-                    p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                    p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                     assert p.findIndexItem(Q) != null;
                     assert p.findIndexItem(R) != null;
                     
@@ -2323,8 +2333,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     /*
                      * Merge Q and R
                      */
-                    q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
-                    r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                    q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
+                    r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
                     if (q.canMergeWith(r)) {
                     	Trace.event(61);
                         doMerge(trx, bcursor);
@@ -2359,7 +2369,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 PageId l_pageId = new PageId(containerId,L);
                 Trace.event(63, l_pageId.getContainerId(), l_pageId.getPageNumber());
                 bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(l_pageId, 0));
-                q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                 /* The node to the right of L is N */
                 /* This may or may not be Q depending upon whether N is
                  * an indirect child of P.
@@ -2369,7 +2379,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 PageId n_pageId = new PageId(containerId, N);
                 Trace.event(64, n_pageId.getContainerId(), n_pageId.getPageNumber());
                 bcursor.setR(btreeMgr.bufmgr.fixForUpdate(n_pageId, 0));
-                r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
 
                 /*
                  * Get highkey of L (u) and compare with the index key associated with L (v) in
@@ -2421,8 +2431,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          *  
                          */
                         Trace.event(68);
-                        q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
-                        r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                        q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
+                        r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
                         
                         if (q.canMergeWith(r)) {
                         	/* merge L and Q */
@@ -2462,7 +2472,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                          * belong to P (because a minimum of 2 items must be
                          * present in a page).
                          */
-                        p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                        p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                         assert p.findIndexItem(Q) != null;
                         assert p.findIndexItem(L) != null;
                     }
@@ -2473,13 +2483,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     bcursor.unfixQ();
                     /* N becomes bcursor.q */
                     bcursor.setQ(bcursor.removeR());
-                    q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                    q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                     /* latch Q again, which now becomes bcursor.r */
                     assert Q == q.header.rightSibling;
                     PageId q_pageId = new PageId(containerId, Q);
                     Trace.event(73, q_pageId.getContainerId(), q_pageId.getPageNumber());
                     bcursor.setR(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
-                    r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                    r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
                     if (!r.isAboutToUnderflow()) {
                         /* Q is no longer about to underflow */
                         // FIXME Test case
@@ -2493,8 +2503,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     	Trace.event(75);
                         doUnlink(trx, bcursor);
                         /* here bcursor.q is N and bcursor.r is Q */
-                        q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
-                        r = new BTreeNode(indexItemFactory, bcursor.getR().getPage());
+                        q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
+                        r = new BTreeNode(po, indexItemFactory, bcursor.getR().getPage());
                         if (q.canMergeWith(r)) {
                             /* merge N and Q */
                         	Trace.event(76);
@@ -2550,7 +2560,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     BTreeIndexManagerImpl.ROOT_PAGE_NUMBER);
         	Trace.event(78, rootPageId.getContainerId(), rootPageId.getPageNumber());
             bcursor.setP(btreeMgr.bufmgr.fixForUpdate(rootPageId, 0));
-            BTreeNode p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             if (p.header.rightSibling != -1) {
                 /* 
                  * Root page has a right sibling. This means that the root page
@@ -2567,7 +2577,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 bcursor.setR(btreeMgr.bufmgr.fixForUpdate(r_pageId, 0));
                 doIncreaseTreeHeight(trx, bcursor);
                 bcursor.setP(bcursor.removeQ());
-                p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             }
             if (p.isLeaf()) {
                 return;
@@ -2578,7 +2588,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     childPageNumber);
             Trace.event(80, q_pageId.getContainerId(), q_pageId.getPageNumber());
             bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
-            BTreeNode q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+            BTreeNode q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
             boolean childPageLatched = true;
             if (p.isRoot() && p.header.keyCount == 1
                     && q.header.rightSibling == -1) {
@@ -2592,7 +2602,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 doDecreaseTreeHeight(trx, bcursor);
                 childPageLatched = false;
             }
-            p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             while (!p.isLeaf()) {
                 if (!childPageLatched) {
                     /*
@@ -2605,7 +2615,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             childPageNumber);
                     Trace.event(82, q_pageId.getContainerId(), q_pageId.getPageNumber());
                     bcursor.setQ(btreeMgr.bufmgr.fixForUpdate(q_pageId, 0));
-                    q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                    q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                     /*
                      * No need to set childPageLatch as this is only needed first time round.
                      */
@@ -2641,7 +2651,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     }
                     assert bcursor.getP().isLatchedForUpdate();
                     assert bcursor.getQ().isLatchedForUpdate();
-                    q = new BTreeNode(indexItemFactory, bcursor.getQ().getPage());
+                    q = new BTreeNode(po, indexItemFactory, bcursor.getQ().getPage());
                     if (q.getHighKey().compareTo(bcursor.searchKey) >= 0) {
                         /* Q covers search key */
                     	Trace.event(87);
@@ -2660,7 +2670,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         bcursor.unfixQ();
                     }
                 }
-                p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             }
         }
 
@@ -2673,8 +2683,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final void readModeTraverse(BTreeContext bcursor) {
 
-            if (log.isDebugEnabled()) {
-                log.debug(
+            if (btreeMgr.log.isDebugEnabled()) {
+            	btreeMgr.log.debug(
                     getClass().getName(),
                     "readModeTraverse",
                     "SIMPLEDBM-DEBUG: Read mode traverse for search key = "
@@ -2689,7 +2699,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     BTreeIndexManagerImpl.ROOT_PAGE_NUMBER);
             Trace.event(89, rootPageId.getContainerId(), rootPageId.getPageNumber());
             bcursor.setP(btreeMgr.bufmgr.fixShared(rootPageId, 0));
-            BTreeNode p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
 
             do {
                 IndexItem v = p.getHighKey();
@@ -2704,7 +2714,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     bcursor.setQ(btreeMgr.bufmgr.fixShared(r_pageId, 0));
                     bcursor.unfixP();
                     bcursor.setP(bcursor.removeQ());
-                    p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                    p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                     assert p.getHighKey().compareTo(bcursor.getSearchKey()) >= 0;
                 }
                 if (!p.isLeaf()) {
@@ -2717,7 +2727,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     bcursor.setQ(btreeMgr.bufmgr.fixShared(c_pageId, 0));
                     bcursor.unfixP();
                     bcursor.setP(bcursor.removeQ());
-                    p = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                    p = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                 }
             } while (!p.isLeaf());
         }
@@ -2736,7 +2746,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             /* At this point p points to the leaf page where the key is to be inserted */
             assert bcursor.getP() != null;
             assert bcursor.getP().isLatchedForUpdate();
-            BTreeNode node = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            BTreeNode node = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             assert node.isLeaf();
             assert !node.isDeallocated();
             assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
@@ -2748,7 +2758,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
             Trace.event(93, bcursor.getP().getPage().getPageId().getContainerId(), bcursor.getP().getPage().getPageId().getPageNumber());
             bcursor.getP().upgradeUpdateLatch();
-            node = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+            node = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
             SearchResult sr = node.search(bcursor.searchKey);
             return sr;
         }
@@ -2787,12 +2797,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	Trace.event(94, r_pageId.getContainerId(), r_pageId.getPageNumber());
                 bcursor.setR(btreeMgr.bufmgr.fixShared(r_pageId, 0));
                 nextPage = (SlottedPage) bcursor.getR().getPage();
-                BTreeNode nextNode = new BTreeNode(indexItemFactory, nextPage);
+                BTreeNode nextNode = new BTreeNode(po, indexItemFactory, nextPage);
                 nextItem = nextNode.getItem(nextk);
                 nextPageLsn = nextPage.getPageLsn();
             } else {
                 // next key is in the current page
-                BTreeNode nextNode = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                BTreeNode nextNode = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                 nextPageLsn = bcursor.getP().getPage().getPageLsn();
                 if (nextk == -1) {
                     nextItem = nextNode.getHighKey(); // represents infinity
@@ -2810,8 +2820,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 return true;
             } catch (LockException e) {
 
-                if (log.isDebugEnabled()) {
-                    log.debug(
+                if (btreeMgr.log.isDebugEnabled()) {
+                	btreeMgr.log.debug(
                         getClass().getName(),
                         "doNextKeyLock",
                         "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + mode
@@ -2927,7 +2937,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     /* next key is in the next page or it is
                      * INFINITY if this is the rightmost page.
                      */
-                    BTreeNode node = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                    BTreeNode node = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                     nextKeyPage = node.header.rightSibling;
                     if (nextKeyPage != -1) {
                         nextk = FIRST_KEY_POS; // first key of next page
@@ -2960,8 +2970,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                     duration);
                             } catch (LockException e) {
                                 // FIXME Test case
-                                if (log.isDebugEnabled()) {
-                                    log.debug(
+                                if (btreeMgr.log.isDebugEnabled()) {
+                                	btreeMgr.log.debug(
                                         getClass().getName(),
                                         "doInsert",
                                         "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT "
@@ -3005,7 +3015,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //                                		new UniqueConstraintViolationException(
 //                                    mcat.getMessage("WB0003", key, location)));
                                 throw new UniqueConstraintViolationException(
-                                    mcat.getMessage("WB0003", key, location));
+                                		po.getMessageCatalog().getMessage("WB0003", key, location));
 
                             }
                             /*
@@ -3093,8 +3103,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void insert(Transaction trx, IndexKey key,
                 Location location) {
         	if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
-				exceptionHandler.errorThrow(getClass().getName(), "insert", 
-						new IndexException(mcat.getMessage("EB0013")));
+        		po.getExceptionHandler().errorThrow(getClass().getName(), "insert", 
+						new IndexException(po.getMessageCatalog().getMessage("EB0013")));
 			}
         	Trace.event(112);
             Savepoint savepoint = trx.createSavepoint(false);
@@ -3137,7 +3147,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * At this point p points to the leaf page where the key is to be deleted 
                  */
                 bcursor.getP().upgradeUpdateLatch();
-                BTreeNode node = new BTreeNode(indexItemFactory, bcursor.getP().getPage());
+                BTreeNode node = new BTreeNode(po, indexItemFactory, bcursor.getP().getPage());
                 assert node.isLeaf();
                 assert !node.isDeallocated();
                 assert node.getHighKey().compareTo(bcursor.searchKey) >= 0;
@@ -3145,8 +3155,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 SearchResult sr = node.search(bcursor.searchKey);
                 if (!sr.exactMatch) {
                     // key not found?? something is wrong
-                    exceptionHandler.unexpectedErrorThrow(getClass().getName(), "doDelete", 
-                    		new IndexException(mcat.getMessage("EB0004",
+                	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doDelete", 
+                    		new IndexException(po.getMessageCatalog().getMessage("EB0004",
                         bcursor.searchKey.toString())));
                 }
 
@@ -3211,8 +3221,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void delete(Transaction trx, IndexKey key,
                 Location location) {
         	if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
-        		exceptionHandler.errorThrow(getClass().getName(), "delete", 
-        				new IndexException(mcat.getMessage("EB0013")));
+        		po.getExceptionHandler().errorThrow(getClass().getName(), "delete", 
+        				new IndexException(po.getMessageCatalog().getMessage("EB0013")));
         	}
         	Trace.event(113);
             Savepoint savepoint = trx.createSavepoint(false);
@@ -3237,7 +3247,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * Cursor may hit EOF as a result. 
          */
         final SearchResult doSearchAtLeafLevel(IndexCursorImpl icursor) {
-            BTreeNode node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
+            BTreeNode node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
             icursor.setEof(false);
             SearchResult sr = null;
             if (icursor.scanMode == IndexCursorImpl.SCAN_FETCH_GREATER
@@ -3252,8 +3262,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr.k = icursor.k;
                 sr.exactMatch = true;
                 if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-                    exceptionHandler.unexpectedErrorThrow(getClass().getName(), "redoLinkOperation", 
-                    		new IndexException(mcat.getMessage("EB0005", node
+                	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "redoLinkOperation", 
+                    		new IndexException(po.getMessageCatalog().getMessage("EB0005", node
                         .getItem(sr.k), icursor.currentKey)));
                 }
             } else {
@@ -3335,7 +3345,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             	Trace.event(137, nextPageId.getContainerId(), nextPageId.getPageNumber());
                 icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(nextPageId, 0));
                 icursor.bcursor.unfixQ();
-                node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
+                node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
                 if (sr.k == -1) {
                 	/* must have hit EOF, as we should never have to move right more than
@@ -3391,7 +3401,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(
                         icursor.pageId,
                         0));
-                    node = new BTreeNode(indexItemFactory, icursor.bcursor.getP().getPage());
+                    node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
                     if (node.isDeallocated() || !node.isLeaf()) {
                         // The node that contained current key is no longer part of the tree, hence scan is necessary
                         searchFromRoot = true;
@@ -3431,8 +3441,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 try {
                     if (sr.item == null) {
                     	Trace.event(139, icursor.btree.containerId);
-                        exceptionHandler.unexpectedErrorThrow(getClass().getName(), "doFetch", 
-                        		new IndexException(mcat.getMessage(
+                    	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doFetch", 
+                        		new IndexException(po.getMessageCatalog().getMessage(
                             "EB0006",
                             icursor.currentKey.toString())));
                     }
@@ -3450,8 +3460,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     return saveCursorState(icursor, sr);
                 } catch (LockException e) {
 
-                    if (log.isDebugEnabled()) {
-                        log.debug(
+                    if (btreeMgr.log.isDebugEnabled()) {
+                    	btreeMgr.log.debug(
                             getClass().getName(),
                             "doFetch",
                             "SIMPLEDBM-DEBUG: Failed to acquire conditional "
@@ -3634,7 +3644,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final boolean fetchNext() {
             if (stateFetchCompleted != 0) {
-                log.warn(
+            	btree.btreeMgr.log.warn(
                     getClass().getName(),
                     "close",
                     "fetchCompleted() has not been called after fetchNext()");
@@ -3655,8 +3665,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             .getLocation());
                         if (lockMode == LockMode.SHARED
                                 || lockMode == LockMode.UPDATE) {
-                            if (log.isDebugEnabled()) {
-                                log.debug(
+                            if (btree.btreeMgr.log.isDebugEnabled()) {
+                            	btree.btreeMgr.log.debug(
                                     getClass().getName(),
                                     IndexCursorImpl.class.getName()
                                             + ".fetchNext",
@@ -3676,8 +3686,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         LockMode lockMode = trx.hasLock(previousKey
                             .getLocation());
                         if (lockMode == LockMode.UPDATE) {
-                            if (log.isDebugEnabled()) {
-                                log.debug(
+                            if (btree.btreeMgr.log.isDebugEnabled()) {
+                            	btree.btreeMgr.log.debug(
                                     getClass().getName(),
                                     IndexCursorImpl.class.getName()
                                             + ".fetchNext",
@@ -3751,8 +3761,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             .getLocation());
                         if (lockMode == LockMode.SHARED
                                 || lockMode == LockMode.UPDATE) {
-                            if (log.isDebugEnabled()) {
-                                log
+                            if (btree.btreeMgr.log.isDebugEnabled()) {
+                            	btree.btreeMgr.log
                                     .debug(
                                         getClass().getName(),
                                         this.getClass().getName() + ".close",
@@ -3779,7 +3789,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 throw ex;
             }
             if (stateFetchCompleted != 0) {
-                log.warn(getClass().getName(), "close", mcat.getMessage("WB0011"));
+            	btree.btreeMgr.log.warn(getClass().getName(), "close", btree.po.getMessageCatalog().getMessage("WB0011"));
             }
         }
 
@@ -3800,14 +3810,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public void restoreState(Transaction txn, Savepoint sp) {
             CursorState cs = (CursorState) sp.getValue(this);
 
-            if (log.isDebugEnabled()) {
-                log
+            if (btree.btreeMgr.log.isDebugEnabled()) {
+            	btree.btreeMgr.log
                     .debug(
                         getClass().getName(),
                         this.getClass().getName() + ".restoreState",
                         "SIMPLEDBM-DEBUG: Current position is set to "
                                 + currentKey);
-                log.debug(
+            	btree.btreeMgr.log.debug(
                     getClass().getName(),
                     this.getClass().getName() + ".restoreState",
                     "SIMPLEDBM-DEBUG: Rollback to savepoint is restoring state to "
@@ -4126,6 +4136,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         static final short NODE_TYPE_LEAF = 1;
         static final short NODE_TREE_UNIQUE = 2;
         static final short NODE_TREE_DEALLOCATED = 4;
+        
+        final PlatformObjects po;
 
         /**
          * Page being managed.
@@ -4153,7 +4165,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         
         final PartialIndexItem.PartialIndexItemFactory partialIndexItemFactory;
         
-        BTreeNode(IndexItemFactory indexItemFactory, Page page) {
+        BTreeNode(PlatformObjects po, IndexItemFactory indexItemFactory, Page page) {
+        	this.po = po;
         	this.indexItemFactory = indexItemFactory;
             this.page = (SlottedPage) page;
             this.pageId = page.getPageId();
@@ -4168,7 +4181,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	if (page != null && pageId.equals(page.getPageId()) && pageLsn.equals(page.getPageLsn())) {
         		return true;
         	}
-        	exceptionHandler.unexpectedErrorThrow(this.getClass().getName(), "sanityCheck", 
+        	po.getExceptionHandler().unexpectedErrorThrow(this.getClass().getName(), "sanityCheck", 
         			new IndexException("The BTreeNode no longer refers to the correct page"));
         	return false;
         }
@@ -4307,7 +4320,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				if (slot > 1) {
 					IndexItem prevItem = getItem(slot - 1);
 					if (prevItem.compareTo(thisItem) >= 0) {
-						exceptionHandler.unexpectedErrorThrow(
+						po.getExceptionHandler().unexpectedErrorThrow(
 								this.getClass().getName(), "validateItemAt",
 								new IndexException("Item at slot " + slot + " is in wrong order"));
 					}
@@ -4317,7 +4330,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						// key before high key can be equal or less than high key in a leaf page
 						IndexItem nextItem = getItem(slot + 1);
 						if (thisItem.compareTo(nextItem) > 0) {
-							exceptionHandler.unexpectedErrorThrow(
+							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
 									new IndexException("Item at slot " + slot
 									+ " is in wrong order"));
@@ -4326,7 +4339,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 					else if (slot < header.keyCount - 1) {
 						IndexItem nextItem = getItem(slot + 1);
 						if (thisItem.compareTo(nextItem) >= 0) {
-							exceptionHandler.unexpectedErrorThrow(
+							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
 									new IndexException("Item at slot " + slot
 									+ " is in wrong order"));
@@ -4337,7 +4350,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 					if (slot < header.keyCount) {
 						IndexItem nextItem = getItem(slot + 1);
 						if (thisItem.compareTo(nextItem) >= 0) {
-							exceptionHandler.unexpectedErrorThrow(
+							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
 									new IndexException("Item at slot " + slot
 									+ " is in wrong order"));
@@ -4356,18 +4369,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 					return;
 				}
 				if (isDeallocated()) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
 							new IndexException("Page is marked for deallocation"));
 				}
 				if (page.getSpaceMapPageNumber() == -1) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
 							new IndexException(
 							"Page has not been assigned a space map page"));
 				}
 				if (page.getNumberOfSlots() != header.keyCount + 1) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
 							new IndexException("Mismatch is keycount"));
 				}
@@ -4388,18 +4401,18 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	Thread.yield();
         	try {
 				if (isDeallocated()) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
 							new IndexException("Page is marked for deallocation"));
 				}
 				if (page.getSpaceMapPageNumber() == -1) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
 							new IndexException(
 							"Page has not been assigned a space map page"));
 				}
 				if (page.getNumberOfSlots() != header.keyCount + 1) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
 							new IndexException("Mismatch is keycount"));
 				}
@@ -4420,14 +4433,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						if (k == header.keyCount) {
 							if (isLeaf()) {
 								if (item.compareTo(prevItem) < 0) {
-									exceptionHandler.unexpectedErrorThrow(
+									po.getExceptionHandler().unexpectedErrorThrow(
 											this.getClass().getName(), "validate",
 											new IndexException(
 											"Item is not in order"));
 								}
 							} else {
 								if (item.compareTo(prevItem) <= 0) {
-									exceptionHandler.unexpectedErrorThrow(
+									po.getExceptionHandler().unexpectedErrorThrow(
 											this.getClass().getName(), "validate",
 											new IndexException(
 											"Item is not in order"));
@@ -4436,7 +4449,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						}
 						else {
 							if (item.compareTo(prevItem) <= 0) {
-								exceptionHandler.unexpectedErrorThrow(
+								po.getExceptionHandler().unexpectedErrorThrow(
 										this.getClass().getName(), "validate",
 										new IndexException("Item is not in order"));
 							}
@@ -4445,12 +4458,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 					prevItem = item;
 				}
 				if (deletedCount > 0) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
 							new IndexException("Deleted count on page > 0"));
 				}
 				if (keyCount != header.keyCount) {
-					exceptionHandler.unexpectedErrorThrow(
+					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
 							new IndexException("Mismatch is keycount"));
 				}
@@ -4493,7 +4506,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         
         private void validateItem(IndexItem item) {
         	if (item.isLeaf != isLeaf() || item.isUnique != isUnique()) {
-				exceptionHandler.unexpectedErrorThrow(
+        		po.getExceptionHandler().unexpectedErrorThrow(
 						this.getClass().getName(), "validateItem",
 						new IndexException("There is a mismatch between the node and the key type"));
         	}
@@ -4658,8 +4671,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     return k;
                 }
             }
-            exceptionHandler.unexpectedErrorThrow(getClass().getName(), "getSplitKey", 
-            		new IndexException(mcat.getMessage("EB0007", page)));
+            po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "getSplitKey", 
+            		new IndexException(po.getMessageCatalog().getMessage("EB0007", page)));
             return -1;
         }
 
@@ -4700,8 +4713,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             while (low <= high) {
                 int mid = (low + high) >>> 1;
                 if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
-                    exceptionHandler.unexpectedErrorThrow(getClass().getName(), "search", 
-                    		new IndexException(mcat.getMessage("EB0008", key
+                	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "search", 
+                    		new IndexException(po.getMessageCatalog().getMessage("EB0008", key
                         .toString())));
                 }
                 IndexItem item = getItem(mid);
@@ -4735,8 +4748,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final int findChildPage(IndexItem key) {
             if (isLeaf()) {
-                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "findChildPage", 
-                		new IndexException(mcat.getMessage("EB0009", page)));
+            	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findChildPage", 
+                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
             }
             SearchResult sr = search(key);
             assert sr.k != -1;
@@ -4748,8 +4761,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final IndexItem findIndexItem(int childPageNumber) {
             if (isLeaf()) {
-                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "findIndexItem", 
-                		new IndexException(mcat.getMessage("EB0009", page)));
+            	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findIndexItem", 
+                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
             }
             /*
              * We avoid reading the full item until we have found the one we want.
@@ -4768,8 +4781,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final int findPosition(int childPageNumber) {
             if (isLeaf()) {
-                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "findPosition", 
-                		new IndexException(mcat.getMessage("EB0009", page)));
+            	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findPosition", 
+                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
             }
             for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
             	PartialIndexItem item = getPartialItem(k);
@@ -4787,8 +4800,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final IndexItem findPrevIndexItem(int childPageNumber) {
             if (isLeaf()) {
-                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "findPrevIndexItem", 
-                		new IndexException(mcat.getMessage("EB0009", page)));
+            	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findPrevIndexItem", 
+                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
             }
             int k = FIRST_KEY_POS;
             for (; k <= getKeyCount(); k++) {
@@ -5311,8 +5324,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void setItem(IndexItem item) {
             this.item = item;
             if (!item.isLeaf()) {
-                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "setItem", 
-                		new IndexException(mcat.getMessage("EB0010", item)));
+            	// FIXME
+            	throw new IndexException();
+//                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "setItem", 
+//                		new IndexException(mcat.getMessage("EB0010", item)));
+                
             }
         }
 

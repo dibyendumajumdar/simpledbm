@@ -23,6 +23,7 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -42,6 +43,39 @@ public class PlatformImpl implements Platform {
 
 	public MessageCatalog getMessageCatalog() {
 		return MessageCatalog.getMessageCatalog();
+	}
+	
+	public PlatformObjects getPlatformObjects(String loggerName) {
+		Logger log = getLogger(loggerName);
+		ExceptionHandler exceptionHandler = getExceptionHandler(log);
+		MessageCatalog messageCatalog = getMessageCatalog();
+		return new PlatformObjectsImpl(log, exceptionHandler, messageCatalog);
+	}
+	
+	static final class PlatformObjectsImpl implements PlatformObjects {
+		
+		final Logger log;
+		final ExceptionHandler exceptionHandler;
+		final MessageCatalog messageCatalog;
+		
+		PlatformObjectsImpl(Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog) {
+			this.log = log;
+			this.exceptionHandler = exceptionHandler;
+			this.messageCatalog = messageCatalog;
+		}
+
+		public final ExceptionHandler getExceptionHandler() {
+			return exceptionHandler;
+		}
+
+		public final Logger getLogger() {
+			return log;
+		}
+
+		public final MessageCatalog getMessageCatalog() {
+			return messageCatalog;
+		}
+		
 	}
 
 }

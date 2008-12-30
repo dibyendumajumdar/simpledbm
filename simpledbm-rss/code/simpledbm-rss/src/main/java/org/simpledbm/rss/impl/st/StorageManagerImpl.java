@@ -24,6 +24,8 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
@@ -41,15 +43,19 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class StorageManagerImpl implements StorageManager {
 
-    private static final Logger log = Logger.getLogger(StorageContainerFactory.LOGGER_NAME);
+    private final Logger log;
     
-    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    private final ExceptionHandler exceptionHandler;
 
-    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    private final MessageCatalog mcat;
     
     private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
 
-    public StorageManagerImpl(Properties properties) {
+    public StorageManagerImpl(Platform platform, Properties properties) {
+    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+    	log = po.getLogger();
+    	exceptionHandler = po.getExceptionHandler();
+    	mcat = po.getMessageCatalog();
     }
     
     public final void register(int id, StorageContainer container) {

@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
@@ -34,6 +35,7 @@ import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -55,12 +57,16 @@ public class TestPage extends BaseTestCase {
     public void testCase1() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestPage");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        StorageManager storageManager = new StorageManagerImpl(properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
@@ -130,12 +136,16 @@ public class TestPage extends BaseTestCase {
     public void testCase2() throws Exception {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestPage");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        StorageManager storageManager = new StorageManagerImpl(properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
@@ -165,12 +175,16 @@ public class TestPage extends BaseTestCase {
     public void testCase3() {
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestPage");
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
-            properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        StorageManager storageManager = new StorageManagerImpl(properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+//        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
+//            properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,

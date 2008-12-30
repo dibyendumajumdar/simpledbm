@@ -24,6 +24,7 @@ import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
@@ -32,6 +33,7 @@ import org.simpledbm.rss.api.registry.StorableFactory;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -93,18 +95,22 @@ public class TestSlottedPage extends BaseTestCase {
 
     public void testInsertItems() throws Exception {
         SlottedPageImpl.TESTING = true;
-    	Properties p = new Properties();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
+    	Properties properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
 //		final StorageContainerFactory storageFactory = new FileStorageContainerFactory();
-        final StorageManager storageManager = new StorageManagerImpl(p);
-        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
-            p);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
-            objectFactory, pageFactory, p);
+            properties);
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(platform, 
+            objectFactory, pageFactory, properties);
         SlottedPageImpl page = (SlottedPageImpl) pageFactory.getInstance(spmgr
             .getPageType(), new PageId());
         page.latchExclusive();

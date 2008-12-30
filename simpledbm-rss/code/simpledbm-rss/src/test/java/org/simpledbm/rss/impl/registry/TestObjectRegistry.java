@@ -23,10 +23,12 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.registry.ObjectCreationException;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.registry.Storable;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 /**
  * Test cases for the Object Registry module.
@@ -106,7 +108,11 @@ public class TestObjectRegistry extends BaseTestCase {
     }
 
     public void testRegistry() throws Exception {
-        ObjectRegistry factory = new ObjectRegistryImpl(new Properties());
+    	Properties properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        ObjectRegistry factory = new ObjectRegistryImpl(platform, properties);
         Integer i = new Integer(55);
         factory.registerObjectFactory(1, new StringFactory());
         factory.registerSingleton(2, i);

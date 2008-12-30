@@ -28,9 +28,10 @@ import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -46,6 +47,7 @@ import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.fsm.FreeSpaceManagerImpl.SpaceCursorImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
@@ -315,7 +317,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
     class MyDB {
         /* Create the write ahead log */
-        final LogFactoryImpl logFactory;
+        final Platform platform;
+    	final LogFactoryImpl logFactory;
         final ObjectRegistry objectFactory;
         final StorageContainerFactory storageFactory;
         final StorageManager storageManager;
@@ -342,32 +345,38 @@ public class TestFreeSpaceManager extends BaseTestCase {
             properties.setProperty("log.buffer.size", "16384");
             properties.setProperty("log.buffer.limit", "4");
             properties.setProperty("log.flush.interval", "5");
+            properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+            properties.setProperty("logging.properties.type", "log4j");
             properties.setProperty(
                 "storage.basePath",
                 "testdata/TestFreeSpaceManager");
 
+            platform = new PlatformImpl(properties);
+            
             /* Create the write ahead log */
-            logFactory = new LogFactoryImpl();
+            logFactory = new LogFactoryImpl(platform, properties);
+            storageFactory = new FileStorageContainerFactory(platform, properties);
             if (create) {
-                logFactory.createLog(properties);
+                logFactory.createLog(storageFactory, properties);
             }
 
-            objectFactory = new ObjectRegistryImpl(properties);
-            storageFactory = new FileStorageContainerFactory(properties);
-            storageManager = new StorageManagerImpl(properties);
-            latchFactory = new LatchFactoryImpl(properties);
+            objectFactory = new ObjectRegistryImpl(platform, properties);
+            storageManager = new StorageManagerImpl(platform, properties);
+            latchFactory = new LatchFactoryImpl(platform, properties);
             pageFactory = new PageManagerImpl(
+            	platform,
                 objectFactory,
                 storageManager,
                 latchFactory,
                 properties);
-            lockmgrFactory = new LockManagerFactoryImpl();
+            lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
             lockmgr = lockmgrFactory.create(latchFactory, properties);
-            logmgr = logFactory.getLog(properties);
-            bufmgr = new BufferManagerImpl(logmgr, pageFactory, 3, 11);
-            loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
-            moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+            logmgr = logFactory.getLog(storageFactory, properties);
+            bufmgr = new BufferManagerImpl(platform, logmgr, pageFactory, 3, 11);
+            loggableFactory = new LoggableFactoryImpl(platform, objectFactory, properties);
+            moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
             trxmgr = new TransactionManagerImpl(
+            	platform,
                 logmgr,
                 storageFactory,
                 storageManager,
@@ -379,6 +388,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 moduleRegistry,
                 properties);
             spacemgr = new FreeSpaceManagerImpl(
+            	platform,
                 objectFactory,
                 pageFactory,
                 logmgr,

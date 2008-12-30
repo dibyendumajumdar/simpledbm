@@ -31,11 +31,12 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectFactory;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -63,6 +64,7 @@ import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
@@ -110,34 +112,41 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty(
             "storage.basePath",
             "testdata/TestTransactionManager2");
-        final LogFactoryImpl logFactory = new LogFactoryImpl();
-        logFactory.createLog(properties);
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
+                properties);
+        
+        logFactory.createLog(storageFactory, properties);
 
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
-            properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
         final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
-        final LogManager logmgr = logFactory.getLog(properties);
+        final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             logmgr,
             pageFactory,
             3,
             11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform, 
             objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
+        	platform,
             logmgr,
             storageFactory,
             storageManager,
@@ -175,32 +184,37 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty(
             "storage.basePath",
             "testdata/TestTransactionManager2");
-        final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
         final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
-        final LogManager logmgr = logFactory.getLog(properties);
+        final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             logmgr,
             pageFactory,
             3,
             11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
             objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
+        	platform,
             logmgr,
             storageFactory,
             storageManager,
@@ -263,32 +277,37 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty(
             "storage.basePath",
             "testdata/TestTransactionManager2");
-        final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
             properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
         final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
-        final LogManager logmgr = logFactory.getLog(properties);
+        final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             logmgr,
             pageFactory,
             3,
             11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
             objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
+        	platform,
             logmgr,
             storageFactory,
             storageManager,
@@ -408,32 +427,37 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty(
             "storage.basePath",
             "testdata/TestTransactionManager2");
-        final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
             properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
         final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
-        final LogManager logmgr = logFactory.getLog(properties);
+        final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             logmgr,
             pageFactory,
             3,
             11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
             objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
+        	platform,
             logmgr,
             storageFactory,
             storageManager,
@@ -492,32 +516,37 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty(
             "storage.basePath",
             "testdata/TestTransactionManager1");
-        final LogFactoryImpl logFactory = new LogFactoryImpl();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        final StorageManager storageManager = new StorageManagerImpl(properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl();
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
         final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
-        final LogManager logmgr = logFactory.getLog(properties);
+        final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(
+        final BufferManager bufmgr = new BufferManagerImpl(platform, 
             logmgr,
             pageFactory,
             3,
             11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
             objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
+        	platform,
             logmgr,
             storageFactory,
             storageManager,

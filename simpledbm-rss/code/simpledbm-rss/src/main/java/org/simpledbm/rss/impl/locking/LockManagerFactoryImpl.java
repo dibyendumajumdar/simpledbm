@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
+import org.simpledbm.rss.api.platform.Platform;
 
 /**
  * Default implementation of a LockMgrFactory.
@@ -32,6 +33,12 @@ import org.simpledbm.rss.api.locking.LockMgrFactory;
  */
 public final class LockManagerFactoryImpl implements LockMgrFactory {
 
+	final Platform platform;
+	
+	public LockManagerFactoryImpl(Platform platform, Properties props) {
+		this.platform = platform;
+	}
+	
     /**
      * Creates a new LockMgr object.
      */
@@ -43,7 +50,7 @@ public final class LockManagerFactoryImpl implements LockMgrFactory {
                 "15");
             deadlockInterval = Integer.parseInt(s);
         }
-        LockManager lockmgr = new LockManagerImpl(latchFactory, props);
+        LockManager lockmgr = new LockManagerImpl(platform, latchFactory, props);
         lockmgr.setDeadlockDetectorInterval(deadlockInterval);
         return lockmgr;
     }

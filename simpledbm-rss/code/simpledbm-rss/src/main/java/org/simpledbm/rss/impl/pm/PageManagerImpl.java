@@ -24,11 +24,13 @@ import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.latch.LatchFactory;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageReadException;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -52,11 +54,11 @@ public final class PageManagerImpl implements PageManager {
     static final int TYPE_BASE = 10;
     static final int TYPE_RAW_PAGE = TYPE_BASE + 1;
 
-    private static Logger log = Logger.getLogger(PageManager.LOGGER_NAME);
+    final Logger log;
     
-    private static ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
 
-	static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+	final MessageCatalog mcat;
 
 	/**
      * Default page size is 8 KB.
@@ -86,8 +88,12 @@ public final class PageManagerImpl implements PageManager {
      */
     private final LatchFactory latchFactory;
 
-    public PageManagerImpl(int pageSize, ObjectRegistry objectRegistry,
+    public PageManagerImpl(Platform platform, int pageSize, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
+    	PlatformObjects po = platform.getPlatformObjects(PageManager.LOGGER_NAME);
+    	this.log = po.getLogger();
+    	this.exceptionHandler = po.getExceptionHandler();
+    	this.mcat = po.getMessageCatalog();
         this.pageSize = pageSize;
         this.objectRegistry = objectRegistry;
         this.storageManager = storageManager;
@@ -95,9 +101,9 @@ public final class PageManagerImpl implements PageManager {
         objectRegistry.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
     }
 
-    public PageManagerImpl(ObjectRegistry objectRegistry,
+    public PageManagerImpl(Platform platform, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
-        this(DEFAULT_PAGE_SIZE, objectRegistry, storageManager, latchFactory, p);
+        this(platform, DEFAULT_PAGE_SIZE, objectRegistry, storageManager, latchFactory, p);
     }
 
     /* (non-Javadoc)

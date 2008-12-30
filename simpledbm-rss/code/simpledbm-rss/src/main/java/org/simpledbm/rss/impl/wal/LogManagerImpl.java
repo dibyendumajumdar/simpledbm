@@ -35,6 +35,8 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -150,11 +152,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class LogManagerImpl implements LogManager {
 
-    static final Logger logger = Logger.getLogger(LogManager.LOGGER_NAME);
+    final Logger logger;
     
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(logger);
+    final ExceptionHandler exceptionHandler;
 
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
     
     static final String DEFAULT_GROUP_PATH = ".";
 
@@ -925,8 +927,14 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a default LogImpl.
      */
-    public LogManagerImpl(StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
+    public LogManagerImpl(Platform platform, StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
 
+    	PlatformObjects po = platform.getPlatformObjects(LogManager.LOGGER_NAME);
+    	this.logger = po.getLogger();
+    	this.exceptionHandler = po.getExceptionHandler();
+    	this.mcat = po.getMessageCatalog();
+    	
+    	
     	this.logBufferSize = logBufferSize;
     	this.maxBuffers = maxBuffers;
     	this.logFlushInterval = logFlushInterval;
@@ -1156,12 +1164,9 @@ public final class LogManagerImpl implements LogManager {
      * @param logfile
      */
     private void resetLogFiles(int logfile) {
-//        LogFileHeader header = new LogFileHeader();
         ByteBuffer bb = ByteBuffer.allocate(LogFileHeader.SIZE);
 
         for (int i = 0; i < anchor.n_LogGroups; i++) {
-//            header.index = anchor.logIndexes[logfile];
-//            header.id = anchor.groups[i].id;
             LogFileHeader header = new LogFileHeader(anchor.groups[i].id, anchor.logIndexes[logfile]);
             bb.clear();
             header.store(bb);
@@ -2352,11 +2357,6 @@ public final class LogManagerImpl implements LogManager {
             return SIZE;
         }
 
-//        public void retrieve(ByteBuffer bb) {
-//            id = bb.getChar();
-//            index = bb.getInt();
-//        }
-
         public void store(ByteBuffer bb) {
             bb.putChar(id);
             bb.putInt(index);
@@ -2409,9 +2409,6 @@ public final class LogManagerImpl implements LogManager {
          */
         final ByteString files[];
 
-//        LogGroup() {
-//        }
-
         LogGroup(char id, String path, int status, int n_files) {
             this.id = id;
             this.path = new ByteString(".");
@@ -2426,14 +2423,10 @@ public final class LogManagerImpl implements LogManager {
         LogGroup(ByteBuffer bb) {
             id = bb.getChar();
             status = bb.getInt();
-//            path = new ByteString();
-//            path.retrieve(bb);
             path = new ByteString(bb);
             short n = bb.getShort();
             files = new ByteString[n];
             for (short i = 0; i < n; i++) {
-//                files[i] = new ByteString();
-//                files[i].retrieve(bb);
                 files[i] = new ByteString(bb);
             }
         }
@@ -2452,24 +2445,6 @@ public final class LogManagerImpl implements LogManager {
             }
             return n;
         }
-
-//        
-//        
-//        /*
-//         * @see org.simpledbm.rss.io.Storable#retrieve(java.nio.ByteBuffer)
-//         */
-//        public void retrieve(ByteBuffer bb) {
-//            id = bb.getChar();
-//            status = bb.getInt();
-//            path = new ByteString();
-//            path.retrieve(bb);
-//            short n = bb.getShort();
-//            files = new ByteString[n];
-//            for (short i = 0; i < n; i++) {
-//                files[i] = new ByteString();
-//                files[i].retrieve(bb);
-//            }
-//        }
 
         /*
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
@@ -2664,15 +2639,11 @@ public final class LogManagerImpl implements LogManager {
             n_CtlFiles = bb.getShort();
             ctlFiles = new ByteString[n_CtlFiles];
             for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
-//                ctlFiles[i] = new ByteString();
-//                ctlFiles[i].retrieve(bb);
                 ctlFiles[i] = new ByteString(bb);
             }
             n_LogGroups = bb.getShort();
             groups = new LogGroup[n_LogGroups];
             for (i = 0; i < n_LogGroups; i++) {
-//                groups[i] = new LogGroup();
-//                groups[i].retrieve(bb);
                 groups[i] = new LogGroup(bb);
             }
             n_LogFiles = bb.getShort();
@@ -2686,31 +2657,17 @@ public final class LogManagerImpl implements LogManager {
             }
             byte b = bb.get();
             archiveMode = b == 1;
-//            archivePath = new ByteString();
-//            archivePath.retrieve(bb);
             archivePath = new ByteString(bb);
             logBufferSize = bb.getInt();
             logFileSize = bb.getInt();
             currentLogFile = bb.getShort();
             currentLogIndex = bb.getInt();
             archivedLogIndex = bb.getInt();
-//            currentLsn = new Lsn();
-//            currentLsn.retrieve(bb);
             currentLsn = new Lsn(bb);
-//            maxLsn = new Lsn();
-//            maxLsn.retrieve(bb);
             maxLsn = new Lsn(bb);
-//            durableLsn = new Lsn();
-//            durableLsn.retrieve(bb);
             durableLsn = new Lsn(bb);
-//            durableCurrentLsn = new Lsn();
-//            durableCurrentLsn.retrieve(bb);
             durableCurrentLsn = new Lsn(bb);
-//            checkpointLsn = new Lsn();
-//            checkpointLsn.retrieve(bb);
             checkpointLsn = new Lsn(bb);
-//            oldestInterestingLsn = new Lsn();
-//            oldestInterestingLsn.retrieve(bb);
             oldestInterestingLsn = new Lsn(bb);
             maxBuffers = bb.getInt();
             logFlushInterval = bb.getInt();
@@ -2747,54 +2704,6 @@ public final class LogManagerImpl implements LogManager {
             n += (Integer.SIZE / Byte.SIZE); // logFlushInterval
             return n;
         }
-
-//        public void retrieve(ByteBuffer bb) {
-//            int i;
-//            n_CtlFiles = bb.getShort();
-//            ctlFiles = new ByteString[n_CtlFiles];
-//            for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
-//                ctlFiles[i] = new ByteString();
-//                ctlFiles[i].retrieve(bb);
-//            }
-//            n_LogGroups = bb.getShort();
-//            groups = new LogGroup[n_LogGroups];
-//            for (i = 0; i < n_LogGroups; i++) {
-//                groups[i] = new LogGroup();
-//                groups[i].retrieve(bb);
-//            }
-//            n_LogFiles = bb.getShort();
-//            fileStatus = new short[n_LogFiles];
-//            logIndexes = new int[n_LogFiles];
-//            for (i = 0; i < n_LogFiles; i++) {
-//                fileStatus[i] = bb.getShort();
-//            }
-//            for (i = 0; i < n_LogFiles; i++) {
-//                logIndexes[i] = bb.getInt();
-//            }
-//            byte b = bb.get();
-//            archiveMode = b == 1;
-//            archivePath = new ByteString();
-//            archivePath.retrieve(bb);
-//            logBufferSize = bb.getInt();
-//            logFileSize = bb.getInt();
-//            currentLogFile = bb.getShort();
-//            currentLogIndex = bb.getInt();
-//            archivedLogIndex = bb.getInt();
-//            currentLsn = new Lsn();
-//            currentLsn.retrieve(bb);
-//            maxLsn = new Lsn();
-//            maxLsn.retrieve(bb);
-//            durableLsn = new Lsn();
-//            durableLsn.retrieve(bb);
-//            durableCurrentLsn = new Lsn();
-//            durableCurrentLsn.retrieve(bb);
-//            checkpointLsn = new Lsn();
-//            checkpointLsn.retrieve(bb);
-//            oldestInterestingLsn = new Lsn();
-//            oldestInterestingLsn.retrieve(bb);
-//            maxBuffers = bb.getInt();
-//            logFlushInterval = bb.getInt();
-//        }
 
         public void store(ByteBuffer bb) {
             int i;
@@ -3024,22 +2933,22 @@ public final class LogManagerImpl implements LogManager {
 
     static final class ArchiveCleaner implements Runnable {
 
-        final private LogManagerImpl log;
+        final private LogManagerImpl logManager;
 
         public ArchiveCleaner(LogManagerImpl log) {
-            this.log = log;
+            this.logManager = log;
         }
 
         public void run() {
-            Lsn oldestInterestingLsn = log.getOldestInterestingLsn();
+            Lsn oldestInterestingLsn = logManager.getOldestInterestingLsn();
             int archivedLogIndex = oldestInterestingLsn.getIndex() - 1;
             while (archivedLogIndex > 0) {
-                String name = log.anchor.archivePath.toString() + "/"
+                String name = logManager.anchor.archivePath.toString() + "/"
                         + archivedLogIndex + ".log";
                 try {
-                    log.storageFactory.delete(name);
-                    if (logger.isDebugEnabled()) {
-                        logger.debug(
+                    logManager.storageFactory.delete(name);
+                    if (logManager.logger.isDebugEnabled()) {
+                        logManager.logger.debug(
                             ArchiveCleaner.class.getName(),
                             "run",
                             "SIMPLEDBM-DEBUG: Removed archived log file "
@@ -3064,10 +2973,10 @@ public final class LogManagerImpl implements LogManager {
      */
     static final class LogWriter implements Runnable {
 
-        final private LogManagerImpl log;
+        final private LogManagerImpl logManager;
 
         public LogWriter(LogManagerImpl log) {
-            this.log = log;
+            this.logManager = log;
         }
 
         /*
@@ -3077,9 +2986,9 @@ public final class LogManagerImpl implements LogManager {
          */
         public void run() {
             try {
-                log.flush();
+                logManager.flush();
             } catch (Exception e) {
-                log.logException(LogWriter.class.getName(), "run", "EW0026", e);
+                logManager.logException(LogWriter.class.getName(), "run", "EW0026", e);
             }
         }
     }
@@ -3092,12 +3001,12 @@ public final class LogManagerImpl implements LogManager {
      */
     static final class ArchiveRequestHandler implements Callable<Boolean> {
 
-        final private LogManagerImpl log;
+        final private LogManagerImpl logManager;
 
         final private ArchiveRequest request;
 
         public ArchiveRequestHandler(LogManagerImpl log, ArchiveRequest request) {
-            this.log = log;
+            this.logManager = log;
             this.request = request;
         }
 
@@ -3108,9 +3017,9 @@ public final class LogManagerImpl implements LogManager {
          */
         public Boolean call() {
             try {
-                log.handleNextArchiveRequest(request);
+                logManager.handleNextArchiveRequest(request);
             } catch (Exception e) {
-                log.logException(
+                logManager.logException(
                     ArchiveRequestHandler.class.getName(),
                     "call",
                     "EW0027",

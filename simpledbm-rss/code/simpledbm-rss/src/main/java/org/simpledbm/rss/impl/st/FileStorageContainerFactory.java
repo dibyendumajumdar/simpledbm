@@ -26,6 +26,8 @@ import java.io.RandomAccessFile;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
@@ -41,12 +43,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
 public final class FileStorageContainerFactory implements
         StorageContainerFactory {
 
-    static final Logger log = Logger
-        .getLogger(StorageContainerFactory.LOGGER_NAME);
+    final Logger log;
 
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
     
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
     
     /**
      * Mode for creating new container objects. This should be
@@ -95,15 +96,23 @@ public final class FileStorageContainerFactory implements
     private static final String FLUSH_MODE = "storage.flushMode";
     private static final String DEFAULT_FLUSH_MODE = "force.true";
 
-    public FileStorageContainerFactory(Properties props) {
+    public FileStorageContainerFactory(Platform platform, Properties props) {
+    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+    	log = po.getLogger();
+    	exceptionHandler = po.getExceptionHandler();
+    	mcat = po.getMessageCatalog();
         basePath = props.getProperty(BASE_PATH, defaultBasePath);
         createMode = props.getProperty(CREATE_MODE, defaultCreateMode);
         openMode = props.getProperty(OPEN_MODE, defaultOpenMode);
         flushMode = props.getProperty(FLUSH_MODE, DEFAULT_FLUSH_MODE);
     }
 
-    public FileStorageContainerFactory() {
-        basePath = defaultBasePath;
+    public FileStorageContainerFactory(Platform platform) {
+    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+    	log = po.getLogger();
+    	exceptionHandler = po.getExceptionHandler();
+    	mcat = po.getMessageCatalog();
+    	basePath = defaultBasePath;
         createMode = defaultCreateMode;
         openMode = defaultOpenMode;
         flushMode = DEFAULT_FLUSH_MODE;

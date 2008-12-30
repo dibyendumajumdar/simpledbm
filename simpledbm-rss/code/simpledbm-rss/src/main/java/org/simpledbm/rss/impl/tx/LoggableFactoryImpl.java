@@ -22,6 +22,7 @@ package org.simpledbm.rss.impl.tx;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
@@ -37,7 +38,7 @@ public final class LoggableFactoryImpl implements LoggableFactory {
 
     private final ObjectRegistry objectFactory;
 
-    public LoggableFactoryImpl(ObjectRegistry objectFactory, Properties p) {
+    public LoggableFactoryImpl(Platform platform, ObjectRegistry objectFactory, Properties p) {
         this.objectFactory = objectFactory;
     }
 

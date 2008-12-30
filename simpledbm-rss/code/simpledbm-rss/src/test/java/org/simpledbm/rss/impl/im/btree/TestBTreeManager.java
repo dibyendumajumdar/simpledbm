@@ -41,6 +41,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
+import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
 import org.simpledbm.rss.api.latch.LatchFactory;
@@ -51,6 +52,8 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
+import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -81,6 +84,7 @@ import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
+import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
 import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageImpl;
@@ -511,6 +515,7 @@ public class TestBTreeManager extends BaseTestCase {
 		for (LoadPageOperation loadPageOp : loader.getPageOperations()) {
 			final PageId pageid = loadPageOp.getPageId();
 			final BTreeIndexManagerImpl btreemgr = db.btreeMgr;
+			final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 			BufferAccessBlock bab = btreemgr.bufmgr.fixExclusive(pageid, false,
 					-1, 0);
 			try {
@@ -518,7 +523,7 @@ public class TestBTreeManager extends BaseTestCase {
 				 * Log record is being applied to BTree page.
 				 */
 				SlottedPage r = (SlottedPage) bab.getPage();
-				BTreeNode node = new BTreeNode(loadPageOp.getIndexItemFactory(), r);
+				BTreeNode node = new BTreeNode(po, loadPageOp.getIndexItemFactory(), r);
 				// System.out.println("Validating page ->");
 				// node.dumpAsXml();
 				// System.out.println("------------------");
@@ -590,6 +595,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doRestartAndMerge(boolean testLeaf, boolean testUnique, int l, int r)
 			throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
@@ -598,14 +604,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE MERGE");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, l), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, r), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -650,6 +656,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doRestartAndLink(boolean testLeaf, boolean testUnique)
 			throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -657,14 +664,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -724,6 +731,7 @@ public class TestBTreeManager extends BaseTestCase {
 
 	void doRestartLink(boolean testLeaf, boolean testUnique) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -731,14 +739,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE LINKING CHILD TO PARENT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -843,6 +851,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doRestartAndRedistribute(boolean testLeaf, boolean testUnique)
 			throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -850,14 +859,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE REDISTRIBUTING KEYS");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -895,19 +904,20 @@ public class TestBTreeManager extends BaseTestCase {
 		boolean testLeaf = true;
 		
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -942,6 +952,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doRestartAndIncreaseTreeHeight(boolean testLeaf, boolean testUnique)
 			throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -949,14 +960,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE INCREASING TREE HEIGHT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -991,6 +1002,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doRestartAndDecreaseTreeHeight(boolean testLeaf, boolean testUnique,
 			int p, int q) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -998,14 +1010,14 @@ public class TestBTreeManager extends BaseTestCase {
 			// System.out.println("--> BEFORE DECREASING TREE HEIGHT");
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, p), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, q), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab.getPage());
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab.getPage());
 				node.dump();
 			} finally {
 				bab.unfix();
@@ -1041,12 +1053,13 @@ public class TestBTreeManager extends BaseTestCase {
 		boolean testUnique = false;
 
 		final BTreeDB db = new BTreeDB(false);
+		final PlatformObjects po = db.platform.getPlatformObjects(IndexManager.LOGGER_NAME);
 		try {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 			BufferAccessBlock bab = db.bufmgr.fixShared(new PageId(1, 2), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab
 						.getPage());
 				node.dump();
 			} finally {
@@ -1054,7 +1067,7 @@ public class TestBTreeManager extends BaseTestCase {
 			}
 			bab = db.bufmgr.fixShared(new PageId(1, 3), 0);
 			try {
-				BTreeNode node = new BTreeNode(btree.indexItemFactory, bab
+				BTreeNode node = new BTreeNode(po, btree.indexItemFactory, bab
 						.getPage());
 				node.dump();
 			} finally {
@@ -2936,7 +2949,6 @@ public class TestBTreeManager extends BaseTestCase {
 				while (line != null) {
 					String k = line.trim();
 					IndexKey key = keyFactory.parseIndexKey(1, k);
-//					key.parseString(k);
 					RowLocation location = (RowLocation) locationFactory
 							.newLocation();
 					location.loc = i++;
@@ -3460,15 +3472,20 @@ public class TestBTreeManager extends BaseTestCase {
 	public void testCanAccomodate() {
 		compressKeys = true;
 		Properties p = new Properties();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
-        final StorageManager storageManager = new StorageManagerImpl(p);
-        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        p.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        p.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(p);
+        final PlatformObjects po = platform.getPlatformObjects(IndexManager.LOGGER_NAME);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, p);
+        final StorageManager storageManager = new StorageManagerImpl(platform, p);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, p);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform, 
             objectFactory,
             storageManager,
             latchFactory,
             p);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(platform, 
             objectFactory, pageFactory, p);
 		objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
 				new StringKeyFactory());
@@ -3480,7 +3497,7 @@ public class TestBTreeManager extends BaseTestCase {
             .getPageType(), new PageId());
         page.latchExclusive();
         BTreeIndexManagerImpl.BTreeNode.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique(), 0);
-        BTreeNode node = new BTreeNode(indexHelper, page);
+        BTreeNode node = new BTreeNode(po, indexHelper, page);
         for (int i = 1; i < 145; i++) {
         	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
         }
@@ -3502,15 +3519,20 @@ public class TestBTreeManager extends BaseTestCase {
 	public void testNodeSearch() {
 		compressKeys = true;
 		Properties p = new Properties();
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(p);
-        final StorageManager storageManager = new StorageManagerImpl(p);
-        final LatchFactory latchFactory = new LatchFactoryImpl(p);
+        p.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        p.setProperty("logging.properties.type", "log4j");
+        final Platform platform = new PlatformImpl(p);
+        final PlatformObjects po = platform.getPlatformObjects(IndexManager.LOGGER_NAME);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, p);
+        final StorageManager storageManager = new StorageManagerImpl(platform, p);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform, p);
         final PageManager pageFactory = new PageManagerImpl(
+        	platform,
             objectFactory,
             storageManager,
             latchFactory,
             p);
-        final SlottedPageManager spmgr = new SlottedPageManagerImpl(
+        final SlottedPageManager spmgr = new SlottedPageManagerImpl(platform, 
             objectFactory, pageFactory, p);
 		objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
 				new StringKeyFactory());
@@ -3522,7 +3544,7 @@ public class TestBTreeManager extends BaseTestCase {
             .getPageType(), new PageId());
         page.latchExclusive();
         BTreeIndexManagerImpl.BTreeNode.formatPage(page, TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, false, indexHelper.isUnique(), 0);
-        BTreeNode node = new BTreeNode(indexHelper, page);
+        BTreeNode node = new BTreeNode(po, indexHelper, page);
         for (int i = 1; i < 145; i++) {
         	node.insert(i, generateKey(indexHelper, "SimpleDBM needs to be totally bug free" + i, i, i, false));
         }
@@ -3651,6 +3673,7 @@ public class TestBTreeManager extends BaseTestCase {
 	}
 
 	public static class BTreeDB {
+		final Platform platform;
 		final LogFactoryImpl logFactory;
 		final ObjectRegistry objectFactory;
 		final StorageContainerFactory storageFactory;
@@ -3693,34 +3716,40 @@ public class TestBTreeManager extends BaseTestCase {
 				properties.setProperty("log.flush.interval", "5");
 				properties.setProperty("bufferpool.numbuffers", "20");
 			}
-			properties.setProperty("storage.basePath",
+	        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+	        properties.setProperty("logging.properties.type", "log4j");
+	        properties.setProperty("storage.basePath",
 					"testdata/TestBTreeManager");
 
-			LockAdaptor lockAdaptor = new DefaultLockAdaptor(properties);
-			logFactory = new LogFactoryImpl();
+	        platform = new PlatformImpl(properties);
+	        
+			LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform, properties);
+			logFactory = new LogFactoryImpl(platform, properties);
+			objectFactory = new ObjectRegistryImpl(platform, properties);
+			storageFactory = new FileStorageContainerFactory(platform, properties);
+			
 			if (create) {
-				logFactory.createLog(properties);
+				logFactory.createLog(storageFactory, properties);
 			}
-			objectFactory = new ObjectRegistryImpl(properties);
-			storageFactory = new FileStorageContainerFactory(properties);
-			storageManager = new StorageManagerImpl(properties);
-			latchFactory = new LatchFactoryImpl(properties);
-			pageFactory = new PageManagerImpl(objectFactory, storageManager,
+
+			storageManager = new StorageManagerImpl(platform, properties);
+			latchFactory = new LatchFactoryImpl(platform, properties);
+			pageFactory = new PageManagerImpl(platform, objectFactory, storageManager,
 					latchFactory, properties);
-			spmgr = new SlottedPageManagerImpl(objectFactory, pageFactory, properties);
-			lockmgrFactory = new LockManagerFactoryImpl();
+			spmgr = new SlottedPageManagerImpl(platform, objectFactory, pageFactory, properties);
+			lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
 			lockmgr = (LockManagerImpl) lockmgrFactory.create(latchFactory, properties);
-			logmgr = (LogManagerImpl) logFactory.getLog(properties);
-			bufmgr = new BufferManagerImpl(logmgr, pageFactory, properties);
-			loggableFactory = new LoggableFactoryImpl(objectFactory, properties);
-			moduleRegistry = new TransactionalModuleRegistryImpl(properties);
-			trxmgr = new TransactionManagerImpl(logmgr, storageFactory,
+			logmgr = (LogManagerImpl) logFactory.getLog(storageFactory, properties);
+			bufmgr = new BufferManagerImpl(platform, logmgr, pageFactory, properties);
+			loggableFactory = new LoggableFactoryImpl(platform, objectFactory, properties);
+			moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+			trxmgr = new TransactionManagerImpl(platform, logmgr, storageFactory,
 					storageManager, bufmgr, lockmgr, loggableFactory,
 					latchFactory, objectFactory, moduleRegistry, properties);
-			spacemgr = new FreeSpaceManagerImpl(objectFactory, pageFactory,
+			spacemgr = new FreeSpaceManagerImpl(platform, objectFactory, pageFactory,
 					logmgr, bufmgr, storageManager, storageFactory,
 					loggableFactory, trxmgr, moduleRegistry, properties);
-			btreeMgr = new BTreeIndexManagerImpl(objectFactory,
+			btreeMgr = new BTreeIndexManagerImpl(platform, objectFactory,
 					loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry, lockAdaptor, properties);
 
 			objectFactory.registerSingleton(TYPE_STRINGKEYFACTORY,
