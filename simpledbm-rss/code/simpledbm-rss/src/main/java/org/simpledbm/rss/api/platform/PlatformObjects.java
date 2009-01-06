@@ -20,6 +20,7 @@
 package org.simpledbm.rss.api.platform;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -30,5 +31,7 @@ public interface PlatformObjects {
 	ExceptionHandler getExceptionHandler();
 	
 	MessageCatalog getMessageCatalog();
+	
+	ClassUtils getClassUtils();
 	
 }

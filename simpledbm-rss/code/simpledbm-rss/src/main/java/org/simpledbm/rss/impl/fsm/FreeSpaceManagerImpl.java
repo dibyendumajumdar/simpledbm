@@ -35,6 +35,7 @@ import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
@@ -142,9 +143,10 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         this.loggableFactory = loggableFactory;
         this.trxmgr = trxmgr;
         this.platform = platform;
-        this.log = platform.getLogger(FreeSpaceManager.LOGGER_NAME);
-        this.exceptionHandler = platform.getExceptionHandler(log);
-        this.mcat = platform.getMessageCatalog();
+        PlatformObjects po = platform.getPlatformObjects(FreeSpaceManager.LOGGER_NAME);
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.mcat = po.getMessageCatalog();
         
         moduleRegistry.registerModule(MODULE_ID, this);
 

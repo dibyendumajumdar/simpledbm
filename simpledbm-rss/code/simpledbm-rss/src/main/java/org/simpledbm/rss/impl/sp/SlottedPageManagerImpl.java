@@ -26,6 +26,7 @@ package org.simpledbm.rss.impl.sp;
 import java.util.Properties;
 
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
@@ -36,9 +37,15 @@ public class SlottedPageManagerImpl implements SlottedPageManager {
 
     static final short TYPE_BASE = 15;
     static final short TYPE_SLOTTEDPAGE = TYPE_BASE + 1;
+    
+    final Platform platform;
+    
+    final PlatformObjects po;
 
     public SlottedPageManagerImpl(Platform platform, ObjectRegistry objectFactory, PageManager pageFactory, Properties p) {
-        objectFactory.registerSingleton(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(pageFactory));
+    	this.platform = platform;
+    	this.po = platform.getPlatformObjects(SlottedPageManager.LOGGER_NAME);
+        objectFactory.registerSingleton(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(po, pageFactory));
     }
 
     public int getPageType() {

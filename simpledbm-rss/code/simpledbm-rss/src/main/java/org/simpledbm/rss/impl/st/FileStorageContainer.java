@@ -26,6 +26,7 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
@@ -41,12 +42,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class FileStorageContainer implements StorageContainer, Dumpable {
 
-    private static final Logger log = Logger
-        .getLogger(StorageContainerFactory.LOGGER_NAME);
+    private final Logger log;
 
-    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    private final ExceptionHandler exceptionHandler;
     
-    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    private final MessageCatalog mcat;
 
     /**
      * The underlying file object.
@@ -64,7 +64,10 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
      * file object.
      * @param file Existing file object.
      */
-    FileStorageContainer(String name, RandomAccessFile file, String flushMode) {
+    FileStorageContainer(PlatformObjects po, String name, RandomAccessFile file, String flushMode) {
+    	this.log = po.getLogger();
+    	this.exceptionHandler = po.getExceptionHandler();
+    	this.mcat = po.getMessageCatalog();
         this.name = name;
         this.file = file;
         this.flushMode = flushMode;

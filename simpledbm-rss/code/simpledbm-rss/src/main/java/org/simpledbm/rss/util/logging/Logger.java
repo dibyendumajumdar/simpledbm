@@ -24,8 +24,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Properties;
-import org.simpledbm.rss.util.ClassUtils;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * A simple wrapper around Log4J/JDK logging facilities.
@@ -34,7 +32,6 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public abstract class Logger {
 
-    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
     /**
      * LoggerFactory for creating Loggers. By default, a JDK1.4 Logger
      * Factory will be used.
@@ -96,7 +93,7 @@ public abstract class Logger {
         if (searchClasspath) {
             URL url = Thread.currentThread().getContextClassLoader().getResource(filename);
             if (url == null) {
-                System.err.println(mcat.getMessage("WL0002"));
+                System.err.println("SIMPLEDBM-WL0002: Failed to initialize Log4J logging system");
             }
             if (isXml) {
                 org.apache.log4j.xml.DOMConfigurator.configure(url);
@@ -124,13 +121,13 @@ public abstract class Logger {
         InputStream is = null;
         try {
             if (searchClasspath) {
-                is = ClassUtils.getResourceAsStream(filename);
+                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
             } else {
                 is = new FileInputStream(filename);
             }
             java.util.logging.LogManager.getLogManager().readConfiguration(is);
         } catch (Exception e) {
-            System.err.println(mcat.getMessage("WL0001") + e.getMessage());
+            System.err.println("SIMPLEDBM-WL0001: Failed to initialize JDK 1.4 logging system due to following error:" + e.getMessage());
         } finally {
             try {
                 if (is != null) {
@@ -317,62 +314,4 @@ public abstract class Logger {
             realLogger.setLevel(org.apache.log4j.Level.INFO);
         }
     }
-//    public static final class LogFormatter extends Formatter {
-//
-//    	final StringBuilder sb = new StringBuilder();
-//
-//    	static final String lineSep = System.getProperty("line.separator");
-//
-//    	public LogFormatter() {
-//    		System.err.println("LogFormatter created");
-//    	}
-//
-//    	private void levelConvert(java.util.logging.Level level, StringBuilder sb) {
-//    		if (level == java.util.logging.Level.INFO) {
-//    			sb.append("INFO");
-//    		}
-//    		else if (level == java.util.logging.Level.FINE) {
-//    			sb.append("DEBUG");
-//    		}
-//    		else if (level == java.util.logging.Level.FINER || level == java.util.logging.Level.FINEST) {
-//    			sb.append("TRACE");
-//    		}
-//    		else if (level == java.util.logging.Level.WARNING) {
-//    			sb.append("WARN");
-//    		}
-//    		else if (level == java.util.logging.Level.SEVERE) {
-//    			sb.append("ERROR");
-//    		}
-//    		else {
-//    			throw new IllegalArgumentException();
-//    		}
-//    	}
-//
-//		@Override
-//		public String format(LogRecord rec) {
-//
-//			sb.setLength(0);
-//
-//			sb.append('[');
-//			sb.append(Thread.currentThread());
-//			sb.append("] ");
-//			levelConvert(rec.getLevel(), sb);
-//			sb.append(' ');
-//			sb.append(rec.getLoggerName());
-//			sb.append(' ');
-//			sb.append(formatMessage(rec));
-//			sb.append(lineSep);
-//			Throwable t = rec.getThrown();
-//			if (t != null) {
-//				StringWriter sw = new StringWriter();
-//				PrintWriter pw = new PrintWriter(sw);
-//				t.printStackTrace(pw);
-//				pw.close();
-//				sb.append(sw.toString());
-//			}
-//
-//			return sb.toString();
-//		}
-//
-//    }
 }

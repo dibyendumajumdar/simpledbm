@@ -97,7 +97,6 @@ import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.impl.wal.LogManagerImpl;
 import org.simpledbm.rss.util.ByteString;
-import org.simpledbm.rss.util.ClassUtils;
 
 public class TestBTreeManager extends BaseTestCase {
 
@@ -412,7 +411,7 @@ public class TestBTreeManager extends BaseTestCase {
 	void doLoadData(String filename) throws Exception {
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				ClassUtils.getResourceAsStream(filename)));
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			IndexContainer index = db.btreeMgr.getIndex(1);
@@ -1658,7 +1657,7 @@ public class TestBTreeManager extends BaseTestCase {
 	 */
 	void doScanTree(String filename) throws Exception {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				ClassUtils.getResourceAsStream(filename)));
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			IndexContainer index = db.btreeMgr.getIndex(1);
@@ -1715,7 +1714,7 @@ public class TestBTreeManager extends BaseTestCase {
 	 */
 	void doFindInTree(String filename) throws Exception {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				ClassUtils.getResourceAsStream(filename)));
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			IndexContainer index = db.btreeMgr.getIndex(1);
@@ -2850,7 +2849,7 @@ public class TestBTreeManager extends BaseTestCase {
 		void doLoadData() throws Exception {
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					ClassUtils.getResourceAsStream(filename)));
+					Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 			try {
 				IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -2935,7 +2934,7 @@ public class TestBTreeManager extends BaseTestCase {
 		void doLoadData() throws Exception {
 
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					ClassUtils.getResourceAsStream(filename)));
+					Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 			try {
 				IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -3045,7 +3044,7 @@ public class TestBTreeManager extends BaseTestCase {
 	 */
 	void doFindInTree2(String filename) throws Exception {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				ClassUtils.getResourceAsStream(filename)));
+				Thread.currentThread().getContextClassLoader().getResourceAsStream(filename)));
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			IndexContainer index = db.btreeMgr.getIndex(1);

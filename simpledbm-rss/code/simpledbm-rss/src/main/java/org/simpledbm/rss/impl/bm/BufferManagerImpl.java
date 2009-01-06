@@ -37,6 +37,7 @@ import org.simpledbm.rss.api.bm.BufferManagerException;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
@@ -234,9 +235,10 @@ public final class BufferManagerImpl implements BufferManager {
      */
     public BufferManagerImpl(Platform platform, LogManager logMgr, PageManager pageFactory,
             int bufferpoolsize, int unused) {
-    	this.log = platform.getLogger(BufferManager.LOGGER_NAME);
-    	this.mcat = platform.getMessageCatalog();
-    	this.exceptionHandler = platform.getExceptionHandler(log);
+    	PlatformObjects po = platform.getPlatformObjects(BufferManager.LOGGER_NAME);
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
     	this.platform = platform;
         init(logMgr, pageFactory, bufferpoolsize);
     }
@@ -250,9 +252,10 @@ public final class BufferManagerImpl implements BufferManager {
      */
     public BufferManagerImpl(Platform platform, LogManager logMgr, PageManager pageFactory,
             Properties props) {
-    	this.log = platform.getLogger(BufferManager.LOGGER_NAME);
-    	this.mcat = platform.getMessageCatalog();
-    	this.exceptionHandler = platform.getExceptionHandler(log);
+    	PlatformObjects po = platform.getPlatformObjects(BufferManager.LOGGER_NAME);
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
     	this.platform = platform;
         int bufferpoolsize = getNumericProperty(
             props,

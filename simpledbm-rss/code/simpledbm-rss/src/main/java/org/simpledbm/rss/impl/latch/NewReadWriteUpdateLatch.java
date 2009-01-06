@@ -26,8 +26,8 @@ import java.util.concurrent.locks.LockSupport;
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
-import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.util.SimpleTimer;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
@@ -71,12 +71,11 @@ public final class NewReadWriteUpdateLatch implements Latch {
 	 */
     private static final int LOCK_TIMEOUT = 10;
 
-    private static final Logger log = Logger
-        .getLogger(LatchFactory.LOGGER_NAME);
+    final Logger log;
 
-    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
     
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();    
+    final MessageCatalog mcat;    
     
     /**
      * Queue of latch requests, contains granted or conversion requests followed
@@ -151,7 +150,10 @@ public final class NewReadWriteUpdateLatch implements Latch {
     /**
      * Creates a new LockMgrImpl, ready for use.
      */
-    public NewReadWriteUpdateLatch() {
+    public NewReadWriteUpdateLatch(PlatformObjects po) { 
+    	this.log = po.getLogger();
+    	this.exceptionHandler = po.getExceptionHandler();
+    	this.mcat = po.getMessageCatalog();
     }
 
     /*
