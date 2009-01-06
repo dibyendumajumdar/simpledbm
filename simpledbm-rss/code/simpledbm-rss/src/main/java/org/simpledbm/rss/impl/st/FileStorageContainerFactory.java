@@ -49,6 +49,8 @@ public final class FileStorageContainerFactory implements
     
     final MessageCatalog mcat;
     
+    final PlatformObjects po;
+    
     /**
      * Mode for creating new container objects. This should be
      * configurable.
@@ -97,7 +99,7 @@ public final class FileStorageContainerFactory implements
     private static final String DEFAULT_FLUSH_MODE = "force.true";
 
     public FileStorageContainerFactory(Platform platform, Properties props) {
-    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+    	po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
     	mcat = po.getMessageCatalog();
@@ -108,7 +110,7 @@ public final class FileStorageContainerFactory implements
     }
 
     public FileStorageContainerFactory(Platform platform) {
-    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+    	po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
     	mcat = po.getMessageCatalog();
@@ -219,7 +221,7 @@ public final class FileStorageContainerFactory implements
             exceptionHandler.errorThrow(this.getClass().getName(), "create",
 					new StorageException(mcat.getMessage("ES0018", name), e));
         }
-        return new FileStorageContainer(logicalName, rafile, flushMode);
+        return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
 
     /**
@@ -258,7 +260,7 @@ public final class FileStorageContainerFactory implements
             exceptionHandler.errorThrow(this.getClass().getName(), "create", 
             		new StorageException(mcat.getMessage("ES0018", name), e));
         }
-        return new FileStorageContainer(logicalName, rafile, flushMode);
+        return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
     
     
@@ -286,7 +288,7 @@ public final class FileStorageContainerFactory implements
             exceptionHandler.errorThrow(this.getClass().getName(), "open", 
             		new StorageException(mcat.getMessage("ES0020", name), e));
         }
-        return new FileStorageContainer(logicalName, rafile, flushMode);
+        return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
 
     /**

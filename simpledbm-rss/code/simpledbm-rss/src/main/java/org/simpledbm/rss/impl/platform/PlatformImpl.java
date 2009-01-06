@@ -24,6 +24,7 @@ import java.util.Properties;
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
@@ -33,15 +34,15 @@ public class PlatformImpl implements Platform {
         Logger.configure(props);		
 	}
 	
-	public ExceptionHandler getExceptionHandler(Logger log) {
+	ExceptionHandler getExceptionHandler(Logger log) {
 		return ExceptionHandler.getExceptionHandler(log);
 	}
 
-	public Logger getLogger(String loggerName) {
+	Logger getLogger(String loggerName) {
 		return Logger.getLogger(loggerName);
 	}
 
-	public MessageCatalog getMessageCatalog() {
+	MessageCatalog getMessageCatalog() {
 		return MessageCatalog.getMessageCatalog();
 	}
 	
@@ -49,7 +50,8 @@ public class PlatformImpl implements Platform {
 		Logger log = getLogger(loggerName);
 		ExceptionHandler exceptionHandler = getExceptionHandler(log);
 		MessageCatalog messageCatalog = getMessageCatalog();
-		return new PlatformObjectsImpl(log, exceptionHandler, messageCatalog);
+		ClassUtils classUtils = new ClassUtils(log, messageCatalog, exceptionHandler);
+		return new PlatformObjectsImpl(log, exceptionHandler, messageCatalog, classUtils);
 	}
 	
 	static final class PlatformObjectsImpl implements PlatformObjects {
@@ -57,11 +59,13 @@ public class PlatformImpl implements Platform {
 		final Logger log;
 		final ExceptionHandler exceptionHandler;
 		final MessageCatalog messageCatalog;
+		final ClassUtils classUtils;
 		
-		PlatformObjectsImpl(Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog) {
+		PlatformObjectsImpl(Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog, ClassUtils classUtils) {
 			this.log = log;
 			this.exceptionHandler = exceptionHandler;
 			this.messageCatalog = messageCatalog;
+			this.classUtils = classUtils;
 		}
 
 		public final ExceptionHandler getExceptionHandler() {
@@ -74,6 +78,10 @@ public class PlatformImpl implements Platform {
 
 		public final MessageCatalog getMessageCatalog() {
 			return messageCatalog;
+		}
+
+		public ClassUtils getClassUtils() {
+			return classUtils;
 		}
 		
 	}

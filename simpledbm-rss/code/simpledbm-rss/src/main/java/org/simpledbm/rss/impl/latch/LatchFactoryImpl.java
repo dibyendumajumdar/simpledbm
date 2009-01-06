@@ -24,13 +24,20 @@ import java.util.Properties;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 
 /**
  * A factory for creating Latches.
  */
 public final class LatchFactoryImpl implements LatchFactory {
+	
+	final Platform platform;
+	
+	final PlatformObjects po;
 
 	public LatchFactoryImpl(Platform platform, Properties properties) {
+		this.platform = platform;
+		this.po = platform.getPlatformObjects(LatchFactory.LOGGER_NAME);
 	}
 	
     /* (non-Javadoc)
@@ -44,14 +51,14 @@ public final class LatchFactoryImpl implements LatchFactory {
      * @see org.simpledbm.common.latch.LatchFactory#newReadWriteUpdateLatch()
      */
     public Latch newReadWriteUpdateLatch() {
-        return new NewReadWriteUpdateLatch();
+        return new NewReadWriteUpdateLatch(po);
     }
 
     /* (non-Javadoc)
      * @see org.simpledbm.common.latch.LatchFactory#newLatch()
      */
     public Latch newLatch() {
-        return new NewReadWriteUpdateLatch();
+        return new NewReadWriteUpdateLatch(po);
     }
 
 }

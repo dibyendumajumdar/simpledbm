@@ -26,6 +26,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Properties;
 
+import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
@@ -37,15 +38,23 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class ClassUtils {
 
-    private static final Logger log = Logger.getLogger("org.simpledbm.util");
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final Logger log;
+    final MessageCatalog mcat;
+    final ExceptionHandler exceptionHandler;
+    
+    public ClassUtils(Logger log, MessageCatalog mcat, ExceptionHandler exceptionHandler) {
+    	this.log = log;
+    	this.mcat = mcat;
+    	this.exceptionHandler = exceptionHandler;
+    }
+    
 
     /**
      * Get the ClassLoader to use. We always use the current Thread's
      * Context ClassLoader. Assumption is that all threads within the
      * application share the same ClassLoader.
      */
-    private static ClassLoader getClassLoader() {
+    private ClassLoader getClassLoader() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
         if (cl == null) {
             throw new RSSException(mcat.getMessage("EU0001"));
@@ -60,7 +69,7 @@ public final class ClassUtils {
      * @param name Name of the class to be loaded
      * @throws ClassNotFoundException
      */
-    public static Class<?> forName(String name) throws ClassNotFoundException {
+    public Class<?> forName(String name) throws ClassNotFoundException {
         ClassLoader cl = getClassLoader();
         Class<?> clazz = null;
         if (log.isDebugEnabled()) {
@@ -80,7 +89,7 @@ public final class ClassUtils {
      * @param name Name of the properties file
      * @throws IOException If the properties file could not be loaded
      */
-    public static InputStream getResourceAsStream(String name)
+    public InputStream getResourceAsStream(String name)
             throws IOException {
         ClassLoader cl = getClassLoader();
         InputStream is = null;
@@ -103,7 +112,7 @@ public final class ClassUtils {
      * @param name Name of the properties file
      * @throws IOException If the properties file could not be loaded
      */
-    public static Properties getResourceAsProperties(String name)
+    public Properties getResourceAsProperties(String name)
             throws IOException {
         ClassLoader cl = getClassLoader();
         InputStream is = null;
@@ -141,7 +150,7 @@ public final class ClassUtils {
      *            The parameter
      * @throws Throwable
      */
-    public static Object invokeMethod(Class<?> cl, Object instance,
+    public Object invokeMethod(Class<?> cl, Object instance,
             String methodName, Object param) throws Throwable {
         Class<? extends Object> paramClass;
         if (param instanceof Integer)
@@ -183,7 +192,7 @@ public final class ClassUtils {
      *            Class of the parameter
      * @throws Throwable
      */
-    public static Object invokeStaticMethod(Class<?> cl, String methodName,
+    public Object invokeStaticMethod(Class<?> cl, String methodName,
             Object param, Class<?> paramClass) throws Throwable {
         Method method = cl.getMethod(methodName, new Class[] { paramClass });
         try {
@@ -207,12 +216,12 @@ public final class ClassUtils {
      * @throws IllegalAccessException
      * @throws InvocationTargetException
      */
-    public static Object createObject(String className, Object param,
+    public Object createObject(String className, Object param,
             Class<?> paramClass) throws ClassNotFoundException, SecurityException,
             NoSuchMethodException, IllegalArgumentException,
             InstantiationException, IllegalAccessException,
             InvocationTargetException {
-        Class<?> clazzImpl = ClassUtils.forName(className);
+        Class<?> clazzImpl = forName(className);
         Constructor<?> ctor = clazzImpl.getConstructor(new Class[] { paramClass });
         Object instance = ctor.newInstance(new Object[] { param });
         return instance;

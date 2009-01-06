@@ -73,7 +73,6 @@ import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.tools.diagnostics.Trace;
-import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
@@ -6873,7 +6872,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 .newInstance();
             try {
                 DocumentBuilder builder = factory.newDocumentBuilder();
-                Document document = builder.parse(ClassUtils
+                Document document = builder.parse(btreemgr.po.getClassUtils()
                     .getResourceAsStream(filename));
                 loadDocument(document);
             } catch (SAXException sxe) {

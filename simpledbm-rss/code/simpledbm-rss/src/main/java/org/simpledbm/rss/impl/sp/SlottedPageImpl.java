@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
@@ -31,7 +32,6 @@ import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.registry.StorableFactory;
 import org.simpledbm.rss.api.sp.SlottedPage;
-import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.DiagnosticLogger;
@@ -64,11 +64,11 @@ import org.simpledbm.rss.util.mcat.MessageCatalog;
  */
 public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
-    static final Logger log = Logger.getLogger(SlottedPageManager.LOGGER_NAME);
+    final Logger log;
     
-    static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    final ExceptionHandler exceptionHandler;
 
-    static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    final MessageCatalog mcat;
 
     /**
      * This is the length of fixed length header in each page. 
@@ -234,13 +234,19 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
 
 
-    SlottedPageImpl(PageManager pageFactory, int type, PageId pageId) {
+    SlottedPageImpl(PlatformObjects po, PageManager pageFactory, int type, PageId pageId) {
 		super(pageFactory, type, pageId);
+		this.log = po.getLogger();
+		this.exceptionHandler = po.getExceptionHandler();
+		this.mcat = po.getMessageCatalog();
 		init();
 	}
 
-	SlottedPageImpl(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+	SlottedPageImpl(PlatformObjects po, PageManager pageFactory, PageId pageId, ByteBuffer bb) {
 		super(pageFactory, pageId, bb);
+		this.log = po.getLogger();
+		this.exceptionHandler = po.getExceptionHandler();
+		this.mcat = po.getMessageCatalog();
         flags = bb.getShort();
         numberOfSlots = bb.getShort();
         deletedSlots = bb.getShort();
@@ -812,15 +818,17 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
     
     public static final class SlottedPageImplFactory implements PageFactory {
+    	final PlatformObjects po;
     	final PageManager pageManager;
-    	public SlottedPageImplFactory(PageManager pageManager) {
+    	public SlottedPageImplFactory(PlatformObjects po, PageManager pageManager) {
+    		this.po = po;
     		this.pageManager = pageManager;
     	}
 		public Page getInstance(int type, PageId pageId) {
-			return new SlottedPageImpl(pageManager, type, pageId);
+			return new SlottedPageImpl(po, pageManager, type, pageId);
 		}
 		public Page getInstance(PageId pageId, ByteBuffer bb) {
-			return new SlottedPageImpl(pageManager, pageId, bb);
+			return new SlottedPageImpl(po, pageManager, pageId, bb);
 		}
 		public int getPageType() {
 			return SlottedPageManagerImpl.TYPE_SLOTTEDPAGE;
