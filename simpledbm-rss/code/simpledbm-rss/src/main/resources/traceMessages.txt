@@ -1,0 +1,140 @@
+0   TID {0} SEQ {1} btree redo split: page Q ({2},{3}) will be split
+1   TID {0} SEQ {1} btree redo split: creating page R ({2},{3}) as the right sibling after split of page Q ({4},{5})
+2   TID {0} SEQ {1} btree redo merge: marking page {4} deallocated in space map page ({2},{3})
+3   TID {0} SEQ {1} btree redo merge: merging contents of page R ({2},{4}) into page Q ({2},{3})
+4   TID {0} SEQ {1} btree redo merge: deallocating merged page R ({2},{3})
+5   TID {0} SEQ {1} btree redo link: adding link to child R ({2}) in parent page ({3},{4})
+6   TID {0} SEQ {1} btree redo unlink: removing link to child R ({2}) from parent page ({3},{4})
+7   TID {0} SEQ {1} btree redo distribute: inserting key into left sibling page ({2},{3})
+8   TID {0} SEQ {1} btree redo distribute: removing key from left sibling page ({2},{3})
+9   TID {0} SEQ {1} btree redo distribute: removing key from right sibling page ({2},{3})
+10  TID {0} SEQ {1} btree redo distribute: inserting key into right sibling page ({2},{3})
+11  TID {0} SEQ {1} btree redo increase tree height: initializing root page ({2},{3}) with pointers to child pages ({2},{4}) and ({2},{5})
+12  TID {0} SEQ {1} btree redo increase tree height: initializing new (left) child ({2},{3}) of root page, whose right sibling will be ({2},{4})
+13  TID {0} SEQ {1} btree redo decrease tree height: updating root page ({2},{3}) with contents of child page ({2},{4})
+14  TID {0} SEQ {1} btree redo decrease tree height: marking child page ({2},{3}) of root as deallocated
+15  TID {0} SEQ {1} btree redo insert: inserting key into page ({2},{3})
+16  TID {0} SEQ {1} btree redo undo insert: removing inserted key from page ({2},{3})
+17  TID {0} SEQ {1} btree undo insert: fixing exclusively as P ({2},{3})
+18  TID {0} SEQ {1} btree undo insert: page P ({2},{3}) still contains the inserted key and will not underflow if key is deleted
+19  TID {0} SEQ {1} btree undo insert: original page not available or key has moved, need to search the tree
+20  TID {0} SEQ {1} btree undo insert: after searching from root, page P ({2},{3}) found to contain the inserted key, therefore upgrading page latch from update to exclusive
+21  TID {0} SEQ {1} btree redo delete: removing key from page ({2},{3})
+22  TID {0} SEQ {1} btree redo undo delete: re-inserting deleted key in page ({2},{3})
+23  TID {0} SEQ {1} btree undo delete: fixing exclusively as P ({2},{3}) where key was originally deleted from
+24  TID {0} SEQ {1} btree undo delete: page P ({2},{3}) either no longer covers the deleted key or will overflow if the deleted key is reinserted, therefore must initiate new search from root
+25  TID {0} SEQ {1} btree undo delete: after search found page P ({2},{3}) where deleted key is to be reinserted, therefore upgrading latch from update to exclusive
+26  TID {0} SEQ {1} btree do split: extending container
+27  TID {0} SEQ {1} btree do split: upgrading latch on Q ({2},{3}) from update to exclusive
+28  TID {0} SEQ {1} btree do split: latching new right sibling R ({2},{3}) in exclusive mode
+29  TID {0} SEQ {1} btree do split: downgrading latch on Q ({2},{3})
+30  TID {0} SEQ {1} btree do split: downgrading latch on R ({2},{3})
+31  TID {0} SEQ {1} btree do split: do merge: upgrading update latch on Q ({2},{3}) to exclusive mode
+32  TID {0} SEQ {1} btree do split: do merge: upgrading update latch on R ({2},{3}) to exclusive mode
+33  TID {0} SEQ {1} btree do split: do merge: downgrading exclusive latch on Q ({2},{3})
+34  TID {0} SEQ {1} btree do link: upgrading update latch on P ({2},{3}) to exclusive
+35  TID {0} SEQ {1} btree do link: downgrading exclusive latch on P ({2},{3})
+36  TID {0} SEQ {1} btree do unlink: upgrading update latch on P ({2},{3}) to exclusive
+37  TID {0} SEQ {1} btree do redistribute: upgrading update latch on Q ({2},{3}) to exclusive
+38  TID {0} SEQ {1} btree do redistribute: upgrading update latch on R ({2},{3}) to exclusive
+39  TID {0} SEQ {1} btree do redistribute: downgrading exclusive latch on Q ({2},{3})
+40  TID {0} SEQ {1} btree do redistribute: downgrading exclusive latch on R ({2},{3})
+41  TID {0} SEQ {1} btree do increase tree height: extending container
+42  TID {0} SEQ {1} btree do increase tree height: upgrading update latch on P ({2},{3})
+43  TID {0} SEQ {1} btree do increase tree height: fixing new child page exclusively as Q ({2},{3})
+44  TID {0} SEQ {1} btree do increase tree height: downgrading exclusive latch on Q ({2},{3})
+45  TID {0} SEQ {1} btree do increase tree height: downgrading exclusive latch on R ({2},{3})
+46  TID {0} SEQ {1} btree do decrease tree height: upgrading update latch on P (root) ({2},{3})
+47  TID {0} SEQ {1} btree do decrease tree height: upgrading update latch on Q (child) ({2},{3})
+48  TID {0} SEQ {1} btree do decrease tree height: downgrading exclusive latch on P (root) ({2},{3})
+49  TID {0} SEQ {1} btree do split parent: about to split P ({2},{3})
+50  TID {0} SEQ {1} btree entering do repair page underflow
+51  TID {0} SEQ {1} btree do repair page underflow: Q is not the rightmost child of P
+52  TID {0} SEQ {1} btree do repair page underflow: fixing R ({2},{3}) for update
+53  TID {0} SEQ {1} btree do repair page underflow: fig 13 R is an indirect child of P
+54  TID {0} SEQ {1} btree do repair page underflow: merge Q with R
+55  TID {0} SEQ {1} btree do repair page underflow: R is direct child of P
+56  TID {0} SEQ {1} btree do repair page underflow: fig 14 R has a right sibling S that is an indirect child of P
+57  TID {0} SEQ {1} btree do repair page underflow: split P
+58  TID {0} SEQ {1} btree do repair page underflow: After P was split, R is not a child of P anymore, must restart the algorithm
+59  TID {0} SEQ {1} btree do repair page underflow: link S to P
+60  TID {0} SEQ {1} btree do repair page underflow: unlink R from P
+61  TID {0} SEQ {1} btree do repair page underflow: merge Q and R
+62  TID {0} SEQ {1} btree do repair page underflow: Q is the rightmost child of P
+63  TID {0} SEQ {1} btree do repair page underflow: fixing page L (page left of Q as per P) for update as Q ({2},{3})
+64  TID {0} SEQ {1} btree do repair page underflow: fixing page N (page right of L as per L) for update as R ({2},{3})
+65  TID {0} SEQ {1} btree do repair page underflow: fig 17 L is direct child of P and Q is right sibling of L (N == Q)
+66  TID {0} SEQ {1} btree do repair page underflow: Q is no longer about to underflow
+67  TID {0} SEQ {1} btree do repair page underflow: unlink Q from P
+68  TID {0} SEQ {1} btree do repair page underflow: fig 18 about to underflow rightmost child is unlinked from its parent
+69  TID {0} SEQ {1} btree do repair page underflow: merge L and Q
+70  TID {0} SEQ {1} btree do repair page underflow: fig 19 left sibling L of Q has right sibling N that is indirect child of P, Q is right sibling of N
+71  TID {0} SEQ {1} btree do repair underflow: split parent
+72  TID {0} SEQ {1} btree do repair page underflow: link N to P
+73  TID {0} SEQ {1} btree do repair page underflow: fixing page Q for update as R ({2},{3})
+74  TID {0} SEQ {1} btree do repair page underflow: Q is no longer about to underflow
+75  TID {0} SEQ {1} btree do repair page underflow: unlink Q from P
+76  TID {0} SEQ {1} btree do repair page underflow: merge N and Q
+77  TID {0} SEQ {1} btree repair page underflow: restarting algorithm
+78  TID {0} SEQ {1} btree update mode traverse: fixing root page in update mode as P ({2},{3})
+79  TID {0} SEQ {1} btree update mode traverse: root page has right sibling - fixing page ({2},{3}) in update mode as R
+80  TID {0} SEQ {1} btree update mode traverse: fixing child page ({2},{3}) in update mode as Q
+81  TID {0} SEQ {1} btree update mode traverse: Q is only child of root page P, tree height needs to be decreased
+82  TID {0} SEQ {1} btree update mode traverse: fixing child page ({2},{3}) in update mode as Q
+83  TID {0} SEQ {1} btree update mode traverse: Q ({2},{3}) is about to underflow
+84  TID {0} SEQ {1} btree update mode traverse: Q has a right sibling R that is an indirect child of P
+85  TID {0} SEQ {1} btree update mode traverse: P cannot accomodate R's key, so P must be split
+86  TID {0} SEQ {1} btree update mode traverse: link R to P
+87  TID {0} SEQ {1} btree update mode traverse: Q covers search key
+88  TID {0} SEQ {1} btree update mode traverse: Q doesn't cover search key anymore, so fixing R ({2},{3}) in update mode
+89  TID {0} SEQ {1} btree read mode traverse: fixing root page ({2},{3}) in shared mode
+90  TID {0} SEQ {1} btree read mode traverse: moving to the right as search key is greater than high key, fixing page ({2},{3}) in shared mode
+91  TID {0} SEQ {1} btree read mode traverse: fixing child page ({2},{3}) in shared mode
+92  TID {0} SEQ {1} btree insert mode traverse: splitting page ({2},{3}) as it cannot accomodate search key
+93  TID {0} SEQ {1} btree insert mode traverse: upgrading latch to exclusive mode on page ({2},{3})
+94  TID {0} SEQ {1} btree do next key lock: as next key is in right sibling, fixing right sibling page ({2},{3}) in shared mode
+95  TID {0} SEQ {1} btree do next key lock: acquiring lock on next key in no wait mode, location: ({2}.{3}.{4})
+96  TID {0} SEQ {1} btree do next key lock: attempting to acquire lock on next key unconditionally as conditional attempt failed, location: ({2}.{3}.{4})
+97  TID {0} SEQ {1} btree do next key lock: do next key lock: reacquiring exclusive mode latch on page ({2},{3})
+98  TID {0} SEQ {1} btree do next key lock: reacquiring shared mode latch on next page ({2},{3})
+99  TID {0} SEQ {1} btree do next key lock: okay to continue after unconditional lock wait
+100 TID {0} SEQ {1} btree do next key lock: pages have changed while acquiring next key lock, hence must restart insert/delete
+101 TID {0} SEQ {1} btree do next key lock: releasing lock on next key, location: ({2}.{3}.{4})
+102 TID {0} SEQ {1} btree insert: next key is in next page
+103 TID {0} SEQ {1} btree insert: next key is INFINITY
+104 TID {0} SEQ {1} btree insert: possible duplicate key - lock key in shared more conditionally, location: ({2}.{3}.{4})
+105 TID {0} SEQ {1} btree insert: failed to acquire conditional lock, try acquiring unconditionally, location: ({2}.{3}.{4})
+106 TID {0} SEQ {1} btree insert: walk down the tree again to find the page where insert is to take place
+107 TID {0} SEQ {1} btree insert: fix root page ({2},{3}) in update mode
+108 TID {0} SEQ {1} btree insert: unique constraint violation
+109 TID {0} SEQ {1} btree insert: releasing lock as cursor mode is read committed, location: ({2}.{3}.{4})
+110 TID {0} SEQ {1} btree insert: insert: key no longer exists, rollback and restart
+111 TID {0} SEQ {1} btree insert: releasing lock on next key, location: ({2}.{3}.{4})
+112 TID {0} SEQ {1} btree insert: inserting key
+113 TID {0} SEQ {1} btree delete: deleting key
+114 TID {0} SEQ {1} btree bcursor: removing P ({2},{3})
+115 TID {0} SEQ {1} btree bcursor: set P ({2},{3})
+116 TID {0} SEQ {1} btree bcursor: removing Q ({2},{3})
+117 TID {0} SEQ {1} btree bcursor: set Q ({2},{3})
+118 TID {0} SEQ {1} btree bcursor: removing R ({2},{3})
+119 TID {0} SEQ {1} btree bcursor: set R ({2},{3})
+120 TID {0} SEQ {1} btree bcursor: unfix P ({2},{3})
+121 TID {0} SEQ {1} btree bcursor: unfix Q ({2},{3})
+122 TID {0} SEQ {1} btree bcursor: unfix R ({2},{3})
+123 TID {0} SEQ {1} btree undo insert: P ({2},{3}) has either been deallocated or is no longer a leaf page, hence must initiate search from root
+124 TID {0} SEQ {1} btree undo insert: page P ({2},{3}) either no longer has the inserted key or will underflow if the inserted key is deleted, therefore must initiate new search
+125 TID {0} SEQ {1} btree undo delete: page P ({2},{3}) still covers the deleted key and will not overflow if the deleted key is reinserted
+126 TID {0} SEQ {1} btree undo delete: page P ({2},{3}) found after search; but it cannot accomodate deleted key and must be split
+127 TID {0} SEQ {1} tmgr undo insert segment: fixing page ({2},{3}) exclusively
+128 TID {0} SEQ {1} tmgr undo insert segment: updating space info for page {4} to {5} in space page ({2},{3}) 
+129 TID {0} SEQ {1} btree do search: fetch next and page ({2},{3}) has not changed, moving to next key in page
+130 TID {0} SEQ {1} btree do search: first fetch or page ({2},{3}) has changed since last fetch, searching for key in page
+131 TID {0} SEQ {1} btree do search: found old key in page ({2},{3}), and not the last key, hence moving to next key in page
+132 TID {0} SEQ {1} btree do search: found old key in page ({2},{3}) but it is the last key in the page, must go to right sibling
+133 TID {0} SEQ {1} btree do search: current key is greater than all keys in the page ({2},{3}), must go to right sibling
+134 TID {0} SEQ {1} btree do search: current key is the only key in the page ({2},{3}), hence at EOF
+135 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has no right sibling, hence at EOF
+136 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has right sibling {4}, moving to sibling node and searching key in node
+137 TID {0} SEQ {1} btree move to right sibling: fixing page ({2},{3}) in SHARED mode
+138 TID {0} SEQ {1} btree node search: searching for key in page ({2},{3})
+139 TID {0} SEQ {1} btree fetch: unexpected error while searching container {2}
