@@ -61,7 +61,6 @@ public class ExceptionHandler {
 	 */
 	public void unexpectedErrorThrow(String sourceClass, String sourceMethod, RuntimeException e) {
 		log.error(sourceClass, sourceMethod, e.getMessage(), e);
-		Trace.dump();
 		throw e;
 	}
 	

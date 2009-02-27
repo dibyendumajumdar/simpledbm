@@ -24,11 +24,14 @@ import java.util.Properties;
 import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
 import org.simpledbm.rss.util.ClassUtils;
 import org.simpledbm.rss.util.logging.Logger;
 import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 public class PlatformImpl implements Platform {
+	
+	final TraceBuffer traceBuffer = new TraceBuffer();
 
 	public PlatformImpl(Properties props) {
         Logger.configure(props);		
@@ -45,13 +48,17 @@ public class PlatformImpl implements Platform {
 	MessageCatalog getMessageCatalog() {
 		return MessageCatalog.getMessageCatalog();
 	}
+
+	public TraceBuffer getTraceBuffer() {
+		return traceBuffer;
+	}
 	
 	public PlatformObjects getPlatformObjects(String loggerName) {
 		Logger log = getLogger(loggerName);
 		ExceptionHandler exceptionHandler = getExceptionHandler(log);
 		MessageCatalog messageCatalog = getMessageCatalog();
-		ClassUtils classUtils = new ClassUtils(log, messageCatalog, exceptionHandler);
-		return new PlatformObjectsImpl(log, exceptionHandler, messageCatalog, classUtils);
+		ClassUtils classUtils = new ClassUtils();
+		return new PlatformObjectsImpl(traceBuffer, log, exceptionHandler, messageCatalog, classUtils);
 	}
 	
 	static final class PlatformObjectsImpl implements PlatformObjects {
@@ -60,8 +67,10 @@ public class PlatformImpl implements Platform {
 		final ExceptionHandler exceptionHandler;
 		final MessageCatalog messageCatalog;
 		final ClassUtils classUtils;
-		
-		PlatformObjectsImpl(Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog, ClassUtils classUtils) {
+		final TraceBuffer traceBuffer;
+
+		PlatformObjectsImpl(TraceBuffer traceBuffer, Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog, ClassUtils classUtils) {
+			this.traceBuffer = traceBuffer;
 			this.log = log;
 			this.exceptionHandler = exceptionHandler;
 			this.messageCatalog = messageCatalog;
@@ -82,6 +91,10 @@ public class PlatformImpl implements Platform {
 
 		public ClassUtils getClassUtils() {
 			return classUtils;
+		}
+
+		public TraceBuffer getTraceBuffer() {
+			return traceBuffer;
 		}
 		
 	}

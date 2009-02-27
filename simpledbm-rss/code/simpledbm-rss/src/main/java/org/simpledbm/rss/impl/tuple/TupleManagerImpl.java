@@ -70,7 +70,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.tools.diagnostics.Trace;
+import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
 import org.simpledbm.rss.util.Dumpable;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
@@ -193,6 +193,8 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     final LockAdaptor lockAdaptor;
     
     private final SlottedPage emptyPage;
+    
+    final TraceBuffer tracer;
 
     public TupleManagerImpl(Platform platform, ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -201,6 +203,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             LockAdaptor lockAdaptor, Properties p) {
 
     	PlatformObjects po = platform.getPlatformObjects(TupleManager.LOGGER_NAME);
+    	this.tracer = po.getTraceBuffer();
         this.log = po.getLogger();
         this.exceptionHandler = po.getExceptionHandler();
         this.mcat = po.getMessageCatalog();
@@ -311,7 +314,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         InsertTupleSegment logrec = (InsertTupleSegment) undoable;
         int spaceMapPage = logrec.spaceMapPage;
 
-        Trace.event(127, pageId.getContainerId(), pageId.getPageNumber());
+        tracer.event(127, pageId.getContainerId(), pageId.getPageNumber());
         BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false, -1, 0);
         try {
             SlottedPage page = (SlottedPage) bab.getPage();
@@ -707,7 +710,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          * As per Mohan the space map update must be logged before the
          * data page update, using redo only log record.
          */
-    	Trace.event(128, containerId, spaceMapPage, pageNumber, spacebitsAfter);
+    	tracer.event(128, containerId, spaceMapPage, pageNumber, spacebitsAfter);
 		
 		/*
 		 * We get a new space cursor rather than a pooled on as we do not want this
