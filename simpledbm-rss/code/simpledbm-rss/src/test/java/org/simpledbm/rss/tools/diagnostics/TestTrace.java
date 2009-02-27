@@ -17,22 +17,29 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.platform;
+package org.simpledbm.rss.tools.diagnostics;
 
-import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
+import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 
+public class TestTrace extends BaseTestCase {
 
-/**
- * The Platform is an abstraction of the runtime environment.
- * It provides access to basic facilities such as logging, event publication,
- * exception management.
- * 
- * @author dibyendumajumdar
- */
-public interface Platform {
-	
-	PlatformObjects getPlatformObjects(String loggerName);
-	
-	TraceBuffer getTraceBuffer();
+	public TestTrace() {
+	}
+
+	public TestTrace(String arg0) {
+		super(arg0);
+	}
+
+	public void testBasics() {
+		String traceMessages = "traceMessages.txt";
+		PlatformObjects po = platform.getPlatformObjects("org.simpledbm.trace");
+		po.getLogger().enableDebug();
+		TraceBuffer traceBuffer = po.getTraceBuffer();
+		traceBuffer.event(1);
+		traceBuffer.event(20);
+		Trace trace = new Trace(traceBuffer, po.getLogger(), traceMessages);
+		trace.dump();
+	}
 	
 }

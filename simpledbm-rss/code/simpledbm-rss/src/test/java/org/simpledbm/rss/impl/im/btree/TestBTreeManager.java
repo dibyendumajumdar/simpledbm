@@ -96,6 +96,7 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.impl.wal.LogManagerImpl;
+import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
 import org.simpledbm.rss.util.ByteString;
 
 public class TestBTreeManager extends BaseTestCase {
@@ -563,7 +564,7 @@ public class TestBTreeManager extends BaseTestCase {
 			int pageNumber = 2;
 			Transaction trx;
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, pageNumber), 0));
 			try {
 				trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -616,7 +617,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, l), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			try {
@@ -679,7 +680,7 @@ public class TestBTreeManager extends BaseTestCase {
 			// prepareParentPage(pageFactory, bufmgr, btree, 1, 4, testUnique,
 			// 2);
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -754,7 +755,7 @@ public class TestBTreeManager extends BaseTestCase {
 			// prepareParentPage(pageFactory, bufmgr, btree, 1, 4, testUnique,
 			// 2);
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -787,7 +788,7 @@ public class TestBTreeManager extends BaseTestCase {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, 4), 0));
@@ -821,7 +822,7 @@ public class TestBTreeManager extends BaseTestCase {
 			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
 					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, q), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, r), 0));
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
@@ -871,7 +872,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -922,7 +923,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -972,7 +973,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -1022,7 +1023,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setP(db.bufmgr.fixForUpdate(new PageId(1, p), 0));
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, q), 0));
 			try {
@@ -1073,7 +1074,7 @@ public class TestBTreeManager extends BaseTestCase {
 				bab.unfix();
 			}
 
-			BTreeContext bcursor = new BTreeContext();
+			BTreeContext bcursor = new BTreeContext(db.tracer);
 			bcursor.setQ(db.bufmgr.fixForUpdate(new PageId(1, 2), 0));
 			bcursor.setR(db.bufmgr.fixForUpdate(new PageId(1, 3), 0));
 			try {
@@ -3689,6 +3690,7 @@ public class TestBTreeManager extends BaseTestCase {
 		final TransactionManagerImpl trxmgr;
 		final FreeSpaceManager spacemgr;
 		final BTreeIndexManagerImpl btreeMgr;
+		final TraceBuffer tracer;
 
 		public BTreeDB(boolean create) throws Exception {
 
@@ -3721,6 +3723,7 @@ public class TestBTreeManager extends BaseTestCase {
 					"testdata/TestBTreeManager");
 
 	        platform = new PlatformImpl(properties);
+	        tracer = platform.getTraceBuffer();
 	        
 			LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform, properties);
 			logFactory = new LogFactoryImpl(platform, properties);
