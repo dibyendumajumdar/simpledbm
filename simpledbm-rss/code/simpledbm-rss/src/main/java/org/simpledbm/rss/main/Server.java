@@ -218,15 +218,9 @@ public class Server {
         server.getStorageFactory().delete();
     }
     
-    /**
-     * Initializes a new RSS Server instance.
-     * @see #start()
-     * @see #shutdown()
-     * @param props Properties that define various parameters for the system
-     */
-    public Server(Properties props) {
-
-    	platform = new PlatformImpl(props);
+    public Server(Platform platform, Properties props) {
+    	
+    	this.platform = platform;
     	PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
         log = po.getLogger();
         exceptionHandler = po.getExceptionHandler();
@@ -297,6 +291,88 @@ public class Server {
             pageFactory,
             lockAdaptor,
             props);
+    }
+    
+    
+    /**
+     * Initializes a new RSS Server instance.
+     * @see #start()
+     * @see #shutdown()
+     * @param props Properties that define various parameters for the system
+     */
+    public Server(Properties props) {
+    	this(new PlatformImpl(props), props);
+    	
+//    	PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
+//        log = po.getLogger();
+//        exceptionHandler = po.getExceptionHandler();
+//        mcat = po.getMessageCatalog();
+//
+//        final LogFactory logFactory = new LogFactoryImpl(platform, props);
+//        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);
+//
+//        LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform, props);
+//        objectRegistry = new ObjectRegistryImpl(platform, props);
+//        storageFactory = new FileStorageContainerFactory(platform, props);
+//        storageManager = new StorageManagerImpl(platform, props);
+//        latchFactory = new LatchFactoryImpl(platform, props);
+//        pageFactory = new PageManagerImpl(
+//        	platform,
+//            objectRegistry,
+//            storageManager,
+//            latchFactory,
+//            props);
+//        slottedPageManager = new SlottedPageManagerImpl(platform, objectRegistry, pageFactory, props);
+//        loggableFactory = new LoggableFactoryImpl(platform, objectRegistry, props);
+//        moduleRegistry = new TransactionalModuleRegistryImpl(platform, props);
+//        lockManager = lockMgrFactory.create(latchFactory, props);
+//        logManager = logFactory.getLog(storageFactory, props);
+//        bufferManager = new BufferManagerImpl(platform, logManager, pageFactory, props);
+//        transactionManager = new TransactionManagerImpl(
+//        	platform,
+//            logManager,
+//            storageFactory,
+//            storageManager,
+//            bufferManager,
+//            lockManager,
+//            loggableFactory,
+//            latchFactory,
+//            objectRegistry,
+//            moduleRegistry,
+//            props);
+//        spaceManager = new FreeSpaceManagerImpl(
+//        	platform,
+//            objectRegistry,
+//            pageFactory,
+//            logManager,
+//            bufferManager,
+//            storageManager,
+//            storageFactory,
+//            loggableFactory,
+//            transactionManager,
+//            moduleRegistry,
+//            props);
+//        indexManager = new BTreeIndexManagerImpl(
+//        	platform,
+//            objectRegistry,
+//            loggableFactory,
+//            spaceManager,
+//            bufferManager,
+//            slottedPageManager,
+//            moduleRegistry,
+//            lockAdaptor,
+//            props);
+//        tupleManager = new TupleManagerImpl(
+//        	platform,
+//            objectRegistry,
+//            loggableFactory,
+//            spaceManager,
+//            bufferManager,
+//            slottedPageManager,
+//            moduleRegistry,
+//            pageFactory,
+//            lockAdaptor,
+//            props);
     }
 
     /**
