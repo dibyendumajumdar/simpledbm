@@ -36,7 +36,7 @@ public class MessageCatalog {
      * abstract the functionality from a client perspective.
      */
 
-    static HashMap<String, String> msgs;
+    HashMap<String, String> msgs;
 
     /*
      * messages have two codes:
@@ -63,7 +63,7 @@ public class MessageCatalog {
      *  V - server
      */
 
-    static {
+    void init() {
         msgs = new HashMap<String, String>();
         msgs
             .put(
@@ -630,6 +630,7 @@ public class MessageCatalog {
     }
 
     private MessageCatalog() {
+    	init();
     }
     
     /**
@@ -637,7 +638,7 @@ public class MessageCatalog {
      * @param key A key to identify the message
      * @param message Message string
      */
-    public static void addMessage(String key, String message) {
+    public void addMessage(String key, String message) {
     	msgs.put(key, message);
     }
     
@@ -657,12 +658,7 @@ public class MessageCatalog {
         return "SIMPLEDBM-U9999: Unknown message key - " + key;
     }
     
-    static MessageCatalog messageCatalog;
-    
     public static synchronized MessageCatalog getMessageCatalog() {
-    	if (messageCatalog == null) {
-    		messageCatalog = new MessageCatalog();
-    	}
-    	return messageCatalog;
+   		return new MessageCatalog();
     }
 }
