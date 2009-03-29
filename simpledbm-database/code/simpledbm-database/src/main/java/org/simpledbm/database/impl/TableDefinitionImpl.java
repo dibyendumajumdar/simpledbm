@@ -26,6 +26,7 @@ import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
@@ -44,10 +45,9 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class TableDefinitionImpl implements Storable, TableDefinition {
 
-	static Logger log = Logger.getLogger(TableDefinitionImpl.class.getPackage()
-			.getName());
-
-	final static MessageCatalog mcat = new MessageCatalog();	
+	final Logger log;
+	final MessageCatalog mcat;
+	final PlatformObjects po;
 	
 	/**
 	 * Database to which this table definition belongs to.
@@ -75,7 +75,10 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
      */
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-    TableDefinitionImpl(Database database, ByteBuffer bb) {
+    TableDefinitionImpl(PlatformObjects po, Database database, ByteBuffer bb) {
+    	this.po = po;
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
 		this.database = database;
 		containerId = bb.getInt();
 		ByteString s = new ByteString(bb);
@@ -84,13 +87,16 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 		int n = bb.getShort();
 		indexes = new ArrayList<IndexDefinition>();
 		for (int i = 0; i < n; i++) {
-			IndexDefinitionImpl idx = new IndexDefinitionImpl(this, bb);
+			IndexDefinitionImpl idx = new IndexDefinitionImpl(po, this, bb);
 			indexes.add(idx);
 		}
 	}
 
-    TableDefinitionImpl(Database database, int containerId, String name,
+    TableDefinitionImpl(PlatformObjects po, Database database, int containerId, String name,
             TypeDescriptor[] rowType) {
+    	this.po = po;
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
         this.database = database;
         this.containerId = containerId;
         this.name = name;
@@ -106,7 +112,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         	log.error(getClass().getName(), "addIndex", mcat.getMessage("ED0012"));
         	throw new DatabaseException(mcat.getMessage("ED0012"));
         }
-        indexes.add(new IndexDefinitionImpl(this, containerId, name, columns, primary, unique));
+        indexes.add(new IndexDefinitionImpl(po, this, containerId, name, columns, primary, unique));
     }
 
     /* (non-Javadoc)

@@ -36,6 +36,8 @@ import org.simpledbm.typesystem.api.TypeFactory;
  * @author dibyendu majumdar
  */
 public interface Database {
+	
+	public final String LOGGER_NAME = "org.simpledbm.database";
 
 	/**
 	 * Constructs a new TableDefinition object. A TableDefinition object is used when

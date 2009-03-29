@@ -28,6 +28,7 @@ import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
@@ -37,9 +38,8 @@ import org.simpledbm.typesystem.api.Row;
 
 public class TableScanImpl implements TableScan {
 
-	static Logger log = Logger.getLogger(TableScanImpl.class.getPackage()
-			.getName());	
-	final static MessageCatalog mcat = new MessageCatalog();
+	final Logger log;	
+	final MessageCatalog mcat;
 	
     private final Table table;
     final IndexScan indexScan;
@@ -49,7 +49,9 @@ public class TableScanImpl implements TableScan {
     final Transaction trx;
     Row currentRow;
 
-    TableScanImpl(Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
+    TableScanImpl(PlatformObjects po, Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
         this.table = table;
         this.trx = trx;
         tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
