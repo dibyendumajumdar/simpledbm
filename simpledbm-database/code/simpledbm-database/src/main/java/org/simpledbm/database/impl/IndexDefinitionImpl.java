@@ -26,6 +26,7 @@ import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexKey;
 import org.simpledbm.rss.api.im.IndexKeyFactory;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.util.ByteString;
 import org.simpledbm.rss.util.TypeSize;
 import org.simpledbm.rss.util.logging.Logger;
@@ -40,10 +41,8 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
  */
 public class IndexDefinitionImpl implements IndexDefinition {
 
-	static Logger log = Logger.getLogger(IndexDefinitionImpl.class.getPackage()
-			.getName());
-
-	final static MessageCatalog mcat = new MessageCatalog();
+	final Logger log;
+	final MessageCatalog mcat;
 	
     /**
      * Table to which this index belongs.
@@ -74,7 +73,9 @@ public class IndexDefinitionImpl implements IndexDefinition {
      */
     boolean unique;
 
-    IndexDefinitionImpl(TableDefinition table, ByteBuffer bb) {
+    IndexDefinitionImpl(PlatformObjects po, TableDefinition table, ByteBuffer bb) {
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
 		this.table = table;
 		containerId = bb.getInt();
 		ByteString s = new ByteString(bb);
@@ -102,14 +103,15 @@ public class IndexDefinitionImpl implements IndexDefinition {
 		}
 	}
 
-    public IndexDefinitionImpl(TableDefinition table, int containerId, String name,
+    public IndexDefinitionImpl(PlatformObjects po, TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
-
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
+    	this.table = table;
     	if (columns.length == 0) {
     		log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0010"));
     		throw new DatabaseException(mcat.getMessage("ED0010"));
     	}
-    	this.table = table;
         this.containerId = containerId;
         this.name = name;
         this.columns = columns;

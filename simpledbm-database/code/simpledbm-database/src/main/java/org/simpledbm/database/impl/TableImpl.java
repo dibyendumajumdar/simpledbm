@@ -29,6 +29,7 @@ import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.Savepoint;
@@ -44,13 +45,16 @@ import org.simpledbm.typesystem.api.Row;
  */
 public class TableImpl implements Table {
 
-	static Logger log = Logger.getLogger(TableImpl.class.getPackage()
-			.getName());	
-	final static MessageCatalog mcat = new MessageCatalog();
+	final Logger log;	
+	final MessageCatalog mcat;
+	final PlatformObjects po;
 	
     private final TableDefinition definition;
 
-    TableImpl(TableDefinition definition) {
+    TableImpl(PlatformObjects po, TableDefinition definition) {
+    	this.po = po;
+    	this.log = po.getLogger();
+    	this.mcat = po.getMessageCatalog();
     	this.definition = definition;
     }
     
@@ -277,7 +281,7 @@ public class TableImpl implements Table {
 	 */
     public TableScan openScan(Transaction trx, int indexno, Row startRow,
             boolean forUpdate) {
-        return new TableScanImpl(trx, this, indexno, startRow, forUpdate);
+        return new TableScanImpl(po, trx, this, indexno, startRow, forUpdate);
     }
 
 	public TableDefinition getDefinition() {
