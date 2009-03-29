@@ -1540,6 +1540,28 @@ Extensions
 
       1. Do `a002 - handle lock conversion`_.
 
+a003 - handle new request
+*************************
+
+Main Success Scenario
+.....................
+
+1) Allocate new request
+2) Append lock request to queue with reference count of 1
+3) Check for waiting requests
+4) Check whether request is compatible with granted mode
+5) There are no waiting requests and lock request is compatible with
+   granted mode
+6) Set lock's granted mode to maximum of this request and existing granted mode.
+7) Success.
+
+Extensions
+..........
+
+5. a) There are waiting requests or lock request is not compatible with
+      granted mode.
+      
+      1. Do `a004 - lock wait`_.
 
 a002 - handle lock conversion
 *****************************
@@ -1547,7 +1569,7 @@ a002 - handle lock conversion
 Main Success Scenario
 .....................
 
-1) Check lock compatibility
+1) Check lock compatibility with granted group
 2) Lock request is compatible with granted group
 3) Grant lock request, and update granted mode for the request.
 
@@ -1558,26 +1580,6 @@ Extensions
 
       1. Do `a004 - lock wait`_.
 
-a003 - handle new request
-*************************
-
-Main Success Scenario
-.....................
-
-1) There are no waiting requests and lock request is compatible with
-   granted mode
-2) Allocate new request
-3) Append lock request to queue with status = GRANTED and reference count of 1
-4) Set lock's granted mode to maximum of this request and existing granted mode.
-5) Success.
-
-Extensions
-..........
-
-1. a) There are waiting requests or lock request is not compatible with
-      granted mode.
-      
-      1. Do `a004 - lock wait`_.
 
 a004 - lock wait
 ****************
@@ -1705,40 +1707,43 @@ Page Manager
 Overview of Page Manager module
 ===============================
 The storage unit of a database system is a contiguous set of bytes
-known as a Page. In SimpleDBM_, pages are contained with logical
+known as a Page. In SimpleDBM, pages are contained with logical
 units called Storage Containers. The default implementation maps
 containers to Operating System files.
 
 A page is typically a fixed size block within the storage container.
 The Page Manager module encapsulates the knowledge about how pages
-map to containers. It knows about page sizes, and also knows how to
-read/write pages from storage containers. By isolating this
-knowledge into a separate module, the rest of the system is
-protected. For example, the Buffer Manager module can work with
+map to containers. It knows about the page size, but delegates the work of
+reading/writing pages to PageFactory implementations. This division of labour
+allows all pages to be centrally managed by the PageManager, yet allows
+new page types to be registered without having to change the PageManager.
+By isolating the management of pages into the PageManager module, 
+the rest of the system is protected. For example, the Buffer Manager module can work with
 different paging strategies by switching the Page Manager module.
 
 Note that the Page Manager module does not worry about the contents
 of the page, except for the very basic and common stuff that must be
-part of every page, such as page Id, page LSN, and page type. It is
-expected that other modules will extend the basic page type and
-implement additional features. The Page Manager does provide the
-base class for all Page implementations. It also provides a generic
-factory class that can instantiate pages of different types.
+part of every page, such as a checksum, the page Id, page LSN, and 
+the page type. It is expected that other modules will extend the basic page type and
+implement additional features. The PageManager does provide the
+base class for all Page implementations.
 
 Interactions with other modules
 ===============================
-The Buffer Manager module uses the Page Manager module to read/write
+The Buffer Manager module uses the PageManager module to read/write
 pages from storage containers and also to create new instances of
 pages.
 
-The Page Manager module requires the services of the Object Registry
-module in order to create instances of pages from type codes.
+The PageManager module requires the services of the Object Registry
+module in order to obtain PageFactory implementations.
 
-Page Manager module also interacts with the Storage Manager module
+The PageManager uses PageFactory implementations to read/write pages.
+
+The PageManager module also interacts with the StorageManager module
 for access to Storage Containers.
 
 Each page is allocated a Latch to manage concurrent access to it.
-The Page Manager therefore requires the services of the Latch
+The PageManager therefore requires the services of the Latch
 Manager.
 
 Page class
@@ -1749,69 +1754,81 @@ The simplest of Page classes that one could create is shown below:
 
 ::
 
-  public class RawPage extends Page {
-    public RawPage() {
-        super();
+  public final class RawPage extends Page {
+
+    RawPage(PageManager pageFactory, int type, PageId pageId) {
+      super(pageFactory, type, pageId);
     }
-    @Override
-    public void init() {
-        // does nothing
+
+    RawPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+      super(pageFactory, pageId, bb);
     }
+
   }
+
+
+The constructor that accepts the ByteBuffer argument, should
+retrieve the contents of the Page from the ByteBuffer. 
 
 Page Size and implementation of Storable interface
 --------------------------------------------------
 The Page class implements the Storable interface. However, unlike
 other implementations, a Page has a fixed length which is defined by
-the Page Factory responsible for creating it. The Page obtains the
-page size from the Page Factory instance and uses that to determine
+the PageManager responsible for creating it. The Page obtains the
+page size from the PageManager instance and uses that to determine
 its persistent size. Sub-classes cannot change this value. This
-means that the page size of all pages managed by a particular Page
-Factory instance is always the same.
+means that the page size of all pages managed by a particular 
+PageManager instance is always the same.
 
-Sub-classes of course still need to implement their own store() and
-retrieve() methods. These methods should always invoke their super
+Sub-classes of course still need to implement their own store() method
+and a constructor that can initialize the object from a supplied
+ByteBuffer object. These methods should always invoke their super
 class counterparts before processing local content.
 
 Example::
 
-  public class RawPage extends Page {
-    int i;
-    public RawPage() {
-      super();
+  public class MyPage extends Page {
+       int i = 0;
+        
+    MyPage(PageManager pageFactory, int type, PageId pageId) {
+      super(pageFactory, type, pageId);
     }
-    public void init() {
-      i = 0;
+
+    MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+      super(pageFactory, pageId, bb);
+      i = bb.getInt();
     }
+
+    /**
+     * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
+     */
+    @Override
     public void store(ByteBuffer bb) {
       super.store(bb);
       bb.putInt(i);
-    }
-    public void retrieve(ByteBuffer bb) {
-      super.retrieve(bb);
-      i = bb.getInt();
-    }
+    }  
   }
 
 How various Page types are managed
 ----------------------------------
-SimpleDBM_ modules do not know in advance what page types are to be
-used. Some of the modules define their own page types. However,
-despite this the Buffer Manager, and the Transaction Manager modules
-must handle pages, even read and write them to the disk as
+Some of the SimpleDBM modules define their own page types. These page types
+are not known to the BufferManager or the TransactionManager, which must
+still handle such pages, even read and write them to the disk as
 necessary. This is made possible as follows:
 
-* Each Page type is given a typecode in the Object Registry. 
-  This allows the Page Factory to obtain instances of specific 
-  Page types given the typecode.
+* Each Page type is given a typecode in the Object Registry. A PageFactory
+  implementation is registered for each Page typecode.
 
 * The typecode is stored in the first two bytes (as a short 
   integer) of the Page when the page is persisted. When reading 
   a page, the first two bytes are inspected to determine the 
   correct Page type to instantiate. Reading and writing various 
-  page types is managed by the Page Factory implementation.
+  page types is managed by the PageFactory implementation.
 
-* The Buffer Manager uses the Page Factory implementation to 
+* The PageManager looks up the PageFactory implementation in the
+  ObjectRegistry, whenever it needs to persist or read pages.
+
+* The Buffer Manager uses the PageManager to 
   generate new instances of Pages or to read/write specific 
   pages.
 
@@ -1823,6 +1840,41 @@ necessary. This is made possible as follows:
 Page Factory
 ------------
 Creating a page factory is relatively simple::
+
+  static class MyPageFactory implements PageFactory {
+
+    final PageManager pageManager;
+        	
+    public MyPageFactory(PageManager pageManager) {
+      this.pageManager = pageManager;
+    }
+    public Page getInstance(int type, PageId pageId) {
+      return new MyPage(pageManager, type, pageId);
+    }
+    public Page getInstance(PageId pageId, ByteBuffer bb) {
+      return new MyPage(pageManager, pageId, bb);
+    }
+    public int getPageType() {
+      return TYPE_MYPAGE;
+    }
+  }
+
+The PageFactory provide two methods for creating new instances
+of Pages. The first method creates an empty Page. The second creates a
+Page instance by reading the contents of a ByteBuffer - this method is
+used when pages are read from a StorageContainer.
+
+The PageFactory implementation must be registered with the
+ObjectRegistry as a Singleton:: 
+
+  static final short TYPE_MYPAGE = 25000;
+  ObjectRegistry objectRegistry = ...;
+  objectRegistry.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+
+Page Manager
+------------
+
+
 
     StorageContainerFactory storageFactory =
         new FileStorageContainerFactory();
@@ -3236,8 +3288,15 @@ module.
 The third page (pagenumber = 2) is  allocated as the root page of the 
 tree. The root page never changes.
 
-Pages at all levels are linked to their right siblings. 
 
+.. raw:: latex
+ 
+   \begin{center}
+   \includegraphics[angle=90]{images/blink-tree-structure.jpg}
+   \end{center}
+
+
+Pages at all levels are linked to their right siblings. 
 In leaf pages, an extra item called the high key is present. In index 
 pages, the last key acts as the highkey. All keys in a page are guaranteed 
 to be <= than the highkey. Note that in leaf pages the highkey may not be 
@@ -3250,7 +3309,6 @@ leaf page cannot be used as the high key because the high key can only change
 through page split, redistribute or merge (SMO) activities, whereas the highest
 key may be deleted outside of these operations, for example, as part of
 a delete key operation. 
-
 
 In index pages, each key is associated with a pointer to a child page. The 
 child page contains keys <= to the key in the index page. 
