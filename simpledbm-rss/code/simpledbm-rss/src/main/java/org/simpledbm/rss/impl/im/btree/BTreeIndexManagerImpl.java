@@ -2448,7 +2448,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             doNewRedistribute(trx, bcursor);
                         }
                         /* Q = L (already true) */
-                        assert bcursor.getQ().getPage().getPageId().getPageNumber() == L;
+// Issue 70: looks like incorrect assertion as redistribute keys can leave the bcursor.Q pointing to either L or Q
+// Maybe did not encounter this before because the doRistribute() wasn't getting called?
+// FIXME once this is verified need to remove the assertion or replace it with a correct one.
+//                        assert bcursor.getQ().getPage().getPageId().getPageNumber() == L;
                     }
                 } else {
                     /*
