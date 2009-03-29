@@ -1,7 +1,40 @@
+/***
+ *    This program is free software; you can redistribute it and/or modify
+ *    it under the terms of the GNU General Public License as published by
+ *    the Free Software Foundation; either version 2 of the License, or
+ *    (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU General Public License for more details.
+ *
+ *    You should have received a copy of the GNU General Public License
+ *    along with this program; if not, write to the Free Software
+ *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ *
+ *    Project: www.simpledbm.org
+ *    Author : Dibyendu Majumdar
+ *    Email  : d dot majumdar at gmail dot com ignore
+ */
 package org.simpledbm.rss.tools.diagnostics;
 
 import org.simpledbm.rss.util.WrappingSequencer;
 
+/**
+ * An efficient thread safe but lock free mechanism to generate trace messages.
+ * Uses a ring buffer.  Messages are stored in memory so that there is very
+ * little performance impact. Each message is tagged with the thread id, and a
+ * sequence number. The sequence number wraps around when it reaches
+ * 2147483646.
+ * <p>
+ * The design of TraceBuffer mechanism was inspired by the article in <cite>DDJ April 23, 2007,
+ * Multi-threaded Debugging Techniques by Shameem Akhter and Jason Roberts</cite>. This
+ * article is an excerpt from the book <cite>Multi-Core Programming</cite> by the same authors.
+ * 
+ * @author dibyendu majumdar
+ * @since 26 July 2008
+ */
 public class TraceBuffer {
 	
 	public interface TraceVisitor {
