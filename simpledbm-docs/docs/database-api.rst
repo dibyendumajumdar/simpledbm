@@ -7,8 +7,8 @@ SimpleDBM Database API
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
 :Version: 1.0.11
-:Date: 17 August 2008
-:Copyright: Copyright by Dibyendu Majumdar, 2008
+:Date: 7 April 2009
+:Copyright: Copyright by Dibyendu Majumdar, 2008-2009
 
 .. contents::
 
@@ -115,9 +115,9 @@ or above if you want to work with SimpleDBM.
 You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
 project download area. The following jar files are required:
 
-* `simpledbm-rss-1.0.11.jar <http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.11.jar>`_ - this is the core database engine.
-* `simpledbm-typesystem-1.0.9.jar <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.9.jar>`_ - provides a simple type system.
-* `simpledbm-database-1.0.10.jar <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.10.jar>`_ - provides a higher level database API with support for tables and indexes. 
+* `simpledbm-rss-1.0.12.jar <http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.12.jar>`_ - this is the core database engine.
+* `simpledbm-typesystem-1.0.10.jar <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.10.jar>`_ - provides a simple type system.
+* `simpledbm-database-1.0.11.jar <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.11.jar>`_ - provides a higher level database API with support for tables and indexes. 
 
 You should make sure that required jars are in your class path.
 
@@ -324,22 +324,23 @@ sample contains both JDK style and Log4J style configuration.::
  java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
  java.util.logging.ConsoleHandler.level = ALL
 
- org.simpledbm.rss.impl.registry.level = INFO
- org.simpledbm.rss.impl.bm.level = INFO
- org.simpledbm.rss.impl.im.btree.level = INFO
- org.simpledbm.rss.impl.st.level = INFO
- org.simpledbm.rss.impl.wal.level = INFO
- org.simpledbm.rss.impl.locking.level = INFO
- org.simpledbm.rss.impl.fsm.level = INFO
- org.simpledbm.rss.impl.sp.level = INFO
- org.simpledbm.rss.impl.tx.level = INFO
- org.simpledbm.rss.impl.tuple.level = INFO
- org.simpledbm.rss.impl.latch.level = INFO
- org.simpledbm.rss.impl.pm.level = INFO
+ org.simpledbm.registry.level = INFO
+ org.simpledbm.bufmgr.level = INFO
+ org.simpledbm.indexmgr.level = INFO
+ org.simpledbm.storagemgr.level = INFO
+ org.simpledbm.walogmgr.level = INFO
+ org.simpledbm.lockmgr.level = INFO
+ org.simpledbm.freespacemgr.level = INFO
+ org.simpledbm.slotpagemgr.level = INFO
+ org.simpledbm.transactionmgr.level = INFO
+ org.simpledbm.tuplemgr.level = INFO
+ org.simpledbm.latchmgr.level = INFO
+ org.simpledbm.pagemgr.level = INFO
  org.simpledbm.rss.util.level = INFO
- org.simpledbm.rss.util.logging.level = INFO
- org.simpledbm.rss.main.level = INFO
- org.simpledbm.rss.trace.level = INFO
+ org.simpledbm.util.level = INFO
+ org.simpledbm.server.level = INFO
+ org.simpledbm.trace.level = INFO
+ org.simpledbm.database.level = INFO
 
  # Default Log4J configuration
 
@@ -360,22 +361,23 @@ sample contains both JDK style and Log4J style configuration.::
  log4j.rootLogger=DEBUG, A1, A2
 
  # Various loggers
- log4j.logger.org.simpledbm.rss.impl.registry=INFO
- log4j.logger.org.simpledbm.rss.impl.bm=INFO
- log4j.logger.org.simpledbm.rss.impl.im.btree=INFO
- log4j.logger.org.simpledbm.rss.impl.st=INFO
- log4j.logger.org.simpledbm.rss.impl.wal=INFO
- log4j.logger.org.simpledbm.rss.impl.locking=INFO
- log4j.logger.org.simpledbm.rss.impl.fsm=INFO
- log4j.logger.org.simpledbm.rss.impl.sp=INFO
- log4j.logger.org.simpledbm.rss.impl.tx=INFO
- log4j.logger.org.simpledbm.rss.impl.tuple=INFO
- log4j.logger.org.simpledbm.rss.impl.latch=INFO
- log4j.logger.org.simpledbm.rss.impl.pm=INFO
+ log4j.logger.org.simpledbm.registry=INFO
+ log4j.logger.org.simpledbm.bufmgr=INFO
+ log4j.logger.org.simpledbm.indexmgr=INFO
+ log4j.logger.org.simpledbm.storagemgr=INFO
+ log4j.logger.org.simpledbm.walogmgr=INFO
+ log4j.logger.org.simpledbm.lockmgr=INFO
+ log4j.logger.org.simpledbm.freespacemgr=INFO
+ log4j.logger.org.simpledbm.slotpagemgr=INFO
+ log4j.logger.org.simpledbm.transactionmgr=INFO
+ log4j.logger.org.simpledbm.tuplemgr=INFO
+ log4j.logger.org.simpledbm.latchmgr=INFO
+ log4j.logger.org.simpledbm.pagemgr=INFO
  log4j.logger.org.simpledbm.rss.util=INFO
- log4j.logger.org.simpledbm.rss.util.logging=INFO
- log4j.logger.org.simpledbm.rss.main=INFO
- log4j.logger.org.simpledbm.rss.trace=INFO
+ log4j.logger.org.simpledbm.util=INFO
+ log4j.logger.org.simpledbm.server=INFO
+ log4j.logger.org.simpledbm.trace=INFO
+ log4j.logger.org.simpledbm.database=INFO
 
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
