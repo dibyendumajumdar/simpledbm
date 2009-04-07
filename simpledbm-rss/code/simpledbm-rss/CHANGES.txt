@@ -6,7 +6,7 @@
  * dm: Issue 61: General: Make Storable objects immutable where possible
  * dm: Issue 59: BTree: Improve redistribute keys in BTree implementation
  * dm: Issue 58: General: Change the logger names so that the log messages have better module identification
- * 
+ * dm: Issue 70: BTree: Removed assertion that looks incorrect after the new redistribute keys method.
 
 1.0.11-BETA:
  * dm: Issue 43: TupleManager: Lots of refactoring to make the code more modular and easy to maintain.
