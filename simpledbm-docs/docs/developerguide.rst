@@ -6,9 +6,9 @@ SimpleDBM RSS Developers's Guide
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Date: 26 September 2008
+:Date: 7 April 2009
 :Version: 1.0.12
-:Copyright: Copyright by Dibyendu Majumdar, 2005-2008
+:Copyright: Copyright by Dibyendu Majumdar, 2005-2009
 
 .. contents::
 
