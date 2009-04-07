@@ -515,7 +515,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         Properties properties = new Properties();
         properties.setProperty(
             "storage.basePath",
-            "testdata/TestTransactionManager1");
+            "testdata/TestTransactionManager2");
         properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
