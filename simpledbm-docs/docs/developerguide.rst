@@ -1874,7 +1874,7 @@ ObjectRegistry as a Singleton::
 Page Manager
 ------------
 
-
+TODO - this section is out of date and needs to be updated.
 
     StorageContainerFactory storageFactory =
         new FileStorageContainerFactory();
