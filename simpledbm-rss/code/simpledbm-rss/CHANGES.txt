@@ -1,3 +1,13 @@
+1.0.12-BETA:
+ * dm: Issue 67: General: Exceptions are thrown by common ExceptionHandler utility allowing them 
+   to be logged at the point where the exception is thrown. Additional action can be taken if necessary.
+ * dm: Issue 66: BufferManager: Fixed page replacement logic to always evict the LRU page even if it is dirty.
+ * dm: Issue 64: BTree: Fetch fails when the search key is greater than all keys in the tree
+ * dm: Issue 61: General: Make Storable objects immutable where possible
+ * dm: Issue 59: BTree: Improve redistribute keys in BTree implementation
+ * dm: Issue 58: General: Change the logger names so that the log messages have better module identification
+ * 
+
 1.0.11-BETA:
  * dm: Issue 43: TupleManager: Lots of refactoring to make the code more modular and easy to maintain.
  * dm: Issue 40: TupleManager: Fixed buffer page being latched exclusively during reads - should be 
