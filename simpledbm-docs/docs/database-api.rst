@@ -28,7 +28,7 @@ application. It provides a simple Java application programming interface (API), 
 Features
 ========
 
-SimpleDBM_ has the following features:
+SimpleDBM has the following features:
 
 - *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
 - *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
@@ -48,7 +48,7 @@ Non-Features
 Status
 ------
 
-SimpleDBM_ is currently in early BETA and not suitable for Production use. 
+SimpleDBM is currently in early BETA and not suitable for Production use. 
 Note that the SimpleDBM API is under flux, and is likely to change until 
 the production 1.0 release is available. 
 
@@ -63,11 +63,11 @@ SimpleDBM Modules
 The core of SimpleDBM is the RSS (named in honor of the
 first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
 System). The RSS provides the underlying storage structures for
-transactions, locking, b-trees etc. The RSS API is however, slightly
+transactions, locking, b-trees etc. The RSS API is however, somewhat
 low level for ordinary users. It is meant to be used by people interested
 in building their own Database Engines on top of RSS. The RSS is described in 
-detail in the `SimpleDBM RSS User's Manual <http://simpledbm.googlecode.com/files/rss-usermanual-1.0.8.pdf>`_ and 
-`SimpleDBM RSS Developers's Guide <http://simpledbm.googlecode.com/files/rss-developerguide-1.0.8.pdf>`_.
+detail in the `SimpleDBM RSS User's Manual <http://simpledbm.googlecode.com/files/rss-usermanual-1.0.12.pdf>`_ and 
+`SimpleDBM RSS Developers's Guide <http://simpledbm.googlecode.com/files/rss-developerguide-1.0.12.pdf>`_.
 
 To provides users with a simplified API, two additional modules are
 available. 
