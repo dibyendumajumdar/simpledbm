@@ -1692,8 +1692,25 @@ Extensions
       1. Failure
 
 
+Data Structures of the Lock Manager
+-----------------------------------
+
+The Lock Manager data structures are based upon the structures described in
+[JGRAY]_. A hash table is used to maintain a lookup table for finding lock
+objects. The buckets in the hash table point to linked lists of lock headers.
+Each lock header holds housekeeping information about a single lock. A chain of
+lock requests is attached to the lock header. Each request represents a lock 
+request by a client. At any point in time, a lock may have multiple requests
+queuing - some in GRANTED state, others waiting for the lock to be GRANTED.
+
+The data structure used by the Lock Manager is depicted below.
+
+.. image:: images/lock-table.jpg
+  
+   
 Deadlock Detector
 -----------------
+
 The Lock Manager contains a simple Deadlock Detector implemented
 which is based upon algorithm described in [JGRAY]_. The deadlock
 detector runs in a background thread, periodically waking up to
@@ -1706,22 +1723,21 @@ Page Manager
 
 Overview of Page Manager module
 ===============================
-The storage unit of a database system is a contiguous set of bytes
-known as a Page. In SimpleDBM, pages are contained with logical
-units called Storage Containers. The default implementation maps
-containers to Operating System files.
+The storage unit of a database system is a Page. In SimpleDBM, pages 
+are contained with logical units called Storage Containers. The default 
+implementation maps containers to Operating System files.
 
 A page is typically a fixed size block within the storage container.
-The Page Manager module encapsulates the knowledge about how pages
+The PageManager module encapsulates knowledge about how pages
 map to containers. It knows about the page size, but delegates the work of
 reading/writing pages to PageFactory implementations. This division of labour
 allows all pages to be centrally managed by the PageManager, yet allows
 new page types to be registered without having to change the PageManager.
 By isolating the management of pages into the PageManager module, 
-the rest of the system is protected. For example, the Buffer Manager module can work with
-different paging strategies by switching the Page Manager module.
+the rest of the system is protected. For example, the BufferManager module can work with
+different paging strategies by switching the PageManager module.
 
-Note that the Page Manager module does not worry about the contents
+Note that the PageManager module does not worry about the contents
 of the page, except for the very basic and common stuff that must be
 part of every page, such as a checksum, the page Id, page LSN, and 
 the page type. It is expected that other modules will extend the basic page type and
@@ -1748,22 +1764,19 @@ Manager.
 
 Page class
 ==========
-The page manager implements an abstract Page class that is the root
+The page manager provides an abstract Page class that is the root
 of the Page hierarchy. All other page types derive from this class.
 The simplest of Page classes that one could create is shown below:
 
 ::
 
   public final class RawPage extends Page {
-
     RawPage(PageManager pageFactory, int type, PageId pageId) {
       super(pageFactory, type, pageId);
     }
-
     RawPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
       super(pageFactory, pageId, bb);
     }
-
   }
 
 
@@ -1859,6 +1872,9 @@ Creating a page factory is relatively simple::
     }
   }
 
+Note that the PageFactory implementation passes on the
+PageManager reference to new pages. 
+
 The PageFactory provide two methods for creating new instances
 of Pages. The first method creates an empty Page. The second creates a
 Page instance by reading the contents of a ByteBuffer - this method is
@@ -1874,18 +1890,28 @@ ObjectRegistry as a Singleton::
 Page Manager
 ------------
 
-TODO - this section is out of date and needs to be updated.::
+Following snippet of code shows how the PageManager instance is created::
 
-    StorageContainerFactory storageFactory =
-        new FileStorageContainerFactory();
-    ObjectFactory objectFactory = new ObjectFactoryImpl();
-    StorageManager storageManager = new StorageManagerImpl();
-    LatchFactory latchFactory = new LatchFactoryImpl();
-    PageFactory pageFactory = new PageFactoryImpl(objectFactory,
-        storageManager, latchFactory);
+  Properties properties = new Properties();
+  properties.setProperty("storage.basePath", "testdata/TestPage");
+  properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+  properties.setProperty("logging.properties.type", "log4j");
+  platform = new PlatformImpl(properties);
+  storageFactory = new FileStorageContainerFactory(platform, 
+    properties);
+  objectRegistry = new ObjectRegistryImpl(platform, properties);
+  storageManager = new StorageManagerImpl(platform, properties);
+  latchFactory = new LatchFactoryImpl(platform, properties);
+  pageManager = new PageManagerImpl(
+    platform,
+    objectRegistry,
+    storageManager,
+    latchFactory,
+    properties);
 
-Note that the Page Factory requires access to the Object Registry,
-the Latch Manager and the Storage Manager.
+Note that the PageManager requires access to the ObjectRegistry,
+the LatchManager and the StorageManager. PageFactory instances are
+retrieved indirectly via the ObjectRegistry.
 
 Storing and retrieving Pages
 ----------------------------
