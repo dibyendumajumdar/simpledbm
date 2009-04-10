@@ -49,48 +49,64 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
 public class TestPage extends BaseTestCase {
 
     static final short TYPE_MYPAGE = 25000;
+    
+    Platform platform;
+    StorageContainerFactory storageFactory;
+    ObjectRegistry objectRegistry;
+    StorageManager storageManager;
+    LatchFactory latchFactory;
+    PageManager pageManager;
 
     public TestPage(String arg0) {
         super(arg0);
     }
-
-    public void testCase1() throws Exception {
+    
+    @Override
+	protected void setUp() throws Exception {
+		super.setUp();
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestPage");
         properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
+        platform = new PlatformImpl(properties);
+        storageFactory = new FileStorageContainerFactory(platform, 
             properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        PageManager pageFactory = new PageManagerImpl(
+        objectRegistry = new ObjectRegistryImpl(platform, properties);
+        storageManager = new StorageManagerImpl(platform, properties);
+        latchFactory = new LatchFactoryImpl(platform, properties);
+        pageManager = new PageManagerImpl(
         	platform,
-            objectFactory,
+            objectRegistry,
             storageManager,
             latchFactory,
             properties);
+        objectRegistry.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageManager));
+    }
 
+	@Override
+	protected void tearDown() throws Exception {
+		super.tearDown();
+        storageManager.shutdown();
+        storageFactory.delete("testfile.dat");
+	}
+
+	public void testCase1() throws Exception {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
 
-        Page page = pageFactory.getInstance(
-            pageFactory.getRawPageType(),
+        Page page = pageManager.getInstance(
+            pageManager.getRawPageType(),
             new PageId(1, 0));
         page.setPageLsn(new Lsn(91, 33));
-        pageFactory.store(page);
-        page = pageFactory.retrieve(new PageId(1, 0));
+        pageManager.store(page);
+        page = pageManager.retrieve(new PageId(1, 0));
         System.out.println("Retrieved page contents = " + page);
         assertEquals(new PageId(1, 0), page.getPageId());
         assertEquals(new Lsn(91, 33), page.getPageLsn());
-        storageManager.shutdown();
-        storageFactory.delete("testfile.dat");
     }
 
     static public class MyPage extends Page {
-
         int i = 0;
         
         MyPage(PageManager pageFactory, int type, PageId pageId) {
@@ -112,7 +128,6 @@ public class TestPage extends BaseTestCase {
         }
         
         static class MyPageFactory implements PageFactory {
-
         	final PageManager pageManager;
         	
         	public MyPageFactory(PageManager pageManager) {
@@ -129,73 +144,33 @@ public class TestPage extends BaseTestCase {
 			public int getPageType() {
 				return TYPE_MYPAGE;
 			}
-        	
         }
     }
 
     public void testCase2() throws Exception {
-        Properties properties = new Properties();
-        properties.setProperty("storage.basePath", "testdata/TestPage");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
-        properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
-
-        MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
+        MyPage page = (MyPage) pageManager.getInstance(TYPE_MYPAGE, new PageId(
             1,
             0));
         page.i = 9745;
         page.setPageLsn(new Lsn(97, 45));
-        pageFactory.store(page);
-        page = (MyPage) pageFactory.retrieve(new PageId(1, 0));
+        pageManager.store(page);
+        page = (MyPage) pageManager.retrieve(new PageId(1, 0));
         System.out.println("Retrieved page contents = " + page);
         assertEquals(page.i, 9745);
         assertEquals(page.getPageLsn(), new Lsn(97, 45));
         assertEquals(page.getPageId(), new PageId(1, 0));
         assertEquals(page.getType(), TYPE_MYPAGE);
-        storageManager.shutdown();
-        storageFactory.delete("testfile.dat");
     }
 
     public void testCase3() {
-        Properties properties = new Properties();
-        properties.setProperty("storage.basePath", "testdata/TestPage");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
-        properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
-//        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-//            properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
-        MyPage page = (MyPage) pageFactory.getInstance(TYPE_MYPAGE, new PageId(
+        MyPage page = (MyPage) pageManager.getInstance(TYPE_MYPAGE, new PageId(
             1,
             0));
-        
-        assertEquals(pageFactory.getUsablePageSize() - Page.SIZE, page.getAvailableLength());
-        assertEquals(pageFactory.getPageSize(), page.getStoredLength());
+        assertEquals(pageManager.getUsablePageSize() - Page.SIZE, page.getAvailableLength());
+        assertEquals(pageManager.getPageSize(), page.getStoredLength());
     }
     
 }
