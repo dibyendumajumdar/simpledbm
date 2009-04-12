@@ -3604,7 +3604,7 @@ public class TestBTreeManager extends BaseTestCase {
 		assertEquals(1, sr.k);
 		key = generateKey(indexHelper, "ZZZZ", 0, 0, true);
 		sr = node.search(key);
-		assertEquals(-1, sr.k);
+		assertEquals(SearchResult.KEY_OUT_OF_BOUNDS, sr.k);
         page.unlatchExclusive();
         compressKeys = false;
 	}	
