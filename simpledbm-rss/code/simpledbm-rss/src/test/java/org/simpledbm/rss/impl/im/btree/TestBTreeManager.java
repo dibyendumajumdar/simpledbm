@@ -3699,6 +3699,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testInsertUnderflowFig15"));
 		suite.addTest(new TestBTreeManager("testInsertNextKeyInNextPage"));
 		suite.addTest(new TestBTreeManager("testInsertUnderflowFig17")); 
+		suite.addTest(new TestBTreeManager("testIssue71")); 
 		suite.addTest(new TestBTreeManager("testDelete1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert2"));
