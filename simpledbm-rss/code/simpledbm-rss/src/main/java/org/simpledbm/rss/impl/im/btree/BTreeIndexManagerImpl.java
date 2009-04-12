@@ -830,7 +830,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         BTreeNode node = new BTreeNode(po, insertOp.getIndexItemFactory(), p);
         SearchResult sr = node.search(insertOp.getItem());
         assert !sr.exactMatch;
-        if (sr.k == -1) {
+        if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
             // The new key is greater than all keys in the node
             // Must still be <= highkey
             assert node.getHighKey().compareTo(insertOp.getItem()) >= 0;
@@ -1088,12 +1088,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             }
             SearchResult sr = node.search(deleteOp.getItem());
             assert !sr.exactMatch;
-            if (sr.k == -1) {
+            if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
                 // this is the rightmost key in this node
                 assert node.getHighKey().compareTo(deleteOp.getItem()) >= 0;
                 sr.k = node.header.keyCount;
             }
-            assert sr.k != -1;
+            assert sr.k != SearchResult.KEY_OUT_OF_BOUNDS;
 
             /*
              * Now we can reinsert the key that was deleted. First generate 
@@ -2940,7 +2940,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int nextKeyPage = -1;
                 int nextk = -1;
 
-                if (sr.k == -1) {
+                if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
                     /* next key is in the next page or it is
                      * INFINITY if this is the rightmost page.
                      */
@@ -3269,7 +3269,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr.k = icursor.k;
                 sr.exactMatch = true;
                 if (!node.getItem(sr.k).equals(icursor.currentKey)) {
-                	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "redoLinkOperation", 
+                	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doSearchAtLeafLevel", 
                     		new IndexException(po.getMessageCatalog().getMessage("EB0005", node
                         .getItem(sr.k), icursor.currentKey)));
                 }
@@ -3305,7 +3305,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     sr.exactMatch = false;
                     sr.item = node.getItem(sr.k);
                 }
-            } else if (sr.k == -1) {
+            } else if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
             	tracer.event(133, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber());
                 /*
                  * The current key is greater than all keys in this node,
@@ -3354,7 +3354,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 icursor.bcursor.unfixQ();
                 node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
-                if (sr.k == -1) {
+                if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
                 	/* must have hit EOF, as we should never have to move right more than
                 	 * once at any level of the tree.
                 	 */
@@ -3492,6 +3492,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     icursor.bcursor.setSearchKey(icursor.currentKey);
                     readModeTraverse(icursor.bcursor);
                     SearchResult sr1 = doSearchAtLeafLevel(icursor);
+                    // FIXME - can sr1.item be null here?
                     if (sr1.item.equals(sr.item)) {
                         // we found the same key again
                         /*
@@ -4083,12 +4084,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     }
 
     public static final class SearchResult implements Dumpable {
+    	
+    	static final int KEY_OUT_OF_BOUNDS = -1;
+    	
         /**
          * The key number can range from {@link BTreeIndexManagerImpl#FIRST_KEY_POS}
          * to {@link BTreeNode#getKeyCount()}. A value of -1 indicates that the
          * search key is greater than all keys in the node.
          */
-        int k = -1;
+        int k = KEY_OUT_OF_BOUNDS;
         IndexItem item = null;
         boolean exactMatch = false;
         
@@ -4765,7 +4769,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
             }
             SearchResult sr = search(key);
-            assert sr.k != -1;
+            assert sr.k != SearchResult.KEY_OUT_OF_BOUNDS;
             return sr.item.getChildPageNumber();
         }
 
