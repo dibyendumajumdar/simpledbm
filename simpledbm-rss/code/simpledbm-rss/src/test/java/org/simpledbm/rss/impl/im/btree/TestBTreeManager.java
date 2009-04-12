@@ -2564,6 +2564,13 @@ public class TestBTreeManager extends BaseTestCase {
 		doFindSingleValue("b4", "10", false);
 	}	
 
+	public void testIssue71_Insert() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/issue71_insert.xml");
+		doSingleInsert(false, true, "a3", "10");
+		doValidateTree("org/simpledbm/rss/impl/im/btree/testIssue71_insert.xml");
+	}		
+	
 	/**
 	 * Scans the tree from a starting key to the eof.
 	 */
@@ -3700,6 +3707,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testInsertNextKeyInNextPage"));
 		suite.addTest(new TestBTreeManager("testInsertUnderflowFig17")); 
 		suite.addTest(new TestBTreeManager("testIssue71")); 
+		suite.addTest(new TestBTreeManager("testIssue71_Insert")); 
 		suite.addTest(new TestBTreeManager("testDelete1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert1"));
 		suite.addTest(new TestBTreeManager("testDeleteInsert2"));
