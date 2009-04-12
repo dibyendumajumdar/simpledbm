@@ -2558,6 +2558,54 @@ public class TestBTreeManager extends BaseTestCase {
 				"org/simpledbm/rss/impl/im/btree/testDeleteInsert1_1.xml", null);
 	}
 
+	public void testIssue71() throws Exception {
+		doInitContainer();
+		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/issue71.xml");
+		doFindSingleValue("b4", "10", false);
+	}	
+
+	/**
+	 * Scans the tree from a starting key to the eof.
+	 */
+	void doFindSingleValue(String k, String l, boolean expectSuccess) throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			IndexContainer index = db.btreeMgr.getIndex(1);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getSingleton(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
+
+			Transaction trx = db.trxmgr.begin(IsolationMode.READ_COMMITTED);
+			try {
+					IndexKey key = keyFactory.parseIndexKey(1, k);
+					Location location = locationFactory.newLocation(l);
+
+					IndexScan scan = index.openScan(trx, key, location, false);
+					boolean found = false;
+					if (scan.fetchNext()) {
+						found = key.toString().equals(scan.getCurrentKey()
+								.toString()) && location.toString().equals(scan
+								.getCurrentLocation().toString());
+						scan.fetchCompleted(true);
+					}
+					scan.close();
+					if (found && !expectSuccess) {
+						fail("Find succeeded for (" + key + ", " + location + ")");
+					}
+					else if (!found && expectSuccess) {
+						fail("Find failed for (" + key + ", " + location + ")");
+					}
+			} finally {
+				trx.abort();
+			}
+		} finally {
+			db.shutdown();
+		}
+	}
+	
+	
 	public void testScan1() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/data6nul.xml");
