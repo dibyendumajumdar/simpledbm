@@ -3355,12 +3355,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
                 sr = node.search(icursor.currentKey);
                 if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
-                	/* must have hit EOF, as we should never have to move right more than
-                	 * once at any level of the tree.
-                	 */
-                	assert node.header.rightSibling == -1;
-                	// TODO also assert that the highkey == +infinity
-                    icursor.setEof(true);
+                	if (node.header.rightSibling == -1) {
+                		/* 
+                		 * Hit EOF.
+                		 */
+                		icursor.setEof(true);
+                	}
                     sr.k = node.header.keyCount;
                     sr.exactMatch = false;
                     sr.item = node.getItem(sr.k);
