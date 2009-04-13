@@ -6,8 +6,8 @@ SimpleDBM Database API
 
 :Author: Dibyendu Majumdar
 :Contact: d.majumdar@gmail.com
-:Version: 1.0.11
-:Date: 7 April 2009
+:Version: 1.0.11b
+:Date: 13 April 2009
 :Copyright: Copyright by Dibyendu Majumdar, 2008-2009
 
 .. contents::
@@ -21,7 +21,8 @@ Overview
 
 SimpleDBM_ is a transactional database engine, written in Java. It has a
 very small footprint and can be embedded in the address space of an
-application. It provides a simple Java application programming interface (API), which can be learned very quickly.
+application. It provides a simple Java application programming interface (API), 
+which can be learned very quickly.
 
 .. _SimpleDBM: http://www.simpledbm.org
 
@@ -84,7 +85,7 @@ Getting Started
 ---------------
 
 A SimpleDBM server is a set of background threads and a library of API
-calls that clients can hook into. The background threads take care of
+calls that clients can call. The background threads take care of
 various tasks, such as writing out buffer pages, writing out logs,
 archiving older log files, creating checkpoints, etc.
 
@@ -96,15 +97,21 @@ any point in time. SimpleDBM uses a lock file to detect multiple
 concurrent access to a database, and will refuse to start if it
 detects that a server is already accessing a database.
 
+Multiple simultaneous threads can access SimpleDBM. Multiple transactions
+can be executed in parallel. SimpleDBM is fully multi-threaded and
+supports concurrent reads and writes.
+
 Internally, SimpleDBM operates on logical entities called Storage
 Containers. From an implementation point of view, Storage Containers
 are mapped to files. 
 
 Tables and Indexes are stored in Containers known as TupleContainers
-and IndexContainers, respectively.
+and IndexContainers, respectively. Each container is identified by a
+numeric ID, called the Container ID. Internally, SimpleDBM reserves the
+container ID zero (0), so the first available ID is one (1).
 
 The SimpleDBM database initially consists of a set of transaction log
-files, a lock file and a special container used internally by
+files, a lock file and a special container (ID 0) used internally by
 SimpleDBM.
 
 SimpleDBM binaries
@@ -115,9 +122,9 @@ or above if you want to work with SimpleDBM.
 You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
 project download area. The following jar files are required:
 
-* `simpledbm-rss-1.0.12.jar <http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.12.jar>`_ - this is the core database engine.
-* `simpledbm-typesystem-1.0.10.jar <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.10.jar>`_ - provides a simple type system.
-* `simpledbm-database-1.0.11.jar <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.11.jar>`_ - provides a higher level database API with support for tables and indexes. 
+* `simpledbm-rss-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - this is the core database engine.
+* `simpledbm-typesystem-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - provides a simple type system.
+* `simpledbm-database-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - provides a higher level database API with support for tables and indexes. 
 
 You should make sure that required jars are in your class path.
 
@@ -135,10 +142,21 @@ as shown below: ::
   properties.setProperty("log.groups.1.path", ".");
   properties.setProperty("log.archive.path", ".");
   properties.setProperty("log.group.files", "3");
-  properties.setProperty("log.file.size", "16384");
-  properties.setProperty("log.buffer.size", "16384");
+  properties.setProperty("log.file.size", "5242880");
+  properties.setProperty("log.buffer.size", "5242880");
   properties.setProperty("log.buffer.limit", "4");
-  properties.setProperty("log.flush.interval", "5");
+  properties.setProperty("log.flush.interval", "30");
+  properties.setProperty("log.disableFlushRequests", "true");
+  properties.setProperty("storage.createMode", "rw");
+  properties.setProperty("storage.openMode", "rw");
+  properties.setProperty("storage.flushMode", "noforce");
+  properties.setProperty("bufferpool.numbuffers", "1500");
+  properties.setProperty("bufferpool.writerSleepInterval", "60000");
+  properties.setProperty("transaction.ckpt.interval", "60000");
+  properties.setProperty("logging.properties.type", "log4j");
+  properties.setProperty("logging.properties.file",
+    "classpath:simpledbm.logging.properties");
+  properties.setProperty("lock.deadlock.detection.interval", "3");
   properties.setProperty("storage.basePath", 
     "demodata/DemoDB");
   
@@ -146,7 +164,10 @@ as shown below: ::
 
 The DatabaseFactory.create() method accepts a Properties object as
 the sole argument. The Properties object can be used to pass a
-number of parameters. The available options are shown below:
+number of parameters. The available options are shown below. Note that
+some of the options have an impact on the performance and reliability
+of the server - especially those that control how SimpleDBM treats
+file IO. 
 
 Server Options
 --------------
@@ -251,12 +272,15 @@ Here is a code snippet that shows how this is done: ::
   properties.setProperty("log.groups.1.path", ".");
   properties.setProperty("log.archive.path", ".");
   properties.setProperty("log.group.files", "3");
-  properties.setProperty("log.file.size", "16384");
-  properties.setProperty("log.buffer.size", "16384");
+  properties.setProperty("log.file.size", "5242880");
+  properties.setProperty("log.buffer.size", "5242880");
   properties.setProperty("log.buffer.limit", "4");
   properties.setProperty("log.flush.interval", "30");
   properties.setProperty("log.disableFlushRequests", "true");
-  properties.setProperty("bufferpool.numbuffers", "100");
+  properties.setProperty("storage.createMode", "rw");
+  properties.setProperty("storage.openMode", "rw");
+  properties.setProperty("storage.flushMode", "noforce");
+  properties.setProperty("bufferpool.numbuffers", "1500");
   properties.setProperty("bufferpool.writerSleepInterval", "60000");
   properties.setProperty("transaction.ckpt.interval", "60000");
   properties.setProperty("logging.properties.type", "log4j");
@@ -265,8 +289,8 @@ Here is a code snippet that shows how this is done: ::
   properties.setProperty("lock.deadlock.detection.interval", "3");
   properties.setProperty("storage.basePath", 
     "demodata/DemoDB");
-
-  Database db = DatabaseFactory.getDatabase(getServerProperties());
+    
+  Database db = DatabaseFactory.getDatabase(properties);
   db.start();  
   try {
     // do some work
@@ -396,6 +420,10 @@ To start a new Transaction, invoke the ``Database.startTransaction()`` method as
 shown below. You must supply an ``IsolationMode``, try
 ``READ_COMMITTED`` to start with.::
 
+ import org.simpledbm.database.api.Database;
+ import org.simpledbm.rss.api.tx.IsolationMode;
+ import org.simpledbm.rss.api.tx.Transaction;
+
  Database database = ...;
 
  // Start a new Transaction
@@ -511,8 +539,9 @@ at present that you need to be aware of.
   tables and indexes will be added in a future release of SimpleDBM.
   
 * Table structures are limited in the type of columns you can have. At
-  present Varchar, DateTime, Number and Integer types are supported. More
-  data types will be available in a future release of SimpleDBM.
+  present Varchar, Varbinary, DateTime, Number, Integer and Long 
+  types are supported. More data types will be available in a future 
+  release of SimpleDBM.
   
 * Null columns cannot be indexed.
 
@@ -546,7 +575,7 @@ shown below.::
     ff.getDateTimeType(), /* date of birth */
     ff.getNumberType(2) /* salary */
   };
-
+  
 The next step is to create a ``TableDefinition`` object by calling the 
 ``Database.newTableDefinition()`` method.::
 
@@ -595,8 +624,10 @@ to such transactions.
 
 It is important to bear in mind that all container names must be unique.
 Think of the container name as the file name. Also, the container IDs are
-used by SimpleDBM to identify each container uniqely. Therefore these IDs
-must also be unique. 
+used by SimpleDBM to identify each container uniqely. As explained before, 
+SimpleDBM internally uses a special container with ID=0. Any tables and 
+indexes you create must have container IDs >= 1, and you must ensure that 
+these are unique. 
 
 Isolation Modes
 ===============
@@ -668,13 +699,14 @@ new row objects rather than reusing existing objects.::
   
 You can assign values to the columns as shown below.::
 
-    tableRow.getColumnValue(0).setInt(1);
-    tableRow.getColumnValue(1).setString("Joe");
-    tableRow.getColumnValue(2).setString("Blogg");
-    tableRow.getColumnValue(5).setDate(getDOB(1930, 12, 31));
-    tableRow.getColumnValue(6).setString("500.00");
+    tableRow.setInt(0, i);
+    tableRow.setString(1, "Joe");
+    tableRow.setString(2, "Blogg");
+    tableRow.setDate(5, getDOB(1930, 12, 31));
+    tableRow.setString(6, "500.00");
 
-Finally, insert the row and commit the transaction.::
+Any columns you do not assign a value will be set to null automatically.
+The final step is to insert the row and commit the transaction.::
 
     table.addRow(trx, tableRow);
     okay = true;
@@ -738,7 +770,8 @@ The following points are worth noting.
 
 1. The ``openScan()`` method takes an index identifier as the second argument.
    The scan is ordered by the index. Indexes are identified
-   by their order of creation, therefore, the first index is 0, the second is 1,
+   by the order in which they were associated with the table, 
+   therefore, the first index is 0, the second is 1,
    and so on. Note that the index number is not the container ID for the index.
 2. The third argument is the starting row for the scan. If ``null`` is specified,
    as in the example above, then the scan will start from logical negative
@@ -766,11 +799,9 @@ to last and three of the columns are updated in all the rows.::
     try {
       while (scan.fetchNext()) {
         Row tr = scan.getCurrentRow();
-        tr.getColumnValue(3).setString("London");
-        tr.getColumnValue(4).setString(
-          tr.getColumnValue(1).getString() + "." + 
-          tr.getColumnValue(2).getString() + "@gmail.com");
-        tr.getColumnValue(6).setInt(50000);
+        tr.setString(3, "London");
+        tr.setString(4, tr.getString(1) + "." + tr.getString(2) + "@gmail.com");
+        tr.setInt(6, 50000);
         scan.updateCurrentRow(tr);
         scan.fetchCompleted(true);
       }
