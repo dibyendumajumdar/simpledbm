@@ -29,7 +29,7 @@ import org.simpledbm.typesystem.api.Row;
  * table.
  * <p>
  * A Table is created by {@link Database#createTable(TableDefinition) Database.createTable()}.
- * Once created, the Table object can be accessed by calling {@link Database#getTable(TableDefinition)
+ * Once created, the Table object can be accessed by calling {@link Database#getTable(Transaction, int)
  * Database.getTable()} method. 
  * 
  * @author dibyendu majumdar

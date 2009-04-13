@@ -114,7 +114,7 @@ public interface TableDefinition extends Storable, Dumpable {
 	 * Constructs an row for the specified Index. Appropriate columns from the
 	 * table are copied into the Index row.
 	 *  
-	 * @param index The Index for which the row is to be constructed
+	 * @param indexNo The Index for which the row is to be constructed
 	 * @param tableRow The table row
 	 * @return An initialized Index Row
 	 */
