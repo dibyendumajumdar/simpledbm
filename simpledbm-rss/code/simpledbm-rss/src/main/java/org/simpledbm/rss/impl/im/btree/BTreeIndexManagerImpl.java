@@ -3376,6 +3376,23 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 		 * We cannot leave the pointer on the high key as the
                 		 * high key is not part of the result set.
                 		 */
+                		/*
+                		 * From Issue 71:
+                		 * The use case is when there is an indirect child which is a leaf page 
+                		 * and isn't the last leaf page of the tree. Also, the high key of the 
+                		 * leaf page is greater than all the keys in the page - maybe because 
+                		 * some keys have been deleted. In this situation, if a fetch tries to 
+                		 * look for one of the deleted keys, the correct action is to move to 
+                		 * the right sibling of the indirect child that would have contained 
+                		 * the key, and position the cursor on the first key of the right sibling. 
+                		 * We therefore have a use case where the search can actually move 
+                		 * across three leaf pages - the left direct child, the indirect child, 
+                		 * and finally the right sibling of the indirect child.
+                		 * 
+                		 * See the test data issue71.xml for a sample tree that demonstrates 
+                		 * this use case. A search for 'b4' and '24' should result in the 
+                		 * cursor being positioned on 'c1' and '31'.
+                		 */
                 		nextPage = node.header.rightSibling;
                     	tracer.event(140, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber(), nextPage);
                         nextPageId = new PageId(containerId, nextPage);
