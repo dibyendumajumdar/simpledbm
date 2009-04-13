@@ -178,7 +178,7 @@ public class Server {
      * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
      * any existing database on the same path, hence caller needs to be sure that the
      * intention is to create a new database.  
-     * @see LogFactory#createLog(Properties)
+     * @see LogFactory#createLog(StorageContainerFactory, Properties)
      * @see LogFactory
      */
     public static void create(Properties props) {
