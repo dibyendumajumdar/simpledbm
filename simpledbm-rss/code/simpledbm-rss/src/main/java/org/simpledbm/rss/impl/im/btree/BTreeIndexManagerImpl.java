@@ -3342,6 +3342,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                  * There isn't a node to our right, so we are at EOF.
                  */
                 icursor.setEof(true);
+                /*
+                 * Position on the high key
+                 */
                 sr.k = node.header.keyCount;
                 sr.exactMatch = false;
                 sr.item = node.getItem(sr.k);
@@ -3356,14 +3359,35 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr = node.search(icursor.currentKey);
                 if (sr.k == SearchResult.KEY_OUT_OF_BOUNDS) {
                 	if (node.header.rightSibling == -1) {
-                		/* 
-                		 * Hit EOF.
-                		 */
+                        /*
+                         * There isn't a node to our right, so we are at EOF.
+                         */
                 		icursor.setEof(true);
+                        /*
+                         * Position on the high key
+                         */
+                        sr.k = node.header.keyCount;
+                        sr.exactMatch = false;
+                        sr.item = node.getItem(sr.k);
                 	}
-                    sr.k = node.header.keyCount;
-                    sr.exactMatch = false;
-                    sr.item = node.getItem(sr.k);
+                	else {
+                		/*
+                		 * Position on the first key in the next node
+                		 * We cannot leave the pointer on the high key as the
+                		 * high key is not part of the result set.
+                		 */
+                		nextPage = node.header.rightSibling;
+                    	tracer.event(140, node.getPage().getPageId().getContainerId(), node.getPage().getPageId().getPageNumber(), nextPage);
+                        nextPageId = new PageId(containerId, nextPage);
+                        icursor.bcursor.setQ(icursor.bcursor.removeP());
+                    	tracer.event(137, nextPageId.getContainerId(), nextPageId.getPageNumber());
+                        icursor.bcursor.setP(btreeMgr.bufmgr.fixShared(nextPageId, 0));
+                        icursor.bcursor.unfixQ();
+                        node = new BTreeNode(po, indexItemFactory, icursor.bcursor.getP().getPage());
+                        sr.k = FIRST_KEY_POS;
+                        sr.exactMatch = false;
+                        sr.item = node.getItem(sr.k);
+                	}
                 }
             }
             return sr;
@@ -4712,11 +4736,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         /**
          * Searches for the supplied key. If there is an
          * exact match, SearchResult.exactMatch will be set.
-         * If a key is found &gt;= 0 the supplied key,
+         * Otherwise, if the node contains a key &gt;= 0 the supplied key,
          * SearchResult.k and SearchResult.item will be set to it.
          * If all keys in the page are &lt; search key then, 
          * SearchResult.k will be set to -1 and SearchResult.item will
          * be null. 
+         * <p>
+         * Note that in leaf nodes, the search does not consider the
+         * high key. Hence the -1 result needs to be verified by the
+         * caller by comparing against the high key.
          */
         public final SearchResult search(IndexItem key) {
         	sanityCheck();
@@ -4726,6 +4754,10 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
              * Binary search algorithm
              */
             int low = FIRST_KEY_POS;
+            /*
+             * Note that in leaf nodes, we do not include the
+             * high key in searches.
+             */
             int high = getKeyCount();
             while (low <= high) {
                 int mid = (low + high) >>> 1;
