@@ -2561,7 +2561,7 @@ public class TestBTreeManager extends BaseTestCase {
 	public void testIssue71() throws Exception {
 		doInitContainer();
 		doLoadXml(false, "org/simpledbm/rss/impl/im/btree/issue71.xml");
-		doFindSingleValue("b4", "10", false);
+		doFindSingleValue("b4", "24", "c1", "31");
 	}	
 
 	public void testIssue71_Insert() throws Exception {
@@ -2574,7 +2574,7 @@ public class TestBTreeManager extends BaseTestCase {
 	/**
 	 * Scans the tree from a starting key to the eof.
 	 */
-	void doFindSingleValue(String k, String l, boolean expectSuccess) throws Exception {
+	void doFindSingleValue(String k, String l, String expectedKey, String expectedLoc) throws Exception {
 		final BTreeDB db = new BTreeDB(false);
 		try {
 			IndexContainer index = db.btreeMgr.getIndex(1);
@@ -2590,20 +2590,15 @@ public class TestBTreeManager extends BaseTestCase {
 					Location location = locationFactory.newLocation(l);
 
 					IndexScan scan = index.openScan(trx, key, location, false);
-					boolean found = false;
 					if (scan.fetchNext()) {
-						found = key.toString().equals(scan.getCurrentKey()
-								.toString()) && location.toString().equals(scan
-								.getCurrentLocation().toString());
+						if (!(scan.getCurrentKey().toString().equals(expectedKey) && 
+								scan.getCurrentLocation().toString().equals(expectedLoc))) {
+							fail("Found (" + scan.getCurrentKey().toString() + ", " + scan.getCurrentLocation().toString() 
+									+ ") instead of (" + expectedKey + "," + expectedLoc + ")");
+						}
 						scan.fetchCompleted(true);
 					}
 					scan.close();
-					if (found && !expectSuccess) {
-						fail("Find succeeded for (" + key + ", " + location + ")");
-					}
-					else if (!found && expectSuccess) {
-						fail("Find failed for (" + key + ", " + location + ")");
-					}
 			} finally {
 				trx.abort();
 			}

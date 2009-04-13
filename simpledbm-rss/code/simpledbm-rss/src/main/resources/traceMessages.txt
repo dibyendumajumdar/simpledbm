@@ -138,3 +138,4 @@
 137 TID {0} SEQ {1} btree move to right sibling: fixing page ({2},{3}) in SHARED mode
 138 TID {0} SEQ {1} btree node search: searching for key in page ({2},{3})
 139 TID {0} SEQ {1} btree fetch: unexpected error while searching container {2}
+140 TID {0} SEQ {1} btree move to right sibling: page ({2},{3}) has right sibling {4} therefore positioning on first key of right sibling
