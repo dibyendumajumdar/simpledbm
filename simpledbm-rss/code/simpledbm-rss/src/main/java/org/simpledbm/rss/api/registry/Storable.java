@@ -30,7 +30,7 @@ import java.nio.ByteBuffer;
  * <p>Storable objects must provide constructors that accept ByteBuffer as the sole
  * argument. In order to create such objects, implementations of {@link org.simpledbm.rss.api.registry.ObjectFactory ObjectFactory} must be
  * registered with the {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
- * <p>The asymmetry between the way objects are serialized through calling {@link #store()} and
+ * <p>The asymmetry between the way objects are serialized through calling {@link #store(ByteBuffer) store()} and
  * de-serialized using the ObjectFactory is to allow constructor based initialization of
  * objects during de-serialization. This allows objects to be defined as immutable without
  * introducing a back door facility for reading/writing final fields.

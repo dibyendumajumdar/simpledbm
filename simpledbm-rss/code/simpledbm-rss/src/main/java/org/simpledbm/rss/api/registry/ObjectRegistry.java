@@ -47,7 +47,7 @@ public interface ObjectRegistry {
      * provided for creating instances of the type. 
      *  
      * @param typecode A unique type code for the type.
-     * @param classname The class name.
+     * @param objectFactory The ObjectFactory implementation.
      */
     public void registerObjectFactory(int typecode, ObjectFactory objectFactory);
 
