@@ -1,3 +1,5 @@
+1.0.15-BETA:
+
 1.0.14-BETA:
  * dm: Issue 71: BTree: Refixed as original solution wasn't correct. When scanning a tree the
    cursor can never be placed on a high key other than the last high key that represents
