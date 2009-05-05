@@ -23,14 +23,14 @@
  */
 package org.simpledbm.rss.api.locking;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * LockException is the base class for all exceptions raised by the Locking sub-system.
  * @author Dibyendu Majumdar
  * @since 27-July-2005
  */
-public class LockException extends RSSException {
+public class LockException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

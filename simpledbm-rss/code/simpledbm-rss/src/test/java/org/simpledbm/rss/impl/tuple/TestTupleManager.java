@@ -29,6 +29,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
+import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
@@ -37,12 +43,9 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
-import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -63,9 +66,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
-import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -73,7 +74,6 @@ import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
 import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
-import org.simpledbm.rss.util.ByteString;
 
 public class TestTupleManager extends BaseTestCase {
 

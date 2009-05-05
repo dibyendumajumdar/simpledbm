@@ -19,9 +19,9 @@
  */
 package org.simpledbm.rss.api.fsm;
 
+import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.tx.Transaction;

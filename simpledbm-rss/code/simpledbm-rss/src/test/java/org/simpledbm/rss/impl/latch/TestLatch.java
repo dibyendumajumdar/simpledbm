@@ -21,11 +21,11 @@ package org.simpledbm.rss.impl.latch;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 /**
  * 

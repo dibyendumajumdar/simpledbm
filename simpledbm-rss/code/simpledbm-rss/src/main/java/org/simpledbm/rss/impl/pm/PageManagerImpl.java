@@ -22,23 +22,23 @@ package org.simpledbm.rss.impl.pm;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.util.ChecksumCalculator;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageReadException;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageManager;
-import org.simpledbm.rss.util.ChecksumCalculator;
-import org.simpledbm.rss.util.TypeSize;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * The PageManager handles the reading and writing of pages. The actual reading/writing

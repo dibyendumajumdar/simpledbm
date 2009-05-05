@@ -22,15 +22,15 @@ package org.simpledbm.rss.impl.tx;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModule;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 public final class TransactionalModuleRegistryImpl implements
         TransactionalModuleRegistry {

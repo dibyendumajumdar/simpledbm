@@ -21,9 +21,9 @@ package org.simpledbm.rss.impl.locking.util;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
-import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.tx.Lockable;
 
 public class DefaultLockAdaptor implements LockAdaptor {

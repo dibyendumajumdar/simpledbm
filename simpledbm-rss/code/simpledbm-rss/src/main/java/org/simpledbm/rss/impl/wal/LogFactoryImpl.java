@@ -22,7 +22,7 @@ package org.simpledbm.rss.impl.wal;
 import java.util.ArrayList;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.platform.Platform;
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogFactory;

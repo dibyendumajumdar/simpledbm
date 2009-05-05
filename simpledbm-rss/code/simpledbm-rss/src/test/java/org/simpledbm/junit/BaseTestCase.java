@@ -24,8 +24,8 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 
 public abstract class BaseTestCase extends TestCase {
 

@@ -21,11 +21,11 @@ package org.simpledbm.rss.impl.tuple;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.tx.BaseLockable;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
 
 /**
  * TupleId uniquely identifies the location of a tuple within the Relation.

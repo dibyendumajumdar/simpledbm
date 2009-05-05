@@ -22,6 +22,12 @@ package org.simpledbm.rss.impl.tx;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.registry.ObjectFactory;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
+import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
@@ -31,14 +37,11 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
-import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectFactory;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
@@ -64,13 +67,10 @@ import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.bm.BufferManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
-import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
-import org.simpledbm.rss.util.ByteString;
 
 public class TestTransactionManager2 extends BaseTestCase {
 

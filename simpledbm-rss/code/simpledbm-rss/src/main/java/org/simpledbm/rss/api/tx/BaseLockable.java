@@ -19,7 +19,7 @@
  */
 package org.simpledbm.rss.api.tx;
 
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.util.Dumpable;
 
 /**
  * BaseLockable provides a convenient base class which transactional modules

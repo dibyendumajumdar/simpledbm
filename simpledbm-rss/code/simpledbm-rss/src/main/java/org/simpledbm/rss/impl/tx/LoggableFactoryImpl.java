@@ -22,8 +22,8 @@ package org.simpledbm.rss.impl.tx;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.wal.LogRecord;

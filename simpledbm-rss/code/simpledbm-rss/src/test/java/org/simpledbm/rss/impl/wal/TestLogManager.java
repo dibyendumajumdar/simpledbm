@@ -25,16 +25,16 @@ import java.util.Properties;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogFactory;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.LogReader;
 import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 
 /**

@@ -21,9 +21,9 @@ package org.simpledbm.rss.api.tx;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 
 /**
  * Transaction Identifier. Must be a monotonically increasing value that 

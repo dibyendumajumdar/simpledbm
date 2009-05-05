@@ -22,7 +22,6 @@ package org.simpledbm.rss.api.bm;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.wal.Lsn;
 

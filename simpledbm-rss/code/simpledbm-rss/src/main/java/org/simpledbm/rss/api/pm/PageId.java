@@ -21,9 +21,9 @@ package org.simpledbm.rss.api.pm;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 
 /**
  * Each page in the database is uniquely identified by a pageid consisting of 

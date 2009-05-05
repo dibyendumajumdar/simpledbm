@@ -24,6 +24,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -32,9 +34,7 @@ import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
-import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 
 /**
  * Test cases for Lock Manager module.

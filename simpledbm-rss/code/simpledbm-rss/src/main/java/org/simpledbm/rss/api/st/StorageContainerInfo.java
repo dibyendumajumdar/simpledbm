@@ -23,7 +23,7 @@
  */
 package org.simpledbm.rss.api.st;
 
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.util.Dumpable;
 
 /**
  * Represents information about an active storage container.

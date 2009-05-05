@@ -27,18 +27,30 @@ import java.util.Properties;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.key.IndexKey;
+import org.simpledbm.common.api.key.IndexKeyFactory;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectFactory;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.api.registry.StorableFactory;
+import org.simpledbm.common.tools.diagnostics.TraceBuffer;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.DiagnosticLogger;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexException;
-import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
@@ -48,14 +60,8 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.registry.ObjectFactory;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.api.registry.StorableFactory;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
@@ -72,12 +78,6 @@ import org.simpledbm.rss.api.tx.TransactionalCursor;
 import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
-import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -3797,7 +3797,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 
         public final void close() {
             trx.unregisterTransactionalCursor(this);
-            RSSException ex = null;
+            SimpleDBMException ex = null;
 
             // Following is needed because in the not found scenario,
             // fetchCompleted will not be called.
@@ -3823,13 +3823,13 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         }
                     }
                 }
-            } catch (RSSException e) {
+            } catch (SimpleDBMException e) {
                 ex = e;
             }
 
             try {
                 bcursor.unfixAll();
-            } catch (RSSException e) {
+            } catch (SimpleDBMException e) {
                 if (ex == null) {
                     ex = e;
                 }
@@ -4092,21 +4092,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         }
 
         public final void unfixAll() {
-            RSSException e = null;
+            SimpleDBMException e = null;
             try {
                 unfixP();
-            } catch (RSSException e1) {
+            } catch (SimpleDBMException e1) {
                 e = e1;
             }
             try {
                 unfixQ();
-            } catch (RSSException e1) {
+            } catch (SimpleDBMException e1) {
                 if (e == null)
                     e = e1;
             }
             try {
                 unfixR();
-            } catch (RSSException e1) {
+            } catch (SimpleDBMException e1) {
                 if (e == null)
                     e = e1;
             }
@@ -4415,7 +4415,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						}
 					}
 				}
-			} catch (RSSException e) {
+			} catch (SimpleDBMException e) {
 				dumpAsXml();
 				throw e;
 			}
@@ -4442,7 +4442,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 							this.getClass().getName(), "validateItemAt",
 							new IndexException("Mismatch is keycount"));
 				}
-			} catch (RSSException e) {
+			} catch (SimpleDBMException e) {
 				dumpAsXml();
 				throw e;
 			}
@@ -4525,7 +4525,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 							this.getClass().getName(), "validate",
 							new IndexException("Mismatch is keycount"));
 				}
-			} catch (RSSException e) {
+			} catch (SimpleDBMException e) {
 				dumpAsXml();
 				throw e;
 			}

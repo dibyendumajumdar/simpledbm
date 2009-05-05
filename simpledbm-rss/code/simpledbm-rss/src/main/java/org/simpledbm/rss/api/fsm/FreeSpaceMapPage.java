@@ -22,8 +22,8 @@ package org.simpledbm.rss.api.fsm;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.rss.api.pm.Page;
-import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.pm.PageId;
+import org.simpledbm.rss.api.pm.PageManager;
 
 /**
  * Abstract base class for Free Space Map pages. 

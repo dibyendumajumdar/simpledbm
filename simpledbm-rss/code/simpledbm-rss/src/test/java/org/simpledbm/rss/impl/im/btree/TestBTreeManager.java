@@ -34,13 +34,20 @@ import java.util.concurrent.locks.ReentrantLock;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.key.IndexKey;
+import org.simpledbm.common.api.key.IndexKeyFactory;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
+import org.simpledbm.common.tools.diagnostics.TraceBuffer;
+import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
-import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
-import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexManager;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
@@ -52,12 +59,9 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPage;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -84,9 +88,7 @@ import org.simpledbm.rss.impl.locking.LockEventListener;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
-import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
@@ -96,8 +98,6 @@ import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 import org.simpledbm.rss.impl.wal.LogManagerImpl;
-import org.simpledbm.rss.tools.diagnostics.TraceBuffer;
-import org.simpledbm.rss.util.ByteString;
 
 public class TestBTreeManager extends BaseTestCase {
 
@@ -1122,7 +1122,7 @@ public class TestBTreeManager extends BaseTestCase {
 				if (scan.fetchNext()) {
 					fail("Unexpected result");
 				}
-			} catch (RSSException e) {
+			} catch (SimpleDBMException e) {
 				fail("Unexpected exception " + e.getMessage());
 			} finally {
 				scan.close();

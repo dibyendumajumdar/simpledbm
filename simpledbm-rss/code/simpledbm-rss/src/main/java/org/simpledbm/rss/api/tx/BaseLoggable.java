@@ -21,10 +21,10 @@ package org.simpledbm.rss.api.tx;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
 
 /**
  * Provides a default implementation of the Loggable interface. Most log records should

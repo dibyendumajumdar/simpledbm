@@ -21,10 +21,10 @@ package org.simpledbm.rss.impl.latch;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 
 /**
  * A factory for creating Latches.
