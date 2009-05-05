@@ -19,8 +19,8 @@
  */
 package org.simpledbm.database.api;
 
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 

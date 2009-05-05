@@ -19,9 +19,9 @@
  */
 package org.simpledbm.exception;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
-public class DatabaseException extends RSSException {
+public class DatabaseException extends SimpleDBMException {
 
 	private static final long serialVersionUID = 8471449892397523231L;
 
