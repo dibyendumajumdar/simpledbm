@@ -21,6 +21,9 @@ package org.simpledbm.database.impl;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableDefinition;
@@ -29,13 +32,10 @@ import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 import org.simpledbm.typesystem.api.Row;
 
 /**

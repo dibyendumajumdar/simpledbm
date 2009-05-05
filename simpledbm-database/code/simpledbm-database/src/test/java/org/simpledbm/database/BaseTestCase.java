@@ -5,7 +5,7 @@ import java.util.Vector;
 
 import junit.framework.TestCase;
 
-import org.simpledbm.rss.util.logging.Logger;
+import org.simpledbm.common.util.logging.Logger;
 
 public abstract class BaseTestCase extends TestCase {
 
