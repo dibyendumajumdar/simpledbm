@@ -22,6 +22,7 @@ package org.simpledbm.integrationtests.btree;
 import java.io.File;
 import java.util.Properties;
 
+import org.simpledbm.common.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexException;
 import org.simpledbm.rss.api.im.IndexScan;
@@ -35,7 +36,6 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.main.Server;
-import org.simpledbm.rss.util.logging.DiagnosticLogger;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
