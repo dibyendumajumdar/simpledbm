@@ -26,7 +26,7 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 
-import org.simpledbm.rss.api.im.IndexKey;
+import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;

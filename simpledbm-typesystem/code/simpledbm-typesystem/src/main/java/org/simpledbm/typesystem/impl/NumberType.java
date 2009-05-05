@@ -23,7 +23,7 @@ import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
-import org.simpledbm.rss.util.TypeSize;
+import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class NumberType implements TypeDescriptor {

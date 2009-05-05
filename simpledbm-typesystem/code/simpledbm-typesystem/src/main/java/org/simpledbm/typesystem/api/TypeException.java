@@ -1,8 +1,9 @@
 package org.simpledbm.typesystem.api;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
-public class TypeException extends RSSException {
+
+public class TypeException extends SimpleDBMException {
 
 	private static final long serialVersionUID = 1L;
 

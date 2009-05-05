@@ -21,7 +21,7 @@ package org.simpledbm.typesystem.api;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.rss.api.im.IndexKeyFactory;
+import org.simpledbm.common.api.key.IndexKeyFactory;
 
 /**
  * A factory for generating rows. Also provides the ability to register row types 

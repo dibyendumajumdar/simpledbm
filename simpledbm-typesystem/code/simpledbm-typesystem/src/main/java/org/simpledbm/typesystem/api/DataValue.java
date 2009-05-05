@@ -27,8 +27,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
 
 /**
  * A DataValue is a data item with a type, and suitable for use in a multi-column row.
