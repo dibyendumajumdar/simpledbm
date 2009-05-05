@@ -24,7 +24,7 @@ import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
-import org.simpledbm.rss.api.im.IndexKey;
+import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TypeDescriptor;

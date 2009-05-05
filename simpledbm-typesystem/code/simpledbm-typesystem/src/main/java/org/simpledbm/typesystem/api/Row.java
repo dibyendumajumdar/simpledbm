@@ -23,8 +23,8 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
 
-import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.api.key.IndexKey;
+import org.simpledbm.common.util.Dumpable;
 
 /**
  * A Row is an array of DataValue objects, and can be used as multi-value record within

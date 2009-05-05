@@ -22,8 +22,8 @@ package org.simpledbm.typesystem.api;
 import java.text.DateFormat;
 import java.util.TimeZone;
 
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.util.Dumpable;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
 
 /**
  * Provides type information.

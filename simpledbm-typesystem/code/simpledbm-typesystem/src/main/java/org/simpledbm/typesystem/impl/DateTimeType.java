@@ -24,7 +24,7 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.TimeZone;
 
-import org.simpledbm.rss.util.ByteString;
+import org.simpledbm.common.util.ByteString;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class DateTimeType implements TypeDescriptor {
