@@ -17,31 +17,9 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.tools.diagnostics;
 
-import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.common.tools.diagnostics.Trace;
-import org.simpledbm.common.tools.diagnostics.TraceBuffer;
-import org.simpledbm.junit.BaseTestCase;
+/**
+ * Provides some common life cycle interfaces.
+ */
+package org.simpledbm.common.api.lifecycle;
 
-public class TestTrace extends BaseTestCase {
-
-	public TestTrace() {
-	}
-
-	public TestTrace(String arg0) {
-		super(arg0);
-	}
-
-	public void testBasics() {
-		String traceMessages = "traceMessages.txt";
-		PlatformObjects po = platform.getPlatformObjects("org.simpledbm.trace");
-		po.getLogger().enableDebug();
-		TraceBuffer traceBuffer = po.getTraceBuffer();
-		traceBuffer.event(1);
-		traceBuffer.event(20);
-		Trace trace = new Trace(traceBuffer, po.getLogger(), traceMessages);
-		trace.dump();
-	}
-	
-}

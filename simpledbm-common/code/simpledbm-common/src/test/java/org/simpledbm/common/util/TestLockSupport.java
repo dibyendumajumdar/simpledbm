@@ -1,4 +1,4 @@
-package org.simpledbm.rss.util;
+package org.simpledbm.common.util;
 
 import junit.framework.TestCase;
 
