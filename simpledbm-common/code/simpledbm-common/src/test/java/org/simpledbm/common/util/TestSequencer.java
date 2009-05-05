@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.util;
+package org.simpledbm.common.util;
 
 import org.simpledbm.common.util.WrappingSequencer;
 import org.simpledbm.junit.BaseTestCase;

@@ -17,7 +17,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.util.logging;
+package org.simpledbm.common.util.logging;
 
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.junit.BaseTestCase;
@@ -33,7 +33,7 @@ public class TestLogging extends BaseTestCase {
     }
 
     public void testCase1() throws Exception {
-        Logger logger = Logger.getLogger(getClass().getName());
+        Logger logger = Logger.getLogger("org.simpledbm.util");
         
         assertFalse(logger.isDebugEnabled());
         logger.debug("test", "test", "This should not appear");
