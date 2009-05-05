@@ -25,23 +25,27 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectFactory;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.util.ByteString;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
-import org.simpledbm.rss.api.exception.ExceptionHandler;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
 import org.simpledbm.rss.api.fsm.FreeSpaceCursor;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManagerException;
 import org.simpledbm.rss.api.fsm.FreeSpaceMapPage;
 import org.simpledbm.rss.api.fsm.FreeSpaceScan;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectFactory;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
@@ -61,10 +65,6 @@ import org.simpledbm.rss.api.tx.TransactionalModuleRegistry;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.util.ByteString;
-import org.simpledbm.rss.util.TypeSize;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         implements FreeSpaceManager {

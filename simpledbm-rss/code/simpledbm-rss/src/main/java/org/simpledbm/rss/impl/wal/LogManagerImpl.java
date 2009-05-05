@@ -34,10 +34,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
-import org.simpledbm.rss.api.registry.Storable;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.ByteString;
+import org.simpledbm.common.util.ChecksumCalculator;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageException;
@@ -46,11 +51,6 @@ import org.simpledbm.rss.api.wal.LogManager;
 import org.simpledbm.rss.api.wal.LogReader;
 import org.simpledbm.rss.api.wal.LogRecord;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.util.ByteString;
-import org.simpledbm.rss.util.ChecksumCalculator;
-import org.simpledbm.rss.util.TypeSize;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * The default LogMgr implementation.

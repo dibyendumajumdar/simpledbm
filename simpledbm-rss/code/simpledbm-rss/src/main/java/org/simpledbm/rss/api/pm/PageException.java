@@ -23,9 +23,9 @@
  */
 package org.simpledbm.rss.api.pm;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
-public class PageException extends RSSException {
+public class PageException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

@@ -19,13 +19,13 @@
  */
 package org.simpledbm.rss.api.tx;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
  */
-public class TransactionException extends RSSException {
+public class TransactionException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

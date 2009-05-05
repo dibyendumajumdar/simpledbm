@@ -21,9 +21,16 @@ package org.simpledbm.rss.main;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.bm.BufferManager;
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexManager;
@@ -32,12 +39,9 @@ import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -58,9 +62,7 @@ import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 import org.simpledbm.rss.impl.locking.LockManagerFactoryImpl;
 import org.simpledbm.rss.impl.locking.util.DefaultLockAdaptor;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
-import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.sp.SlottedPageManagerImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
@@ -69,8 +71,6 @@ import org.simpledbm.rss.impl.tx.LoggableFactoryImpl;
 import org.simpledbm.rss.impl.tx.TransactionManagerImpl;
 import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * A Server instance encapsulates all the modules that comprise the RSS. 
@@ -118,14 +118,14 @@ public class Server {
     private void assertNotStarted() {
         if (started) {
             exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-            	new RSSException(mcat.getMessage("EV0003")));
+            	new SimpleDBMException(mcat.getMessage("EV0003")));
         }
     }
 
     private void assertStarted() {
         if (!started) {
         	exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-        		new RSSException(mcat.getMessage("EV0004")));
+        		new SimpleDBMException(mcat.getMessage("EV0004")));
         }
     }
 
@@ -152,7 +152,7 @@ public class Server {
             lockObtained = true;
         } catch (StorageException e) {
             exceptionHandler.errorThrow(getClass().getName(), "start", 
-            	new RSSException(mcat.getMessage("EV0005", e.getMessage()), e));
+            	new SimpleDBMException(mcat.getMessage("EV0005", e.getMessage()), e));
         } finally {
             if (!lockObtained) {
                 if (lock != null) {

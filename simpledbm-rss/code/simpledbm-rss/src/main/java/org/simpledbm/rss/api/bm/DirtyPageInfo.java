@@ -21,10 +21,10 @@ package org.simpledbm.rss.api.bm;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.rss.api.pm.PageId;
-import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.util.Dumpable;
 
 /**
  * Holds information about a dirty page. 

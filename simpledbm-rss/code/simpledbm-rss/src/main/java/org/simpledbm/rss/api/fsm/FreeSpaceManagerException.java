@@ -19,12 +19,12 @@
  */
 package org.simpledbm.rss.api.fsm;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * Exception class for the Space Manager module.
  */
-public class FreeSpaceManagerException extends RSSException {
+public class FreeSpaceManagerException extends SimpleDBMException {
 
     public static class TestException extends FreeSpaceManagerException {
         private static final long serialVersionUID = 1L;

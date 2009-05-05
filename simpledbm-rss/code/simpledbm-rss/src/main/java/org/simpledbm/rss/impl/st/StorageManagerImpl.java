@@ -23,17 +23,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.st.StorageException;
 import org.simpledbm.rss.api.st.StorageManager;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * Implements the StorageManager interface.

@@ -21,13 +21,13 @@ package org.simpledbm.rss.main;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
-import org.simpledbm.rss.api.exception.RSSException;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
-import org.simpledbm.rss.util.ByteString;
 
 public class TestServer extends BaseTestCase {
 
@@ -124,7 +124,7 @@ public class TestServer extends BaseTestCase {
         Server server2 = new Server(properties);
         try {
             server2.start();
-        } catch (RSSException e) {
+        } catch (SimpleDBMException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0005"));
             server.shutdown();
             Server.drop(properties);
@@ -154,7 +154,7 @@ public class TestServer extends BaseTestCase {
 
         try {
             server.start();
-        } catch (RSSException e) {
+        } catch (SimpleDBMException e) {
             assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0003"));
             Server.drop(properties);
             return;

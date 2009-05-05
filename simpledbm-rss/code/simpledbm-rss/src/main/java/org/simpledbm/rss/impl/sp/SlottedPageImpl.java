@@ -22,21 +22,21 @@ package org.simpledbm.rss.impl.sp;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
-import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.api.registry.StorableFactory;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.DiagnosticLogger;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.Storable;
-import org.simpledbm.rss.api.registry.StorableFactory;
 import org.simpledbm.rss.api.sp.SlottedPage;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
-import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * SlottedPageImpl is an implementation of SlottedPage that can support page sizes

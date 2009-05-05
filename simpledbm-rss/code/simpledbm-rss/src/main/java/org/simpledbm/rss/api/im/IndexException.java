@@ -19,13 +19,13 @@
  */
 package org.simpledbm.rss.api.im;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * @author Dibyendu Majumdar
  * @since 12-Oct-2005
  */
-public class IndexException extends RSSException {
+public class IndexException extends SimpleDBMException {
 
     private static final long serialVersionUID = 2680497332718941694L;
 

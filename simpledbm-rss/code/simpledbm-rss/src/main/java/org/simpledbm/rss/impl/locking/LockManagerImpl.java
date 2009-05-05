@@ -29,7 +29,13 @@ import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-import org.simpledbm.rss.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.SimpleTimer;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -40,12 +46,6 @@ import org.simpledbm.rss.api.locking.LockInfo;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.LockTimeoutException;
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.SimpleTimer;
-import org.simpledbm.rss.util.logging.Logger;
-import org.simpledbm.rss.util.mcat.MessageCatalog;
 
 /**
  * The default implementation of the LockMgr interface is a memory based lock

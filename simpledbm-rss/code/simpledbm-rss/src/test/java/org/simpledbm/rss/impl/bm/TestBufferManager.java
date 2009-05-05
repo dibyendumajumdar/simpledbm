@@ -24,24 +24,24 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.latch.LatchFactory;
-import org.simpledbm.rss.api.platform.Platform;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageFactory;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
-import org.simpledbm.rss.impl.platform.PlatformImpl;
 import org.simpledbm.rss.impl.pm.PageManagerImpl;
-import org.simpledbm.rss.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.rss.impl.st.FileStorageContainerFactory;
 import org.simpledbm.rss.impl.st.StorageManagerImpl;
 

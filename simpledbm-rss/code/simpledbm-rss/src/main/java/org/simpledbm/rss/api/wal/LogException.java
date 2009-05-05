@@ -19,7 +19,7 @@
  */
 package org.simpledbm.rss.api.wal;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * Base class for all exceptions thrown by the Log implementations.
@@ -27,7 +27,7 @@ import org.simpledbm.rss.api.exception.RSSException;
  * @author Dibyendu Majumdar
  * @since 10-Jun-2005
  */
-public class LogException extends RSSException {
+public class LogException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

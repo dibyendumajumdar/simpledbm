@@ -21,10 +21,10 @@ package org.simpledbm.rss.impl.locking;
 
 import java.util.Properties;
 
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
-import org.simpledbm.rss.api.platform.Platform;
 
 /**
  * Default implementation of a LockMgrFactory.

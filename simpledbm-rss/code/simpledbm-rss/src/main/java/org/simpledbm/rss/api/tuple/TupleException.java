@@ -23,13 +23,13 @@
  */
 package org.simpledbm.rss.api.tuple;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 
 /**
  * Exceptions thrown by the Tuple Manager module are all sub-types of 
  * TupleException.
  */
-public class TupleException extends RSSException {
+public class TupleException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

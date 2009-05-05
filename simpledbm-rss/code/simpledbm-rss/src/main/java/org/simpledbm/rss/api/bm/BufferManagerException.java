@@ -19,7 +19,8 @@
  */
 package org.simpledbm.rss.api.bm;
 
-import org.simpledbm.rss.api.exception.RSSException;
+import org.simpledbm.common.api.exception.SimpleDBMException;
+
 
 /**
  * Exceptions thrown by the Buffer Manager module are all
@@ -28,7 +29,7 @@ import org.simpledbm.rss.api.exception.RSSException;
  * @author Dibyendu Majumdar
  * @since 20-Aug-2005
  */
-public class BufferManagerException extends RSSException {
+public class BufferManagerException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 

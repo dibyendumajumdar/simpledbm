@@ -25,10 +25,10 @@ package org.simpledbm.rss.impl.sp;
 
 import java.util.Properties;
 
-import org.simpledbm.rss.api.platform.Platform;
-import org.simpledbm.rss.api.platform.PlatformObjects;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.pm.PageManager;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 
 public class SlottedPageManagerImpl implements SlottedPageManager {

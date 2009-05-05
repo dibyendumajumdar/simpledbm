@@ -21,12 +21,12 @@ package org.simpledbm.rss.api.pm;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.rss.api.latch.Latch;
-import org.simpledbm.rss.api.registry.ObjectRegistry;
-import org.simpledbm.rss.api.registry.Storable;
 import org.simpledbm.rss.api.wal.Lsn;
-import org.simpledbm.rss.util.Dumpable;
-import org.simpledbm.rss.util.TypeSize;
 
 /**
  * The base class for all Page implementations. The basic most common page attributes
