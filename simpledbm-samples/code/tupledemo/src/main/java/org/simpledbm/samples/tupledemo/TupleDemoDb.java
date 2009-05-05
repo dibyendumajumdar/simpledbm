@@ -22,9 +22,9 @@ package org.simpledbm.samples.tupledemo;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import org.simpledbm.common.api.key.IndexKey;
+import org.simpledbm.common.api.key.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexContainer;
-import org.simpledbm.rss.api.im.IndexKey;
-import org.simpledbm.rss.api.im.IndexKeyFactory;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
