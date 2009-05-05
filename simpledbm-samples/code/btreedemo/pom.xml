@@ -42,6 +42,11 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
+			<artifactId>simpledbm-common</artifactId>
+			<version>1.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
 			<!--  <version>[1.0.7,)</version> -->
 			<version>1.0.15-SNAPSHOT</version>

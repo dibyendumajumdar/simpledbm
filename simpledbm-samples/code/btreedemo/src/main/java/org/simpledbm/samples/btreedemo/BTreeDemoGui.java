@@ -25,12 +25,9 @@
 
 package org.simpledbm.samples.btreedemo;
 
-import javax.swing.JComboBox;
 import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 
-import org.simpledbm.rss.util.logging.DiagnosticLogger;
-import org.simpledbm.rss.util.logging.DiagnosticLogger.LogHandler;
+import org.simpledbm.common.util.logging.DiagnosticLogger;
 
 /**
  *
