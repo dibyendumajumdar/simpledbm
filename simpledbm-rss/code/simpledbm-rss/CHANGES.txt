@@ -1,4 +1,5 @@
 1.0.15-BETA:
+ * dm: Issue-74: General: Changed license to GPL v2 with classpath exception.
 
 1.0.14-BETA:
  * dm: Issue 71: BTree: Refixed as original solution wasn't correct. When scanning a tree the
