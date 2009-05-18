@@ -34,7 +34,7 @@
 	<licenses>
 		<license>
 			<name>
-				The GNU General Public License version 2.0 or later
+				The GNU General Public License version 2.0 or later with Classpath Exception
 			</name>
 			<url>http://www.gnu.org/licenses/gpl.txt</url>
 		</license>
