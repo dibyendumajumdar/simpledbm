@@ -4,7 +4,7 @@
 	<groupId>org.simpledbm.database</groupId>
 	<artifactId>simpledbm-database</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.11</version>
+	<version>1.0.12</version>
 	<name>SimpleDBM Database</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -44,7 +44,7 @@
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.10</version>
+			<version>1.0.11</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
