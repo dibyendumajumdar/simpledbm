@@ -4,7 +4,7 @@
 	<groupId>org.simpledbm.database</groupId>
 	<artifactId>simpledbm-database</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.11</version>
+	<version>1.0.12</version>
 	<name>SimpleDBM Database</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -31,7 +31,7 @@
 	</developers>
 	<licenses>
 		<license>
-			<name> The GNU General Public License version 2.0 or later </name>
+			<name> The GNU General Public License version 2.0 or later with Classpath Exception</name>
 			<url>http://www.gnu.org/licenses/gpl.txt</url>
 		</license>
 	</licenses>
@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.10</version>
+			<version>1.0.11</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
