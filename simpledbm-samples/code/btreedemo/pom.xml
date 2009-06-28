@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm.samples-btreedemo</groupId>
 	<artifactId>simpledbm-samples-btreedemo</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.8</version>
+	<version>1.0.9</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -48,14 +48,12 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<!--  <version>[1.0.7,)</version> -->
-			<version>1.0.15-SNAPSHOT</version>
+			<version>1.0.16-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<!--  <version>[1.0.7,)</version> -->
-			<version>1.0.10</version>
+			<version>1.0.12</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.swing-layout</groupId>
