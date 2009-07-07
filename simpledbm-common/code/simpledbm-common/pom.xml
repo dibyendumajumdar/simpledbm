@@ -8,9 +8,9 @@
  <description>SimpleDBM Common</description>
  <url>http://www.simpledbm.org</url>
  <scm>
-  <connection>scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-common/code/simpledbm-common</connection>
-  <developerConnection>scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-common/code/simpledbm-common</developerConnection>
-  <url>http://simpledbm.googlecode.com/svn/</url>
+  <connection>scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-common/code/simpledbm-common</connection>
+  <developerConnection>scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-common/code/simpledbm-common</developerConnection>
+  <url>http://code.google.com/p/simpledbm/source/browse/</url>
  </scm>
  <inceptionYear>2005</inceptionYear>
  <issueManagement>
@@ -53,6 +53,13 @@
  <build>
   <defaultGoal>package</defaultGoal>
   <plugins>
+   <plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-scm-plugin</artifactId>
+    <configuration>
+     <goals>install</goals>
+    </configuration>
+   </plugin>
    <plugin>
     <artifactId>maven-compiler-plugin</artifactId>
     <configuration>
