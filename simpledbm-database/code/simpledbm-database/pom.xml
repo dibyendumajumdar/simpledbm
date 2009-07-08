@@ -9,12 +9,12 @@
 	<url>http://www.simpledbm.org</url>
 	<scm>
 		<connection>
-			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database 
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-database/code/simpledbm-database 
 		</connection>
 		<developerConnection>
-			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-database/code/simpledbm-database 
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-database/code/simpledbm-database 
 		</developerConnection>
-		<url>http://simpledbm.googlecode.com/svn/</url>
+		<url>http://code.google.com/p/simpledbm/source/browse/</url>
 	</scm>
 	<developers>
 		<developer>
