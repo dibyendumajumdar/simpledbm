@@ -10,12 +10,12 @@
 	<url>http://www.simpledbm.org</url>
 	<scm>
 		<connection>
-			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-typesystem/code/simpledbm-typesystem
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-typesystem/code/simpledbm-typesystem
 		</connection>
 		<developerConnection>
-			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-typesystem/code/simpledbm-typesystem
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-typesystem/code/simpledbm-typesystem
 		</developerConnection>
-		<url>http://simpledbm.googlecode.com/svn/</url>
+		<url>http://code.google.com/p/simpledbm/source/browse/</url>
 	</scm>
 	<developers>
 		<developer>
