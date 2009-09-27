@@ -255,7 +255,7 @@ public abstract class Logger {
         }
 
         public boolean isDebugEnabled() {
-            return realLogger.isLoggable(java.util.logging.Level.FINE);
+            return realLogger.isLoggable(java.util.logging.Level.FINE) || realLogger.isLoggable(java.util.logging.Level.FINER);
         }
 
         public void enableDebug() {
@@ -320,7 +320,7 @@ public abstract class Logger {
         }
 
         public boolean isDebugEnabled() {
-            return realLogger.isDebugEnabled();
+            return realLogger.isDebugEnabled() || realLogger.isTraceEnabled();
         }
 
         public void enableDebug() {
