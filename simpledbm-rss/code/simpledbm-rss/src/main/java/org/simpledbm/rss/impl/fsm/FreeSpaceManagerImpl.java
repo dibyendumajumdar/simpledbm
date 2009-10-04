@@ -69,7 +69,9 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
+import org.simpledbm.rss.api.tx.ContainerCreateOperation;
 import org.simpledbm.rss.api.tx.ContainerDeleteOperation;
+import org.simpledbm.rss.api.tx.ContainerOpenOperation;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.NonTransactionRelatedOperation;
@@ -113,7 +115,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
     private final TransactionManager trxmgr;
     
-    private final Platform platform;
+//    private final Platform platform;
 
     final FreeSpaceCursorCache cursorCache = new FreeSpaceCursorCache(this);
     
@@ -159,7 +161,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         this.storageFactory = storageFactory;
         this.loggableFactory = loggableFactory;
         this.trxmgr = trxmgr;
-        this.platform = platform;
+//        this.platform = platform;
         PlatformObjects po = platform.getPlatformObjects(FreeSpaceManager.LOGGER_NAME);
         this.log = po.getLogger();
         this.exceptionHandler = po.getExceptionHandler();
@@ -274,7 +276,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             // part of this container.
             bufmgr.invalidateContainer(logrec.getContainerId());
             storageManager.remove(logrec.getContainerId());
-            // storageFactory.delete(logrec.getName());
+            storageFactory.delete(logrec.getName());
             cursorCache.removeContainerId(logrec.getContainerId());
         } else if (loggable instanceof FormatHeaderPage) {
             HeaderPage hdrPage = (HeaderPage) page;
@@ -356,7 +358,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             DropContainer logrec = (DropContainer) loggable;
             bufmgr.invalidateContainer(logrec.getContainerId());
             storageManager.remove(logrec.getContainerId());
-            // storageFactory.delete(logrec.getName());
+            storageFactory.delete(logrec.getName());
             // Following is now handled by the transaction manager
             // trxmgr.logNonTransactionRelatedOperation(logrec);
             cursorCache.removeContainerId(logrec.getContainerId());
@@ -390,8 +392,8 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
 
         // Start a nested top action
-        trx.startNestedTopAction();
-        boolean commitNTA = false;
+//        trx.startNestedTopAction();
+//        boolean commitNTA = false;
         try {
             CreateContainer createContainerLog = new CreateContainer(
                 MODULE_ID,
@@ -515,22 +517,22 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                 Testing = 0;
                 throw new FreeSpaceManagerException.TestException();
             }
-            commitNTA = true;
+//            commitNTA = true;
         } finally {
             /*
              * End nested top action
              */
-            if (commitNTA) {
-                trx.completeNestedTopAction();
-                if (log.isDebugEnabled()) {
-                    log.debug(
-                    		FreeSpaceManagerImpl.class.getName(),
-                        "createContainer",
-                        "SIMPLEDBM-DEBUG: Created container " + containerName);
-                }
-            } else {
-                trx.resetNestedTopAction();
-            }
+//            if (commitNTA) {
+//                trx.completeNestedTopAction();
+//                if (log.isDebugEnabled()) {
+//                    log.debug(
+//                    		FreeSpaceManagerImpl.class.getName(),
+//                        "createContainer",
+//                        "SIMPLEDBM-DEBUG: Created container " + containerName);
+//                }
+//            } else {
+//                trx.resetNestedTopAction();
+//            }
         }
     }
 
@@ -785,7 +787,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      * container will be dropped.
      */
     public static final class CreateContainer extends ContainerOperation
-            implements Undoable {
+            implements Undoable, ContainerCreateOperation {
         
         public CreateContainer(int moduleId, int typeCode) {
 			super(moduleId, typeCode);
@@ -861,7 +863,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
      * This ensures that that the container is reopened during the redo phase.
      */
     public static final class OpenContainer extends ContainerOperation
-            implements NonTransactionRelatedOperation {
+            implements NonTransactionRelatedOperation, ContainerOpenOperation {
 
         public OpenContainer(int moduleId, int typeCode) {
 			super(moduleId, typeCode);
