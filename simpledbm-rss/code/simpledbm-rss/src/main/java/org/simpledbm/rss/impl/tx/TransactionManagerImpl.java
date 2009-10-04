@@ -38,6 +38,7 @@ package org.simpledbm.rss.impl.tx;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -76,6 +77,7 @@ import org.simpledbm.rss.api.st.StorageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.Compensation;
 import org.simpledbm.rss.api.tx.ContainerDeleteOperation;
+import org.simpledbm.rss.api.tx.ContainerOpenOperation;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Lockable;
 import org.simpledbm.rss.api.tx.Loggable;
@@ -197,6 +199,18 @@ public final class TransactionManagerImpl implements TransactionManager {
      * are completed. 
      */
     private LinkedList<TransactionImpl> trxTable = new LinkedList<TransactionImpl>();
+
+    /**
+     * Keeps track of the LSN of the ContainerOpenOperation related to new
+     * containers. During restart, special handling is required for containers
+     * that were created since the last checkpoint. During the restart analysis
+     * phase, when a ContainerOpenOperation is encountered, the LSN of the log
+     * record is cached in this hashmap. If subsequently, a
+     * ContainerDropOperation is encountered, the entry is removed. During the
+     * redo phase, this map is consulted to determine whether container open
+     * operations need to be redone or not.
+     */
+    private HashMap<Integer, Lsn> containerLsn = new HashMap<Integer, Lsn>();
 
     /**
      * Protects modifications to the transaction table.
@@ -846,6 +860,7 @@ public final class TransactionManagerImpl implements TransactionManager {
     /**
      * Remove all dirty pages that belong to the container that has been
      * deleted. Also remove the container from the list of active containers.
+     * Finally remove the container from the map of newly open containers.
      */
     private void processContainerDelete(Loggable loggable) {
         ContainerDeleteOperation containerDelete = (ContainerDeleteOperation) loggable;
@@ -874,30 +889,46 @@ public final class TransactionManagerImpl implements TransactionManager {
                 }
             }
         }
+        containerLsn.remove(containerDelete.getContainerId());
     }
 
     /**
-     * Remove a deleted container from the Storage Manager
-     * module. Unfortunately we cannot physically remove the container due to the
-     * fact that at restart the open container event may be replayed, and this
-     * event requires the container to be available.
+     * Adds the LSN of the log record to the list of open containers.
      */
-    private void removeDeletedContainer(Loggable loggable) {
-        ContainerDeleteOperation containerDelete = (ContainerDeleteOperation) loggable;
+    private void processContainerOpen(Loggable loggable) {
+        ContainerOpenOperation containerOpen = (ContainerOpenOperation) loggable;
         if (log.isDebugEnabled()) {
-            log.debug(
-                this.getClass().getName(),
-                "removeContainerDelete",
-                "SIMPLEDBM-DEBUG: Removing container "
-                        + containerDelete.getContainerId()
-                        + " from Storage Manager");
+            log.debug(this.getClass().getName(), "processContainerOpen",
+                    "SIMPLEDBM-DEBUG: Adding container "
+                            + containerOpen.getContainerId()
+                            + " to the list of open containers");
         }
-        if (storageManager.getInstance(containerDelete.getContainerId()) != null) {
-            storageManager.remove(containerDelete.getContainerId());
-            // FIXME: Must remove the container physically. One option is to
-            // ignore errors when opening container. 
-        }
+        containerLsn
+                .put(containerOpen.getContainerId(), containerOpen.getLsn());
     }
+    
+//    /**
+//     * Remove a deleted container from the Storage Manager
+//     * module. Unfortunately we cannot physically remove the container due to the
+//     * fact that at restart the open container event may be replayed, and this
+//     * event requires the container to be available.
+//     */
+//    private void removeDeletedContainer(Loggable loggable) {
+//        ContainerDeleteOperation containerDelete = (ContainerDeleteOperation) loggable;
+//        if (log.isDebugEnabled()) {
+//            log.debug(
+//                this.getClass().getName(),
+//                "removeContainerDelete",
+//                "SIMPLEDBM-DEBUG: Removing container "
+//                        + containerDelete.getContainerId()
+//                        + " from Storage Manager");
+//        }
+//        if (storageManager.getInstance(containerDelete.getContainerId()) != null) {
+//            storageManager.remove(containerDelete.getContainerId());
+//            // FIXME: Must remove the container physically. One option is to
+//            // ignore errors when opening container. 
+//        }
+//    }
 
     /**
      * Find a Transaction record.
@@ -1108,6 +1139,18 @@ public final class TransactionManagerImpl implements TransactionManager {
                 processContainerDelete(loggable);
             }
 
+            if (loggable instanceof ContainerOpenOperation) {
+                /*
+                 * We treat container open operations in a special way. Every
+                 * time a container open operation log is found we add the lsn
+                 * of the log record to the hashmap container lsn. This is taken
+                 * off if a container delete operation is encountered.
+                 * Purpose of this is to allow us to decide whether to redo a
+                 * container open operation.
+                 */
+                processContainerOpen(loggable);
+            }
+
             if (loggable instanceof PostCommitAction) {
                 /*
                  * This means that the PostCommitAction has been performed. Therefore
@@ -1207,14 +1250,14 @@ public final class TransactionManagerImpl implements TransactionManager {
                     "SIMPLEDBM-TRACE: Processing log record " + loggable);
             }
 
-            if (loggable instanceof ContainerDeleteOperation) {
-                /*
-                 * This is a kludge to ensure that the open container action for a 
-                 * container that is deleted as a result of aborting create container is
-                 * undone.
-                 */
-                removeDeletedContainer(loggable);
-            }
+//            if (loggable instanceof ContainerDeleteOperation) {
+//                /*
+//                 * This is a kludge to ensure that the open container action for a 
+//                 * container that is deleted as a result of aborting create container is
+//                 * undone.
+//                 */
+//                removeDeletedContainer(loggable);
+//            }
 
             if (loggable instanceof Redoable) {
 
@@ -1315,19 +1358,55 @@ public final class TransactionManagerImpl implements TransactionManager {
                  */
                 TransactionalModule module = moduleRegistry.getModule(loggable
                     .getModuleId());
-                try {
-                    moduleRedo(module, loggable);
-                } catch (TransactionException e) {
-                    /*
-                     * 05-Dec-05
-                     * We ignore exceptions raised by NonTransactionRelatedOperations as
-                     * a workaround for the OpenContainer problem. If a container creation 
-                     * operation is aborted, then the OpenContainer operation will fail 
-                     * at restart.
-                     */
-                    log.warn(this.getClass().getName(), "restartRedo", mcat
-                        .getMessage("WX0012", loggable), e);
+
+                boolean skip = false;
+                if (loggable instanceof ContainerOpenOperation) {
+                    ContainerOpenOperation openOperation = (ContainerOpenOperation) loggable;
+                    Lsn lsn = containerLsn.get(openOperation.getContainerId());
+                    if (lsn == null
+                            || lsn.compareTo(openOperation.getLsn()) > 0) {
+                        /*
+                         * Container is not valid; there must be a subsequent
+                         * delete.
+                         */
+                        skip = true;
+                        if (log.isDebugEnabled()) {
+                            log
+                                    .debug(
+                                            this.getClass().getName(),
+                                            "restartRedo",
+                                            "SIMPLEDBM-DEBUG: Skipping redo of log record ["
+                                                    + loggable
+                                                    + " as LSN of log record is null or less than "
+                                                    + lsn);
+                        }
+                    }
                 }
+
+                if (!skip) {
+                    moduleRedo(module, loggable);
+                }
+
+                //                try {
+//                    moduleRedo(module, loggable);
+//                } catch (StorageException e) {
+//					if (loggable instanceof ContainerOpenOperation 
+//							// && e.getMessage().startsWith("SIMPLEDBM-ES0019") 
+//							&& !isContainerDirty(((ContainerOpenOperation)loggable).getContainerId())) {
+//	                    /*
+//	                     * 05-Dec-05
+//	                     * We ignore exceptions raised by NonTransactionRelatedOperations as
+//	                     * a workaround for the OpenContainer problem. If a container creation 
+//	                     * operation is aborted, then the OpenContainer operation will fail 
+//	                     * at restart.
+//	                     */
+//	                    log.warn(this.getClass().getName(), "restartRedo", mcat
+//	                        .getMessage("WX0012", loggable), e);
+//					}
+//					else {
+//						throw e;
+//					}
+//                }
             }
 
             else if (loggable instanceof TrxEnd) {
@@ -2332,11 +2411,9 @@ public final class TransactionManagerImpl implements TransactionManager {
                 if (loggable instanceof Undoable) {
 
                     if (trxmgr.log.isDebugEnabled()) {
-                    	trxmgr.log.debug(
-                            this.getClass().getName(),
-                            "rollback",
-                            "Undoing effects of log record " + loggable
-                                    + " to transaction " + this);
+                        trxmgr.log.debug(this.getClass().getName(), "rollback",
+                                "SIMPLEDBM-DEBUG: Undoing effects of log record "
+                                        + loggable + " to transaction " + this);
                     }
 
                     /*
@@ -2812,23 +2889,27 @@ public final class TransactionManagerImpl implements TransactionManager {
             }
         }
 
-        public StringBuilder appendTo(StringBuilder sb) {
-            sb.append("CheckpointEnd(");
-            super.appendTo(sb);
-            sb.append(", trxTable={");
-            for (TransactionImpl trx : trxTable) {
-                if (trx.state == TrxState.TRX_DEAD) {
-                    continue;
+		public StringBuilder appendTo(StringBuilder sb) {
+			sb.append("CheckpointEnd(");
+			super.appendTo(sb);
+			sb.append(", trxTable={");
+            if (trxTable != null) {
+                for (TransactionImpl trx : trxTable) {
+                    if (trx.state == TrxState.TRX_DEAD) {
+                        continue;
+                    }
+                    trx.appendTo(sb).append(',');
                 }
-                trx.appendTo(sb).append(',');
             }
-            sb.append("}, dirtyPages={");
-            for (DirtyPageInfo dp : dirtyPages) {
-                sb.append(dp).append(',');
+			sb.append("}, dirtyPages={");
+            if (dirtyPages != null) {
+                for (DirtyPageInfo dp : dirtyPages) {
+                    sb.append(dp).append(',');
+                }
             }
-            sb.append("})");
-            return sb;
-        }
+			sb.append("})");
+			return sb;
+		}
 
         public String toString() {
             return appendTo(new StringBuilder()).toString();
