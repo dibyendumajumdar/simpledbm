@@ -36,9 +36,10 @@
  */
 package org.simpledbm.rss.impl.locking.util;
 
+import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.rss.api.tx.BaseLockable;
 
-class ContainerId extends BaseLockable {
+class ContainerId extends BaseLockable implements Dumpable {
 
     final int containerId;
 
@@ -49,6 +50,17 @@ class ContainerId extends BaseLockable {
 
     public int getContainerId() {
         return containerId;
+    }
+
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        return super.appendTo(sb.append("ContainerId("))
+                .append(",containerId=").append(containerId).append(")");
+    }
+
+    @Override
+    public String toString() {
+        return appendTo(new StringBuilder()).toString();
     }
 
 }
