@@ -63,9 +63,11 @@ import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
+import org.simpledbm.rss.api.tx.Compensation;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -100,7 +102,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	/** Object registry id for row factory */
 	final static int ROW_FACTORY_TYPE_ID = MODULE_BASE + 1;
 	/** Type ID for Loggable object */
-	final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE + 2;
+    final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE + 2;
+    final static int TYPE_UNDO_CREATE_TABLE_DEFINITION = MODULE_BASE + 3;
+    final static int TYPE_DROP_TABLE_DEFINITION = MODULE_BASE + 4;
 	/** RSS Server object */
 	Server server;
 	/** Database startup/create properties */
@@ -303,7 +307,11 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		server.getObjectRegistry().registerSingleton(MODULE_ID, this);
 		server.getObjectRegistry().registerObjectFactory(TYPE_CREATE_TABLE_DEFINITION,
 				new CreateTableDefinition.CreateTableDefinitionFactory(this));
-		server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
+        server.getObjectRegistry().registerObjectFactory(
+                TYPE_UNDO_CREATE_TABLE_DEFINITION,
+                new UndoCreateTableDefinition.UndoCreateTableDefinitionFactory(
+                        this));
+        server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
 		/*
 		 * Register this module as a transactional module. This will allow the
 		 * module to participate in transactions.
@@ -504,16 +512,48 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
-	@Override
-	public void redo(Page page, Redoable loggable) {
-		if (loggable instanceof CreateTableDefinition) {
-			CreateTableDefinition ctd = (CreateTableDefinition) loggable;
-			System.err.println("Redoing " + ctd);
-			storeTableDefinition(ctd.table);
-		}	
-	}
+    @Override
+    public void redo(Page page, Redoable loggable) {
+        if (loggable instanceof CreateTableDefinition) {
+            CreateTableDefinition ctd = (CreateTableDefinition) loggable;
+            // System.err.println("Redoing " + ctd);
+            storeTableDefinition(ctd.table);
+        } else if (loggable instanceof UndoCreateTableDefinition) {
+            UndoCreateTableDefinition uctd = (UndoCreateTableDefinition) loggable;
+            dropTableDefinition(uctd);
+        }
+    }
 
-	/**
+    @Override
+    public Compensation generateCompensation(Undoable undoable) {
+        if (undoable instanceof CreateTableDefinition) {
+            UndoCreateTableDefinition undoCreateTableDefinition = new UndoCreateTableDefinition(
+                    MODULE_ID, TYPE_UNDO_CREATE_TABLE_DEFINITION, this);
+            CreateTableDefinition ctd = (CreateTableDefinition) undoable;
+            undoCreateTableDefinition.defList.add(ctd.table.getContainerId());
+            for (IndexDefinition id : ctd.table.getIndexes()) {
+                undoCreateTableDefinition.defList.add(id.getContainerId());
+            }
+            return undoCreateTableDefinition;
+        }
+        return null;
+    }
+	
+    /**
+     * Deletes the table and index definitions.
+     */
+    private void dropTableDefinition(DeleteTableDefinition deleteTableDefinition) {
+        for (int c : deleteTableDefinition.defList) {
+            String containerName = makeTableDefName(c);
+            if (log.isDebugEnabled()) {
+                log.debug(getClass().getName(), "dropTableDefinition",
+                        "Dropping definition " + containerName);
+            }
+            getServer().getStorageFactory().delete(containerName);
+        }
+    }
+
+    /**
 	 * Constructs a name for the container that will store the table and
 	 * associated index definitions. The container name will be based upon
 	 * the table's container ID. This naming convention allows the definition
@@ -625,7 +665,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * @since 29 Dec 2007
 	 */
 	public static final class CreateTableDefinition extends BaseLoggable
-			implements Redoable {
+			implements Undoable {
 
 		int actionId;
 		TableDefinition table;
@@ -703,6 +743,97 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
+    static abstract class DeleteTableDefinition extends BaseLoggable {
+
+        final DatabaseImpl database;
+        ArrayList<Integer> defList = new ArrayList<Integer>();
+
+        protected DeleteTableDefinition(DatabaseImpl database, ByteBuffer bb) {
+            super(bb);
+            this.database = database;
+            int n = bb.getShort();
+            defList.clear();
+            for (int i = 0; i < n; i++) {
+                defList.add((int) bb.getShort());
+            }
+        }
+
+        public DeleteTableDefinition(int moduleId, int typecode,
+                DatabaseImpl database) {
+            super(moduleId, typecode);
+            this.database = database;
+        }
+
+        @Override
+        public StringBuilder appendTo(StringBuilder sb) {
+            return super.appendTo(sb).append(", containerList=")
+                    .append(defList);
+        }
+
+        @Override
+        public int getStoredLength() {
+            int n = super.getStoredLength();
+            n += ((defList.size() + 1) * TypeSize.SHORT);
+            return n;
+        }
+
+        @Override
+        public void store(ByteBuffer bb) {
+            super.store(bb);
+            bb.putShort((short) defList.size());
+            for (int i : defList) {
+                bb.putShort((short) i);
+            }
+        }
+
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+    }
+
+    public static final class UndoCreateTableDefinition extends
+            DeleteTableDefinition implements Compensation {
+
+        public UndoCreateTableDefinition(DatabaseImpl database, ByteBuffer bb) {
+            super(database, bb);
+        }
+
+        public UndoCreateTableDefinition(int moduleId, int typecode,
+                DatabaseImpl database) {
+            super(moduleId, typecode, database);
+        }
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("UndoCreateTableDefinition(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
+        static final class UndoCreateTableDefinitionFactory implements
+                ObjectFactory {
+            private final DatabaseImpl database;
+
+            UndoCreateTableDefinitionFactory(DatabaseImpl database) {
+                this.database = database;
+            }
+
+            public Class<?> getType() {
+                return UndoCreateTableDefinition.class;
+            }
+
+            public Object newInstance(ByteBuffer buf) {
+                return new UndoCreateTableDefinition(database, buf);
+            }
+        }
+    }
+	
 	/**
 	 * Obtains an instance of the Table associated with the supplied
 	 * TableDefinition.
