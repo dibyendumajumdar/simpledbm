@@ -55,5 +55,9 @@ public class SimpleDictionaryCache implements DictionaryCache {
     public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
     	typeDescMap.put(keytype, rowTypeDesc);
     }
+
+    public void unregisterRowType(int keytype) {
+        typeDescMap.remove(keytype);
+    }
 	
 }

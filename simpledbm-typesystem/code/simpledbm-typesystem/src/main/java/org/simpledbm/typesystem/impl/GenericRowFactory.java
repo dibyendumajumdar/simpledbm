@@ -127,6 +127,10 @@ public class GenericRowFactory implements RowFactory {
     	dictionaryCache.registerRowType(keytype, rowTypeDesc);
     }
 
+    public void unregisterRowType(int keytype) {
+        dictionaryCache.unregisterRowType(keytype);
+    }
+    
     public DictionaryCache getDictionaryCache() {
 		return dictionaryCache;
 	}
@@ -149,13 +153,9 @@ public class GenericRowFactory implements RowFactory {
         public GenericRow makeRow(ByteBuffer bb) {
             return new GenericRow(fieldFactory, rowTypeDesc, bb);
         }
-        
-        
     }
 
 	public IndexKey parseIndexKey(int arg0, String arg1) {
 		throw new UnsupportedOperationException();
 	}
-
-
 }
