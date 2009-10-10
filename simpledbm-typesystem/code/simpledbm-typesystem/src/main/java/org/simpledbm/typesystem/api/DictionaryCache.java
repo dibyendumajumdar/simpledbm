@@ -58,4 +58,10 @@ public interface DictionaryCache {
 	 * @param rowTypeDesc An array of types that describe the fields in the row.
 	 */
 	void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
+	
+    /**
+     * Removes the row definition for a particular container ID.
+     * @param containerId container ID for which the row type information is being removed
+     */
+    void unregisterRowType(int containerId);
 }
