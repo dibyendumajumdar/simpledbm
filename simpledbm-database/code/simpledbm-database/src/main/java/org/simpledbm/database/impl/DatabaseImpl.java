@@ -39,6 +39,7 @@ package org.simpledbm.database.impl;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Properties;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
@@ -65,6 +66,8 @@ import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
 import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Loggable;
+import org.simpledbm.rss.api.tx.PostCommitAction;
 import org.simpledbm.rss.api.tx.Redoable;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.Undoable;
@@ -191,6 +194,35 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		tables.add(tableDefinition);
 	}
 
+    /**
+     * Removes a table definition to the in-memory dictionary cache. Caller
+     * must protect {@link #tables}.
+     * 
+     * @param tableDefinition
+     */
+    private void unregisterTableDefinition(int containerId) {
+        Iterator<TableDefinition> iter = tables.iterator();
+        TableDefinition tableDefinition = null;
+        while (iter.hasNext()) {
+            TableDefinition td = iter.next();
+            if (td.getContainerId() == containerId) {
+                tableDefinition = td;
+                iter.remove();
+                break;
+            }
+        }
+        if (tableDefinition == null) {
+            // FIXME throw proper error
+            throw new DatabaseException();
+        }
+        /* Remove the table's type descriptor from the Row Factory */
+        getRowFactory().unregisterRowType(tableDefinition.getContainerId());
+        /* Remove the indexes */
+        for (IndexDefinition idx : tableDefinition.getIndexes()) {
+            getRowFactory().unregisterRowType(idx.getContainerId());
+        }
+    }
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -512,6 +544,46 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
+    public void dropTable(TableDefinition tableDefinition) {
+        Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+        boolean success = false;
+        try {
+            /*
+             * First let's lock tuple container to prevent concurrent access
+             */
+            getServer().getTupleManager().lockTupleContainer(trx,
+                    tableDefinition.getContainerId(), LockMode.EXCLUSIVE);
+            /*
+             * Lets also lock all the index containers
+             */
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
+                server.getIndexManager().lockIndexContainer(trx,
+                        idx.getContainerId(), LockMode.EXCLUSIVE);
+            }
+            /*
+             * FIXME we should drop indexes in reverse order of creation
+             */
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
+                server.getSpaceManager().dropContainer(trx,
+                        idx.getContainerId());
+            }
+            server.getSpaceManager().dropContainer(trx,
+                    tableDefinition.getContainerId());
+
+            DropTableDefinition dtp = new DropTableDefinition(MODULE_ID,
+                    TYPE_DROP_TABLE_DEFINITION, this, tableDefinition);
+            trx.schedulePostCommitAction(dtp);
+
+            success = true;
+        } finally {
+            if (success) {
+                trx.commit();
+            } else {
+                trx.abort();
+            }
+        }
+    }
+	
     @Override
     public void redo(Page page, Redoable loggable) {
         if (loggable instanceof CreateTableDefinition) {
@@ -520,6 +592,14 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             storeTableDefinition(ctd.table);
         } else if (loggable instanceof UndoCreateTableDefinition) {
             UndoCreateTableDefinition uctd = (UndoCreateTableDefinition) loggable;
+            dropTableDefinition(uctd);
+        }
+    }
+
+    @Override
+    public void redo(Loggable loggable) {
+        if (loggable instanceof DropTableDefinition) {
+            DropTableDefinition uctd = (DropTableDefinition) loggable;
             dropTableDefinition(uctd);
         }
     }
@@ -550,6 +630,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
                         "Dropping definition " + containerName);
             }
             getServer().getStorageFactory().delete(containerName);
+        }
+        synchronized (tables) {
+            /*
+             * unregister table definition: note the assumption that the first
+             * item in the list is the table's container ID.
+             */
+            unregisterTableDefinition(deleteTableDefinition.defList.get(0));
         }
     }
 
@@ -743,6 +830,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		}
 	}
 
+    /**
+     * Abstract log record for dropping table and its indexes.
+     */
     static abstract class DeleteTableDefinition extends BaseLoggable {
 
         final DatabaseImpl database;
@@ -792,6 +882,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
         }
     }
 
+    /**
+     * Undoes the table creation.
+     */
     public static final class UndoCreateTableDefinition extends
             DeleteTableDefinition implements Compensation {
 
@@ -833,7 +926,72 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             }
         }
     }
-	
+
+    /**
+     * Logs the dropping of a table and its associated indexes. Handled as post
+     * commit action.
+     */
+    public static final class DropTableDefinition extends DeleteTableDefinition
+            implements PostCommitAction {
+
+        int actionId;
+
+        public DropTableDefinition(DatabaseImpl database, ByteBuffer bb) {
+            super(database, bb);
+        }
+
+        public DropTableDefinition(int moduleId, int typecode,
+                DatabaseImpl database, TableDefinition tableDefinition) {
+            super(moduleId, typecode, database);
+            /*
+             * The order in which the definitions are added is important as the
+             * first item in the list is expected to be the table's container
+             * ID. If this changes, then the method dropTableDefinition() will
+             * need to be changed.
+             */
+            defList.add(tableDefinition.getContainerId());
+            for (IndexDefinition idx : tableDefinition.getIndexes()) {
+                defList.add(idx.getContainerId());
+            }
+        }
+
+        public int getActionId() {
+            return actionId;
+        }
+
+        public void setActionId(int actionId) {
+            this.actionId = actionId;
+        }
+
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append("DropTableDefinition(");
+            super.appendTo(sb);
+            sb.append(")");
+            return sb;
+        }
+
+        @Override
+        public String toString() {
+            return appendTo(new StringBuilder()).toString();
+        }
+
+        static final class DropTableDefinitionFactory implements ObjectFactory {
+            private final DatabaseImpl database;
+
+            DropTableDefinitionFactory(DatabaseImpl database) {
+                this.database = database;
+            }
+
+            public Class<?> getType() {
+                return DropTableDefinition.class;
+            }
+
+            public Object newInstance(ByteBuffer buf) {
+                return new DropTableDefinition(database, buf);
+            }
+        }
+    }
+    
 	/**
 	 * Obtains an instance of the Table associated with the supplied
 	 * TableDefinition.
