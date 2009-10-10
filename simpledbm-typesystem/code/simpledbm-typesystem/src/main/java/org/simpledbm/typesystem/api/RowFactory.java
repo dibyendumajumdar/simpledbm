@@ -73,4 +73,13 @@ public interface RowFactory extends IndexKeyFactory {
 	 */
 	void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
 
+	
+    /**
+     * Removes the row definition for a particular container ID.
+     * 
+     * @param containerId
+     *            container ID for which the row type information is being
+     *            removed
+     */
+    void unregisterRowType(int containerId);
 }
