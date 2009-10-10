@@ -87,5 +87,9 @@ public class DictionaryCacheImpl implements DictionaryCache {
     public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
     	typeDescMap.put(keytype, rowTypeDesc);
     }
+
+    public synchronized void unregisterRowType(int keytype) {
+        typeDescMap.remove(keytype);
+    }
     
 }
