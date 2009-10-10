@@ -125,6 +125,10 @@ public class TestDatabase extends BaseTestCase {
 		return c.getTime();
 	}
 
+//	public void testCreateDatabase() throws Exception {
+//		createTestDatabase(getServerProperties());
+//	}
+	
 	public void testBasicFunctions() throws Exception {
 
 		createTestDatabase(getServerProperties());
@@ -201,9 +205,19 @@ public class TestDatabase extends BaseTestCase {
 					trx.abort();
 				}
 			}
+
 		} finally {
 			db.shutdown();
 		}
+
+        db = DatabaseFactory.getDatabase(getServerProperties());
+        db.start();
+        try {
+            TableDefinition tableDefinition = db.getTableDefinition(1);
+            db.dropTable(tableDefinition);
+        } finally {
+            db.shutdown();
+        }
 	}
 
 	static class EmpRecord {
