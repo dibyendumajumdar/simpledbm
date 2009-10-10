@@ -139,10 +139,19 @@ public interface Database {
 	/**
 	 * Creates a Table and associated indexes using the information in the supplied 
 	 * TableDefinition object. Note that the table must have a primary index defined.
-	 * The table creation is performed in a standalone transaction.
+	 * The table creation is performed in a stand alone transaction.
 	 * @param tableDefinition The TableDefinition object that contains information about the table to be created.
 	 */
 	public abstract void createTable(TableDefinition tableDefinition);
+
+    /**
+     * Drops a Table and all its associated indexes.
+     * 
+     * @param tableDefinition
+     *            The TableDefinition object that contains information about the
+     *            table to be dropped.
+     */
+    public abstract void dropTable(TableDefinition tableDefinition);
 	
 	/**
 	 * Gets the table associated with the specified container ID.
