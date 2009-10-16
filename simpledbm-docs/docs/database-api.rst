@@ -85,7 +85,7 @@ Getting Started
 ---------------
 
 A SimpleDBM server is a set of background threads and a library of API
-calls that clients can call. The background threads take care of
+calls that clients can invoke. The background threads take care of
 various tasks, such as writing out buffer pages, writing out logs,
 archiving older log files, creating checkpoints, etc.
 
@@ -310,6 +310,78 @@ Some points to bear in mind when starting SimpleDBM databases:
    object. Create a new database object if you want to start the
    database again.
 
+Performance impact of server options
+====================================
+
+Some of the server options impact the performance or recoverability
+of SimpleDBM. These are discussed below.
+
+log.disableFlushRequests
+  Normally, the write ahead log is flushed to disk every time a transaction
+  commits, or there is a log switch, or a checkpoint is taken. By setting this
+  option to true, SimpleDBM can be configured to avoid flushing the log at 
+  transaction commits. The log will still be flushed for other events such as
+  log switches or checkpoints. This option improves the performance of SimpleDBM,
+  but wll have an impact on recovery of transactions since the last checkpoint.
+  Due to deferred log flush, some transaction log records may not be persisted
+  to disk; this will result in such transactions being aborted during restart.
+
+storage.openMode
+  This is set to a ``mode`` supported by the standard Java ``RandomAccessFile``. 
+  The recommended setting for recoverability is "rws", as this will ensure
+  that modifications to the file are persisted on physical storage as soon as
+  possible. The setting "rw" may improve performance by allowing the underlying
+  operating system to buffer file reads/writes. However, the downside of this
+  mode is that if there is a crash, some of the file contents may not be correctly
+  reflected on physical storage. This can result in corrupted files.
+
+storage.flushMode
+  This setting influences how/whether SimpleDBM invokes ``force()`` on underlying
+  ``FileChannel`` when writing to files. A setting of "noforce" disables this; which
+  is best for performance. A setting of "force.true" causes SimpleDBM to invoke
+  ``force(true)``, and a setting of "force.false" causes SimpleDBM to invoke 
+  ``force(false)``. As for the other settings, this setting can favour either
+  performance or recoverability.
+
+While changing the default settings for above options can improve perfomance,
+SimpleDBM, like any database management system, requires high performance physical
+storage system to get the best balance between performance and recoverability.
+
+A few other settings that affect the performance or scalability are discussed below.
+
+bufferpool.numbuffers
+  This setting affects the bufferpool size, and hence impacts the performance of
+  the buffer cache. A bigger size is preferable; some experimentation may be required
+  to determine the optimum size for a particular workload.
+
+log.file.size
+  SimpleDBM will not span log records across log files. Hence the maximum log file 
+  size affects the maximum size of an individual log record. See also the note on
+  ``log.buffer.size``.
+
+log.buffer.size 
+  For performance reasons, log records are buffered in memory. SimpleDBM will not
+  span log records across log buffer boundaries, hence the maximum log buffer size
+  restricts the size of a log record. Together, this option
+  and the ``log.file.size`` setting dictate the maximum size of a log record.
+
+Problems starting a database
+============================
+
+SimpleDBM uses a lock file to determine whether an instance is already
+running. At startup, it creates the file at the location ``_internal\lock`` relative
+to the path where the database is created. If this file already exists, then
+SimpleDBM will report a failure such as::
+
+  SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another
+  instance may be running - error was: SIMPLEDBM-ES0017: Unable to create
+  StorageContainer .._internal\lock because an object of the name already exists
+
+This message indicates either that some other instance is running, or that
+an earlier instance of SimpleDBM terminated without properly sutting down.
+If the latter is the case, then the ``_internal/lock`` file may be deleted enabling
+SimpleDBM to start.
+ 
 Managing log messages
 =====================
 
@@ -534,9 +606,6 @@ at present that you need to be aware of.
 * All indexes required for the table must be defined at the time of table
   creation. At present you cannot add an index at a later
   stage.
-
-* Tables and indexes cannot be dropped once created. Support for dropping
-  tables and indexes will be added in a future release of SimpleDBM.
   
 * Table structures are limited in the type of columns you can have. At
   present Varchar, Varbinary, DateTime, Number, Integer and Long 
