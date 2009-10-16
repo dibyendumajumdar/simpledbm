@@ -2289,6 +2289,24 @@ implemented using Dummy Compensation Log Records - and make use of
 the ability to skip logs records using the UndoLsn pointer as
 described previously.
 
+Key differences from ARIES
+==========================
+
+The implementation of the Transaction Manager in SimpleDBM is as faithful
+to ARIES as possible, with a few differences. 
+
+* SimpleDBM supports multi-page redo operations where a single log record
+  affects multiple pages.
+
+* SimpleDBM records in the checkpoint records the list of open containers
+  so that it can ensure that these containers are re-opened at startup.
+
+* The transaction manager supports post commit actions for handling of 
+  special cases such as deleting a container.
+
+* The transaction manager supports non-page specific log records for operations
+  such as opening/deleting containers.
+
 Transactions and Locks
 ======================
 There is close coordination between the Transaction Manager and the
@@ -2383,7 +2401,6 @@ This is enabled in two ways:
    the Transaction Manager would not know which module is 
    responsible for handling a particular log record.
 
-
 Transactions and Log records
 ============================
 The Transaction Manager works very closely with the Log Manager to
@@ -2459,6 +2476,13 @@ as internal).
  |                              |coordinates with the Buffer Manager to    |
  |                              |clear the cached pages related to the     |
  |                              |deleted container.                        |
+ +------------------------------+------------------------------------------+
+ |ContainerOpenOperation        |The Transaction Manager needs to be aware |
+ |                              |when containers are opened between        |
+ |                              |checkpoints so that it can include these  |
+ |                              |in the next checkpoint.                   |
+ |                              |The TM uses this marker interface to      |
+ |                              |identify the open operation.              |
  +------------------------------+------------------------------------------+
 
 
@@ -2756,6 +2780,15 @@ changes to it. The Transaction Manager uses the
 ContainerDeleteOperation interface as a marker interface to identify
 log records that are going to cause containers to be dropped.
 
+ContainerOpenOperations
+-----------------------
+The TransactionManager maintains a list of open containers in
+the checkpoint record. At restart, it needs to identify containers
+created since the last checkpoint; it does this by tracking any
+ContainerOpenOperation records. A container is reopened if the
+ContainerOpenOperation is valid, i.e., it has not been superceded
+by a later ContainerDeleteOperation. 
+
 =============
 Space Manager
 =============
@@ -2941,7 +2974,7 @@ extended and then the search retried.
 Updating space information
 --------------------------
 
-A successful search will result in the space map page being erxclusively
+A successful search will result in the space map page being exclusively
 latched. Hence, after the search, the client must unfix the page. Failure
 to do so will cause pages to remain fixed and exhaust the Buffer Pool.
 The SpaceCursor interface provides an interface for unfixing the

@@ -95,19 +95,20 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * the definitions in memory as well. At startup, all existing definitions
 	 * are loaded by the system into memory. New definitions are added to the
 	 * memory cache as well as persisted to the database as described above. At
-	 * present there is no support for deleting a table. Also indexes cannot be
-	 * added at a later stage.
+	 * present indexes cannot be added at a later stage.
 	 */
 
 	/* ID for this module */
 	final static int MODULE_ID = 100;
 	final static int MODULE_BASE = 101;
+	
 	/** Object registry id for row factory */
 	final static int ROW_FACTORY_TYPE_ID = MODULE_BASE + 1;
 	/** Type ID for Loggable object */
     final static int TYPE_CREATE_TABLE_DEFINITION = MODULE_BASE + 2;
     final static int TYPE_UNDO_CREATE_TABLE_DEFINITION = MODULE_BASE + 3;
     final static int TYPE_DROP_TABLE_DEFINITION = MODULE_BASE + 4;
+    
 	/** RSS Server object */
 	Server server;
 	/** Database startup/create properties */
@@ -545,6 +546,14 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	}
 
     public void dropTable(TableDefinition tableDefinition) {
+    	
+    	/*
+    	 * All drop operations are handled as post commit actions 
+    	 * as recovery of a deleted container would be very difficult.
+    	 * We only delete a container when are sure that the transaction will
+    	 * commit.
+    	 */
+    	
         Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
         boolean success = false;
         try {
@@ -561,15 +570,22 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
                         idx.getContainerId(), LockMode.EXCLUSIVE);
             }
             /*
+             * Drop all indexes
              * FIXME we should drop indexes in reverse order of creation
              */
             for (IndexDefinition idx : tableDefinition.getIndexes()) {
                 server.getSpaceManager().dropContainer(trx,
                         idx.getContainerId());
             }
+            /*
+             * Drop the table
+             */
             server.getSpaceManager().dropContainer(trx,
                     tableDefinition.getContainerId());
 
+            /*
+             * Drop the definitions from the data dictionary.
+             */
             DropTableDefinition dtp = new DropTableDefinition(MODULE_ID,
                     TYPE_DROP_TABLE_DEFINITION, this, tableDefinition);
             trx.schedulePostCommitAction(dtp);
@@ -588,7 +604,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     public void redo(Page page, Redoable loggable) {
         if (loggable instanceof CreateTableDefinition) {
             CreateTableDefinition ctd = (CreateTableDefinition) loggable;
-            // System.err.println("Redoing " + ctd);
             storeTableDefinition(ctd.table);
         } else if (loggable instanceof UndoCreateTableDefinition) {
             UndoCreateTableDefinition uctd = (UndoCreateTableDefinition) loggable;
@@ -744,9 +759,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
 	/**
 	 * Responsible for adding the table definition to the data dictionary.
-	 * The persistence of the table definition is handled as a post commit action.
-	 * Before the table definition is logged, the table and associated indexes are
-	 * created. 
 	 * 
 	 * @author dibyendumajumdar
 	 * @since 29 Dec 2007
@@ -754,14 +766,12 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	public static final class CreateTableDefinition extends BaseLoggable
 			implements Undoable {
 
-		int actionId;
 		TableDefinition table;
 		final DatabaseImpl database;
 
 		public CreateTableDefinition(DatabaseImpl database, ByteBuffer bb) {
 			super(bb);
 			this.database = database;
-			actionId = bb.getInt();
 			table = new TableDefinitionImpl(database.po, database, bb);
 		}
 
@@ -770,20 +780,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			this.database = database;
 		}
 
-		public int getActionId() {
-			return actionId;
-		}
-
-		public void setActionId(int actionId) {
-			this.actionId = actionId;
-		}
-
 		@Override
 		public StringBuilder appendTo(StringBuilder sb) {
 			sb.append("CreateTableDefinition(");
 			super.appendTo(sb);
-			sb.append(", actionId=");
-			sb.append(actionId);
 			sb.append(", table=");
 			table.appendTo(sb);
 			sb.append(")");
@@ -796,7 +796,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		@Override
 		public int getStoredLength() {
 			int n = super.getStoredLength();
-			n += TypeSize.INTEGER;
 			n += table.getStoredLength();
 			return n;
 		}
@@ -807,7 +806,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		@Override
 		public void store(ByteBuffer bb) {
 			super.store(bb);
-			bb.putInt(actionId);
 			table.store(bb);
 		}
 
@@ -883,7 +881,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     }
 
     /**
-     * Undoes the table creation.
+     * Logs undo of a table creation.
      */
     public static final class UndoCreateTableDefinition extends
             DeleteTableDefinition implements Compensation {
