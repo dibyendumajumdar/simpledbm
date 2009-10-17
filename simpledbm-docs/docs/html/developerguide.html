@@ -65,7 +65,7 @@
 <li><a class="reference internal" href="#technology" id="id54">Technology</a><ul>
 <li><a class="reference internal" href="#third-party-libraries" id="id55">Third party libraries</a></li>
 <li><a class="reference internal" href="#obtaining-simpledbm" id="id56">Obtaining SimpleDBM</a></li>
-<li><a class="reference internal" href="#svn-urls" id="id57">SVN URLs</a></li>
+<li><a class="reference internal" href="#mercurial-urls" id="id57">Mercurial URLs</a></li>
 <li><a class="reference internal" href="#pre-requisites" id="id58">Pre-requisites</a></li>
 <li><a class="reference internal" href="#instructions-for-eclipse" id="id59">Instructions for Eclipse</a></li>
 <li><a class="reference internal" href="#maven-commands" id="id60">Maven commands</a></li>
@@ -387,6 +387,9 @@ need a subversion client on your PC.</p>
 <p>The SimpleDBM SVN repository is organized as follows:</p>
 <div class="highlight-python"><pre>trunk  --+--- simpledbm-rss          This contains the core DBMS engine
          |
+         +--- simpledbm-common       This contains basic utilities that are
+         |                           shared by all projects.
+         |
          +--- simpledbm-typesystem   This contains a simple typesystem
          |                           that can be used with SimpleDBM.
          |
@@ -410,12 +413,14 @@ need a subversion client on your PC.</p>
 <p>Some of these folders may be empty if no content has been created.</p>
 <p>In the code sub-directory, there is a top-level directory for each project.</p>
 </div>
-<div class="section" id="svn-urls">
-<h4><a class="toc-backref" href="#id57">SVN URLs</a><a class="headerlink" href="#svn-urls" title="Permalink to this headline">¶</a></h4>
-<p>Here are the SVN URLs for the various SimpleDBM sub-systems.</p>
+<div class="section" id="mercurial-urls">
+<h4><a class="toc-backref" href="#id57">Mercurial URLs</a><a class="headerlink" href="#mercurial-urls" title="Permalink to this headline">¶</a></h4>
+<p>Here are the Mercurial URLs for the various SimpleDBM sub-systems.</p>
 <dl class="docutils">
 <dt>Base URL</dt>
-<dd><a class="reference external" href="http://simpledbm.googlecode.com/svn/trunk">http://simpledbm.googlecode.com/svn/trunk</a></dd>
+<dd><a class="reference external" href="http://simpledbm.googlecode.com/hg/">http://simpledbm.googlecode.com/hg/</a></dd>
+<dt>SimpleDBM-Common</dt>
+<dd>.../simpledbm-common/code/simpledbm-common</dd>
 <dt>SimpleDBM-RSS</dt>
 <dd>.../simpledbm-rss/code/simpledbm-rss</dd>
 <dt>SimpleDBM-TypeSystem</dt>
@@ -4260,7 +4265,7 @@ Management of Data, June 1996.</td></tr>
 <li><a class="reference external" href="#technology">Technology</a><ul>
 <li><a class="reference external" href="#third-party-libraries">Third party libraries</a></li>
 <li><a class="reference external" href="#obtaining-simpledbm">Obtaining SimpleDBM</a></li>
-<li><a class="reference external" href="#svn-urls">SVN URLs</a></li>
+<li><a class="reference external" href="#mercurial-urls">Mercurial URLs</a></li>
 <li><a class="reference external" href="#pre-requisites">Pre-requisites</a></li>
 <li><a class="reference external" href="#instructions-for-eclipse">Instructions for Eclipse</a></li>
 <li><a class="reference external" href="#maven-commands">Maven commands</a></li>

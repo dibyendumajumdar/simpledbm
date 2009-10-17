@@ -89,6 +89,9 @@ The SimpleDBM SVN repository is organized as follows:
 
  trunk  --+--- simpledbm-rss   	      This contains the core DBMS engine
           |
+          +--- simpledbm-common       This contains basic utilities that are
+          |                           shared by all projects.
+          |
           +--- simpledbm-typesystem   This contains a simple typesystem
           |                           that can be used with SimpleDBM.
           |
@@ -116,13 +119,16 @@ Some of these folders may be empty if no content has been created.
 
 In the code sub-directory, there is a top-level directory for each project.
 
-SVN URLs
---------
+Mercurial URLs
+--------------
 
-Here are the SVN URLs for the various SimpleDBM sub-systems.
+Here are the Mercurial URLs for the various SimpleDBM sub-systems.
 
 Base URL
-  http://simpledbm.googlecode.com/svn/trunk
+  http://simpledbm.googlecode.com/hg/
+
+SimpleDBM-Common
+  .../simpledbm-common/code/simpledbm-common
 
 SimpleDBM-RSS
   .../simpledbm-rss/code/simpledbm-rss
