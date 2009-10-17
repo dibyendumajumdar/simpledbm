@@ -1,3 +1,16 @@
+1.0.16-BETA:
+ * dm: Issue-56: Documented settings that impact performance
+ * dm: Issue-67: Exception stack traces are not captured when the error is initially logged
+ * dm: Issue-69: Create a platform module to encapsulate the base utilities such as logging, tracing, exception handling, etc.
+ * dm: Issue-73: Break out the common utility stuff out of the RSS module and make Type-System independent of RSS
+ * dm: Issue-75: Documented the usage of lock file and manual recovery step for a restart
+ * dm: Issue-76: Implemented table drop functionality
+ * dm: Issue-77: Migrated version control from SVN to Mercurial
+ * dm: Issue-78: Updated SCM details in Maven
+ * dm: Issue-79: Added Eclipse project files to version control
+ * dm: Issue-80: Fixed undo of container create operations to remove deleted containers physically
+ * dm: Issue-81: Ensured that during undo of table create the table definition is deleted
+
 1.0.15-BETA:
  * dm: Issue-74: General: Changed license to GPL v2 with classpath exception.
 
