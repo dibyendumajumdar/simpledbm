@@ -1,0 +1,335 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SimpleDBM TypeSystem &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.12 BETA',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
+    <link rel="next" title="SimpleDBM RSS Developers’s Guide" href="developerguide.html" />
+    <link rel="prev" title="SimpleDBM Database API" href="database-api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="database-api.html" title="SimpleDBM Database API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simpledbm-typesystem">
+<h1><a class="toc-backref" href="#id3">SimpleDBM TypeSystem</a><a class="headerlink" href="#simpledbm-typesystem" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
+</tr>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body"><a class="reference external" href="mailto:d&#46;majumdar&#37;&#52;&#48;gmail&#46;com">d<span>&#46;</span>majumdar<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">1.0.x</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">05 July 2008</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2008</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#simpledbm-typesystem" id="id3">SimpleDBM TypeSystem</a><ul>
+<li><a class="reference internal" href="#introduction" id="id4">Introduction</a><ul>
+<li><a class="reference internal" href="#overview" id="id5">Overview</a></li>
+<li><a class="reference internal" href="#features" id="id6">Features</a><ul>
+<li><a class="reference internal" href="#non-features" id="id7">Non-Features</a></li>
+<li><a class="reference internal" href="#status" id="id8">Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id1" id="id9">SimpleDBM TypeSystem</a><ul>
+<li><a class="reference internal" href="#id2" id="id10">Introduction</a></li>
+<li><a class="reference internal" href="#typesystem-classes" id="id11">TypeSystem Classes</a></li>
+<li><a class="reference internal" href="#how-it-all-fits-together" id="id12">How it all fits together</a></li>
+<li><a class="reference internal" href="#about-data-values" id="id13">About Data Values</a></li>
+<li><a class="reference internal" href="#integration-with-simpledbm-rss-module" id="id14">Integration with SimpleDBM RSS Module</a></li>
+<li><a class="reference internal" href="#samples" id="id15">Samples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id4">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="overview">
+<h3><a class="toc-backref" href="#id5">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is a transactional database engine, written in Java. It has a
+very small footprint and can be embedded in the address space of an
+application. It provides a simple Java application programming interface (API), which can be learned very quickly.</p>
+</div>
+<div class="section" id="features">
+<h3><a class="toc-backref" href="#id6">Features</a><a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> has the following features:</p>
+<ul class="simple">
+<li><em>Transactional</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.</li>
+<li><em>Multi-threaded</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is multi-threaded and supports concurrent reads and writes of data.</li>
+<li><em>Write Ahead Log</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> uses a write ahead log to ensure transaction recovery in the event of system crashes.</li>
+<li><em>Lock based concurrency</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> uses row-level shared, update and exclusive locks to manage concurrency.</li>
+<li><em>Multiple Isolation Levels</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> supports read committed, repeatable read, and serializable isolation levels.</li>
+<li><em>B-Tree Indexes</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> B-Trees continually rebalance themselves, and do not suffer from fragmentation.</li>
+<li><em>Tables</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.</li>
+<li><em>Latches and Locks</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.</li>
+<li><em>Deadlock detection</em> - <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.</li>
+</ul>
+<div class="section" id="non-features">
+<h4><a class="toc-backref" href="#id7">Non-Features</a><a class="headerlink" href="#non-features" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is not an SQL engine.</li>
+<li>There is no support for distributed transactions (XA) yet.</li>
+</ul>
+</div>
+<div class="section" id="status">
+<h4><a class="toc-backref" href="#id8">Status</a><a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h4>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is currently in early BETA and not suitable for Production use.
+Note that the simpleDBM API is under flux, and is likely to change
+until the final 1.0 release is available.</p>
+<p>The latest builds can be downloaded from:</p>
+<p><a class="reference external" href="http://code.google.com/p/simpledbm/downloads/list">http://code.google.com/p/simpledbm/downloads/list</a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="id1">
+<h2><a class="toc-backref" href="#id9">SimpleDBM TypeSystem</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id2">
+<h3><a class="toc-backref" href="#id10">Introduction</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> has a modular architecture. The core of the database engine is
+in the RSS module. A feature of the engine is that it has no knowledge of
+data types. This is deliberate, to ensure the greatest flexibility. The RSS
+only cares about the &#8220;sortability&#8221; and &#8220;persistability&#8221; of data. It doesn&#8217;t
+really care about the internal structure of the data.</p>
+<p>From a user perspective, the RSS is fairly low level. It requires a fair
+amount of work to use the low level API. For instance, the developer has
+to worry about how to implement various types, and how to integrate the
+types into <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>. This may be exactly what is needed for someone who
+wishes to use very specialized data types, but for the majority of users,
+this is too much complexity.</p>
+<p>The SimpleDBM-TypeSystem module adds a type system module that can
+be used with <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>. It is currently at experimental stage, and is
+evolving.</p>
+<p>The TypeSystem is used by the Database API to provide a higher level
+interface to <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>.</p>
+</div>
+<div class="section" id="typesystem-classes">
+<h3><a class="toc-backref" href="#id11">TypeSystem Classes</a><a class="headerlink" href="#typesystem-classes" title="Permalink to this headline">¶</a></h3>
+<p>The overall design of the TypeSystem API is shown in a simplified form in
+the class diagram below:</p>
+<a class="reference external image-reference" href="_images/TypeSystem.png"><img alt="_images/TypeSystem.png" src="_images/TypeSystem.png" /></a>
+<p>The main classes and their purposes are described below:</p>
+<dl class="docutils">
+<dt>Row</dt>
+<dd>represents a table or index row. A row consists of a number of
+column (Field) objects which are accessed by position.</dd>
+<dt>DictionaryCache</dt>
+<dd>implements the Dictionary Cache where row types can be
+registered, and later on retrieved by container ID.</dd>
+<dt>RowFactory</dt>
+<dd>is responsible for instantiating Rows for
+tables and indexes.</dd>
+<dt>TypeFactory</dt>
+<dd>is the main interface for generating column data
+type descriptors (TypeDescriptor). It provides methods for creating
+various types.</dd>
+<dt>TypeDescriptor</dt>
+<dd>holds details of the type definition. At present, only
+following four types are available: Varchar, Number, DateTime and
+Integer.</dd>
+<dt>DataValue</dt>
+<dd>this is the column value. Sub-classes implement the actual
+behavior. DataValue provides a consistent interface for comparison,
+assignment and reference.</dd>
+</dl>
+</div>
+<div class="section" id="how-it-all-fits-together">
+<h3><a class="toc-backref" href="#id12">How it all fits together</a><a class="headerlink" href="#how-it-all-fits-together" title="Permalink to this headline">¶</a></h3>
+<p>A client starts by creating an array of TypeDescriptor objects.
+This array represents the row type for a table or an index container.:</p>
+<div class="highlight-python"><pre>TypeFactory typeFactory = TypeSystemFactory.getDefaultTypeFactory();
+TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
+  typeFactory.getIntegerType(), typeFactory.getVarcharType(10)
+};</pre>
+</div>
+<p>In the example shown above, a row type is created with one
+integer column and one Varchar column of length 10 characters.</p>
+<p>The next step is to register the row type so that it can be
+accessed by clients. This is done as shown below:</p>
+<div class="highlight-python"><pre>RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(typeFactory);
+rowFactory.registerRowType(1, rowtype1);</pre>
+</div>
+<p>Here the row type is being registered for container ID 1.</p>
+<p>Whenever it is necessary to construct a new Row object for
+container 1, the following code can be invoked:</p>
+<div class="highlight-python"><pre>Row row = rowFactory.newRow(1);</pre>
+</div>
+<p>By default all the column values in the Row are set to NULL.
+NULL is a special state in the Field&#8217;s value.</p>
+<p>Column values can be accessed via the getColumnvalue() method provided
+by the Row interface. The column&#8217;s value can be changed using
+one of the setter methods implemented by the underlying DataValue
+object. Example:</p>
+<div class="highlight-python"><pre>DataValue firstColumn = row.getColumnValue(0);
+DataValue secondColumn = row.getColumnValue(1);
+
+firstColumn.setInt(5); // set column value
+secondColumn.setString("Hello world!");</pre>
+</div>
+<p>Note that column positions start at 0.</p>
+</div>
+<div class="section" id="about-data-values">
+<h3><a class="toc-backref" href="#id13">About Data Values</a><a class="headerlink" href="#about-data-values" title="Permalink to this headline">¶</a></h3>
+<p>A DataValue can be in one of four states:</p>
+<dl class="docutils">
+<dt>Positive Infinity</dt>
+<dd>this is a logical value that is greater than
+any other value of the column.</dd>
+<dt>Negative Infinity</dt>
+<dd>the converse of Positive Infinity, this
+represents the lowest possible value.</dd>
+<dt>Null</dt>
+<dd>this represents the Null value.</dd>
+<dt>Value</dt>
+<dd>this signifies that there is a real value in the
+column which is not Null and not one of the Infinity
+values.</dd>
+</dl>
+<p>DataValues are sortable. Rows are sortable as well.</p>
+</div>
+<div class="section" id="integration-with-simpledbm-rss-module">
+<h3><a class="toc-backref" href="#id14">Integration with SimpleDBM RSS Module</a><a class="headerlink" href="#integration-with-simpledbm-rss-module" title="Permalink to this headline">¶</a></h3>
+<p>The TypeSystem integrates with <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> RSS in following ways:</p>
+<ul class="simple">
+<li>RowFactory is a sub-class of IndexKeyFactory. Therefore RowFactory can
+be used wherever IndexKeyFactory is required.</li>
+<li>Row is a sub-class of IndexKey and Storable. Therefore, Row
+objects can be used as Tuple values as well as Index key
+values.</li>
+<li>GenericRowFactory is an implementation of RowFactory that can
+be registered with <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> as a factory for index keys and
+table rows.</li>
+</ul>
+</div>
+<div class="section" id="samples">
+<h3><a class="toc-backref" href="#id15">Samples</a><a class="headerlink" href="#samples" title="Permalink to this headline">¶</a></h3>
+<p>The following samples show how the TypeSystem may be used:</p>
+<ul class="simple">
+<li>TupleDemo - demonstrates the raw <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> RSS API and shows
+how the TypeSystem may be integrated with it.</li>
+<li>BTreeDemo - demonstrates the standalone use of BTrees.</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">SimpleDBM TypeSystem</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#features">Features</a><ul>
+<li><a class="reference external" href="#non-features">Non-Features</a></li>
+<li><a class="reference external" href="#status">Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#id1">SimpleDBM TypeSystem</a><ul>
+<li><a class="reference external" href="#id2">Introduction</a></li>
+<li><a class="reference external" href="#typesystem-classes">TypeSystem Classes</a></li>
+<li><a class="reference external" href="#how-it-all-fits-together">How it all fits together</a></li>
+<li><a class="reference external" href="#about-data-values">About Data Values</a></li>
+<li><a class="reference external" href="#integration-with-simpledbm-rss-module">Integration with SimpleDBM RSS Module</a></li>
+<li><a class="reference external" href="#samples">Samples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="database-api.html"
+                                  title="previous chapter">SimpleDBM Database API</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="developerguide.html"
+                                  title="next chapter">SimpleDBM RSS Developers&#8217;s Guide</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/typesystem.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+             >next</a></li>
+        <li class="right" >
+          <a href="database-api.html" title="SimpleDBM Database API"
+             >previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Dibyendu Majumdar.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>
