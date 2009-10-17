@@ -1,0 +1,1776 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SimpleDBM RSS User’s Manual &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.12 BETA',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
+    <link rel="next" title="SimpleDBM RSS Developers’s Guide" href="developerguide.html" />
+    <link rel="prev" title="SimpleDBM TypeSystem" href="typesystem.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simpledbm-rss-user-s-manual">
+<h1><a class="toc-backref" href="#id5">SimpleDBM RSS User&#8217;s Manual</a><a class="headerlink" href="#simpledbm-rss-user-s-manual" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
+</tr>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body"><a class="reference external" href="mailto:d&#46;majumdar&#37;&#52;&#48;gmail&#46;com">d<span>&#46;</span>majumdar<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">1.0.12</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">7 April 2009</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2007-2009</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#simpledbm-rss-user-s-manual" id="id5">SimpleDBM RSS User&#8217;s Manual</a><ul>
+<li><a class="reference internal" href="#introduction" id="id6">Introduction</a><ul>
+<li><a class="reference internal" href="#overview" id="id7">Overview</a></li>
+<li><a class="reference internal" href="#features" id="id8">Features</a><ul>
+<li><a class="reference internal" href="#non-features" id="id9">Non-Features</a></li>
+<li><a class="reference internal" href="#status" id="id10">Status</a></li>
+<li><a class="reference internal" href="#getting-started" id="id11">Getting Started</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simpledbm-modules" id="id12">SimpleDBM Modules</a></li>
+<li><a class="reference internal" href="#simpledbm-servers-and-databases" id="id13">SimpleDBM Servers and Databases</a><ul>
+<li><a class="reference internal" href="#id1" id="id14">Introduction</a></li>
+<li><a class="reference internal" href="#creating-a-simpledbm-database" id="id15">Creating a SimpleDBM database</a><ul>
+<li><a class="reference internal" href="#server-options" id="id16">Server Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opening-a-database" id="id17">Opening a database</a></li>
+<li><a class="reference internal" href="#managing-log-messages" id="id18">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common-infrastructure" id="id19">Common Infrastructure</a><ul>
+<li><a class="reference internal" href="#object-registry" id="id20">Object Registry</a><ul>
+<li><a class="reference internal" href="#id2" id="id21">Overview</a></li>
+<li><a class="reference internal" href="#two-use-cases" id="id22">Two Use cases</a></li>
+<li><a class="reference internal" href="#registering-an-objectfactory" id="id23">Registering an ObjectFactory</a></li>
+<li><a class="reference internal" href="#asymmetry-between-retrieving-and-storing-objects" id="id24">Asymmetry between retrieving and storing objects</a></li>
+<li><a class="reference internal" href="#storable-interface-and-object-serialization" id="id25">Storable Interface and Object serialization</a></li>
+<li><a class="reference internal" href="#registering-singletons" id="id26">Registering Singletons</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#transactions" id="id27">Transactions</a><ul>
+<li><a class="reference internal" href="#creating-new-transactions" id="id28">Creating new Transactions</a></li>
+<li><a class="reference internal" href="#working-with-transactions" id="id29">Working with Transactions</a><ul>
+<li><a class="reference internal" href="#transaction-api" id="id30">Transaction API</a></li>
+<li><a class="reference internal" href="#transaction-savepoints" id="id31">Transaction Savepoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tables" id="id32">Tables</a><ul>
+<li><a class="reference internal" href="#tuplecontainers" id="id33">TupleContainers</a></li>
+<li><a class="reference internal" href="#creating-a-tuplecontainer" id="id34">Creating a TupleContainer</a></li>
+<li><a class="reference internal" href="#accessing-a-tuplecontainer" id="id35">Accessing a TupleContainer</a></li>
+<li><a class="reference internal" href="#inserting-tuples" id="id36">Inserting tuples</a></li>
+<li><a class="reference internal" href="#reading-tuples" id="id37">Reading tuples</a></li>
+<li><a class="reference internal" href="#updating-tuples" id="id38">Updating tuples</a></li>
+<li><a class="reference internal" href="#deleting-tuples" id="id39">Deleting tuples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#indexes" id="id40">Indexes</a><ul>
+<li><a class="reference internal" href="#index-keys" id="id41">Index Keys</a></li>
+<li><a class="reference internal" href="#index-key-factories" id="id42">Index Key Factories</a><ul>
+<li><a class="reference internal" href="#example" id="id43">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#locations" id="id44">Locations</a></li>
+<li><a class="reference internal" href="#creating-a-new-index" id="id45">Creating a new index</a></li>
+<li><a class="reference internal" href="#obtaining-index-instance" id="id46">Obtaining index instance</a></li>
+<li><a class="reference internal" href="#working-with-keys" id="id47">Working with keys</a><ul>
+<li><a class="reference internal" href="#adding-a-key" id="id48">Adding a key</a></li>
+<li><a class="reference internal" href="#deleting-a-key" id="id49">Deleting a key</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#scanning-keys" id="id50">Scanning keys</a><ul>
+<li><a class="reference internal" href="#isolation-modes" id="id51">Isolation Modes</a></li>
+<li><a class="reference internal" href="#common-behaviour" id="id52">Common Behaviour</a></li>
+<li><a class="reference internal" href="#read-committed-cursor-stability" id="id53">Read Committed/Cursor Stability</a></li>
+<li><a class="reference internal" href="#repeatable-read-rr" id="id54">Repeatable Read (RR)</a></li>
+<li><a class="reference internal" href="#serializable" id="id55">Serializable</a></li>
+<li><a class="reference internal" href="#scanning-api" id="id56">Scanning API</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id6">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="overview">
+<h3><a class="toc-backref" href="#id7">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is a transactional database engine, written in Java. It has a
+very small footprint and can be embedded in the address space of an
+application. It provides a simple Java application programming interface (API),
+which can be learned very quickly.</p>
+</div>
+<div class="section" id="features">
+<h3><a class="toc-backref" href="#id8">Features</a><a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM has the following features:</p>
+<ul class="simple">
+<li><em>Transactional</em> - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.</li>
+<li><em>Multi-threaded</em> - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.</li>
+<li><em>Write Ahead Log</em> - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.</li>
+<li><em>Lock based concurrency</em> - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency.</li>
+<li><em>Multiple Isolation Levels</em> - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.</li>
+<li><em>B-Tree Indexes</em> - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.</li>
+<li><em>Tables</em> - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.</li>
+<li><em>Latches and Locks</em> - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.</li>
+<li><em>Deadlock detection</em> - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.</li>
+</ul>
+<div class="section" id="non-features">
+<h4><a class="toc-backref" href="#id9">Non-Features</a><a class="headerlink" href="#non-features" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>SimpleDBM is not an SQL engine.</li>
+<li>There is no support for distributed transactions (XA) yet.</li>
+</ul>
+</div>
+<div class="section" id="status">
+<h4><a class="toc-backref" href="#id10">Status</a><a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available.</p>
+<p>The latest builds can be downloaded from:</p>
+<p><a class="reference external" href="http://code.google.com/p/simpledbm/downloads/list">http://code.google.com/p/simpledbm/downloads/list</a>.</p>
+</div>
+<div class="section" id="getting-started">
+<h4><a class="toc-backref" href="#id11">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h4>
+<p>Download the latest build of SimpleDBM.
+There are no special requirements or third party library dependencies; all you
+need to ensure is that the SimpleDBM jar file is in your classpath.</p>
+<p>SimpleDBM does not come with a type system of its own, but there is a sample
+type system implementation available, which you can enhance.</p>
+</div>
+</div>
+</div>
+<div class="section" id="simpledbm-modules">
+<h2><a class="toc-backref" href="#id12">SimpleDBM Modules</a><a class="headerlink" href="#simpledbm-modules" title="Permalink to this headline">¶</a></h2>
+<p>The core of <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is the RSS (named in honor of the
+first IBM Relational Database prototype <a class="reference external" href="http://www.mcjones.org/System_R/">System-R</a> Relational Storage
+System). The RSS provides the underlying storage structures for
+transactions, locking, b-trees etc.</p>
+<p>This document covers the RSS API.</p>
+<p>Note that the RSS API is probably too low level for ordinary users.
+It is meant to be used by people interested
+in build their own Database Engines on top. The design of the RSS is described in
+detail in the <a class="reference external" href="http://www.simpledbm.org">SimpleDBM RSS Developers&#8217;s Guide</a>.</p>
+<p>For users looking for a simpler API, two additional modules are
+available.</p>
+<p>The first one is the <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> TypeSystem module, which adds support
+for typed data values and multi-attribute row objects. For details of this
+module, please read <a class="reference external" href="http://www.simpledbm.org">SimpleDBM TypeSystem</a>.</p>
+<p>The second module, the Database API, implements a high level
+Database API and uses the TypeSystem module on top of the RSS. For details of this
+module, please read <a class="reference external" href="http://www.simpledbm.org">SimpleDBM Database API</a>.</p>
+</div>
+<div class="section" id="simpledbm-servers-and-databases">
+<h2><a class="toc-backref" href="#id13">SimpleDBM Servers and Databases</a><a class="headerlink" href="#simpledbm-servers-and-databases" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id1">
+<h3><a class="toc-backref" href="#id14">Introduction</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>A SimpleDBM server is a set of background threads and a library of API
+calls that clients can hook into. The background threads take care of
+various tasks, such as writing out buffer pages, writing out logs,
+archiving older log files, creating checkpoints, etc.</p>
+<p>A SimpleDBM server operates on a set of data and index files, known as
+the SimpleDBM database.</p>
+<p>Only one server instance is allowed to access a SimpleDBM database at
+any point in time. SimpleDBM uses a lock file to detect multiple
+concurrent access to a database, and will refuse to start if it
+detects that a server is already accessing a database.</p>
+<p>Internally, SimpleDBM operates on logical entities called Storage
+Containers. From an implementation point of view, Storage Containers
+are mapped to files.</p>
+<p>Tables and Indexes are stored in Containers known as TupleContainers
+and IndexContainers, respectively.</p>
+<p>The SimpleDBM database initially consists of a set of transaction log
+files, a lock file and a special container used internally by
+SimpleDBM.</p>
+</div>
+<div class="section" id="creating-a-simpledbm-database">
+<h3><a class="toc-backref" href="#id15">Creating a SimpleDBM database</a><a class="headerlink" href="#creating-a-simpledbm-database" title="Permalink to this headline">¶</a></h3>
+<p>A SimpleDBM database is created by a call to Server.create(), as shown
+below:</p>
+<div class="highlight-python"><pre>import org.simpledbm.rss.main.Server;
+...
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath",
+  "demodata/TupleDemo1");
+
+Server.create(properties);</pre>
+</div>
+<p>The Server.create() method accepts a Properties object as
+the sole argument. The Properties object can be used to pass a
+number of parameters. The available options are shown below:</p>
+<div class="section" id="server-options">
+<h4><a class="toc-backref" href="#id16">Server Options</a><a class="headerlink" href="#server-options" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Property Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">log.ctl.{n}</span></tt></td>
+<td>The fully qualified path to the
+log control file. The first file should be specified as
+<tt class="docutils literal"><span class="pre">log.ctl.1</span></tt>, second as <tt class="docutils literal"><span class="pre">log.ctl.2</span></tt>, and so on. Up to a
+maximum of 3 can be specified. Default is 2.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.groups.{n}.path</span></tt></td>
+<td>The path where log files of a group should be stored.
+The first log group is specified as <tt class="docutils literal"><span class="pre">log.groups.1.path</span></tt>,
+the second as <tt class="docutils literal"><span class="pre">log.groups.2.path</span></tt>,
+and so on. Up to a maximum of 3 log groups can be
+specified. Default number of groups is 1. Path defaults
+to current directory.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.archive.path</span></tt></td>
+<td>Defines the path for storing archive files. Defaults to
+current directory.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.group.files</span></tt></td>
+<td>Specifies the number of log files within each group.
+Up to a maximum of 8 are allowed. Defaults to 2.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.file.size</span></tt></td>
+<td>Specifies the size of each log file in
+bytes. Default is 2 KB.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.buffer.size</span></tt></td>
+<td>Specifies the size of the log buffer
+in bytes. Default is 2 KB.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.buffer.limit</span></tt></td>
+<td>Sets a limit on the maximum number of
+log buffers that can be allocated. Default is 10 *
+log.group.files.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.flush.interval</span></tt></td>
+<td>Sets the interval (in seconds)
+between log flushes. Default is 6 seconds.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.disableFlushRequests</span></tt></td>
+<td>Boolean value, if set, disables
+log flushes requested explicitly by the Buffer Manager
+or Transaction Manager. Log flushes still occur during
+checkpoints and log switches. By reducing the log flushes,
+performance is improved, but transactions may not be
+durable. Only those transactions will survive a system
+crash that have all their log records on disk.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.basePath</span></tt></td>
+<td>Defines the base location of the
+SimpleDBM database. All files and directories are created
+relative to this location.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.createMode</span></tt></td>
+<td>Defines mode in which files will be
+created. Default is <tt class="docutils literal"><span class="pre">&quot;rws&quot;</span></tt>.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.openMode</span></tt></td>
+<td>Defines mode in which files will be
+opened. Default is <tt class="docutils literal"><span class="pre">&quot;rws&quot;</span></tt>.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.flushMode</span></tt></td>
+<td>Defines mode in which files will be flushed. Possible
+values are noforce, force.true (default), and force.false</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">bufferpool.numbuffers</span></tt></td>
+<td>Sets the number of buffers to be created in
+the Buffer Pool.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">bufferpool.writerSleepInterval</span></tt></td>
+<td>Sets the interval in milliseconds between each run of
+the BufferWriter. Note that BufferWriter may run earlier
+than the specified interval if the pool runs out of
+buffers, and a new page has to be read in. In such cases,
+the Buffer Writer may be manually triggered to clean out
+buffers.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">lock.deadlock.detection.interval</span></tt></td>
+<td>Sets the interval in seconds between deadlock scans.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">logging.properties.file</span></tt></td>
+<td>Specifies the name of logging properties file. Precede
+<tt class="docutils literal"><span class="pre">classpath:</span></tt> if you want SimpleDBM to search for this
+file in the classpath.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">logging.properties.type</span></tt></td>
+<td>Specify <tt class="docutils literal"><span class="pre">&quot;log4j&quot;</span></tt> if you want to SimpleDBM to use Log4J
+for generating log messages.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">transaction.lock.timeout</span></tt></td>
+<td>Specifies the default lock timeout value in seconds.
+Default is 60 seconds.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">transaction.ckpt.interval</span></tt></td>
+<td>Specifies the interval between checkpoints in milliseconds.
+Default is 15000 milliseconds (15 secs).</td>
+</tr>
+</tbody>
+</table>
+<p>The <tt class="docutils literal"><span class="pre">Server.create()</span></tt> call will overwrite any existing database
+in the specified storage path, so it must be called only when you know
+for sure that you want to create a database.</p>
+</div>
+</div>
+<div class="section" id="opening-a-database">
+<h3><a class="toc-backref" href="#id17">Opening a database</a><a class="headerlink" href="#opening-a-database" title="Permalink to this headline">¶</a></h3>
+<p>Once a database has been created, it can be opened by creating an
+instance of SimpleDBM server, and starting it. The same properties that were
+supplied while creating the database, can be supplied when starting it.</p>
+<p>Here is a code snippet that shows how this is done:</p>
+<div class="highlight-python"><pre>Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "16384");
+properties.setProperty("log.buffer.size", "16384");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "5");
+properties.setProperty("storage.basePath",
+  "demodata/TupleDemo1");
+
+Server server = new Server(properties);
+server.start();
+try {
+  // do some work
+}
+finally {
+  server.shutdown();
+}</pre>
+</div>
+<p>Some points to bear in mind when starting SimpleDBM server instances:</p>
+<ol class="arabic simple">
+<li>Make sure that you invoke <tt class="docutils literal"><span class="pre">shutdown()</span></tt> eventually to ensure proper
+shutdown of the database.</li>
+<li>Database startup/shutdown is relatively expensive, so do it only
+once during the life-cycle of your application.</li>
+<li>A Server object can be used only once - after calling
+<tt class="docutils literal"><span class="pre">shutdown()</span></tt>, it is an error to do any operation with the server
+object.</li>
+</ol>
+</div>
+<div class="section" id="managing-log-messages">
+<h3><a class="toc-backref" href="#id18">Managing log messages</a><a class="headerlink" href="#managing-log-messages" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM has support for JDK 1.4 style logging as well as
+Log4J logging. By default, if Log4J library is available on the
+classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
+package is used.</p>
+<p>You can specify the type of logging to be used using the
+Server Property <tt class="docutils literal"><span class="pre">logging.properties.type</span></tt>. If this is set to
+&#8220;log4j&#8221;, SimpleDBM will use Log4J logging. Any other value causes
+SimpleDBM to use default JDK logging.</p>
+<p>The configuration of the logging can be specified using a
+properties file. The name and location of the properties file
+is specified using the Server property <tt class="docutils literal"><span class="pre">logging.properties.file</span></tt>.
+If the filename is prefixed with the string &#8220;classpath:&#8221;, then
+SimpleDBM will search for the properties file in the classpath.
+Otherwise, the filename is searched for in the current filesystem.</p>
+<p>A sample logging properties file is shown below. Note that this
+sample contains both JDK style and Log4J style configuration.:</p>
+<div class="highlight-python"><pre>############################################################
+#      JDK 1.4 Logging
+############################################################
+handlers= java.util.logging.FileHandler, java.util.logging.ConsoleHandler
+.level= INFO
+
+java.util.logging.FileHandler.pattern = simpledbm.log.%g
+java.util.logging.FileHandler.limit = 50000
+java.util.logging.FileHandler.count = 1
+java.util.logging.FileHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.FileHandler.level = ALL
+
+java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.ConsoleHandler.level = ALL
+
+org.simpledbm.registry.level = INFO
+org.simpledbm.bufmgr.level = INFO
+org.simpledbm.indexmgr.level = INFO
+org.simpledbm.storagemgr.level = INFO
+org.simpledbm.walogmgr.level = INFO
+org.simpledbm.lockmgr.level = INFO
+org.simpledbm.freespacemgr.level = INFO
+org.simpledbm.slotpagemgr.level = INFO
+org.simpledbm.transactionmgr.level = INFO
+org.simpledbm.tuplemgr.level = INFO
+org.simpledbm.latchmgr.level = INFO
+org.simpledbm.pagemgr.level = INFO
+org.simpledbm.rss.util.level = INFO
+org.simpledbm.util.level = INFO
+org.simpledbm.server.level = INFO
+org.simpledbm.trace.level = INFO
+org.simpledbm.database.level = INFO
+
+# Default Log4J configuration
+
+# Console appender
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# File Appender
+log4j.appender.A2=org.apache.log4j.RollingFileAppender
+log4j.appender.A2.MaxFileSize=10MB
+log4j.appender.A2.MaxBackupIndex=1
+log4j.appender.A2.File=simpledbm.log
+log4j.appender.A2.layout=org.apache.log4j.PatternLayout
+log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# Root logger set to DEBUG using the A1 and A2 appenders defined above.
+log4j.rootLogger=DEBUG, A1, A2
+
+# Various loggers
+log4j.logger.org.simpledbm.registry=INFO
+log4j.logger.org.simpledbm.bufmgr=INFO
+log4j.logger.org.simpledbm.indexmgr=INFO
+log4j.logger.org.simpledbm.storagemgr=INFO
+log4j.logger.org.simpledbm.walogmgr=INFO
+log4j.logger.org.simpledbm.lockmgr=INFO
+log4j.logger.org.simpledbm.freespacemgr=INFO
+log4j.logger.org.simpledbm.slotpagemgr=INFO
+log4j.logger.org.simpledbm.transactionmgr=INFO
+log4j.logger.org.simpledbm.tuplemgr=INFO
+log4j.logger.org.simpledbm.latchmgr=INFO
+log4j.logger.org.simpledbm.pagemgr=INFO
+log4j.logger.org.simpledbm.rss.util=INFO
+log4j.logger.org.simpledbm.util=INFO
+log4j.logger.org.simpledbm.server=INFO
+log4j.logger.org.simpledbm.trace=INFO
+log4j.logger.org.simpledbm.database=INFO</pre>
+</div>
+<p>By default, SimpleDBM looks for a logging properties file named
+&#8220;simpledbm.logging.properties&#8221;.</p>
+</div>
+</div>
+<div class="section" id="common-infrastructure">
+<h2><a class="toc-backref" href="#id19">Common Infrastructure</a><a class="headerlink" href="#common-infrastructure" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="object-registry">
+<h3><a class="toc-backref" href="#id20">Object Registry</a><a class="headerlink" href="#object-registry" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id2">
+<h4><a class="toc-backref" href="#id21">Overview</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM uses a custom serialization mechanism for marshalling
+and unmarshalling objects to/from byte streams. When an object
+is marshalled, a two-byte code is stored in the first two bytes of
+the byte stream <a class="footnote-reference" href="#id4" id="id3">[1]</a>. This identifies the class of the stored object.
+When reading back, the type code is used to lookup a factory for
+creating the object of the correct class.</p>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>In some cases the type code is not stored, as it can be
+determined through some other means.</td></tr>
+</tbody>
+</table>
+<p>The SimpleDBM serialization mechanism does not use the Java
+Serialization framework.</p>
+<p>Central to the SimpleDBM serialization mechanism is the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>
+module. The <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> provides the coupling between SimpleDBM
+serialization mechanism and its clients. For instance, index key
+types, table row types, etc. are registered in SimpleDBM&#8217;s
+<tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> and thereby made available to SimpleDBM. You will
+see how this is done when we discuss Tables and
+Indexes.</p>
+<p>To allow SimpleDBM to serialize and deserialize an object from a byte-stream,
+you must:</p>
+<ol class="arabic simple">
+<li>Assign a unique 2-byte (short) type code to the class. Because the type
+code gets recorded in persistent storage,
+it must be stable, i.e., once registered, the type code association
+for a class must remain constant for the life span of the
+the database.</li>
+<li>Ensure that the class implements a constructor that takes a
+ByteBuffer argument. The constructor should expect the first two bytes
+to contain the typecode for the class.</li>
+<li>Ensure that the class implements the Storable interface. The
+stored length of an object of the class must allow for the 2-byte
+type code.</li>
+<li>Provide an implementation of the <tt class="docutils literal"><span class="pre">org.simpledbm.rss.api.registry.ObjectFactory</span></tt>
+interface, and register this implementation with the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>.</li>
+</ol>
+<p>An important consideration is to ensure that all the required classes
+are available to a SimpleDBM RSS instance at startup.</p>
+<p>A limitation of the current design is that the type registrations are
+not held in persistent storage. Since all type mappings must be available
+to SimpleDBM server when it is starting up (as these may be involved
+in recovery) you need to ensure that custom type mappings are registered
+to the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> immediately after the server instance is constructed, but
+before the server is started. Typically this is handled by requiring
+each module to register its own types.</p>
+<p>Type codes between the range 0-1000 are reserved for use by
+SimpleDBM.</p>
+</div>
+<div class="section" id="two-use-cases">
+<h4><a class="toc-backref" href="#id22">Two Use cases</a><a class="headerlink" href="#two-use-cases" title="Permalink to this headline">¶</a></h4>
+<p>The <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> supports two use cases.</p>
+<ul class="simple">
+<li>The first use case is where the client registers an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt>
+implementation. In this case, <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> can construct the
+correct object from a byte stream on request. By taking care of the
+common case, the client code is simplified.</li>
+<li>The second case is when the client has a more complex requirement
+and wants to manage the instantiation of objects. In this scenario,
+the client registers a singleton class and associates this with the
+type code. The <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> will return the registered singleton
+object when requested.</li>
+</ul>
+</div>
+<div class="section" id="registering-an-objectfactory">
+<h4><a class="toc-backref" href="#id23">Registering an ObjectFactory</a><a class="headerlink" href="#registering-an-objectfactory" title="Permalink to this headline">¶</a></h4>
+<p>In the simple case, an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> implementation needs to be
+registered for a particular type code.</p>
+<p>In the example shown below, objects of the class <tt class="docutils literal"><span class="pre">MyObject</span></tt>
+are to be persisted:</p>
+<div class="highlight-python"><pre>public final class MyObject implements Storable {
+  final int value;
+
+  /**
+   * Constructs a MyObject from a byte stream.
+   */
+  public MyObject(ByteBuffer buf) {
+    // skip the type code
+    buf.getShort();
+    // now get the value
+    value = buf.getInt();
+  }
+
+  /* Storable methods not shown */
+}</pre>
+</div>
+<p>Points worth noting are:</p>
+<ul class="simple">
+<li>The <tt class="docutils literal"><span class="pre">MyObject</span></tt> class provides a constructor that takes a <tt class="docutils literal"><span class="pre">ByteBuffer</span></tt>
+as an argument. This is important as it allows the object to
+use final fields, allowing the class to be immutable.</li>
+<li>The constructor skips the first two bytes which contain the type code.</li>
+</ul>
+<p>We need an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> implementation that constructs the <tt class="docutils literal"><span class="pre">MyObject</span></tt>
+instances. The implementation is relatively straightforward:</p>
+<div class="highlight-python"><pre>class MyObjectFactory implements ObjectFactory {
+  Object getInstance(ByteBuffer buf) {
+    return new MyObject(buf);
+  }
+}</pre>
+</div>
+<p>Next, we register the <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> implementation with the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>.:</p>
+<div class="highlight-python"><pre>objectRegistry.registerObjectFactory(1, new MyObjectFactory());</pre>
+</div>
+<p>Given above registration, it is possible to
+construct MyObject instances as follows:</p>
+<div class="highlight-python"><pre>ByteBuffer buf = ...;
+MyObject o = (MyObject) objectRegistry.getInstance(buf);</pre>
+</div>
+<p>This pattern is used throughout SimpleDBM RSS.</p>
+</div>
+<div class="section" id="asymmetry-between-retrieving-and-storing-objects">
+<h4><a class="toc-backref" href="#id24">Asymmetry between retrieving and storing objects</a><a class="headerlink" href="#asymmetry-between-retrieving-and-storing-objects" title="Permalink to this headline">¶</a></h4>
+<p>The reader may have noticed that the <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> says
+nothing about how objects are marshalled into a byte stream.
+It only deals with the unmarshalling of objects.</p>
+<p>The marshalling is handled by the object itself. All
+objects that support marshalling are required to implement
+the Storable interface.</p>
+</div>
+<div class="section" id="storable-interface-and-object-serialization">
+<h4><a class="toc-backref" href="#id25">Storable Interface and Object serialization</a><a class="headerlink" href="#storable-interface-and-object-serialization" title="Permalink to this headline">¶</a></h4>
+<p>Classes that need serialization support should implement
+the interface <tt class="docutils literal"><span class="pre">org.simpledbm.rss.api.registry.Storable</span></tt>.
+The <tt class="docutils literal"><span class="pre">Storable</span></tt> interface requires the object
+to be able to predict its persistent size in bytes when the
+<tt class="docutils literal"><span class="pre">getStoredLength()</span></tt> method is invoked. It also requires the
+implementation to be able to stream itself to a <tt class="docutils literal"><span class="pre">ByteBuffer</span></tt>.</p>
+<p>The Storable interface specification is as follows:</p>
+<div class="highlight-python"><pre>/**
+ * A Storable object can be written to (stored into) or
+ * read from (retrieved from) a ByteBuffer. The object
+ * must be able to predict its length in bytes;
+ * this not only allows clients to allocate ByteBuffer
+ * objects of suitable size, it is also be used by a
+ * StorageContainer to ensure that objects can be
+ * restored from secondary storage.
+ */
+public interface Storable {
+
+  /**
+   * Store this object into the supplied ByteBuffer in
+   * a format that can be subsequently used to reconstruct the
+   * object. ByteBuffer is assumed to be setup
+   * correctly for writing.
+   *
+   * @param bb ByteBuffer that will contain a stored
+   *           representation of the object.
+   */
+  void store(ByteBuffer bb);
+
+  /**
+   * Predict the length of this object in bytes when
+   * stored in a ByteBuffer.
+   *
+   * @return The length of this object when stored in
+   *         a ByteBuffer.
+   */
+  int getStoredLength();
+}</pre>
+</div>
+<p>The implementation of the <tt class="docutils literal"><span class="pre">store()</span></tt> method must be the inverse
+of the constructor that takes the <tt class="docutils literal"><span class="pre">ByteBuffer</span></tt> argument.</p>
+<p>A complete example of the <tt class="docutils literal"><span class="pre">MyObject</span></tt> class will look like
+this:</p>
+<div class="highlight-python"><pre>public final class MyObject implements Storable {
+  final int value;
+
+  /**
+   * Constructs a MyObject from a byte stream.
+   */
+  public MyObject(ByteBuffer buf) {
+    // skip the type code
+    buf.getShort();
+    // now get the value
+    value = buf.getInt();
+  }
+
+  public int getStoredLength() {
+    return 6;
+  }
+
+  /**
+   * Serialize to a ByteBuffer object.
+   */
+  public void store(ByteBuffer bb) {
+    bb.putShort((short) 1);
+    bb.putInt(value);
+  }
+}</pre>
+</div>
+</div>
+<div class="section" id="registering-singletons">
+<h4><a class="toc-backref" href="#id26">Registering Singletons</a><a class="headerlink" href="#registering-singletons" title="Permalink to this headline">¶</a></h4>
+<p>In some cases, the requirements for constructing objects are complex
+enough for the client to manage it itself. In this case, the client
+provides a singleton object that is registered with the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>.
+The <tt class="docutils literal"><span class="pre">ObjectRegistry.getSingleton(int</span> <span class="pre">typecode)</span></tt> method retrieves the
+Singleton object. Typically, the singleton is a factory class that can
+be used to create new instances of objects.</p>
+</div>
+</div>
+</div>
+<div class="section" id="transactions">
+<h2><a class="toc-backref" href="#id27">Transactions</a><a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
+<p>Most SimpleDBM operations take place in the context of a Transaction.
+Following are the main API calls for managing transactions.</p>
+<div class="section" id="creating-new-transactions">
+<h3><a class="toc-backref" href="#id28">Creating new Transactions</a><a class="headerlink" href="#creating-new-transactions" title="Permalink to this headline">¶</a></h3>
+<p>To start a new Transaction, invoke the <tt class="docutils literal"><span class="pre">Server.begin()</span></tt> method as
+shown below. You must supply an <tt class="docutils literal"><span class="pre">IsolationMode</span></tt>, try
+<tt class="docutils literal"><span class="pre">READ_COMMITTED</span></tt> to start with.:</p>
+<div class="highlight-python"><pre>Server server = ...;
+
+// Start a new Transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);</pre>
+</div>
+<p>Isolation Modes are discussed in more detail in <a class="reference internal" href="#isolation-modes">Isolation Modes</a>.</p>
+</div>
+<div class="section" id="working-with-transactions">
+<h3><a class="toc-backref" href="#id29">Working with Transactions</a><a class="headerlink" href="#working-with-transactions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="transaction-api">
+<h4><a class="toc-backref" href="#id30">Transaction API</a><a class="headerlink" href="#transaction-api" title="Permalink to this headline">¶</a></h4>
+<p>The Transaction interface provides the following methods for clients
+to invoke:</p>
+<div class="highlight-python"><pre>public interface Transaction {
+
+  /**
+   * Creates a transaction savepoint.
+   */
+  public Savepoint createSavepoint(boolean saveCursors);
+
+  /**
+   * Commits the transaction. All locks held by the
+   * transaction are released.
+   */
+  public void commit();
+
+  /**
+   * Rolls back a transaction upto a savepoint. Locks acquired
+   * since the Savepoint are released. PostCommitActions queued
+   * after the Savepoint was created are discarded.
+   */
+  public void rollback(Savepoint sp);
+
+  /**
+   * Aborts the transaction, undoing all changes and releasing
+   * locks.
+   */
+  public void abort();
+
+}</pre>
+</div>
+<p>A transaction must always be either committed or aborted. Failure to
+do so will lead to resource leaks, such as locks, which will not be
+released.  The correct way to work with transactions is shown below:</p>
+<div class="highlight-python"><pre>// Start a new Transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  // do some work and if this is completed succesfully ...
+  // set success to true.
+  doSomething();
+  success = true;
+}
+finally {
+  if (success) {
+    trx.commit();
+  }
+  else {
+    trx.abort();
+  }
+}</pre>
+</div>
+</div>
+<div class="section" id="transaction-savepoints">
+<h4><a class="toc-backref" href="#id31">Transaction Savepoints</a><a class="headerlink" href="#transaction-savepoints" title="Permalink to this headline">¶</a></h4>
+<p>You can create transaction savepoints at any point in time.  When you
+create a savepoint, you need to decide whether the scans associated
+with the transaction should save their state so that in the event of
+a rollback, they can be restored to the state they were in at
+the time of the savepoint. This is important if you intend to use the
+scans after you have performed a rollback to savepoint.</p>
+<p>Bear in mind that in certain IsolationModes, locks are released as the
+scan cursor moves, When using such an IsolationMode, rollback to a
+Savepoint can fail if after the rollback, the scan cursor cannot be
+positioned on a suitable location, for example, if a deadlock occurs when
+it attempts to reacquire lock on the previous location. Also, in case
+the location itself is no longer valid, perhaps due to a delete
+operation by some other transaction, then the scan may position itself
+on the next available location.</p>
+<p>If you are preserving cursor state during savepoints, be prepared that
+in certain IsolationModes, a rollback may fail due to locking, or the
+scan may not be able to reposition itself on exactly the same
+location.</p>
+</div>
+</div>
+</div>
+<div class="section" id="tables">
+<h2><a class="toc-backref" href="#id32">Tables</a><a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="tuplecontainers">
+<h3><a class="toc-backref" href="#id33">TupleContainers</a><a class="headerlink" href="#tuplecontainers" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM provides support for tables with variable length records.
+The container for a table is known as <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>.  As far as SimpleDBM is concerned,
+a row in a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt> is just a blob of data; it can contain
+anything you like. SimpleDBM will automatically break up a large row
+into smaller chunks so the chunks can be stored in individual data
+pages. This chunking is transparent from a client perspective, as the
+client only ever sees full records.</p>
+</div>
+<div class="section" id="creating-a-tuplecontainer">
+<h3><a class="toc-backref" href="#id34">Creating a TupleContainer</a><a class="headerlink" href="#creating-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
+<p>When you create a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>, you must supply a name for the
+container, a unique numeric ID which should not be in use by any other
+container, and the extent size. For efficiency, SimpleDBM allocates
+space in extents; an extent is simply a set of contiguous pages.:</p>
+<div class="highlight-python"><pre>/**
+ * Creates a new Tuple Container.
+ *
+ * @param trx Transaction to be used for creating the container
+ * @param name Name of the container
+ * @param containerId A numeric ID for the container - must
+ *                    be unique for each container
+ * @param extentSize The number of pages that should be part
+ *                   of each extent in the container
+ */
+public void createTupleContainer(Transaction trx, String name,
+ int containerId, int extentSize);</pre>
+</div>
+<p>Note that the <tt class="docutils literal"><span class="pre">createTupleContainer()</span></tt> method requires a Transaction.
+Given below is an example of how a tuple container may be created.
+In this instance, we are creating a TupleContainer named &#8220;test.db&#8221;, which
+will be assigned container ID 1, and will have an extent size of 20 pages.:</p>
+<div class="highlight-python"><pre>Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  server.createTupleContainer(trx, "test.db", 1, 20);
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+<dl class="docutils">
+<dt>Note:</dt>
+<dd>When you create a Container it is exclusively locked. The lock
+is released when you commit or abort the transaction. The exclusive lock
+prevents any other transaction from manipulating the container while it is
+being created.</dd>
+<dt>Recommendation:</dt>
+<dd>You should create standalone transactions for creating
+containers, and commit the transaction as soon as the container has been
+created.</dd>
+</dl>
+</div>
+<div class="section" id="accessing-a-tuplecontainer">
+<h3><a class="toc-backref" href="#id35">Accessing a TupleContainer</a><a class="headerlink" href="#accessing-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
+<p>To manipulate a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>, you must first get access to it. This
+is done by invoking the <tt class="docutils literal"><span class="pre">getTupleContainer()</span></tt> method provided by the
+SimpleDBM Server object. Note that when you access a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt> in
+this way, a shared lock is placed on the container. This prevents
+other transactions from deleting the container while you are working
+with it. However, other transactions can perform row level operations
+on the same container concurrently.:</p>
+<div class="highlight-python"><pre>Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  // do something
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+</div>
+<div class="section" id="inserting-tuples">
+<h3><a class="toc-backref" href="#id36">Inserting tuples</a><a class="headerlink" href="#inserting-tuples" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM treats tuples (rows) as blobs of data, and does not care
+about the internal structure of a tuple. The only requirement is that
+a tuple must implement the <tt class="docutils literal"><span class="pre">Storable</span></tt> interface.</p>
+<p>An insert operation is split into two steps. In the first step,
+the initial chunk of the tuple is inserted and a Location assigned to
+the tuple. At this point, you can do other things such as add entries
+to indexes.</p>
+<p>You complete the insert as a second step. At this point, if the tuple
+was larger than the space allowed for in the first chunk, additional
+chunks get created and allocated for the tuple.</p>
+<p>The reason for the two step operation is to ensure that for large
+tuples that span multiple pages, the insert does not proceed until it
+is certain that the insert will be successful. It is assumed that once
+the indexes have been successfully updated, in particular, the primary
+key has been created, then the insert can proceed.</p>
+<p>In the example below, we insert a tuple of type <tt class="docutils literal"><span class="pre">ByteString</span></tt>, which is
+a <tt class="docutils literal"><span class="pre">Storable</span></tt> wrapper for <tt class="docutils literal"><span class="pre">String</span></tt> objects.:</p>
+<div class="highlight-python"><pre>Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleInserter inserter =
+    container.insert(trx, new ByteString("Hello World!"));
+  Location location = inserter.getLocation();
+
+  // Create index entires here
+
+  inserter.completeInsert();
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+</div>
+<div class="section" id="reading-tuples">
+<h3><a class="toc-backref" href="#id37">Reading tuples</a><a class="headerlink" href="#reading-tuples" title="Permalink to this headline">¶</a></h3>
+<p>In order to read tuples, you must open a scan. A scan is a mechanism
+for accessing tuples one by one. You can open Index Scans (described
+in next chapter) or Tuple Scans. A Tuple Scan directly scans a
+TupleContainer.  Compared to index scans, tuple scans are unordered,
+and do not support Serializable or Repeatable Read lock modes. Another
+limitation at present is that tuple scans do not save their state
+during savepoints, and therefore cannot restore their state in the event of
+a rollback to a savepoint.:</p>
+<div class="highlight-python"><pre>Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, false);
+  while (scan.fetchNext()) {
+    byte[] data = scan.getCurrentTuple();
+    // Do somthing with the tuple data
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+</div>
+<div class="section" id="updating-tuples">
+<h3><a class="toc-backref" href="#id38">Updating tuples</a><a class="headerlink" href="#updating-tuples" title="Permalink to this headline">¶</a></h3>
+<p>In order to update a tuple, you must first obtain its Location using a
+scan. typically, if you intend to update the tuple, you should open the
+scan in UPDATE mode. This is done by supplying a boolean true as the
+second argument to <tt class="docutils literal"><span class="pre">openScan()</span></tt> method.</p>
+<p>Note that in the current implementation of SimpleDBM, the space
+allocated to a tuple is never reduced, even if the tuple grows smaller
+due to updates.:</p>
+<div class="highlight-python"><pre>Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, true);
+  while (scan.fetchNext()) {
+    Location location = scan.getCurrentLocation();
+    byte[] data = scan.getCurrentTuple();
+    // Do somthing with the tuple data
+    // Assume updatedTuple contains update tuple data.
+    Storable updatedTuple = ... ;
+    // Update the tuple
+    container.update(trx, location, updatedTuple);
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+ }</pre>
+</div>
+</div>
+<div class="section" id="deleting-tuples">
+<h3><a class="toc-backref" href="#id39">Deleting tuples</a><a class="headerlink" href="#deleting-tuples" title="Permalink to this headline">¶</a></h3>
+<p>Tuple deletes are done in a similar way as tuple updates.
+Start a scan in UPDATE mode, if you intend to delete tuples
+during the scan. Here is an example:</p>
+<div class="highlight-python"><pre>Server server ...
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+try {
+  boolean success = false
+  TupleContainer container = server.getTupleContainer(trx, 1);
+  TupleScan scan = container.openScan(trx, true);
+  while (scan.fetchNext()) {
+    Location location = scan.getCurrentLocation();
+    container.delete(trx, location);
+  }
+  success = true;
+}
+finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+</div>
+</div>
+<div class="section" id="indexes">
+<h2><a class="toc-backref" href="#id40">Indexes</a><a class="headerlink" href="#indexes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="index-keys">
+<h3><a class="toc-backref" href="#id41">Index Keys</a><a class="headerlink" href="#index-keys" title="Permalink to this headline">¶</a></h3>
+<p>Index Keys are the searchable attributes stored in the Index. This module
+specifies Index Keys in a fairly general way:</p>
+<div class="highlight-python"><pre>public interface IndexKey
+  extends Storable, Comparable&lt;IndexKey&gt; {
+
+  /**
+   * Used mainly for building test cases; this method should
+   * parse the input string and initialize itself. The contents
+   * of the string is expected to match the toString() output.
+   */
+  void parseString(String string);
+}</pre>
+</div>
+<p>The requirements for an IndexKey are fairly simple. The key must be
+<tt class="docutils literal"><span class="pre">Storable</span></tt> and <tt class="docutils literal"><span class="pre">Comparable</span></tt>. Note that this interface does
+not say anything about the internal structure of the key; in
+particular it does not specify whether the key contains multiple
+attributes. This is deliberate, as it makes the Index Manager module
+more generic.</p>
+<p>Depending upon the implementation, there may be restricions on the
+size of the key. For instance, in the SimpleDBM BTree implementation,
+the key should not exceed 1/8th of the page size, ie, 1KB in a 8KB
+page.</p>
+</div>
+<div class="section" id="index-key-factories">
+<h3><a class="toc-backref" href="#id42">Index Key Factories</a><a class="headerlink" href="#index-key-factories" title="Permalink to this headline">¶</a></h3>
+<p>An Index Key Factory is used to create new keys. In addition to normal
+keys, an Index Key Factory must be able to create two special type of
+keys:</p>
+<dl class="docutils">
+<dt>MinKey</dt>
+<dd>This is a special key that represents negative
+infinity. All valid keys must be greater than this key.</dd>
+<dt>MaxKey</dt>
+<dd>This is a special key that represents positive
+infinity. All valid keys must be less than this key.</dd>
+</dl>
+<p>The special keys are used by the Index Manager internally. You can
+also specify the <tt class="docutils literal"><span class="pre">MinKey</span></tt> when opening a scan, to effectively
+start the scan from the first available key.:</p>
+<div class="highlight-python"><pre>public interface IndexKeyFactory {
+
+  /**
+   * Generates a new (empty) key for the specified
+   * Container. The Container ID is meant to be used as key
+   * for locating information specific to a container; for
+   * instance, the attributes of an Index.
+   *
+   * @param containerId ID of the container for which a key
+   *                    is required
+   */
+  IndexKey newIndexKey(int containerId);
+
+  /**
+   * Generates a key that represents Infinity - it must be
+   * greater than all possible keys in the domain for the key.
+   * The Container ID is meant to be used as key
+   * for locating information specific to a container; for
+   * instance, the attributes of an Index.
+   *
+   * @param containerId ID of the container for which a key
+   *                    is required
+   */
+  IndexKey maxIndexKey(int containerId);
+
+  /**
+   * Generates a key that represents negative Infinity - it
+   * must be smaller than all possible keys in the domain for
+   * the key. The Container ID is meant to be used as key
+   * for locating information specific to a container; for
+   * instance, the attributes of an Index.
+   *
+   * The key returned by this method can be used as an
+   * argument to index scans. The result will be a scan of
+   * the index starting from the first key in the index.
+   *
+   * @param containerId ID of the container for which a key
+   * is required
+   */
+  IndexKey minIndexKey(int containerId);
+}</pre>
+</div>
+<p>An implementation is free to use any method it likes for identifying
+keys that represent <tt class="docutils literal"><span class="pre">MinKey</span></tt> and <tt class="docutils literal"><span class="pre">MaxKey</span></tt>, as long as it ensures
+that these keys will obey the contract defined above.</p>
+<p>The methods of <tt class="docutils literal"><span class="pre">IndexKeyFactory</span></tt> take the container ID as a
+parameter. In SimpleDBM, each index is stored in a separate container,
+hence container ID is used as a mechanism for identifying the index.
+The <tt class="docutils literal"><span class="pre">IndexKeyFactory</span></tt> implementation is expected to use the
+container ID to determine the type of index key to create. For
+example, it may consult a data dictionary to determine the type of key
+attributes required by the index key.</p>
+<div class="section" id="example">
+<h4><a class="toc-backref" href="#id43">Example</a><a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h4>
+<p>Given below is an example of an <tt class="docutils literal"><span class="pre">IndexKey</span></tt> implementation. This
+implementation uses a special byte field to maintain the status
+information.:</p>
+<div class="highlight-python"><pre>public class IntegerKey implements IndexKey {
+
+  private static final byte NULL_FIELD = 1;
+  private static final byte MINUS_INFINITY_FIELD = 2;
+  private static final byte VALUE_FIELD = 4;
+  private static final byte PLUS_INFINITY_FIELD = 8;
+
+  private byte statusByte = NULL_FIELD;
+  private int value;
+
+  public IntegerKey() {
+    statusByte = NULL_FIELD;
+  }
+
+  public IntegerKey(int value) {
+    statusByte = VALUE_FIELD;
+    this.value = value;
+  }
+
+  protected IntegerKey(byte statusByte, int value) {
+    this.statusByte = statusByte;
+    this.value = value;
+  }
+
+  public int getValue() {
+    if (statusByte != VALUE_FIELD) {
+      throw new IllegalStateException("Value has not been set");
+    }
+    return value;
+  }
+
+  public void setValue(int i) {
+    value = i;
+    statusByte = VALUE_FIELD;
+  }
+
+  public void retrieve(ByteBuffer bb) {
+    statusByte = bb.get();
+    value = bb.getInt();
+  }
+
+  public void store(ByteBuffer bb) {
+    bb.put(statusByte);
+    bb.putInt(value);
+  }
+
+  public int getStoredLength() {
+    return 5;
+  }
+
+  public int compareTo(IndexKey key) {
+    if (key == null) {
+      throw new IllegalArgumentException("Supplied key is null");
+    }
+    if (key == this) {
+      return 0;
+    }
+    if (key.getClass() != getClass()) {
+      throw new IllegalArgumentException(
+          "Supplied key is not of the correct type");
+    }
+    IntegerKey other = (IntegerKey) key;
+    int result = statusByte - other.statusByte;
+    if (result == 0 &amp;&amp; statusByte == VALUE_FIELD) {
+      result = value - other.value;
+    }
+    return result;
+  }
+
+  public final boolean isNull() {
+    return statusByte == NULL_FIELD;
+  }
+
+  public final boolean isMinKey() {
+    return statusByte == MINUS_INFINITY_FIELD;
+  }
+
+  public final boolean isMaxKey() {
+    return statusByte == PLUS_INFINITY_FIELD;
+  }
+
+  public final boolean isValue() {
+    return statusByte == VALUE_FIELD;
+  }
+
+  public boolean equals(Object o) {
+    if (o == null) {
+      throw new IllegalArgumentException("Supplied key is null");
+    }
+    if (o == this) {
+      return true;
+    }
+    if (o == null || !(o instanceof IntegerKey)) {
+      return false;
+    }
+    return compareTo((IntegerKey) o) == 0;
+  }
+
+  public void parseString(String s) {
+    if ("&lt;NULL&gt;".equals(s)) {
+      statusByte = NULL_FIELD;
+    } else if ("&lt;MINKEY&gt;".equals(s)) {
+      statusByte = MINUS_INFINITY_FIELD;
+    } else if ("&lt;MAXKEY&gt;".equals(s)) {
+      statusByte = PLUS_INFINITY_FIELD;
+    } else {
+      value = Integer.parseInt(s);
+      statusByte = VALUE_FIELD;
+    }
+  }
+
+  public String toString() {
+    if (isNull()) {
+      return "&lt;NULL&gt;";
+    } else if (isMinKey()) {
+      return "&lt;MINKEY&gt;";
+    } else if (isMaxKey()) {
+      return "&lt;MAXKEY&gt;";
+    } else {
+      return Integer.toString(value);
+    }
+  }
+
+  public static IntegerKey createNullKey() {
+    return new IntegerKey(NULL_FIELD, 0);
+  }
+
+  public static IntegerKey createMinKey() {
+    return new IntegerKey(MINUS_INFINITY_FIELD, 0);
+  }
+
+  public static IntegerKey createMaxKey() {
+    return new IntegerKey(PLUS_INFINITY_FIELD, 0);
+  }
+}</pre>
+</div>
+<p>Shown below is the corresponding <tt class="docutils literal"><span class="pre">IndexKeyFactory</span></tt> implementation.:</p>
+<div class="highlight-python"><pre>public class IntegerKeyFactory implements IndexKeyFactory {
+
+  public IndexKey maxIndexKey(int containerId) {
+    return IntegerKey.createMaxKey();
+  }
+
+  public IndexKey minIndexKey(int containerId) {
+    return IntegerKey.createMinKey();
+  }
+
+  public IndexKey newIndexKey(int containerId) {
+    return IntegerKey.createNullKey();
+  }
+}</pre>
+</div>
+<p>The example shown above is a simple key. It is possible to create
+multi-attribute keys as well. For an example of how this can be done,
+please see the sample <tt class="docutils literal"><span class="pre">typesystem</span></tt> package supplied with SimpleDBM,
+and the sample project <tt class="docutils literal"><span class="pre">tupledemo</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="locations">
+<h3><a class="toc-backref" href="#id44">Locations</a><a class="headerlink" href="#locations" title="Permalink to this headline">¶</a></h3>
+<p>Indexes contain pointers to tuple data. When you insert a tuple in a
+tuple container, a location is assigned to the tuple. This location
+can be stored in an index to point to the tuple.</p>
+</div>
+<div class="section" id="creating-a-new-index">
+<h3><a class="toc-backref" href="#id45">Creating a new index</a><a class="headerlink" href="#creating-a-new-index" title="Permalink to this headline">¶</a></h3>
+<p>Following code snippet shows the steps required to create a new
+index.:</p>
+<div class="highlight-python"><pre>int INDEX_KEY_FACTORY_TYPE = 25000;
+
+Server server = ...;
+IndexKeyFactory indexKeyFactory = ...;
+
+// Register key factory
+server.registerSingleton(INDEX_KEY_FACTORY_TYPE,
+  indexKeyFactory);
+
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  int containerId = 1;
+  int extentSize = 8;
+  boolean isUnique = true;
+  server.createIndex(trx, "testbtree.dat",
+    containerId, extentSize, INDEX_KEY_FACTORY_TYPE,
+    isUnique);
+  success = true;
+} finally {
+  if (success)
+    trx.commit();
+  else
+    trx.abort();
+}</pre>
+</div>
+</div>
+<div class="section" id="obtaining-index-instance">
+<h3><a class="toc-backref" href="#id46">Obtaining index instance</a><a class="headerlink" href="#obtaining-index-instance" title="Permalink to this headline">¶</a></h3>
+<p>In order to manipulate an index, you must first obtain an instance of
+the index. This is shown below.</p>
+<div class="highlight-python"><pre>Transaction trx = ...;
+int containerId = 1;
+IndexContainer index = server.getIndex(trx, containerId);</pre>
+</div>
+<p>This operation causes a SHARED mode lock to be placed on the container
+ID. This lock is to prevent other transactions from dropping the
+container. Concurrent insert, delete and scan operations are
+permitted, however.</p>
+</div>
+<div class="section" id="working-with-keys">
+<h3><a class="toc-backref" href="#id47">Working with keys</a><a class="headerlink" href="#working-with-keys" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="adding-a-key">
+<h4><a class="toc-backref" href="#id48">Adding a key</a><a class="headerlink" href="#adding-a-key" title="Permalink to this headline">¶</a></h4>
+<p>The API for inserting new keys is shown below.</p>
+<div class="highlight-python"><pre>public interface IndexContainer {
+  /**
+   * Inserts a new key and location. If the Index is unique,
+   * only one instance of key is allowed. In non-unique indexes,
+   * multiple instances of the same key may exist, but only
+   * one instance of the combination of key/location
+   * is allowed.
+   *
+   * The caller must obtain a Shared lock on the Index
+   * Container prior to this call.
+   *
+   * The caller must acquire an Exclusive lock on Location
+   * before this call.
+   *
+   * @param trx Transaction managing the insert
+   * @param key Key to be inserted
+   * @param location Location associated with the key
+   */
+  public void insert(Transaction trx, IndexKey key,
+                     Location location);
+}</pre>
+</div>
+<p>To add a key, you need the <tt class="docutils literal"><span class="pre">IndexKey</span></tt> instance and the
+<tt class="docutils literal"><span class="pre">Location</span></tt>. The most common use case is to insert the keys
+after inserting a tuple in a tuple container. An example of this is
+shown below:</p>
+<div class="highlight-python"><pre>Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  TupleContainer table = server.getTupleContainer(
+    trx, TABLE_CONTNO);
+  IndexContainer primaryIndex =
+    server.getIndex(trx, PKEY_CONTNO);
+  IndexContainer secondaryIndex =
+    server.getIndex(trx, SKEY1_CONTNO);
+
+  // First lets create a new row and lock the location
+  TupleInserter inserter = table.insert(trx, tableRow);
+
+  // Insert the primary key - may fail with unique constraint
+  // violation
+  primaryIndex.insert(trx, primaryKeyRow,
+    inserter.getLocation());
+
+  // Insert seconary key
+  secondaryIndex.insert(trx, secondaryKeyRow,
+    inserter.getLocation());
+
+  // Complete the insert - may be a no-op.
+  inserter.completeInsert();
+  success = true;
+} finally {
+  if (success) {
+    trx.commit();
+  } else {
+    trx.abort();
+  }
+}</pre>
+</div>
+<p>Above example is taken from the sample <tt class="docutils literal"><span class="pre">tupledemo</span></tt>.</p>
+</div>
+<div class="section" id="deleting-a-key">
+<h4><a class="toc-backref" href="#id49">Deleting a key</a><a class="headerlink" href="#deleting-a-key" title="Permalink to this headline">¶</a></h4>
+<p>Deleting a key is very similar to adding a key. First lets look
+at the API.</p>
+<div class="highlight-python"><pre>public interface IndexContainer {
+  /**
+   * Deletes specified key and location.
+   *
+   * The caller must obtain a Shared lock on the Index
+   * Container prior to this call.
+   *
+   * The caller must acquire an Exclusive lock on Location
+   * before this call.
+   *
+   * @param trx Transaction managing the delete
+   * @param key Key to be deleted
+   * @param location Location associated with the key
+   */
+  public void delete(Transaction trx, IndexKey key,
+                     Location location);
+}</pre>
+</div>
+<p>Again we take an example from the tupledemo sample (note that
+the code has been simplified a bit).</p>
+<div class="highlight-python"><pre>// Start a new transaction
+Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  TupleContainer table =
+    server.getTupleContainer(trx, TABLE_CONTNO);
+  IndexContainer primaryIndex =
+    server.getIndex(trx, PKEY_CONTNO);
+
+  // Start a scan, with the primary key as argument
+  IndexScan indexScan = primaryIndex.openScan(trx, primaryKeyRow,
+    null, true);
+  if (indexScan.fetchNext()) {
+    // Scan always return item &gt;= search key, so let's
+    // check if we had an exact match
+    boolean matched = indexScan.getCurrentKey().equals(
+      primaryKeyRow);
+    try {
+      if (matched) {
+        Location location = indexScan.getCurrentLocation();
+        // Delete tuple data
+        table.delete(trx, location);
+        // Delete primary key
+        primaryIndex.delete(trx, primaryKeyRow, location);
+      }
+    } finally {
+      indexScan.fetchCompleted(matched);
+    }
+  }
+  success = true;
+} finally {
+  if (success) {
+    trx.commit();
+  } else {
+    trx.abort();
+  }
+}</pre>
+</div>
+<p>Prior to deleting the key, the associated location must be
+exclusively locked for commit duration. Fortunately, when you delete
+a tuple, it is locked exclusively, hence in the example shown above,
+there is no need for the Location to be locked again.</p>
+<p>Above example demonstrates also a very common use case, ie, scanning
+an index in UPDATE mode and then carrying out modifications.</p>
+</div>
+</div>
+<div class="section" id="scanning-keys">
+<h3><a class="toc-backref" href="#id50">Scanning keys</a><a class="headerlink" href="#scanning-keys" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="isolation-modes">
+<h4><a class="toc-backref" href="#id51">Isolation Modes</a><a class="headerlink" href="#isolation-modes" title="Permalink to this headline">¶</a></h4>
+<p>Before describing how to scan keys within an Index, it is necessary to
+describe the various lock isolation modes supported by SimpleDBM.</p>
+</div>
+<div class="section" id="common-behaviour">
+<h4><a class="toc-backref" href="#id52">Common Behaviour</a><a class="headerlink" href="#common-behaviour" title="Permalink to this headline">¶</a></h4>
+<p>Following behaviour is common across all lock isolation modes.</p>
+<ol class="arabic simple">
+<li>All locking is on Tuple Locations (rowids) only.</li>
+<li>When a tuple is inserted or deleted, its Location is first
+locked in EXCLUSIVE mode, the tuple is inserted or deleted from data
+page, and only after that, indexes are modified.</li>
+<li>Updates to indexed columns are treated as key deletes followed
+by key inserts. The updated row is locked in EXCLUSIVE mode before
+indexes are modified.</li>
+<li>When fetching, the index is looked up first, which causes a
+SHARED or UPDATE mode lock to be placed on the row, before the data
+pages are accessed.</li>
+</ol>
+</div>
+<div class="section" id="read-committed-cursor-stability">
+<h4><a class="toc-backref" href="#id53">Read Committed/Cursor Stability</a><a class="headerlink" href="#read-committed-cursor-stability" title="Permalink to this headline">¶</a></h4>
+<p>During scans, the tuple location is locked in SHARED or UPDATE mode
+while the cursor is positioned on the key. The lock on current
+location is released before the cursor moves to the next key.</p>
+</div>
+<div class="section" id="repeatable-read-rr">
+<h4><a class="toc-backref" href="#id54">Repeatable Read (RR)</a><a class="headerlink" href="#repeatable-read-rr" title="Permalink to this headline">¶</a></h4>
+<p>SHARED mode locks obtained on tuple locations during scans are retained until
+the transaction completes. UPDATE mode locks are downgraded to SHARED mode when
+the cursor moves.</p>
+</div>
+<div class="section" id="serializable">
+<h4><a class="toc-backref" href="#id55">Serializable</a><a class="headerlink" href="#serializable" title="Permalink to this headline">¶</a></h4>
+<p>Same as Repeatable Read, with additional locking (next key) during
+scans to prevent phantom reads.</p>
+</div>
+<div class="section" id="scanning-api">
+<h4><a class="toc-backref" href="#id56">Scanning API</a><a class="headerlink" href="#scanning-api" title="Permalink to this headline">¶</a></h4>
+<p>Opening an IndexScan requires you to specify a start condition.
+If you want to start from the beginning, then you may specify null values
+as the start key/location.</p>
+<p>In SimpleDBM, scans do not have a stop key. Instead, a scan starts fetching
+data from the first key/location that is greater or equal to the supplied
+start key/location. You must determine whether the fetched key satisfies
+the search criteria or not. If the fetched key no longer meets the search
+criteria, you should call <tt class="docutils literal"><span class="pre">fetchCompleted()</span></tt> with a false value, indicating that
+there is no need to fetch any more keys. This then causes the scan to
+reach logical EOF.</p>
+<p>The API for index scans is shown below:</p>
+<div class="highlight-python"><pre>public interface IndexContainer {
+
+  /**
+   * Opens a new index scan. The Scan will fetch keys &gt;= the
+   * specified key and location. Before returning fetched keys,
+   * the associated Location objects will be locked. The lock
+   * mode depends upon the forUpdate flag. The IsolationMode
+   * of the transaction determines when lock are released.
+   *
+   * Caller must obtain a Shared lock on the Index Container
+   * prior to calling this method.
+   *
+   * @param trx Transaction that will manage locks obtained
+   *            by the scan
+   * @param key The starting key to be searched for
+   * @param location The starting location to be searched for.
+   * @param forUpdate If this set, UPDATED mode locks will
+   *                  be acquired, else SHARED mode locks will
+   *                  be acquired.
+   */
+  public IndexScan openScan(Transaction trx, IndexKey key,
+    Location location, boolean forUpdate);
+
+}
+
+
+public interface IndexScan {
+
+  /**
+   * Fetches the next available key from the Index.
+   * Handles the situation where current key has been deleted.
+   * Note that prior to returning the key the Location
+   * object associated with the key is locked.
+   * After fetching an index row, typically, data must
+   * be fetched from associated tuple container. Locks
+   * obtained by the fetch protect such access. After
+   * tuple has been fetched, caller must invoke
+   * fetchCompleted() to ensure that locks are released
+   * in certain lock isolation modes. Failure to do so will
+   * cause extra locking.
+   */
+  public boolean fetchNext();
+
+  /**
+   * In certain isolation modes, releases locks acquired
+   * by fetchNext(). Must be invoked after the data from
+   * associated tuple container has been fetched.
+   * If the argument matched is set to false, the scan
+   * is assumed to have reached eof of file. The next
+   * call to fetchNext() will return false.
+   *
+   * @param matched If set to true indicates that the
+   *                key satisfies search query
+   */
+  public void fetchCompleted(boolean matched);
+
+  /**
+   * Returns the IndexKey on which the scan is currently
+   * positioned.
+   */
+  public IndexKey getCurrentKey();
+
+  /**
+   * Returns the Location associated with the current
+   * IndexKey.
+   */
+  public Location getCurrentLocation();
+
+  /**
+   * After the scan is completed, the close method
+   * should be called to release all resources acquired
+   * by the scan.
+   */
+  public void close();
+
+  /**
+   * Returns the End of File status of the scan. Once
+   * the scan has gone past the last available key in
+   * the Index, this will return true.
+   */
+  public boolean isEof();
+}</pre>
+</div>
+<p>Following code snippet, taken from the btreedemo sample,
+shows how to implement index scans.:</p>
+<div class="highlight-python"><pre>Transaction trx = ...;
+IndexContainer indexContainer = ...;
+IndexScan scan = indexContainer.openScan(trx, null,
+  null, false);
+try {
+  while (scan.fetchNext()) {
+    System.err.println("SCAN NEXT=" + scan.getCurrentKey() +
+      "," + scan.getCurrentLocation());
+    scan.fetchCompleted(true);
+  }
+} finally {
+  if (scan != null) {
+    scan.close();
+  }
+}</pre>
+</div>
+<p>Another example of an index scan can be found in section <a class="reference internal" href="#deleting-a-key">Deleting a key</a>.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">SimpleDBM RSS User&#8217;s Manual</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#features">Features</a><ul>
+<li><a class="reference external" href="#non-features">Non-Features</a></li>
+<li><a class="reference external" href="#status">Status</a></li>
+<li><a class="reference external" href="#getting-started">Getting Started</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#simpledbm-modules">SimpleDBM Modules</a></li>
+<li><a class="reference external" href="#simpledbm-servers-and-databases">SimpleDBM Servers and Databases</a><ul>
+<li><a class="reference external" href="#id1">Introduction</a></li>
+<li><a class="reference external" href="#creating-a-simpledbm-database">Creating a SimpleDBM database</a><ul>
+<li><a class="reference external" href="#server-options">Server Options</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#opening-a-database">Opening a database</a></li>
+<li><a class="reference external" href="#managing-log-messages">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#common-infrastructure">Common Infrastructure</a><ul>
+<li><a class="reference external" href="#object-registry">Object Registry</a><ul>
+<li><a class="reference external" href="#id2">Overview</a></li>
+<li><a class="reference external" href="#two-use-cases">Two Use cases</a></li>
+<li><a class="reference external" href="#registering-an-objectfactory">Registering an ObjectFactory</a></li>
+<li><a class="reference external" href="#asymmetry-between-retrieving-and-storing-objects">Asymmetry between retrieving and storing objects</a></li>
+<li><a class="reference external" href="#storable-interface-and-object-serialization">Storable Interface and Object serialization</a></li>
+<li><a class="reference external" href="#registering-singletons">Registering Singletons</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#transactions">Transactions</a><ul>
+<li><a class="reference external" href="#creating-new-transactions">Creating new Transactions</a></li>
+<li><a class="reference external" href="#working-with-transactions">Working with Transactions</a><ul>
+<li><a class="reference external" href="#transaction-api">Transaction API</a></li>
+<li><a class="reference external" href="#transaction-savepoints">Transaction Savepoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#tables">Tables</a><ul>
+<li><a class="reference external" href="#tuplecontainers">TupleContainers</a></li>
+<li><a class="reference external" href="#creating-a-tuplecontainer">Creating a TupleContainer</a></li>
+<li><a class="reference external" href="#accessing-a-tuplecontainer">Accessing a TupleContainer</a></li>
+<li><a class="reference external" href="#inserting-tuples">Inserting tuples</a></li>
+<li><a class="reference external" href="#reading-tuples">Reading tuples</a></li>
+<li><a class="reference external" href="#updating-tuples">Updating tuples</a></li>
+<li><a class="reference external" href="#deleting-tuples">Deleting tuples</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#indexes">Indexes</a><ul>
+<li><a class="reference external" href="#index-keys">Index Keys</a></li>
+<li><a class="reference external" href="#index-key-factories">Index Key Factories</a><ul>
+<li><a class="reference external" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#locations">Locations</a></li>
+<li><a class="reference external" href="#creating-a-new-index">Creating a new index</a></li>
+<li><a class="reference external" href="#obtaining-index-instance">Obtaining index instance</a></li>
+<li><a class="reference external" href="#working-with-keys">Working with keys</a><ul>
+<li><a class="reference external" href="#adding-a-key">Adding a key</a></li>
+<li><a class="reference external" href="#deleting-a-key">Deleting a key</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#scanning-keys">Scanning keys</a><ul>
+<li><a class="reference external" href="#isolation-modes">Isolation Modes</a></li>
+<li><a class="reference external" href="#common-behaviour">Common Behaviour</a></li>
+<li><a class="reference external" href="#read-committed-cursor-stability">Read Committed/Cursor Stability</a></li>
+<li><a class="reference external" href="#repeatable-read-rr">Repeatable Read (RR)</a></li>
+<li><a class="reference external" href="#serializable">Serializable</a></li>
+<li><a class="reference external" href="#scanning-api">Scanning API</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="typesystem.html"
+                                  title="previous chapter">SimpleDBM TypeSystem</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="developerguide.html"
+                                  title="next chapter">SimpleDBM RSS Developers&#8217;s Guide</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/usermanual.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+             >next</a></li>
+        <li class="right" >
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             >previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Dibyendu Majumdar.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>
