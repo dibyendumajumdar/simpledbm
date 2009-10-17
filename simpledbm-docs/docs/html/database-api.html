@@ -1,0 +1,1395 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SimpleDBM Database API &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.12 BETA',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
+    <link rel="next" title="SimpleDBM TypeSystem" href="typesystem.html" />
+    <link rel="prev" title="Welcome to SimpleDBM’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to SimpleDBM’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simpledbm-database-api">
+<h1><a class="toc-backref" href="#id1">SimpleDBM Database API</a><a class="headerlink" href="#simpledbm-database-api" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
+</tr>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body"><a class="reference external" href="mailto:d&#46;majumdar&#37;&#52;&#48;gmail&#46;com">d<span>&#46;</span>majumdar<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">1.0.11b</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">13 April 2009</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2008-2009</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#simpledbm-database-api" id="id1">SimpleDBM Database API</a><ul>
+<li><a class="reference internal" href="#introduction" id="id2">Introduction</a><ul>
+<li><a class="reference internal" href="#overview" id="id3">Overview</a></li>
+<li><a class="reference internal" href="#features" id="id4">Features</a><ul>
+<li><a class="reference internal" href="#non-features" id="id5">Non-Features</a></li>
+<li><a class="reference internal" href="#status" id="id6">Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simpledbm-modules" id="id7">SimpleDBM Modules</a></li>
+<li><a class="reference internal" href="#getting-started" id="id8">Getting Started</a><ul>
+<li><a class="reference internal" href="#simpledbm-binaries" id="id9">SimpleDBM binaries</a></li>
+<li><a class="reference internal" href="#creating-a-simpledbm-database" id="id10">Creating a SimpleDBM database</a><ul>
+<li><a class="reference internal" href="#server-options" id="id11">Server Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opening-a-database" id="id12">Opening a database</a></li>
+<li><a class="reference internal" href="#performance-impact-of-server-options" id="id13">Performance impact of server options</a></li>
+<li><a class="reference internal" href="#problems-starting-a-database" id="id14">Problems starting a database</a></li>
+<li><a class="reference internal" href="#managing-log-messages" id="id15">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#transactions" id="id16">Transactions</a><ul>
+<li><a class="reference internal" href="#creating-new-transactions" id="id17">Creating new Transactions</a></li>
+<li><a class="reference internal" href="#working-with-transactions" id="id18">Working with Transactions</a><ul>
+<li><a class="reference internal" href="#transaction-api" id="id19">Transaction API</a></li>
+<li><a class="reference internal" href="#transaction-savepoints" id="id20">Transaction Savepoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#tables-and-indexes" id="id21">Tables and Indexes</a><ul>
+<li><a class="reference internal" href="#limitations" id="id22">Limitations</a></li>
+<li><a class="reference internal" href="#creating-a-table-and-indexes" id="id23">Creating a Table and Indexes</a></li>
+<li><a class="reference internal" href="#isolation-modes" id="id24">Isolation Modes</a><ul>
+<li><a class="reference internal" href="#common-behaviour" id="id25">Common Behaviour</a></li>
+<li><a class="reference internal" href="#read-committed-cursor-stability" id="id26">Read Committed/Cursor Stability</a></li>
+<li><a class="reference internal" href="#repeatable-read-rr" id="id27">Repeatable Read (RR)</a></li>
+<li><a class="reference internal" href="#serializable" id="id28">Serializable</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#inserting-rows-into-a-table" id="id29">Inserting rows into a table</a></li>
+<li><a class="reference internal" href="#accessing-table-data" id="id30">Accessing table data</a></li>
+<li><a class="reference internal" href="#updating-tuples" id="id31">Updating tuples</a></li>
+<li><a class="reference internal" href="#deleting-tuples" id="id32">Deleting tuples</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-database-api" id="id33">The Database API</a><ul>
+<li><a class="reference internal" href="#databasefactory" id="id34">DatabaseFactory</a></li>
+<li><a class="reference internal" href="#database" id="id35">Database</a></li>
+<li><a class="reference internal" href="#tabledefinition" id="id36">TableDefinition</a></li>
+<li><a class="reference internal" href="#table" id="id37">Table</a></li>
+<li><a class="reference internal" href="#tablescan" id="id38">TableScan</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id2">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="overview">
+<h3><a class="toc-backref" href="#id3">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is a transactional database engine, written in Java. It has a
+very small footprint and can be embedded in the address space of an
+application. It provides a simple Java application programming interface (API),
+which can be learned very quickly.</p>
+</div>
+<div class="section" id="features">
+<h3><a class="toc-backref" href="#id4">Features</a><a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM has the following features:</p>
+<ul class="simple">
+<li><em>Transactional</em> - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.</li>
+<li><em>Multi-threaded</em> - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.</li>
+<li><em>Write Ahead Log</em> - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.</li>
+<li><em>Lock based concurrency</em> - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency.</li>
+<li><em>Multiple Isolation Levels</em> - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.</li>
+<li><em>B-Tree Indexes</em> - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.</li>
+<li><em>Tables</em> - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.</li>
+<li><em>Latches and Locks</em> - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.</li>
+<li><em>Deadlock detection</em> - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.</li>
+</ul>
+<div class="section" id="non-features">
+<h4><a class="toc-backref" href="#id5">Non-Features</a><a class="headerlink" href="#non-features" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>SimpleDBM is not an SQL engine.</li>
+<li>There is no support for distributed transactions (XA) yet.</li>
+</ul>
+</div>
+<div class="section" id="status">
+<h4><a class="toc-backref" href="#id6">Status</a><a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM is currently in early BETA and not suitable for Production use.
+Note that the SimpleDBM API is under flux, and is likely to change until
+the production 1.0 release is available.</p>
+<p>The latest builds can be downloaded from:</p>
+<p><a class="reference external" href="http://code.google.com/p/simpledbm/downloads/list">http://code.google.com/p/simpledbm/downloads/list</a>.</p>
+</div>
+</div>
+</div>
+<div class="section" id="simpledbm-modules">
+<h2><a class="toc-backref" href="#id7">SimpleDBM Modules</a><a class="headerlink" href="#simpledbm-modules" title="Permalink to this headline">¶</a></h2>
+<p>The core of SimpleDBM is the RSS (named in honor of the
+first IBM Relational Database prototype <a class="reference external" href="http://www.mcjones.org/System_R/">System-R</a> Relational Storage
+System). The RSS provides the underlying storage structures for
+transactions, locking, b-trees etc. The RSS API is however, somewhat
+low level for ordinary users. It is meant to be used by people interested
+in building their own Database Engines on top of RSS. The RSS is described in
+detail in the <a class="reference external" href="http://simpledbm.googlecode.com/files/rss-usermanual-1.0.12.pdf">SimpleDBM RSS User&#8217;s Manual</a> and
+<a class="reference external" href="http://simpledbm.googlecode.com/files/rss-developerguide-1.0.12.pdf">SimpleDBM RSS Developers&#8217;s Guide</a>.</p>
+<p>To provides users with a simplified API, two additional modules are
+available.</p>
+<p>The first one is the <a class="reference external" href="http://simpledbm.googlecode.com/files/typesystem-1.0.8.pdf">SimpleDBM TypeSystem</a> module, which adds support
+for typed data values and multi-attribute row objects.</p>
+<p>The second module, the Database API, is the subject of this document.
+This module implements a high level Database API and uses the
+TypeSystem module on top of the RSS.</p>
+</div>
+<div class="section" id="getting-started">
+<h2><a class="toc-backref" href="#id8">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>A SimpleDBM server is a set of background threads and a library of API
+calls that clients can invoke. The background threads take care of
+various tasks, such as writing out buffer pages, writing out logs,
+archiving older log files, creating checkpoints, etc.</p>
+<p>A SimpleDBM server operates on a set of data and index files, known as
+the SimpleDBM database.</p>
+<p>Only one server instance is allowed to access a SimpleDBM database at
+any point in time. SimpleDBM uses a lock file to detect multiple
+concurrent access to a database, and will refuse to start if it
+detects that a server is already accessing a database.</p>
+<p>Multiple simultaneous threads can access SimpleDBM. Multiple transactions
+can be executed in parallel. SimpleDBM is fully multi-threaded and
+supports concurrent reads and writes.</p>
+<p>Internally, SimpleDBM operates on logical entities called Storage
+Containers. From an implementation point of view, Storage Containers
+are mapped to files.</p>
+<p>Tables and Indexes are stored in Containers known as TupleContainers
+and IndexContainers, respectively. Each container is identified by a
+numeric ID, called the Container ID. Internally, SimpleDBM reserves the
+container ID zero (0), so the first available ID is one (1).</p>
+<p>The SimpleDBM database initially consists of a set of transaction log
+files, a lock file and a special container (ID 0) used internally by
+SimpleDBM.</p>
+<div class="section" id="simpledbm-binaries">
+<h3><a class="toc-backref" href="#id9">SimpleDBM binaries</a><a class="headerlink" href="#simpledbm-binaries" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.5
+or above if you want to work with SimpleDBM.</p>
+<p>You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
+project download area. The following jar files are required:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-common-1.0.x.jar</a> - this provides common utilities.</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-rss-1.0.x.jar</a> - this is the core database engine.</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-typesystem-1.0.x.jar</a> - provides a simple type system.</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-database-1.0.x.jar</a> - provides a higher level database API with support for tables and indexes.</li>
+</ul>
+<p>You should make sure that required jars are in your class path.</p>
+</div>
+<div class="section" id="creating-a-simpledbm-database">
+<h3><a class="toc-backref" href="#id10">Creating a SimpleDBM database</a><a class="headerlink" href="#creating-a-simpledbm-database" title="Permalink to this headline">¶</a></h3>
+<p>A SimpleDBM database is created by a call to DatabaseFactory.create(),
+as shown below:</p>
+<div class="highlight-python"><pre>import org.simpledbm.database.api.DatabaseFactory;
+...
+Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "5242880");
+properties.setProperty("log.buffer.size", "5242880");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "30");
+properties.setProperty("log.disableFlushRequests", "true");
+properties.setProperty("storage.createMode", "rw");
+properties.setProperty("storage.openMode", "rw");
+properties.setProperty("storage.flushMode", "noforce");
+properties.setProperty("bufferpool.numbuffers", "1500");
+properties.setProperty("bufferpool.writerSleepInterval", "60000");
+properties.setProperty("transaction.ckpt.interval", "60000");
+properties.setProperty("logging.properties.type", "log4j");
+properties.setProperty("logging.properties.file",
+  "classpath:simpledbm.logging.properties");
+properties.setProperty("lock.deadlock.detection.interval", "3");
+properties.setProperty("storage.basePath",
+  "demodata/DemoDB");
+
+DatabaseFactory.create(properties);</pre>
+</div>
+<p>The DatabaseFactory.create() method accepts a Properties object as
+the sole argument. The Properties object can be used to pass a
+number of parameters. The available options are shown below. Note that
+some of the options have an impact on the performance and reliability
+of the server - especially those that control how SimpleDBM treats
+file IO.</p>
+<div class="section" id="server-options">
+<h4><a class="toc-backref" href="#id11">Server Options</a><a class="headerlink" href="#server-options" title="Permalink to this headline">¶</a></h4>
+<table border="1" class="docutils">
+<colgroup>
+<col width="38%" />
+<col width="62%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Property Name</th>
+<th class="head">Description</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">log.ctl.{n}</span></tt></td>
+<td>The fully qualified path to the
+log control file. The first file should be specified as
+<tt class="docutils literal"><span class="pre">log.ctl.1</span></tt>, second as <tt class="docutils literal"><span class="pre">log.ctl.2</span></tt>, and so on. Up to a
+maximum of 3 can be specified. Default is 2.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.groups.{n}.path</span></tt></td>
+<td>The path where log files of a group should be stored.
+The first log group is specified as <tt class="docutils literal"><span class="pre">log.groups.1.path</span></tt>,
+the second as <tt class="docutils literal"><span class="pre">log.groups.2.path</span></tt>,
+and so on. Up to a maximum of 3 log groups can be
+specified. Default number of groups is 1. Path defaults
+to current directory.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.archive.path</span></tt></td>
+<td>Defines the path for storing archive files. Defaults to
+current directory.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.group.files</span></tt></td>
+<td>Specifies the number of log files within each group.
+Up to a maximum of 8 are allowed. Defaults to 2.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.file.size</span></tt></td>
+<td>Specifies the size of each log file in
+bytes. Default is 2 KB.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.buffer.size</span></tt></td>
+<td>Specifies the size of the log buffer
+in bytes. Default is 2 KB.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.buffer.limit</span></tt></td>
+<td>Sets a limit on the maximum number of
+log buffers that can be allocated. Default is 10 *
+log.group.files.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.flush.interval</span></tt></td>
+<td>Sets the interval (in seconds)
+between log flushes. Default is 6 seconds.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">log.disableFlushRequests</span></tt></td>
+<td>Boolean value, if set, disables
+log flushes requested explicitly by the Buffer Manager
+or Transaction Manager. Log flushes still occur during
+checkpoints and log switches. By reducing the log flushes,
+performance is improved, but transactions may not be
+durable. Only those transactions will survive a system
+crash that have all their log records on disk.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.basePath</span></tt></td>
+<td>Defines the base location of the
+SimpleDBM database. All files and directories are created
+relative to this location.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.createMode</span></tt></td>
+<td>Defines mode in which files will be
+created. Default is <tt class="docutils literal"><span class="pre">&quot;rws&quot;</span></tt>.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.openMode</span></tt></td>
+<td>Defines mode in which files will be
+opened. Default is <tt class="docutils literal"><span class="pre">&quot;rws&quot;</span></tt>.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">storage.flushMode</span></tt></td>
+<td>Defines mode in which files will be flushed. Possible
+values are noforce, force.true (default), and force.false</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">bufferpool.numbuffers</span></tt></td>
+<td>Sets the number of buffers to be created in
+the Buffer Pool.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">bufferpool.writerSleepInterval</span></tt></td>
+<td>Sets the interval in milliseconds between each run of
+the BufferWriter. Note that BufferWriter may run earlier
+than the specified interval if the pool runs out of
+buffers, and a new page has to be read in. In such cases,
+the Buffer Writer may be manually triggered to clean out
+buffers.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">lock.deadlock.detection.interval</span></tt></td>
+<td>Sets the interval in seconds between deadlock scans.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">logging.properties.file</span></tt></td>
+<td>Specifies the name of logging properties file. Precede
+<tt class="docutils literal"><span class="pre">classpath:</span></tt> if you want SimpleDBM to search for this
+file in the classpath.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">logging.properties.type</span></tt></td>
+<td>Specify <tt class="docutils literal"><span class="pre">&quot;log4j&quot;</span></tt> if you want to SimpleDBM to use Log4J
+for generating log messages.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">transaction.lock.timeout</span></tt></td>
+<td>Specifies the default lock timeout value in seconds.
+Default is 60 seconds.</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">transaction.ckpt.interval</span></tt></td>
+<td>Specifies the interval between checkpoints in milliseconds.
+Default is 15000 milliseconds (15 secs).</td>
+</tr>
+</tbody>
+</table>
+<p>The DatabaseFactory.create() call will overwrite any existing database
+in the specified storage path, so it must be called only when you know
+for sure that you want to create a database.</p>
+</div>
+</div>
+<div class="section" id="opening-a-database">
+<h3><a class="toc-backref" href="#id12">Opening a database</a><a class="headerlink" href="#opening-a-database" title="Permalink to this headline">¶</a></h3>
+<p>Once a database has been created, it can be opened by creating an
+instance of Database, and starting it. The same properties that were
+supplied while creating the database, can be supplied when starting it.</p>
+<p>Here is a code snippet that shows how this is done:</p>
+<div class="highlight-python"><pre>Properties properties = new Properties();
+properties.setProperty("log.ctl.1", "ctl.a");
+properties.setProperty("log.ctl.2", "ctl.b");
+properties.setProperty("log.groups.1.path", ".");
+properties.setProperty("log.archive.path", ".");
+properties.setProperty("log.group.files", "3");
+properties.setProperty("log.file.size", "5242880");
+properties.setProperty("log.buffer.size", "5242880");
+properties.setProperty("log.buffer.limit", "4");
+properties.setProperty("log.flush.interval", "30");
+properties.setProperty("log.disableFlushRequests", "true");
+properties.setProperty("storage.createMode", "rw");
+properties.setProperty("storage.openMode", "rw");
+properties.setProperty("storage.flushMode", "noforce");
+properties.setProperty("bufferpool.numbuffers", "1500");
+properties.setProperty("bufferpool.writerSleepInterval", "60000");
+properties.setProperty("transaction.ckpt.interval", "60000");
+properties.setProperty("logging.properties.type", "log4j");
+properties.setProperty("logging.properties.file",
+  "classpath:simpledbm.logging.properties");
+properties.setProperty("lock.deadlock.detection.interval", "3");
+properties.setProperty("storage.basePath",
+  "demodata/DemoDB");
+
+Database db = DatabaseFactory.getDatabase(properties);
+db.start();
+try {
+  // do some work
+}
+finally {
+  db.shutdown();
+}</pre>
+</div>
+<p>Some points to bear in mind when starting SimpleDBM databases:</p>
+<ol class="arabic simple">
+<li>Make sure that you invoke <tt class="docutils literal"><span class="pre">shutdown()</span></tt> eventually to ensure proper
+shutdown of the database.</li>
+<li>Database startup/shutdown is relatively expensive, so do it only
+once during the life-cycle of your application.</li>
+<li>A Database object can be used only once - after calling
+<tt class="docutils literal"><span class="pre">shutdown()</span></tt>, it is an error to do any operation with the database
+object. Create a new database object if you want to start the
+database again.</li>
+</ol>
+</div>
+<div class="section" id="performance-impact-of-server-options">
+<h3><a class="toc-backref" href="#id13">Performance impact of server options</a><a class="headerlink" href="#performance-impact-of-server-options" title="Permalink to this headline">¶</a></h3>
+<p>Some of the server options impact the performance or recoverability
+of SimpleDBM. These are discussed below.</p>
+<dl class="docutils">
+<dt>log.disableFlushRequests</dt>
+<dd>Normally, the write ahead log is flushed to disk every time a transaction
+commits, or there is a log switch, or a checkpoint is taken. By setting this
+option to true, SimpleDBM can be configured to avoid flushing the log at
+transaction commits. The log will still be flushed for other events such as
+log switches or checkpoints. This option improves the performance of SimpleDBM,
+but will have a negative impact on recovery of transactions since the last checkpoint.
+Due to deferred log flush, some transaction log records may not be persisted
+to disk; this will result in such transactions being aborted during restart.</dd>
+<dt>storage.openMode</dt>
+<dd>This is set to a <tt class="docutils literal"><span class="pre">mode</span></tt> supported by the standard Java <tt class="docutils literal"><span class="pre">RandomAccessFile</span></tt>.
+The recommended setting for recoverability is &#8220;rws&#8221;, as this will ensure
+that modifications to the file are persisted on physical storage as soon as
+possible. The setting &#8220;rw&#8221; may improve performance by allowing the underlying
+operating system to buffer file reads/writes. However, the downside of this
+mode is that if there is a crash, some of the file contents may not be correctly
+reflected on physical storage. This can result in corrupted files.</dd>
+<dt>storage.flushMode</dt>
+<dd>This setting influences how/whether SimpleDBM invokes <tt class="docutils literal"><span class="pre">force()</span></tt> on underlying
+<tt class="docutils literal"><span class="pre">FileChannel</span></tt> when writing to files. A setting of &#8220;noforce&#8221; disables this; which
+is best for performance. A setting of &#8220;force.true&#8221; causes SimpleDBM to invoke
+<tt class="docutils literal"><span class="pre">force(true)</span></tt>, and a setting of &#8220;force.false&#8221; causes SimpleDBM to invoke
+<tt class="docutils literal"><span class="pre">force(false)</span></tt>. As for the other settings, this setting can favour either
+performance or recoverability.</dd>
+</dl>
+<p>While changing the default settings for above options can improve perfomance,
+SimpleDBM, like any database management system, requires high performance physical
+storage system to get the best balance between performance and recoverability.</p>
+<p>A few other settings that affect the performance or scalability are discussed below.</p>
+<dl class="docutils">
+<dt>bufferpool.numbuffers</dt>
+<dd>This setting affects the bufferpool size, and hence impacts the performance of
+the buffer cache. A bigger size is preferable; some experimentation may be required
+to determine the optimum size for a particular workload. Suggested default: 1000.</dd>
+<dt>log.file.size</dt>
+<dd>SimpleDBM will not span log records across log files. Hence the maximum log file
+size affects the maximum size of an individual log record. See also the note on
+<tt class="docutils literal"><span class="pre">log.buffer.size</span></tt>. The maximum size of a log record limits the size of data
+operations (insert, update or delete). Suggested default: 5MB.</dd>
+<dt>log.buffer.size</dt>
+<dd>For performance reasons, log records are buffered in memory. SimpleDBM will not
+span log records across log buffer boundaries, hence the maximum log buffer size
+restricts the size of a log record. Together, this option
+and the <tt class="docutils literal"><span class="pre">log.file.size</span></tt> setting dictate the maximum size of a log record.
+Suggested default: 5MB.</dd>
+</dl>
+</div>
+<div class="section" id="problems-starting-a-database">
+<h3><a class="toc-backref" href="#id14">Problems starting a database</a><a class="headerlink" href="#problems-starting-a-database" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM uses a lock file to determine whether an instance is already
+running. At startup, it creates the file at the location <tt class="docutils literal"><span class="pre">_internal\lock</span></tt> relative
+to the path where the database is created. If this file already exists, then
+SimpleDBM will report a failure such as:</p>
+<div class="highlight-python"><pre>SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another
+instance may be running - error was: SIMPLEDBM-ES0017: Unable to create
+StorageContainer .._internal\lock because an object of the name already exists</pre>
+</div>
+<p>This message indicates either that some other instance is running, or that
+an earlier instance of SimpleDBM terminated without properly sutting down.
+If the latter is the case, then the <tt class="docutils literal"><span class="pre">_internal/lock</span></tt> file may be deleted enabling
+SimpleDBM to start.</p>
+</div>
+<div class="section" id="managing-log-messages">
+<h3><a class="toc-backref" href="#id15">Managing log messages</a><a class="headerlink" href="#managing-log-messages" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM has support for JDK 1.4 style logging as well as
+Log4J logging. By default, if Log4J library is available on the
+classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
+package is used.</p>
+<p>You can specify the type of logging to be used using the
+Server Property <tt class="docutils literal"><span class="pre">logging.properties.type</span></tt>. If this is set to
+&#8220;log4j&#8221;, SimpleDBM will use Log4J logging. Any other value causes
+SimpleDBM to use default JDK logging.</p>
+<p>The configuration of the logging can be specified using a
+properties file. The name and location of the properties file
+is specified using the Server property <tt class="docutils literal"><span class="pre">logging.properties.file</span></tt>.
+If the filename is prefixed with the string &#8220;classpath:&#8221;, then
+SimpleDBM will search for the properties file in the classpath.
+Otherwise, the filename is searched for in the current filesystem.</p>
+<p>A sample logging properties file is shown below. Note that this
+sample contains both JDK style and Log4J style configuration.:</p>
+<div class="highlight-python"><pre>############################################################
+#      JDK 1.4 Logging
+############################################################
+handlers= java.util.logging.FileHandler, java.util.logging.ConsoleHandler
+.level= INFO
+
+java.util.logging.FileHandler.pattern = simpledbm.log.%g
+java.util.logging.FileHandler.limit = 50000
+java.util.logging.FileHandler.count = 1
+java.util.logging.FileHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.FileHandler.level = ALL
+
+java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.ConsoleHandler.level = ALL
+
+org.simpledbm.registry.level = INFO
+org.simpledbm.bufmgr.level = INFO
+org.simpledbm.indexmgr.level = INFO
+org.simpledbm.storagemgr.level = INFO
+org.simpledbm.walogmgr.level = INFO
+org.simpledbm.lockmgr.level = INFO
+org.simpledbm.freespacemgr.level = INFO
+org.simpledbm.slotpagemgr.level = INFO
+org.simpledbm.transactionmgr.level = INFO
+org.simpledbm.tuplemgr.level = INFO
+org.simpledbm.latchmgr.level = INFO
+org.simpledbm.pagemgr.level = INFO
+org.simpledbm.rss.util.level = INFO
+org.simpledbm.util.level = INFO
+org.simpledbm.server.level = INFO
+org.simpledbm.trace.level = INFO
+org.simpledbm.database.level = INFO
+
+# Default Log4J configuration
+
+# Console appender
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# File Appender
+log4j.appender.A2=org.apache.log4j.RollingFileAppender
+log4j.appender.A2.MaxFileSize=10MB
+log4j.appender.A2.MaxBackupIndex=1
+log4j.appender.A2.File=simpledbm.log
+log4j.appender.A2.layout=org.apache.log4j.PatternLayout
+log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# Root logger set to DEBUG using the A1 and A2 appenders defined above.
+log4j.rootLogger=DEBUG, A1, A2
+
+# Various loggers
+log4j.logger.org.simpledbm.registry=INFO
+log4j.logger.org.simpledbm.bufmgr=INFO
+log4j.logger.org.simpledbm.indexmgr=INFO
+log4j.logger.org.simpledbm.storagemgr=INFO
+log4j.logger.org.simpledbm.walogmgr=INFO
+log4j.logger.org.simpledbm.lockmgr=INFO
+log4j.logger.org.simpledbm.freespacemgr=INFO
+log4j.logger.org.simpledbm.slotpagemgr=INFO
+log4j.logger.org.simpledbm.transactionmgr=INFO
+log4j.logger.org.simpledbm.tuplemgr=INFO
+log4j.logger.org.simpledbm.latchmgr=INFO
+log4j.logger.org.simpledbm.pagemgr=INFO
+log4j.logger.org.simpledbm.rss.util=INFO
+log4j.logger.org.simpledbm.util=INFO
+log4j.logger.org.simpledbm.server=INFO
+log4j.logger.org.simpledbm.trace=INFO
+log4j.logger.org.simpledbm.database=INFO</pre>
+</div>
+<p>By default, SimpleDBM looks for a logging properties file named
+&#8220;simpledbm.logging.properties&#8221;.</p>
+</div>
+</div>
+<div class="section" id="transactions">
+<h2><a class="toc-backref" href="#id16">Transactions</a><a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
+<p>Most SimpleDBM operations take place in the context of a Transaction.
+Following are the main API calls for managing transactions.</p>
+<div class="section" id="creating-new-transactions">
+<h3><a class="toc-backref" href="#id17">Creating new Transactions</a><a class="headerlink" href="#creating-new-transactions" title="Permalink to this headline">¶</a></h3>
+<p>To start a new Transaction, invoke the <tt class="docutils literal"><span class="pre">Database.startTransaction()</span></tt> method as
+shown below. You must supply an <tt class="docutils literal"><span class="pre">IsolationMode</span></tt>, try
+<tt class="docutils literal"><span class="pre">READ_COMMITTED</span></tt> to start with.:</p>
+<div class="highlight-python"><pre>import org.simpledbm.database.api.Database;
+import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.rss.api.tx.Transaction;
+
+Database database = ...;
+
+// Start a new Transaction
+Transaction trx = database.startTransaction(IsolationMode.READ_COMMITTED);</pre>
+</div>
+<p>Isolation Modes are discussed in more detail in <a class="reference internal" href="#isolation-modes">Isolation Modes</a>.</p>
+</div>
+<div class="section" id="working-with-transactions">
+<h3><a class="toc-backref" href="#id18">Working with Transactions</a><a class="headerlink" href="#working-with-transactions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="transaction-api">
+<h4><a class="toc-backref" href="#id19">Transaction API</a><a class="headerlink" href="#transaction-api" title="Permalink to this headline">¶</a></h4>
+<p>The Transaction interface provides the following methods for clients
+to invoke:</p>
+<div class="highlight-python"><pre>public interface Transaction {
+
+  /**
+   * Creates a transaction savepoint.
+   */
+  public Savepoint createSavepoint(boolean saveCursors);
+
+  /**
+   * Commits the transaction. All locks held by the
+   * transaction are released.
+   */
+  public void commit();
+
+  /**
+   * Rolls back a transaction upto a savepoint. Locks acquired
+   * since the Savepoint are released. PostCommitActions queued
+   * after the Savepoint was created are discarded.
+   */
+  public void rollback(Savepoint sp);
+
+  /**
+   * Aborts the transaction, undoing all changes and releasing
+   * locks.
+   */
+  public void abort();
+
+}</pre>
+</div>
+<p>A transaction must always be either committed or aborted. Failure to
+do so will lead to resource leaks, such as locks, which will not be
+released.  The correct way to work with transactions is shown below:</p>
+<div class="highlight-python"><pre>// Start a new Transaction
+Transaction trx = database.startTransaction(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+  // do some work and if this is completed succesfully ...
+  // set success to true.
+  doSomething();
+  success = true;
+}
+finally {
+  if (success) {
+    trx.commit();
+  }
+  else {
+    trx.abort();
+  }
+}</pre>
+</div>
+</div>
+<div class="section" id="transaction-savepoints">
+<h4><a class="toc-backref" href="#id20">Transaction Savepoints</a><a class="headerlink" href="#transaction-savepoints" title="Permalink to this headline">¶</a></h4>
+<p>You can create transaction savepoints at any point in time.  When you
+create a savepoint, you need to decide whether the scans associated
+with the transaction should save their state so that in the event of
+a rollback, they can be restored to the state they were in at
+the time of the savepoint. This is important if you intend to use the
+scans after you have performed a rollback to savepoint.</p>
+<p>Bear in mind that in certain IsolationModes, locks are released as the
+scan cursor moves, When using such an IsolationMode, rollback to a
+Savepoint can fail if after the rollback, the scan cursor cannot be
+positioned on a suitable location, for example, if a deadlock occurs when
+it attempts to reacquire lock on the previous location. Also, in case
+the location itself is no longer valid, perhaps due to a delete
+operation by some other transaction, then the scan may position itself
+on the next available location.</p>
+<p>If you are preserving cursor state during savepoints, be prepared that
+in certain IsolationModes, a rollback may fail due to locking, or the
+scan may not be able to reposition itself on exactly the same
+location.</p>
+<p><em>Note that the cursor restore functionality has not been tested
+thoroughly in the current release of SimpleDBM.</em></p>
+</div>
+</div>
+</div>
+<div class="section" id="tables-and-indexes">
+<h2><a class="toc-backref" href="#id21">Tables and Indexes</a><a class="headerlink" href="#tables-and-indexes" title="Permalink to this headline">¶</a></h2>
+<p>SimpleDBM provides support for tables with variable length rows. Tables
+can have associated BTree indexes. In this section we shall see how to create
+new tables and indexes and how to use them.</p>
+<div class="section" id="limitations">
+<h3><a class="toc-backref" href="#id22">Limitations</a><a class="headerlink" href="#limitations" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM supports creating tables and indexes but there are some limitations
+at present that you need to be aware of.</p>
+<ul class="simple">
+<li>All indexes required for the table must be defined at the time of table
+creation. At present you cannot add an index at a later
+stage.</li>
+<li>Table structures are limited in the type of columns you can have. At
+present Varchar, Varbinary, DateTime, Number, Integer and Long
+types are supported. More data types will be available in a future
+release of SimpleDBM.</li>
+<li>Null columns cannot be indexed.</li>
+<li>There is no support for referential integrity constraints or any other
+type of constraint. Therefore you need to enforce any such requirement in
+your application logic.</li>
+<li>Generally speaking, table rows can be large, but be aware that large rows
+are split across multiple database pages. The SimpleDBM page size is 8K.</li>
+<li>An Index key must be limited in size to about 1K in storage space.</li>
+</ul>
+</div>
+<div class="section" id="creating-a-table-and-indexes">
+<h3><a class="toc-backref" href="#id23">Creating a Table and Indexes</a><a class="headerlink" href="#creating-a-table-and-indexes" title="Permalink to this headline">¶</a></h3>
+<p>You start by creating the table&#8217;s row definition, which consists of an array of
+<tt class="docutils literal"><span class="pre">TypeDescriptor</span></tt> objects. Each element of the array represents a column definition
+for the table.</p>
+<p>You use the <tt class="docutils literal"><span class="pre">TypeFactory</span></tt> interface for creating the <tt class="docutils literal"><span class="pre">TypeDescriptor</span></tt> objects as
+shown below.:</p>
+<div class="highlight-python"><pre>Database db = ...;
+TypeFactory ff = db.getTypeFactory();
+TypeDescriptor employee_rowtype[] = {
+  ff.getIntegerType(), /* primary key */
+  ff.getVarcharType(20), /* name */
+  ff.getVarcharType(20), /* surname */
+  ff.getVarcharType(20), /* city */
+  ff.getVarcharType(45), /* email address */
+  ff.getDateTimeType(), /* date of birth */
+  ff.getNumberType(2) /* salary */
+};</pre>
+</div>
+<p>The next step is to create a <tt class="docutils literal"><span class="pre">TableDefinition</span></tt> object by calling the
+<tt class="docutils literal"><span class="pre">Database.newTableDefinition()</span></tt> method.:</p>
+<div class="highlight-python"><pre>TableDefinition tableDefinition = db.newTableDefinition("employee.dat", 1,
+  employee_rowtype);</pre>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">newTableDefinition()</span></tt> method takes 3 arguments:</p>
+<ol class="arabic simple">
+<li>The name of the table container.</li>
+<li>The ID for the table container. IDs start at 1, and must be unique.</li>
+<li>The <tt class="docutils literal"><span class="pre">TypeDescriptor</span> <span class="pre">array</span></tt> that you created before.</li>
+</ol>
+<p>Now you can add indexes by invoking the <tt class="docutils literal"><span class="pre">addIndex()</span></tt> method provided
+by the <tt class="docutils literal"><span class="pre">TableDefinition</span></tt> interface.:</p>
+<div class="highlight-python"><pre>tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true, true);
+tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+  false);
+tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false, false);
+tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false, false);</pre>
+</div>
+<p>Above example shows four indexes being created.</p>
+<p>The <tt class="docutils literal"><span class="pre">addIndex()</span></tt> method takes following arguments.</p>
+<ol class="arabic simple">
+<li>The ID of the index container. Must be unique, and different from the table
+container ID.</li>
+<li>The name of the index container.</li>
+<li>An array of integers. Each element of the array must refer to a table
+column by position. The table column positions start at zero. Therefore the
+array { 2, 1 } refers to 3rd column, and 2nd column of the table.</li>
+<li>The next argument is a boolean value to indicate whether the index is the primary
+index. The first index must always be the primary index.</li>
+<li>The next argument is also a boolean value to indicate whether duplicate
+values are allowed in the index. If set, this makes the index unique, which
+prevents duplicates. The primary index must always be unique.</li>
+</ol>
+<p>Now that you have a fully initialized <tt class="docutils literal"><span class="pre">TableDefinition</span></tt> object, you can
+proceed to create the table and indexes by invoking the <tt class="docutils literal"><span class="pre">createTable()</span></tt>
+method provided by the Database interface.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">db</span><span class="o">.</span><span class="n">createTable</span><span class="p">(</span><span class="n">tableDefinition</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Tables are created in their own transactions, and you have no access
+to such transactions.</p>
+<p>It is important to bear in mind that all container names must be unique.
+Think of the container name as the file name. Also, the container IDs are
+used by SimpleDBM to identify each container uniqely. As explained before,
+SimpleDBM internally uses a special container with ID=0. Any tables and
+indexes you create must have container IDs &gt;= 1, and you must ensure that
+these are unique.</p>
+</div>
+<div class="section" id="isolation-modes">
+<h3><a class="toc-backref" href="#id24">Isolation Modes</a><a class="headerlink" href="#isolation-modes" title="Permalink to this headline">¶</a></h3>
+<p>Before describing how to access table data using scans, it is necessary to
+describe the various lock isolation modes supported by SimpleDBM.</p>
+<div class="section" id="common-behaviour">
+<h4><a class="toc-backref" href="#id25">Common Behaviour</a><a class="headerlink" href="#common-behaviour" title="Permalink to this headline">¶</a></h4>
+<p>Following behaviour is common across all lock isolation modes.</p>
+<ol class="arabic simple">
+<li>All locking is on Row Locations (rowids) only. The SimpleDBM Rowid is
+called a TupleId.</li>
+<li>When a row is inserted or deleted, its rowid is first
+locked in EXCLUSIVE mode, the row is inserted or deleted from data
+page, and only after that, indexes are modified.</li>
+<li>Updates to indexed columns are treated as key deletes followed
+by key inserts. The updated row is locked in EXCLUSIVE mode before
+indexes are modified.</li>
+<li>When fetching, the index is looked up first, which causes a
+SHARED or UPDATE mode lock to be placed on the row, before the data
+pages are accessed.</li>
+</ol>
+</div>
+<div class="section" id="read-committed-cursor-stability">
+<h4><a class="toc-backref" href="#id26">Read Committed/Cursor Stability</a><a class="headerlink" href="#read-committed-cursor-stability" title="Permalink to this headline">¶</a></h4>
+<p>During scans, the rowid is locked in SHARED or UPDATE mode
+while the cursor is positioned on the key. The lock on current
+rowid is released before the cursor moves to the next key.</p>
+<p>For most use cases, this is the recommended isolation mode as
+it provides the best concurrency.</p>
+</div>
+<div class="section" id="repeatable-read-rr">
+<h4><a class="toc-backref" href="#id27">Repeatable Read (RR)</a><a class="headerlink" href="#repeatable-read-rr" title="Permalink to this headline">¶</a></h4>
+<p>SHARED mode locks obtained on rowids during scans are retained until
+the transaction completes. UPDATE mode locks are downgraded to SHARED mode when
+the cursor moves.</p>
+</div>
+<div class="section" id="serializable">
+<h4><a class="toc-backref" href="#id28">Serializable</a><a class="headerlink" href="#serializable" title="Permalink to this headline">¶</a></h4>
+<p>Same as Repeatable Read, with additional locking (next key) during
+scans to prevent phantom reads.</p>
+</div>
+</div>
+<div class="section" id="inserting-rows-into-a-table">
+<h3><a class="toc-backref" href="#id29">Inserting rows into a table</a><a class="headerlink" href="#inserting-rows-into-a-table" title="Permalink to this headline">¶</a></h3>
+<p>To insert a row into a table, following steps are needed.</p>
+<p>Obtain a transaction context in which to perform the insert.:</p>
+<div class="highlight-python"><pre>Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+boolean okay = false;
+try {</pre>
+</div>
+<p>Get the <tt class="docutils literal"><span class="pre">Table</span></tt> object associated with the table. Tables are
+identified by their container Ids.:</p>
+<div class="highlight-python"><pre>int containerId = 1;
+Table table = db.getTable(trx, containerId);</pre>
+</div>
+<p>Create a blank row. It is best to create
+new row objects rather than reusing existing objects.:</p>
+<div class="highlight-python"><pre>Row tableRow = table.getRow();</pre>
+</div>
+<p>You can assign values to the columns as shown below.:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">tableRow</span><span class="o">.</span><span class="n">setInt</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">);</span>
+<span class="n">tableRow</span><span class="o">.</span><span class="n">setString</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="s">&quot;Joe&quot;</span><span class="p">);</span>
+<span class="n">tableRow</span><span class="o">.</span><span class="n">setString</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s">&quot;Blogg&quot;</span><span class="p">);</span>
+<span class="n">tableRow</span><span class="o">.</span><span class="n">setDate</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="n">getDOB</span><span class="p">(</span><span class="mi">1930</span><span class="p">,</span> <span class="mi">12</span><span class="p">,</span> <span class="mi">31</span><span class="p">));</span>
+<span class="n">tableRow</span><span class="o">.</span><span class="n">setString</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="s">&quot;500.00&quot;</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Any columns you do not assign a value will be set to null automatically.
+The final step is to insert the row and commit the transaction.:</p>
+<div class="highlight-python"><pre>  table.addRow(trx, tableRow);
+  okay = true;
+} finally {
+  if (okay) {
+    trx.commit();
+  } else {
+    trx.abort();
+  }
+}</pre>
+</div>
+</div>
+<div class="section" id="accessing-table-data">
+<h3><a class="toc-backref" href="#id30">Accessing table data</a><a class="headerlink" href="#accessing-table-data" title="Permalink to this headline">¶</a></h3>
+<p>In order to read table data, you must open a scan. A scan is a mechanism
+for accessing table rows one by one. Scans are ordered using indexes.</p>
+<p>Opening an TableScan requires you to specify a starting row.
+If you want to start from the beginning, then you may specify <tt class="docutils literal"><span class="pre">null</span></tt>
+as the starting row. The values from the starting row are used
+to perform an index search, and the scan begins from the first row
+greater or equal to the values in the starting row.</p>
+<p>In SimpleDBM, scans do not have a stop value. Instead, a scan
+starts fetching data from the first row that is greater or equal to the
+supplied starting row. You must determine whether the fetched key satisfies
+the search criteria or not. If the fetched key no longer meets the search
+criteria, you should call <tt class="docutils literal"><span class="pre">fetchCompleted()</span></tt> with a <tt class="docutils literal"><span class="pre">false</span></tt> value,
+indicating that there is no need to fetch any more keys. This then causes
+the scan to reach logical <tt class="docutils literal"><span class="pre">EOF</span></tt>.</p>
+<p>The code snippet below shows a table scan that is used to count the
+number of rows in the table.:</p>
+<div class="highlight-python"><pre>Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+boolean okay = false;
+int count = 0;
+try {
+  Table table = db.getTable(trx, 1);
+  /* open a scan with null starting row */
+  /* scan will use index 0 - ie - first index */
+  TableScan scan = table.openScan(trx, 0, null, false);
+  try {
+    while (scan.fetchNext()) {
+      scan.fetchCompleted(true);
+      count++;
+    }
+  } finally {
+    scan.close();
+  }
+  okay = true;
+} finally {
+  if (okay) {
+    trx.commit();
+  } else {
+    trx.abort();
+  }
+}</pre>
+</div>
+<p>The following points are worth noting.</p>
+<ol class="arabic simple">
+<li>The <tt class="docutils literal"><span class="pre">openScan()</span></tt> method takes an index identifier as the second argument.
+The scan is ordered by the index. Indexes are identified
+by the order in which they were associated with the table,
+therefore, the first index is 0, the second is 1,
+and so on. Note that the index number is not the container ID for the index.</li>
+<li>The third argument is the starting row for the scan. If <tt class="docutils literal"><span class="pre">null</span></tt> is specified,
+as in the example above, then the scan will start from logical negative
+infinity, ie, from the first row (as per selected index) in the table.</li>
+<li>The scan must be closed in a finally block to ensure proper cleanup of
+resources.</li>
+</ol>
+</div>
+<div class="section" id="updating-tuples">
+<h3><a class="toc-backref" href="#id31">Updating tuples</a><a class="headerlink" href="#updating-tuples" title="Permalink to this headline">¶</a></h3>
+<p>In order to update a row, you must first set the RowId using a
+scan. Typically, if you intend to update the tuple, you should open the
+scan in UPDATE mode. This is done by supplying a boolean true as the
+fourth argument to <tt class="docutils literal"><span class="pre">openScan()</span></tt> method.</p>
+<p>Here is an example of an update. The table is scanned from first row
+to last and three of the columns are updated in all the rows.:</p>
+<div class="highlight-python"><pre>Transaction trx = db.startTransaction(IsolationMode.READ_COMMITTED);
+boolean okay = false;
+try {
+  Table table = db.getTable(trx, 1);
+  /* start an update mode scan */
+  TableScan scan = table.openScan(trx, 0, null, true);
+  try {
+    while (scan.fetchNext()) {
+      Row tr = scan.getCurrentRow();
+      tr.setString(3, "London");
+      tr.setString(4, tr.getString(1) + "." + tr.getString(2) + "@gmail.com");
+      tr.setInt(6, 50000);
+      scan.updateCurrentRow(tr);
+      scan.fetchCompleted(true);
+    }
+  } finally {
+    scan.close();
+  }
+  okay = true;
+} finally {
+  if (okay) {
+    trx.commit();
+  } else {
+    trx.abort();
+  }
+}</pre>
+</div>
+<p>The following points are worth noting:</p>
+<ol class="arabic simple">
+<li>If you update the columns that form part of the index that
+is performing the scan, then the results may be unexpected.
+As the data is updated it may alter the scan ordering.</li>
+<li>The update mode scan places UPDATE locks on rows as these
+are accessed. When the row is updated, the lock is promoted
+to EXCLUSIVE mode. If you skip the row without updating it,
+the lock is either released (READ_COMMITTED) or downgraded
+(in other lock modes) to SHARED lock.</li>
+</ol>
+</div>
+<div class="section" id="deleting-tuples">
+<h3><a class="toc-backref" href="#id32">Deleting tuples</a><a class="headerlink" href="#deleting-tuples" title="Permalink to this headline">¶</a></h3>
+<p>Start a table scan in UPDATE mode, if you intend to delete rows
+during the scan. Row deletes are performed in a similar way as
+row updates, except that <tt class="docutils literal"><span class="pre">TableScan.deleteRow()</span></tt> is invoked on the
+current row.</p>
+</div>
+</div>
+<div class="section" id="the-database-api">
+<h2><a class="toc-backref" href="#id33">The Database API</a><a class="headerlink" href="#the-database-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="databasefactory">
+<h3><a class="toc-backref" href="#id34">DatabaseFactory</a><a class="headerlink" href="#databasefactory" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * The DatabaseFactory class is responsible for creating and obtaining
+ * instances of Databases.
+ */
+public class DatabaseFactory {
+
+      /**
+       * Creates a new SimpleDBM database based upon supplied properties.
+       * For details of available properties, please refer to the SimpleDBM
+       * User Manual.
+       */
+      public static void create(Properties properties);
+
+      /**
+       * Obtains a database instance for an existing database.
+       */
+      public static Database getDatabase(Properties properties);
+
+}</pre>
+</div>
+</div>
+<div class="section" id="database">
+<h3><a class="toc-backref" href="#id35">Database</a><a class="headerlink" href="#database" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A SimpleDBM Database is a collection of Tables. The Database runs as
+ * an embedded server, and provides an API for creating and
+ * maintaining tables.
+ * A Database is created using DatabaseFactory.create(). An
+ * existing Database can be instantiated using
+ * DatabaseFactory.getDatabase().
+ */
+public interface Database {
+
+      /**
+       * Constructs a new TableDefinition object. A TableDefinition object
+       * is used when creating new tables.
+       *
+       * @param name Name of the table
+       * @param containerId ID of the container that will hold the table data
+       * @param rowType A row type definition.
+       * @return A TableDefinition object.
+       */
+      public abstract TableDefinition newTableDefinition(String name,
+                      int containerId, TypeDescriptor[] rowType);
+
+      /**
+       * Gets the table definition associated with the specified container ID.
+       *
+       * @param containerId Id of the container
+       * @return TableDefinition
+       */
+      public abstract TableDefinition getTableDefinition(int containerId);
+
+      /**
+       * Starts the database instance.
+       */
+      public abstract void start();
+
+      /**
+       * Shuts down the database instance.
+       */
+      public abstract void shutdown();
+
+      /**
+       * Gets the SimpleDBM RSS Server object that is managing this database.
+       * @return SimpleDBM RSS Server object.
+       */
+      public abstract Server getServer();
+
+      /**
+       * Starts a new Transaction
+       */
+      public abstract Transaction startTransaction(IsolationMode isolationMode);
+
+      /**
+       * Returns the TypeFactory instance associated with this database.
+       * The TypeFactory object can be used to create TypeDescriptors
+       * for various types that can become columns in a row.
+       */
+      public abstract TypeFactory getTypeFactory();
+
+      /**
+       * Returns the RowFactory instance associated with this database.
+       * The RowFactory is used to generate rows.
+       */
+      public abstract RowFactory getRowFactory();
+
+      /**
+       * Creates a Table and associated indexes using the information
+       * in the supplied TableDefinition object. Note that the table
+       * must have a primary index defined.
+       * The table creation is performed in a standalone transaction.
+       */
+      public abstract void createTable(TableDefinition tableDefinition);
+
+      /**
+       * Drops a Table and all its associated indexes.
+       *
+       * @param tableDefinition
+       *            The TableDefinition object that contains information about the
+       *            table to be dropped.
+       */
+      public abstract void dropTable(TableDefinition tableDefinition);
+
+      /**
+       * Gets the table associated with the specified container ID.
+       *
+       * @param trx Transaction context
+       * @param containerId Id of the container
+       * @return Table
+       */
+      public abstract Table getTable(Transaction trx, int containerId);
+}</pre>
+</div>
+</div>
+<div class="section" id="tabledefinition">
+<h3><a class="toc-backref" href="#id36">TableDefinition</a><a class="headerlink" href="#tabledefinition" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A TableDefinition holds information about a table, such as its name,
+ * container ID, types and number of columns, etc..
+ */
+public interface TableDefinition extends Storable {
+
+      /**
+       * Adds an Index to the table definition. Only one primay index
+       * is allowed.
+       *
+       * @param containerId Container ID for the new index.
+       * @param name Name of the Index Container
+       * @param columns Array of Column identifiers - columns to be indexed
+       * @param primary A boolean flag indicating that this is
+       *                the primary index or not
+       * @param unique A boolean flag indicating whether the index
+       *               should allow only unique values
+       */
+      public abstract void addIndex(int containerId, String name, int[] columns,
+                      boolean primary, boolean unique);
+
+      /**
+       * Gets the Container ID associated with the table.
+       */
+      public abstract int getContainerId();
+
+      /**
+       * Returns the Table's container name.
+       */
+      public abstract String getName();
+
+      /**
+       * Constructs an empty row for the table.
+       * @return Row
+       */
+      public abstract Row getRow();
+
+      /**
+       * Returns the number of indexes associated with the table.
+       */
+      public abstract int getNumberOfIndexes();
+
+      /**
+       * Constructs an row for the specified Index. Appropriate columns
+       * from the table are copied into the Index row.
+       *
+       * @param index The Index for which the row is to be constructed
+       * @param tableRow The table row
+       * @return An initialized Index Row
+       */
+      public abstract Row getIndexRow(int indexNo, Row tableRow);
+}</pre>
+</div>
+</div>
+<div class="section" id="table">
+<h3><a class="toc-backref" href="#id37">Table</a><a class="headerlink" href="#table" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A Table is a collection of rows. Each row is made up of
+ * columns (fields). A table must have a primary key defined
+ * which uniquely identifies each row in the
+ * table.
+ * &lt;p&gt;
+ * A Table is created by Database.createTable().
+ * Once created, the Table object can be accessed by calling
+ * Database.getTable() method.
+ */
+public interface Table {
+
+      /**
+       * Adds a row to the table. The primary key of the row must
+       * be unique and different from all other rows in the table.
+       *
+       * @param trx The Transaction managing this row insert
+       * @param tableRow The row to be inserted
+       * @return Location of the new row
+       */
+      public abstract Location addRow(Transaction trx, Row tableRow);
+
+      /**
+       * Updates the supplied row in the table. Note that the row to be
+       * updated is identified by its primary key.
+       *
+       * @param trx The Transaction managing this update
+       * @param tableRow The row to be updated.
+       */
+      public abstract void updateRow(Transaction trx, Row tableRow);
+
+      /**
+       * Deletes the supplied row from the table. Note that the row to be
+       * deleted is identified by its primary key.
+       *
+       * @param trx The Transaction managing this delete
+       * @param tableRow The row to be deleted.
+       */
+      public abstract void deleteRow(Transaction trx, Row tableRow);
+
+      /**
+       * Opens a Table Scan, which allows rows to be fetched from the Table,
+       * and updated.
+       *
+       * @param trx Transaction managing the scan
+       * @param indexno The index to be used for the scan
+       * @param startRow The starting row of the scan
+       * @param forUpdate A boolean value indicating whether the scan will
+       *                  be used to update rows
+       * @return A TableScan
+       */
+      public abstract TableScan openScan(Transaction trx, int indexno,
+                      Row startRow, boolean forUpdate);
+
+      /**
+       * Constructs an empty row for the table.
+       * @return Row
+       */
+      public abstract Row getRow();
+
+      /**
+       * Constructs an row for the specified Index. Appropriate columns from the
+       * table are copied into the Index row.
+       *
+       * @param index The Index for which the row is to be constructed
+       * @param tableRow The table row
+       * @return An initialized Index Row
+       */
+      public abstract Row getIndexRow(int index, Row tableRow);
+}</pre>
+</div>
+</div>
+<div class="section" id="tablescan">
+<h3><a class="toc-backref" href="#id38">TableScan</a><a class="headerlink" href="#tablescan" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A TableScan is an Iterator that allows clients to iterate through the
+ * contents of a Table. The iteraion is always ordered through an Index.
+ * The Transaction managing the iteration defines the Lock Isolation level.
+ */
+public interface TableScan {
+
+      /**
+       * Fetches the next row from the Table. The row to be fetched depends
+       * upon the current position of the scan, and the Index ordering of
+       * the scan.
+       * @return A boolean value indicating success of EOF
+       */
+      public abstract boolean fetchNext();
+
+      /**
+       * Returns a copy of the current Row.
+       */
+      public abstract Row getCurrentRow();
+
+      /**
+       * Returns a copy of the current Index Row.
+       */
+      public abstract Row getCurrentIndexRow();
+
+      /**
+       * Notifies the scan that the fetch has been completed
+       * and locks may be released (depending upon the
+       * Isolation level).
+       * @param matched A boolean value that should be true
+       *   if the row is part of the search criteria match result.
+       *   If set to false, this indicates that no further
+       *   fetches are required.
+       */
+      public abstract void fetchCompleted(boolean matched);
+
+      /**
+       * Closes the scan, releasing locks and other resources
+       * acquired by the scan.
+       */
+      public abstract void close();
+
+      /**
+       * Updates the current row.
+       */
+      public abstract void updateCurrentRow(Row tableRow);
+
+      /**
+       * Deletes the current row.
+       */
+      public abstract void deleteRow();
+}</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">SimpleDBM Database API</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a><ul>
+<li><a class="reference external" href="#overview">Overview</a></li>
+<li><a class="reference external" href="#features">Features</a><ul>
+<li><a class="reference external" href="#non-features">Non-Features</a></li>
+<li><a class="reference external" href="#status">Status</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#simpledbm-modules">SimpleDBM Modules</a></li>
+<li><a class="reference external" href="#getting-started">Getting Started</a><ul>
+<li><a class="reference external" href="#simpledbm-binaries">SimpleDBM binaries</a></li>
+<li><a class="reference external" href="#creating-a-simpledbm-database">Creating a SimpleDBM database</a><ul>
+<li><a class="reference external" href="#server-options">Server Options</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#opening-a-database">Opening a database</a></li>
+<li><a class="reference external" href="#performance-impact-of-server-options">Performance impact of server options</a></li>
+<li><a class="reference external" href="#problems-starting-a-database">Problems starting a database</a></li>
+<li><a class="reference external" href="#managing-log-messages">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#transactions">Transactions</a><ul>
+<li><a class="reference external" href="#creating-new-transactions">Creating new Transactions</a></li>
+<li><a class="reference external" href="#working-with-transactions">Working with Transactions</a><ul>
+<li><a class="reference external" href="#transaction-api">Transaction API</a></li>
+<li><a class="reference external" href="#transaction-savepoints">Transaction Savepoints</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#tables-and-indexes">Tables and Indexes</a><ul>
+<li><a class="reference external" href="#limitations">Limitations</a></li>
+<li><a class="reference external" href="#creating-a-table-and-indexes">Creating a Table and Indexes</a></li>
+<li><a class="reference external" href="#isolation-modes">Isolation Modes</a><ul>
+<li><a class="reference external" href="#common-behaviour">Common Behaviour</a></li>
+<li><a class="reference external" href="#read-committed-cursor-stability">Read Committed/Cursor Stability</a></li>
+<li><a class="reference external" href="#repeatable-read-rr">Repeatable Read (RR)</a></li>
+<li><a class="reference external" href="#serializable">Serializable</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#inserting-rows-into-a-table">Inserting rows into a table</a></li>
+<li><a class="reference external" href="#accessing-table-data">Accessing table data</a></li>
+<li><a class="reference external" href="#updating-tuples">Updating tuples</a></li>
+<li><a class="reference external" href="#deleting-tuples">Deleting tuples</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#the-database-api">The Database API</a><ul>
+<li><a class="reference external" href="#databasefactory">DatabaseFactory</a></li>
+<li><a class="reference external" href="#database">Database</a></li>
+<li><a class="reference external" href="#tabledefinition">TableDefinition</a></li>
+<li><a class="reference external" href="#table">Table</a></li>
+<li><a class="reference external" href="#tablescan">TableScan</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="index.html"
+                                  title="previous chapter">Welcome to SimpleDBM&#8217;s documentation!</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="typesystem.html"
+                                  title="next chapter">SimpleDBM TypeSystem</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/database-api.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             >next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to SimpleDBM’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Dibyendu Majumdar.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>
