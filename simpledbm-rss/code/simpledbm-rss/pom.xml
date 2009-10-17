@@ -53,7 +53,7 @@
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.2</version>
 		</dependency>
 	</dependencies>
 	<build>
@@ -93,9 +93,6 @@
 			</plugin>
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
-				<configuration>
-					<tagBase>https://simpledbm.googlecode.com/svn/tags</tagBase>
-				</configuration>
 			</plugin>
 		</plugins>
 	</build>
