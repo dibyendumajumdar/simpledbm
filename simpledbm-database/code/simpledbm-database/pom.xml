@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simpledbm.database</groupId>
 	<artifactId>simpledbm-database</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.13-SNAPSHOT</version>
+	<version>1.0.13</version>
 	<name>SimpleDBM Database</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -21,11 +20,11 @@
 			<id>dmajumdar</id>
 			<name>Dibyendu Majumdar</name>
 			<email>d dot majumdar at gmail dot com</email>
-			<url></url>
+			<url />
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
 			<roles />
-			<timezone></timezone>
+			<timezone />
 			<properties />
 		</developer>
 	</developers>
