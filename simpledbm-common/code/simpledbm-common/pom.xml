@@ -3,7 +3,7 @@
  <groupId>org.simpledbm.rss</groupId>
  <artifactId>simpledbm-common</artifactId>
  <packaging>jar</packaging>
- <version>1.0.1-SNAPSHOT</version>
+ <version>1.0.2</version>
  <name>SimpleDBM</name>
  <description>SimpleDBM Common</description>
  <url>http://www.simpledbm.org</url>
@@ -95,7 +95,7 @@
    <plugin>
     <artifactId>maven-release-plugin</artifactId>
     <configuration>
-     <tagBase>https://simpledbm.googlecode.com/svn/tags</tagBase>
+     <!--  <tagBase>https://simpledbm.googlecode.com/hg/simpledbm-common/code/simpledbm-common</tagBase> -->
     </configuration>
    </plugin>
   </plugins>
