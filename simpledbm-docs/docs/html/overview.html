@@ -1,0 +1,582 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SimpleDBM Overview &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0.12 BETA',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
+    <link rel="next" title="SimpleDBM Database API" href="database-api.html" />
+    <link rel="prev" title="Welcome to SimpleDBM’s documentation!" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="database-api.html" title="SimpleDBM Database API"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to SimpleDBM’s documentation!"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simpledbm-overview">
+<h1><a class="toc-backref" href="#id3">SimpleDBM Overview</a><a class="headerlink" href="#simpledbm-overview" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
+</tr>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body">d dot majumdar at gmail dot com</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">18 October 2009</td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">1.0.13 BETA</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2005-2009</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#simpledbm-overview" id="id3">SimpleDBM Overview</a><ul>
+<li><a class="reference internal" href="#overview" id="id4">Overview</a><ul>
+<li><a class="reference internal" href="#introduction" id="id5">Introduction</a></li>
+<li><a class="reference internal" href="#features" id="id6">Features</a><ul>
+<li><a class="reference internal" href="#non-features" id="id7">Non-Features</a></li>
+<li><a class="reference internal" href="#current-status" id="id8">Current Status</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#architecture" id="id9">Architecture</a><ul>
+<li><a class="reference internal" href="#technology" id="id10">Technology</a></li>
+<li><a class="reference internal" href="#third-party-libraries" id="id11">Third party libraries</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#using-simpledbm" id="id12">Using SimpleDBM</a></li>
+<li><a class="reference internal" href="#developing-simpledbm" id="id13">Developing SimpleDBM</a><ul>
+<li><a class="reference internal" href="#obtaining-simpledbm" id="id14">Obtaining SimpleDBM</a><ul>
+<li><a class="reference internal" href="#mercurial-urls" id="id15">Mercurial URLs</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#build-instructions" id="id16">Build Instructions</a><ul>
+<li><a class="reference internal" href="#pre-requisites" id="id17">Pre-requisites</a></li>
+<li><a class="reference internal" href="#instructions-for-eclipse" id="id18">Instructions for Eclipse</a></li>
+<li><a class="reference internal" href="#maven-commands" id="id19">Maven commands</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#building-releases" id="id20">Building releases</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#coding-and-design-principles" id="id21">Coding and Design Principles</a><ul>
+<li><a class="reference internal" href="#modular-design" id="id22">Modular design</a></li>
+<li><a class="reference internal" href="#java-coding-standards" id="id23">Java coding standards</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#documentation" id="id24">Documentation</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="overview">
+<h2><a class="toc-backref" href="#id4">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="introduction">
+<h3><a class="toc-backref" href="#id5">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h3>
+<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is a transactional database engine, written in Java. It has a
+very small footprint and can be embedded in the address space of an
+application. It provides a simple Java application programming interface (API),
+which can be learned very quickly.</p>
+</div>
+<div class="section" id="features">
+<h3><a class="toc-backref" href="#id6">Features</a><a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM implements the following features:</p>
+<ul class="simple">
+<li><em>Transactional</em> - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.</li>
+<li><em>Multi-threaded</em> - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.</li>
+<li><em>Write Ahead Log</em> - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.</li>
+<li><em>Lock based concurrency</em> - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency.</li>
+<li><em>Multiple Isolation Levels</em> - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.</li>
+<li><em>B-Tree Indexes</em> - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.</li>
+<li><em>Tables</em> - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.</li>
+<li><em>Latches and Locks</em> - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.</li>
+<li><em>Deadlock detection</em> - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.</li>
+</ul>
+<div class="section" id="non-features">
+<h4><a class="toc-backref" href="#id7">Non-Features</a><a class="headerlink" href="#non-features" title="Permalink to this headline">¶</a></h4>
+<ul class="simple">
+<li>SimpleDBM is not an SQL engine.</li>
+<li>There is no support for distributed transactions (XA).</li>
+<li>At present there is no network API.</li>
+</ul>
+</div>
+<div class="section" id="current-status">
+<h4><a class="toc-backref" href="#id8">Current Status</a><a class="headerlink" href="#current-status" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM is currently in early BETA and not suitable for Production use.
+Note that the SimpleDBM API is under flux, and is likely to change until
+the production 1.0 release is available.</p>
+<p>The latest builds can be downloaded from:</p>
+<p><a class="reference external" href="http://code.google.com/p/simpledbm/downloads/list">http://code.google.com/p/simpledbm/downloads/list</a>.</p>
+</div>
+</div>
+<div class="section" id="architecture">
+<h3><a class="toc-backref" href="#id9">Architecture</a><a class="headerlink" href="#architecture" title="Permalink to this headline">¶</a></h3>
+<p>The core database engine of SimpleDBM is the RSS (named in honor of the
+first IBM Relational Database prototype <a class="reference external" href="http://www.mcjones.org/System_R/index.html">System-R</a> Relational Storage
+System). The RSS provides the underlying storage structures for
+transactions, locking, b-trees etc. The functions
+of the RSS subsystem will be based upon the description of the <a class="reference external" href="http://www.mcjones.org/System_R/index.html">System-R</a>
+RSS component in <a class="reference internal" href="#astra-76">[ASTRA-76]</a>.</p>
+<blockquote>
+The Relational Storage Interface (RSI) is an internal interface
+which handles access to single tuples of base relations. This
+interface and its supporting system, the Relational Storage
+System (RSS), is actually a complete storage subsystem in that
+it manages devices, space allocation, storage buffers, transaction
+consistency and locking, deadlock detection, backout, transaction
+recovery, and system recovery. Furthermore, it maintains indexes
+on selected fields of base relations, and pointer chains across
+relations.</blockquote>
+<p>The RSS API is however, somewhat low level for ordinary users.
+It is meant to be used by people interested in building their own
+Database Engines on top of RSS.</p>
+<p>To provides users with a simplified API, two additional modules are
+available.</p>
+<p>The first one is the SimpleDBM TypeSystem module, which adds support
+for typed data values and multi-attribute row objects.</p>
+<p>The second module, the Database API. This module implements a high level
+Database API and uses the TypeSystem module on top of the RSS.</p>
+<div class="section" id="technology">
+<h4><a class="toc-backref" href="#id10">Technology</a><a class="headerlink" href="#technology" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM is written in Java and uses features available since version 5.0
+of this language.</p>
+</div>
+<div class="section" id="third-party-libraries">
+<h4><a class="toc-backref" href="#id11">Third party libraries</a><a class="headerlink" href="#third-party-libraries" title="Permalink to this headline">¶</a></h4>
+<p>To avoid license compatibility issues, and to reduce dependency on
+third-party libraries, SimpleDBM makes little or no use of any
+external libraries. A custom wrapper is used for logging, which uses
+the Java logging API by default, but can use <a class="reference external" href="http://logging.apache.org/log4j/1.2/index.html">Log4J</a> if available.</p>
+</div>
+</div>
+</div>
+<div class="section" id="using-simpledbm">
+<h2><a class="toc-backref" href="#id12">Using SimpleDBM</a><a class="headerlink" href="#using-simpledbm" title="Permalink to this headline">¶</a></h2>
+<p>SimpleDBM is available in two levels of abstraction.</p>
+<p>The add-on modules SimpleDBM-Database and SimpleDBM Type-System provide
+a high level API wth support for data dictionary, and the ability to create tables
+with traditional row/column structure. Indexes can be associated with tables.
+Details of how to use this API can be found in the document SimpleDBM Database API.
+Instructions for getting started with the SimpleDBM Database API can be
+found at the <a class="reference external" href="http://simpledbm.googlecode.com/">SimpleDBM Google project site</a>.</p>
+<p>The lower level RSS module works at the level of containers and arbitrary
+types. The document named RSS User Manual provides instructions on how to develop
+using the RSS. Note that this is for advanced users who want to implement their
+own type system and data dictionary.</p>
+</div>
+<div class="section" id="developing-simpledbm">
+<h2><a class="toc-backref" href="#id13">Developing SimpleDBM</a><a class="headerlink" href="#developing-simpledbm" title="Permalink to this headline">¶</a></h2>
+<p>The instructions in this section are for those who wish to develop SimpleDBM.
+If you want to use it rather than extend, then read the document named SimpleDBM
+Database API.</p>
+<div class="section" id="obtaining-simpledbm">
+<h3><a class="toc-backref" href="#id14">Obtaining SimpleDBM</a><a class="headerlink" href="#obtaining-simpledbm" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM source code can be obtained from the <a class="reference external" href="http://simpledbm.googlecode.com/">SimpleDBM Google project
+site</a>. Source code is maintained in a Subversion repository, so you will
+need a subversion client on your PC.</p>
+<p>The SimpleDBM SCM repository is organized as follows:</p>
+<div class="highlight-python"><pre>trunk  --+--- simpledbm-rss          This contains the core DBMS engine
+         |
+         +--- simpledbm-common       This contains basic utilities that are
+         |                           shared by all projects.
+         |
+         +--- simpledbm-typesystem   This contains a simple typesystem
+         |                           that can be used with SimpleDBM.
+         |
+         +--- simpledbm-database     This contains a higher level DB
+         |                           API that makes life easier for
+         |                           users. It uses the typesystem
+         |                           component.
+         |
+         +--- simpledbm-samples      This contains some sample programs
+         |                           that demonstrate how to use SimpleDBM.
+         |
+         +--- docs                   Contains the documentation sources.</pre>
+</div>
+<p>Under each of the top-level folders, there is the following structure.</p>
+<div class="highlight-python"><pre>--+--- code            This is where the source code is.
+  |
+  +--- docs            This folder contains documents.
+  |
+  +--- site            This folder contains web site contents.</pre>
+</div>
+<p>Some of these folders may be empty if no content has been created.</p>
+<p>In the code sub-directory, there is a top-level directory for each project.</p>
+<div class="section" id="mercurial-urls">
+<h4><a class="toc-backref" href="#id15">Mercurial URLs</a><a class="headerlink" href="#mercurial-urls" title="Permalink to this headline">¶</a></h4>
+<p>Here are the Mercurial URLs for the various SimpleDBM sub-systems.</p>
+<dl class="docutils">
+<dt>Base URL</dt>
+<dd><a class="reference external" href="http://simpledbm.googlecode.com/hg/">http://simpledbm.googlecode.com/hg/</a></dd>
+<dt>SimpleDBM-Common</dt>
+<dd>.../simpledbm-common/code/simpledbm-common</dd>
+<dt>SimpleDBM-RSS</dt>
+<dd>.../simpledbm-rss/code/simpledbm-rss</dd>
+<dt>SimpleDBM-TypeSystem</dt>
+<dd>.../simpledbm-typesystem/code/simpledbm-typesystem</dd>
+<dt>SimpleDBM-Database</dt>
+<dd>.../simpledbm-database/code/simpledbm-database</dd>
+<dt>TupleDemo sample</dt>
+<dd>.../simpledbm-samples/code/tupledemo</dd>
+<dt>B-TreeDemo sample</dt>
+<dd>.../simpledbm-samples/code/btreedemo</dd>
+</dl>
+<p>If you are a committer, you need to use <tt class="docutils literal"><span class="pre">https</span></tt> instead of <tt class="docutils literal"><span class="pre">http</span></tt>.</p>
+</div>
+</div>
+<div class="section" id="build-instructions">
+<h3><a class="toc-backref" href="#id16">Build Instructions</a><a class="headerlink" href="#build-instructions" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="pre-requisites">
+<h4><a class="toc-backref" href="#id17">Pre-requisites</a><a class="headerlink" href="#pre-requisites" title="Permalink to this headline">¶</a></h4>
+<p>SimpleDBM uses <a class="reference external" href="http://maven.apache.org.">Maven</a> for build management. You will need to obtain a
+copy of Maven 2. Install Maven and set up your PATH so that Maven can be
+executed by typing the following command.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mvn</span>
+</pre></div>
+</div>
+<p>SimpleDBM development is being done using Eclipse 3.x. You can use any IDE
+of your choice, but you may need to find ways of converting the maven
+projects to the format recognized by your IDE.</p>
+<p>You will need a Subversion client in order to checkout the code for
+SimpleDBM.</p>
+<p>SimpleDBM requires Java SE 5.0 or above. Java SE 6.0 is recommended.
+On the Mac, Java SE 5.0 is available for Mac OS X Tiger.</p>
+<p>Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
+SimpleDBM code will not compile.</p>
+</div>
+<div class="section" id="instructions-for-eclipse">
+<h4><a class="toc-backref" href="#id18">Instructions for Eclipse</a><a class="headerlink" href="#instructions-for-eclipse" title="Permalink to this headline">¶</a></h4>
+<p>The following instructions are for the simpledbm-rss project.
+However, the same instructions apply for the other projects, simply
+change the Mercurial URL as appropriate.</p>
+<ol class="arabic">
+<li><p class="first">Use the Mercurial command line tools to create a local clone of the
+SimpleDBM Repository:</p>
+<div class="highlight-python"><pre>hg clone http://simpledbm.googlecode.com/hg simpledbm</pre>
+</div>
+</li>
+<li><p class="first">Create a new <tt class="docutils literal"><span class="pre">classpath</span></tt> variable named <tt class="docutils literal"><span class="pre">M2_REPO</span></tt> inside
+Eclipse. From the menu bar, select Window &gt; Preferences. Select the Java
+&gt; Build Path &gt; Classpath Variables page. The <tt class="docutils literal"><span class="pre">M2_REPO</span></tt> variable should
+contain the path to your local Maven 2 repository. Usually this is:</p>
+<div class="highlight-python"><pre>&lt;Your Home Directory&gt;/.m2/repository</pre>
+</div>
+</li>
+<li><p class="first">Import the SimpleDBM projects into Eclipse. The project files are stored in
+the version control repository, so Eclipse should automatically create the
+correct project type.</p>
+</li>
+</ol>
+<p>If you need to change the dependencies in the project, such as using a different
+version of a module, you can edit the Maven <tt class="docutils literal"><span class="pre">pom.xml</span></tt> file. Once you have the
+correct dependencies, do following:</p>
+<ol class="arabic simple">
+<li>Start a command shell. Cd to the project directory.</li>
+<li>Run <tt class="docutils literal"><span class="pre">mvn</span> <span class="pre">eclipse:clean</span></tt>, followed by <tt class="docutils literal"><span class="pre">mvn</span> <span class="pre">eclipse:eclipse</span></tt>.</li>
+<li>Switch back to Eclipse and refresh the project. It should now
+display a small J against the project showing that it is a Java project. Eclipse
+is now setup to automatically rebuild SimpleDBM whenever you change any
+code.</li>
+</ol>
+</div>
+<div class="section" id="maven-commands">
+<h4><a class="toc-backref" href="#id19">Maven commands</a><a class="headerlink" href="#maven-commands" title="Permalink to this headline">¶</a></h4>
+<p>You can also compile, test and do other operations using maven commands.
+The following maven commands are commonly used.</p>
+<p>To run the test cases.</p>
+<div class="highlight-python"><pre>mvn test</pre>
+</div>
+<p>To create the package and install it in the local repository.</p>
+<div class="highlight-python"><pre>mvn install</pre>
+</div>
+<p>Please visit the SimpleDBM project Wiki pages for additional platform
+specific instructions.</p>
+</div>
+</div>
+<div class="section" id="building-releases">
+<h3><a class="toc-backref" href="#id20">Building releases</a><a class="headerlink" href="#building-releases" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM releases are built using Maven release plugin.</p>
+<ol class="arabic">
+<li><p class="first">Setup the maven user settings file with userid/password for
+the Mercurial repository:</p>
+<div class="highlight-python"><pre>&lt;servers&gt;
+  &lt;server&gt;
+    &lt;id&gt;simpledbm.googlecode.com&lt;/id&gt;
+    &lt;username&gt;d.majumdar&lt;/username&gt;
+    &lt;password&gt;xxxxxxx&lt;/password&gt;
+  &lt;/server&gt;
+&lt;/servers&gt;</pre>
+</div>
+</li>
+<li><p class="first">Make a new clone of the SimpleDBM Mercurial repository. Do not use your
+existing Eclipse project as the release-plugin does not like local files.</p>
+</li>
+<li><p class="first">cd into the newly created project sub-directory directory.</p>
+</li>
+<li><p class="first">Run:</p>
+<div class="highlight-python"><pre>mvn release:prepare -DdryRun=true</pre>
+</div>
+<p>If this completes successfully, execute:</p>
+<div class="highlight-python"><pre>mvn release:clean</pre>
+</div>
+<p>Delete local files created by the release:</p>
+<div class="highlight-python"><pre>mvn clean
+rm -rf testdata
+rm simpledbm.log*</pre>
+</div>
+</li>
+<li><p class="first">Now do the real build:</p>
+<div class="highlight-python"><pre>mvn release:prepare</pre>
+</div>
+</li>
+<li><p class="first">Finally, run mvn release:perform to deploy the release. At present the release
+is deployed to a local filesystem directory file:///tmp. Note that this
+step is optional - if you are not deploying the release then
+you can skip this step.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="coding-and-design-principles">
+<h2><a class="toc-backref" href="#id21">Coding and Design Principles</a><a class="headerlink" href="#coding-and-design-principles" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="modular-design">
+<h3><a class="toc-backref" href="#id22">Modular design</a><a class="headerlink" href="#modular-design" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM RSS is made up of several modules. Each module implements a
+particular component, and is contained in its own package.</p>
+<p>Each module has a public API, which is specified via a set of Java
+interfaces. Classes are generally not used as part of the public API,
+though there are a few exceptional cases.</p>
+<p>To make the modules reusable and as independent of each other as
+possible, the interface of a module is deliberately specified in
+general terms. Where possible, direct dependence between modules is
+avoided. The only permissible way for one module to interact with
+another is to go via the public interfaces of the other module.
+Modules are not allowed to depend upon implementation specifics of
+other modules.</p>
+<p>A strict rule is that two modules cannot have cyclic dependency.
+Module dependencies are one-way only, higher level modules depend
+upon lower level modules. This is illustrated below.</p>
+<a class="reference external image-reference" href="_images/component-model.png"><img alt="_images/component-model.png" src="_images/component-model.png" /></a>
+<p>SimpleDBM uses constructor based dependency injection to link
+modules. It is being designed in such a way that a third-party IoC
+(Inversion of Control) container may be used to manage the
+dependencies.</p>
+</div>
+<div class="section" id="java-coding-standards">
+<h3><a class="toc-backref" href="#id23">Java coding standards</a><a class="headerlink" href="#java-coding-standards" title="Permalink to this headline">¶</a></h3>
+<p>Where possible, classes are made immutable. This helps in
+improving the robustness of the system. The serialization mechanism
+used by SimpleDBM is designed to work with immutable objects.</p>
+<p>In the interest of concurrency, fine-grained locking is used as
+opposed to coarse-grained synchronization. This makes the code complex
+in some cases, as careful ordering of locks is required for deadlock
+avoidance. Also, the correctness of synchronization logic is of
+paramount importance.</p>
+<p>Unchecked exceptions are used throughout. Due to the nature of
+unchecked exceptions, the code that throws the exception has the
+responsibility of logging an error message at the point where the
+exception is thrown. This ensures that even if the exception is not
+caught by the client, an error message will be logged to indicate
+the nature of the error.</p>
+<p>All error messages are given unique error codes.</p>
+<p>The code relies upon the efficiency of modern garbage collectors
+and does not attempt to manage memory. Rather than
+using object pools, SimpleDBM encourages the use of short-lived
+objects, on the basis that this aids the garbage collector in
+reclaiming space more quickly. The aim is to keep permanently
+occupied memory to a low level.</p>
+<p>JUnit based test cases are being added constantly to improve the
+test coverage. Simple code coverage statistics are not a good indicator of the
+usefulness of test cases, due to the multi-threaded nature of most
+SimpleDBM components. Where possible, test cases are created to simulate
+specific thread interactions, covering common scenarios.</p>
+<p>Particular attention is paid to cleaning up of resources. To ensure
+that resources are cleaned up during normal as well as exceptional
+circumstances, finally blocks are used.</p>
+<p>Debug messages are used liberally - and are executed conditionally
+so that if debug is switched off, there is minimal impact on
+performance.</p>
+<p>A special Trace module is used to capture runtime trace. This module
+is designed to be lock-free, and is very low overhead, so that trace
+can be collected with negligible overhead. This feature is still being
+implemented across modules; the intention is that when fatal errors
+occur, the last 5000 trace messages will be dumped to help debug the
+error condition.</p>
+</div>
+</div>
+<div class="section" id="documentation">
+<h2><a class="toc-backref" href="#id24">Documentation</a><a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>Most of the documentation for SimpleDBM is written in reStructuredText.
+HTML and PDF versions are generated from the source documents.
+There is a generous amount of comments in the source code as well.</p>
+<p>Being an educational project, producing good documentation is high
+priority.</p>
+<p>The design of most modules is based upon published research. References
+are provided in appropriate places, both in this document, and in the
+source code. This acts as another source of information.</p>
+<p>Following documents are recommended as starting points:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html">SimpleDBM Overview</a> - provides an overview of SimpleDBM</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/database-api.html">SimpleDBM Database API</a> - describes the Database API</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/typesystem.html">SimpleDBM TypeSystem</a> - useful if you want to know more about the type system</li>
+</ul>
+</blockquote>
+<p>For advanced stuff, read:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/usermanual.html">SimpleDBM RSS User&#8217;s Manual</a> - describes the low level API of RSS</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/developerguide.html">SimpleDBM RSS Developer&#8217;s Guide</a> - covers internals of RSS, the SimpleDBM database engine</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/btree-space-management-1.0.pdf">BTree Space Management</a> - describes some implementation issues with BTree space management</li>
+</ul>
+</blockquote>
+<p>JavaDoc for the main projects:</p>
+<blockquote>
+<ul class="simple">
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/simpledbm-database-1.0.11-javadoc.jar">Database API JavaDoc</a> - contains the JavaDoc for the SimpleDBM Database API</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.10-javadoc.jar">TypeSystem JavaDoc</a> - contains JavaDoc for the TypeSystem.</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.15-SNAPSHOT-javadoc.jar">SimpleDBM RSS JavaDoc</a> - provides JavaDoc for the RSS component.</li>
+</ul>
+</blockquote>
+<table class="docutils citation" frame="void" id="astra-76" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[ASTRA-76]</a></td><td>M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,
+K.P.Eswaran, J.N.Gray, P.P.Griffiths, W.F.King, R.A.Lorie,
+P.R.McJones, J.W.Mehl, G.R.Putzolu, I.L.Traiger, B.W.Wade
+AND V.Watson. System R: Relational Approach to Database
+Management, ACM, Copyright 1976, ACM Transactions on
+Database Systems, Vol 1, No. 2, June 1976, Pages 97-137.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="">SimpleDBM Overview</a><ul>
+<li><a class="reference external" href="#overview">Overview</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a></li>
+<li><a class="reference external" href="#features">Features</a><ul>
+<li><a class="reference external" href="#non-features">Non-Features</a></li>
+<li><a class="reference external" href="#current-status">Current Status</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#architecture">Architecture</a><ul>
+<li><a class="reference external" href="#technology">Technology</a></li>
+<li><a class="reference external" href="#third-party-libraries">Third party libraries</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference external" href="#using-simpledbm">Using SimpleDBM</a></li>
+<li><a class="reference external" href="#developing-simpledbm">Developing SimpleDBM</a><ul>
+<li><a class="reference external" href="#obtaining-simpledbm">Obtaining SimpleDBM</a><ul>
+<li><a class="reference external" href="#mercurial-urls">Mercurial URLs</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#build-instructions">Build Instructions</a><ul>
+<li><a class="reference external" href="#pre-requisites">Pre-requisites</a></li>
+<li><a class="reference external" href="#instructions-for-eclipse">Instructions for Eclipse</a></li>
+<li><a class="reference external" href="#maven-commands">Maven commands</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#building-releases">Building releases</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#coding-and-design-principles">Coding and Design Principles</a><ul>
+<li><a class="reference external" href="#modular-design">Modular design</a></li>
+<li><a class="reference external" href="#java-coding-standards">Java coding standards</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#documentation">Documentation</a></li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="index.html"
+                                  title="previous chapter">Welcome to SimpleDBM&#8217;s documentation!</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="database-api.html"
+                                  title="next chapter">SimpleDBM Database API</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/overview.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="database-api.html" title="SimpleDBM Database API"
+             >next</a></li>
+        <li class="right" >
+          <a href="index.html" title="Welcome to SimpleDBM’s documentation!"
+             >previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Dibyendu Majumdar.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.3.
+    </div>
+  </body>
+</html>

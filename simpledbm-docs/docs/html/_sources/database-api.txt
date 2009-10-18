@@ -5,9 +5,9 @@ SimpleDBM Database API
 ======================
 
 :Author: Dibyendu Majumdar
-:Contact: d.majumdar@gmail.com
-:Version: 1.0.11b
-:Date: 13 April 2009
+:Contact: d dot majumdar at gmail dot com
+:Version: 1.0.13
+:Date: 18 October 2009
 :Copyright: Copyright by Dibyendu Majumdar, 2008-2009
 
 .. contents::
@@ -16,69 +16,18 @@ SimpleDBM Database API
 Introduction
 ------------
 
-Overview
-========
+This document describes the SimpleDBM Database API.
 
-SimpleDBM_ is a transactional database engine, written in Java. It has a
-very small footprint and can be embedded in the address space of an
-application. It provides a simple Java application programming interface (API), 
-which can be learned very quickly.
+Intended Audience
+=================
 
-.. _SimpleDBM: http://www.simpledbm.org
+This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
 
-Features
-========
+Pre-requisite Reading
+=====================
 
-SimpleDBM has the following features:
-
-- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
-- *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
-- *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
-- *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
-- *Multiple Isolation Levels* - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.
-- *B-Tree Indexes* - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.
-- *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.
-- *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
-- *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
-
-Non-Features
-------------
-- SimpleDBM is not an SQL engine. 
-- There is no support for distributed transactions (XA) yet.
-
-Status
-------
-
-SimpleDBM is currently in early BETA and not suitable for Production use. 
-Note that the SimpleDBM API is under flux, and is likely to change until 
-the production 1.0 release is available. 
-
-The latest builds can be downloaded from:
-
-http://code.google.com/p/simpledbm/downloads/list.
-
------------------
-SimpleDBM Modules
------------------
-
-The core of SimpleDBM is the RSS (named in honor of the
-first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
-System). The RSS provides the underlying storage structures for
-transactions, locking, b-trees etc. The RSS API is however, somewhat
-low level for ordinary users. It is meant to be used by people interested
-in building their own Database Engines on top of RSS. The RSS is described in 
-detail in the `SimpleDBM RSS User's Manual <http://simpledbm.googlecode.com/files/rss-usermanual-1.0.12.pdf>`_ and 
-`SimpleDBM RSS Developers's Guide <http://simpledbm.googlecode.com/files/rss-developerguide-1.0.12.pdf>`_.
-
-To provides users with a simplified API, two additional modules are
-available. 
-
-The first one is the `SimpleDBM TypeSystem <http://simpledbm.googlecode.com/files/typesystem-1.0.8.pdf>`_ module, which adds support
-for typed data values and multi-attribute row objects.
-
-The second module, the Database API, is the subject of this document.
-This module implements a high level Database API and uses the 
-TypeSystem module on top of the RSS.
+Before reading this document, the reader is advised to go through 
+the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
 
 ---------------
 Getting Started
