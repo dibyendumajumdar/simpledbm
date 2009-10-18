@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>SimpleDBM RSS Developers’s Guide &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <title>SimpleDBM Developers’s Guide &mdash; SimpleDBM v1.0.12 BETA documentation</title>
     <link rel="stylesheet" href="_static/default.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -38,15 +38,15 @@
         <div class="bodywrapper">
           <div class="body">
             
-  <div class="section" id="simpledbm-rss-developers-s-guide">
-<h1><a class="toc-backref" href="#id51">SimpleDBM RSS Developers&#8217;s Guide</a><a class="headerlink" href="#simpledbm-rss-developers-s-guide" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="simpledbm-developers-s-guide">
+<h1><a class="toc-backref" href="#id49">SimpleDBM Developers&#8217;s Guide</a><a class="headerlink" href="#simpledbm-developers-s-guide" title="Permalink to this headline">¶</a></h1>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
 </tr>
-<tr class="field"><th class="field-name">Contact:</th><td class="field-body"><a class="reference external" href="mailto:d&#46;majumdar&#37;&#52;&#48;gmail&#46;com">d<span>&#46;</span>majumdar<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body">d dot majumdar at gmail dot com</td>
 </tr>
 <tr class="field"><th class="field-name">Date:</th><td class="field-body">7 April 2009</td>
 </tr>
@@ -59,269 +59,254 @@
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#simpledbm-rss-developers-s-guide" id="id51">SimpleDBM RSS Developers&#8217;s Guide</a><ul>
-<li><a class="reference internal" href="#introduction" id="id52">Introduction</a><ul>
-<li><a class="reference internal" href="#overview" id="id53">Overview</a></li>
-<li><a class="reference internal" href="#technology" id="id54">Technology</a><ul>
-<li><a class="reference internal" href="#third-party-libraries" id="id55">Third party libraries</a></li>
-<li><a class="reference internal" href="#obtaining-simpledbm" id="id56">Obtaining SimpleDBM</a></li>
-<li><a class="reference internal" href="#mercurial-urls" id="id57">Mercurial URLs</a></li>
-<li><a class="reference internal" href="#pre-requisites" id="id58">Pre-requisites</a></li>
-<li><a class="reference internal" href="#instructions-for-eclipse" id="id59">Instructions for Eclipse</a></li>
-<li><a class="reference internal" href="#maven-commands" id="id60">Maven commands</a></li>
+<li><a class="reference internal" href="#simpledbm-developers-s-guide" id="id49">SimpleDBM Developers&#8217;s Guide</a><ul>
+<li><a class="reference internal" href="#introduction" id="id50">Introduction</a><ul>
+<li><a class="reference internal" href="#intended-audience" id="id51">Intended Audience</a></li>
+<li><a class="reference internal" href="#pre-requisite-reading" id="id52">Pre-requisite Reading</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#data-manager-rss-components" id="id53">Data Manager/RSS Components</a></li>
+<li><a class="reference internal" href="#object-registry" id="id54">Object Registry</a><ul>
+<li><a class="reference internal" href="#overview" id="id55">Overview</a></li>
+<li><a class="reference internal" href="#two-use-cases" id="id56">Two Use cases</a></li>
+<li><a class="reference internal" href="#registering-an-objectfactory" id="id57">Registering an ObjectFactory</a></li>
+<li><a class="reference internal" href="#asymmetry-between-retrieving-and-storing-objects" id="id58">Asymmetry between retrieving and storing objects</a></li>
+<li><a class="reference internal" href="#storable-interface-and-object-serialization" id="id59">Storable Interface and Object serialization</a></li>
+<li><a class="reference internal" href="#registering-singletons" id="id60">Registering Singletons</a></li>
+<li><a class="reference internal" href="#historical-note" id="id61">Historical Note</a></li>
+<li><a class="reference internal" href="#comparison-with-apache-derby" id="id62">Comparison with Apache Derby</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#storage-factory" id="id63">Storage Factory</a><ul>
+<li><a class="reference internal" href="#id3" id="id64">Overview</a></li>
+<li><a class="reference internal" href="#storage-containers" id="id65">Storage Containers</a></li>
+<li><a class="reference internal" href="#storage-container-registry" id="id66">Storage Container Registry</a></li>
+<li><a class="reference internal" href="#default-implementation" id="id67">Default Implementation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#latch-manager" id="id68">Latch Manager</a><ul>
+<li><a class="reference internal" href="#id4" id="id69">Overview</a></li>
+<li><a class="reference internal" href="#latch-modes" id="id70">Latch modes</a></li>
+<li><a class="reference internal" href="#implementation-and-performance-notes" id="id71">Implementation and Performance Notes</a></li>
+<li><a class="reference internal" href="#obtaining-a-latch-instance" id="id72">Obtaining a latch instance</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#log-manager" id="id73">Log Manager</a><ul>
+<li><a class="reference internal" href="#id5" id="id74">Overview</a></li>
+<li><a class="reference internal" href="#write-ahead-log-wal-protocol" id="id75">Write Ahead Log (WAL) Protocol</a></li>
+<li><a class="reference internal" href="#advantages-of-wal" id="id76">Advantages of WAL</a></li>
+<li><a class="reference internal" href="#usage-notes" id="id77">Usage Notes</a></li>
+<li><a class="reference internal" href="#simpledbm-implementation-of-the-log" id="id78">SimpleDBM Implementation of the Log</a></li>
+<li><a class="reference internal" href="#limitations-of-current-design" id="id79">Limitations of current design</a></li>
+<li><a class="reference internal" href="#operations" id="id80">Operations</a><ul>
+<li><a class="reference internal" href="#creating-a-new-log-instance" id="id81">Creating a new Log Instance</a></li>
+<li><a class="reference internal" href="#opening-a-log-instance" id="id82">Opening a log instance</a></li>
+<li><a class="reference internal" href="#inserting-new-log-records" id="id83">Inserting new log records</a></li>
+<li><a class="reference internal" href="#flushing-the-log" id="id84">Flushing the Log</a></li>
+<li><a class="reference internal" href="#reading-log-records" id="id85">Reading Log records</a></li>
+<li><a class="reference internal" href="#checkpoint-records" id="id86">Checkpoint Records</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#coding-and-design-principles" id="id61">Coding and Design Principles</a><ul>
-<li><a class="reference internal" href="#modular-design" id="id62">Modular design</a></li>
-<li><a class="reference internal" href="#java-coding-standards" id="id63">Java coding standards</a></li>
-<li><a class="reference internal" href="#documentation" id="id64">Documentation</a></li>
-<li><a class="reference internal" href="#release-schedule" id="id65">Release schedule</a></li>
+<li><a class="reference internal" href="#lock-manager" id="id87">Lock Manager</a><ul>
+<li><a class="reference internal" href="#id6" id="id88">Introduction</a></li>
+<li><a class="reference internal" href="#locking-basics" id="id89">Locking Basics</a></li>
+<li><a class="reference internal" href="#two-phase-locking-and-repeatable-read-isolation-level" id="id90">Two-Phase Locking and Repeatable Read Isolation Level</a></li>
+<li><a class="reference internal" href="#read-committed-isolation-level" id="id91">Read Committed Isolation Level</a></li>
+<li><a class="reference internal" href="#serializable-isolation-level" id="id92">Serializable Isolation Level</a></li>
+<li><a class="reference internal" href="#design-choices" id="id93">Design choices</a></li>
+<li><a class="reference internal" href="#lock-modes" id="id94">Lock Modes</a><ul>
+<li><a class="reference internal" href="#lock-compatibility-matrix" id="id95">Lock Compatibility Matrix</a></li>
+<li><a class="reference internal" href="#lock-conversions" id="id96">Lock Conversions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#data-manager-rss-components" id="id66">Data Manager/RSS Components</a></li>
-<li><a class="reference internal" href="#object-registry" id="id67">Object Registry</a><ul>
-<li><a class="reference internal" href="#id2" id="id68">Overview</a></li>
-<li><a class="reference internal" href="#two-use-cases" id="id69">Two Use cases</a></li>
-<li><a class="reference internal" href="#registering-an-objectfactory" id="id70">Registering an ObjectFactory</a></li>
-<li><a class="reference internal" href="#asymmetry-between-retrieving-and-storing-objects" id="id71">Asymmetry between retrieving and storing objects</a></li>
-<li><a class="reference internal" href="#storable-interface-and-object-serialization" id="id72">Storable Interface and Object serialization</a></li>
-<li><a class="reference internal" href="#registering-singletons" id="id73">Registering Singletons</a></li>
-<li><a class="reference internal" href="#historical-note" id="id74">Historical Note</a></li>
-<li><a class="reference internal" href="#comparison-with-apache-derby" id="id75">Comparison with Apache Derby</a></li>
+<li><a class="reference internal" href="#id7" id="id97">Operations</a><ul>
+<li><a class="reference internal" href="#obtaining-an-instance-of-lock-manager" id="id98">Obtaining an instance of Lock Manager</a></li>
+<li><a class="reference internal" href="#lockable-objects" id="id99">Lockable objects</a></li>
+<li><a class="reference internal" href="#lock-owners" id="id100">Lock Owners</a></li>
+<li><a class="reference internal" href="#lock-durations" id="id101">Lock Durations</a></li>
+<li><a class="reference internal" href="#acquiring-and-releasing-locks" id="id102">Acquiring and releasing locks</a></li>
+<li><a class="reference internal" href="#algorithm" id="id103">Algorithm</a><ul>
+<li><a class="reference internal" href="#a001-lock-acquire" id="id104">a001 - lock acquire</a><ul>
+<li><a class="reference internal" href="#main-success-scenario" id="id105">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#extensions" id="id106">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#storage-factory" id="id76">Storage Factory</a><ul>
-<li><a class="reference internal" href="#id5" id="id77">Overview</a></li>
-<li><a class="reference internal" href="#storage-containers" id="id78">Storage Containers</a></li>
-<li><a class="reference internal" href="#storage-container-registry" id="id79">Storage Container Registry</a></li>
-<li><a class="reference internal" href="#default-implementation" id="id80">Default Implementation</a></li>
+<li><a class="reference internal" href="#a003-handle-new-request" id="id107">a003 - handle new request</a><ul>
+<li><a class="reference internal" href="#id9" id="id108">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id10" id="id109">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#latch-manager" id="id81">Latch Manager</a><ul>
-<li><a class="reference internal" href="#id6" id="id82">Overview</a></li>
-<li><a class="reference internal" href="#latch-modes" id="id83">Latch modes</a></li>
-<li><a class="reference internal" href="#implementation-and-performance-notes" id="id84">Implementation and Performance Notes</a></li>
-<li><a class="reference internal" href="#obtaining-a-latch-instance" id="id85">Obtaining a latch instance</a></li>
+<li><a class="reference internal" href="#a002-handle-lock-conversion" id="id110">a002 - handle lock conversion</a><ul>
+<li><a class="reference internal" href="#id11" id="id111">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id12" id="id112">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#log-manager" id="id86">Log Manager</a><ul>
-<li><a class="reference internal" href="#id7" id="id87">Overview</a></li>
-<li><a class="reference internal" href="#write-ahead-log-wal-protocol" id="id88">Write Ahead Log (WAL) Protocol</a></li>
-<li><a class="reference internal" href="#advantages-of-wal" id="id89">Advantages of WAL</a></li>
-<li><a class="reference internal" href="#usage-notes" id="id90">Usage Notes</a></li>
-<li><a class="reference internal" href="#simpledbm-implementation-of-the-log" id="id91">SimpleDBM Implementation of the Log</a></li>
-<li><a class="reference internal" href="#limitations-of-current-design" id="id92">Limitations of current design</a></li>
-<li><a class="reference internal" href="#operations" id="id93">Operations</a><ul>
-<li><a class="reference internal" href="#creating-a-new-log-instance" id="id94">Creating a new Log Instance</a></li>
-<li><a class="reference internal" href="#opening-a-log-instance" id="id95">Opening a log instance</a></li>
-<li><a class="reference internal" href="#inserting-new-log-records" id="id96">Inserting new log records</a></li>
-<li><a class="reference internal" href="#flushing-the-log" id="id97">Flushing the Log</a></li>
-<li><a class="reference internal" href="#reading-log-records" id="id98">Reading Log records</a></li>
-<li><a class="reference internal" href="#checkpoint-records" id="id99">Checkpoint Records</a></li>
+<li><a class="reference internal" href="#a004-lock-wait" id="id113">a004 - lock wait</a><ul>
+<li><a class="reference internal" href="#id13" id="id114">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id14" id="id115">Extensions</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#b001-release-lock" id="id116">b001 - release lock</a><ul>
+<li><a class="reference internal" href="#id15" id="id117">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id16" id="id118">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#lock-manager" id="id100">Lock Manager</a><ul>
-<li><a class="reference internal" href="#id8" id="id101">Introduction</a></li>
-<li><a class="reference internal" href="#locking-basics" id="id102">Locking Basics</a></li>
-<li><a class="reference internal" href="#two-phase-locking-and-repeatable-read-isolation-level" id="id103">Two-Phase Locking and Repeatable Read Isolation Level</a></li>
-<li><a class="reference internal" href="#read-committed-isolation-level" id="id104">Read Committed Isolation Level</a></li>
-<li><a class="reference internal" href="#serializable-isolation-level" id="id105">Serializable Isolation Level</a></li>
-<li><a class="reference internal" href="#design-choices" id="id106">Design choices</a></li>
-<li><a class="reference internal" href="#lock-modes" id="id107">Lock Modes</a><ul>
-<li><a class="reference internal" href="#lock-compatibility-matrix" id="id108">Lock Compatibility Matrix</a></li>
-<li><a class="reference internal" href="#lock-conversions" id="id109">Lock Conversions</a></li>
+<li><a class="reference internal" href="#b002-grant-waiters" id="id119">b002 - grant waiters</a><ul>
+<li><a class="reference internal" href="#id17" id="id120">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id18" id="id121">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#id9" id="id110">Operations</a><ul>
-<li><a class="reference internal" href="#obtaining-an-instance-of-lock-manager" id="id111">Obtaining an instance of Lock Manager</a></li>
-<li><a class="reference internal" href="#lockable-objects" id="id112">Lockable objects</a></li>
-<li><a class="reference internal" href="#lock-owners" id="id113">Lock Owners</a></li>
-<li><a class="reference internal" href="#lock-durations" id="id114">Lock Durations</a></li>
-<li><a class="reference internal" href="#acquiring-and-releasing-locks" id="id115">Acquiring and releasing locks</a></li>
-<li><a class="reference internal" href="#algorithm" id="id116">Algorithm</a><ul>
-<li><a class="reference internal" href="#a001-lock-acquire" id="id117">a001 - lock acquire</a><ul>
-<li><a class="reference internal" href="#main-success-scenario" id="id118">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#extensions" id="id119">Extensions</a></li>
+<li><a class="reference internal" href="#b003-grant-conversion-request" id="id122">b003 - grant conversion request</a><ul>
+<li><a class="reference internal" href="#id19" id="id123">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id20" id="id124">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#a003-handle-new-request" id="id120">a003 - handle new request</a><ul>
-<li><a class="reference internal" href="#id11" id="id121">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id12" id="id122">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#a002-handle-lock-conversion" id="id123">a002 - handle lock conversion</a><ul>
-<li><a class="reference internal" href="#id13" id="id124">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id14" id="id125">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#a004-lock-wait" id="id126">a004 - lock wait</a><ul>
-<li><a class="reference internal" href="#id15" id="id127">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id16" id="id128">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#b001-release-lock" id="id129">b001 - release lock</a><ul>
-<li><a class="reference internal" href="#id17" id="id130">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id18" id="id131">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#b002-grant-waiters" id="id132">b002 - grant waiters</a><ul>
-<li><a class="reference internal" href="#id19" id="id133">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id20" id="id134">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#b003-grant-conversion-request" id="id135">b003 - grant conversion request</a><ul>
-<li><a class="reference internal" href="#id21" id="id136">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id22" id="id137">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#c001-check-request-compatible-with-granted-group" id="id138">c001 - check request compatible with granted group</a><ul>
-<li><a class="reference internal" href="#id23" id="id139">Main Success Scenario</a></li>
-<li><a class="reference internal" href="#id24" id="id140">Extensions</a></li>
+<li><a class="reference internal" href="#c001-check-request-compatible-with-granted-group" id="id125">c001 - check request compatible with granted group</a><ul>
+<li><a class="reference internal" href="#id21" id="id126">Main Success Scenario</a></li>
+<li><a class="reference internal" href="#id22" id="id127">Extensions</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#data-structures-of-the-lock-manager" id="id141">Data Structures of the Lock Manager</a></li>
-<li><a class="reference internal" href="#deadlock-detector" id="id142">Deadlock Detector</a></li>
+<li><a class="reference internal" href="#data-structures-of-the-lock-manager" id="id128">Data Structures of the Lock Manager</a></li>
+<li><a class="reference internal" href="#deadlock-detector" id="id129">Deadlock Detector</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#page-manager" id="id143">Page Manager</a><ul>
-<li><a class="reference internal" href="#overview-of-page-manager-module" id="id144">Overview of Page Manager module</a></li>
-<li><a class="reference internal" href="#interactions-with-other-modules" id="id145">Interactions with other modules</a></li>
-<li><a class="reference internal" href="#page-class" id="id146">Page class</a><ul>
-<li><a class="reference internal" href="#page-size-and-implementation-of-storable-interface" id="id147">Page Size and implementation of Storable interface</a></li>
-<li><a class="reference internal" href="#how-various-page-types-are-managed" id="id148">How various Page types are managed</a></li>
-<li><a class="reference internal" href="#page-factory" id="id149">Page Factory</a></li>
-<li><a class="reference internal" href="#id27" id="id150">Page Manager</a></li>
-<li><a class="reference internal" href="#storing-and-retrieving-pages" id="id151">Storing and retrieving Pages</a></li>
-<li><a class="reference internal" href="#checksum" id="id152">Checksum</a></li>
+<li><a class="reference internal" href="#page-manager" id="id130">Page Manager</a><ul>
+<li><a class="reference internal" href="#overview-of-page-manager-module" id="id131">Overview of Page Manager module</a></li>
+<li><a class="reference internal" href="#interactions-with-other-modules" id="id132">Interactions with other modules</a></li>
+<li><a class="reference internal" href="#page-class" id="id133">Page class</a><ul>
+<li><a class="reference internal" href="#page-size-and-implementation-of-storable-interface" id="id134">Page Size and implementation of Storable interface</a></li>
+<li><a class="reference internal" href="#how-various-page-types-are-managed" id="id135">How various Page types are managed</a></li>
+<li><a class="reference internal" href="#page-factory" id="id136">Page Factory</a></li>
+<li><a class="reference internal" href="#id25" id="id137">Page Manager</a></li>
+<li><a class="reference internal" href="#storing-and-retrieving-pages" id="id138">Storing and retrieving Pages</a></li>
+<li><a class="reference internal" href="#checksum" id="id139">Checksum</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#buffer-manager" id="id153">Buffer Manager</a><ul>
-<li><a class="reference internal" href="#id28" id="id154">Overview</a></li>
-<li><a class="reference internal" href="#id29" id="id155">Interactions with other modules</a></li>
-<li><a class="reference internal" href="#id30" id="id156">Operations</a><ul>
-<li><a class="reference internal" href="#creating-a-buffer-manager-instance" id="id157">Creating a Buffer Manager instance</a></li>
-<li><a class="reference internal" href="#fixing-pages-in-the-buffer-pool" id="id158">Fixing Pages in the Buffer Pool</a></li>
-<li><a class="reference internal" href="#modifying-page-contents" id="id159">Modifying page contents</a></li>
-<li><a class="reference internal" href="#changing-lock-modes" id="id160">Changing lock modes</a></li>
-<li><a class="reference internal" href="#unfixing-a-page" id="id161">Unfixing a Page</a></li>
+<li><a class="reference internal" href="#buffer-manager" id="id140">Buffer Manager</a><ul>
+<li><a class="reference internal" href="#id26" id="id141">Overview</a></li>
+<li><a class="reference internal" href="#id27" id="id142">Interactions with other modules</a></li>
+<li><a class="reference internal" href="#id28" id="id143">Operations</a><ul>
+<li><a class="reference internal" href="#creating-a-buffer-manager-instance" id="id144">Creating a Buffer Manager instance</a></li>
+<li><a class="reference internal" href="#fixing-pages-in-the-buffer-pool" id="id145">Fixing Pages in the Buffer Pool</a></li>
+<li><a class="reference internal" href="#modifying-page-contents" id="id146">Modifying page contents</a></li>
+<li><a class="reference internal" href="#changing-lock-modes" id="id147">Changing lock modes</a></li>
+<li><a class="reference internal" href="#unfixing-a-page" id="id148">Unfixing a Page</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#transaction-manager" id="id162">Transaction Manager</a><ul>
-<li><a class="reference internal" href="#id31" id="id163">Introduction</a></li>
-<li><a class="reference internal" href="#overiew" id="id164">Overiew</a></li>
-<li><a class="reference internal" href="#what-is-aries" id="id165">What is ARIES?</a></li>
-<li><a class="reference internal" href="#aries-an-overview" id="id166">ARIES - An Overview</a></li>
-<li><a class="reference internal" href="#features-of-aries" id="id167">Features of ARIES</a></li>
-<li><a class="reference internal" href="#key-differences-from-aries" id="id168">Key differences from ARIES</a></li>
-<li><a class="reference internal" href="#transactions-and-locks" id="id169">Transactions and Locks</a></li>
-<li><a class="reference internal" href="#transactions-and-modules" id="id170">Transactions and Modules</a></li>
-<li><a class="reference internal" href="#transactions-and-log-records" id="id171">Transactions and Log records</a></li>
-<li><a class="reference internal" href="#the-loggable-hierarchy" id="id172">The Loggable hierarchy</a><ul>
-<li><a class="reference internal" href="#loggable-hierarchy" id="id173">Loggable Hierarchy</a></li>
-<li><a class="reference internal" href="#transaction-manager-internal-log-records" id="id174">Transaction Manager Internal Log Records</a></li>
-<li><a class="reference internal" href="#redoable" id="id175">Redoable</a></li>
-<li><a class="reference internal" href="#baseloggable-abstract-class" id="id176">BaseLoggable abstract class</a></li>
-<li><a class="reference internal" href="#pageformatoperation" id="id177">PageFormatOperation</a></li>
-<li><a class="reference internal" href="#multipageredo" id="id178">MultiPageRedo</a></li>
-<li><a class="reference internal" href="#undoable" id="id179">Undoable</a></li>
-<li><a class="reference internal" href="#physical-undos" id="id180">Physical Undos</a></li>
-<li><a class="reference internal" href="#singlepagelogicalundos" id="id181">SinglePageLogicalUndos</a></li>
-<li><a class="reference internal" href="#logicalundos" id="id182">LogicalUndos</a></li>
-<li><a class="reference internal" href="#comments-about-implementing-undo-operations" id="id183">Comments about implementing undo operations</a></li>
-<li><a class="reference internal" href="#compensation-records" id="id184">Compensation records</a></li>
-<li><a class="reference internal" href="#nontransactionrelatedoperations" id="id185">NonTransactionRelatedOperations</a></li>
-<li><a class="reference internal" href="#postcommitactions" id="id186">PostCommitActions</a></li>
-<li><a class="reference internal" href="#containerdeleteoperations" id="id187">ContainerDeleteOperations</a></li>
-<li><a class="reference internal" href="#containeropenoperations" id="id188">ContainerOpenOperations</a></li>
+<li><a class="reference internal" href="#transaction-manager" id="id149">Transaction Manager</a><ul>
+<li><a class="reference internal" href="#id29" id="id150">Introduction</a></li>
+<li><a class="reference internal" href="#overiew" id="id151">Overiew</a></li>
+<li><a class="reference internal" href="#what-is-aries" id="id152">What is ARIES?</a></li>
+<li><a class="reference internal" href="#aries-an-overview" id="id153">ARIES - An Overview</a></li>
+<li><a class="reference internal" href="#features-of-aries" id="id154">Features of ARIES</a></li>
+<li><a class="reference internal" href="#key-differences-from-aries" id="id155">Key differences from ARIES</a></li>
+<li><a class="reference internal" href="#transactions-and-locks" id="id156">Transactions and Locks</a></li>
+<li><a class="reference internal" href="#transactions-and-modules" id="id157">Transactions and Modules</a></li>
+<li><a class="reference internal" href="#transactions-and-log-records" id="id158">Transactions and Log records</a></li>
+<li><a class="reference internal" href="#the-loggable-hierarchy" id="id159">The Loggable hierarchy</a><ul>
+<li><a class="reference internal" href="#loggable-hierarchy" id="id160">Loggable Hierarchy</a></li>
+<li><a class="reference internal" href="#transaction-manager-internal-log-records" id="id161">Transaction Manager Internal Log Records</a></li>
+<li><a class="reference internal" href="#redoable" id="id162">Redoable</a></li>
+<li><a class="reference internal" href="#baseloggable-abstract-class" id="id163">BaseLoggable abstract class</a></li>
+<li><a class="reference internal" href="#pageformatoperation" id="id164">PageFormatOperation</a></li>
+<li><a class="reference internal" href="#multipageredo" id="id165">MultiPageRedo</a></li>
+<li><a class="reference internal" href="#undoable" id="id166">Undoable</a></li>
+<li><a class="reference internal" href="#physical-undos" id="id167">Physical Undos</a></li>
+<li><a class="reference internal" href="#singlepagelogicalundos" id="id168">SinglePageLogicalUndos</a></li>
+<li><a class="reference internal" href="#logicalundos" id="id169">LogicalUndos</a></li>
+<li><a class="reference internal" href="#comments-about-implementing-undo-operations" id="id170">Comments about implementing undo operations</a></li>
+<li><a class="reference internal" href="#compensation-records" id="id171">Compensation records</a></li>
+<li><a class="reference internal" href="#nontransactionrelatedoperations" id="id172">NonTransactionRelatedOperations</a></li>
+<li><a class="reference internal" href="#postcommitactions" id="id173">PostCommitActions</a></li>
+<li><a class="reference internal" href="#containerdeleteoperations" id="id174">ContainerDeleteOperations</a></li>
+<li><a class="reference internal" href="#containeropenoperations" id="id175">ContainerOpenOperations</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#space-manager" id="id189">Space Manager</a><ul>
-<li><a class="reference internal" href="#id35" id="id190">Introduction</a></li>
-<li><a class="reference internal" href="#comparison-with-storage-manager-module" id="id191">Comparison with Storage Manager module</a></li>
-<li><a class="reference internal" href="#id36" id="id192">Operations</a><ul>
-<li><a class="reference internal" href="#obtaining-an-instance-of-spacemgr" id="id193">Obtaining an instance of SpaceMgr</a></li>
-<li><a class="reference internal" href="#creating-a-container" id="id194">Creating a Container</a></li>
-<li><a class="reference internal" href="#extending-a-container" id="id195">Extending a Container</a></li>
-<li><a class="reference internal" href="#deleting-a-container" id="id196">Deleting a container</a></li>
-<li><a class="reference internal" href="#searching-for-free-space" id="id197">Searching for free space</a></li>
-<li><a class="reference internal" href="#updating-space-information" id="id198">Updating space information</a></li>
+<li><a class="reference internal" href="#space-manager" id="id176">Space Manager</a><ul>
+<li><a class="reference internal" href="#id33" id="id177">Introduction</a></li>
+<li><a class="reference internal" href="#comparison-with-storage-manager-module" id="id178">Comparison with Storage Manager module</a></li>
+<li><a class="reference internal" href="#id34" id="id179">Operations</a><ul>
+<li><a class="reference internal" href="#obtaining-an-instance-of-spacemgr" id="id180">Obtaining an instance of SpaceMgr</a></li>
+<li><a class="reference internal" href="#creating-a-container" id="id181">Creating a Container</a></li>
+<li><a class="reference internal" href="#extending-a-container" id="id182">Extending a Container</a></li>
+<li><a class="reference internal" href="#deleting-a-container" id="id183">Deleting a container</a></li>
+<li><a class="reference internal" href="#searching-for-free-space" id="id184">Searching for free space</a></li>
+<li><a class="reference internal" href="#updating-space-information" id="id185">Updating space information</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#slotted-page-manager" id="id199">Slotted Page Manager</a><ul>
-<li><a class="reference internal" href="#id37" id="id200">Introduction</a></li>
-<li><a class="reference internal" href="#structure-of-slotted-page" id="id201">Structure of Slotted Page</a></li>
-<li><a class="reference internal" href="#obtaining-instances-of-slotted-page" id="id202">Obtaining instances of Slotted Page</a></li>
-<li><a class="reference internal" href="#inserting-or-updating-records" id="id203">Inserting or updating records</a></li>
-<li><a class="reference internal" href="#deleting-records" id="id204">Deleting records</a></li>
-<li><a class="reference internal" href="#accessing-records" id="id205">Accessing records</a></li>
-<li><a class="reference internal" href="#miscellaneous-operations" id="id206">Miscellaneous operations</a></li>
+<li><a class="reference internal" href="#slotted-page-manager" id="id186">Slotted Page Manager</a><ul>
+<li><a class="reference internal" href="#id35" id="id187">Introduction</a></li>
+<li><a class="reference internal" href="#structure-of-slotted-page" id="id188">Structure of Slotted Page</a></li>
+<li><a class="reference internal" href="#obtaining-instances-of-slotted-page" id="id189">Obtaining instances of Slotted Page</a></li>
+<li><a class="reference internal" href="#inserting-or-updating-records" id="id190">Inserting or updating records</a></li>
+<li><a class="reference internal" href="#deleting-records" id="id191">Deleting records</a></li>
+<li><a class="reference internal" href="#accessing-records" id="id192">Accessing records</a></li>
+<li><a class="reference internal" href="#miscellaneous-operations" id="id193">Miscellaneous operations</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#index-manager" id="id207">Index Manager</a><ul>
-<li><a class="reference internal" href="#id38" id="id208">Overview</a></li>
-<li><a class="reference internal" href="#challenges-with-b-tree-concurrency" id="id209">Challenges with B-Tree Concurrency</a><ul>
-<li><a class="reference internal" href="#survey-of-algorithms" id="id210">Survey of algorithms</a></li>
-<li><a class="reference internal" href="#limitations-of-lehman-and-yao-b-link-trees" id="id211">Limitations of Lehman and Yao B-link Trees</a></li>
-<li><a class="reference internal" href="#recoverable-b-link-trees" id="id212">Recoverable B-Link Trees</a></li>
-<li><a class="reference internal" href="#b-tree-algorithm-in-apache-derby" id="id213">B-Tree algorithm in Apache Derby</a></li>
-<li><a class="reference internal" href="#simpledbm-b-link-tree" id="id214">SimpleDBM B-link Tree</a></li>
+<li><a class="reference internal" href="#index-manager" id="id194">Index Manager</a><ul>
+<li><a class="reference internal" href="#id36" id="id195">Overview</a></li>
+<li><a class="reference internal" href="#challenges-with-b-tree-concurrency" id="id196">Challenges with B-Tree Concurrency</a><ul>
+<li><a class="reference internal" href="#survey-of-algorithms" id="id197">Survey of algorithms</a></li>
+<li><a class="reference internal" href="#limitations-of-lehman-and-yao-b-link-trees" id="id198">Limitations of Lehman and Yao B-link Trees</a></li>
+<li><a class="reference internal" href="#recoverable-b-link-trees" id="id199">Recoverable B-Link Trees</a></li>
+<li><a class="reference internal" href="#b-tree-algorithm-in-apache-derby" id="id200">B-Tree algorithm in Apache Derby</a></li>
+<li><a class="reference internal" href="#simpledbm-b-link-tree" id="id201">SimpleDBM B-link Tree</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#structure-of-the-b-link-tree" id="id215">Structure of the B-link Tree</a></li>
-<li><a class="reference internal" href="#structure-of-nodes" id="id216">Structure of Nodes</a><ul>
-<li><a class="reference internal" href="#id44" id="id217">Overview</a></li>
-<li><a class="reference internal" href="#leaf-nodes" id="id218">Leaf Nodes</a></li>
-<li><a class="reference internal" href="#index-nodes" id="id219">Index Nodes</a></li>
-<li><a class="reference internal" href="#limits" id="id220">Limits</a></li>
+<li><a class="reference internal" href="#structure-of-the-b-link-tree" id="id202">Structure of the B-link Tree</a></li>
+<li><a class="reference internal" href="#structure-of-nodes" id="id203">Structure of Nodes</a><ul>
+<li><a class="reference internal" href="#id42" id="id204">Overview</a></li>
+<li><a class="reference internal" href="#leaf-nodes" id="id205">Leaf Nodes</a></li>
+<li><a class="reference internal" href="#index-nodes" id="id206">Index Nodes</a></li>
+<li><a class="reference internal" href="#limits" id="id207">Limits</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#key-differences-from-published-algorithm" id="id221">Key Differences from published algorithm</a><ul>
-<li><a class="reference internal" href="#support-for-non-unique-indexes" id="id222">Support for Non-Unique indexes</a></li>
-<li><a class="reference internal" href="#handling-of-storage-map" id="id223">Handling of storage map</a></li>
-<li><a class="reference internal" href="#variable-length-keys" id="id224">Variable length keys</a></li>
-<li><a class="reference internal" href="#page-split-operation" id="id225">Page Split operation</a></li>
-<li><a class="reference internal" href="#merge-operation" id="id226">Merge Operation</a></li>
-<li><a class="reference internal" href="#link-operation" id="id227">Link Operation</a></li>
-<li><a class="reference internal" href="#unlink-operation" id="id228">Unlink Operation</a></li>
-<li><a class="reference internal" href="#redistribute-keys-operation" id="id229">Redistribute Keys Operation</a></li>
-<li><a class="reference internal" href="#increase-tree-height-operation" id="id230">Increase Tree Height Operation</a></li>
-<li><a class="reference internal" href="#decrease-tree-height-operation" id="id231">Decrease Tree Height Operation</a></li>
-<li><a class="reference internal" href="#index-scans" id="id232">Index Scans</a></li>
-<li><a class="reference internal" href="#simplified-algorithm-for-scans" id="id233">Simplified Algorithm for Scans</a></li>
-<li><a class="reference internal" href="#simpler-page-modification-checks" id="id234">Simpler page modification checks</a></li>
-<li><a class="reference internal" href="#b-tree-index-is-a-secondary-structure" id="id235">B-Tree index is a secondary structure</a></li>
+<li><a class="reference internal" href="#key-differences-from-published-algorithm" id="id208">Key Differences from published algorithm</a><ul>
+<li><a class="reference internal" href="#support-for-non-unique-indexes" id="id209">Support for Non-Unique indexes</a></li>
+<li><a class="reference internal" href="#handling-of-storage-map" id="id210">Handling of storage map</a></li>
+<li><a class="reference internal" href="#variable-length-keys" id="id211">Variable length keys</a></li>
+<li><a class="reference internal" href="#page-split-operation" id="id212">Page Split operation</a></li>
+<li><a class="reference internal" href="#merge-operation" id="id213">Merge Operation</a></li>
+<li><a class="reference internal" href="#link-operation" id="id214">Link Operation</a></li>
+<li><a class="reference internal" href="#unlink-operation" id="id215">Unlink Operation</a></li>
+<li><a class="reference internal" href="#redistribute-keys-operation" id="id216">Redistribute Keys Operation</a></li>
+<li><a class="reference internal" href="#increase-tree-height-operation" id="id217">Increase Tree Height Operation</a></li>
+<li><a class="reference internal" href="#decrease-tree-height-operation" id="id218">Decrease Tree Height Operation</a></li>
+<li><a class="reference internal" href="#index-scans" id="id219">Index Scans</a></li>
+<li><a class="reference internal" href="#simplified-algorithm-for-scans" id="id220">Simplified Algorithm for Scans</a></li>
+<li><a class="reference internal" href="#simpler-page-modification-checks" id="id221">Simpler page modification checks</a></li>
+<li><a class="reference internal" href="#b-tree-index-is-a-secondary-structure" id="id222">B-Tree index is a secondary structure</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#tuple-manager" id="id236">Tuple Manager</a><ul>
-<li><a class="reference internal" href="#overview-of-tuple-manager" id="id237">Overview of Tuple Manager</a></li>
-<li><a class="reference internal" href="#design-decisions" id="id238">Design Decisions</a><ul>
-<li><a class="reference internal" href="#tuple-inserts" id="id239">Tuple Inserts</a></li>
-<li><a class="reference internal" href="#tuple-segmentation" id="id240">Tuple Segmentation</a></li>
-<li><a class="reference internal" href="#tuple-deletes" id="id241">Tuple Deletes</a></li>
-<li><a class="reference internal" href="#tuple-updates" id="id242">Tuple Updates</a></li>
-<li><a class="reference internal" href="#space-reclamation" id="id243">Space Reclamation</a></li>
-<li><a class="reference internal" href="#tuple-segment-structure" id="id244">Tuple Segment Structure</a></li>
-<li><a class="reference internal" href="#free-space-information" id="id245">Free Space Information</a></li>
-<li><a class="reference internal" href="#latch-ordering" id="id246">Latch Ordering</a></li>
-<li><a class="reference internal" href="#logging-of-space-map-page-updates" id="id247">Logging of Space Map Page updates</a></li>
+<li><a class="reference internal" href="#tuple-manager" id="id223">Tuple Manager</a><ul>
+<li><a class="reference internal" href="#overview-of-tuple-manager" id="id224">Overview of Tuple Manager</a></li>
+<li><a class="reference internal" href="#design-decisions" id="id225">Design Decisions</a><ul>
+<li><a class="reference internal" href="#tuple-inserts" id="id226">Tuple Inserts</a></li>
+<li><a class="reference internal" href="#tuple-segmentation" id="id227">Tuple Segmentation</a></li>
+<li><a class="reference internal" href="#tuple-deletes" id="id228">Tuple Deletes</a></li>
+<li><a class="reference internal" href="#tuple-updates" id="id229">Tuple Updates</a></li>
+<li><a class="reference internal" href="#space-reclamation" id="id230">Space Reclamation</a></li>
+<li><a class="reference internal" href="#tuple-segment-structure" id="id231">Tuple Segment Structure</a></li>
+<li><a class="reference internal" href="#free-space-information" id="id232">Free Space Information</a></li>
+<li><a class="reference internal" href="#latch-ordering" id="id233">Latch Ordering</a></li>
+<li><a class="reference internal" href="#logging-of-space-map-page-updates" id="id234">Logging of Space Map Page updates</a></li>
 </ul>
 </li>
 </ul>
@@ -331,262 +316,20 @@
 </ul>
 </div>
 <div class="section" id="introduction">
-<h2><a class="toc-backref" href="#id52">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="overview">
-<h3><a class="toc-backref" href="#id53">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
-<p>The goal of <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> project is to build a Relational Database
-Manager in Java.</p>
-<p>It is anticipated that there will be two major sub-systems in the
-dbms backend. The RSS subsystem (Relational Storage System) will be
-responsible for implementing low-level stuff such as transactions,
-locking, buffer management, table and index management. The functions
-of the RSS subsystem will be based upon the description of the <a class="reference external" href="http://www.mcjones.org/System_R/index.html">System-R</a>
-RSS component in <a class="reference internal" href="#astra-76">[ASTRA-76]</a>.</p>
-<blockquote>
-The Relational Storage Interface (RSI) is an internal interface
-which handles access to single tuples of base relations. This
-interface and its supporting system, the Relational Storage
-System (RSS), is actually a complete storage subsystem in that
-it manages devices, space allocation, storage buffers, transaction
-consistency and locking, deadlock detection, backout, transaction
-recovery, and system recovery. Furthermore, it maintains indexes
-on selected fields of base relations, and pointer chains across
-relations.</blockquote>
-<p>The RSS sub-system is currently in early BETA.</p>
-<p>As the RSS is fairly low level, two add-on modules are available that
-make it more user friendly by adding certain features.</p>
-<dl class="docutils">
-<dt>Type-System</dt>
-<dd>This adds the concept of scalar types, such as VarChar, Number,
-DateTime, etc.</dd>
-<dt>Database-API</dt>
-<dd>This adds a Data Dictionary, and easy to use high level API for
-creating tables and indexes, and data manipulation.</dd>
-</dl>
-<p>The second major sub-system will be called RDS (Relational
-Data System). Its job will be to parse SQL statements,
-produce optimum execution plans, and execute SQL statements. Development
-of the RDS sub-system has not started yet.</p>
+<h2><a class="toc-backref" href="#id50">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes the SimpleDBM Internals.</p>
+<div class="section" id="intended-audience">
+<h3><a class="toc-backref" href="#id51">Intended Audience</a><a class="headerlink" href="#intended-audience" title="Permalink to this headline">¶</a></h3>
+<p>This documented is targetted at <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> developers.</p>
 </div>
-<div class="section" id="technology">
-<h3><a class="toc-backref" href="#id54">Technology</a><a class="headerlink" href="#technology" title="Permalink to this headline">¶</a></h3>
-<p>SimpleDBM is written in Java and uses features available since version 5.0
-of this language.</p>
-<div class="section" id="third-party-libraries">
-<h4><a class="toc-backref" href="#id55">Third party libraries</a><a class="headerlink" href="#third-party-libraries" title="Permalink to this headline">¶</a></h4>
-<p>To avoid license compatibility issues, and to reduce dependency on
-third-party libraries, SimpleDBM makes little or no use of any
-external libraries. A custom wrapper is used for logging, which uses
-the Java logging API by default, but can use <a class="reference external" href="http://logging.apache.org/log4j/1.2/index.html">Log4J</a> if available.</p>
-</div>
-<div class="section" id="obtaining-simpledbm">
-<h4><a class="toc-backref" href="#id56">Obtaining SimpleDBM</a><a class="headerlink" href="#obtaining-simpledbm" title="Permalink to this headline">¶</a></h4>
-<p>SimpleDBM source code can be obtained from the <a class="reference external" href="http://code.google.com/p/simpledbm/">SimpleDBM Google project
-site</a>. Source code is maintained in a Subversion repository, so you will
-need a subversion client on your PC.</p>
-<p>The SimpleDBM SVN repository is organized as follows:</p>
-<div class="highlight-python"><pre>trunk  --+--- simpledbm-rss          This contains the core DBMS engine
-         |
-         +--- simpledbm-common       This contains basic utilities that are
-         |                           shared by all projects.
-         |
-         +--- simpledbm-typesystem   This contains a simple typesystem
-         |                           that can be used with SimpleDBM.
-         |
-         +--- simpledbm-database     This contains a higher level DB
-         |                           API that makes life easier for
-         |                           users. It uses the typesystem
-         |                           component.
-         |
-         +--- simpledbm-samples      This contains some sample programs
-         |                           that demonstrate how to use SimpleDBM.
-         |
-         +--- docs                   Contains the documentation sources.</pre>
-</div>
-<p>Under each of the top-level folders, there is the following structure.</p>
-<div class="highlight-python"><pre>--+--- code            This is where the source code is.
-  |
-  +--- docs            This folder contains documents.
-  |
-  +--- site            This folder contains web site contents.</pre>
-</div>
-<p>Some of these folders may be empty if no content has been created.</p>
-<p>In the code sub-directory, there is a top-level directory for each project.</p>
-</div>
-<div class="section" id="mercurial-urls">
-<h4><a class="toc-backref" href="#id57">Mercurial URLs</a><a class="headerlink" href="#mercurial-urls" title="Permalink to this headline">¶</a></h4>
-<p>Here are the Mercurial URLs for the various SimpleDBM sub-systems.</p>
-<dl class="docutils">
-<dt>Base URL</dt>
-<dd><a class="reference external" href="http://simpledbm.googlecode.com/hg/">http://simpledbm.googlecode.com/hg/</a></dd>
-<dt>SimpleDBM-Common</dt>
-<dd>.../simpledbm-common/code/simpledbm-common</dd>
-<dt>SimpleDBM-RSS</dt>
-<dd>.../simpledbm-rss/code/simpledbm-rss</dd>
-<dt>SimpleDBM-TypeSystem</dt>
-<dd>.../simpledbm-typesystem/code/simpledbm-typesystem</dd>
-<dt>SimpleDBM-Database</dt>
-<dd>.../simpledbm-database/code/simpledbm-database</dd>
-<dt>TupleDemo sample</dt>
-<dd>.../simpledbm-samples/code/tupledemo</dd>
-<dt>B-TreeDemo sample</dt>
-<dd>.../simpledbm-samples/code/btreedemo</dd>
-</dl>
-<p>If you are a committer, you need to use <tt class="docutils literal"><span class="pre">https</span></tt> instead of <tt class="docutils literal"><span class="pre">http</span></tt>.</p>
-</div>
-<div class="section" id="pre-requisites">
-<h4><a class="toc-backref" href="#id58">Pre-requisites</a><a class="headerlink" href="#pre-requisites" title="Permalink to this headline">¶</a></h4>
-<p>SimpleDBM uses <a class="reference external" href="http://maven.apache.org.">Maven</a> for build management. You will need to obtain a
-copy of Maven 2. Install Maven and set up your PATH so that Maven can be
-executed by typing the following command.</p>
-<div class="highlight-python"><div class="highlight"><pre><span class="n">mvn</span>
-</pre></div>
-</div>
-<p>SimpleDBM development is being done using Eclipse 3.x. You can use any IDE
-of your choice, but you may need to find ways of converting the maven
-projects to the format recognized by your IDE.</p>
-<p>You will need a Subversion client in order to checkout the code for
-SimpleDBM.</p>
-<p>SimpleDBM requires Java SE 5.0 or above. Java SE 6.0 is recommended.
-On the Mac, Java SE 5.0 is available for Mac OS X Tiger.</p>
-<p>Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
-SimpleDBM code will not compile.</p>
-</div>
-<div class="section" id="instructions-for-eclipse">
-<h4><a class="toc-backref" href="#id59">Instructions for Eclipse</a><a class="headerlink" href="#instructions-for-eclipse" title="Permalink to this headline">¶</a></h4>
-<p>The following instructions are for the simpledbm-rss project.
-However, the same instructions apply for the other projects, simply
-change the SVN URL as appropriate.</p>
-<ol class="arabic">
-<li><p class="first">Create a new <tt class="docutils literal"><span class="pre">classpath</span></tt> variable named <tt class="docutils literal"><span class="pre">M2_REPO</span></tt> inside
-Eclipse. From the menu bar, select Window &gt; Preferences. Select the Java
-&gt; Build Path &gt; Classpath Variables page. The <tt class="docutils literal"><span class="pre">M2_REPO</span></tt> variable should
-contain the path to your local Maven 2 repository. Usually this is:</p>
-<div class="highlight-python"><pre>&lt;Your Home Directory&gt;/.m2/repository</pre>
-</div>
-</li>
-<li><p class="first">Create a new SVN repository location in Eclipse (If you are a committer,
-use https instead of http).:</p>
-<div class="highlight-python"><pre>http://simpledbm.googlecode.com/svn/trunk/simpledbm-rss/code</pre>
-</div>
-</li>
-<li><p class="first">Checkout the folder simpledbm-rss as a project in the
-workspace.</p>
-</li>
-<li><p class="first">Start a command shell. Cd to the project directory.</p>
-</li>
-<li><p class="first">Run <tt class="docutils literal"><span class="pre">mvn</span> <span class="pre">eclipse:clean</span></tt>, followed by <tt class="docutils literal"><span class="pre">mvn</span> <span class="pre">eclipse:eclipse</span></tt>.</p>
-</li>
-<li><p class="first">Switch back to Eclipse and refresh the project. It should now
-display a small J against the project showing that it is a Java project. Eclipse
-is now setup to automatically rebuild SimpleDBM whenever you change any
-code.</p>
-</li>
-</ol>
-</div>
-<div class="section" id="maven-commands">
-<h4><a class="toc-backref" href="#id60">Maven commands</a><a class="headerlink" href="#maven-commands" title="Permalink to this headline">¶</a></h4>
-<p>You can also compile, test and do other operations using maven commands.
-The following maven commands are commonly used.</p>
-<p>To run the test cases.</p>
-<div class="highlight-python"><pre>mvn test</pre>
-</div>
-<p>To create the package and install it in the local repository.</p>
-<div class="highlight-python"><pre>mvn install</pre>
-</div>
-<p>Please visit the SimpleDBM project Wiki pages for additional platform
-specific instructions.</p>
-</div>
-</div>
-</div>
-<div class="section" id="coding-and-design-principles">
-<h2><a class="toc-backref" href="#id61">Coding and Design Principles</a><a class="headerlink" href="#coding-and-design-principles" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="modular-design">
-<h3><a class="toc-backref" href="#id62">Modular design</a><a class="headerlink" href="#modular-design" title="Permalink to this headline">¶</a></h3>
-<p>SimpleDBM RSS is made up of several modules. Each module implements a
-particular component, and is contained in its own package.</p>
-<p>Each module has a public API, which is specified via a set of Java
-interfaces. Classes are generally not used as part of the public API,
-though there are a few exceptional cases.</p>
-<p>To make the modules reusable and as independent of each other as
-possible, the interface of a module is deliberately specified in
-general terms. Where possible, direct dependence between modules is
-avoided. The only permissible way for one module to interact with
-another is to go via the public interfaces of the other module.
-Modules are not allowed to depend upon implementation specifics of
-other modules.</p>
-<p>A strict rule is that two modules cannot have cyclic dependency.
-Module dependencies are one-way only, higher level modules depend
-upon lower level modules. This is illustrated below.</p>
-<a class="reference external image-reference" href="_images/component-model.png"><img alt="_images/component-model.png" src="_images/component-model.png" /></a>
-<p>SimpleDBM uses constructor based dependency injection to link
-modules. It is being designed in such a way that a third-party IoC
-(Inversion of Control) container may be used to manage the
-dependencies.</p>
-</div>
-<div class="section" id="java-coding-standards">
-<h3><a class="toc-backref" href="#id63">Java coding standards</a><a class="headerlink" href="#java-coding-standards" title="Permalink to this headline">¶</a></h3>
-<p>Where possible, classes are made immutable. This helps in
-improving the robustness of the system. The serialization mechanism
-used by SimpleDBM is designed to work with immutable objects.</p>
-<p>In the interest of concurrency, fine-grained locking is used as
-opposed to coarse-grained synchronization. This makes the code complex
-in some cases, as careful ordering of locks is required for deadlock
-avoidance. Also, the correctness of synchronization logic is of
-paramount importance.</p>
-<p>Unchecked exceptions are used throughout. Due to the nature of
-unchecked exceptions, the code that throws the exception has the
-responsibility of logging an error message at the point where the
-exception is thrown. This ensures that even if the exception is not
-caught by the client, an error message will be logged to indicate
-the nature of the error.</p>
-<p>All error messages are given unique error codes.</p>
-<p>The code relies upon the efficiency of modern garbage collectors
-and does not attempt to manage memory. Rather than
-using object pools, SimpleDBM encourages the use of short-lived
-objects, on the basis that this aids the garbage collector in
-reclaiming space more quickly. The aim is to keep permanently
-occupied memory to a low level.</p>
-<p>JUnit based test cases are being added constantly to improve the
-test coverage. Simple code coverage statistics are not a good indicator of the
-usefulness of test cases, due to the multi-threaded nature of most
-SimpleDBM components. Where possible, test cases are created to simulate
-specific thread interactions, covering common scenarios.</p>
-<p>Particular attention is paid to cleaning up of resources. To ensure
-that resources are cleaned up during normal as well as exceptional
-circumstances, finally blocks are used.</p>
-<p>Debug messages are used liberally - and are executed conditionally
-so that if debug is switched off, there is minimal impact on
-performance.</p>
-<p>A special Trace module is used to capture runtime trace. This module
-is designed to be lock-free, and is very low overhead, so that trace
-can be collected with negligible overhead. This feature is still being
-implemented across modules; the intention is that when fatal errors
-occur, the last 5000 trace messages will be dumped to help debug the
-error condition.</p>
-</div>
-<div class="section" id="documentation">
-<h3><a class="toc-backref" href="#id64">Documentation</a><a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h3>
-<p>The design of SimpleDBM RSS sub-system is covered in this document.
-There is a generous amount of comments in the source code as well.</p>
-<p>Being an educational project, producing good documentation is high
-priority.</p>
-<p>The design of most modules is based upon published research. References
-are provided in appropriate places, both in this document, and in the
-source code. This acts as another source of information.</p>
-<p>I know of no other database project that is as well documented as
-SimpleDBM.</p>
-</div>
-<div class="section" id="release-schedule">
-<h3><a class="toc-backref" href="#id65">Release schedule</a><a class="headerlink" href="#release-schedule" title="Permalink to this headline">¶</a></h3>
-<p>The system is designed so that each module is usable once it is
-delivered. This means that although the full system has not yet been
-constructed, the individual modules can be used as soon as they are
-available.</p>
+<div class="section" id="pre-requisite-reading">
+<h3><a class="toc-backref" href="#id52">Pre-requisite Reading</a><a class="headerlink" href="#pre-requisite-reading" title="Permalink to this headline">¶</a></h3>
+<p>Before reading this document, the reader is advised to go through
+the <a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html">SimpleDBM Overview</a> document.</p>
 </div>
 </div>
 <div class="section" id="data-manager-rss-components">
-<h2><a class="toc-backref" href="#id66">Data Manager/RSS Components</a><a class="headerlink" href="#data-manager-rss-components" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id53">Data Manager/RSS Components</a><a class="headerlink" href="#data-manager-rss-components" title="Permalink to this headline">¶</a></h2>
 <p>The Data Manager/Relational Storage system (RSS) consists of the
 components listed in the table given below.</p>
 <table border="1" class="docutils">
@@ -689,19 +432,19 @@ SimpleDBM RSS database engine.</td>
 </table>
 </div>
 <div class="section" id="object-registry">
-<h2><a class="toc-backref" href="#id67">Object Registry</a><a class="headerlink" href="#object-registry" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id2">
-<h3><a class="toc-backref" href="#id68">Overview</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id54">Object Registry</a><a class="headerlink" href="#object-registry" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="overview">
+<h3><a class="toc-backref" href="#id55">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
 <p>SimpleDBM uses a custom serialization mechanism for marshalling
 and unmarshalling objects to/from byte streams. When an object
 is marshalled, a two-byte code is stored in the first two bytes of
-the byte stream <a class="footnote-reference" href="#id4" id="id3">[1]</a>. This identifies the class of the stored object.
+the byte stream <a class="footnote-reference" href="#id2" id="id1">[1]</a>. This identifies the class of the stored object.
 When reading back, the type code is used to lookup a factory for
 creating the object of the correct class.</p>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>In some cases the type code is not stored, as it can be
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>In some cases the type code is not stored, as it can be
 determined through some other means.</td></tr>
 </tbody>
 </table>
@@ -744,7 +487,7 @@ each module to register its own types.</p>
 SimpleDBM.</p>
 </div>
 <div class="section" id="two-use-cases">
-<h3><a class="toc-backref" href="#id69">Two Use cases</a><a class="headerlink" href="#two-use-cases" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id56">Two Use cases</a><a class="headerlink" href="#two-use-cases" title="Permalink to this headline">¶</a></h3>
 <p>The <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> supports two use cases.</p>
 <ul class="simple">
 <li>The first use case is where the client registers an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt>
@@ -759,7 +502,7 @@ object when requested.</li>
 </ul>
 </div>
 <div class="section" id="registering-an-objectfactory">
-<h3><a class="toc-backref" href="#id70">Registering an ObjectFactory</a><a class="headerlink" href="#registering-an-objectfactory" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id57">Registering an ObjectFactory</a><a class="headerlink" href="#registering-an-objectfactory" title="Permalink to this headline">¶</a></h3>
 <p>In the simple case, an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> implementation needs to be
 registered for a particular type code.</p>
 <p>In the example shown below, objects of the class <tt class="docutils literal"><span class="pre">MyObject</span></tt>
@@ -806,7 +549,7 @@ MyObject o = (MyObject) objectRegistry.getInstance(buf);</pre>
 <p>This pattern is used throughout SimpleDBM RSS.</p>
 </div>
 <div class="section" id="asymmetry-between-retrieving-and-storing-objects">
-<h3><a class="toc-backref" href="#id71">Asymmetry between retrieving and storing objects</a><a class="headerlink" href="#asymmetry-between-retrieving-and-storing-objects" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id58">Asymmetry between retrieving and storing objects</a><a class="headerlink" href="#asymmetry-between-retrieving-and-storing-objects" title="Permalink to this headline">¶</a></h3>
 <p>The reader may have noticed that the <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> says
 nothing about how objects are marshalled into a byte stream.
 It only deals with the unmarshalling of objects.</p>
@@ -815,7 +558,7 @@ objects that support marshalling are required to implement
 the Storable interface.</p>
 </div>
 <div class="section" id="storable-interface-and-object-serialization">
-<h3><a class="toc-backref" href="#id72">Storable Interface and Object serialization</a><a class="headerlink" href="#storable-interface-and-object-serialization" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id59">Storable Interface and Object serialization</a><a class="headerlink" href="#storable-interface-and-object-serialization" title="Permalink to this headline">¶</a></h3>
 <p>Classes that need serialization support should implement
 the interface <tt class="docutils literal"><span class="pre">org.simpledbm.rss.api.registry.Storable</span></tt>.
 The <tt class="docutils literal"><span class="pre">Storable</span></tt> interface requires the object
@@ -887,7 +630,7 @@ this:</p>
 </div>
 </div>
 <div class="section" id="registering-singletons">
-<h3><a class="toc-backref" href="#id73">Registering Singletons</a><a class="headerlink" href="#registering-singletons" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id60">Registering Singletons</a><a class="headerlink" href="#registering-singletons" title="Permalink to this headline">¶</a></h3>
 <p>In some cases, the requirements for constructing objects are complex
 enough for the client to manage it itself. In this case, the client
 provides a singleton object that is registered with the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>.
@@ -896,7 +639,7 @@ Singleton object. Typically, the singleton is a factory class that can
 be used to create new instances of objects.</p>
 </div>
 <div class="section" id="historical-note">
-<h3><a class="toc-backref" href="#id74">Historical Note</a><a class="headerlink" href="#historical-note" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id61">Historical Note</a><a class="headerlink" href="#historical-note" title="Permalink to this headline">¶</a></h3>
 <p>The initial design of SimpleDBM&#8217;s <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> used reflection
 to create instances of objects. Instead of registering factory classes,
 the name of the target class was registered.</p>
@@ -920,7 +663,7 @@ by a third-party, which had no knowledge about the object.</li>
 more robust code.</p>
 </div>
 <div class="section" id="comparison-with-apache-derby">
-<h3><a class="toc-backref" href="#id75">Comparison with Apache Derby</a><a class="headerlink" href="#comparison-with-apache-derby" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id62">Comparison with Apache Derby</a><a class="headerlink" href="#comparison-with-apache-derby" title="Permalink to this headline">¶</a></h3>
 <p>Apache Derby has a similar requirement to marshall and unmarshall objects
 to/from a byte stream. The solution used by Derby
 is different from SimpleDBM in following ways.</p>
@@ -934,9 +677,9 @@ types.</li>
 </div>
 </div>
 <div class="section" id="storage-factory">
-<h2><a class="toc-backref" href="#id76">Storage Factory</a><a class="headerlink" href="#storage-factory" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id5">
-<h3><a class="toc-backref" href="#id77">Overview</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id63">Storage Factory</a><a class="headerlink" href="#storage-factory" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3><a class="toc-backref" href="#id64">Overview</a><a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
 <p>Database Managers typically use files to store various types of
 data, such as log files, data files, etc.. However, from the
 perspective of a DBMS, the concept of a file is a logical one; all
@@ -950,7 +693,7 @@ becomes an implementation artefact. If desired, containers may be
 mapped to raw devices, or to segments within a file.</p>
 </div>
 <div class="section" id="storage-containers">
-<h3><a class="toc-backref" href="#id78">Storage Containers</a><a class="headerlink" href="#storage-containers" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id65">Storage Containers</a><a class="headerlink" href="#storage-containers" title="Permalink to this headline">¶</a></h3>
 <p>A Storage Container is a named entity that supports positioned
 (random) Input/Output. The default implementation maps a container
 to a file, but this is an implementation detail, and not a requirement.
@@ -964,7 +707,7 @@ its data. Table and index containers have fixed size pages. The
 Write Ahead Log contains variable size records.</p>
 </div>
 <div class="section" id="storage-container-registry">
-<h3><a class="toc-backref" href="#id79">Storage Container Registry</a><a class="headerlink" href="#storage-container-registry" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id66">Storage Container Registry</a><a class="headerlink" href="#storage-container-registry" title="Permalink to this headline">¶</a></h3>
 <p>Container names are usually not good identifiers for the rest of the
 system. Integer identifiers are better, especially when other
 objects need to refer to specific containers. Integers take less
@@ -990,7 +733,7 @@ modules may obtain access to the storage container as follows:</p>
 </div>
 </div>
 <div class="section" id="default-implementation">
-<h3><a class="toc-backref" href="#id80">Default Implementation</a><a class="headerlink" href="#default-implementation" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id67">Default Implementation</a><a class="headerlink" href="#default-implementation" title="Permalink to this headline">¶</a></h3>
 <p>The default implementation of the StorageFactory uses a
 <tt class="docutils literal"><span class="pre">RandomAccessFile</span></tt> as the underlying container. A few
 configuration options are supported to allow changing the
@@ -1036,16 +779,16 @@ SimpleDBM.</p>
 </div>
 </div>
 <div class="section" id="latch-manager">
-<h2><a class="toc-backref" href="#id81">Latch Manager</a><a class="headerlink" href="#latch-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id6">
-<h3><a class="toc-backref" href="#id82">Overview</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id68">Latch Manager</a><a class="headerlink" href="#latch-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id4">
+<h3><a class="toc-backref" href="#id69">Overview</a><a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
 <p>A Latch is an efficient lock that is used by the system to manage
 concurrent access to physical structures. In many ways, Latches are
 similar to Mutexes, however, latches supports additional lock modes,
 such as Shared locks and Update locks.</p>
 </div>
 <div class="section" id="latch-modes">
-<h3><a class="toc-backref" href="#id83">Latch modes</a><a class="headerlink" href="#latch-modes" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id70">Latch modes</a><a class="headerlink" href="#latch-modes" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> implements two types of latches. A ReadWrite Latch
 supports two lock modes:</p>
 <dl class="docutils">
@@ -1067,7 +810,7 @@ Exclusive lock may be downgraded to an Update lock. An Update lock
 may also be downgraded to a Shared lock.</p>
 </div>
 <div class="section" id="implementation-and-performance-notes">
-<h3><a class="toc-backref" href="#id84">Implementation and Performance Notes</a><a class="headerlink" href="#implementation-and-performance-notes" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id71">Implementation and Performance Notes</a><a class="headerlink" href="#implementation-and-performance-notes" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> Latch interface is designed to be compatible with the
 Java 5.0 <tt class="docutils literal"><span class="pre">ReentrantReadWriteLock</span></tt> interface. This allows the <tt class="docutils literal"><span class="pre">ReadWrite</span></tt>
 Latch implementation to be based upon the Java primitive.</p>
@@ -1098,7 +841,7 @@ Such deadlocks are avoided by ensuring that latches are acquired and released in
 </ul>
 </div>
 <div class="section" id="obtaining-a-latch-instance">
-<h3><a class="toc-backref" href="#id85">Obtaining a latch instance</a><a class="headerlink" href="#obtaining-a-latch-instance" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id72">Obtaining a latch instance</a><a class="headerlink" href="#obtaining-a-latch-instance" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> implements a factory class for creating Latch objects. The
 factory supports instantiating a ReadWrite latch, or a
 ReadWriteUpdate latch. There is also a default mode which results in
@@ -1106,9 +849,9 @@ ReadWrite latch.</p>
 </div>
 </div>
 <div class="section" id="log-manager">
-<h2><a class="toc-backref" href="#id86">Log Manager</a><a class="headerlink" href="#log-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id7">
-<h3><a class="toc-backref" href="#id87">Overview</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id73">Log Manager</a><a class="headerlink" href="#log-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id5">
+<h3><a class="toc-backref" href="#id74">Overview</a><a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
 <p>The Write Ahead Log plays a crucial role in a DBMS. It provides the
 basis for recoverability. It is also a critical part of the system
 that has a massive impact on performance of an OLTP system.</p>
@@ -1134,7 +877,7 @@ ensures that such Log records do not contain changes that have
 already been persisted within the database.</p>
 </div>
 <div class="section" id="write-ahead-log-wal-protocol">
-<h3><a class="toc-backref" href="#id88">Write Ahead Log (WAL) Protocol</a><a class="headerlink" href="#write-ahead-log-wal-protocol" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id75">Write Ahead Log (WAL) Protocol</a><a class="headerlink" href="#write-ahead-log-wal-protocol" title="Permalink to this headline">¶</a></h3>
 <p>The WAL protocol requires the following conditions to hold true:</p>
 <ol class="arabic simple">
 <li>All changes made by a transaction must be recorded in the Log
@@ -1161,7 +904,7 @@ reflects the order in which the changes were made to the page.</li>
 </ul>
 </div>
 <div class="section" id="advantages-of-wal">
-<h3><a class="toc-backref" href="#id89">Advantages of WAL</a><a class="headerlink" href="#advantages-of-wal" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id76">Advantages of WAL</a><a class="headerlink" href="#advantages-of-wal" title="Permalink to this headline">¶</a></h3>
 <p>Typically, in an OLTP system, updates tend to be random and can
 affect different parts of the disk at a point in time. In
 comparison, writes to the Log are always sequential. If it were
@@ -1173,12 +916,12 @@ effect of transforming random writes into serial writes, thereby
 improving performance significantly.</p>
 </div>
 <div class="section" id="usage-notes">
-<h3><a class="toc-backref" href="#id90">Usage Notes</a><a class="headerlink" href="#usage-notes" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id77">Usage Notes</a><a class="headerlink" href="#usage-notes" title="Permalink to this headline">¶</a></h3>
 <p>The Log Manager interface does not make any assumptions about log
 records. In fact, it does not specify the format of a log record.</p>
 </div>
 <div class="section" id="simpledbm-implementation-of-the-log">
-<h3><a class="toc-backref" href="#id91">SimpleDBM Implementation of the Log</a><a class="headerlink" href="#simpledbm-implementation-of-the-log" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id78">SimpleDBM Implementation of the Log</a><a class="headerlink" href="#simpledbm-implementation-of-the-log" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> Log maintains control information separately from log
 files. For safety, multiple copies of control information are stored
 (though at present, only the first control file is used when opening
@@ -1251,7 +994,7 @@ however this is currently not implemented. By default archive mode
 is ON.</p>
 </div>
 <div class="section" id="limitations-of-current-design">
-<h3><a class="toc-backref" href="#id92">Limitations of current design</a><a class="headerlink" href="#limitations-of-current-design" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id79">Limitations of current design</a><a class="headerlink" href="#limitations-of-current-design" title="Permalink to this headline">¶</a></h3>
 <p>A Log record cannot span log files, and it must fit within a single
 log buffer. Thus the size of a log record is limited by the size of
 a log buffer and by the size of a log file. As a workaround to this
@@ -1260,9 +1003,9 @@ but in that case, clients are responsible for merging the data back
 when reading from the Log.</p>
 </div>
 <div class="section" id="operations">
-<h3><a class="toc-backref" href="#id93">Operations</a><a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id80">Operations</a><a class="headerlink" href="#operations" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="creating-a-new-log-instance">
-<h4><a class="toc-backref" href="#id94">Creating a new Log Instance</a><a class="headerlink" href="#creating-a-new-log-instance" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id81">Creating a new Log Instance</a><a class="headerlink" href="#creating-a-new-log-instance" title="Permalink to this headline">¶</a></h4>
 <p>Several parameters must be supplied when creating a new log
 instance. These are specified using a Java Properties object.</p>
 <table border="1" class="docutils">
@@ -1342,7 +1085,7 @@ factory.createLog(properties);</pre>
 </div>
 </div>
 <div class="section" id="opening-a-log-instance">
-<h4><a class="toc-backref" href="#id95">Opening a log instance</a><a class="headerlink" href="#opening-a-log-instance" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id82">Opening a log instance</a><a class="headerlink" href="#opening-a-log-instance" title="Permalink to this headline">¶</a></h4>
 <p>Once a Log has been created, it can be opened for use. Opening the
 log also starts back ground threads that handle periodic log flushes
 and archival of log files. When the log is closed, the background
@@ -1371,7 +1114,7 @@ try {
 closed.</p>
 </div>
 <div class="section" id="inserting-new-log-records">
-<h4><a class="toc-backref" href="#id96">Inserting new log records</a><a class="headerlink" href="#inserting-new-log-records" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id83">Inserting new log records</a><a class="headerlink" href="#inserting-new-log-records" title="Permalink to this headline">¶</a></h4>
 <p>The Log Manager does not care about the contents of the log record.
 It treats the contents as a byte stream. This is illustrated in the
 following example:</p>
@@ -1390,7 +1133,7 @@ the Log Sequence Number (LSN). This can be used later on to retrieve
 the log record.</p>
 </div>
 <div class="section" id="flushing-the-log">
-<h4><a class="toc-backref" href="#id97">Flushing the Log</a><a class="headerlink" href="#flushing-the-log" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id84">Flushing the Log</a><a class="headerlink" href="#flushing-the-log" title="Permalink to this headline">¶</a></h4>
 <p>When new log records are created, initially they are stored in the
 Log Buffers. The log records are flushed to disk either upon request
 or by the background thread that periodically flushes the Log.
@@ -1408,7 +1151,7 @@ transaction commits or aborts, or by the Buffer Manager when it is
 about to write a dirty buffer.</p>
 </div>
 <div class="section" id="reading-log-records">
-<h4><a class="toc-backref" href="#id98">Reading Log records</a><a class="headerlink" href="#reading-log-records" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id85">Reading Log records</a><a class="headerlink" href="#reading-log-records" title="Permalink to this headline">¶</a></h4>
 <p>Log records can be read individually or using a scan. The Log
 Manager allows both forward and backward scans of the Log. A
 starting LSN can be specified; if this is not specified then the
@@ -1440,7 +1183,7 @@ byte[] data = logrec.getData();</pre>
 </div>
 </div>
 <div class="section" id="checkpoint-records">
-<h4><a class="toc-backref" href="#id99">Checkpoint Records</a><a class="headerlink" href="#checkpoint-records" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id86">Checkpoint Records</a><a class="headerlink" href="#checkpoint-records" title="Permalink to this headline">¶</a></h4>
 <p>In transactional systems there is often a need to maintain special
 checkpoint records that contain a snapshot of the system at a point
 in time. Checkpoint records can be handled in the same way as normal
@@ -1463,9 +1206,9 @@ then the checkpointLsn should be set to the first checkpoint record.</p>
 </div>
 </div>
 <div class="section" id="lock-manager">
-<h2><a class="toc-backref" href="#id100">Lock Manager</a><a class="headerlink" href="#lock-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id8">
-<h3><a class="toc-backref" href="#id101">Introduction</a><a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id87">Lock Manager</a><a class="headerlink" href="#lock-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id6">
+<h3><a class="toc-backref" href="#id88">Introduction</a><a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <p>All multi-user transactional systems use some form of locking to
 ensure that concurrent transactions do not conflict with each other.
 Depending upon the level of consistency guaranteed by the
@@ -1475,7 +1218,7 @@ automatically consistent, as only one transaction can execute at any
 point in time.</p>
 </div>
 <div class="section" id="locking-basics">
-<h3><a class="toc-backref" href="#id102">Locking Basics</a><a class="headerlink" href="#locking-basics" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id89">Locking Basics</a><a class="headerlink" href="#locking-basics" title="Permalink to this headline">¶</a></h3>
 <p>In multi-user systems, transactions must be allowed to proceed
 concurrently if reasonable performance is to be obtained. However,
 this means that unless some form of locking is used, data
@@ -1496,7 +1239,7 @@ transaction cannot obtain an Exclusive lock on the same record, and
 vice-versa.</p>
 </div>
 <div class="section" id="two-phase-locking-and-repeatable-read-isolation-level">
-<h3><a class="toc-backref" href="#id103">Two-Phase Locking and Repeatable Read Isolation Level</a><a class="headerlink" href="#two-phase-locking-and-repeatable-read-isolation-level" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id90">Two-Phase Locking and Repeatable Read Isolation Level</a><a class="headerlink" href="#two-phase-locking-and-repeatable-read-isolation-level" title="Permalink to this headline">¶</a></h3>
 <p>Not only must a record be locked when it is updated, the transaction
 must hold the lock until the transaction is committed or aborted.
 This strategy leads to the basic rule of two-phase locking, which
@@ -1512,7 +1255,7 @@ appearance of running in isolation. Strict two-phase locking
 strategy provides a level of consistency called Repeatable Read.</p>
 </div>
 <div class="section" id="read-committed-isolation-level">
-<h3><a class="toc-backref" href="#id104">Read Committed Isolation Level</a><a class="headerlink" href="#read-committed-isolation-level" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id91">Read Committed Isolation Level</a><a class="headerlink" href="#read-committed-isolation-level" title="Permalink to this headline">¶</a></h3>
 <p>This basic strategy can be modified to obtain greater concurrency at
 the cost of data consistency. For example, read locks can be
 released early to allow other transactions to read data. While this
@@ -1522,7 +1265,7 @@ previously has been modified by the time it is read a second time.
 This level of consistency is known as Read Committed.</p>
 </div>
 <div class="section" id="serializable-isolation-level">
-<h3><a class="toc-backref" href="#id105">Serializable Isolation Level</a><a class="headerlink" href="#serializable-isolation-level" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id92">Serializable Isolation Level</a><a class="headerlink" href="#serializable-isolation-level" title="Permalink to this headline">¶</a></h3>
 <p>Although the Repeatable Read level of consistency prevents data that
 has been read by one transaction from being modified by another, it
 does not prevent the problem of phantom reads, which occurs when new
@@ -1541,7 +1284,7 @@ and C, then a lock on C would encompass the entire range of data
 between A and C, excluding A, but including and up to C.</p>
 </div>
 <div class="section" id="design-choices">
-<h3><a class="toc-backref" href="#id106">Design choices</a><a class="headerlink" href="#design-choices" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id93">Design choices</a><a class="headerlink" href="#design-choices" title="Permalink to this headline">¶</a></h3>
 <p>The Locking subsystem specified in <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> requires that locks
 should be implemented independently of the objects being locked. In
 order for locking to work, all participants must agree to agree to
@@ -1580,7 +1323,7 @@ file system locks can be source of numerous problems, such as
 portability of the system, performance, etc.</p>
 </div>
 <div class="section" id="lock-modes">
-<h3><a class="toc-backref" href="#id107">Lock Modes</a><a class="headerlink" href="#lock-modes" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id94">Lock Modes</a><a class="headerlink" href="#lock-modes" title="Permalink to this headline">¶</a></h3>
 <p>The <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> Lock Manager supports the following Lock Modes:</p>
 <dl class="docutils">
 <dt>INTENTION_SHARED</dt>
@@ -1600,7 +1343,7 @@ data at a lower level of granularity.</dd>
 <dd>Prevents access by other users.</dd>
 </dl>
 <div class="section" id="lock-compatibility-matrix">
-<h4><a class="toc-backref" href="#id108">Lock Compatibility Matrix</a><a class="headerlink" href="#lock-compatibility-matrix" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id95">Lock Compatibility Matrix</a><a class="headerlink" href="#lock-compatibility-matrix" title="Permalink to this headline">¶</a></h4>
 <p>The lock compatibility matrix for above is given below:</p>
 <table border="1" class="docutils">
 <caption>Lock Compatibility Table</caption>
@@ -1697,7 +1440,7 @@ Excluive</td>
 </table>
 </div>
 <div class="section" id="lock-conversions">
-<h4><a class="toc-backref" href="#id109">Lock Conversions</a><a class="headerlink" href="#lock-conversions" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id96">Lock Conversions</a><a class="headerlink" href="#lock-conversions" title="Permalink to this headline">¶</a></h4>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>&#8216;s Lock Manager also supports Lock Conversions. The
 following table shows how lock conversions are handled:</p>
 <table border="1" class="docutils">
@@ -1795,10 +1538,10 @@ Exclusive</td>
 </table>
 </div>
 </div>
-<div class="section" id="id9">
-<h3><a class="toc-backref" href="#id110">Operations</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h3><a class="toc-backref" href="#id97">Operations</a><a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="obtaining-an-instance-of-lock-manager">
-<h4><a class="toc-backref" href="#id111">Obtaining an instance of Lock Manager</a><a class="headerlink" href="#obtaining-an-instance-of-lock-manager" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id98">Obtaining an instance of Lock Manager</a><a class="headerlink" href="#obtaining-an-instance-of-lock-manager" title="Permalink to this headline">¶</a></h4>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> provides a factory class for generating instances of the
 Lock Manager. Note that locks are meaningful only within an instance
 of the Lock Manager &#8211; if there are two Lock Manager instances, each
@@ -1812,7 +1555,7 @@ LockMgr lockmgr = factory.create(props);</pre>
 <p>The only property that can be set is the Hash Table size.</p>
 </div>
 <div class="section" id="lockable-objects">
-<h4><a class="toc-backref" href="#id112">Lockable objects</a><a class="headerlink" href="#lockable-objects" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id99">Lockable objects</a><a class="headerlink" href="#lockable-objects" title="Permalink to this headline">¶</a></h4>
 <p>Any object can be locked. The only requirement is that the object
 should implement the <tt class="docutils literal"><span class="pre">hashCode()</span></tt> and <tt class="docutils literal"><span class="pre">equals()</span></tt> methods.
 For the system to work correctly, lockable objects should be
@@ -1822,13 +1565,13 @@ the system will malfunction, as the object will no longer respond to
 <tt class="docutils literal"><span class="pre">hashCode()</span></tt> and <tt class="docutils literal"><span class="pre">equals()</span></tt> in a consistent manner.</p>
 </div>
 <div class="section" id="lock-owners">
-<h4><a class="toc-backref" href="#id113">Lock Owners</a><a class="headerlink" href="#lock-owners" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id100">Lock Owners</a><a class="headerlink" href="#lock-owners" title="Permalink to this headline">¶</a></h4>
 <p>Every lock must have an owner. The LockMgr interface allows any
 object to be lock owner; the only requirement is that the object
 must implement the <tt class="docutils literal"><span class="pre">equals()</span></tt> method.</p>
 </div>
 <div class="section" id="lock-durations">
-<h4><a class="toc-backref" href="#id114">Lock Durations</a><a class="headerlink" href="#lock-durations" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id101">Lock Durations</a><a class="headerlink" href="#lock-durations" title="Permalink to this headline">¶</a></h4>
 <p>Locks can be acquired for an <tt class="docutils literal"><span class="pre">INSTANT_DURATION</span></tt> or
 <tt class="docutils literal"><span class="pre">MANUAL_DURATION</span></tt>. Instant duration locks are not acquired in
 reality &#8211; the caller is delayed until the lock becomes available.
@@ -1841,7 +1584,7 @@ In some cases, SHARED locks may be released early, for example, in
 the READ COMMITTED Isolation Level.</p>
 </div>
 <div class="section" id="acquiring-and-releasing-locks">
-<h4><a class="toc-backref" href="#id115">Acquiring and releasing locks</a><a class="headerlink" href="#acquiring-and-releasing-locks" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id102">Acquiring and releasing locks</a><a class="headerlink" href="#acquiring-and-releasing-locks" title="Permalink to this headline">¶</a></h4>
 <p>Locks can be acquired using the <tt class="docutils literal"><span class="pre">acquire()</span></tt> method provided by
 the LockMgr interface. The acquire method returns a Handle to the
 lock, which can be used subsequently to release the lock. Example:</p>
@@ -1855,13 +1598,13 @@ handle.release(false);</pre>
 </div>
 </div>
 <div class="section" id="algorithm">
-<h4><a class="toc-backref" href="#id116">Algorithm</a><a class="headerlink" href="#algorithm" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id103">Algorithm</a><a class="headerlink" href="#algorithm" title="Permalink to this headline">¶</a></h4>
 <p>The main algorithm for the lock manager is shown in the form of use cases.
 The description here is inspired by a similar description in <a class="reference internal" href="#cockburn">[COCKBURN]</a>.</p>
 <div class="section" id="a001-lock-acquire">
-<h5><a class="toc-backref" href="#id117">a001 - lock acquire</a><a class="headerlink" href="#a001-lock-acquire" title="Permalink to this headline">¶</a></h5>
+<h5><a class="toc-backref" href="#id104">a001 - lock acquire</a><a class="headerlink" href="#a001-lock-acquire" title="Permalink to this headline">¶</a></h5>
 <div class="section" id="main-success-scenario">
-<h6><a class="toc-backref" href="#id118">Main Success Scenario</a><a class="headerlink" href="#main-success-scenario" title="Permalink to this headline">¶</a></h6>
+<h6><a class="toc-backref" href="#id105">Main Success Scenario</a><a class="headerlink" href="#main-success-scenario" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Search for the lock header</li>
 <li>Lock header not found</li>
@@ -1872,7 +1615,7 @@ The description here is inspired by a similar description in <a class="reference
 </ol>
 </div>
 <div class="section" id="extensions">
-<h6><a class="toc-backref" href="#id119">Extensions</a><a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h6>
+<h6><a class="toc-backref" href="#id106">Extensions</a><a class="headerlink" href="#extensions" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="2">
 <li><ol class="first loweralpha">
 <li>Lock header found but client has no prior request for the lock.<ol class="arabic">
@@ -1889,9 +1632,9 @@ The description here is inspired by a similar description in <a class="reference
 </div>
 </div>
 <div class="section" id="a003-handle-new-request">
-<h5><a class="toc-backref" href="#id120">a003 - handle new request</a><a class="headerlink" href="#a003-handle-new-request" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id11">
-<h6><a class="toc-backref" href="#id121">Main Success Scenario</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id107">a003 - handle new request</a><a class="headerlink" href="#a003-handle-new-request" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id9">
+<h6><a class="toc-backref" href="#id108">Main Success Scenario</a><a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Allocate new request.</li>
 <li>Append lock request to queue with reference count of 1.</li>
@@ -1903,8 +1646,8 @@ granted mode.</li>
 <li>Success.</li>
 </ol>
 </div>
-<div class="section" id="id12">
-<h6><a class="toc-backref" href="#id122">Extensions</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id10">
+<h6><a class="toc-backref" href="#id109">Extensions</a><a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="5">
 <li><ol class="first loweralpha">
 <li>There are waiting requests or lock request is not compatible with
@@ -1918,17 +1661,17 @@ granted mode.<ol class="arabic">
 </div>
 </div>
 <div class="section" id="a002-handle-lock-conversion">
-<h5><a class="toc-backref" href="#id123">a002 - handle lock conversion</a><a class="headerlink" href="#a002-handle-lock-conversion" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id13">
-<h6><a class="toc-backref" href="#id124">Main Success Scenario</a><a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id110">a002 - handle lock conversion</a><a class="headerlink" href="#a002-handle-lock-conversion" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id11">
+<h6><a class="toc-backref" href="#id111">Main Success Scenario</a><a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Check lock compatibility with granted group.</li>
 <li>Lock request is compatible with granted group.</li>
 <li>Grant lock request, and update granted mode for the request.</li>
 </ol>
 </div>
-<div class="section" id="id14">
-<h6><a class="toc-backref" href="#id125">Extensions</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id12">
+<h6><a class="toc-backref" href="#id112">Extensions</a><a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="2">
 <li><ol class="first loweralpha">
 <li>Lock request is incompatible with granted group.<ol class="arabic">
@@ -1941,17 +1684,17 @@ granted mode.<ol class="arabic">
 </div>
 </div>
 <div class="section" id="a004-lock-wait">
-<h5><a class="toc-backref" href="#id126">a004 - lock wait</a><a class="headerlink" href="#a004-lock-wait" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id15">
-<h6><a class="toc-backref" href="#id127">Main Success Scenario</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id113">a004 - lock wait</a><a class="headerlink" href="#a004-lock-wait" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id13">
+<h6><a class="toc-backref" href="#id114">Main Success Scenario</a><a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Wait for lock.</li>
 <li>Lock granted.</li>
 <li>Success.</li>
 </ol>
 </div>
-<div class="section" id="id16">
-<h6><a class="toc-backref" href="#id128">Extensions</a><a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id14">
+<h6><a class="toc-backref" href="#id115">Extensions</a><a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="2">
 <li><ol class="first loweralpha">
 <li>Lock was not granted.<ol class="arabic">
@@ -1964,9 +1707,9 @@ granted mode.<ol class="arabic">
 </div>
 </div>
 <div class="section" id="b001-release-lock">
-<h5><a class="toc-backref" href="#id129">b001 - release lock</a><a class="headerlink" href="#b001-release-lock" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id17">
-<h6><a class="toc-backref" href="#id130">Main Success Scenario</a><a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id116">b001 - release lock</a><a class="headerlink" href="#b001-release-lock" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id15">
+<h6><a class="toc-backref" href="#id117">Main Success Scenario</a><a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Decrease reference count.</li>
 <li>Sole lock request and reference count is zero.</li>
@@ -1974,8 +1717,8 @@ granted mode.<ol class="arabic">
 <li>Success.</li>
 </ol>
 </div>
-<div class="section" id="id18">
-<h6><a class="toc-backref" href="#id131">Extensions</a><a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id16">
+<h6><a class="toc-backref" href="#id118">Extensions</a><a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="2">
 <li><ol class="first loweralpha">
 <li>Reference count greater than zero.<ol class="arabic">
@@ -1998,9 +1741,9 @@ granted mode.<ol class="arabic">
 </div>
 </div>
 <div class="section" id="b002-grant-waiters">
-<h5><a class="toc-backref" href="#id132">b002 - grant waiters</a><a class="headerlink" href="#b002-grant-waiters" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id19">
-<h6><a class="toc-backref" href="#id133">Main Success Scenario</a><a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id119">b002 - grant waiters</a><a class="headerlink" href="#b002-grant-waiters" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id17">
+<h6><a class="toc-backref" href="#id120">Main Success Scenario</a><a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Get next granted lock.</li>
 <li>Recalculate granted mode.</li>
@@ -2012,8 +1755,8 @@ the granted request and set granted mode to maximum of current mode and granted 
 <li>Repeat from 4) until no more waiting requests.</li>
 </ol>
 </div>
-<div class="section" id="id20">
-<h6><a class="toc-backref" href="#id134">Extensions</a><a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id18">
+<h6><a class="toc-backref" href="#id121">Extensions</a><a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li><ol class="first loweralpha">
 <li>Conversion request.<ol class="arabic">
@@ -2043,17 +1786,17 @@ the granted request and set granted mode to maximum of current mode and granted 
 </div>
 </div>
 <div class="section" id="b003-grant-conversion-request">
-<h5><a class="toc-backref" href="#id135">b003 - grant conversion request</a><a class="headerlink" href="#b003-grant-conversion-request" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id21">
-<h6><a class="toc-backref" href="#id136">Main Success Scenario</a><a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id122">b003 - grant conversion request</a><a class="headerlink" href="#b003-grant-conversion-request" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id19">
+<h6><a class="toc-backref" href="#id123">Main Success Scenario</a><a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Do <a class="reference internal" href="#c001-check-request-compatible-with-granted-group">c001 - check request compatible with granted group</a>.</li>
 <li>Request is compatible.</li>
 <li>Grant conversion request.</li>
 </ol>
 </div>
-<div class="section" id="id22">
-<h6><a class="toc-backref" href="#id137">Extensions</a><a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id20">
+<h6><a class="toc-backref" href="#id124">Extensions</a><a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple" start="2">
 <li><ol class="first loweralpha">
 <li>Conversion request incompatible with granted group.<ol class="arabic">
@@ -2066,17 +1809,17 @@ the granted request and set granted mode to maximum of current mode and granted 
 </div>
 </div>
 <div class="section" id="c001-check-request-compatible-with-granted-group">
-<h5><a class="toc-backref" href="#id138">c001 - check request compatible with granted group</a><a class="headerlink" href="#c001-check-request-compatible-with-granted-group" title="Permalink to this headline">¶</a></h5>
-<div class="section" id="id23">
-<h6><a class="toc-backref" href="#id139">Main Success Scenario</a><a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h6>
+<h5><a class="toc-backref" href="#id125">c001 - check request compatible with granted group</a><a class="headerlink" href="#c001-check-request-compatible-with-granted-group" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id21">
+<h6><a class="toc-backref" href="#id126">Main Success Scenario</a><a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li>Get next granted request.</li>
 <li>Request is compatible with this request.</li>
 <li>Repeat from 1) until no more granted requests.</li>
 </ol>
 </div>
-<div class="section" id="id24">
-<h6><a class="toc-backref" href="#id140">Extensions</a><a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h6>
+<div class="section" id="id22">
+<h6><a class="toc-backref" href="#id127">Extensions</a><a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h6>
 <ol class="arabic simple">
 <li><ol class="first loweralpha">
 <li>Request belongs to the caller.<ol class="arabic">
@@ -2097,7 +1840,7 @@ the granted request and set granted mode to maximum of current mode and granted 
 </div>
 </div>
 <div class="section" id="data-structures-of-the-lock-manager">
-<h4><a class="toc-backref" href="#id141">Data Structures of the Lock Manager</a><a class="headerlink" href="#data-structures-of-the-lock-manager" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id128">Data Structures of the Lock Manager</a><a class="headerlink" href="#data-structures-of-the-lock-manager" title="Permalink to this headline">¶</a></h4>
 <p>The Lock Manager data structures are based upon the structures described in
 <a class="reference internal" href="#jgray">[JGRAY]</a>. A hash table is used to maintain a lookup table for finding lock
 objects. The buckets in the hash table point to linked lists of lock headers.
@@ -2109,7 +1852,7 @@ queuing - some in GRANTED state, others waiting for the lock to be GRANTED.</p>
 <img alt="_images/lock-table.jpg" src="_images/lock-table.jpg" />
 </div>
 <div class="section" id="deadlock-detector">
-<h4><a class="toc-backref" href="#id142">Deadlock Detector</a><a class="headerlink" href="#deadlock-detector" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id129">Deadlock Detector</a><a class="headerlink" href="#deadlock-detector" title="Permalink to this headline">¶</a></h4>
 <p>The Lock Manager contains a simple Deadlock Detector implemented
 which is based upon algorithm described in <a class="reference internal" href="#jgray">[JGRAY]</a>. The deadlock
 detector runs in a background thread, periodically waking up to
@@ -2119,9 +1862,9 @@ check for deadlocks. When a deadlock is detected, one of the transactions
 </div>
 </div>
 <div class="section" id="page-manager">
-<h2><a class="toc-backref" href="#id143">Page Manager</a><a class="headerlink" href="#page-manager" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id130">Page Manager</a><a class="headerlink" href="#page-manager" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="overview-of-page-manager-module">
-<h3><a class="toc-backref" href="#id144">Overview of Page Manager module</a><a class="headerlink" href="#overview-of-page-manager-module" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id131">Overview of Page Manager module</a><a class="headerlink" href="#overview-of-page-manager-module" title="Permalink to this headline">¶</a></h3>
 <p>The storage unit of a database system is a Page. In SimpleDBM, pages
 are contained with logical units called Storage Containers. The default
 implementation maps containers to Operating System files.</p>
@@ -2142,7 +1885,7 @@ implement additional features. The PageManager does provide the
 base class for all Page implementations.</p>
 </div>
 <div class="section" id="interactions-with-other-modules">
-<h3><a class="toc-backref" href="#id145">Interactions with other modules</a><a class="headerlink" href="#interactions-with-other-modules" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id132">Interactions with other modules</a><a class="headerlink" href="#interactions-with-other-modules" title="Permalink to this headline">¶</a></h3>
 <p>The Buffer Manager module uses the PageManager module to read/write
 pages from storage containers and also to create new instances of
 pages.</p>
@@ -2156,7 +1899,7 @@ The PageManager therefore requires the services of the Latch
 Manager.</p>
 </div>
 <div class="section" id="page-class">
-<h3><a class="toc-backref" href="#id146">Page class</a><a class="headerlink" href="#page-class" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id133">Page class</a><a class="headerlink" href="#page-class" title="Permalink to this headline">¶</a></h3>
 <p>The page manager provides an abstract Page class that is the root
 of the Page hierarchy. All other page types derive from this class.
 The simplest of Page classes that one could create is shown below:</p>
@@ -2172,7 +1915,7 @@ The simplest of Page classes that one could create is shown below:</p>
 <p>The constructor that accepts the ByteBuffer argument, should
 retrieve the contents of the Page from the ByteBuffer.</p>
 <div class="section" id="page-size-and-implementation-of-storable-interface">
-<h4><a class="toc-backref" href="#id147">Page Size and implementation of Storable interface</a><a class="headerlink" href="#page-size-and-implementation-of-storable-interface" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id134">Page Size and implementation of Storable interface</a><a class="headerlink" href="#page-size-and-implementation-of-storable-interface" title="Permalink to this headline">¶</a></h4>
 <p>The Page class implements the Storable interface. However, unlike
 other implementations, a Page has a fixed length which is defined by
 the PageManager responsible for creating it. The Page obtains the
@@ -2209,7 +1952,7 @@ class counterparts before processing local content.</p>
 </div>
 </div>
 <div class="section" id="how-various-page-types-are-managed">
-<h4><a class="toc-backref" href="#id148">How various Page types are managed</a><a class="headerlink" href="#how-various-page-types-are-managed" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id135">How various Page types are managed</a><a class="headerlink" href="#how-various-page-types-are-managed" title="Permalink to this headline">¶</a></h4>
 <p>Some of the SimpleDBM modules define their own page types. These page types
 are not known to the BufferManager or the TransactionManager, which must
 still handle such pages, even read and write them to the disk as
@@ -2234,7 +1977,7 @@ updates to pages.</li>
 </ul>
 </div>
 <div class="section" id="page-factory">
-<h4><a class="toc-backref" href="#id149">Page Factory</a><a class="headerlink" href="#page-factory" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id136">Page Factory</a><a class="headerlink" href="#page-factory" title="Permalink to this headline">¶</a></h4>
 <p>Creating a page factory is relatively simple:</p>
 <div class="highlight-python"><pre>static class MyPageFactory implements PageFactory {
 
@@ -2267,8 +2010,8 @@ ObjectRegistry objectRegistry = ...;
 objectRegistry.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));</pre>
 </div>
 </div>
-<div class="section" id="id27">
-<h4><a class="toc-backref" href="#id150">Page Manager</a><a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="id25">
+<h4><a class="toc-backref" href="#id137">Page Manager</a><a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h4>
 <p>Following snippet of code shows how the PageManager instance is created:</p>
 <div class="highlight-python"><pre>Properties properties = new Properties();
 properties.setProperty("storage.basePath", "testdata/TestPage");
@@ -2292,7 +2035,7 @@ the LatchManager and the StorageManager. PageFactory instances are
 retrieved indirectly via the ObjectRegistry.</p>
 </div>
 <div class="section" id="storing-and-retrieving-pages">
-<h4><a class="toc-backref" href="#id151">Storing and retrieving Pages</a><a class="headerlink" href="#storing-and-retrieving-pages" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id138">Storing and retrieving Pages</a><a class="headerlink" href="#storing-and-retrieving-pages" title="Permalink to this headline">¶</a></h4>
 <p>Before pages can be stored or retrieved, the appropriate Storage
 Containers must be created/opened and registered with the Storage
 Manager. Also, the Page types must be registered with the Object
@@ -2314,7 +2057,7 @@ page = (MyPage) pageFactory.retrieve(new PageId(1, 0));</pre>
 </div>
 </div>
 <div class="section" id="checksum">
-<h4><a class="toc-backref" href="#id152">Checksum</a><a class="headerlink" href="#checksum" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id139">Checksum</a><a class="headerlink" href="#checksum" title="Permalink to this headline">¶</a></h4>
 <p>When a page is persisted, its checksum is stored in a field within
 the page. The checksum is recalculated when a page is read, and compared
 with the stored checksum. This allows SimpleDBM to detect page corruption.</p>
@@ -2324,9 +2067,9 @@ detected.</p>
 </div>
 </div>
 <div class="section" id="buffer-manager">
-<h2><a class="toc-backref" href="#id153">Buffer Manager</a><a class="headerlink" href="#buffer-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id28">
-<h3><a class="toc-backref" href="#id154">Overview</a><a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id140">Buffer Manager</a><a class="headerlink" href="#buffer-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id26">
+<h3><a class="toc-backref" href="#id141">Overview</a><a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
 <p>The Buffer Manager is a critical component of any DBMS. Its primary
 job is to cache disk pages in memory. Typically, a Buffer Manager
 has a fixed size Buffer Pool, implemented as an array of in-memory
@@ -2355,8 +2098,8 @@ flag temporary pages. The Buffer Manager can then use this knowledge
 to decide that instead of the page going to MRU end, it goes to the
 LRU end.</p>
 </div>
-<div class="section" id="id29">
-<h3><a class="toc-backref" href="#id155">Interactions with other modules</a><a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id27">
+<h3><a class="toc-backref" href="#id142">Interactions with other modules</a><a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
 <p>The Buffer Manager interacts with the Log Manager and the Page
 Manager modules. It needs the help of the PageFactory in order to
 instantiate new pages, read pages from disk, and write out dirty
@@ -2370,10 +2113,10 @@ determine where recovery should start. After a system restart the
 Transaction Manager informs the Buffer Manager about the recovery
 status of disk pages.</p>
 </div>
-<div class="section" id="id30">
-<h3><a class="toc-backref" href="#id156">Operations</a><a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id28">
+<h3><a class="toc-backref" href="#id143">Operations</a><a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="creating-a-buffer-manager-instance">
-<h4><a class="toc-backref" href="#id157">Creating a Buffer Manager instance</a><a class="headerlink" href="#creating-a-buffer-manager-instance" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id144">Creating a Buffer Manager instance</a><a class="headerlink" href="#creating-a-buffer-manager-instance" title="Permalink to this headline">¶</a></h4>
 <p>A Buffer Manager instance has a dependency on Log Manager and Page
 Factory. These in turn depend upon a few other modules. The
 following sample code illustrates the steps required to create a
@@ -2409,7 +2152,7 @@ be of the same size; the page size is determined by the Page
 Factory.</p>
 </div>
 <div class="section" id="fixing-pages-in-the-buffer-pool">
-<h4><a class="toc-backref" href="#id158">Fixing Pages in the Buffer Pool</a><a class="headerlink" href="#fixing-pages-in-the-buffer-pool" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id145">Fixing Pages in the Buffer Pool</a><a class="headerlink" href="#fixing-pages-in-the-buffer-pool" title="Permalink to this headline">¶</a></h4>
 <p>The Buffer Manager provides methods for fixing pages in the Buffer
 Pool. There are two possibilities:</p>
 <ul class="simple">
@@ -2450,7 +2193,7 @@ The Page can be accessed as follows:</p>
 </div>
 </div>
 <div class="section" id="modifying-page-contents">
-<h4><a class="toc-backref" href="#id159">Modifying page contents</a><a class="headerlink" href="#modifying-page-contents" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id146">Modifying page contents</a><a class="headerlink" href="#modifying-page-contents" title="Permalink to this headline">¶</a></h4>
 <p>Note that in order to modify a Page&#8217;s content, the Page must be
 fixed in Exclusive mode.</p>
 <p>Also, the Write Ahead Log protocol must be obeyed. This requires the
@@ -2466,7 +2209,7 @@ the modification about to be made.</li>
 <p>Failure to follow this protocol may lead to unrecoverable changes.</p>
 </div>
 <div class="section" id="changing-lock-modes">
-<h4><a class="toc-backref" href="#id160">Changing lock modes</a><a class="headerlink" href="#changing-lock-modes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id147">Changing lock modes</a><a class="headerlink" href="#changing-lock-modes" title="Permalink to this headline">¶</a></h4>
 <p>As mentioned before, pages that are locked in Update mode may be
 upgraded to Exclusive mode. Pages that are locked in Exclusive mode
 may be downgraded to Update mode. The BufferAccessBlock interface
@@ -2474,7 +2217,7 @@ provides methods that allow the lock mode to be upgraded or
 downgraded.</p>
 </div>
 <div class="section" id="unfixing-a-page">
-<h4><a class="toc-backref" href="#id161">Unfixing a Page</a><a class="headerlink" href="#unfixing-a-page" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id148">Unfixing a Page</a><a class="headerlink" href="#unfixing-a-page" title="Permalink to this headline">¶</a></h4>
 <p>It is very important to unfix a Page after the client is done with
 it. Failure to do so may cause the Buffer Pool to become full and
 the system will potentially come to a halt if further pages cannot
@@ -2485,9 +2228,9 @@ If necessary the same page can be fixed again.</p>
 </div>
 </div>
 <div class="section" id="transaction-manager">
-<h2><a class="toc-backref" href="#id162">Transaction Manager</a><a class="headerlink" href="#transaction-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id31">
-<h3><a class="toc-backref" href="#id163">Introduction</a><a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id149">Transaction Manager</a><a class="headerlink" href="#transaction-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id29">
+<h3><a class="toc-backref" href="#id150">Introduction</a><a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
 <p>The Transaction Manager is responsible for managing transactions. It
 provides interfaces for starting new transactions, and for
 committing or aborting transactions. The <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> implementation
@@ -2499,7 +2242,7 @@ how other modules can use this interface to participate in
 Transactions.</p>
 </div>
 <div class="section" id="overiew">
-<h3><a class="toc-backref" href="#id164">Overiew</a><a class="headerlink" href="#overiew" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id151">Overiew</a><a class="headerlink" href="#overiew" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>&#8216;s transaction manager is modelled after <a class="reference internal" href="#aries">[ARIES]</a>. It makes
 following assumptions about the rest of the system:</p>
 <ul class="simple">
@@ -2531,7 +2274,7 @@ forcing the release of a lock.</li>
 </ul>
 </div>
 <div class="section" id="what-is-aries">
-<h3><a class="toc-backref" href="#id165">What is ARIES?</a><a class="headerlink" href="#what-is-aries" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id152">What is ARIES?</a><a class="headerlink" href="#what-is-aries" title="Permalink to this headline">¶</a></h3>
 <p>ARIES is a Transaction Logging and Recovery algorithm developed at
 IBM and published by IBM researcher C. Mohan.</p>
 <p>For a full description of ARIES, please see <tt class="docutils literal"><span class="pre">Mohan,</span> <span class="pre">C.,</span>
@@ -2542,7 +2285,7 @@ IBM and published by IBM researcher C. Mohan.</p>
 <p>A brief overview of ARIES is given below.</p>
 </div>
 <div class="section" id="aries-an-overview">
-<h3><a class="toc-backref" href="#id166">ARIES - An Overview</a><a class="headerlink" href="#aries-an-overview" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id153">ARIES - An Overview</a><a class="headerlink" href="#aries-an-overview" title="Permalink to this headline">¶</a></h3>
 <p>Following is a brief description of the main principles behind
 ARIES.</p>
 <p>Firstly, in ARIES, changes always take the system forward. That is
@@ -2589,7 +2332,7 @@ are being rolled back, does the system need to know about high level
 data structures.</p>
 </div>
 <div class="section" id="features-of-aries">
-<h3><a class="toc-backref" href="#id167">Features of ARIES</a><a class="headerlink" href="#features-of-aries" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id154">Features of ARIES</a><a class="headerlink" href="#features-of-aries" title="Permalink to this headline">¶</a></h3>
 <p>ARIES includes a number of optimisations to reduce the amount of
 work required during normal operations and recovery.</p>
 <p>One optimisation is to avoid application of log records
@@ -2631,7 +2374,7 @@ the ability to skip logs records using the UndoLsn pointer as
 described previously.</p>
 </div>
 <div class="section" id="key-differences-from-aries">
-<h3><a class="toc-backref" href="#id168">Key differences from ARIES</a><a class="headerlink" href="#key-differences-from-aries" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id155">Key differences from ARIES</a><a class="headerlink" href="#key-differences-from-aries" title="Permalink to this headline">¶</a></h3>
 <p>The implementation of the Transaction Manager in SimpleDBM is as faithful
 to ARIES as possible, with a few differences.</p>
 <ul class="simple">
@@ -2646,7 +2389,7 @@ such as opening/deleting containers.</li>
 </ul>
 </div>
 <div class="section" id="transactions-and-locks">
-<h3><a class="toc-backref" href="#id169">Transactions and Locks</a><a class="headerlink" href="#transactions-and-locks" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id156">Transactions and Locks</a><a class="headerlink" href="#transactions-and-locks" title="Permalink to this headline">¶</a></h3>
 <p>There is close coordination between the Transaction Manager and the
 Lock Manager. A Transaction needs to keep track of all locks
 acquired on its behalf so that it can release them when the
@@ -2699,7 +2442,7 @@ trx.commit();</pre>
 </div>
 </div>
 <div class="section" id="transactions-and-modules">
-<h3><a class="toc-backref" href="#id170">Transactions and Modules</a><a class="headerlink" href="#transactions-and-modules" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id157">Transactions and Modules</a><a class="headerlink" href="#transactions-and-modules" title="Permalink to this headline">¶</a></h3>
 <p>The Transaction Manager provides a framework for managing
 transactions. It provides interfaces to:</p>
 <ol class="arabic simple">
@@ -2731,7 +2474,7 @@ responsible for handling a particular log record.</li>
 </ol>
 </div>
 <div class="section" id="transactions-and-log-records">
-<h3><a class="toc-backref" href="#id171">Transactions and Log records</a><a class="headerlink" href="#transactions-and-log-records" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id158">Transactions and Log records</a><a class="headerlink" href="#transactions-and-log-records" title="Permalink to this headline">¶</a></h3>
 <p>The Transaction Manager works very closely with the Log Manager to
 ensure the ACID properties of transactions. We saw in the chapter on
 Log Manager that it does not care about the contents of Log Records.
@@ -2740,7 +2483,7 @@ of different Log record types that should be used by clients. This
 is explained below.</p>
 </div>
 <div class="section" id="the-loggable-hierarchy">
-<h3><a class="toc-backref" href="#id172">The Loggable hierarchy</a><a class="headerlink" href="#the-loggable-hierarchy" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id159">The Loggable hierarchy</a><a class="headerlink" href="#the-loggable-hierarchy" title="Permalink to this headline">¶</a></h3>
 <p>Loggable is parent interface for all Log Records. The Transaction
 Manager will only accept Log records that implement this interface.
 This can be seen from the signature of the logInsert() method
@@ -2748,7 +2491,7 @@ provided by the Transaction interface.</p>
 <p>The Loggable hierarchy defines the various types of log records that
 clients can generate. These are further discussed below.</p>
 <div class="section" id="loggable-hierarchy">
-<h4><a class="toc-backref" href="#id173">Loggable Hierarchy</a><a class="headerlink" href="#loggable-hierarchy" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id160">Loggable Hierarchy</a><a class="headerlink" href="#loggable-hierarchy" title="Permalink to this headline">¶</a></h4>
 <p>The main branches of the Loggable hierarchy are shown below. Note
 that some of the hierarchy is not visible to outside clients (marked
 as internal).</p>
@@ -2826,13 +2569,13 @@ identify the open operation.</td>
 </table>
 </div>
 <div class="section" id="transaction-manager-internal-log-records">
-<h4><a class="toc-backref" href="#id174">Transaction Manager Internal Log Records</a><a class="headerlink" href="#transaction-manager-internal-log-records" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id161">Transaction Manager Internal Log Records</a><a class="headerlink" href="#transaction-manager-internal-log-records" title="Permalink to this headline">¶</a></h4>
 <p>The Transaction Manager uses internal log records to track
 Transaction completion, and also Checkpoints. These log record types
 are not available outside the implementation of the TM.</p>
 </div>
 <div class="section" id="redoable">
-<h4><a class="toc-backref" href="#id175">Redoable</a><a class="headerlink" href="#redoable" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id162">Redoable</a><a class="headerlink" href="#redoable" title="Permalink to this headline">¶</a></h4>
 <p>Generally speaking, most log records are implementations of Redoable
 interface or one of its sub-interfaces. A Redoable log record is
 related to one or more database pages, and can be re-done at System
@@ -2888,7 +2631,7 @@ PageFormatOperation interfaces. The BaseLoggable class and the
 PageFormatOperation interface are described further below.</p>
 </div>
 <div class="section" id="baseloggable-abstract-class">
-<h4><a class="toc-backref" href="#id176">BaseLoggable abstract class</a><a class="headerlink" href="#baseloggable-abstract-class" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id163">BaseLoggable abstract class</a><a class="headerlink" href="#baseloggable-abstract-class" title="Permalink to this headline">¶</a></h4>
 <p>The Transaction Manager provides the BaseLoggable abstract class
 which implements the Loggable interface. Rather than attempting to
 implement the Loggable interface from scratch, it is highly
@@ -2899,7 +2642,7 @@ client to implement its own class hierarchy independently from the
 Loggable hierarchy.</p>
 </div>
 <div class="section" id="pageformatoperation">
-<h4><a class="toc-backref" href="#id177">PageFormatOperation</a><a class="headerlink" href="#pageformatoperation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id164">PageFormatOperation</a><a class="headerlink" href="#pageformatoperation" title="Permalink to this headline">¶</a></h4>
 <p>Operations that format new pages are particularly important because
 the Transaction Manager must invoke the Buffer Manager FIX AS NEW
 interface to fix pages affected by them. If the normal fix interface
@@ -2913,7 +2656,7 @@ a marker interface only.</p>
 container is created or expanded.</p>
 </div>
 <div class="section" id="multipageredo">
-<h4><a class="toc-backref" href="#id178">MultiPageRedo</a><a class="headerlink" href="#multipageredo" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id165">MultiPageRedo</a><a class="headerlink" href="#multipageredo" title="Permalink to this headline">¶</a></h4>
 <p>Normally a Redoable log record represents changes to a single page.
 Sometimes, however, it may be necessary for a single log record to
 contain changes made to multiple pages. In such cases, the Log
@@ -2930,7 +2673,7 @@ log record.</li>
 </ol>
 </div>
 <div class="section" id="undoable">
-<h4><a class="toc-backref" href="#id179">Undoable</a><a class="headerlink" href="#undoable" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id166">Undoable</a><a class="headerlink" href="#undoable" title="Permalink to this headline">¶</a></h4>
 <p>Logs records that need to be undoable should implement the Undoable
 interface. The Undoable interface extends the Redoable interface,
 thus, undoable log records are by definition redoable as well.</p>
@@ -2970,7 +2713,7 @@ redo operation.</li>
 <p>Following sections describe above in reverse order.</p>
 </div>
 <div class="section" id="physical-undos">
-<h4><a class="toc-backref" href="#id180">Physical Undos</a><a class="headerlink" href="#physical-undos" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id167">Physical Undos</a><a class="headerlink" href="#physical-undos" title="Permalink to this headline">¶</a></h4>
 <p>The simplest case is that of a Physical Undo, where the undo
 operation affects the same page that was originally modified during
 forward change (i.e., redo). In this case, the Transaction Manager
@@ -2986,7 +2729,7 @@ module.redo(page, clr);</pre>
 generateCompensation(Undoable) and redo(Page, Redoable) operations.</p>
 </div>
 <div class="section" id="singlepagelogicalundos">
-<h4><a class="toc-backref" href="#id181">SinglePageLogicalUndos</a><a class="headerlink" href="#singlepagelogicalundos" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id168">SinglePageLogicalUndos</a><a class="headerlink" href="#singlepagelogicalundos" title="Permalink to this headline">¶</a></h4>
 <p>SinglePageLogicalUndos are slightly more complex than Physical
 undos. The undo operation is guaranteed to affect one page only, but
 it may not be the page originally affected. To handle this scenario,
@@ -3007,7 +2750,7 @@ and fixing the appropriate page &#8211; the page is unfixed by
 Transaction Manager once the change has been applied.</p>
 </div>
 <div class="section" id="logicalundos">
-<h4><a class="toc-backref" href="#id182">LogicalUndos</a><a class="headerlink" href="#logicalundos" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id169">LogicalUndos</a><a class="headerlink" href="#logicalundos" title="Permalink to this headline">¶</a></h4>
 <p>From the client&#8217;s perspective the most complex type of undo is where
 the undo operation may impact several pages, and may result in
 additional log records being generated.</p>
@@ -3020,7 +2763,7 @@ client&#8217;s undo interface as follows:</p>
 records and make changes to database pages.</p>
 </div>
 <div class="section" id="comments-about-implementing-undo-operations">
-<h4><a class="toc-backref" href="#id183">Comments about implementing undo operations</a><a class="headerlink" href="#comments-about-implementing-undo-operations" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id170">Comments about implementing undo operations</a><a class="headerlink" href="#comments-about-implementing-undo-operations" title="Permalink to this headline">¶</a></h4>
 <p>From the discussion above, it should be clear that Physical undos
 are the easiest to implement. They are also the most efficient.
 However, in some cases, notably in Index operations, physical undos
@@ -3035,7 +2778,7 @@ page splits. Such undo operations may impact more than one page. The
 operation.</p>
 </div>
 <div class="section" id="compensation-records">
-<h4><a class="toc-backref" href="#id184">Compensation records</a><a class="headerlink" href="#compensation-records" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id171">Compensation records</a><a class="headerlink" href="#compensation-records" title="Permalink to this headline">¶</a></h4>
 <p>Undo operations are represented using Compensation log records. The
 benefits of using Compensation log records are explained in detail
 by Mohan in the ARIES paper. As Mohan explains in his paper, a
@@ -3055,7 +2798,7 @@ operations. For further details, please refer to the paper entitled
 &#8211; <tt class="docutils literal"><span class="pre">Space</span> <span class="pre">Management</span> <span class="pre">issues</span> <span class="pre">in</span> <span class="pre">B-Link</span> <span class="pre">trees</span></tt>.</p>
 </div>
 <div class="section" id="nontransactionrelatedoperations">
-<h4><a class="toc-backref" href="#id185">NonTransactionRelatedOperations</a><a class="headerlink" href="#nontransactionrelatedoperations" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id172">NonTransactionRelatedOperations</a><a class="headerlink" href="#nontransactionrelatedoperations" title="Permalink to this headline">¶</a></h4>
 <p>A NonTransactionRelatedOperation is one that should be redone
 without reference to a database page. Note that such operations are
 discarded after a Checkpoint, i.e, only those records will be redone
@@ -3070,7 +2813,7 @@ in <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> i
 open container log records become redundant after the Checkpoint.</p>
 </div>
 <div class="section" id="postcommitactions">
-<h4><a class="toc-backref" href="#id186">PostCommitActions</a><a class="headerlink" href="#postcommitactions" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id173">PostCommitActions</a><a class="headerlink" href="#postcommitactions" title="Permalink to this headline">¶</a></h4>
 <p>PostCommitActions are used to defer certain actions until it is
 known for sure that the Transaction is definitely committing. In
 <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>, dropping a container is handled this way. When a request
@@ -3088,7 +2831,7 @@ erroneous for the PostCommitAction to complain if the container is
 already deleted.</p>
 </div>
 <div class="section" id="containerdeleteoperations">
-<h4><a class="toc-backref" href="#id187">ContainerDeleteOperations</a><a class="headerlink" href="#containerdeleteoperations" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id174">ContainerDeleteOperations</a><a class="headerlink" href="#containerdeleteoperations" title="Permalink to this headline">¶</a></h4>
 <p>Since an ARIES style Transaction Manager operates at the level of
 disk pages, it is necessary to know when a container has been
 deleted so that all pages related to the container can be marked
@@ -3098,7 +2841,7 @@ ContainerDeleteOperation interface as a marker interface to identify
 log records that are going to cause containers to be dropped.</p>
 </div>
 <div class="section" id="containeropenoperations">
-<h4><a class="toc-backref" href="#id188">ContainerOpenOperations</a><a class="headerlink" href="#containeropenoperations" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id175">ContainerOpenOperations</a><a class="headerlink" href="#containeropenoperations" title="Permalink to this headline">¶</a></h4>
 <p>The TransactionManager maintains a list of open containers in
 the checkpoint record. At restart, it needs to identify containers
 created since the last checkpoint; it does this by tracking any
@@ -3109,9 +2852,9 @@ by a later ContainerDeleteOperation.</p>
 </div>
 </div>
 <div class="section" id="space-manager">
-<h2><a class="toc-backref" href="#id189">Space Manager</a><a class="headerlink" href="#space-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id35">
-<h3><a class="toc-backref" href="#id190">Introduction</a><a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id176">Space Manager</a><a class="headerlink" href="#space-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id33">
+<h3><a class="toc-backref" href="#id177">Introduction</a><a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
 <p>The Space Manager module is responsible for managing free space
 information within a Storage Container. Using free space
 information, the Space Manager module can find pages that meet space
@@ -3120,7 +2863,7 @@ creation of new containers and expansion/deletion of existing
 containers.</p>
 </div>
 <div class="section" id="comparison-with-storage-manager-module">
-<h3><a class="toc-backref" href="#id191">Comparison with Storage Manager module</a><a class="headerlink" href="#comparison-with-storage-manager-module" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id178">Comparison with Storage Manager module</a><a class="headerlink" href="#comparison-with-storage-manager-module" title="Permalink to this headline">¶</a></h3>
 <p>We have previously encountered the Storage Manager module which
 provides facilities for creating and dropping specific containers.
 However, these operations are low-level, and not transactional.
@@ -3138,10 +2881,10 @@ This information can be used to quickly locate a page with
 specified amount of storage.</li>
 </ul>
 </div>
-<div class="section" id="id36">
-<h3><a class="toc-backref" href="#id192">Operations</a><a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id34">
+<h3><a class="toc-backref" href="#id179">Operations</a><a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="obtaining-an-instance-of-spacemgr">
-<h4><a class="toc-backref" href="#id193">Obtaining an instance of SpaceMgr</a><a class="headerlink" href="#obtaining-an-instance-of-spacemgr" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id180">Obtaining an instance of SpaceMgr</a><a class="headerlink" href="#obtaining-an-instance-of-spacemgr" title="Permalink to this headline">¶</a></h4>
 <p>The default implementation of the SpaceMgr module is
 org.simpledbm.rss.sm.impl.SpaceMgrImpl.
 As can be seen in the example below, the SpaceMgr module depends
@@ -3152,7 +2895,7 @@ upon a number of other modules.</p>
 </div>
 </div>
 <div class="section" id="creating-a-container">
-<h4><a class="toc-backref" href="#id194">Creating a Container</a><a class="headerlink" href="#creating-a-container" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id181">Creating a Container</a><a class="headerlink" href="#creating-a-container" title="Permalink to this headline">¶</a></h4>
 <p>Following sample code demonstrates how to create a Container. Note
 that for correct operation, the container ID allocated to the new
 container should be locked exclusively prior to creating the
@@ -3185,7 +2928,7 @@ finally {
 <p>Note that the container create operation is transactional.</p>
 </div>
 <div class="section" id="extending-a-container">
-<h4><a class="toc-backref" href="#id195">Extending a Container</a><a class="headerlink" href="#extending-a-container" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id182">Extending a Container</a><a class="headerlink" href="#extending-a-container" title="Permalink to this headline">¶</a></h4>
 <p>When a container is initially created, it is allocated an extent of
 specified size. The extent is the minimum allocation unit for a
 container; a container is always expanded in extents.</p>
@@ -3195,7 +2938,7 @@ trx.commit();</pre>
 </div>
 </div>
 <div class="section" id="deleting-a-container">
-<h4><a class="toc-backref" href="#id196">Deleting a container</a><a class="headerlink" href="#deleting-a-container" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id183">Deleting a container</a><a class="headerlink" href="#deleting-a-container" title="Permalink to this headline">¶</a></h4>
 <p>Note that prior to deleting a container, you must acquire an
 Exclusive lock on the container ID. This will prevent other transactions
 from accessing the same container.</p>
@@ -3213,7 +2956,7 @@ is not physically removed. This will be fixed in a future revision
 of the module.</p>
 </div>
 <div class="section" id="searching-for-free-space">
-<h4><a class="toc-backref" href="#id197">Searching for free space</a><a class="headerlink" href="#searching-for-free-space" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id184">Searching for free space</a><a class="headerlink" href="#searching-for-free-space" title="Permalink to this headline">¶</a></h4>
 <p>At the time of creating a container, you can specify the number
 of bits that should be used to track space information for each
 individual page. At present, you can either use a single
@@ -3263,7 +3006,7 @@ map information is accurate and up-to-date.</p>
 extended and then the search retried.</p>
 </div>
 <div class="section" id="updating-space-information">
-<h4><a class="toc-backref" href="#id198">Updating space information</a><a class="headerlink" href="#updating-space-information" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id185">Updating space information</a><a class="headerlink" href="#updating-space-information" title="Permalink to this headline">¶</a></h4>
 <p>A successful search will result in the space map page being exclusively
 latched. Hence, after the search, the client must unfix the page. Failure
 to do so will cause pages to remain fixed and exhaust the Buffer Pool.
@@ -3297,9 +3040,9 @@ trx.commit();</pre>
 </div>
 </div>
 <div class="section" id="slotted-page-manager">
-<h2><a class="toc-backref" href="#id199">Slotted Page Manager</a><a class="headerlink" href="#slotted-page-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id37">
-<h3><a class="toc-backref" href="#id200">Introduction</a><a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id186">Slotted Page Manager</a><a class="headerlink" href="#slotted-page-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id35">
+<h3><a class="toc-backref" href="#id187">Introduction</a><a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>, like most other databases, stores records in fixed size
 pages. The Slotted Page Manager module provides an enhancement to
 the Raw Page by allowing records to be inserted, updated and deleted
@@ -3308,7 +3051,7 @@ modules such as the B-Tree Manager or the Tuple Manager can
 concentrate on higher level functions.</p>
 </div>
 <div class="section" id="structure-of-slotted-page">
-<h3><a class="toc-backref" href="#id201">Structure of Slotted Page</a><a class="headerlink" href="#structure-of-slotted-page" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id188">Structure of Slotted Page</a><a class="headerlink" href="#structure-of-slotted-page" title="Permalink to this headline">¶</a></h3>
 <p>From the client perspective, the structure of the Slotted Page is
 not relevant in its details. What matters is the interface. A key
 requirement is to be able to access records quickly within the page,
@@ -3326,7 +3069,7 @@ record specified and also shifts to the left all records to the right of
 the purged record.</p>
 </div>
 <div class="section" id="obtaining-instances-of-slotted-page">
-<h3><a class="toc-backref" href="#id202">Obtaining instances of Slotted Page</a><a class="headerlink" href="#obtaining-instances-of-slotted-page" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id189">Obtaining instances of Slotted Page</a><a class="headerlink" href="#obtaining-instances-of-slotted-page" title="Permalink to this headline">¶</a></h3>
 <p>The actual implementation of the Slotted Page is not visible to the
 outside world. The Slotted Page Manager module <em>registers</em> the
 implementation of SlottedPage to the Object Registry. This enables
@@ -3363,7 +3106,7 @@ when the client module accesses the page via the Buffer Manager,
 the correct page type is automatically instantiated.</p>
 </div>
 <div class="section" id="inserting-or-updating-records">
-<h3><a class="toc-backref" href="#id203">Inserting or updating records</a><a class="headerlink" href="#inserting-or-updating-records" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id190">Inserting or updating records</a><a class="headerlink" href="#inserting-or-updating-records" title="Permalink to this headline">¶</a></h3>
 <p>The SlottedPage interface supports two insert modes. In the
 replace mode, the new record will replace any existing record at
 the same Slot. If replace mode is false, the new record will cause
@@ -3380,7 +3123,7 @@ page.insertAt(0, item0, replaceMode);
 between 0 and <tt class="docutils literal"><span class="pre">SlottedPage.getNumberOfSlots()</span></tt>.</p>
 </div>
 <div class="section" id="deleting-records">
-<h3><a class="toc-backref" href="#id204">Deleting records</a><a class="headerlink" href="#deleting-records" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id191">Deleting records</a><a class="headerlink" href="#deleting-records" title="Permalink to this headline">¶</a></h3>
 <p>As mentioned before, there are two types of delete.
 The first type removes the record but does not disturb the
 Slot Numbers. Example:</p>
@@ -3405,7 +3148,7 @@ page.purge(0)
 </div>
 </div>
 <div class="section" id="accessing-records">
-<h3><a class="toc-backref" href="#id205">Accessing records</a><a class="headerlink" href="#accessing-records" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id192">Accessing records</a><a class="headerlink" href="#accessing-records" title="Permalink to this headline">¶</a></h3>
 <p>The <tt class="docutils literal"><span class="pre">SlottedPage.getNumberOfSlots()</span></tt> method returns the number
 of slots in the page. To access a slot, you invoke <tt class="docutils literal"><span class="pre">SlottedPage.get()</span></tt>;
 you must supply the correct <tt class="docutils literal"><span class="pre">Storable</span></tt> object
@@ -3415,7 +3158,7 @@ page.get(1, new StringItem());</pre>
 </div>
 </div>
 <div class="section" id="miscellaneous-operations">
-<h3><a class="toc-backref" href="#id206">Miscellaneous operations</a><a class="headerlink" href="#miscellaneous-operations" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id193">Miscellaneous operations</a><a class="headerlink" href="#miscellaneous-operations" title="Permalink to this headline">¶</a></h3>
 <p>It is possible to assign to each Slot a set of flags.
 Upto 16 bits can be accomodated.</p>
 <div class="highlight-python"><pre>// Get the flags for Slot 0
@@ -3430,15 +3173,15 @@ There are a few methods that provide space usage data.</p>
 </div>
 </div>
 <div class="section" id="index-manager">
-<h2><a class="toc-backref" href="#id207">Index Manager</a><a class="headerlink" href="#index-manager" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id38">
-<h3><a class="toc-backref" href="#id208">Overview</a><a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
+<h2><a class="toc-backref" href="#id194">Index Manager</a><a class="headerlink" href="#index-manager" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id36">
+<h3><a class="toc-backref" href="#id195">Overview</a><a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
 <p>The Index Manager module is responsible for implementing search structures
 such as BTrees. Indexes are used to enforce primary key constraint and unique
 constraints in tables, as well as for ensuring speedy retrieval of data.</p>
 </div>
 <div class="section" id="challenges-with-b-tree-concurrency">
-<h3><a class="toc-backref" href="#id209">Challenges with B-Tree Concurrency</a><a class="headerlink" href="#challenges-with-b-tree-concurrency" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id196">Challenges with B-Tree Concurrency</a><a class="headerlink" href="#challenges-with-b-tree-concurrency" title="Permalink to this headline">¶</a></h3>
 <p>It is challenging to implement a B-Tree that supports high concurrency and
 is also recoverable. The problem occurs because B-Tree traversals occur
 top-down, whereas the tree grows bottom-up using page splits that are
@@ -3466,7 +3209,7 @@ can be propagated bottom-up without obtaining locks at multiple
 levels of the tree.</li>
 </ol>
 <div class="section" id="survey-of-algorithms">
-<h4><a class="toc-backref" href="#id210">Survey of algorithms</a><a class="headerlink" href="#survey-of-algorithms" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id197">Survey of algorithms</a><a class="headerlink" href="#survey-of-algorithms" title="Permalink to this headline">¶</a></h4>
 <p>A popular approach to improving concurrency is based on locking
 subsets of the Tree top-down during an SMO. For example, if it becomes
 necessary to split a page, the program gives up any locks on
@@ -3525,7 +3268,7 @@ parent node, its new sibling, and the left child are all locked
 before the new link to the right sibling is inserted.</p>
 </div>
 <div class="section" id="limitations-of-lehman-and-yao-b-link-trees">
-<h4><a class="toc-backref" href="#id211">Limitations of Lehman and Yao B-link Trees</a><a class="headerlink" href="#limitations-of-lehman-and-yao-b-link-trees" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id198">Limitations of Lehman and Yao B-link Trees</a><a class="headerlink" href="#limitations-of-lehman-and-yao-b-link-trees" title="Permalink to this headline">¶</a></h4>
 <p>Lehman and Yao assumed that each process that accesses a node
 would read its own copy of the page. In most DBMS implementations,
 this is not true. Pages are shared between processes via the
@@ -3541,7 +3284,7 @@ in order to compact the tree.</p>
 <p>The algorithm does not consider recovery.</p>
 </div>
 <div class="section" id="recoverable-b-link-trees">
-<h4><a class="toc-backref" href="#id212">Recoverable B-Link Trees</a><a class="headerlink" href="#recoverable-b-link-trees" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id199">Recoverable B-Link Trees</a><a class="headerlink" href="#recoverable-b-link-trees" title="Permalink to this headline">¶</a></h4>
 <p>The individual page split operations in a B-Link Tree can be made
 atomic by using the nested top action features of ARIES. These atomic
 actions must be independent of regular transactions and must not be
@@ -3556,7 +3299,7 @@ an action can be initiated to add the missing link into the
 parent node.</p>
 </div>
 <div class="section" id="b-tree-algorithm-in-apache-derby">
-<h4><a class="toc-backref" href="#id213">B-Tree algorithm in Apache Derby</a><a class="headerlink" href="#b-tree-algorithm-in-apache-derby" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id200">B-Tree algorithm in Apache Derby</a><a class="headerlink" href="#b-tree-algorithm-in-apache-derby" title="Permalink to this headline">¶</a></h4>
 <p>In <a class="reference external" href="http://db.apache.org/derby/papers/btree_package.html">Apache Derby</a>, when an inserter finds during a page split that
 that it is unable to promote the discriminator key into the parent
 node because the parent node is full, it releases all locks, and
@@ -3566,7 +3309,7 @@ and may esult in moe page splits that needed, but the assumption is
 that the nodes would have to be split eventually anyway.</p>
 </div>
 <div class="section" id="simpledbm-b-link-tree">
-<h4><a class="toc-backref" href="#id214">SimpleDBM B-link Tree</a><a class="headerlink" href="#simpledbm-b-link-tree" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id201">SimpleDBM B-link Tree</a><a class="headerlink" href="#simpledbm-b-link-tree" title="Permalink to this headline">¶</a></h4>
 <p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> currently provides a B-Link Tree Index implementation, based
 upon algorithms described in <a class="reference internal" href="#jaluta-05">[JALUTA-05]</a>.
 These algorithms combine the idea of short atomic actions, as in <a class="reference internal" href="#davi-92">[DAVI-92]</a>,
@@ -3579,7 +3322,7 @@ places within the code, and described below.</p>
 </div>
 </div>
 <div class="section" id="structure-of-the-b-link-tree">
-<h3><a class="toc-backref" href="#id215">Structure of the B-link Tree</a><a class="headerlink" href="#structure-of-the-b-link-tree" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id202">Structure of the B-link Tree</a><a class="headerlink" href="#structure-of-the-b-link-tree" title="Permalink to this headline">¶</a></h3>
 <p>The tree is contained in a container of fixed size pages. The
 first page (pagenumber = 0) of the container is a header page. The second
 page (pagenumber = 1) is the first space map page. These pages are
@@ -3620,15 +3363,15 @@ forward to the rightmost pages at each level of the tree. This key can
 never be deleted from the tree.</p>
 </div>
 <div class="section" id="structure-of-nodes">
-<h3><a class="toc-backref" href="#id216">Structure of Nodes</a><a class="headerlink" href="#structure-of-nodes" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id44">
-<h4><a class="toc-backref" href="#id217">Overview</a><a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h4>
+<h3><a class="toc-backref" href="#id203">Structure of Nodes</a><a class="headerlink" href="#structure-of-nodes" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id42">
+<h4><a class="toc-backref" href="#id204">Overview</a><a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h4>
 <p>Nodes at each level of the tree are linked from left to right.
 The link of the rightmost node at a particular level is always set
 to null.</p>
 </div>
 <div class="section" id="leaf-nodes">
-<h4><a class="toc-backref" href="#id218">Leaf Nodes</a><a class="headerlink" href="#leaf-nodes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id205">Leaf Nodes</a><a class="headerlink" href="#leaf-nodes" title="Permalink to this headline">¶</a></h4>
 <p>Leaf nodes have following structure:</p>
 <a class="reference external image-reference" href="_images/leaf-node.png"><img alt="_images/leaf-node.png" src="_images/leaf-node.png" /></a>
 <div class="highlight-python"><pre>[header] [item1] [item2] ... [itemN] [highkey]
@@ -3643,7 +3386,7 @@ highkey in leaf pages are Split, Merge and Redistribute. All keys in the
 page are guaranteed to be &lt;= highkey.</p>
 </div>
 <div class="section" id="index-nodes">
-<h4><a class="toc-backref" href="#id219">Index Nodes</a><a class="headerlink" href="#index-nodes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id206">Index Nodes</a><a class="headerlink" href="#index-nodes" title="Permalink to this headline">¶</a></h4>
 <p>Index nodes have following structure:</p>
 <div class="highlight-python"><pre>[header] [item1] [item2] ... [itemN]
 item[0] = header
@@ -3657,16 +3400,16 @@ The child page contains keys that are &lt;=
 than the item key.</p>
 </div>
 <div class="section" id="limits">
-<h4><a class="toc-backref" href="#id220">Limits</a><a class="headerlink" href="#limits" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id207">Limits</a><a class="headerlink" href="#limits" title="Permalink to this headline">¶</a></h4>
 <p>The largest key cannot exceed 1/8th size of the page. The published
 algorithm requires a key to be smaller than 1/6th of a page.</p>
 <p>Each page other than root must have at least two keys.</p>
 </div>
 </div>
 <div class="section" id="key-differences-from-published-algorithm">
-<h3><a class="toc-backref" href="#id221">Key Differences from published algorithm</a><a class="headerlink" href="#key-differences-from-published-algorithm" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id208">Key Differences from published algorithm</a><a class="headerlink" href="#key-differences-from-published-algorithm" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="support-for-non-unique-indexes">
-<h4><a class="toc-backref" href="#id222">Support for Non-Unique indexes</a><a class="headerlink" href="#support-for-non-unique-indexes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id209">Support for Non-Unique indexes</a><a class="headerlink" href="#support-for-non-unique-indexes" title="Permalink to this headline">¶</a></h4>
 <p>The published algorithm assumes a unique index. <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> implementation
 supports both unique and non-unique indexes. In non-unique indexes, a
 key/location pair is always the unit of comparison, whereas in unique
@@ -3674,7 +3417,7 @@ indexes, only key values are used. There are some differences in how
 locking is handled for a unique index versus a non-unique index.</p>
 </div>
 <div class="section" id="handling-of-storage-map">
-<h4><a class="toc-backref" href="#id223">Handling of storage map</a><a class="headerlink" href="#handling-of-storage-map" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id210">Handling of storage map</a><a class="headerlink" href="#handling-of-storage-map" title="Permalink to this headline">¶</a></h4>
 <p>The published algorithm assumes a single page 0 that contains a bit vector
 showing the allocated/unallocated status of all pages. In <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>
 implementation space allocation is managed using free space pages which
@@ -3683,7 +3426,7 @@ are arranged in a linked list and are dynamic.</p>
 map. See <a class="reference internal" href="#diby-05">[DIBY-05]</a> for further details.</p>
 </div>
 <div class="section" id="variable-length-keys">
-<h4><a class="toc-backref" href="#id224">Variable length keys</a><a class="headerlink" href="#variable-length-keys" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id211">Variable length keys</a><a class="headerlink" href="#variable-length-keys" title="Permalink to this headline">¶</a></h4>
 <p>The implementation differs from the published algorithm in how it
 determines whether a page is &#8220;about to underflow&#8221; or &#8220;about to overflow&#8221;. It
 considers any page with minimum keys (1 for root, and 2 for all other pages) as
@@ -3691,7 +3434,7 @@ about to underflow. It checks the available space for the key being inserted to
 determine whether the page is about to overflow.</p>
 </div>
 <div class="section" id="page-split-operation">
-<h4><a class="toc-backref" href="#id225">Page Split operation</a><a class="headerlink" href="#page-split-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id212">Page Split operation</a><a class="headerlink" href="#page-split-operation" title="Permalink to this headline">¶</a></h4>
 <p>A page split operation takes a node and splits it into two.
 A new node is allocated and linked to the old node. This is
 shown in the example below.</p>
@@ -3728,7 +3471,7 @@ ARIES algorithms do not cater for this.</p>
 that the transaction manager supports multi-page redo.</p>
 </div>
 <div class="section" id="merge-operation">
-<h4><a class="toc-backref" href="#id226">Merge Operation</a><a class="headerlink" href="#merge-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id213">Merge Operation</a><a class="headerlink" href="#merge-operation" title="Permalink to this headline">¶</a></h4>
 <p>The Merge Operation is the opposite of the Split operation. It joins
 two existing nodes to create a single node.</p>
 <p>The implementation differs from published algorithm in its management of
@@ -3742,7 +3485,7 @@ this is not implemented.</p>
 <p>The Merge Operation is logged as a Multi-Page Redo only record.</p>
 </div>
 <div class="section" id="link-operation">
-<h4><a class="toc-backref" href="#id227">Link Operation</a><a class="headerlink" href="#link-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id214">Link Operation</a><a class="headerlink" href="#link-operation" title="Permalink to this headline">¶</a></h4>
 <p>The Link Operation creates a link from a parent node to a child node.
 Following diagrams illustrate the link operation.</p>
 <p>Before the link operation:</p>
@@ -3766,7 +3509,7 @@ Link(ParentNode, LeftNode, RightNode) {
 </div>
 </div>
 <div class="section" id="unlink-operation">
-<h4><a class="toc-backref" href="#id228">Unlink Operation</a><a class="headerlink" href="#unlink-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id215">Unlink Operation</a><a class="headerlink" href="#unlink-operation" title="Permalink to this headline">¶</a></h4>
 <p>The Unlink Operation is the reverse of the Link operation.</p>
 <p>The implementation differs slightly from the published algorithm.
 The psuedo code is shown below.</p>
@@ -3782,7 +3525,7 @@ The psuedo code is shown below.</p>
 </div>
 </div>
 <div class="section" id="redistribute-keys-operation">
-<h4><a class="toc-backref" href="#id229">Redistribute Keys Operation</a><a class="headerlink" href="#redistribute-keys-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id216">Redistribute Keys Operation</a><a class="headerlink" href="#redistribute-keys-operation" title="Permalink to this headline">¶</a></h4>
 <p>The implementation of this differs from the published algorithm. It
 moves one key from the overpopulated node to the sibling node,
 rather than evenly redistributing the keys across the two
@@ -3795,7 +3538,7 @@ nodes.</p>
 redo only log record.</p>
 </div>
 <div class="section" id="increase-tree-height-operation">
-<h4><a class="toc-backref" href="#id230">Increase Tree Height Operation</a><a class="headerlink" href="#increase-tree-height-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id217">Increase Tree Height Operation</a><a class="headerlink" href="#increase-tree-height-operation" title="Permalink to this headline">¶</a></h4>
 <p>The Increase Tree Height Operation is used to raise the height
 of the tree. For this to occur, the root must have been split
 previously and therefore must have a right sibling.</p>
@@ -3819,7 +3562,7 @@ when they are first created.</li>
 </ol>
 </div>
 <div class="section" id="decrease-tree-height-operation">
-<h4><a class="toc-backref" href="#id231">Decrease Tree Height Operation</a><a class="headerlink" href="#decrease-tree-height-operation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id218">Decrease Tree Height Operation</a><a class="headerlink" href="#decrease-tree-height-operation" title="Permalink to this headline">¶</a></h4>
 <p>This differs from the published algorithm.</p>
 <p>To increase concurrency, the  space map page update is logged after the
 SMO as a separate redo only action. This improves concurrency because
@@ -3833,14 +3576,14 @@ the page flags for the BTreeNode but this is not implemented.</p>
 log record.</p>
 </div>
 <div class="section" id="index-scans">
-<h4><a class="toc-backref" href="#id232">Index Scans</a><a class="headerlink" href="#index-scans" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id219">Index Scans</a><a class="headerlink" href="#index-scans" title="Permalink to this headline">¶</a></h4>
 <p>The published algorithm only considers the SERIALIZATION lock isolation
 mode, but the implementation supports other lock modes. There are
 differences in when and where locks are acquired and released under
 various modes.</p>
 </div>
 <div class="section" id="simplified-algorithm-for-scans">
-<h4><a class="toc-backref" href="#id233">Simplified Algorithm for Scans</a><a class="headerlink" href="#simplified-algorithm-for-scans" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id220">Simplified Algorithm for Scans</a><a class="headerlink" href="#simplified-algorithm-for-scans" title="Permalink to this headline">¶</a></h4>
 <p>The published algorithm has a complex fetch and fetchnext logic,
 and attempts to handle both &gt; and &gt;= operators. The implementation
 does not allow the operator to be specified. It automatically uses
@@ -3874,13 +3617,13 @@ first page, every delete will cause the tree to be scanned from root to
 leaf. This can be avoided by using the technique described by Mohan.</p>
 </div>
 <div class="section" id="simpler-page-modification-checks">
-<h4><a class="toc-backref" href="#id234">Simpler page modification checks</a><a class="headerlink" href="#simpler-page-modification-checks" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id221">Simpler page modification checks</a><a class="headerlink" href="#simpler-page-modification-checks" title="Permalink to this headline">¶</a></h4>
 <p>The implementation uses a simpler check to determine whether the
 page has changed since last it was latched. This may cause unnecessary
 traversals from root node.</p>
 </div>
 <div class="section" id="b-tree-index-is-a-secondary-structure">
-<h4><a class="toc-backref" href="#id235">B-Tree index is a secondary structure</a><a class="headerlink" href="#b-tree-index-is-a-secondary-structure" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id222">B-Tree index is a secondary structure</a><a class="headerlink" href="#b-tree-index-is-a-secondary-structure" title="Permalink to this headline">¶</a></h4>
 <p>Unlike the published algorithm, where the B-Tree index holds the
 database records in the leaf nodes, the implementation stores pointers
 (Locations) to tuples (table rows).</p>
@@ -3888,9 +3631,9 @@ database records in the leaf nodes, the implementation stores pointers
 </div>
 </div>
 <div class="section" id="tuple-manager">
-<h2><a class="toc-backref" href="#id236">Tuple Manager</a><a class="headerlink" href="#tuple-manager" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id223">Tuple Manager</a><a class="headerlink" href="#tuple-manager" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="overview-of-tuple-manager">
-<h3><a class="toc-backref" href="#id237">Overview of Tuple Manager</a><a class="headerlink" href="#overview-of-tuple-manager" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id224">Overview of Tuple Manager</a><a class="headerlink" href="#overview-of-tuple-manager" title="Permalink to this headline">¶</a></h3>
 <p>The Tuple Manager module provides a low-level interface for
 managing persistence of table rows. It is low-level in the sense that
 this module has no knowledge of what is contained in a table row.
@@ -3918,10 +3661,10 @@ to allow a callback method to calculate the difference between
 the old and the new tuple.</p>
 </div>
 <div class="section" id="design-decisions">
-<h3><a class="toc-backref" href="#id238">Design Decisions</a><a class="headerlink" href="#design-decisions" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id225">Design Decisions</a><a class="headerlink" href="#design-decisions" title="Permalink to this headline">¶</a></h3>
 <p>Some of the implementation decisions are given below:</p>
 <div class="section" id="tuple-inserts">
-<h4><a class="toc-backref" href="#id239">Tuple Inserts</a><a class="headerlink" href="#tuple-inserts" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id226">Tuple Inserts</a><a class="headerlink" href="#tuple-inserts" title="Permalink to this headline">¶</a></h4>
 <p>Tuple inserts are done in two stages. In the first stage,
 a new Location is allocated and locked exclusively. Also, the
 tuple data is inserted into the first page that will be used by the
@@ -3931,7 +3674,7 @@ the client to perform other operations in between, such as creating
 Index keys.</p>
 </div>
 <div class="section" id="tuple-segmentation">
-<h4><a class="toc-backref" href="#id240">Tuple Segmentation</a><a class="headerlink" href="#tuple-segmentation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id227">Tuple Segmentation</a><a class="headerlink" href="#tuple-segmentation" title="Permalink to this headline">¶</a></h4>
 <p>If a tuple is too large to fit into one page, it is broken into
 chunks of <tt class="docutils literal"><span class="pre">TupleManagerImpl.TupleSegment</span></tt>. Each segment is inserted
 into a page, and the segments are linked together in a singly linked
@@ -3944,7 +3687,7 @@ as possible on each page. When a page is visited, an attempt is made to
 reclaim any deleted segments within the page.</p>
 </div>
 <div class="section" id="tuple-deletes">
-<h4><a class="toc-backref" href="#id241">Tuple Deletes</a><a class="headerlink" href="#tuple-deletes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id228">Tuple Deletes</a><a class="headerlink" href="#tuple-deletes" title="Permalink to this headline">¶</a></h4>
 <p>Deletes are logical, ie, the Tuple Segments are marked with a logical
 delete flag. Space Map information is updated immediately, however. During
 deletes, the links between the segments of a tuple are broken. This is
@@ -3956,7 +3699,7 @@ removed.</p>
 <p>If the delete is undone, the links are restored.</p>
 </div>
 <div class="section" id="tuple-updates">
-<h4><a class="toc-backref" href="#id242">Tuple Updates</a><a class="headerlink" href="#tuple-updates" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id229">Tuple Updates</a><a class="headerlink" href="#tuple-updates" title="Permalink to this headline">¶</a></h4>
 <p>When tuples are updated, existing segments are updated with new data. If the
 new tuple is longer than the old tuple, then additional segments are added.
 The <tt class="docutils literal"><span class="pre">TupleInserter#completeInsert()</span></tt> interface is reused for this purpose.
@@ -3973,7 +3716,7 @@ more efficient by using some mechanism to calculate the difference between
 the old tuple and the new.</p>
 </div>
 <div class="section" id="space-reclamation">
-<h4><a class="toc-backref" href="#id243">Space Reclamation</a><a class="headerlink" href="#space-reclamation" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id230">Space Reclamation</a><a class="headerlink" href="#space-reclamation" title="Permalink to this headline">¶</a></h4>
 <p>Space used by deleted tuples is reclaimed when some other transaction visits
 the affected page and tries to use the space. Locking is used to determine
 whether the delete was committed. The actual physical removal of the tuple
@@ -3992,7 +3735,7 @@ the lock on the location will fail. The segments wil get eventually reused,
 when the transaction that locked the tuple commits.</p>
 </div>
 <div class="section" id="tuple-segment-structure">
-<h4><a class="toc-backref" href="#id244">Tuple Segment Structure</a><a class="headerlink" href="#tuple-segment-structure" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id231">Tuple Segment Structure</a><a class="headerlink" href="#tuple-segment-structure" title="Permalink to this headline">¶</a></h4>
 <p>Each Tuple segment contains three fields.</p>
 <dl class="docutils">
 <dt>nextPageNumber</dt>
@@ -4008,7 +3751,7 @@ number of the first segment.</dd>
 </dl>
 </div>
 <div class="section" id="free-space-information">
-<h4><a class="toc-backref" href="#id245">Free Space Information</a><a class="headerlink" href="#free-space-information" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id232">Free Space Information</a><a class="headerlink" href="#free-space-information" title="Permalink to this headline">¶</a></h4>
 <p>Both BTrees and Tuple Containers need free space management. By
 free space management we mean the process of identifying pages
 where new data can go. In the case of B-Trees, <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> uses
@@ -4114,14 +3857,14 @@ Hence, it is appropriate to use the Lock Manager solution
 in <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>.</p>
 </div>
 <div class="section" id="latch-ordering">
-<h4><a class="toc-backref" href="#id246">Latch Ordering</a><a class="headerlink" href="#latch-ordering" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id233">Latch Ordering</a><a class="headerlink" href="#latch-ordering" title="Permalink to this headline">¶</a></h4>
 <p>If both data page and free space map page need to be
 updated, then the latch order is data page first, and
 then free space map page while holding the data page
 latch.</p>
 </div>
 <div class="section" id="logging-of-space-map-page-updates">
-<h4><a class="toc-backref" href="#id247">Logging of Space Map Page updates</a><a class="headerlink" href="#logging-of-space-map-page-updates" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id234">Logging of Space Map Page updates</a><a class="headerlink" href="#logging-of-space-map-page-updates" title="Permalink to this headline">¶</a></h4>
 <p>As per <a class="reference internal" href="#moha-94">[MOHA-94]</a>, space map pages should be logged using
 redo only log records. During normal processing, the
 data page update is logged first followed by the space
@@ -4132,7 +3875,7 @@ ordering.</p>
 <table class="docutils citation" frame="void" id="astra-76" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[ASTRA-76]</a></td><td>M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,
+<tr><td class="label">[ASTRA-76]</td><td>M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,
 K.P.Eswaran, J.N.Gray, P.P.Griffiths, W.F.King, R.A.Lorie,
 P.R.McJones, J.W.Mehl, G.R.Putzolu, I.L.Traiger, B.W.Wade
 AND V.Watson. System R: Relational Approach to Database
@@ -4143,7 +3886,7 @@ Database Systems, Vol 1, No. 2, June 1976, Pages 97-137.</td></tr>
 <table class="docutils citation" frame="void" id="jaluta-05" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id42">[JALUTA-05]</a></td><td>Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen.
+<tr><td class="label"><a class="fn-backref" href="#id40">[JALUTA-05]</a></td><td>Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen.
 Concurrency control and recovery for balanced B-link trees.
 The VLDB Journal, Volume 14, Issue 2 (April 2005),
 Pages: 257 - 277, ISSN:1066-8888.</td></tr>
@@ -4152,7 +3895,7 @@ Pages: 257 - 277, ISSN:1066-8888.</td></tr>
 <table class="docutils citation" frame="void" id="lehman-81" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id40">[LEHMAN-81]</a></td><td>Philip L. Lehman, S. Bing Yao:
+<tr><td class="label"><a class="fn-backref" href="#id38">[LEHMAN-81]</a></td><td>Philip L. Lehman, S. Bing Yao:
 Efficient Locking for Concurrent Operations on B-Trees.
 ACM Trans. Database Syst. 6(4): 650-670(1981)</td></tr>
 </tbody>
@@ -4160,13 +3903,13 @@ ACM Trans. Database Syst. 6(4): 650-670(1981)</td></tr>
 <table class="docutils citation" frame="void" id="diby-05" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id45">[DIBY-05]</a></td><td>Dibyendu Majumdar: Space Management in B-Link Trees. 2005.</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id43">[DIBY-05]</a></td><td>Dibyendu Majumdar: Space Management in B-Link Trees. 2005.</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="moha-02" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id46">[MOHA-02]</a></td><td>Mohan, C. An Efficient Method for Performing Record Deletions
+<tr><td class="label"><a class="fn-backref" href="#id44">[MOHA-02]</a></td><td>Mohan, C. An Efficient Method for Performing Record Deletions
 and Updates Using Index Scans
 (<a class="reference external" href="http://www.almaden.ibm.com/u/mohan/DelIScan.pdf">http://www.almaden.ibm.com/u/mohan/DelIScan.pdf</a>),
 Proc. 28th International Conference on Very Large Databases, Hong Kong,
@@ -4190,7 +3933,7 @@ Maintenance of Large Ordered Indices. Acta Inf. 1: 173-189 (1972).</td></tr>
 <table class="docutils citation" frame="void" id="moha-92" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id39">[MOHA-92]</a></td><td>C.Mohan and Frank Levine. ARIES/IM: an efficient and
+<tr><td class="label"><a class="fn-backref" href="#id37">[MOHA-92]</a></td><td>C.Mohan and Frank Levine. ARIES/IM: an efficient and
 high concurrency index management method with write-ahead
 logging. ACM SIGMOD Record. V21 N2, P371-380, June 1 1992.
 A longer version of the paper can be found at:
@@ -4200,14 +3943,14 @@ A longer version of the paper can be found at:
 <table class="docutils citation" frame="void" id="davi-92" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[DAVI-92]</td><td><em>(<a class="fn-backref" href="#id41">1</a>, <a class="fn-backref" href="#id43">2</a>)</em> David Lomet and Betty Salzburg. Access method
+<tr><td class="label">[DAVI-92]</td><td><em>(<a class="fn-backref" href="#id39">1</a>, <a class="fn-backref" href="#id41">2</a>)</em> David Lomet and Betty Salzburg. Access method
 concurrency with recovery. ACM SIGMOD, V21 N2, p351-360, June 1 1992.</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="aries" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id32">[ARIES]</a></td><td>C. Mohan, D. Haderle, B. Lindsay, H. Pirahesh and P.
+<tr><td class="label"><a class="fn-backref" href="#id30">[ARIES]</a></td><td>C. Mohan, D. Haderle, B. Lindsay, H. Pirahesh and P.
 Schwarz. ARIES: A Transaction Recovery Method Supporting Fine-Granularity
 Locking and Partial Rollbacks Using Write-Ahead Logging.
 ACM Transactions on Database Systems, 17(1):94-162, March 1992.
@@ -4218,14 +3961,14 @@ Morgan Kaufmann Publishers.</td></tr>
 <table class="docutils citation" frame="void" id="jgray" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[JGRAY]</td><td><em>(<a class="fn-backref" href="#id25">1</a>, <a class="fn-backref" href="#id26">2</a>, <a class="fn-backref" href="#id33">3</a>, <a class="fn-backref" href="#id34">4</a>)</em> Transaction Processing: Concepts and Techniques, by Jim Gray
+<tr><td class="label">[JGRAY]</td><td><em>(<a class="fn-backref" href="#id23">1</a>, <a class="fn-backref" href="#id24">2</a>, <a class="fn-backref" href="#id31">3</a>, <a class="fn-backref" href="#id32">4</a>)</em> Transaction Processing: Concepts and Techniques, by Jim Gray
 and Andreas Reuter</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="moha-94" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[MOHA-94]</td><td><em>(<a class="fn-backref" href="#id47">1</a>, <a class="fn-backref" href="#id50">2</a>)</em> C.Mohan and D.Haderle. Algorithms for Flexible Space Management
+<tr><td class="label">[MOHA-94]</td><td><em>(<a class="fn-backref" href="#id45">1</a>, <a class="fn-backref" href="#id48">2</a>)</em> C.Mohan and D.Haderle. Algorithms for Flexible Space Management
 in Transaction Systems Supporting Fine-Granularity Locking.
 In Proceedings of the International Conference on Extending
 Database Technology, March 1994.</td></tr>
@@ -4234,7 +3977,7 @@ Database Technology, March 1994.</td></tr>
 <table class="docutils citation" frame="void" id="carey-96" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[CAREY-96]</td><td><em>(<a class="fn-backref" href="#id48">1</a>, <a class="fn-backref" href="#id49">2</a>)</em> Mark L.McAuliffe, Michael J. Carey and Marvin H. Solomon. Towards
+<tr><td class="label">[CAREY-96]</td><td><em>(<a class="fn-backref" href="#id46">1</a>, <a class="fn-backref" href="#id47">2</a>)</em> Mark L.McAuliffe, Michael J. Carey and Marvin H. Solomon. Towards
 Effective and Efficient Free Space Management. ACM SIGMOD Record.
 Proceedings of the 1996 ACM SIGMOD international conference on
 Management of Data, June 1996.</td></tr>
@@ -4243,7 +3986,7 @@ Management of Data, June 1996.</td></tr>
 <table class="docutils citation" frame="void" id="cockburn" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id10">[COCKBURN]</a></td><td>Alistair Cockburn. Writing Effective Use Cases.</td></tr>
+<tr><td class="label"><a class="fn-backref" href="#id8">[COCKBURN]</a></td><td>Alistair Cockburn. Writing Effective Use Cases.</td></tr>
 </tbody>
 </table>
 </div>
@@ -4259,30 +4002,15 @@ Management of Data, June 1996.</td></tr>
         <div class="sphinxsidebarwrapper">
             <h3><a href="index.html">Table Of Contents</a></h3>
             <ul>
-<li><a class="reference external" href="">SimpleDBM RSS Developers&#8217;s Guide</a><ul>
+<li><a class="reference external" href="">SimpleDBM Developers&#8217;s Guide</a><ul>
 <li><a class="reference external" href="#introduction">Introduction</a><ul>
-<li><a class="reference external" href="#overview">Overview</a></li>
-<li><a class="reference external" href="#technology">Technology</a><ul>
-<li><a class="reference external" href="#third-party-libraries">Third party libraries</a></li>
-<li><a class="reference external" href="#obtaining-simpledbm">Obtaining SimpleDBM</a></li>
-<li><a class="reference external" href="#mercurial-urls">Mercurial URLs</a></li>
-<li><a class="reference external" href="#pre-requisites">Pre-requisites</a></li>
-<li><a class="reference external" href="#instructions-for-eclipse">Instructions for Eclipse</a></li>
-<li><a class="reference external" href="#maven-commands">Maven commands</a></li>
-</ul>
-</li>
-</ul>
-</li>
-<li><a class="reference external" href="#coding-and-design-principles">Coding and Design Principles</a><ul>
-<li><a class="reference external" href="#modular-design">Modular design</a></li>
-<li><a class="reference external" href="#java-coding-standards">Java coding standards</a></li>
-<li><a class="reference external" href="#documentation">Documentation</a></li>
-<li><a class="reference external" href="#release-schedule">Release schedule</a></li>
+<li><a class="reference external" href="#intended-audience">Intended Audience</a></li>
+<li><a class="reference external" href="#pre-requisite-reading">Pre-requisite Reading</a></li>
 </ul>
 </li>
 <li><a class="reference external" href="#data-manager-rss-components">Data Manager/RSS Components</a></li>
 <li><a class="reference external" href="#object-registry">Object Registry</a><ul>
-<li><a class="reference external" href="#id2">Overview</a></li>
+<li><a class="reference external" href="#overview">Overview</a></li>
 <li><a class="reference external" href="#two-use-cases">Two Use cases</a></li>
 <li><a class="reference external" href="#registering-an-objectfactory">Registering an ObjectFactory</a></li>
 <li><a class="reference external" href="#asymmetry-between-retrieving-and-storing-objects">Asymmetry between retrieving and storing objects</a></li>
@@ -4293,21 +4021,21 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#storage-factory">Storage Factory</a><ul>
-<li><a class="reference external" href="#id5">Overview</a></li>
+<li><a class="reference external" href="#id3">Overview</a></li>
 <li><a class="reference external" href="#storage-containers">Storage Containers</a></li>
 <li><a class="reference external" href="#storage-container-registry">Storage Container Registry</a></li>
 <li><a class="reference external" href="#default-implementation">Default Implementation</a></li>
 </ul>
 </li>
 <li><a class="reference external" href="#latch-manager">Latch Manager</a><ul>
-<li><a class="reference external" href="#id6">Overview</a></li>
+<li><a class="reference external" href="#id4">Overview</a></li>
 <li><a class="reference external" href="#latch-modes">Latch modes</a></li>
 <li><a class="reference external" href="#implementation-and-performance-notes">Implementation and Performance Notes</a></li>
 <li><a class="reference external" href="#obtaining-a-latch-instance">Obtaining a latch instance</a></li>
 </ul>
 </li>
 <li><a class="reference external" href="#log-manager">Log Manager</a><ul>
-<li><a class="reference external" href="#id7">Overview</a></li>
+<li><a class="reference external" href="#id5">Overview</a></li>
 <li><a class="reference external" href="#write-ahead-log-wal-protocol">Write Ahead Log (WAL) Protocol</a></li>
 <li><a class="reference external" href="#advantages-of-wal">Advantages of WAL</a></li>
 <li><a class="reference external" href="#usage-notes">Usage Notes</a></li>
@@ -4325,7 +4053,7 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#lock-manager">Lock Manager</a><ul>
-<li><a class="reference external" href="#id8">Introduction</a></li>
+<li><a class="reference external" href="#id6">Introduction</a></li>
 <li><a class="reference external" href="#locking-basics">Locking Basics</a></li>
 <li><a class="reference external" href="#two-phase-locking-and-repeatable-read-isolation-level">Two-Phase Locking and Repeatable Read Isolation Level</a></li>
 <li><a class="reference external" href="#read-committed-isolation-level">Read Committed Isolation Level</a></li>
@@ -4336,7 +4064,7 @@ Management of Data, June 1996.</td></tr>
 <li><a class="reference external" href="#lock-conversions">Lock Conversions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#id9">Operations</a><ul>
+<li><a class="reference external" href="#id7">Operations</a><ul>
 <li><a class="reference external" href="#obtaining-an-instance-of-lock-manager">Obtaining an instance of Lock Manager</a></li>
 <li><a class="reference external" href="#lockable-objects">Lockable objects</a></li>
 <li><a class="reference external" href="#lock-owners">Lock Owners</a></li>
@@ -4349,38 +4077,38 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#a003-handle-new-request">a003 - handle new request</a><ul>
+<li><a class="reference external" href="#id9">Main Success Scenario</a></li>
+<li><a class="reference external" href="#id10">Extensions</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#a002-handle-lock-conversion">a002 - handle lock conversion</a><ul>
 <li><a class="reference external" href="#id11">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id12">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#a002-handle-lock-conversion">a002 - handle lock conversion</a><ul>
+<li><a class="reference external" href="#a004-lock-wait">a004 - lock wait</a><ul>
 <li><a class="reference external" href="#id13">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id14">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#a004-lock-wait">a004 - lock wait</a><ul>
+<li><a class="reference external" href="#b001-release-lock">b001 - release lock</a><ul>
 <li><a class="reference external" href="#id15">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id16">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#b001-release-lock">b001 - release lock</a><ul>
+<li><a class="reference external" href="#b002-grant-waiters">b002 - grant waiters</a><ul>
 <li><a class="reference external" href="#id17">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id18">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#b002-grant-waiters">b002 - grant waiters</a><ul>
+<li><a class="reference external" href="#b003-grant-conversion-request">b003 - grant conversion request</a><ul>
 <li><a class="reference external" href="#id19">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id20">Extensions</a></li>
 </ul>
 </li>
-<li><a class="reference external" href="#b003-grant-conversion-request">b003 - grant conversion request</a><ul>
+<li><a class="reference external" href="#c001-check-request-compatible-with-granted-group">c001 - check request compatible with granted group</a><ul>
 <li><a class="reference external" href="#id21">Main Success Scenario</a></li>
 <li><a class="reference external" href="#id22">Extensions</a></li>
-</ul>
-</li>
-<li><a class="reference external" href="#c001-check-request-compatible-with-granted-group">c001 - check request compatible with granted group</a><ul>
-<li><a class="reference external" href="#id23">Main Success Scenario</a></li>
-<li><a class="reference external" href="#id24">Extensions</a></li>
 </ul>
 </li>
 </ul>
@@ -4398,7 +4126,7 @@ Management of Data, June 1996.</td></tr>
 <li><a class="reference external" href="#page-size-and-implementation-of-storable-interface">Page Size and implementation of Storable interface</a></li>
 <li><a class="reference external" href="#how-various-page-types-are-managed">How various Page types are managed</a></li>
 <li><a class="reference external" href="#page-factory">Page Factory</a></li>
-<li><a class="reference external" href="#id27">Page Manager</a></li>
+<li><a class="reference external" href="#id25">Page Manager</a></li>
 <li><a class="reference external" href="#storing-and-retrieving-pages">Storing and retrieving Pages</a></li>
 <li><a class="reference external" href="#checksum">Checksum</a></li>
 </ul>
@@ -4406,9 +4134,9 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#buffer-manager">Buffer Manager</a><ul>
-<li><a class="reference external" href="#id28">Overview</a></li>
-<li><a class="reference external" href="#id29">Interactions with other modules</a></li>
-<li><a class="reference external" href="#id30">Operations</a><ul>
+<li><a class="reference external" href="#id26">Overview</a></li>
+<li><a class="reference external" href="#id27">Interactions with other modules</a></li>
+<li><a class="reference external" href="#id28">Operations</a><ul>
 <li><a class="reference external" href="#creating-a-buffer-manager-instance">Creating a Buffer Manager instance</a></li>
 <li><a class="reference external" href="#fixing-pages-in-the-buffer-pool">Fixing Pages in the Buffer Pool</a></li>
 <li><a class="reference external" href="#modifying-page-contents">Modifying page contents</a></li>
@@ -4419,7 +4147,7 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#transaction-manager">Transaction Manager</a><ul>
-<li><a class="reference external" href="#id31">Introduction</a></li>
+<li><a class="reference external" href="#id29">Introduction</a></li>
 <li><a class="reference external" href="#overiew">Overiew</a></li>
 <li><a class="reference external" href="#what-is-aries">What is ARIES?</a></li>
 <li><a class="reference external" href="#aries-an-overview">ARIES - An Overview</a></li>
@@ -4450,9 +4178,9 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#space-manager">Space Manager</a><ul>
-<li><a class="reference external" href="#id35">Introduction</a></li>
+<li><a class="reference external" href="#id33">Introduction</a></li>
 <li><a class="reference external" href="#comparison-with-storage-manager-module">Comparison with Storage Manager module</a></li>
-<li><a class="reference external" href="#id36">Operations</a><ul>
+<li><a class="reference external" href="#id34">Operations</a><ul>
 <li><a class="reference external" href="#obtaining-an-instance-of-spacemgr">Obtaining an instance of SpaceMgr</a></li>
 <li><a class="reference external" href="#creating-a-container">Creating a Container</a></li>
 <li><a class="reference external" href="#extending-a-container">Extending a Container</a></li>
@@ -4464,7 +4192,7 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#slotted-page-manager">Slotted Page Manager</a><ul>
-<li><a class="reference external" href="#id37">Introduction</a></li>
+<li><a class="reference external" href="#id35">Introduction</a></li>
 <li><a class="reference external" href="#structure-of-slotted-page">Structure of Slotted Page</a></li>
 <li><a class="reference external" href="#obtaining-instances-of-slotted-page">Obtaining instances of Slotted Page</a></li>
 <li><a class="reference external" href="#inserting-or-updating-records">Inserting or updating records</a></li>
@@ -4474,7 +4202,7 @@ Management of Data, June 1996.</td></tr>
 </ul>
 </li>
 <li><a class="reference external" href="#index-manager">Index Manager</a><ul>
-<li><a class="reference external" href="#id38">Overview</a></li>
+<li><a class="reference external" href="#id36">Overview</a></li>
 <li><a class="reference external" href="#challenges-with-b-tree-concurrency">Challenges with B-Tree Concurrency</a><ul>
 <li><a class="reference external" href="#survey-of-algorithms">Survey of algorithms</a></li>
 <li><a class="reference external" href="#limitations-of-lehman-and-yao-b-link-trees">Limitations of Lehman and Yao B-link Trees</a></li>
@@ -4485,7 +4213,7 @@ Management of Data, June 1996.</td></tr>
 </li>
 <li><a class="reference external" href="#structure-of-the-b-link-tree">Structure of the B-link Tree</a></li>
 <li><a class="reference external" href="#structure-of-nodes">Structure of Nodes</a><ul>
-<li><a class="reference external" href="#id44">Overview</a></li>
+<li><a class="reference external" href="#id42">Overview</a></li>
 <li><a class="reference external" href="#leaf-nodes">Leaf Nodes</a></li>
 <li><a class="reference external" href="#index-nodes">Index Nodes</a></li>
 <li><a class="reference external" href="#limits">Limits</a></li>

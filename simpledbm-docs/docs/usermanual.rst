@@ -5,7 +5,7 @@ SimpleDBM RSS User's Manual
 ===========================
 
 :Author: Dibyendu Majumdar
-:Contact: d.majumdar@gmail.com
+:Contact: d dot majumdar at gmail dot com
 :Version: 1.0.12
 :Date: 7 April 2009
 :Copyright: Copyright by Dibyendu Majumdar, 2007-2009
@@ -16,81 +16,18 @@ SimpleDBM RSS User's Manual
 Introduction
 ------------
 
-Overview
-========
+This document describes the SimpleDBM RSS API.
 
-SimpleDBM_ is a transactional database engine, written in Java. It has a
-very small footprint and can be embedded in the address space of an
-application. It provides a simple Java application programming interface (API), 
-which can be learned very quickly.
+Intended Audience
+=================
 
-.. _SimpleDBM: http://www.simpledbm.org
+This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
 
-Features
-========
+Pre-requisite Reading
+=====================
 
-SimpleDBM has the following features:
-
-- *Transactional* - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.
-- *Multi-threaded* - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
-- *Write Ahead Log* - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
-- *Lock based concurrency* - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency. 
-- *Multiple Isolation Levels* - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.
-- *B-Tree Indexes* - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.
-- *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.
-- *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
-- *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
-
-Non-Features
-------------
-- SimpleDBM is not an SQL engine. 
-- There is no support for distributed transactions (XA) yet.
-
-Status
-------
-
-SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available. 
-
-The latest builds can be downloaded from:
-
-http://code.google.com/p/simpledbm/downloads/list.
-
-Getting Started
----------------
-
-Download the latest build of SimpleDBM.
-There are no special requirements or third party library dependencies; all you
-need to ensure is that the SimpleDBM jar file is in your classpath.
-
-SimpleDBM does not come with a type system of its own, but there is a sample
-type system implementation available, which you can enhance. 
-
------------------
-SimpleDBM Modules
------------------
-
-The core of SimpleDBM_ is the RSS (named in honor of the
-first IBM Relational Database prototype `System-R <http://www.mcjones.org/System_R/>`_ Relational Storage
-System). The RSS provides the underlying storage structures for
-transactions, locking, b-trees etc. 
-
-This document covers the RSS API.
-
-Note that the RSS API is probably too low level for ordinary users. 
-It is meant to be used by people interested
-in build their own Database Engines on top. The design of the RSS is described in 
-detail in the `SimpleDBM RSS Developers's Guide <http://www.simpledbm.org>`_.
-
-For users looking for a simpler API, two additional modules are
-available. 
-
-The first one is the SimpleDBM_ TypeSystem module, which adds support
-for typed data values and multi-attribute row objects. For details of this
-module, please read `SimpleDBM TypeSystem <http://www.simpledbm.org>`_.
-
-The second module, the Database API, implements a high level 
-Database API and uses the TypeSystem module on top of the RSS. For details of this
-module, please read `SimpleDBM Database API <http://www.simpledbm.org>`_.
+Before reading this document, the reader is advised to go through 
+the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
 
 -------------------------------
 SimpleDBM Servers and Databases

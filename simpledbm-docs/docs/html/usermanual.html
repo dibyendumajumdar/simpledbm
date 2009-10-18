@@ -20,7 +20,7 @@
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
     <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
-    <link rel="next" title="SimpleDBM RSS Developers’s Guide" href="developerguide.html" />
+    <link rel="next" title="SimpleDBM Developers’s Guide" href="developerguide.html" />
     <link rel="prev" title="SimpleDBM TypeSystem" href="typesystem.html" /> 
   </head>
   <body>
@@ -28,7 +28,7 @@
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+          <a href="developerguide.html" title="SimpleDBM Developers’s Guide"
              accesskey="N">next</a></li>
         <li class="right" >
           <a href="typesystem.html" title="SimpleDBM TypeSystem"
@@ -43,14 +43,14 @@
           <div class="body">
             
   <div class="section" id="simpledbm-rss-user-s-manual">
-<h1><a class="toc-backref" href="#id5">SimpleDBM RSS User&#8217;s Manual</a><a class="headerlink" href="#simpledbm-rss-user-s-manual" title="Permalink to this headline">¶</a></h1>
+<h1><a class="toc-backref" href="#id4">SimpleDBM RSS User&#8217;s Manual</a><a class="headerlink" href="#simpledbm-rss-user-s-manual" title="Permalink to this headline">¶</a></h1>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
 </tr>
-<tr class="field"><th class="field-name">Contact:</th><td class="field-body"><a class="reference external" href="mailto:d&#46;majumdar&#37;&#52;&#48;gmail&#46;com">d<span>&#46;</span>majumdar<span>&#64;</span>gmail<span>&#46;</span>com</a></td>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body">d dot majumdar at gmail dot com</td>
 </tr>
 <tr class="field"><th class="field-name">Version:</th><td class="field-body">1.0.12</td>
 </tr>
@@ -63,80 +63,74 @@
 <div class="contents topic" id="contents">
 <p class="topic-title first">Contents</p>
 <ul class="simple">
-<li><a class="reference internal" href="#simpledbm-rss-user-s-manual" id="id5">SimpleDBM RSS User&#8217;s Manual</a><ul>
-<li><a class="reference internal" href="#introduction" id="id6">Introduction</a><ul>
-<li><a class="reference internal" href="#overview" id="id7">Overview</a></li>
-<li><a class="reference internal" href="#features" id="id8">Features</a><ul>
-<li><a class="reference internal" href="#non-features" id="id9">Non-Features</a></li>
-<li><a class="reference internal" href="#status" id="id10">Status</a></li>
-<li><a class="reference internal" href="#getting-started" id="id11">Getting Started</a></li>
+<li><a class="reference internal" href="#simpledbm-rss-user-s-manual" id="id4">SimpleDBM RSS User&#8217;s Manual</a><ul>
+<li><a class="reference internal" href="#introduction" id="id5">Introduction</a><ul>
+<li><a class="reference internal" href="#intended-audience" id="id6">Intended Audience</a></li>
+<li><a class="reference internal" href="#pre-requisite-reading" id="id7">Pre-requisite Reading</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#simpledbm-servers-and-databases" id="id8">SimpleDBM Servers and Databases</a><ul>
+<li><a class="reference internal" href="#id1" id="id9">Introduction</a></li>
+<li><a class="reference internal" href="#creating-a-simpledbm-database" id="id10">Creating a SimpleDBM database</a><ul>
+<li><a class="reference internal" href="#server-options" id="id11">Server Options</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#opening-a-database" id="id12">Opening a database</a></li>
+<li><a class="reference internal" href="#managing-log-messages" id="id13">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#common-infrastructure" id="id14">Common Infrastructure</a><ul>
+<li><a class="reference internal" href="#object-registry" id="id15">Object Registry</a><ul>
+<li><a class="reference internal" href="#overview" id="id16">Overview</a></li>
+<li><a class="reference internal" href="#two-use-cases" id="id17">Two Use cases</a></li>
+<li><a class="reference internal" href="#registering-an-objectfactory" id="id18">Registering an ObjectFactory</a></li>
+<li><a class="reference internal" href="#asymmetry-between-retrieving-and-storing-objects" id="id19">Asymmetry between retrieving and storing objects</a></li>
+<li><a class="reference internal" href="#storable-interface-and-object-serialization" id="id20">Storable Interface and Object serialization</a></li>
+<li><a class="reference internal" href="#registering-singletons" id="id21">Registering Singletons</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#simpledbm-modules" id="id12">SimpleDBM Modules</a></li>
-<li><a class="reference internal" href="#simpledbm-servers-and-databases" id="id13">SimpleDBM Servers and Databases</a><ul>
-<li><a class="reference internal" href="#id1" id="id14">Introduction</a></li>
-<li><a class="reference internal" href="#creating-a-simpledbm-database" id="id15">Creating a SimpleDBM database</a><ul>
-<li><a class="reference internal" href="#server-options" id="id16">Server Options</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#opening-a-database" id="id17">Opening a database</a></li>
-<li><a class="reference internal" href="#managing-log-messages" id="id18">Managing log messages</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#common-infrastructure" id="id19">Common Infrastructure</a><ul>
-<li><a class="reference internal" href="#object-registry" id="id20">Object Registry</a><ul>
-<li><a class="reference internal" href="#id2" id="id21">Overview</a></li>
-<li><a class="reference internal" href="#two-use-cases" id="id22">Two Use cases</a></li>
-<li><a class="reference internal" href="#registering-an-objectfactory" id="id23">Registering an ObjectFactory</a></li>
-<li><a class="reference internal" href="#asymmetry-between-retrieving-and-storing-objects" id="id24">Asymmetry between retrieving and storing objects</a></li>
-<li><a class="reference internal" href="#storable-interface-and-object-serialization" id="id25">Storable Interface and Object serialization</a></li>
-<li><a class="reference internal" href="#registering-singletons" id="id26">Registering Singletons</a></li>
+<li><a class="reference internal" href="#transactions" id="id22">Transactions</a><ul>
+<li><a class="reference internal" href="#creating-new-transactions" id="id23">Creating new Transactions</a></li>
+<li><a class="reference internal" href="#working-with-transactions" id="id24">Working with Transactions</a><ul>
+<li><a class="reference internal" href="#transaction-api" id="id25">Transaction API</a></li>
+<li><a class="reference internal" href="#transaction-savepoints" id="id26">Transaction Savepoints</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a class="reference internal" href="#transactions" id="id27">Transactions</a><ul>
-<li><a class="reference internal" href="#creating-new-transactions" id="id28">Creating new Transactions</a></li>
-<li><a class="reference internal" href="#working-with-transactions" id="id29">Working with Transactions</a><ul>
-<li><a class="reference internal" href="#transaction-api" id="id30">Transaction API</a></li>
-<li><a class="reference internal" href="#transaction-savepoints" id="id31">Transaction Savepoints</a></li>
+<li><a class="reference internal" href="#tables" id="id27">Tables</a><ul>
+<li><a class="reference internal" href="#tuplecontainers" id="id28">TupleContainers</a></li>
+<li><a class="reference internal" href="#creating-a-tuplecontainer" id="id29">Creating a TupleContainer</a></li>
+<li><a class="reference internal" href="#accessing-a-tuplecontainer" id="id30">Accessing a TupleContainer</a></li>
+<li><a class="reference internal" href="#inserting-tuples" id="id31">Inserting tuples</a></li>
+<li><a class="reference internal" href="#reading-tuples" id="id32">Reading tuples</a></li>
+<li><a class="reference internal" href="#updating-tuples" id="id33">Updating tuples</a></li>
+<li><a class="reference internal" href="#deleting-tuples" id="id34">Deleting tuples</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#indexes" id="id35">Indexes</a><ul>
+<li><a class="reference internal" href="#index-keys" id="id36">Index Keys</a></li>
+<li><a class="reference internal" href="#index-key-factories" id="id37">Index Key Factories</a><ul>
+<li><a class="reference internal" href="#example" id="id38">Example</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#tables" id="id32">Tables</a><ul>
-<li><a class="reference internal" href="#tuplecontainers" id="id33">TupleContainers</a></li>
-<li><a class="reference internal" href="#creating-a-tuplecontainer" id="id34">Creating a TupleContainer</a></li>
-<li><a class="reference internal" href="#accessing-a-tuplecontainer" id="id35">Accessing a TupleContainer</a></li>
-<li><a class="reference internal" href="#inserting-tuples" id="id36">Inserting tuples</a></li>
-<li><a class="reference internal" href="#reading-tuples" id="id37">Reading tuples</a></li>
-<li><a class="reference internal" href="#updating-tuples" id="id38">Updating tuples</a></li>
-<li><a class="reference internal" href="#deleting-tuples" id="id39">Deleting tuples</a></li>
+<li><a class="reference internal" href="#locations" id="id39">Locations</a></li>
+<li><a class="reference internal" href="#creating-a-new-index" id="id40">Creating a new index</a></li>
+<li><a class="reference internal" href="#obtaining-index-instance" id="id41">Obtaining index instance</a></li>
+<li><a class="reference internal" href="#working-with-keys" id="id42">Working with keys</a><ul>
+<li><a class="reference internal" href="#adding-a-key" id="id43">Adding a key</a></li>
+<li><a class="reference internal" href="#deleting-a-key" id="id44">Deleting a key</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#indexes" id="id40">Indexes</a><ul>
-<li><a class="reference internal" href="#index-keys" id="id41">Index Keys</a></li>
-<li><a class="reference internal" href="#index-key-factories" id="id42">Index Key Factories</a><ul>
-<li><a class="reference internal" href="#example" id="id43">Example</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#locations" id="id44">Locations</a></li>
-<li><a class="reference internal" href="#creating-a-new-index" id="id45">Creating a new index</a></li>
-<li><a class="reference internal" href="#obtaining-index-instance" id="id46">Obtaining index instance</a></li>
-<li><a class="reference internal" href="#working-with-keys" id="id47">Working with keys</a><ul>
-<li><a class="reference internal" href="#adding-a-key" id="id48">Adding a key</a></li>
-<li><a class="reference internal" href="#deleting-a-key" id="id49">Deleting a key</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#scanning-keys" id="id50">Scanning keys</a><ul>
-<li><a class="reference internal" href="#isolation-modes" id="id51">Isolation Modes</a></li>
-<li><a class="reference internal" href="#common-behaviour" id="id52">Common Behaviour</a></li>
-<li><a class="reference internal" href="#read-committed-cursor-stability" id="id53">Read Committed/Cursor Stability</a></li>
-<li><a class="reference internal" href="#repeatable-read-rr" id="id54">Repeatable Read (RR)</a></li>
-<li><a class="reference internal" href="#serializable" id="id55">Serializable</a></li>
-<li><a class="reference internal" href="#scanning-api" id="id56">Scanning API</a></li>
+<li><a class="reference internal" href="#scanning-keys" id="id45">Scanning keys</a><ul>
+<li><a class="reference internal" href="#isolation-modes" id="id46">Isolation Modes</a></li>
+<li><a class="reference internal" href="#common-behaviour" id="id47">Common Behaviour</a></li>
+<li><a class="reference internal" href="#read-committed-cursor-stability" id="id48">Read Committed/Cursor Stability</a></li>
+<li><a class="reference internal" href="#repeatable-read-rr" id="id49">Repeatable Read (RR)</a></li>
+<li><a class="reference internal" href="#serializable" id="id50">Serializable</a></li>
+<li><a class="reference internal" href="#scanning-api" id="id51">Scanning API</a></li>
 </ul>
 </li>
 </ul>
@@ -146,75 +140,22 @@
 </ul>
 </div>
 <div class="section" id="introduction">
-<h2><a class="toc-backref" href="#id6">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="overview">
-<h3><a class="toc-backref" href="#id7">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is a transactional database engine, written in Java. It has a
-very small footprint and can be embedded in the address space of an
-application. It provides a simple Java application programming interface (API),
-which can be learned very quickly.</p>
+<h2><a class="toc-backref" href="#id5">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes the SimpleDBM RSS API.</p>
+<div class="section" id="intended-audience">
+<h3><a class="toc-backref" href="#id6">Intended Audience</a><a class="headerlink" href="#intended-audience" title="Permalink to this headline">¶</a></h3>
+<p>This documented is targetted at users of <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>.</p>
 </div>
-<div class="section" id="features">
-<h3><a class="toc-backref" href="#id8">Features</a><a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h3>
-<p>SimpleDBM has the following features:</p>
-<ul class="simple">
-<li><em>Transactional</em> - SimpleDBM fully supports ACID transactions. A STEAL and NO-FORCE buffer management strategy is used for transactions which is optimum for performance.</li>
-<li><em>Multi-threaded</em> - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.</li>
-<li><em>Write Ahead Log</em> - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.</li>
-<li><em>Lock based concurrency</em> - SimpleDBM uses row-level shared, update and exclusive locks to manage concurrency.</li>
-<li><em>Multiple Isolation Levels</em> - SimpleDBM supports read committed, repeatable read, and serializable isolation levels.</li>
-<li><em>B-Tree Indexes</em> - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually rebalance themselves, and do not suffer from fragmentation.</li>
-<li><em>Tables</em> - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages.</li>
-<li><em>Latches and Locks</em> - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.</li>
-<li><em>Deadlock detection</em> - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.</li>
-</ul>
-<div class="section" id="non-features">
-<h4><a class="toc-backref" href="#id9">Non-Features</a><a class="headerlink" href="#non-features" title="Permalink to this headline">¶</a></h4>
-<ul class="simple">
-<li>SimpleDBM is not an SQL engine.</li>
-<li>There is no support for distributed transactions (XA) yet.</li>
-</ul>
+<div class="section" id="pre-requisite-reading">
+<h3><a class="toc-backref" href="#id7">Pre-requisite Reading</a><a class="headerlink" href="#pre-requisite-reading" title="Permalink to this headline">¶</a></h3>
+<p>Before reading this document, the reader is advised to go through
+the <a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html">SimpleDBM Overview</a> document.</p>
 </div>
-<div class="section" id="status">
-<h4><a class="toc-backref" href="#id10">Status</a><a class="headerlink" href="#status" title="Permalink to this headline">¶</a></h4>
-<p>SimpleDBM is currently in early BETA and not suitable for Production use. Note that the simpleDBM API is under flux, and is likely to change until the final 1.0 release is available.</p>
-<p>The latest builds can be downloaded from:</p>
-<p><a class="reference external" href="http://code.google.com/p/simpledbm/downloads/list">http://code.google.com/p/simpledbm/downloads/list</a>.</p>
-</div>
-<div class="section" id="getting-started">
-<h4><a class="toc-backref" href="#id11">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h4>
-<p>Download the latest build of SimpleDBM.
-There are no special requirements or third party library dependencies; all you
-need to ensure is that the SimpleDBM jar file is in your classpath.</p>
-<p>SimpleDBM does not come with a type system of its own, but there is a sample
-type system implementation available, which you can enhance.</p>
-</div>
-</div>
-</div>
-<div class="section" id="simpledbm-modules">
-<h2><a class="toc-backref" href="#id12">SimpleDBM Modules</a><a class="headerlink" href="#simpledbm-modules" title="Permalink to this headline">¶</a></h2>
-<p>The core of <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> is the RSS (named in honor of the
-first IBM Relational Database prototype <a class="reference external" href="http://www.mcjones.org/System_R/">System-R</a> Relational Storage
-System). The RSS provides the underlying storage structures for
-transactions, locking, b-trees etc.</p>
-<p>This document covers the RSS API.</p>
-<p>Note that the RSS API is probably too low level for ordinary users.
-It is meant to be used by people interested
-in build their own Database Engines on top. The design of the RSS is described in
-detail in the <a class="reference external" href="http://www.simpledbm.org">SimpleDBM RSS Developers&#8217;s Guide</a>.</p>
-<p>For users looking for a simpler API, two additional modules are
-available.</p>
-<p>The first one is the <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a> TypeSystem module, which adds support
-for typed data values and multi-attribute row objects. For details of this
-module, please read <a class="reference external" href="http://www.simpledbm.org">SimpleDBM TypeSystem</a>.</p>
-<p>The second module, the Database API, implements a high level
-Database API and uses the TypeSystem module on top of the RSS. For details of this
-module, please read <a class="reference external" href="http://www.simpledbm.org">SimpleDBM Database API</a>.</p>
 </div>
 <div class="section" id="simpledbm-servers-and-databases">
-<h2><a class="toc-backref" href="#id13">SimpleDBM Servers and Databases</a><a class="headerlink" href="#simpledbm-servers-and-databases" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id8">SimpleDBM Servers and Databases</a><a class="headerlink" href="#simpledbm-servers-and-databases" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="id1">
-<h3><a class="toc-backref" href="#id14">Introduction</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id9">Introduction</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
 <p>A SimpleDBM server is a set of background threads and a library of API
 calls that clients can hook into. The background threads take care of
 various tasks, such as writing out buffer pages, writing out logs,
@@ -235,7 +176,7 @@ files, a lock file and a special container used internally by
 SimpleDBM.</p>
 </div>
 <div class="section" id="creating-a-simpledbm-database">
-<h3><a class="toc-backref" href="#id15">Creating a SimpleDBM database</a><a class="headerlink" href="#creating-a-simpledbm-database" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id10">Creating a SimpleDBM database</a><a class="headerlink" href="#creating-a-simpledbm-database" title="Permalink to this headline">¶</a></h3>
 <p>A SimpleDBM database is created by a call to Server.create(), as shown
 below:</p>
 <div class="highlight-python"><pre>import org.simpledbm.rss.main.Server;
@@ -259,7 +200,7 @@ Server.create(properties);</pre>
 the sole argument. The Properties object can be used to pass a
 number of parameters. The available options are shown below:</p>
 <div class="section" id="server-options">
-<h4><a class="toc-backref" href="#id16">Server Options</a><a class="headerlink" href="#server-options" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id11">Server Options</a><a class="headerlink" href="#server-options" title="Permalink to this headline">¶</a></h4>
 <table border="1" class="docutils">
 <colgroup>
 <col width="38%" />
@@ -376,7 +317,7 @@ for sure that you want to create a database.</p>
 </div>
 </div>
 <div class="section" id="opening-a-database">
-<h3><a class="toc-backref" href="#id17">Opening a database</a><a class="headerlink" href="#opening-a-database" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id12">Opening a database</a><a class="headerlink" href="#opening-a-database" title="Permalink to this headline">¶</a></h3>
 <p>Once a database has been created, it can be opened by creating an
 instance of SimpleDBM server, and starting it. The same properties that were
 supplied while creating the database, can be supplied when starting it.</p>
@@ -415,7 +356,7 @@ object.</li>
 </ol>
 </div>
 <div class="section" id="managing-log-messages">
-<h3><a class="toc-backref" href="#id18">Managing log messages</a><a class="headerlink" href="#managing-log-messages" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id13">Managing log messages</a><a class="headerlink" href="#managing-log-messages" title="Permalink to this headline">¶</a></h3>
 <p>SimpleDBM has support for JDK 1.4 style logging as well as
 Log4J logging. By default, if Log4J library is available on the
 classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
@@ -507,21 +448,21 @@ log4j.logger.org.simpledbm.database=INFO</pre>
 </div>
 </div>
 <div class="section" id="common-infrastructure">
-<h2><a class="toc-backref" href="#id19">Common Infrastructure</a><a class="headerlink" href="#common-infrastructure" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id14">Common Infrastructure</a><a class="headerlink" href="#common-infrastructure" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="object-registry">
-<h3><a class="toc-backref" href="#id20">Object Registry</a><a class="headerlink" href="#object-registry" title="Permalink to this headline">¶</a></h3>
-<div class="section" id="id2">
-<h4><a class="toc-backref" href="#id21">Overview</a><a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h4>
+<h3><a class="toc-backref" href="#id15">Object Registry</a><a class="headerlink" href="#object-registry" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="overview">
+<h4><a class="toc-backref" href="#id16">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h4>
 <p>SimpleDBM uses a custom serialization mechanism for marshalling
 and unmarshalling objects to/from byte streams. When an object
 is marshalled, a two-byte code is stored in the first two bytes of
-the byte stream <a class="footnote-reference" href="#id4" id="id3">[1]</a>. This identifies the class of the stored object.
+the byte stream <a class="footnote-reference" href="#id3" id="id2">[1]</a>. This identifies the class of the stored object.
 When reading back, the type code is used to lookup a factory for
 creating the object of the correct class.</p>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>In some cases the type code is not stored, as it can be
+<tr><td class="label"><a class="fn-backref" href="#id2">[1]</a></td><td>In some cases the type code is not stored, as it can be
 determined through some other means.</td></tr>
 </tbody>
 </table>
@@ -564,7 +505,7 @@ each module to register its own types.</p>
 SimpleDBM.</p>
 </div>
 <div class="section" id="two-use-cases">
-<h4><a class="toc-backref" href="#id22">Two Use cases</a><a class="headerlink" href="#two-use-cases" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id17">Two Use cases</a><a class="headerlink" href="#two-use-cases" title="Permalink to this headline">¶</a></h4>
 <p>The <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt> supports two use cases.</p>
 <ul class="simple">
 <li>The first use case is where the client registers an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt>
@@ -579,7 +520,7 @@ object when requested.</li>
 </ul>
 </div>
 <div class="section" id="registering-an-objectfactory">
-<h4><a class="toc-backref" href="#id23">Registering an ObjectFactory</a><a class="headerlink" href="#registering-an-objectfactory" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id18">Registering an ObjectFactory</a><a class="headerlink" href="#registering-an-objectfactory" title="Permalink to this headline">¶</a></h4>
 <p>In the simple case, an <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> implementation needs to be
 registered for a particular type code.</p>
 <p>In the example shown below, objects of the class <tt class="docutils literal"><span class="pre">MyObject</span></tt>
@@ -626,7 +567,7 @@ MyObject o = (MyObject) objectRegistry.getInstance(buf);</pre>
 <p>This pattern is used throughout SimpleDBM RSS.</p>
 </div>
 <div class="section" id="asymmetry-between-retrieving-and-storing-objects">
-<h4><a class="toc-backref" href="#id24">Asymmetry between retrieving and storing objects</a><a class="headerlink" href="#asymmetry-between-retrieving-and-storing-objects" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id19">Asymmetry between retrieving and storing objects</a><a class="headerlink" href="#asymmetry-between-retrieving-and-storing-objects" title="Permalink to this headline">¶</a></h4>
 <p>The reader may have noticed that the <tt class="docutils literal"><span class="pre">ObjectFactory</span></tt> says
 nothing about how objects are marshalled into a byte stream.
 It only deals with the unmarshalling of objects.</p>
@@ -635,7 +576,7 @@ objects that support marshalling are required to implement
 the Storable interface.</p>
 </div>
 <div class="section" id="storable-interface-and-object-serialization">
-<h4><a class="toc-backref" href="#id25">Storable Interface and Object serialization</a><a class="headerlink" href="#storable-interface-and-object-serialization" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id20">Storable Interface and Object serialization</a><a class="headerlink" href="#storable-interface-and-object-serialization" title="Permalink to this headline">¶</a></h4>
 <p>Classes that need serialization support should implement
 the interface <tt class="docutils literal"><span class="pre">org.simpledbm.rss.api.registry.Storable</span></tt>.
 The <tt class="docutils literal"><span class="pre">Storable</span></tt> interface requires the object
@@ -707,7 +648,7 @@ this:</p>
 </div>
 </div>
 <div class="section" id="registering-singletons">
-<h4><a class="toc-backref" href="#id26">Registering Singletons</a><a class="headerlink" href="#registering-singletons" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id21">Registering Singletons</a><a class="headerlink" href="#registering-singletons" title="Permalink to this headline">¶</a></h4>
 <p>In some cases, the requirements for constructing objects are complex
 enough for the client to manage it itself. In this case, the client
 provides a singleton object that is registered with the <tt class="docutils literal"><span class="pre">ObjectRegistry</span></tt>.
@@ -718,11 +659,11 @@ be used to create new instances of objects.</p>
 </div>
 </div>
 <div class="section" id="transactions">
-<h2><a class="toc-backref" href="#id27">Transactions</a><a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id22">Transactions</a><a class="headerlink" href="#transactions" title="Permalink to this headline">¶</a></h2>
 <p>Most SimpleDBM operations take place in the context of a Transaction.
 Following are the main API calls for managing transactions.</p>
 <div class="section" id="creating-new-transactions">
-<h3><a class="toc-backref" href="#id28">Creating new Transactions</a><a class="headerlink" href="#creating-new-transactions" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id23">Creating new Transactions</a><a class="headerlink" href="#creating-new-transactions" title="Permalink to this headline">¶</a></h3>
 <p>To start a new Transaction, invoke the <tt class="docutils literal"><span class="pre">Server.begin()</span></tt> method as
 shown below. You must supply an <tt class="docutils literal"><span class="pre">IsolationMode</span></tt>, try
 <tt class="docutils literal"><span class="pre">READ_COMMITTED</span></tt> to start with.:</p>
@@ -734,9 +675,9 @@ Transaction trx = server.begin(IsolationMode.READ_COMMITTED);</pre>
 <p>Isolation Modes are discussed in more detail in <a class="reference internal" href="#isolation-modes">Isolation Modes</a>.</p>
 </div>
 <div class="section" id="working-with-transactions">
-<h3><a class="toc-backref" href="#id29">Working with Transactions</a><a class="headerlink" href="#working-with-transactions" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id24">Working with Transactions</a><a class="headerlink" href="#working-with-transactions" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="transaction-api">
-<h4><a class="toc-backref" href="#id30">Transaction API</a><a class="headerlink" href="#transaction-api" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id25">Transaction API</a><a class="headerlink" href="#transaction-api" title="Permalink to this headline">¶</a></h4>
 <p>The Transaction interface provides the following methods for clients
 to invoke:</p>
 <div class="highlight-python"><pre>public interface Transaction {
@@ -790,7 +731,7 @@ finally {
 </div>
 </div>
 <div class="section" id="transaction-savepoints">
-<h4><a class="toc-backref" href="#id31">Transaction Savepoints</a><a class="headerlink" href="#transaction-savepoints" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id26">Transaction Savepoints</a><a class="headerlink" href="#transaction-savepoints" title="Permalink to this headline">¶</a></h4>
 <p>You can create transaction savepoints at any point in time.  When you
 create a savepoint, you need to decide whether the scans associated
 with the transaction should save their state so that in the event of
@@ -813,9 +754,9 @@ location.</p>
 </div>
 </div>
 <div class="section" id="tables">
-<h2><a class="toc-backref" href="#id32">Tables</a><a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id27">Tables</a><a class="headerlink" href="#tables" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="tuplecontainers">
-<h3><a class="toc-backref" href="#id33">TupleContainers</a><a class="headerlink" href="#tuplecontainers" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id28">TupleContainers</a><a class="headerlink" href="#tuplecontainers" title="Permalink to this headline">¶</a></h3>
 <p>SimpleDBM provides support for tables with variable length records.
 The container for a table is known as <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>.  As far as SimpleDBM is concerned,
 a row in a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt> is just a blob of data; it can contain
@@ -825,7 +766,7 @@ pages. This chunking is transparent from a client perspective, as the
 client only ever sees full records.</p>
 </div>
 <div class="section" id="creating-a-tuplecontainer">
-<h3><a class="toc-backref" href="#id34">Creating a TupleContainer</a><a class="headerlink" href="#creating-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id29">Creating a TupleContainer</a><a class="headerlink" href="#creating-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
 <p>When you create a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>, you must supply a name for the
 container, a unique numeric ID which should not be in use by any other
 container, and the extent size. For efficiency, SimpleDBM allocates
@@ -873,7 +814,7 @@ created.</dd>
 </dl>
 </div>
 <div class="section" id="accessing-a-tuplecontainer">
-<h3><a class="toc-backref" href="#id35">Accessing a TupleContainer</a><a class="headerlink" href="#accessing-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id30">Accessing a TupleContainer</a><a class="headerlink" href="#accessing-a-tuplecontainer" title="Permalink to this headline">¶</a></h3>
 <p>To manipulate a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt>, you must first get access to it. This
 is done by invoking the <tt class="docutils literal"><span class="pre">getTupleContainer()</span></tt> method provided by the
 SimpleDBM Server object. Note that when you access a <tt class="docutils literal"><span class="pre">TupleContainer</span></tt> in
@@ -899,7 +840,7 @@ finally {
 </div>
 </div>
 <div class="section" id="inserting-tuples">
-<h3><a class="toc-backref" href="#id36">Inserting tuples</a><a class="headerlink" href="#inserting-tuples" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id31">Inserting tuples</a><a class="headerlink" href="#inserting-tuples" title="Permalink to this headline">¶</a></h3>
 <p>SimpleDBM treats tuples (rows) as blobs of data, and does not care
 about the internal structure of a tuple. The only requirement is that
 a tuple must implement the <tt class="docutils literal"><span class="pre">Storable</span></tt> interface.</p>
@@ -941,7 +882,7 @@ finally {
 </div>
 </div>
 <div class="section" id="reading-tuples">
-<h3><a class="toc-backref" href="#id37">Reading tuples</a><a class="headerlink" href="#reading-tuples" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id32">Reading tuples</a><a class="headerlink" href="#reading-tuples" title="Permalink to this headline">¶</a></h3>
 <p>In order to read tuples, you must open a scan. A scan is a mechanism
 for accessing tuples one by one. You can open Index Scans (described
 in next chapter) or Tuple Scans. A Tuple Scan directly scans a
@@ -972,7 +913,7 @@ finally {
 </div>
 </div>
 <div class="section" id="updating-tuples">
-<h3><a class="toc-backref" href="#id38">Updating tuples</a><a class="headerlink" href="#updating-tuples" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id33">Updating tuples</a><a class="headerlink" href="#updating-tuples" title="Permalink to this headline">¶</a></h3>
 <p>In order to update a tuple, you must first obtain its Location using a
 scan. typically, if you intend to update the tuple, you should open the
 scan in UPDATE mode. This is done by supplying a boolean true as the
@@ -1007,7 +948,7 @@ finally {
 </div>
 </div>
 <div class="section" id="deleting-tuples">
-<h3><a class="toc-backref" href="#id39">Deleting tuples</a><a class="headerlink" href="#deleting-tuples" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id34">Deleting tuples</a><a class="headerlink" href="#deleting-tuples" title="Permalink to this headline">¶</a></h3>
 <p>Tuple deletes are done in a similar way as tuple updates.
 Start a scan in UPDATE mode, if you intend to delete tuples
 during the scan. Here is an example:</p>
@@ -1034,9 +975,9 @@ finally {
 </div>
 </div>
 <div class="section" id="indexes">
-<h2><a class="toc-backref" href="#id40">Indexes</a><a class="headerlink" href="#indexes" title="Permalink to this headline">¶</a></h2>
+<h2><a class="toc-backref" href="#id35">Indexes</a><a class="headerlink" href="#indexes" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="index-keys">
-<h3><a class="toc-backref" href="#id41">Index Keys</a><a class="headerlink" href="#index-keys" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id36">Index Keys</a><a class="headerlink" href="#index-keys" title="Permalink to this headline">¶</a></h3>
 <p>Index Keys are the searchable attributes stored in the Index. This module
 specifies Index Keys in a fairly general way:</p>
 <div class="highlight-python"><pre>public interface IndexKey
@@ -1062,7 +1003,7 @@ the key should not exceed 1/8th of the page size, ie, 1KB in a 8KB
 page.</p>
 </div>
 <div class="section" id="index-key-factories">
-<h3><a class="toc-backref" href="#id42">Index Key Factories</a><a class="headerlink" href="#index-key-factories" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id37">Index Key Factories</a><a class="headerlink" href="#index-key-factories" title="Permalink to this headline">¶</a></h3>
 <p>An Index Key Factory is used to create new keys. In addition to normal
 keys, an Index Key Factory must be able to create two special type of
 keys:</p>
@@ -1130,7 +1071,7 @@ container ID to determine the type of index key to create. For
 example, it may consult a data dictionary to determine the type of key
 attributes required by the index key.</p>
 <div class="section" id="example">
-<h4><a class="toc-backref" href="#id43">Example</a><a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id38">Example</a><a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h4>
 <p>Given below is an example of an <tt class="docutils literal"><span class="pre">IndexKey</span></tt> implementation. This
 implementation uses a special byte field to maintain the status
 information.:</p>
@@ -1293,13 +1234,13 @@ and the sample project <tt class="docutils literal"><span class="pre">tupledemo<
 </div>
 </div>
 <div class="section" id="locations">
-<h3><a class="toc-backref" href="#id44">Locations</a><a class="headerlink" href="#locations" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id39">Locations</a><a class="headerlink" href="#locations" title="Permalink to this headline">¶</a></h3>
 <p>Indexes contain pointers to tuple data. When you insert a tuple in a
 tuple container, a location is assigned to the tuple. This location
 can be stored in an index to point to the tuple.</p>
 </div>
 <div class="section" id="creating-a-new-index">
-<h3><a class="toc-backref" href="#id45">Creating a new index</a><a class="headerlink" href="#creating-a-new-index" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id40">Creating a new index</a><a class="headerlink" href="#creating-a-new-index" title="Permalink to this headline">¶</a></h3>
 <p>Following code snippet shows the steps required to create a new
 index.:</p>
 <div class="highlight-python"><pre>int INDEX_KEY_FACTORY_TYPE = 25000;
@@ -1330,7 +1271,7 @@ try {
 </div>
 </div>
 <div class="section" id="obtaining-index-instance">
-<h3><a class="toc-backref" href="#id46">Obtaining index instance</a><a class="headerlink" href="#obtaining-index-instance" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id41">Obtaining index instance</a><a class="headerlink" href="#obtaining-index-instance" title="Permalink to this headline">¶</a></h3>
 <p>In order to manipulate an index, you must first obtain an instance of
 the index. This is shown below.</p>
 <div class="highlight-python"><pre>Transaction trx = ...;
@@ -1343,9 +1284,9 @@ container. Concurrent insert, delete and scan operations are
 permitted, however.</p>
 </div>
 <div class="section" id="working-with-keys">
-<h3><a class="toc-backref" href="#id47">Working with keys</a><a class="headerlink" href="#working-with-keys" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id42">Working with keys</a><a class="headerlink" href="#working-with-keys" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="adding-a-key">
-<h4><a class="toc-backref" href="#id48">Adding a key</a><a class="headerlink" href="#adding-a-key" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id43">Adding a key</a><a class="headerlink" href="#adding-a-key" title="Permalink to this headline">¶</a></h4>
 <p>The API for inserting new keys is shown below.</p>
 <div class="highlight-python"><pre>public interface IndexContainer {
   /**
@@ -1409,7 +1350,7 @@ try {
 <p>Above example is taken from the sample <tt class="docutils literal"><span class="pre">tupledemo</span></tt>.</p>
 </div>
 <div class="section" id="deleting-a-key">
-<h4><a class="toc-backref" href="#id49">Deleting a key</a><a class="headerlink" href="#deleting-a-key" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id44">Deleting a key</a><a class="headerlink" href="#deleting-a-key" title="Permalink to this headline">¶</a></h4>
 <p>Deleting a key is very similar to adding a key. First lets look
 at the API.</p>
 <div class="highlight-python"><pre>public interface IndexContainer {
@@ -1479,14 +1420,14 @@ an index in UPDATE mode and then carrying out modifications.</p>
 </div>
 </div>
 <div class="section" id="scanning-keys">
-<h3><a class="toc-backref" href="#id50">Scanning keys</a><a class="headerlink" href="#scanning-keys" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id45">Scanning keys</a><a class="headerlink" href="#scanning-keys" title="Permalink to this headline">¶</a></h3>
 <div class="section" id="isolation-modes">
-<h4><a class="toc-backref" href="#id51">Isolation Modes</a><a class="headerlink" href="#isolation-modes" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id46">Isolation Modes</a><a class="headerlink" href="#isolation-modes" title="Permalink to this headline">¶</a></h4>
 <p>Before describing how to scan keys within an Index, it is necessary to
 describe the various lock isolation modes supported by SimpleDBM.</p>
 </div>
 <div class="section" id="common-behaviour">
-<h4><a class="toc-backref" href="#id52">Common Behaviour</a><a class="headerlink" href="#common-behaviour" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id47">Common Behaviour</a><a class="headerlink" href="#common-behaviour" title="Permalink to this headline">¶</a></h4>
 <p>Following behaviour is common across all lock isolation modes.</p>
 <ol class="arabic simple">
 <li>All locking is on Tuple Locations (rowids) only.</li>
@@ -1502,24 +1443,24 @@ pages are accessed.</li>
 </ol>
 </div>
 <div class="section" id="read-committed-cursor-stability">
-<h4><a class="toc-backref" href="#id53">Read Committed/Cursor Stability</a><a class="headerlink" href="#read-committed-cursor-stability" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id48">Read Committed/Cursor Stability</a><a class="headerlink" href="#read-committed-cursor-stability" title="Permalink to this headline">¶</a></h4>
 <p>During scans, the tuple location is locked in SHARED or UPDATE mode
 while the cursor is positioned on the key. The lock on current
 location is released before the cursor moves to the next key.</p>
 </div>
 <div class="section" id="repeatable-read-rr">
-<h4><a class="toc-backref" href="#id54">Repeatable Read (RR)</a><a class="headerlink" href="#repeatable-read-rr" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id49">Repeatable Read (RR)</a><a class="headerlink" href="#repeatable-read-rr" title="Permalink to this headline">¶</a></h4>
 <p>SHARED mode locks obtained on tuple locations during scans are retained until
 the transaction completes. UPDATE mode locks are downgraded to SHARED mode when
 the cursor moves.</p>
 </div>
 <div class="section" id="serializable">
-<h4><a class="toc-backref" href="#id55">Serializable</a><a class="headerlink" href="#serializable" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id50">Serializable</a><a class="headerlink" href="#serializable" title="Permalink to this headline">¶</a></h4>
 <p>Same as Repeatable Read, with additional locking (next key) during
 scans to prevent phantom reads.</p>
 </div>
 <div class="section" id="scanning-api">
-<h4><a class="toc-backref" href="#id56">Scanning API</a><a class="headerlink" href="#scanning-api" title="Permalink to this headline">¶</a></h4>
+<h4><a class="toc-backref" href="#id51">Scanning API</a><a class="headerlink" href="#scanning-api" title="Permalink to this headline">¶</a></h4>
 <p>Opening an IndexScan requires you to specify a start condition.
 If you want to start from the beginning, then you may specify null values
 as the start key/location.</p>
@@ -1648,16 +1589,10 @@ try {
             <ul>
 <li><a class="reference external" href="">SimpleDBM RSS User&#8217;s Manual</a><ul>
 <li><a class="reference external" href="#introduction">Introduction</a><ul>
-<li><a class="reference external" href="#overview">Overview</a></li>
-<li><a class="reference external" href="#features">Features</a><ul>
-<li><a class="reference external" href="#non-features">Non-Features</a></li>
-<li><a class="reference external" href="#status">Status</a></li>
-<li><a class="reference external" href="#getting-started">Getting Started</a></li>
+<li><a class="reference external" href="#intended-audience">Intended Audience</a></li>
+<li><a class="reference external" href="#pre-requisite-reading">Pre-requisite Reading</a></li>
 </ul>
 </li>
-</ul>
-</li>
-<li><a class="reference external" href="#simpledbm-modules">SimpleDBM Modules</a></li>
 <li><a class="reference external" href="#simpledbm-servers-and-databases">SimpleDBM Servers and Databases</a><ul>
 <li><a class="reference external" href="#id1">Introduction</a></li>
 <li><a class="reference external" href="#creating-a-simpledbm-database">Creating a SimpleDBM database</a><ul>
@@ -1670,7 +1605,7 @@ try {
 </li>
 <li><a class="reference external" href="#common-infrastructure">Common Infrastructure</a><ul>
 <li><a class="reference external" href="#object-registry">Object Registry</a><ul>
-<li><a class="reference external" href="#id2">Overview</a></li>
+<li><a class="reference external" href="#overview">Overview</a></li>
 <li><a class="reference external" href="#two-use-cases">Two Use cases</a></li>
 <li><a class="reference external" href="#registering-an-objectfactory">Registering an ObjectFactory</a></li>
 <li><a class="reference external" href="#asymmetry-between-retrieving-and-storing-objects">Asymmetry between retrieving and storing objects</a></li>
@@ -1733,7 +1668,7 @@ try {
                                   title="previous chapter">SimpleDBM TypeSystem</a></p>
             <h4>Next topic</h4>
             <p class="topless"><a href="developerguide.html"
-                                  title="next chapter">SimpleDBM RSS Developers&#8217;s Guide</a></p>
+                                  title="next chapter">SimpleDBM Developers&#8217;s Guide</a></p>
             <h3>This Page</h3>
             <ul class="this-page-menu">
               <li><a href="_sources/usermanual.txt"
@@ -1760,7 +1695,7 @@ try {
       <h3>Navigation</h3>
       <ul>
         <li class="right" style="margin-right: 10px">
-          <a href="developerguide.html" title="SimpleDBM RSS Developers’s Guide"
+          <a href="developerguide.html" title="SimpleDBM Developers’s Guide"
              >next</a></li>
         <li class="right" >
           <a href="typesystem.html" title="SimpleDBM TypeSystem"
