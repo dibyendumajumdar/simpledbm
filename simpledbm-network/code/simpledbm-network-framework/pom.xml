@@ -1,17 +1,18 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simpledbm.network</groupId>
-	<artifactId>simpledbm-network-server</artifactId>
+	<artifactId>simpledbm-network-framework</artifactId>
 	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>SimpleDBM Network Client</name>
+	<name>SimpleDBM Network Framework</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
 		<connection>
-			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simpledbm-network-server 
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simple-network-framework
 		</connection>
 		<developerConnection>
-			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simpledbm-network-server
+			scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simple-network-framework
 		</developerConnection>
 		<url>http://code.google.com/p/simpledbm/source/browse/</url>
 	</scm>
@@ -36,29 +37,9 @@
 	</licenses>
 	<dependencies>
 		<dependency>
-			<groupId>org.simpledbm.network</groupId>
-			<artifactId>simpledbm-network-common</artifactId>
-			<version>0.0.1-SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>org.simpledbm.database</groupId>
-			<artifactId>simpledbm-database</artifactId>
-			<version>1.0.13</version>
-		</dependency>
-		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-common</artifactId>
 			<version>1.0.2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
-			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.16</version>
-		</dependency>
-		<dependency>
-			<groupId>org.simpledbm.typesystem</groupId>
-			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.12</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
