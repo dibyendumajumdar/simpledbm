@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -36,97 +36,90 @@
  */
 package org.simpledbm.network.nio;
 
-import java.io.IOException;
-import java.net.Socket;
-import java.net.UnknownHostException;
+import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.network.nio.api.Connection;
+import org.simpledbm.network.nio.api.NetworkServer;
+import org.simpledbm.network.nio.api.NetworkUtil;
+import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.network.nio.samples.EchoRequestHandler;
 
-import org.simpledbm.network.nio.impl.ClientConnection;
-import org.simpledbm.network.nio.impl.NetworkServer;
+import java.util.Properties;
 
-import junit.framework.TestCase;
+public class NetworkTest extends BaseTestCase {
 
-public class NetworkTest extends TestCase {
+    public NetworkTest(String name) {
+        super(name);
+    }
 
-	public NetworkTest(String name) {
-		super(name);
-	}
+    protected void setUp() throws Exception {
+        super.setUp();
+    }
 
-	protected void setUp() throws Exception {
-		super.setUp();
-	}
+    protected void tearDown() throws Exception {
+        super.tearDown();
+    }
 
-	protected void tearDown() throws Exception {
-		super.tearDown();
-	}
+    public void testBasics() {
 
-	public void testBasics() {
+        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, new EchoRequestHandler(), new Properties());
+        networkServer.start();
+        Thread t = new Thread(new TestClient(networkServer));
+        t.start();
+        try {
+            Thread.sleep(1000);
+            while (networkServer.isOpen()) {
+                networkServer.select();
+            }
+            t.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            networkServer.shutdown();
+        }
+    }
 
-		NetworkServer networkServer = new NetworkServer("localhost", 8000);
-        System.err.println(networkServer);
-        networkServer.open();
-		Thread t = new Thread(new TestClient(networkServer));
-		t.start();
-		try {
-			Thread.sleep(1000);
-			while (networkServer.isOpen()) {
-				networkServer.select();
-			}
-			t.join();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		networkServer.close();
-	}
-	
-	static final class TestClient implements Runnable {
+    final class TestClient implements Runnable {
 
-		NetworkServer server;
-		
-		public TestClient(NetworkServer server) {
-			super();
-			this.server = server;
-		}
+        NetworkServer server;
 
-		public void run() {
-			
-			try {
-				Thread.sleep(5000);
-			} catch (InterruptedException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
-			}
-			
-			Socket s = null;
-			ClientConnection c = null;
-			try {
-				System.err.println("Connecting ...");
-				s = new Socket("localhost", 8000);
-				c = new ClientConnection(s);
-				System.err.println("Connected, sending message");
-				c.write("hello world!".getBytes());	
-				byte[] data = c.read();
-				String str = new String(data);
-				System.err.println("Received message [" + str +"]");
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			} catch (UnknownHostException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			finally {
-				if (c != null) {
-					c.close();
-				}
-				server.requestStop();
-			}
-		}
-	}	
-	
+        public TestClient(NetworkServer server) {
+            super();
+            this.server = server;
+        }
+
+        public void run() {
+
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e1) {
+            }
+
+            Connection c = null;
+            try {
+                System.err.println("Connecting ...");
+                c = NetworkUtil.createConnection("localhost", 8000);
+                for (int i = 0; i < 5; i++) {
+                    System.err.println("Connected, sending message");
+                    Response response = c.submit(NetworkUtil.createRequest("hello world!"));
+                    String str = new String(response.getData().array());
+                    System.err.println("Received reply [" + str + "]");
+                    if (!str.equals("hello world!")) {
+                         throw new RuntimeException("Unexpected response from server");
+                    }
+                }
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                }
+            } catch (Exception e) {
+                NetworkTest.super.setThreadFailed(Thread.currentThread(), e);
+            }
+            finally {
+                if (c != null) {
+                    c.close();
+                }
+                server.requestStop();
+            }
+        }
+    }
 }

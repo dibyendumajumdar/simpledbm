@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -38,13 +38,38 @@ package org.simpledbm.network.nio.api;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Response message from the Network Server.
+ */
 public interface Response {
-	
-	int getStatusCode();
-	void setStatusCode(int requestCode);
-	int getSessionId();
-	void setSessionId(int sessionId);
 
-	void setData(ByteBuffer buffer);
-	ByteBuffer getData();
+    /**
+     * Gets the status code, < 0 for errors.
+     */
+    int getStatusCode();
+
+    /**
+     * Sets the status code, set < 0 for errors.
+     */
+    void setStatusCode(int requestCode);
+
+    /**
+     * Gets the session id.
+     */
+    int getSessionId();
+
+    /**
+     * Sets the session id.
+     */
+    void setSessionId(int sessionId);
+
+    /**
+     * Sets the data content.
+     */
+    void setData(ByteBuffer buffer);
+
+    /**
+     * Gets the data content of the message.
+     */
+    ByteBuffer getData();
 }

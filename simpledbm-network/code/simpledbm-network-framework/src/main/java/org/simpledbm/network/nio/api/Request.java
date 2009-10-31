@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -38,13 +38,50 @@ package org.simpledbm.network.nio.api;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Encapsulates the request received from a network client.
+ */
 public interface Request {
 
-	int getSessionId();
-	int getCorrelationId();
-	int getRequestCode();
-	int getVersion();
-	int getDataSize();
-	
-	ByteBuffer getData();
+    /**
+     * Gets the session Id associated with the client.
+     * If the session Id is not allocated yet, this method should return
+     * 0. All valid session Ids should be > 0.
+     * New session Ids should be set in the Response object.
+     */
+    int getSessionId();
+
+    /**
+     * Gets the correlation Id set by the network client.
+     * The correlation Id should be copied to the Response object.
+     */
+    int getCorrelationId();
+
+    /**
+     * Gets the request code which may have been provided by the client.
+     */
+    int getRequestCode();
+
+    /**
+     * Gets the version of the request message.
+     */
+    int getVersion();
+
+    /**
+     *  Gets the size of the data associated with the request.
+     */
+    int getDataSize();
+
+    /**
+     * Gets the data sent by the client. The buffer should be independent
+     * of the underlying framework, so that the request handler can manipulate this
+     * if necessary. The buffer should be positioned such as position() is 0,
+     * and limit() is set to the length of the buffer.
+     */
+    ByteBuffer getData();
+
+    /**
+     * Gets the header data.
+     */
+    ByteBuffer getHeaderData();
 }
