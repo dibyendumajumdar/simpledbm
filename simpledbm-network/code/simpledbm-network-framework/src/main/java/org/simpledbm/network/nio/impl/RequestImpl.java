@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -42,57 +42,65 @@ import org.simpledbm.network.nio.api.Request;
 
 public class RequestImpl implements Request {
 
-	RequestHeader header;
-	ByteBuffer data;
-	
-	public RequestImpl(RequestHeader header, ByteBuffer data) {
-		super();
-		this.header = header;
-		this.data = data;
-	}
+    RequestHeader header;
+    ByteBuffer data;
 
-	public int getCorrelationId() {
-		return header.getCorrelationId();
-	}
+    public RequestImpl(RequestHeader header, ByteBuffer data) {
+        super();
+        this.header = header;
+        header.setDataSize(data.limit());
+        this.data = data;
+    }
 
-	public ByteBuffer getData() {
-		return data;
-	}
+    public int getCorrelationId() {
+        return header.getCorrelationId();
+    }
 
-	public int getDataSize() {
-		return header.getDataSize();
-	}
+    public ByteBuffer getData() {
+        return data;
+    }
 
-	public int getRequestCode() {
-		return header.getRequestCode();
-	}
+    public int getDataSize() {
+        return header.getDataSize();
+    }
 
-	public int getSessionId() {
-		return header.getSessionId();
-	}
+    public int getRequestCode() {
+        return header.getRequestCode();
+    }
 
-	public int getVersion() {
-		return header.getVersion();
-	}
-	
-	RequestHeader getRequestHeader() {
-		return header;
-	}
+    public int getSessionId() {
+        return header.getSessionId();
+    }
 
-	void setRequestHeader(RequestHeader header) {
-		this.header = header;
-	}
-	
-	void setData(ByteBuffer data) {
-		this.data = data;
-	}
+    public int getVersion() {
+        return header.getVersion();
+    }
 
-	RequestHeader getHeader() {
-		return header;
-	}
+    RequestHeader getRequestHeader() {
+        return header;
+    }
 
-	void setHeader(RequestHeader header) {
-		this.header = header;
-	}
-	
+    void setRequestHeader(RequestHeader header) {
+        this.header = header;
+    }
+
+    void setData(ByteBuffer data) {
+        this.data = data;
+    }
+
+    RequestHeader getHeader() {
+        return header;
+    }
+
+    void setHeader(RequestHeader header) {
+        this.header = header;
+    }
+
+    public ByteBuffer getHeaderData() {
+        ByteBuffer headerData = RequestHeader.allocate();
+        header.store(headerData);
+        headerData.flip();
+        return headerData;
+    }
+
 }

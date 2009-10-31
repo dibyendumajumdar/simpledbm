@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -42,45 +42,45 @@ import org.simpledbm.network.nio.api.Response;
 
 public class ResponseImpl implements Response {
 
-	ResponseHeader header;
-	ByteBuffer data;	
-	
-	public ResponseImpl(ResponseHeader header, ByteBuffer data) {
-		super();
-		this.header = header;
-		this.data = data;
-	}
+    ResponseHeader header;
+    ByteBuffer data;
 
-	public int getSessionId() {
-		return header.getSessionId();
-	}
+    public ResponseImpl(ResponseHeader header, ByteBuffer data) {
+        super();
+        this.header = header;
+        this.data = data;
+    }
 
-	public int getStatusCode() {
-		return header.getStatusCode();
-	}
+    public int getSessionId() {
+        return header.getSessionId();
+    }
 
-	public void setData(ByteBuffer buffer) {
-		this.data = buffer;
-	}
+    public int getStatusCode() {
+        return header.getStatusCode();
+    }
 
-	public void setSessionId(int sessionId) {
-		header.setSessionId(sessionId);
-	}
+    public void setData(ByteBuffer buffer) {
+        this.data = buffer;
+    }
 
-	public void setStatusCode(int requestCode) {
-		header.setStatusCode(requestCode);
-	}
+    public void setSessionId(int sessionId) {
+        header.setSessionId(sessionId);
+    }
 
-	ResponseHeader getHeader() {
-		return header;
-	}
+    public void setStatusCode(int requestCode) {
+        header.setStatusCode(requestCode);
+    }
 
-	void setHeader(ResponseHeader header) {
-		this.header = header;
-	}
+    ResponseHeader getHeader() {
+        return header;
+    }
 
-	public ByteBuffer getData() {
-		return data;
-	}
+    void setHeader(ResponseHeader header) {
+        this.header = header;
+    }
+
+    public ByteBuffer getData() {
+        return data;
+    }
 
 }

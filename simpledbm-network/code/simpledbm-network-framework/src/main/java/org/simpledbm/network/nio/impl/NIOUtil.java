@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -36,29 +36,49 @@
  */
 package org.simpledbm.network.nio.impl;
 
+import java.io.Closeable;
 import java.io.IOException;
+import java.net.Socket;
 import java.nio.channels.Channel;
 import java.nio.channels.Selector;
 
 public class NIOUtil {
 
-	static void close(Channel channel) {
-		if (channel != null) {
-			try {
-				channel.close();
-			} catch (IOException e) {
-			}
-		}
-	}
+    static void close(Channel channel) {
+        if (channel != null) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+            }
+        }
+    }
 
-	static void close(Selector channel) {
-		if (channel != null) {
-			try {
-				channel.close();
-			} catch (IOException e) {
-			}
-		}
-	}
-	
-	
+    static void close(Selector channel) {
+        if (channel != null) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+            }
+        }
+    }
+
+    static void close(Closeable closeable) {
+        if (closeable != null) {
+            try {
+                closeable.close();
+            }
+            catch (IOException e) {
+            }
+        }
+    }
+
+    static void close(Socket socket) {
+        if (socket != null) {
+            try {
+                socket.close();
+            }
+            catch (IOException e) {
+            }
+        }
+    }
 }

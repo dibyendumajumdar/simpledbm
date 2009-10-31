@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -36,17 +36,32 @@
  */
 package org.simpledbm.network.nio.samples;
 
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
 
+import java.util.Properties;
 
+/**
+ * Simple request handler that expects string messages and echoes them
+ * back.
+ */
 public class EchoRequestHandler implements RequestHandler {
 
-	public void handleRequest(Request request, Response response) {
+    public void onInitialize(Platform platform, Properties properties) {
+    }
+
+    public void onStart() {
+    }
+
+    public void handleRequest(Request request, Response response) {
         String s = new String(request.getData().array());
-        System.err.println("Received [" + s + "]");
+        System.err.println("Received request [" + s + "]");
         response.setData(request.getData());
-	}
+    }
+
+    public void onShutdown() {
+    }
 
 }
