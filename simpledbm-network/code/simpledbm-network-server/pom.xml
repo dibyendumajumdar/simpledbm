@@ -37,13 +37,13 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.simpledbm.network</groupId>
-			<artifactId>simpledbm-network-common</artifactId>
+			<artifactId>simpledbm-network-framework</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.database</groupId>
 			<artifactId>simpledbm-database</artifactId>
-			<version>1.0.13</version>
+			<version>1.0.14-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>

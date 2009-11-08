@@ -300,6 +300,25 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		addMessages();
 	}
 
+	/**
+	 * Constructs the Database object. The actual initialization of the server
+	 * objects is deferred until the database is started.
+	 * 
+	 * @param properties
+	 *            Properties for the database. For details see RSS
+	 *            Documentation.
+	 */
+	public DatabaseImpl(Platform platform, Properties properties) {
+		validateProperties(properties);
+		this.properties = properties;
+		this.platform = platform; 
+		po = platform.getPlatformObjects(Database.LOGGER_NAME);
+		log = po.getLogger();
+		mcat = po.getMessageCatalog();
+		exceptionHandler = po.getExceptionHandler();
+		addMessages();
+	}	
+	
 	private void validateProperties(Properties properties2) {
 		// TODO Auto-generated method stub
 	}

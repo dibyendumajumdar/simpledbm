@@ -34,47 +34,51 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.database.api;
+package org.simpledbm.network.server;
 
 import java.util.Properties;
 
 import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.database.impl.DatabaseImpl;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.database.api.Database;
+import org.simpledbm.database.api.DatabaseFactory;
+import org.simpledbm.network.nio.api.NetworkServer;
+import org.simpledbm.network.nio.api.NetworkUtil;
+import org.simpledbm.network.nio.api.Request;
+import org.simpledbm.network.nio.api.RequestHandler;
+import org.simpledbm.network.nio.api.Response;
 
-/**
- * The DatabaseFactory class is responsible for creating and obtaining instances of 
- * Databases.
- * 
- * @author dibyendu majumdar
- */
-public class DatabaseFactory {
+
+public class SimpleDBMRequestHandler implements RequestHandler {
 	
-	/**
-	 * Creates a new SimpleDBM database based upon supplied properties.
-	 * For details of available properties, please refer to the SimpleDBM 
-	 * User Manual.
-	 * @param properties Properties for SimpleDBM 
-	 */
-	public static void create(Properties properties) {
-		DatabaseImpl.create(properties);
-	}
-	
-	/**
-	 * Obtains a database instance for an existing database.
-	 * @param properties Properties for SimpleDBM
-	 * @return Database Instance
-	 */
-	public static Database getDatabase(Properties properties) {
-		return new DatabaseImpl(properties);
+	Database database;
+
+	public static void main(String args[]) {
+
+		Properties properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+		Platform platform = new PlatformImpl(properties);
+
+		SimpleDBMRequestHandler server = new SimpleDBMRequestHandler();
+		NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, server, new Properties());
+        networkServer.start();
+        networkServer.shutdown();	
 	}
 
-	/**
-	 * Obtains a database instance for an existing database.
-	 * @param properties Properties for SimpleDBM
-	 * @return Database Instance
-	 */
-	public static Database getDatabase(Platform platform, Properties properties) {
-		return new DatabaseImpl(properties);
-	}	
-	
+	public void handleRequest(Request request, Response response) {
+	}
+
+	public void onInitialize(Platform platform, Properties properties) {
+		database = DatabaseFactory.getDatabase(platform, properties);
+	}
+
+	public void onShutdown() {
+		database.shutdown();
+	}
+
+	public void onStart() {
+		database.start();
+	}
 }
