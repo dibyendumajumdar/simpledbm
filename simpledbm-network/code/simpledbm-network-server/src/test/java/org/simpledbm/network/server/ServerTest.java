@@ -36,49 +36,32 @@
  */
 package org.simpledbm.network.server;
 
-import java.util.Properties;
-
-import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.common.impl.platform.PlatformImpl;
-import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.database.api.Database;
-import org.simpledbm.database.api.DatabaseFactory;
+import org.simpledbm.junit.BaseTestCase;
+import org.simpledbm.network.nio.api.Connection;
 import org.simpledbm.network.nio.api.NetworkServer;
 import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Request;
-import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.network.nio.samples.EchoRequestHandler;
 
+import java.util.Properties;
 
-public class SimpleDBMRequestHandler implements RequestHandler {
+public class ServerTest extends BaseTestCase {
 
-    Database database;
-
-    public static void main(String args[]) {
-
-        Properties properties = new Properties();
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
-        properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
-
-        SimpleDBMRequestHandler server = new SimpleDBMRequestHandler();
-        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, server, new Properties());
-        networkServer.start();
-        networkServer.shutdown();
+    public ServerTest(String name) {
+        super(name);
     }
 
-    public void handleRequest(Request request, Response response) {
+    protected void setUp() throws Exception {
+        super.setUp();
     }
 
-    public void onInitialize(Platform platform, Properties properties) {
-        database = DatabaseFactory.getDatabase(platform, properties);
+    protected void tearDown() throws Exception {
+        super.tearDown();
     }
 
-    public void onShutdown() {
-        database.shutdown();
+    public void testBasics() {
+        SimpleDBMServer server = new SimpleDBMServer();
+        server.run(new String[] {"create", "test.properties"});
     }
 
-    public void onStart() {
-        database.start();
-    }
 }

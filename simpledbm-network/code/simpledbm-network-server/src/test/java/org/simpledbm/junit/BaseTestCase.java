@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *
+ *    
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *
+ *    
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,51 +34,69 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.network.server;
+package org.simpledbm.junit;
 
 import java.util.Properties;
+import java.util.Vector;
+
+import junit.framework.TestCase;
 
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.impl.platform.PlatformImpl;
-import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.database.api.Database;
-import org.simpledbm.database.api.DatabaseFactory;
-import org.simpledbm.network.nio.api.NetworkServer;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Request;
-import org.simpledbm.network.nio.api.RequestHandler;
-import org.simpledbm.network.nio.api.Response;
 
+public abstract class BaseTestCase extends TestCase {
 
-public class SimpleDBMRequestHandler implements RequestHandler {
+    Vector<ThreadFailure> threadFailureExceptions;
+    
+    protected Platform platform;
 
-    Database database;
+    public BaseTestCase() {
+    }
 
-    public static void main(String args[]) {
+    public BaseTestCase(String arg0) {
+        super(arg0);
+    }
 
+    public final void setThreadFailed(Thread thread, Throwable exception) {
+        threadFailureExceptions.add(new ThreadFailure(thread, exception));
+    }
+
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        threadFailureExceptions = new Vector<ThreadFailure>();
         Properties properties = new Properties();
         properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
-
-        SimpleDBMRequestHandler server = new SimpleDBMRequestHandler();
-        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, server, new Properties());
-        networkServer.start();
-        networkServer.shutdown();
+        platform = new PlatformImpl(properties);
+//        Logger.configure(properties);
     }
 
-    public void handleRequest(Request request, Response response) {
+    @Override
+    protected void tearDown() throws Exception {
+        threadFailureExceptions = null;
+        super.tearDown();
     }
 
-    public void onInitialize(Platform platform, Properties properties) {
-        database = DatabaseFactory.getDatabase(platform, properties);
+    public final void checkThreadFailures() throws Exception {
+        for (ThreadFailure tf : threadFailureExceptions) {
+            System.err.println("Thread [" + tf.threadName + " failed");
+            tf.exception.printStackTrace();
+        }
+        if (threadFailureExceptions.size() > 0) {
+            fail(threadFailureExceptions.size()
+                    + " number of threads have failed the test");
+        }
     }
 
-    public void onShutdown() {
-        database.shutdown();
+    final static class ThreadFailure {
+        Throwable exception;
+        String threadName;
+
+        public ThreadFailure(Thread thread, Throwable exception) {
+            this.threadName = thread.getName();
+            this.exception = exception;
+        }
     }
 
-    public void onStart() {
-        database.start();
-    }
 }
