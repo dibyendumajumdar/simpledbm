@@ -54,19 +54,6 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
     Database database;
 
-    public static void main(String args[]) {
-
-        Properties properties = new Properties();
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
-        properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
-
-        SimpleDBMRequestHandler server = new SimpleDBMRequestHandler();
-        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, server, new Properties());
-        networkServer.start();
-        networkServer.shutdown();
-    }
-
     public void handleRequest(Request request, Response response) {
     }
 
