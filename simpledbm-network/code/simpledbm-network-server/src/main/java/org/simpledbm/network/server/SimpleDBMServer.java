@@ -1,8 +1,11 @@
 package org.simpledbm.network.server;
 
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.database.api.DatabaseFactory;
+import org.simpledbm.network.nio.api.NetworkServer;
+import org.simpledbm.network.nio.api.NetworkUtil;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -27,7 +30,7 @@ public class SimpleDBMServer {
             create(properties);
         }
         else if ("open".equalsIgnoreCase(command)) {
-            
+            open(properties);
         }
         else {
             usage();
@@ -37,6 +40,14 @@ public class SimpleDBMServer {
 
     private void create(Properties properties) {
         DatabaseFactory.create(properties);
+    }
+
+    private void open(Properties properties) {
+        Platform platform = new PlatformImpl(properties);
+        SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
+        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, simpleDBMRequestHandler, properties);
+        networkServer.start();
+        networkServer.shutdown();
     }
 
     private Properties parseProperties(String arg) {
