@@ -103,4 +103,8 @@ public class RequestImpl implements Request {
         return headerData;
     }
 
+    public void setRequestCode(int requestCode) {
+        header.setRequestCode(requestCode);
+    }
+    
 }

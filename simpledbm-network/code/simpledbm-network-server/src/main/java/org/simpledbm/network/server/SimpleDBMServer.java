@@ -12,6 +12,8 @@ import java.util.Properties;
 
 public class SimpleDBMServer {
 
+    NetworkServer networkServer = null;
+
     private void usage() {
         System.out.println("SimpleDBMServer create|open <properties-file>");
     }
@@ -45,9 +47,19 @@ public class SimpleDBMServer {
     private void open(Properties properties) {
         Platform platform = new PlatformImpl(properties);
         SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
-        NetworkServer networkServer = NetworkUtil.createNetworkServer(platform, simpleDBMRequestHandler, properties);
+        networkServer = NetworkUtil.createNetworkServer(platform, simpleDBMRequestHandler, properties);
         networkServer.start();
-        networkServer.shutdown();
+    }
+
+    public void select() {
+        networkServer.select();
+    }
+    
+    public void shutdown() {
+        if (networkServer != null) {
+            networkServer.shutdown();
+            networkServer = null;
+        }
     }
 
     private Properties parseProperties(String arg) {

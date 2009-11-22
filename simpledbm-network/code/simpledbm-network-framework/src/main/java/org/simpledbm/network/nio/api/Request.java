@@ -63,6 +63,12 @@ public interface Request {
     int getRequestCode();
 
     /**
+     * Sets the request code. To be used by a client generating the
+     * request.
+     */
+    void setRequestCode(int requestCode);    
+    
+    /**
      * Gets the version of the request message.
      */
     int getVersion();

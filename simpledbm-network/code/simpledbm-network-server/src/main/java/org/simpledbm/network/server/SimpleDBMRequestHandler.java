@@ -36,15 +36,15 @@
  */
 package org.simpledbm.network.server;
 
+import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.common.impl.platform.PlatformImpl;
-import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
-import org.simpledbm.network.nio.api.NetworkServer;
-import org.simpledbm.network.nio.api.NetworkUtil;
+import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
@@ -53,8 +53,15 @@ import org.simpledbm.network.nio.api.Response;
 public class SimpleDBMRequestHandler implements RequestHandler {
 
     Database database;
-
+    HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
+    AtomicInteger sessionIdGenerator = new AtomicInteger(0);
+    
     public void handleRequest(Request request, Response response) {
+        System.err.println("received request from client");
+        if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
+            System.err.println("handling open session request");
+            handleSessionRequest(request, response);
+        }
     }
 
     public void onInitialize(Platform platform, Properties properties) {
@@ -68,4 +75,15 @@ public class SimpleDBMRequestHandler implements RequestHandler {
     public void onStart() {
         database.start();
     }
+    
+    void handleSessionRequest(Request request, Response response) {
+        int sessionId = sessionIdGenerator.incrementAndGet();
+        System.err.println("next session id = " + sessionId);
+        ClientSession session = new ClientSession(sessionId);
+        sessions.put(sessionId, session);
+        response.setSessionId(sessionId);
+        response.setStatusCode(0);
+//        response.setData(ByteBuffer.allocate(0));
+    }
+    
 }
