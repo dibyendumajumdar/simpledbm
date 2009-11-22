@@ -6,6 +6,6 @@
   <classpathentry kind="output" path="target/classes"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.12/log4j-1.2.12.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/simpledbm/rss/simpledbm-common/1.0.2/simpledbm-common-1.0.2.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/simpledbm/rss/simpledbm-common/1.0.3-SNAPSHOT/simpledbm-common-1.0.3-SNAPSHOT.jar"/>
   <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 </classpath>

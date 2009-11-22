@@ -54,8 +54,11 @@ import java.util.concurrent.TimeUnit;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.network.nio.api.*;
-import org.simpledbm.network.nio.samples.EchoRequestHandler;
+import org.simpledbm.network.nio.api.NetworkException;
+import org.simpledbm.network.nio.api.NetworkServer;
+import org.simpledbm.network.nio.api.Request;
+import org.simpledbm.network.nio.api.RequestHandler;
+import org.simpledbm.network.nio.api.Response;
 
 public class NetworkServerImpl implements NetworkServer {
 
@@ -226,7 +229,7 @@ public class NetworkServerImpl implements NetworkServer {
     void queueRequest(ProtocolHandler protocolHandler, RequestHeader requestHeader, ByteBuffer request) {
         ResponseHeader responseHeader = new ResponseHeader();
         responseHeader.setCorrelationId(requestHeader.getCorrelationId());
-        RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHeader, request, responseHeader);
+        RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHandler, requestHeader, request, responseHeader);
 //    	System.err.println("Scheduling request handler for channel " + protocolHandler.socketChannel);
         requestHandlerService.submit(requestDispatcher);
     }
@@ -450,7 +453,12 @@ public class NetworkServerImpl implements NetworkServer {
         }
 
         synchronized void queueWrite(WriteRequest wr) {
-            wr.responseHeader.setDataSize(wr.response.limit());
+            try {
+                wr.responseHeader.setDataSize(wr.response.limit());
+            }
+            catch (NullPointerException e) {
+                e.printStackTrace();
+            }
             writeQueue.add(wr);
             networkServer.selector.wakeup();
         }
@@ -467,10 +475,11 @@ public class NetworkServerImpl implements NetworkServer {
         final ResponseHeader responseHeader;
         final ByteBuffer data;
 
-        final RequestHandler requestHandler = new EchoRequestHandler();
+        final RequestHandler requestHandler;
 
-        RequestDispatcher(ProtocolHandler protocolHandler, RequestHeader requestHeader, ByteBuffer request, ResponseHeader responseHeader) {
+        RequestDispatcher(ProtocolHandler protocolHandler, RequestHandler requestHandler, RequestHeader requestHeader, ByteBuffer request, ResponseHeader responseHeader) {
             this.protocolHandler = protocolHandler;
+            this.requestHandler = requestHandler;
             this.requestHeader = requestHeader;
             this.responseHeader = responseHeader;
             this.data = request;

@@ -41,6 +41,11 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
+			<groupId>org.simpledbm.network</groupId>
+			<artifactId>simpledbm-network-common</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
 			<groupId>org.simpledbm.database</groupId>
 			<artifactId>simpledbm-database</artifactId>
 			<version>1.0.14-SNAPSHOT</version>
