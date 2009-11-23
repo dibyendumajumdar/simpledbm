@@ -39,79 +39,78 @@ package org.simpledbm.network.client;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.network.client.api.Session;
 import org.simpledbm.network.client.api.SessionManager;
-import org.simpledbm.network.nio.api.Connection;
-import org.simpledbm.network.nio.api.NetworkServer;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Response;
-import org.simpledbm.network.nio.samples.EchoRequestHandler;
 import org.simpledbm.network.server.SimpleDBMServer;
-import org.simpledbm.typesystem.api.TypeFactory;
-
-import java.util.Properties;
 
 public class ClientTest extends BaseTestCase {
 
-    public ClientTest(String name) {
-        super(name);
-    }
+	public ClientTest(String name) {
+		super(name);
+	}
 
-    protected void setUp() throws Exception {
-        super.setUp();
-        SimpleDBMServer server = new SimpleDBMServer();
-        server.run(new String[]{"create", "test.properties"});
-    }
+	protected void setUp() throws Exception {
+		super.setUp();
+		SimpleDBMServer server = new SimpleDBMServer();
+		server.run(new String[] { "create", "test.properties" });
+	}
 
-    protected void tearDown() throws Exception {
-        super.tearDown();
-    }
+	protected void tearDown() throws Exception {
+		super.tearDown();
+	}
 
-    static class MyServer implements Runnable {
+	static class MyServer implements Runnable {
 
-        volatile boolean stop = false;
-        SimpleDBMServer server = new SimpleDBMServer();
+		volatile boolean stop = false;
+		SimpleDBMServer server = new SimpleDBMServer();
 
-        MyServer() {
-        }
+		MyServer() {
+		}
 
-        public void run() {
-            System.err.println("starting server");
-            try {
-                server.run(new String[]{"open", "test.properties"});
-                while (!stop) {
-                    server.select();
-                }
-                server.shutdown();
-            }
-            catch (Exception e) {
-                System.err.println("failed to start server");
-                e.printStackTrace();
-            }
-        }
+		public void run() {
+			System.err.println("starting server");
+			try {
+				server.run(new String[] { "open", "test.properties" });
+				while (!stop) {
+					server.select();
+				}
+				server.shutdown();
+			} catch (Exception e) {
+				System.err.println("failed to start server");
+				e.printStackTrace();
+			}
+		}
 
-        void shutdown() {
-            stop = true;
-        }
-    }
+		void shutdown() {
+			stop = true;
+		}
+	}
 
-    public void testConnection() {
-        MyServer server = new MyServer();
-        Thread t = new Thread(server);
-        t.start();
+	public void testConnection() {
+		MyServer server = new MyServer();
+		Thread t = new Thread(server);
+		t.start();
 
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-        }
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+		}
 
-        SessionManager sessionManager = new SessionManager("localhost", 8000);
-        TypeFactory typeFactory = sessionManager.getTypeFactory();
-        Session session = sessionManager.openSession();
-        server.shutdown();
+		SessionManager sessionManager = new SessionManager("localhost", 8000);
+//		TypeFactory typeFactory = sessionManager.getTypeFactory();
+		Session session = sessionManager.openSession();
+		try {
+			session.startTransaction();
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			session.close();
+		}
+		server.shutdown();
 
-        try {
-            t.join();
-        } catch (InterruptedException e) {
-        }
-    }
+		try {
+			t.join();
+		} catch (InterruptedException e) {
+		}
+	}
 
 }

@@ -37,13 +37,6 @@
 package org.simpledbm.network.server;
 
 import org.simpledbm.junit.BaseTestCase;
-import org.simpledbm.network.nio.api.Connection;
-import org.simpledbm.network.nio.api.NetworkServer;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Response;
-import org.simpledbm.network.nio.samples.EchoRequestHandler;
-
-import java.util.Properties;
 
 public class ServerTest extends BaseTestCase {
 
