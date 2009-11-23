@@ -48,7 +48,11 @@ public class ResponseImpl implements Response {
     public ResponseImpl(ResponseHeader header, ByteBuffer data) {
         super();
         this.header = header;
+        if (data == null) {
+        	data = ByteBuffer.allocate(0);
+        }
         this.data = data;
+        this.header.setDataSize(data.limit());
     }
 
     public int getSessionId() {
@@ -61,6 +65,7 @@ public class ResponseImpl implements Response {
 
     public void setData(ByteBuffer buffer) {
         this.data = buffer;
+        this.header.dataSize = buffer.limit();
     }
 
     public void setSessionId(int sessionId) {

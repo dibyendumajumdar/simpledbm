@@ -49,41 +49,82 @@ import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
 
-
 public class SimpleDBMRequestHandler implements RequestHandler {
 
-    Database database;
-    HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
-    AtomicInteger sessionIdGenerator = new AtomicInteger(0);
-    
-    public void handleRequest(Request request, Response response) {
-        System.err.println("received request from client");
-        if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
-            System.err.println("handling open session request");
-            handleSessionRequest(request, response);
-        }
-    }
+	Database database;
 
-    public void onInitialize(Platform platform, Properties properties) {
-        database = DatabaseFactory.getDatabase(platform, properties);
-    }
+	/**
+	 * A map of all active sessions
+	 */
+	HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
 
-    public void onShutdown() {
-        database.shutdown();
-    }
+	/**
+	 * A sequence number generator used to allocate new session ids.
+	 */
+	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
 
-    public void onStart() {
-        database.start();
-    }
-    
-    void handleSessionRequest(Request request, Response response) {
-        int sessionId = sessionIdGenerator.incrementAndGet();
-        System.err.println("next session id = " + sessionId);
-        ClientSession session = new ClientSession(sessionId);
-        sessions.put(sessionId, session);
-        response.setSessionId(sessionId);
-        response.setStatusCode(0);
-//        response.setData(ByteBuffer.allocate(0));
-    }
-    
+	public void handleRequest(Request request, Response response) {
+		if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
+			handleOpenSessionRequest(request, response);
+		} else if (request.getRequestCode() == RequestCode.CLOSE_SESSION) {
+			handleCloseSessionRequest(request, response);
+		} else {
+			handleUnknownRequest(request, response);
+		}
+	}
+
+	public void onInitialize(Platform platform, Properties properties) {
+		database = DatabaseFactory.getDatabase(platform, properties);
+	}
+
+	public void onShutdown() {
+		database.shutdown();
+	}
+
+	public void onStart() {
+		database.start();
+	}
+
+	void handleOpenSessionRequest(Request request, Response response) {
+		int sessionId = sessionIdGenerator.incrementAndGet();
+		ClientSession session = new ClientSession(sessionId);
+		sessions.put(sessionId, session);
+		response.setSessionId(sessionId);
+		response.setStatusCode(0);
+	}
+
+	void handleCloseSessionRequest(Request request, Response response) {
+		int sessionId = request.getSessionId();
+		System.err.println("Request to close session " + sessionId);
+		ClientSession session = sessions.get(sessionId);
+		if (session == null) {
+			response.setStatusCode(-1);
+			response.setData(ByteBuffer.wrap("Unknown session identifier"
+					.getBytes()));
+			response.setSessionId(0);
+		} else {
+			System.err.println("session removed");
+			sessions.remove(sessionId);
+			response.setStatusCode(0);
+			response.setData(ByteBuffer.allocate(0));
+			response.setSessionId(0);
+		}
+	}
+
+	void handleUnknownRequest(Request request, Response response) {
+		int sessionId = request.getSessionId();
+		System.err.println("Received invalid request "
+				+ request.getRequestCode() + " from " + sessionId);
+		response.setStatusCode(-1);
+		response.setData(ByteBuffer.wrap("Unknown request code"
+				.getBytes()));
+		response.setSessionId(0);
+	}
+	
+	/*
+	 * On shutdown we must abort transactions that weren't committed by respective clients
+	 * We should also periodically check on the session activity and timeout sessions that 
+	 * are inactive for a while.
+	 */
+
 }

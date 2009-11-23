@@ -36,15 +36,51 @@
  */
 package org.simpledbm.network.client.api;
 
+import java.nio.ByteBuffer;
+
+import org.simpledbm.network.common.api.RequestCode;
+import org.simpledbm.network.common.api.SessionRequestMessage;
+import org.simpledbm.network.nio.api.NetworkUtil;
+import org.simpledbm.network.nio.api.Request;
+import org.simpledbm.network.nio.api.Response;
+
 /**
  * Session represents a session with the server.
  */
 public class Session {
 
     final int sessionId;
+    final SessionManager sessionManager;
     
-    public Session(int sessionId) {
+    public Session(SessionManager sessionManager, int sessionId) {
+    	this.sessionManager = sessionManager;
         this.sessionId = sessionId;
     }
     
+    public void close() {
+        SessionRequestMessage message = new SessionRequestMessage();
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.CLOSE_SESSION);
+        request.setSessionId(sessionId);
+        Response response = sessionManager.getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error");
+        } 
+    }
+    
+    public void startTransaction() {
+        SessionRequestMessage message = new SessionRequestMessage();
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.START_TRANSACTION);
+        request.setSessionId(sessionId);
+        Response response = sessionManager.getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error");
+        } 
+    }
+
 }

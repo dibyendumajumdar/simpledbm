@@ -1,12 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-  <classpathentry kind="src" path="src/test/java" output="target/test-classes" including="**/*.java"/>
-  <classpathentry kind="src" path="src/test/resources" output="target/test-classes" excluding="**/*.java"/>
-  <classpathentry kind="src" path="src/main/java" including="**/*.java"/>
-  <classpathentry kind="output" path="target/classes"/>
-  <classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
-  <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.12/log4j-1.2.12.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/simpledbm/rss/simpledbm-common/1.0.3-SNAPSHOT/simpledbm-common-1.0.3-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/simpledbm/rss/simpledbm-rss/1.0.17-SNAPSHOT/simpledbm-rss-1.0.17-SNAPSHOT.jar"/>
-  <classpathentry kind="var" path="M2_REPO/org/simpledbm/typesystem/simpledbm-typesystem/1.0.13-SNAPSHOT/simpledbm-typesystem-1.0.13-SNAPSHOT.jar"/>
-  <classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry including="**/*.java" kind="src" output="target/test-classes" path="src/test/java"/>
+	<classpathentry excluding="**/*.java" kind="src" output="target/test-classes" path="src/test/resources"/>
+	<classpathentry including="**/*.java" kind="src" path="src/main/java"/>
+	<classpathentry kind="var" path="M2_REPO/junit/junit/3.8.1/junit-3.8.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.12/log4j-1.2.12.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-common"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-rss"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-typesystem"/>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

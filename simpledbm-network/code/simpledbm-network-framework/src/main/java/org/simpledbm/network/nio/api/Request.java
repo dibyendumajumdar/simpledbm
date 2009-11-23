@@ -67,6 +67,11 @@ public interface Request {
      * request.
      */
     void setRequestCode(int requestCode);    
+
+    /**
+     * Sets the session ID that is generating this request.
+     */
+    void setSessionId(int sessionId);
     
     /**
      * Gets the version of the request message.

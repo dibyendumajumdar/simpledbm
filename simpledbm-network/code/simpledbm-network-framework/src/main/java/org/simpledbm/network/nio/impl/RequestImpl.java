@@ -86,6 +86,7 @@ public class RequestImpl implements Request {
 
     void setData(ByteBuffer data) {
         this.data = data;
+        this.header.setDataSize(data.limit());
     }
 
     RequestHeader getHeader() {
@@ -105,6 +106,10 @@ public class RequestImpl implements Request {
 
     public void setRequestCode(int requestCode) {
         header.setRequestCode(requestCode);
+    }
+    
+    public void setSessionId(int sessionId) {
+    	header.setSessionId(sessionId);
     }
     
 }

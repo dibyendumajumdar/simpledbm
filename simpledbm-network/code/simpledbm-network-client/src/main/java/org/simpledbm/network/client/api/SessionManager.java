@@ -74,8 +74,11 @@ public class SessionManager {
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error");
         }
-        Session session = new Session(response.getSessionId());
-        System.err.println("Session id = " + session.sessionId);
+        Session session = new Session(this, response.getSessionId());
         return session;
+    }
+    
+    Connection getConnection() {
+    	return connection;
     }
 }
