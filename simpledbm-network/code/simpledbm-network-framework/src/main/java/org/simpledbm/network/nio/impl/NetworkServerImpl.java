@@ -229,7 +229,7 @@ public class NetworkServerImpl implements NetworkServer {
     void queueRequest(ProtocolHandler protocolHandler, RequestHeader requestHeader, ByteBuffer request) {
         ResponseHeader responseHeader = new ResponseHeader();
         responseHeader.setCorrelationId(requestHeader.getCorrelationId());
-        RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHandler, requestHeader, request, responseHeader);
+        RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHandler, requestHeader, request);
 //    	System.err.println("Scheduling request handler for channel " + protocolHandler.socketChannel);
         requestHandlerService.submit(requestDispatcher);
     }
@@ -453,12 +453,7 @@ public class NetworkServerImpl implements NetworkServer {
         }
 
         synchronized void queueWrite(WriteRequest wr) {
-            try {
-                wr.responseHeader.setDataSize(wr.response.limit());
-            }
-            catch (NullPointerException e) {
-                e.printStackTrace();
-            }
+        	wr.responseHeader.setDataSize(wr.response.limit());
             writeQueue.add(wr);
             networkServer.selector.wakeup();
         }
@@ -472,23 +467,27 @@ public class NetworkServerImpl implements NetworkServer {
 
         final ProtocolHandler protocolHandler;
         final RequestHeader requestHeader;
-        final ResponseHeader responseHeader;
-        final ByteBuffer data;
-
+        final ByteBuffer requestData;
         final RequestHandler requestHandler;
+        
+        static final ByteBuffer defaultData = ByteBuffer.allocate(0);
 
-        RequestDispatcher(ProtocolHandler protocolHandler, RequestHandler requestHandler, RequestHeader requestHeader, ByteBuffer request, ResponseHeader responseHeader) {
+        RequestDispatcher(ProtocolHandler protocolHandler, RequestHandler requestHandler, RequestHeader requestHeader, ByteBuffer requestData) {
             this.protocolHandler = protocolHandler;
             this.requestHandler = requestHandler;
             this.requestHeader = requestHeader;
-            this.responseHeader = responseHeader;
-            this.data = request;
+            this.requestData = requestData;
         }
 
         public Object call() throws Exception {
-            data.rewind();
-            Request request = new RequestImpl(requestHeader, data);
-            Response response = new ResponseImpl(responseHeader, null);
+            requestData.rewind();
+            Request request = new RequestImpl(requestHeader, requestData);
+            // setup default response
+            ResponseHeader responseHeader = new ResponseHeader();            
+            responseHeader.setCorrelationId(requestHeader.getCorrelationId());
+            responseHeader.setStatusCode(0);
+            responseHeader.setSessionId(requestHeader.getSessionId());
+            Response response = new ResponseImpl(responseHeader, defaultData);
             try {
                 requestHandler.handleRequest(request, response);
             }

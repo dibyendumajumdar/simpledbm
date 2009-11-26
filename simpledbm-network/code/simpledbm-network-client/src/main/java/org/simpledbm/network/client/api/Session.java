@@ -36,6 +36,7 @@
  */
 package org.simpledbm.network.client.api;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.network.common.api.RequestCode;
@@ -57,6 +58,17 @@ public class Session {
         this.sessionId = sessionId;
     }
     
+    private String getError(Response response) {
+    	byte[] data = response.getData().array();
+    	String msg;
+		try {
+			msg = new String(data, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			msg = "Error message could not be decoded";
+		}
+    	return msg;
+    }
+    
     public void close() {
         SessionRequestMessage message = new SessionRequestMessage();
         ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
@@ -66,7 +78,7 @@ public class Session {
         request.setSessionId(sessionId);
         Response response = sessionManager.getConnection().submit(request);
         if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
+            throw new SessionException("server returned error: " + getError(response));
         } 
     }
     
@@ -79,7 +91,7 @@ public class Session {
         request.setSessionId(sessionId);
         Response response = sessionManager.getConnection().submit(request);
         if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
+            throw new SessionException("server returned error: " + getError(response));
         } 
     }
 
