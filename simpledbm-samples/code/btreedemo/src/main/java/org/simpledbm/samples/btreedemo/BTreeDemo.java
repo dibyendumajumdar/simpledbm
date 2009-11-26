@@ -253,7 +253,7 @@ public class BTreeDemo {
 		 */
 		public void createBTree() throws IndexException, TransactionException {
 			Transaction trx = server.begin(IsolationMode.READ_COMMITTED);
-			boolean success = false;
+			boolean success = true;
 			try {
 				server.createIndex(trx, "testbtree.dat", 1, 8, KEY_FACTORY_TYPE, LOCATION_FACTORY_TYPE, true);
 			} finally {
@@ -342,10 +342,22 @@ public class BTreeDemo {
 			Savepoint sp = trx.createSavepoint(false);
 			try {
 				IndexContainer btree = server.getIndex(trx, 1);
-				Row row = (Row) keyFactory.newIndexKey(1);
-				row.setString(0, key);
+				Row row = null;
+				if ("".equals(key)) {
+					row = null;
+				}
+				else {
+					row = (Row) keyFactory.newIndexKey(1);
+					row.setString(0, key);
+				}
 				LocationFactory locationFactory = (LocationFactory) server.getObjectRegistry().getSingleton(LOCATION_FACTORY_TYPE);
-				Location location = locationFactory.newLocation(sloc);
+				Location location = null;
+				if ("".equals(sloc)) {
+					location = null;
+				}
+				else {
+					location = locationFactory.newLocation(sloc);
+				}
 //				location.parseString(sloc);
 				IndexScan scan = btree.openScan(trx, row, location, false);
 				try {

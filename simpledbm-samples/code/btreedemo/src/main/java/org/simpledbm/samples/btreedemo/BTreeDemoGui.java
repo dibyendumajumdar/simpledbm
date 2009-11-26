@@ -102,11 +102,11 @@ public class BTreeDemoGui extends javax.swing.JFrame {
 
         commandsComboBox.setModel(new javax.swing.DefaultComboBoxModel(new String[] { "Add", "Delete", "List", "Commit", "Abort" }));
 
-        jLabel2.setText("Key:");
+        jLabel2.setText("Key (integer):");
 
         keyField.setText(" ");
 
-        jLabel3.setText("Location:");
+        jLabel3.setText("Location (integer):");
 
         locationField.setText(" ");
 
