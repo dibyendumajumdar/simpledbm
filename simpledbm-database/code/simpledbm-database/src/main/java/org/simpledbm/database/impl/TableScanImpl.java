@@ -71,9 +71,9 @@ public class TableScanImpl implements TableScan {
     	this.mcat = po.getMessageCatalog();
         this.table = table;
         this.trx = trx;
-        tcont = table.getDefinition().getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
+        tcont = table.getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
         IndexDefinition index = table.getDefinition().getIndex(indexNo);
-        icont = table.getDefinition().getDatabase().getServer().getIndex(trx, index.getContainerId());
+        icont = table.getDatabase().getServer().getIndex(trx, index.getContainerId());
         if (tableRow == null) {
         	/*
         	 * Create a start row that begins at negative infinity
@@ -162,7 +162,7 @@ public class TableScanImpl implements TableScan {
                 // Old secondary key
                 for (int i = 1; i < getTable().getDefinition().getIndexes().size(); i++) {
                     IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
-                    IndexContainer secondaryIndex = getTable().getDefinition().getDatabase().getServer().getIndex(trx, skey.getContainerId());
+                    IndexContainer secondaryIndex = getTable().getDatabase().getServer().getIndex(trx, skey.getContainerId());
                     // old secondary key
                     Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);
                     // New secondary key
@@ -209,7 +209,7 @@ public class TableScanImpl implements TableScan {
             // Update indexes
             for (int i = getTable().getDefinition().getIndexes().size() - 1; i >= 0; i--) {
                 IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
-                IndexContainer index = getTable().getDefinition().getDatabase().getServer().getIndex(
+                IndexContainer index = getTable().getDatabase().getServer().getIndex(
                         trx, skey.getContainerId());
                 // old secondary key
                 Row indexRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);

@@ -36,10 +36,17 @@
  */
 package org.simpledbm.network.client;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
+import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.network.client.api.Session;
 import org.simpledbm.network.client.api.SessionManager;
 import org.simpledbm.network.server.SimpleDBMServer;
+import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 public class ClientTest extends BaseTestCase {
 
@@ -84,6 +91,30 @@ public class ClientTest extends BaseTestCase {
 		}
 	}
 
+    private Properties parseProperties(String arg) {
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(arg);
+        if (null == in) {
+            System.out.println("Unable to access resource [" + arg + "]");
+            return null;
+        }
+        Properties properties = new Properties();
+        try {
+            properties.load(in);
+        }
+        catch (IOException e) {
+            System.err.println("Error loading from resource [" + arg + "] :" + e.getMessage());
+            return null;
+        }
+        finally {
+            try {
+                in.close();
+            } catch (IOException ignored) {
+            }
+        }
+        System.out.println(properties);
+        return properties;
+    }
+	
 	public void testConnection() {
 		MyServer server = new MyServer();
 		Thread t = new Thread(server);
@@ -94,8 +125,10 @@ public class ClientTest extends BaseTestCase {
 		} catch (InterruptedException e) {
 		}
 
-		SessionManager sessionManager = new SessionManager("localhost", 8000);
-//		TypeFactory typeFactory = sessionManager.getTypeFactory();
+		Properties properties = parseProperties("test.properties");
+		SessionManager sessionManager = new SessionManager(properties, "localhost", 8000);
+		TypeFactory ff = sessionManager.getTypeFactory();		
+//		sessionManager.createTestTables();
 		Session session = sessionManager.openSession();
 		try {
 			session.startTransaction();
@@ -105,6 +138,34 @@ public class ClientTest extends BaseTestCase {
 		} finally {
 			session.close();
 		}
+		TypeDescriptor employee_rowtype[] = { 
+				ff.getIntegerType(), /* primary key */
+				ff.getVarcharType(20), /* name */
+				ff.getVarcharType(20), /* surname */
+				ff.getVarcharType(20), /* city */
+				ff.getVarcharType(45), /* email address */
+				ff.getDateTimeType(), /* date of birth */
+				ff.getNumberType(2) /* salary */
+		};
+		TableDefinition tableDefinition = sessionManager.newTableDefinition(
+				"employee", 1, employee_rowtype);
+		tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+				true);
+		tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
+				false, false);
+		tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
+				false, false);
+		tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
+				false, false);
+		sessionManager.createTable(tableDefinition);
+		try {
+			TypeDescriptor[] td = sessionManager.getRowType(1);
+			for (int i = 0; i < td.length; i++) {
+				System.out.println(td[i]);				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		server.shutdown();
 
 		try {
@@ -112,5 +173,4 @@ public class ClientTest extends BaseTestCase {
 		} catch (InterruptedException e) {
 		}
 	}
-
 }

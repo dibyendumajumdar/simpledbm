@@ -453,6 +453,7 @@ public class NetworkServerImpl implements NetworkServer {
         }
 
         synchronized void queueWrite(WriteRequest wr) {
+        	System.err.println("queuing write " + wr.response.limit());
         	wr.responseHeader.setDataSize(wr.response.limit());
             writeQueue.add(wr);
             networkServer.selector.wakeup();

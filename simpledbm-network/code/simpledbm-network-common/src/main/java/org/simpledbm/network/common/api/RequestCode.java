@@ -7,4 +7,6 @@ public interface RequestCode {
     int COMMIT_TRANSACTION = 4;
     int ABORT_TRANSACTION = 5;
     int CREATE_TABLE = 6;
+    int QUERY_DICTIONARY = 7;
+    int CREATE_TEST_TABLES = 8;
 }

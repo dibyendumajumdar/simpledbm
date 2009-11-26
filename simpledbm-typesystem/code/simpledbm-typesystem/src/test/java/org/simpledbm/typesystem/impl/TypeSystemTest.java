@@ -45,10 +45,11 @@ import java.util.Date;
 
 import junit.framework.TestCase;
 
-import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class TypeSystemTest extends TestCase {
@@ -61,8 +62,9 @@ public class TypeSystemTest extends TestCase {
     }
 
     public void testRowFactory() throws Exception {
+    	DictionaryCache dictionaryCache = new SimpleDictionaryCache();
         TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
-        RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
+        RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
@@ -71,7 +73,7 @@ public class TypeSystemTest extends TestCase {
         }
         System.err.println(fieldFactory.getDateTimeType());
         System.err.println(fieldFactory.getNumberType(2));
-        rowFactory.registerRowType(1, rowtype1);
+        dictionaryCache.registerRowType(1, rowtype1);
         Row row = rowFactory.newRow(1);
         assertEquals(row.getNumberOfColumns(), 2);
         System.err.println("Number of fields in row = " + row.getNumberOfColumns());

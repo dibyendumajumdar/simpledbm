@@ -45,13 +45,13 @@ import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 /**
  * Encapsulates a table definition and provides methods to work with table and
@@ -69,7 +69,17 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 	/**
 	 * Database to which this table definition belongs to.
 	 */
-    final Database database;
+//    final Database database;
+	
+	/**
+	 * Row Factory responsible for generating and manipulating rows.
+	 */
+	final RowFactory rowFactory;
+	
+	/**
+	 * Type Factory responsible for defining types.
+	 */
+	final TypeFactory typeFactory;
     
     /**
      * Container ID for the table.
@@ -92,15 +102,17 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
      */
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-    TableDefinitionImpl(PlatformObjects po, Database database, ByteBuffer bb) {
+    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
     	this.po = po;
     	this.log = po.getLogger();
     	this.mcat = po.getMessageCatalog();
-		this.database = database;
+//		this.database = database;
+    	this.typeFactory = typeFactory;
+    	this.rowFactory = rowFactory;
 		containerId = bb.getInt();
 		ByteString s = new ByteString(bb);
 		name = s.toString();
-		rowType = database.getTypeFactory().retrieve(bb);
+		rowType = typeFactory.retrieve(bb);
 		int n = bb.getShort();
 		indexes = new ArrayList<IndexDefinition>();
 		for (int i = 0; i < n; i++) {
@@ -109,12 +121,14 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 		}
 	}
 
-    TableDefinitionImpl(PlatformObjects po, Database database, int containerId, String name,
+    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
             TypeDescriptor[] rowType) {
     	this.po = po;
     	this.log = po.getLogger();
     	this.mcat = po.getMessageCatalog();
-        this.database = database;
+    	this.typeFactory = typeFactory;
+    	this.rowFactory = rowFactory;
+//        this.database = database;
         this.containerId = containerId;
         this.name = name;
         this.rowType = rowType;
@@ -135,8 +149,12 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     /* (non-Javadoc)
 	 * @see org.simpledbm.database.TableDefinition#getDatabase()
 	 */
-    public Database getDatabase() {
-        return database;
+//    public Database getDatabase() {
+//        return database;
+//    }
+    
+    public RowFactory getRowFactory() {
+    	return rowFactory;
     }
 
     /* (non-Javadoc)
@@ -175,7 +193,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         ByteString s = new ByteString(name);
         n += TypeSize.INTEGER;
         n += s.getStoredLength();
-        n += database.getTypeFactory().getStoredLength(rowType);
+        n += typeFactory.getStoredLength(rowType);
         n += TypeSize.SHORT;
         for (int i = 0; i < indexes.size(); i++) {
             n += indexes.get(i).getStoredLength();
@@ -190,7 +208,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
         bb.putInt(containerId);
         ByteString s = new ByteString(name);
         s.store(bb);
-        database.getTypeFactory().store(rowType, bb);
+        typeFactory.store(rowType, bb);
         bb.putShort((short) indexes.size());
         for (int i = 0; i < indexes.size(); i++) {
             IndexDefinition idx = indexes.get(i);
@@ -236,7 +254,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 	 * @see org.simpledbm.database.TableDefinition#getRow()
 	 */
     public Row getRow() {
-        RowFactory rowFactory = database.getRowFactory();
+//        RowFactory rowFactory = database.getRowFactory();
         return rowFactory.newRow(containerId);
     }
     
@@ -244,7 +262,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 	 * @see org.simpledbm.database.TableDefinition#getRow()
 	 */
     public Row getRow(ByteBuffer bb) {
-        RowFactory rowFactory = database.getRowFactory();
+//        RowFactory rowFactory = database.getRowFactory();
         return rowFactory.newRow(containerId, bb);
     }
 

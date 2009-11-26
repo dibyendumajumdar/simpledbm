@@ -144,7 +144,7 @@ public class DateTimeType implements TypeDescriptor {
 	}
 
 	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("DataTimeType(timeZone=").
+		sb.append("DateTimeType(timeZone=").
 			append(timeZone.getID()).
 			append(", dateFormat='").
 			append(dateFormat.toPattern()).

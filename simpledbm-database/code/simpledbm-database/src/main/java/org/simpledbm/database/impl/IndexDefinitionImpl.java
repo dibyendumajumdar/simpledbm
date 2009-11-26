@@ -201,7 +201,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
 	 * @see org.simpledbm.database.IndexDefinition#getRow()
 	 */
     public Row getRow() {
-        RowFactory rowFactory = table.getDatabase().getRowFactory();
+        RowFactory rowFactory = table.getRowFactory();
         return rowFactory.newRow(containerId);
     }
 
@@ -213,7 +213,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
      * @return Appropriate row type
      */
     IndexKey makeMinRow(int containerId) {
-        IndexKeyFactory rowFactory = table.getDatabase().getRowFactory();
+        IndexKeyFactory rowFactory = table.getRowFactory();
         return rowFactory.minIndexKey(containerId);
     }
 
