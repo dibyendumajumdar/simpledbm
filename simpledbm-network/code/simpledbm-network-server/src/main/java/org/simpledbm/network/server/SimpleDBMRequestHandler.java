@@ -37,6 +37,7 @@
 package org.simpledbm.network.server;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -85,46 +86,49 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		database.start();
 	}
 
+	private void setError(Response response, int statusCode, String message) {
+		response.setStatusCode(statusCode);
+		// FIXME set charset to utf-8
+		byte[] bytes = message.getBytes(Charset.forName("UTF-8"));
+		ByteBuffer data = ByteBuffer.wrap(bytes);
+		data.limit(bytes.length);
+		response.setData(data);
+	}
+
 	void handleOpenSessionRequest(Request request, Response response) {
 		int sessionId = sessionIdGenerator.incrementAndGet();
 		ClientSession session = new ClientSession(sessionId);
-		sessions.put(sessionId, session);
+		synchronized (session) {
+			sessions.put(sessionId, session);
+		}
 		response.setSessionId(sessionId);
-		response.setStatusCode(0);
 	}
 
 	void handleCloseSessionRequest(Request request, Response response) {
 		int sessionId = request.getSessionId();
 		System.err.println("Request to close session " + sessionId);
-		ClientSession session = sessions.get(sessionId);
-		if (session == null) {
-			response.setStatusCode(-1);
-			response.setData(ByteBuffer.wrap("Unknown session identifier"
-					.getBytes()));
-			response.setSessionId(0);
-		} else {
-			System.err.println("session removed");
-			sessions.remove(sessionId);
-			response.setStatusCode(0);
-			response.setData(ByteBuffer.allocate(0));
-			response.setSessionId(0);
+		synchronized (sessions) {
+			ClientSession session = sessions.get(sessionId);
+			if (session == null) {
+				setError(response, -1, "Unknown session identifier");
+			} else {
+				System.err.println("session removed");
+				sessions.remove(sessionId);
+			}
 		}
+		response.setSessionId(0);
 	}
 
 	void handleUnknownRequest(Request request, Response response) {
 		int sessionId = request.getSessionId();
-		System.err.println("Received invalid request "
+		setError(response, -1, "Received invalid request "
 				+ request.getRequestCode() + " from " + sessionId);
-		response.setStatusCode(-1);
-		response.setData(ByteBuffer.wrap("Unknown request code"
-				.getBytes()));
 		response.setSessionId(0);
 	}
-	
-	/*
-	 * On shutdown we must abort transactions that weren't committed by respective clients
-	 * We should also periodically check on the session activity and timeout sessions that 
-	 * are inactive for a while.
-	 */
 
+	/*
+	 * On shutdown we must abort transactions that weren't committed by
+	 * respective clients We should also periodically check on the session
+	 * activity and timeout sessions that are inactive for a while.
+	 */
 }
