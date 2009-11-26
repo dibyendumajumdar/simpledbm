@@ -36,9 +36,11 @@
  */
 package org.simpledbm.database.api;
 
+import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
@@ -135,6 +137,11 @@ public interface Database {
 	 * @return RowFactory instance.
 	 */
 	public abstract RowFactory getRowFactory();
+	
+	/**
+	 * Returns the dictionary cache used by the database.
+	 */
+	public abstract DictionaryCache getDictionaryCache();
 
 	/**
 	 * Creates a Table and associated indexes using the information in the supplied 
@@ -161,4 +168,6 @@ public interface Database {
 	 * @return Table
 	 */
 	public abstract Table getTable(Transaction trx, int containerId);
+	
+	public PlatformObjects getPlatformObjects();
 }

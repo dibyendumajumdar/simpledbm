@@ -41,11 +41,13 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl;
 import org.simpledbm.rss.main.Server;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
+import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
 
 /**
  * This class demonstrates how to interface with the BTree module.
@@ -198,9 +200,11 @@ public class BTreeDemo {
 
 		Server server;
 		
+		final DictionaryCache dictionaryCache = new SimpleDictionaryCache();
+		
 		final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 
-		final RowFactory keyFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
+		final RowFactory keyFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
 
 		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { fieldFactory.getIntegerType() };
 
@@ -238,7 +242,7 @@ public class BTreeDemo {
     		server = new Server(properties);
     		server.start();
 
-			keyFactory.registerRowType(1, rowtype1);
+			dictionaryCache.registerRowType(1, rowtype1);
 
 			server.getObjectRegistry().registerSingleton(KEY_FACTORY_TYPE, keyFactory);
 			server.getObjectRegistry().registerSingleton(LOCATION_FACTORY_TYPE, new RowLocationFactory());

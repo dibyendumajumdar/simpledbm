@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
@@ -68,7 +69,9 @@ public interface TableDefinition extends Storable, Dumpable {
 	 * Gets the Database to which this Table is associated
 	 * @return Database
 	 */
-	public abstract Database getDatabase();
+//	public abstract Database getDatabase();
+	
+	public RowFactory getRowFactory();
 
 	/**
 	 * Gets the Container ID associated with the table.

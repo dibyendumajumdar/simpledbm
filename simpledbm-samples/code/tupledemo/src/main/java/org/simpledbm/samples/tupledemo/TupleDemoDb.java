@@ -32,12 +32,14 @@ import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 import org.simpledbm.typesystem.impl.IntegerType;
+import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
 import org.simpledbm.typesystem.impl.VarcharType;
 
 /**
@@ -131,9 +133,11 @@ class TupleDemoDb {
      */
     void registerTableRowType() {
 
+    	final DictionaryCache dictionaryCache = new SimpleDictionaryCache();
+    	
         final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
 
-        final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory);
+        final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
 
         /**
          * Table row (id, name, surname, city)
@@ -162,9 +166,9 @@ class TupleDemoDb {
                 rowtype_for_mytable[1], /* name */
         };
 
-        rowFactory.registerRowType(TABLE_CONTNO, rowtype_for_mytable);
-        rowFactory.registerRowType(PKEY_CONTNO, rowtype_for_pk);
-        rowFactory.registerRowType(SKEY1_CONTNO, rowtype_for_sk1);
+        dictionaryCache.registerRowType(TABLE_CONTNO, rowtype_for_mytable);
+        dictionaryCache.registerRowType(PKEY_CONTNO, rowtype_for_pk);
+        dictionaryCache.registerRowType(SKEY1_CONTNO, rowtype_for_sk1);
 
         server.registerSingleton(ROW_FACTORY_TYPE_ID, rowFactory);
     }

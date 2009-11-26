@@ -73,6 +73,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.main.Server;
+import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
@@ -117,8 +118,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	private boolean serverStarted = false;
 	/** The TypeSystem Factory we will use for constructing types */
 	final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+	/** Dictonary cache for maintaining all table definitions in memory */
+	final DictionaryCache dictionaryCache = new DictionaryCacheImpl(this); 
 	/** The RowFactory we will use for constructing rows */
-	final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, new DictionaryCacheImpl(this));
+	final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
 
 	final Platform platform;
 	final PlatformObjects po;
@@ -163,6 +166,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		mcat.addMessage("ED0015", "SIMPLEDBM-ED0015: Row failed validation: {0}");
 	}
 	
+	public DictionaryCache getDictionaryCache() {
+		return dictionaryCache;
+	}
+	
+	public PlatformObjects getPlatformObjects() {
+		return po;
+	}
 	
 	/**
 	 * Register a table definition to the in-memory dictionary cache. Caller
@@ -185,11 +195,11 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			}
 		}
 		/* Register the table's type descriptor with the Row Factory */
-		getRowFactory().registerRowType(tableDefinition.getContainerId(),
+		getDictionaryCache().registerRowType(tableDefinition.getContainerId(),
 				tableDefinition.getRowType());
 		/* For each of the indexes, register the row type descriptor */
 		for (IndexDefinition idx : tableDefinition.getIndexes()) {
-			getRowFactory().registerRowType(idx.getContainerId(),
+			getDictionaryCache().registerRowType(idx.getContainerId(),
 					idx.getRowType());
 		}
 		tables.add(tableDefinition);
@@ -217,10 +227,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             throw new DatabaseException();
         }
         /* Remove the table's type descriptor from the Row Factory */
-        getRowFactory().unregisterRowType(tableDefinition.getContainerId());
+        getDictionaryCache().unregisterRowType(tableDefinition.getContainerId());
         /* Remove the indexes */
         for (IndexDefinition idx : tableDefinition.getIndexes()) {
-            getRowFactory().unregisterRowType(idx.getContainerId());
+            getDictionaryCache().unregisterRowType(idx.getContainerId());
         }
     }
 	
@@ -232,7 +242,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
 	public TableDefinition newTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, this, containerId, name, rowType);
+		return new TableDefinitionImpl(po, fieldFactory, rowFactory, containerId, name, rowType);
 	}
 
 	/*
@@ -766,7 +776,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			buffer = new byte[n];
 			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
-			table = new TableDefinitionImpl(po, this, bb);
+			table = new TableDefinitionImpl(po, fieldFactory, rowFactory, bb);
 		} finally {
 			sc.close();
 		}
@@ -791,7 +801,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		public CreateTableDefinition(DatabaseImpl database, ByteBuffer bb) {
 			super(bb);
 			this.database = database;
-			table = new TableDefinitionImpl(database.po, database, bb);
+			table = new TableDefinitionImpl(database.po, database.fieldFactory, database.rowFactory, bb);
 		}
 
 		public CreateTableDefinition(int moduleId, int typeCode, DatabaseImpl database) {
@@ -1017,6 +1027,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 * @return Table object representing the table
 	 */	
 	Table getTable(TableDefinition tableDefinition) {
-		return new TableImpl(po, tableDefinition);
+		return new TableImpl(po, this, tableDefinition);
 	}
 }

@@ -45,14 +45,20 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
+import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.database.impl.TableDefinitionImpl;
+import org.simpledbm.network.common.api.QueryDictionaryMessage;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
 
 public class SimpleDBMRequestHandler implements RequestHandler {
 
 	Database database;
+	Platform platform;
 
 	/**
 	 * A map of all active sessions
@@ -69,12 +75,19 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 			handleOpenSessionRequest(request, response);
 		} else if (request.getRequestCode() == RequestCode.CLOSE_SESSION) {
 			handleCloseSessionRequest(request, response);
+		} else if (request.getRequestCode() == RequestCode.CREATE_TEST_TABLES) {
+			handleCreateTestTables(request, response);
+		} else if (request.getRequestCode() == RequestCode.QUERY_DICTIONARY) {
+			handleQueryDictionaryRequest(request, response);
+		} else if (request.getRequestCode() == RequestCode.CREATE_TABLE) {
+			handleCreateTable(request, response);
 		} else {
 			handleUnknownRequest(request, response);
 		}
 	}
 
 	public void onInitialize(Platform platform, Properties properties) {
+		this.platform = platform;
 		database = DatabaseFactory.getDatabase(platform, properties);
 	}
 
@@ -88,7 +101,6 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 	private void setError(Response response, int statusCode, String message) {
 		response.setStatusCode(statusCode);
-		// FIXME set charset to utf-8
 		byte[] bytes = message.getBytes(Charset.forName("UTF-8"));
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
@@ -118,6 +130,24 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		}
 		response.setSessionId(0);
 	}
+	
+	void handleQueryDictionaryRequest(Request request, Response response) {
+		try {
+			QueryDictionaryMessage message = new QueryDictionaryMessage(request
+					.getData());
+			TypeDescriptor[] td = database.getDictionaryCache()
+					.getTypeDescriptor(message.containerId);
+			ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
+					.getStoredLength(td));
+			database.getTypeFactory().store(td, bb);
+			bb.flip();
+			response.setData(bb);
+		} catch (Exception e) {
+			e.printStackTrace();
+			setError(response, -1, "Failed to query data dictionary: "
+					+ e.getMessage());
+		}
+	}
 
 	void handleUnknownRequest(Request request, Response response) {
 		int sessionId = request.getSessionId();
@@ -126,6 +156,51 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		response.setSessionId(0);
 	}
 
+	void handleCreateTestTables(Request request, Response response) {
+		try {
+			TypeFactory ff = database.getTypeFactory();
+			TypeDescriptor employee_rowtype[] = { 
+					ff.getIntegerType(), /* primary key */
+					ff.getVarcharType(20), /* name */
+					ff.getVarcharType(20), /* surname */
+					ff.getVarcharType(20), /* city */
+					ff.getVarcharType(45), /* email address */
+					ff.getDateTimeType(), /* date of birth */
+					ff.getNumberType(2) /* salary */
+			};
+			TableDefinition tableDefinition = database.newTableDefinition(
+					"employee", 1, employee_rowtype);
+			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+					true);
+			tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
+					false, false);
+			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
+					false, false);
+			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
+					false, false);
+
+			database.createTable(tableDefinition);
+		} catch (Exception e) {
+			e.printStackTrace();
+			setError(response, -1, "Failed to create test tables: "
+					+ e.getMessage());
+		}
+	}
+	
+	void handleCreateTable(Request request, Response response) {
+		try {
+			TableDefinition tableDefinition = new TableDefinitionImpl(
+					database.getPlatformObjects(), database.getTypeFactory(),
+					database.getRowFactory(), request.getData());
+			database.createTable(tableDefinition);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+			setError(response, -1, "Failed to create table: "
+					+ e.getMessage());
+		}
+	}
+	
 	/*
 	 * On shutdown we must abort transactions that weren't committed by
 	 * respective clients We should also periodically check on the session

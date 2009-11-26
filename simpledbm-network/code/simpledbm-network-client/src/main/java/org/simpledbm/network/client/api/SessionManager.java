@@ -37,33 +37,67 @@
 package org.simpledbm.network.client.api;
 
 import java.nio.ByteBuffer;
+import java.util.Properties;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.impl.platform.PlatformImpl;
+import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.database.impl.TableDefinitionImpl;
+import org.simpledbm.network.client.impl.DictionaryCacheProxy;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.common.api.SessionRequestMessage;
 import org.simpledbm.network.nio.api.Connection;
 import org.simpledbm.network.nio.api.NetworkUtil;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.typesystem.api.DictionaryCache;
+import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class SessionManager {
+	
+	public static final String LOGGER_NAME = "org.simpledbm.network";
 
     String host;
     int port;
     Connection connection;
     TypeFactory typeFactory = TypeSystemFactory.getDefaultTypeFactory();
+    DictionaryCache dictionaryCache;
+    RowFactory rowFactory;
+	final Platform platform;
+	final PlatformObjects po;
+	final Logger log;
+	final MessageCatalog mcat;
+	final ExceptionHandler exceptionHandler;
 
-    public SessionManager(String host, int port) {
+    public SessionManager(Properties properties, String host, int port) {
+		this.platform = new PlatformImpl(properties);
+		this.po = platform.getPlatformObjects(SessionManager.LOGGER_NAME);
+		this.log = po.getLogger();
+		this.mcat = po.getMessageCatalog();
+		this.exceptionHandler = po.getExceptionHandler();
         this.host = host;
         this.port = port;
-        connection = NetworkUtil.createConnection(host, port);
+        this.connection = NetworkUtil.createConnection(host, port);
+        this.dictionaryCache = new DictionaryCacheProxy(connection, typeFactory);
+        this.rowFactory = TypeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
     }
 
     public TypeFactory getTypeFactory() {
         return typeFactory;
     }
 
+	public TableDefinition newTableDefinition(String name, int containerId,
+			TypeDescriptor[] rowType) {
+		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name, rowType);
+	}    
+    
     public Session openSession() {
         SessionRequestMessage message = new SessionRequestMessage();
         ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
@@ -81,4 +115,35 @@ public class SessionManager {
     Connection getConnection() {
     	return connection;
     }
+
+    public void createTestTables() {
+        SessionRequestMessage message = new SessionRequestMessage();
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.CREATE_TEST_TABLES);
+        Response response = getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error");
+        } 
+    }
+    
+    public TypeDescriptor[] getRowType(int containerId) {
+    	return dictionaryCache.getTypeDescriptor(containerId);
+    }
+    
+    public void createTable(TableDefinition tableDefinition) {
+        ByteBuffer data = ByteBuffer.allocate(tableDefinition.getStoredLength());
+        tableDefinition.store(data);
+        byte[] arr = data.array();
+        System.err.println("stored length = " + tableDefinition.getStoredLength());
+        System.err.println("array length = " + arr.length);
+        Request request = NetworkUtil.createRequest(arr);
+        request.setRequestCode(RequestCode.CREATE_TABLE);
+        Response response = getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error");
+        }     	
+    }
+    
 }

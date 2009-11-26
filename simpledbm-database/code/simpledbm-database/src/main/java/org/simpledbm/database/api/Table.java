@@ -121,4 +121,6 @@ public interface Table {
 	 * Check the table row for validity.
 	 */
 	public abstract boolean validateRow(Row tableRow);
+	
+	public Database getDatabase();
 }
