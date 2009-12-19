@@ -36,6 +36,7 @@
  */
 package org.simpledbm.network.server;
 
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -145,7 +146,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 	private void setError(Response response, int statusCode, String message) {
 		response.setStatusCode(statusCode);
-		byte[] bytes = message.getBytes(Charset.forName("UTF-8"));
+		byte[] bytes;
+		try {
+			bytes = message.getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			throw new SimpleDBMException(e);
+		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
 		response.setData(data);
@@ -177,7 +183,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 				sb.append("Caused by: ");
 			}
 		} while (e != null);
-		byte[] bytes = sb.toString().getBytes(Charset.forName("UTF-8"));
+		byte[] bytes;
+		try {
+			bytes = sb.toString().getBytes("UTF-8");
+		} catch (UnsupportedEncodingException e1) {
+			throw new SimpleDBMException(e1);
+		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
 		response.setData(data);
