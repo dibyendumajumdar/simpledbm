@@ -69,6 +69,7 @@ public interface IndexScan {
      * end of file. The next call to fetchNext() will return false.
      * 
      * @param matched If set to true indicates that the key satisfies search query
+     * @deprecated
      */
     public void fetchCompleted(boolean matched);
 

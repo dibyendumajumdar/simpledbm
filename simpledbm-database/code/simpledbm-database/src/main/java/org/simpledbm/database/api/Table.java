@@ -39,6 +39,7 @@ package org.simpledbm.database.api;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 
 /**
  * A Table is a collection of rows. Each row is made up of columns (fields).

@@ -42,9 +42,7 @@ import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.database.api.Database;
-import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
-import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.im.IndexContainer;
@@ -54,7 +52,9 @@ import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 
 /**
  * A Table instance.

@@ -36,7 +36,7 @@
  */
 package org.simpledbm.rss.impl.locking;
 
-import org.simpledbm.rss.api.locking.LockMode;
+import org.simpledbm.common.api.locking.LockMode;
 
 /**
  * LockEventListener allows interested clients to be notified for certain lock events.

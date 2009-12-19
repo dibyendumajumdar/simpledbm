@@ -36,9 +36,10 @@
  */
 package org.simpledbm.rss.api.tx;
 
+import org.simpledbm.common.api.locking.LockMode;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockManager;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.wal.Lsn;
 

@@ -36,6 +36,7 @@
  */
 package org.simpledbm.rss.api.tx;
 
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**

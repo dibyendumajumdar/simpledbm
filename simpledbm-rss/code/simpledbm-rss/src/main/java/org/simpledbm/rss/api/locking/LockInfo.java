@@ -36,6 +36,8 @@
  */
 package org.simpledbm.rss.api.locking;
 
+import org.simpledbm.common.api.locking.LockMode;
+
 public interface LockInfo {
 
     /**

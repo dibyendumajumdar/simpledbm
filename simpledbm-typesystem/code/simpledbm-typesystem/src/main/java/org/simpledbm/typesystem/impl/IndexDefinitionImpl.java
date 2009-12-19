@@ -34,7 +34,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.database.impl;
+package org.simpledbm.typesystem.impl;
 
 import java.nio.ByteBuffer;
 
@@ -45,12 +45,12 @@ import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.database.api.IndexDefinition;
-import org.simpledbm.database.api.TableDefinition;
-import org.simpledbm.exception.DatabaseException;
+import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeException;
 
 /**
  * An implementation of IndexDefinition.
@@ -120,14 +120,14 @@ public class IndexDefinitionImpl implements IndexDefinition {
 		}
 	}
 
-    public IndexDefinitionImpl(PlatformObjects po, TableDefinition table, int containerId, String name,
+    IndexDefinitionImpl(PlatformObjects po, TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
     	this.log = po.getLogger();
     	this.mcat = po.getMessageCatalog();
     	this.table = table;
     	if (columns.length == 0) {
     		log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0010"));
-    		throw new DatabaseException(mcat.getMessage("ED0010"));
+    		throw new TypeException(mcat.getMessage("ED0010"));
     	}
         this.containerId = containerId;
         this.name = name;
@@ -142,7 +142,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
         for (int i = 0; i < columns.length; i++) {
             if (columns[i] >= table.getRowType().length || columns[i] < 0) {
             	log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0011", columns[i], table.getName()));
-            	throw new DatabaseException(mcat.getMessage("ED0011", columns[i], table.getName()));
+            	throw new TypeException(mcat.getMessage("ED0011", columns[i], table.getName()));
             }
             rowType[i] = table.getRowType()[columns[i]];
         }

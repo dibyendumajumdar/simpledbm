@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,47 +34,89 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.locking;
+package org.simpledbm.network.common.api;
 
-import org.simpledbm.common.api.locking.LockMode;
+import java.nio.ByteBuffer;
 
-/**
- * LockHandle provides a handle to an acquired lock. It provides methods for releasing the lock.
- * @author Dibyendu Majumdar
- * @since 26-July-2005
- * @see LockManager
- */
-public interface LockHandle {
-    /**
-     * Releases a lock; if force is true the lock is released unconditionally, regardless of
-     * the duration of the lock. MANUAL_DURATION locks are
-     * reentrant, therefore the Lock Manager must keep track of the number of times such a lock 
-     * is acquired. A call to release causes the lock reference count to be decremented until it 
-     * is zero, when the lock can be actually deleted. 
-     * <p>
-     * If force option is set to true, the lock is released unconditionally, regardless of the
-     * lock duration or reference count. The force option is meant to be used only when a transaction
-     * commits, or rolls back (including to a savepoint). 
-     * 
-     * @param force Forcibly release the lock regardless of lock count.
-     * @throws LockException Thrown if the lock doesn't exist
-     * @return True if lock was released, false if lock is still held.
-     */
-    boolean release(boolean force);
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
 
-    /**
-     * Downgrades a lock to the desired mode. Downgrading a lock may result in other
-     * compatible locks being granted. For example, if an {@link LockMode#UPDATE}
-     * lock is downgraded to {@link LockMode#SHARED}, it may result in pending shared
-     * lock requests being granted.
-     * @param mode
-     * @throws LockException
-     */
-    void downgrade(LockMode mode);
+public class OpenScanMessage implements Storable {
 
-    /**
-     * Returns the currently held LockMode.
-     * @return Currently held LockMode.
-     */
-    LockMode getCurrentMode();
+	int containerId;
+	int indexNo;
+	Row startRow;
+	boolean forUpdate;
+
+	public OpenScanMessage(int containerId, int indexNo, Row startRow,
+			boolean forUpdate) {
+		this.containerId = containerId;
+		this.indexNo = indexNo;
+		this.startRow = startRow;
+		this.forUpdate = forUpdate;
+	}
+
+	public OpenScanMessage(RowFactory rowFactory, ByteBuffer bb) {
+		containerId = bb.getInt();
+		indexNo = bb.getInt();
+		boolean hasStartRow = (bb.get() == 1);
+		if (hasStartRow) {
+			startRow = rowFactory.newRow(containerId, bb);
+		}
+		else {
+			startRow = null;
+		}
+		forUpdate = (bb.get() == 1 ? true : false);
+	}
+
+	public int getStoredLength() {
+		return TypeSize.INTEGER * 2
+				+ (startRow != null ? startRow.getStoredLength() : 0)
+				+ TypeSize.BYTE * 2;
+	}
+
+	public void store(ByteBuffer bb) {
+		bb.putInt(containerId);
+		bb.putInt(indexNo);
+		bb.put((byte) (startRow != null ? 1 : 0));
+		if (startRow != null) {
+			startRow.store(bb);
+		}
+		bb.put((byte) (forUpdate ? 1 : 0));
+	}
+
+	public int getContainerId() {
+		return containerId;
+	}
+
+	public void setContainerId(int containerId) {
+		this.containerId = containerId;
+	}
+
+	public int getIndexNo() {
+		return indexNo;
+	}
+
+	public void setIndexNo(int indexNo) {
+		this.indexNo = indexNo;
+	}
+
+	public Row getStartRow() {
+		return startRow;
+	}
+
+	public void setStartRow(Row startRow) {
+		this.startRow = startRow;
+	}
+
+	public boolean isForUpdate() {
+		return forUpdate;
+	}
+
+	public void setForUpdate(boolean forUpdate) {
+		this.forUpdate = forUpdate;
+	}
+
 }

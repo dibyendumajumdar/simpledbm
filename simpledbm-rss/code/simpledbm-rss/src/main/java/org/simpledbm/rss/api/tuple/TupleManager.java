@@ -36,8 +36,8 @@
  */
 package org.simpledbm.rss.api.tuple;
 
+import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.rss.api.loc.LocationFactory;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModule;
 

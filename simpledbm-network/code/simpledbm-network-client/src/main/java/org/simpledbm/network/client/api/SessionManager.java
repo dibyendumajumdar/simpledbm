@@ -45,8 +45,6 @@ import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.database.api.TableDefinition;
-import org.simpledbm.database.impl.TableDefinitionImpl;
 import org.simpledbm.network.client.impl.DictionaryCacheProxy;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.common.api.SessionRequestMessage;
@@ -56,6 +54,7 @@ import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.Response;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
@@ -95,7 +94,7 @@ public class SessionManager {
 
 	public TableDefinition newTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name, rowType);
+		return TypeSystemFactory.getTableDefinition(po, typeFactory, rowFactory, containerId, name, rowType);
 	}    
     
     public Session openSession() {
@@ -116,34 +115,8 @@ public class SessionManager {
     	return connection;
     }
 
-    public void createTestTables() {
-        SessionRequestMessage message = new SessionRequestMessage();
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.CREATE_TEST_TABLES);
-        Response response = getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
-        } 
-    }
-    
     public TypeDescriptor[] getRowType(int containerId) {
     	return dictionaryCache.getTypeDescriptor(containerId);
-    }
-    
-    public void createTable(TableDefinition tableDefinition) {
-        ByteBuffer data = ByteBuffer.allocate(tableDefinition.getStoredLength());
-        tableDefinition.store(data);
-        byte[] arr = data.array();
-        System.err.println("stored length = " + tableDefinition.getStoredLength());
-        System.err.println("array length = " + arr.length);
-        Request request = NetworkUtil.createRequest(arr);
-        request.setRequestCode(RequestCode.CREATE_TABLE);
-        Response response = getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
-        }     	
     }
     
 }

@@ -39,19 +39,25 @@ package org.simpledbm.network.client.api;
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.api.tx.IsolationMode;
+import org.simpledbm.network.common.api.EndTransactionMessage;
+import org.simpledbm.network.common.api.GetTableMessage;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.common.api.SessionRequestMessage;
+import org.simpledbm.network.common.api.StartTransactionMessage;
 import org.simpledbm.network.nio.api.NetworkUtil;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.typesystem.api.TableDefinition;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 /**
  * Session represents a session with the server.
  */
 public class Session {
 
-    final int sessionId;
-    final SessionManager sessionManager;
+    private final int sessionId;
+    private final SessionManager sessionManager;
     
     public Session(SessionManager sessionManager, int sessionId) {
     	this.sessionManager = sessionManager;
@@ -69,30 +75,88 @@ public class Session {
     	return msg;
     }
     
-    public void close() {
+    public synchronized void close() {
         SessionRequestMessage message = new SessionRequestMessage();
         ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
         message.store(data);
         Request request = NetworkUtil.createRequest(data.array());
         request.setRequestCode(RequestCode.CLOSE_SESSION);
-        request.setSessionId(sessionId);
-        Response response = sessionManager.getConnection().submit(request);
+        request.setSessionId(getSessionId());
+        Response response = getSessionManager().getConnection().submit(request);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
         } 
     }
     
-    public void startTransaction() {
-        SessionRequestMessage message = new SessionRequestMessage();
+    public synchronized void startTransaction(IsolationMode isolationMode) {
+        StartTransactionMessage message = new StartTransactionMessage(isolationMode);
         ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
         message.store(data);
         Request request = NetworkUtil.createRequest(data.array());
         request.setRequestCode(RequestCode.START_TRANSACTION);
-        request.setSessionId(sessionId);
-        Response response = sessionManager.getConnection().submit(request);
+        request.setSessionId(getSessionId());
+        Response response = getSessionManager().getConnection().submit(request);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
-        } 
+        }
     }
+
+    private synchronized void endTransaction(boolean commit) {
+        EndTransactionMessage message = new EndTransactionMessage(commit);
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.END_TRANSACTION);
+        request.setSessionId(getSessionId());
+        Response response = getSessionManager().getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error: " + getError(response));
+        }    	
+    }
+    
+    public void commit() {
+    	endTransaction(true);
+    }
+    
+    public void rollback() {
+    	endTransaction(false);
+    }
+    
+    public synchronized void createTable(TableDefinition tableDefinition) {
+        ByteBuffer data = ByteBuffer.allocate(tableDefinition.getStoredLength());
+        tableDefinition.store(data);
+        byte[] arr = data.array();
+        Request request = NetworkUtil.createRequest(arr);
+        request.setSessionId(getSessionId());
+        request.setRequestCode(RequestCode.CREATE_TABLE);
+        Response response = getSessionManager().getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error" + getError(response));
+        }     	
+    }
+
+    public Table getTable(int containerId) {
+    	GetTableMessage message = new GetTableMessage(containerId);
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.GET_TABLE);
+        request.setSessionId(getSessionId());
+        Response response = getSessionManager().getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+            throw new SessionException("server returned error: " + getError(response));
+        }    	
+        TableDefinition tableDefinition = TypeSystemFactory.getTableDefinition(getSessionManager().po, getSessionManager().getTypeFactory(),
+        		getSessionManager().rowFactory, response.getData());
+    	return new Table(this, tableDefinition);
+    }
+
+	SessionManager getSessionManager() {
+		return sessionManager;
+	}
+
+	int getSessionId() {
+		return sessionId;
+	}
     
 }

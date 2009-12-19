@@ -48,12 +48,14 @@ import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.common.api.key.IndexKeyFactory;
+import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.registry.StorableFactory;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
@@ -75,7 +77,6 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.loc.LocationFactory;
 import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
@@ -84,7 +85,6 @@ import org.simpledbm.rss.api.sp.SlottedPageManager;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.LogicalUndo;
 import org.simpledbm.rss.api.tx.MultiPageRedo;
@@ -3710,10 +3710,11 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          */
         public final boolean fetchNext() {
             if (stateFetchCompleted != 0) {
-            	btree.btreeMgr.log.warn(
-                    getClass().getName(),
-                    "close",
-                    "fetchCompleted() has not been called after fetchNext()");
+//            	btree.btreeMgr.log.warn(
+//                    getClass().getName(),
+//                    "close",
+//                    "fetchCompleted() has not been called after fetchNext()");
+            	fetchCompleted();
             }
             if (!isEof()) {
                 if (scanMode == SCAN_FETCH_GREATER) {
@@ -3776,15 +3777,15 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             return false;
         }
 
-        public final void fetchCompleted(boolean matched) {
+        private void fetchCompleted() {
             /*
              * This method is invoked after the data from tuple container has been
              * read. Its main purpose is to release locks in read committed or cursor stability mode.
              */
             stateFetchCompleted = 0;
-            if (!matched && !isEof()) {
-                setEof(true);
-            }
+//            if (!matched && !isEof()) {
+//                setEof(true);
+//            }
             if (currentKey != null) {
                 boolean releaseLock = false;
                 if (trx.getIsolationMode() == IsolationMode.CURSOR_STABILITY
@@ -3810,6 +3811,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     }
                 }
             }
+        }
+        
+        public final void fetchCompleted(boolean matched) {
         }
 
         public final void close() {
@@ -3855,7 +3859,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 throw ex;
             }
             if (stateFetchCompleted != 0) {
-            	btree.btreeMgr.log.warn(getClass().getName(), "close", btree.po.getMessageCatalog().getMessage("WB0011"));
+            	// btree.btreeMgr.log.warn(getClass().getName(), "close", btree.po.getMessageCatalog().getMessage("WB0011"));
             }
         }
 

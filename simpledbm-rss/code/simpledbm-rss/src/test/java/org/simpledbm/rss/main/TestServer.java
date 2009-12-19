@@ -39,11 +39,11 @@ package org.simpledbm.rss.main;
 import java.util.Properties;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 public class TestServer extends BaseTestCase {

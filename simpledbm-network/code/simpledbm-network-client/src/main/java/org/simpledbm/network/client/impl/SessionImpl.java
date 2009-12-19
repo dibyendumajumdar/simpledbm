@@ -36,7 +36,6 @@
  */
 package org.simpledbm.network.client.impl;
 
-
 public class SessionImpl  {
 
     public void shutdown() {

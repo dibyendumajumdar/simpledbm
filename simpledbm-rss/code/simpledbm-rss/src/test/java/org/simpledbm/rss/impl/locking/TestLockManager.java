@@ -41,6 +41,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
@@ -50,7 +51,6 @@ import org.simpledbm.rss.api.locking.LockDuration;
 import org.simpledbm.rss.api.locking.LockException;
 import org.simpledbm.rss.api.locking.LockHandle;
 import org.simpledbm.rss.api.locking.LockManager;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.impl.latch.LatchFactoryImpl;
 
 /**

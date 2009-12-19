@@ -34,7 +34,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.database.api;
+package org.simpledbm.typesystem.api;
 
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.Dumpable;

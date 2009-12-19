@@ -34,7 +34,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.database.impl;
+package org.simpledbm.typesystem.impl;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -45,12 +45,12 @@ import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.database.api.IndexDefinition;
-import org.simpledbm.database.api.TableDefinition;
-import org.simpledbm.exception.DatabaseException;
+import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeException;
 import org.simpledbm.typesystem.api.TypeFactory;
 
 /**
@@ -141,7 +141,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
             boolean primary, boolean unique) {
         if (!primary && indexes.size() == 0) {
         	log.error(getClass().getName(), "addIndex", mcat.getMessage("ED0012"));
-        	throw new DatabaseException(mcat.getMessage("ED0012"));
+        	throw new TypeException(mcat.getMessage("ED0012"));
         }
         indexes.add(new IndexDefinitionImpl(po, this, containerId, name, columns, primary, unique));
     }
@@ -291,7 +291,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 		if (indexNo < 0 || indexNo  >= indexes.size()) {
 			// FIXME
 			// log error
-			throw new DatabaseException();
+			throw new TypeException();
 		}
 		return indexes.get(indexNo);
 	}

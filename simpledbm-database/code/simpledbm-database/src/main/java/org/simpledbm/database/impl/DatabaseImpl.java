@@ -43,20 +43,19 @@ import java.util.Iterator;
 import java.util.Properties;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectFactory;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.database.api.Database;
-import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
-import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
-import org.simpledbm.rss.api.locking.LockMode;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.st.StorageContainer;
@@ -65,7 +64,6 @@ import org.simpledbm.rss.api.st.StorageContainerInfo;
 import org.simpledbm.rss.api.tx.BaseLoggable;
 import org.simpledbm.rss.api.tx.BaseTransactionalModule;
 import org.simpledbm.rss.api.tx.Compensation;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Loggable;
 import org.simpledbm.rss.api.tx.PostCommitAction;
 import org.simpledbm.rss.api.tx.Redoable;
@@ -74,7 +72,9 @@ import org.simpledbm.rss.api.tx.Undoable;
 import org.simpledbm.rss.api.wal.Lsn;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.DictionaryCache;
+import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
@@ -242,7 +242,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
 	public TableDefinition newTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, fieldFactory, rowFactory, containerId, name, rowType);
+		return TypeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, containerId, name, rowType);
 	}
 
 	/*
@@ -758,7 +758,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		String tableName = makeTableDefName(containerId);
 		StorageContainerFactory storageFactory = server.getStorageFactory();
 		StorageContainer sc = storageFactory.open(tableName);
-		TableDefinitionImpl table = null;
+		TableDefinition table = null;
 		try {
 			byte buffer[] = new byte[TypeSize.BYTE + TypeSize.INTEGER];
 			sc.read(0, buffer, 0, buffer.length);
@@ -776,7 +776,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			buffer = new byte[n];
 			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
-			table = new TableDefinitionImpl(po, fieldFactory, rowFactory, bb);
+			table = TypeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, bb);
 		} finally {
 			sc.close();
 		}
@@ -801,7 +801,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		public CreateTableDefinition(DatabaseImpl database, ByteBuffer bb) {
 			super(bb);
 			this.database = database;
-			table = new TableDefinitionImpl(database.po, database.fieldFactory, database.rowFactory, bb);
+			table = TypeSystemFactory.getTableDefinition(database.po, database.fieldFactory, database.rowFactory, bb);
 		}
 
 		public CreateTableDefinition(int moduleId, int typeCode, DatabaseImpl database) {

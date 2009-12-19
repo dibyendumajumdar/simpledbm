@@ -37,9 +37,9 @@
 package org.simpledbm.rss.api.im;
 
 import org.simpledbm.common.api.key.IndexKey;
+import org.simpledbm.common.api.locking.LockMode;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.rss.api.loc.Location;
-import org.simpledbm.rss.api.locking.LockMode;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**

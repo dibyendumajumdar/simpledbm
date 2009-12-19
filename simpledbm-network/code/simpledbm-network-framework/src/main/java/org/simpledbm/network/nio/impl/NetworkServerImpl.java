@@ -128,7 +128,7 @@ public class NetworkServerImpl implements NetworkServer {
         } else {
             return;
         }
-        System.err.println("Closing server " + serverSocketAddress);
+//        System.err.println("Closing server " + serverSocketAddress);
         stop = true;
         selector.wakeup();
         requestHandlerService.shutdown();
@@ -453,7 +453,7 @@ public class NetworkServerImpl implements NetworkServer {
         }
 
         synchronized void queueWrite(WriteRequest wr) {
-        	System.err.println("queuing write " + wr.response.limit());
+//        	System.err.println("queuing write " + wr.response.limit());
         	wr.responseHeader.setDataSize(wr.response.limit());
             writeQueue.add(wr);
             networkServer.selector.wakeup();

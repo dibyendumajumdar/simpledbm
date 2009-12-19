@@ -10,8 +10,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-network-server"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-common"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-database"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-rss"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-typesystem"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

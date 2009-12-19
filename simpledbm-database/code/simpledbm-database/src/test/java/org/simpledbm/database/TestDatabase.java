@@ -42,15 +42,15 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
-import org.simpledbm.database.api.TableDefinition;
 import org.simpledbm.database.api.TableScan;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
