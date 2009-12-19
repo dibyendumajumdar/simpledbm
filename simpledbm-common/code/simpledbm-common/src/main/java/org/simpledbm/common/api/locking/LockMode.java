@@ -35,7 +35,7 @@
  *    Email  : d dot majumdar at gmail dot com ignore
  */
 
-package org.simpledbm.rss.api.locking;
+package org.simpledbm.common.api.locking;
 
 /**
  * LockMode defines the different types of Locks available in the system. It

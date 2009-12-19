@@ -42,18 +42,34 @@ import java.util.HashMap;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
-import org.simpledbm.database.api.TableDefinition;
-import org.simpledbm.database.impl.TableDefinitionImpl;
+import org.simpledbm.database.api.Table;
+import org.simpledbm.database.api.TableScan;
+import org.simpledbm.network.common.api.AddRowMessage;
+import org.simpledbm.network.common.api.CloseScanMessage;
+import org.simpledbm.network.common.api.DeleteRowMessage;
+import org.simpledbm.network.common.api.EndTransactionMessage;
+import org.simpledbm.network.common.api.FetchNextRowMessage;
+import org.simpledbm.network.common.api.FetchNextRowReply;
+import org.simpledbm.network.common.api.GetTableMessage;
+import org.simpledbm.network.common.api.OpenScanMessage;
 import org.simpledbm.network.common.api.QueryDictionaryMessage;
 import org.simpledbm.network.common.api.RequestCode;
+import org.simpledbm.network.common.api.StartTransactionMessage;
+import org.simpledbm.network.common.api.UpdateRowMessage;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class SimpleDBMRequestHandler implements RequestHandler {
 
@@ -69,18 +85,46 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 * A sequence number generator used to allocate new session ids.
 	 */
 	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
+	
+	
+	private ClientSession validateSession(Request request, Response response) {
+		ClientSession session = null;
+		synchronized(sessions) {
+			session = sessions.get(request.getSessionId());
+			if (session == null) {
+				setError(response, -1, "Unknown session identifier");
+			}
+		}
+		return session;
+	}
 
 	public void handleRequest(Request request, Response response) {
 		if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
 			handleOpenSessionRequest(request, response);
 		} else if (request.getRequestCode() == RequestCode.CLOSE_SESSION) {
 			handleCloseSessionRequest(request, response);
-		} else if (request.getRequestCode() == RequestCode.CREATE_TEST_TABLES) {
-			handleCreateTestTables(request, response);
 		} else if (request.getRequestCode() == RequestCode.QUERY_DICTIONARY) {
 			handleQueryDictionaryRequest(request, response);
 		} else if (request.getRequestCode() == RequestCode.CREATE_TABLE) {
 			handleCreateTable(request, response);
+		} else if (request.getRequestCode() == RequestCode.START_TRANSACTION) {
+			handleStartTransaction(request, response);
+		} else if (request.getRequestCode() == RequestCode.END_TRANSACTION) {
+			handleEndTransaction(request, response);
+		} else if (request.getRequestCode() == RequestCode.GET_TABLE) {
+			handleGetTable(request, response);
+		} else if (request.getRequestCode() == RequestCode.OPEN_TABLESCAN) {
+			handleOpenTableScan(request, response);
+		} else if (request.getRequestCode() == RequestCode.CLOSE_TABLESCAN) {
+			handleCloseTableScan(request, response);
+		} else if (request.getRequestCode() == RequestCode.ADD_ROW) {
+			handleAddRow(request, response);
+		} else if (request.getRequestCode() == RequestCode.FETCH_NEXT_ROW) {
+			handleFetchNextRow(request, response);
+		} else if (request.getRequestCode() == RequestCode.UPDATE_CURRENT_ROW) {
+			handleUpdateCurrentRow(request, response);
+		} else if (request.getRequestCode() == RequestCode.DELETE_CURRENT_ROW) {
+			handleDeleteCurrentRow(request, response);
 		} else {
 			handleUnknownRequest(request, response);
 		}
@@ -107,9 +151,41 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		response.setData(data);
 	}
 
+	private void formatException(StringBuilder sb, Throwable e) {
+		sb.append(e.getClass().getName());
+		sb.append(": ");
+		sb.append(e.getMessage());
+		sb.append(Dumpable.newline);
+		for (StackTraceElement se : e.getStackTrace()) {
+			sb.append(Dumpable.TAB);
+			sb.append("at ");
+			sb.append(se.toString());
+			sb.append(Dumpable.newline);
+		}		
+	}
+	
+	private void setError(Response response, int statusCode, String message,
+			Throwable e) {
+		response.setStatusCode(statusCode);
+		StringBuilder sb = new StringBuilder();
+		sb.append(message);
+		sb.append(Dumpable.newline);
+		do {
+			formatException(sb, e);
+			e = e.getCause();
+			if (e != null) {
+				sb.append("Caused by: ");
+			}
+		} while (e != null);
+		byte[] bytes = sb.toString().getBytes(Charset.forName("UTF-8"));
+		ByteBuffer data = ByteBuffer.wrap(bytes);
+		data.limit(bytes.length);
+		response.setData(data);
+	}
+	
 	void handleOpenSessionRequest(Request request, Response response) {
 		int sessionId = sessionIdGenerator.incrementAndGet();
-		ClientSession session = new ClientSession(sessionId);
+		ClientSession session = new ClientSession(sessionId, database);
 		synchronized (session) {
 			sessions.put(sessionId, session);
 		}
@@ -118,13 +194,13 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 	void handleCloseSessionRequest(Request request, Response response) {
 		int sessionId = request.getSessionId();
-		System.err.println("Request to close session " + sessionId);
+//		System.err.println("Request to close session " + sessionId);
 		synchronized (sessions) {
 			ClientSession session = sessions.get(sessionId);
 			if (session == null) {
-				setError(response, -1, "Unknown session identifier");
+				setError(response, -1, "Unknown session identifier: " + sessionId);
 			} else {
-				System.err.println("session removed");
+//				System.err.println("session removed");
 				sessions.remove(sessionId);
 			}
 		}
@@ -143,9 +219,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 			bb.flip();
 			response.setData(bb);
 		} catch (Exception e) {
-			e.printStackTrace();
-			setError(response, -1, "Failed to query data dictionary: "
-					+ e.getMessage());
+			setError(response, -1, "Failed to query data dictionary", e);
 		}
 	}
 
@@ -181,23 +255,252 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 			database.createTable(tableDefinition);
 		} catch (Exception e) {
-			e.printStackTrace();
-			setError(response, -1, "Failed to create test tables: "
-					+ e.getMessage());
+			setError(response, -1, "Failed to create test tables", e);
 		}
 	}
 	
 	void handleCreateTable(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
 		try {
-			TableDefinition tableDefinition = new TableDefinitionImpl(
+			TableDefinition tableDefinition = TypeSystemFactory.getTableDefinition(
 					database.getPlatformObjects(), database.getTypeFactory(),
 					database.getRowFactory(), request.getData());
 			database.createTable(tableDefinition);
 		}
 		catch (Exception e) {
-			e.printStackTrace();
-			setError(response, -1, "Failed to create table: "
-					+ e.getMessage());
+			setError(response, -1, "Failed to create table", e);
+		}
+	}
+
+	void handleStartTransaction(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction != null) {
+			setError(response, -1, "Has an active transaction: " + transaction);
+			return;
+		}
+		StartTransactionMessage message = new StartTransactionMessage(request.getData());
+		try {
+			transaction = database.startTransaction(message.getIsolationMode());
+			session.setTransaction(transaction);
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to start transaction", e);
+		}
+	}
+
+	void handleEndTransaction(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		EndTransactionMessage message = new EndTransactionMessage(request.getData());
+		try {
+			if (message.isCommit()) {
+				transaction.commit();
+			}
+			else {
+				transaction.abort();
+			}
+			session.setTransaction(null);
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to end transaction", e);
+		}
+	}
+	
+	void handleGetTable(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		GetTableMessage message = new GetTableMessage(request.getData());
+		try {
+			Table table = session.getTable(message.containerId);
+			TableDefinition tableDefinition = table.getDefinition();
+			ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
+			tableDefinition.store(bb);
+			bb.flip();
+			response.setData(bb);
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to get table " + message.containerId, e);
+		}
+	}
+	
+	void handleOpenTableScan(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		OpenScanMessage message = new OpenScanMessage(database.getRowFactory(), request.getData());
+		try {
+			Table table = session.getTable(message.getContainerId());
+			if (table == null) {
+				throw new RuntimeException("No such table");
+			}
+			TableScan tableScan = table.openScan(transaction, message.getIndexNo(), 
+					message.getStartRow(), message.isForUpdate());
+			int scanId = session.registerTableScan(tableScan);
+			ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
+			bb.putInt(scanId);
+			bb.flip();
+			response.setData(bb);
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to open scan for table " + message.getContainerId(), e);
+		}
+	}
+
+	void handleCloseTableScan(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		CloseScanMessage message = new CloseScanMessage(request.getData());
+		try {
+			TableScan tableScan = session.getTableScan(message.getScanId());
+			if (tableScan == null) {
+				throw new RuntimeException("No such table scan");
+			}
+			tableScan.close();
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to close scan # " + message.getScanId(), e);
+		}
+	}
+	
+	void handleAddRow(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		AddRowMessage message = new AddRowMessage(database.getRowFactory(), request.getData());
+		try {
+			Table table = session.getTable(message.getContainerId());
+			if (table == null) {
+				throw new RuntimeException("No such table");
+			}
+//			System.err.println("Adding row " + message.getRow());
+			table.addRow(transaction, message.getRow());
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to add row to table " + message.getContainerId(), e);
+		}
+	}	
+
+	void handleFetchNextRow(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		FetchNextRowMessage message = new FetchNextRowMessage(database.getRowFactory(), request.getData());
+		try {
+			TableScan tableScan = session.getTableScan(message.getScanId());
+			if (tableScan == null) {
+				throw new SimpleDBMException("No such table scan");
+			}
+			FetchNextRowReply reply = null;
+			boolean hasNext = tableScan.fetchNext();
+			if (hasNext) {
+				reply = new FetchNextRowReply(tableScan.getTable().getDefinition().getContainerId(), 
+						false, tableScan.getCurrentRow());
+			}
+			else {
+				reply = new FetchNextRowReply(tableScan.getTable().getDefinition().getContainerId(), true, null);
+			}
+			ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
+			reply.store(bb);
+			bb.flip();
+			response.setData(bb);
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to fetch the next row", e);
+		}
+	}
+	
+	void handleUpdateCurrentRow(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		UpdateRowMessage message = new UpdateRowMessage(database.getRowFactory(), request.getData());
+		try {
+			TableScan tableScan = session.getTableScan(message.getScanId());
+			if (tableScan == null) {
+				throw new RuntimeException("No such table scan");
+			}
+			tableScan.updateCurrentRow(message.getRow());
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to update row", e);
+		}
+	}
+
+	/**
+	 * Process a delete row request
+	 */
+	void handleDeleteCurrentRow(Request request, Response response) {
+		ClientSession session = validateSession(request, response);
+		if (session == null) {
+			return;
+		}
+		Transaction transaction = session.getTransaction();
+		if (transaction == null) {
+			setError(response, -1, "There is no active transaction");
+			return;
+		}
+		DeleteRowMessage message = new DeleteRowMessage(request.getData());
+		try {
+			TableScan tableScan = session.getTableScan(message.getScanId());
+			if (tableScan == null) {
+				throw new SimpleDBMException("No such table scan");
+			}
+			tableScan.deleteRow();
+		}
+		catch (Exception e) {
+			setError(response, -1, "Failed to delete row", e);
 		}
 	}
 	

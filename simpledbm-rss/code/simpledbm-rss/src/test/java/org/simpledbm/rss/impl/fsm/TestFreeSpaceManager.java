@@ -40,6 +40,7 @@ import java.util.Properties;
 
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
@@ -55,7 +56,6 @@ import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageManager;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.LoggableFactory;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;

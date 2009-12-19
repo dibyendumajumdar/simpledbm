@@ -37,11 +37,12 @@
 package org.simpledbm.database.api;
 
 import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.rss.api.tx.IsolationMode;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 

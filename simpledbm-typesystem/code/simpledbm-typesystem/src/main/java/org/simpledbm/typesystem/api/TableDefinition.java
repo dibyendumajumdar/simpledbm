@@ -34,7 +34,7 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.database.api;
+package org.simpledbm.typesystem.api;
 
 import java.nio.ByteBuffer;
 import java.util.ArrayList;

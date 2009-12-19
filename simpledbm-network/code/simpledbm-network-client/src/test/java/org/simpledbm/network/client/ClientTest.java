@@ -38,13 +38,19 @@ package org.simpledbm.network.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.Properties;
 
-import org.simpledbm.database.api.TableDefinition;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.network.client.api.Session;
 import org.simpledbm.network.client.api.SessionManager;
+import org.simpledbm.network.client.api.Table;
+import org.simpledbm.network.client.api.TableScan;
 import org.simpledbm.network.server.SimpleDBMServer;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
@@ -91,6 +97,21 @@ public class ClientTest extends BaseTestCase {
 		}
 	}
 
+	static Date getDOB(int year, int month, int day) {
+		Calendar c = Calendar.getInstance();
+		c.clear();
+		c.set(year, month-1, day);
+		return c.getTime();
+	}
+
+	static Date getDOB(int year, int month, int day, int add) {
+		Calendar c = Calendar.getInstance();
+		c.clear();
+		c.set(year, month-1, day);
+		c.add(Calendar.DATE, add);
+		return c.getTime();
+	}	
+	
     private Properties parseProperties(String arg) {
         InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(arg);
         if (null == in) {
@@ -131,33 +152,93 @@ public class ClientTest extends BaseTestCase {
 //		sessionManager.createTestTables();
 		Session session = sessionManager.openSession();
 		try {
-			session.startTransaction();
+			TypeDescriptor employee_rowtype[] = { 
+					ff.getIntegerType(), /* primary key */
+					ff.getVarcharType(20), /* name */
+					ff.getVarcharType(20), /* surname */
+					ff.getVarcharType(20), /* city */
+					ff.getVarcharType(45), /* email address */
+					ff.getDateTimeType(), /* date of birth */
+					ff.getNumberType(2) /* salary */
+			};
+			TableDefinition tableDefinition = sessionManager.newTableDefinition(
+					"employee", 1, employee_rowtype);
+			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+					true);
+			tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
+					false, false);
+			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
+					false, false);
+			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
+					false, false);
+			session.createTable(tableDefinition);
+			session.startTransaction(IsolationMode.READ_COMMITTED);
+			boolean success = false;
+			try {
+				Table table = session.getTable(1);
+				System.out.println(table);	
+				Row tableRow = table.getRow();
+				tableRow.setInt(0, 1);
+				tableRow.setString(1, "Joe");
+				tableRow.setString(2, "Blogg");
+				tableRow.setDate(5, getDOB(1930, 12, 31));
+				tableRow.setString(6, "500.00");
+				table.addRow(tableRow);
+				TableScan scan = table.openScan(0, null, false);
+				try {
+					Row row = scan.fetchNext();
+					while (row != null) {
+						System.err.println("Fetched row " + row);
+						row.setString(6, "501.00");
+						scan.updateCurrentRow(row);
+						row = scan.fetchNext();
+					}
+				}
+				finally {
+					scan.close();
+				}
+				success = true;
+			}
+			finally {
+				if (success) {
+					session.commit();
+				}
+				else {
+					session.rollback();
+				}
+			}
+			session.startTransaction(IsolationMode.READ_COMMITTED);
+			success = false;
+			try {
+				Table table = session.getTable(1);
+				TableScan scan = table.openScan(0, null, false);
+				try {
+					Row row = scan.fetchNext();
+					while (row != null) {
+						System.err.println("Deleting row " + row);
+						scan.deleteRow();
+						row = scan.fetchNext();
+					}
+				}
+				finally {
+					scan.close();
+				}
+				success = true;
+			}
+			finally {
+				if (success) {
+					session.commit();
+				}
+				else {
+					session.rollback();
+				}
+			}
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			session.close();
 		}
-		TypeDescriptor employee_rowtype[] = { 
-				ff.getIntegerType(), /* primary key */
-				ff.getVarcharType(20), /* name */
-				ff.getVarcharType(20), /* surname */
-				ff.getVarcharType(20), /* city */
-				ff.getVarcharType(45), /* email address */
-				ff.getDateTimeType(), /* date of birth */
-				ff.getNumberType(2) /* salary */
-		};
-		TableDefinition tableDefinition = sessionManager.newTableDefinition(
-				"employee", 1, employee_rowtype);
-		tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
-				true);
-		tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
-				false, false);
-		tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
-				false, false);
-		tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
-				false, false);
-		sessionManager.createTable(tableDefinition);
 		try {
 			TypeDescriptor[] td = sessionManager.getRowType(1);
 			for (int i = 0; i < td.length; i++) {

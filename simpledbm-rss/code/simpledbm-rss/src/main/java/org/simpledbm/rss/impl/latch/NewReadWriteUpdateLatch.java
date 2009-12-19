@@ -41,13 +41,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.SimpleTimer;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
-import org.simpledbm.rss.api.locking.LockMode;
 
 /**
  * @author Dibyendu Majumdar

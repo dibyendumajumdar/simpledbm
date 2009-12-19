@@ -36,6 +36,8 @@
  */
 package org.simpledbm.rss.api.locking;
 
+import org.simpledbm.common.api.locking.LockMode;
+
 /**
  * LockMgr is the primary interface of acquiring locks. Typical usage is
  * shown below:

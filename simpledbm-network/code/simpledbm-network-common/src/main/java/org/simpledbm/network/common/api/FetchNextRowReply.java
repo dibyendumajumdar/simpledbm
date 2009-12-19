@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,8 +34,61 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.tx;
+package org.simpledbm.network.common.api;
 
-public enum IsolationMode {
-    READ_UNCOMMITTED, READ_COMMITTED, CURSOR_STABILITY, REPEATABLE_READ, SERIALIZABLE
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.RowFactory;
+
+public class FetchNextRowReply implements Storable {
+
+	int containerId;
+	boolean eof;
+	Row row;
+
+	public FetchNextRowReply(int containerId, boolean eof, Row row) {
+		this.containerId = containerId;
+		this.eof = eof;
+		this.row = row;
+	}
+
+	public FetchNextRowReply(RowFactory rowFactory, ByteBuffer bb) {
+		eof = (bb.get() == 1 ? true: false);
+		if (!eof) {
+			containerId = bb.getInt();
+			row = rowFactory.newRow(containerId, bb);
+		}
+		else {
+			row = null;
+		}
+	}
+
+	public int getStoredLength() {
+		return TypeSize.BYTE 
+				+ (!eof? (row.getStoredLength() + TypeSize.INTEGER): 0);
+	}
+
+	public void store(ByteBuffer bb) {
+		bb.put((byte)(eof?1:0));
+		if (!eof) {
+			bb.putInt(containerId);
+			row.store(bb);
+		}
+	}
+
+	public Row getRow() {
+		return row;
+	}
+
+	public void setRow(Row row) {
+		this.row = row;
+	}
+
+	public boolean isEof() {
+		return eof;
+	}
+
 }

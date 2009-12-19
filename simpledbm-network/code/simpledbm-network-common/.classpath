@@ -9,7 +9,5 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-common"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-network-framework"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-typesystem"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-database"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/simpledbm-rss"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

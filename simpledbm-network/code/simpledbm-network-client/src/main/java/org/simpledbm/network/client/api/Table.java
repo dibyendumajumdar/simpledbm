@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,43 +34,54 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.typesystem.api;
+package org.simpledbm.network.client.api;
 
 import java.nio.ByteBuffer;
 
-import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.typesystem.impl.DefaultTypeFactory;
-import org.simpledbm.typesystem.impl.GenericRowFactory;
-import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
-import org.simpledbm.typesystem.impl.TableDefinitionImpl;
+import org.simpledbm.network.common.api.AddRowMessage;
+import org.simpledbm.network.common.api.RequestCode;
+import org.simpledbm.network.nio.api.NetworkUtil;
+import org.simpledbm.network.nio.api.Request;
+import org.simpledbm.network.nio.api.Response;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 
-/**
- * TypeSystemFactory is the entry point for external clients to obtain access
- * to the type system interfaces.
- * 
- * @author dibyendumajumdar
- */
-public class TypeSystemFactory {
+public class Table {
+	
+	Session session;
+	TableDefinition tableDefinition;
+	
+	public Table(Session session, TableDefinition tableDefinition) {
+		super();
+		this.session = session;
+		this.tableDefinition = tableDefinition;
+	}
 
-	public static TypeFactory getDefaultTypeFactory() {
-		return new DefaultTypeFactory();
+	public TableScan openScan(int indexno, Row startRow,
+            boolean forUpdate) {
+		return new TableScan(session, tableDefinition, indexno, startRow, forUpdate);
 	}
 	
-	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
-		return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
+	public Row getRow() {
+		return tableDefinition.getRow();
 	}
 	
-	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache) {
-		return new GenericRowFactory(typeFactory, dictionaryCache);
+	public void addRow(Row row) {
+    	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
+        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
+        message.store(data);
+        Request request = NetworkUtil.createRequest(data.array());
+        request.setRequestCode(RequestCode.ADD_ROW);
+        request.setSessionId(session.getSessionId());
+        Response response = session.getSessionManager().getConnection().submit(request);
+        if (response.getStatusCode() < 0) {
+        	// FIXME
+            throw new SessionException("server returned error");
+        }  		
 	}
 	
-	public static TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, bb);
+	public String toString() {
+		return "Table(" + tableDefinition.toString() + ")";
 	}
 	
-	public static TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
-            TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name,
-            rowType);
-	}	
 }

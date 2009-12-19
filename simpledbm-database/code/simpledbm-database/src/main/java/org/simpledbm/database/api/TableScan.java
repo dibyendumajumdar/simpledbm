@@ -71,6 +71,7 @@ public interface TableScan {
 	 * Notifies the scan that the fetch has been completed and locks may be
 	 * released (depending upon the Isolation level).
 	 * @param matched A boolean value that should be true if the row is part of the search criteria match result. If set to false, this indicates that no further fetches are required.
+	 * @deprecated
 	 */
 	public abstract void fetchCompleted(boolean matched);
 
@@ -90,4 +91,9 @@ public interface TableScan {
 	 */
 	public abstract void deleteRow();
 
+	
+	/**
+	 * Returns the table associated with the scan.
+	 */
+	public Table getTable();
 }

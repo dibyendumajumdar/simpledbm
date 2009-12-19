@@ -24,12 +24,12 @@ import java.util.Properties;
 
 import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.common.api.key.IndexKeyFactory;
+import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.rss.api.im.IndexContainer;
 import org.simpledbm.rss.api.im.IndexScan;
 import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tuple.TupleInserter;
-import org.simpledbm.rss.api.tx.IsolationMode;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.main.Server;
 import org.simpledbm.typesystem.api.DictionaryCache;

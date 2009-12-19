@@ -41,7 +41,6 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.database.api.IndexDefinition;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableScan;
 import org.simpledbm.exception.DatabaseException;
@@ -51,6 +50,7 @@ import org.simpledbm.rss.api.loc.Location;
 import org.simpledbm.rss.api.tuple.TupleContainer;
 import org.simpledbm.rss.api.tx.Savepoint;
 import org.simpledbm.rss.api.tx.Transaction;
+import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 
 public class TableScanImpl implements TableScan {
@@ -123,7 +123,7 @@ public class TableScanImpl implements TableScan {
 	 * @see org.simpledbm.database.TableScan#fetchCompleted(boolean)
 	 */
     public void fetchCompleted(boolean matched) {
-        indexScan.fetchCompleted(matched);
+//        indexScan.fetchCompleted(matched);
     }
 
     /* (non-Javadoc)
@@ -224,7 +224,7 @@ public class TableScanImpl implements TableScan {
         }
     }
 
-	Table getTable() {
+	public Table getTable() {
 		return table;
 	}
 }
