@@ -36,87 +36,70 @@
  */
 package org.simpledbm.network.client.api;
 
-import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.common.api.exception.ExceptionHandler;
-import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.common.impl.platform.PlatformImpl;
-import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
-import org.simpledbm.network.client.impl.DictionaryCacheProxy;
-import org.simpledbm.network.common.api.RequestCode;
-import org.simpledbm.network.common.api.SessionRequestMessage;
+import org.simpledbm.network.client.impl.SessionManagerImpl;
 import org.simpledbm.network.nio.api.Connection;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Request;
-import org.simpledbm.network.nio.api.Response;
-import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
-import org.simpledbm.typesystem.api.TypeSystemFactory;
 
-public class SessionManager {
-	
-	public static final String LOGGER_NAME = "org.simpledbm.network";
+/**
+ * The SessionManager manages the connection to the SimpleDBM
+ * Network Server, and initiates sessions used by the clients.
+ * 
+ * @author dibyendu majumdar
+ */
+public abstract class SessionManager {
 
-    String host;
-    int port;
-    Connection connection;
-    TypeFactory typeFactory = TypeSystemFactory.getDefaultTypeFactory();
-    DictionaryCache dictionaryCache;
-    RowFactory rowFactory;
-	final Platform platform;
-	final PlatformObjects po;
-	final Logger log;
-	final MessageCatalog mcat;
-	final ExceptionHandler exceptionHandler;
-
-    public SessionManager(Properties properties, String host, int port) {
-		this.platform = new PlatformImpl(properties);
-		this.po = platform.getPlatformObjects(SessionManager.LOGGER_NAME);
-		this.log = po.getLogger();
-		this.mcat = po.getMessageCatalog();
-		this.exceptionHandler = po.getExceptionHandler();
-        this.host = host;
-        this.port = port;
-        this.connection = NetworkUtil.createConnection(host, port);
-        this.dictionaryCache = new DictionaryCacheProxy(connection, typeFactory);
-        this.rowFactory = TypeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
+	/**
+	 * Obtains an instance of the SessionManager for the specified
+	 * connection parameters. The client should allow for the fact that the
+	 * returned instance may be a shared one.
+	 * 
+	 * @param properties
+	 * @param host
+	 * @param port
+	 * @return
+	 */
+    public static SessionManager getSessionManager(Properties properties, String host, int port) {
+    	return new SessionManagerImpl(properties, host, port);
     }
 
-    public TypeFactory getTypeFactory() {
-        return typeFactory;
-    }
-
-	public TableDefinition newTableDefinition(String name, int containerId,
-			TypeDescriptor[] rowType) {
-		return TypeSystemFactory.getTableDefinition(po, typeFactory, rowFactory, containerId, name, rowType);
-	}    
+    /**
+     * Gets the TypeFactory associated with the database.
+     * @return
+     */
+    public abstract TypeFactory getTypeFactory();
     
-    public Session openSession() {
-        SessionRequestMessage message = new SessionRequestMessage();
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.OPEN_SESSION);
-        Response response = connection.submit(request);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
-        }
-        Session session = new Session(this, response.getSessionId());
-        return session;
-    }
-    
-    Connection getConnection() {
-    	return connection;
-    }
+    /**
+     * Gets the RowFactory for the database.
+     * @return
+     */
+    public abstract RowFactory getRowFactory();
 
-    public TypeDescriptor[] getRowType(int containerId) {
-    	return dictionaryCache.getTypeDescriptor(containerId);
-    }
+    /**
+     * Creates a new TableDefinition.
+     * @param name
+     * @param containerId
+     * @param rowType
+     * @return
+     */
+	public abstract TableDefinition newTableDefinition(String name, int containerId,
+			TypeDescriptor[] rowType);
     
+	/**
+	 * Starts a new session.
+	 * @return
+	 */
+    public abstract Session openSession();
+    
+    /**
+     * Gets the underlying connection object associated with this SessionManager.
+     * <p>The connection object must be handled with care, as its correct
+     * operation is vital to the client server communication.
+     * @return
+     */
+    public abstract Connection getConnection();    
 }

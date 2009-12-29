@@ -147,7 +147,7 @@ public class ClientTest extends BaseTestCase {
 		}
 
 		Properties properties = parseProperties("test.properties");
-		SessionManager sessionManager = new SessionManager(properties, "localhost", 8000);
+		SessionManager sessionManager = SessionManager.getSessionManager(properties, "localhost", 8000);
 		TypeFactory ff = sessionManager.getTypeFactory();		
 //		sessionManager.createTestTables();
 		Session session = sessionManager.openSession();
@@ -239,14 +239,14 @@ public class ClientTest extends BaseTestCase {
 		} finally {
 			session.close();
 		}
-		try {
-			TypeDescriptor[] td = sessionManager.getRowType(1);
-			for (int i = 0; i < td.length; i++) {
-				System.out.println(td[i]);				
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+//		try {
+//			TypeDescriptor[] td = sessionManager.getRowType(1);
+//			for (int i = 0; i < td.length; i++) {
+//				System.out.println(td[i]);				
+//			}
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//		}
 		server.shutdown();
 
 		try {

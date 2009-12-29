@@ -36,163 +36,53 @@
  */
 package org.simpledbm.network.client.api;
 
-import java.nio.ByteBuffer;
-
-import org.simpledbm.network.common.api.CloseScanMessage;
-import org.simpledbm.network.common.api.DeleteRowMessage;
-import org.simpledbm.network.common.api.FetchNextRowMessage;
-import org.simpledbm.network.common.api.FetchNextRowReply;
-import org.simpledbm.network.common.api.OpenScanMessage;
-import org.simpledbm.network.common.api.RequestCode;
-import org.simpledbm.network.common.api.UpdateRowMessage;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Request;
-import org.simpledbm.network.nio.api.Response;
 import org.simpledbm.typesystem.api.Row;
-import org.simpledbm.typesystem.api.TableDefinition;
 
-public class TableScan {
-	
-	private final Session session;
-	final TableDefinition tableDefinition;
-	
-	/**
-	 * Index to use for the scan.
-	 */
-	final int indexNo;
-	
-	/**
-	 * Initial search row, may be null.
-	 */
-	final Row startRow;
+/**
+ * A TableScan is used to traverse the rows in a table, ordered
+ * by an Index. The initial position of the scan is determined by
+ * the keys supplied when the scan is opened. The table scan 
+ * respects the lock isolation mode of the transaction.
+ * <p>
+ * As rows are fetched, the scan maintains its position. The current
+ * row may be updated or deleted. 
+ * 
+ * @author Dibyendu Majumdar
+ */
+public interface TableScan {
 	
 	/**
-	 * Was the scan opened for update?
+	 * Opens the scan, preparing for data to be fetched.
+	 * @return
 	 */
-	final boolean forUpdate;
-	
-	/**
-	 * Handle for the scan.
-	 */
-	int scanId;
-
-	/**
-	 * The current row as returned by fetchNext()
-	 */
-	Row currentRow;
-
-	/**
-	 * Have we reached eof?
-	 */
-	boolean eof;
-	
-	public TableScan(Session session, TableDefinition tableDefinition,
-			int indexNo, Row startRow, boolean forUpdate) {
-		super();
-		this.session = session;
-		this.tableDefinition = tableDefinition;
-		this.indexNo = indexNo;
-		this.startRow = startRow;
-		this.forUpdate = forUpdate;
-		eof = false;
-		this.scanId = openScan();
-	}
-	
-    public int openScan() {
-    	OpenScanMessage message = new OpenScanMessage(tableDefinition.getContainerId(),
-    			indexNo, startRow, forUpdate);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.OPEN_TABLESCAN);
-        request.setSessionId(getSession().getSessionId());
-        Response response = getSession().getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-        int scanNo = response.getData().getInt();
-//        System.err.println("Scan id = " + scanNo);
-        return scanNo;
-    }
+    public int open();
     
-    public Row fetchNext() {
-    	if (eof) {
-    		return null;
-    	}
-    	FetchNextRowMessage message = new FetchNextRowMessage(scanId);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.FETCH_NEXT_ROW);
-        request.setSessionId(getSession().getSessionId());
-        Response response = getSession().getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-        FetchNextRowReply reply = new FetchNextRowReply(getSession().getSessionManager().rowFactory, response.getData());
-        if (reply.isEof()) {
-        	eof = true;
-        	return null;
-        }
-//        System.err.println("Scan row = " + reply.getRow());
-        return reply.getRow();
-    }
+    /**
+     * Fetches the next row. If EOF is reached, null will 
+     * be returned.
+     * @return
+     */
+    public Row fetchNext();
 
-    public void updateCurrentRow(Row tableRow) {
-    	if (eof) {
-    		throw new RuntimeException("Scan has reached EOF");
-    	}
-    	UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.UPDATE_CURRENT_ROW);
-        request.setSessionId(getSession().getSessionId());
-        Response response = getSession().getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-    }
+    /**
+     * Updates the current row.
+     * @param tableRow
+     */
+    public void updateCurrentRow(Row tableRow);
 
-    public void deleteRow() {
-    	if (eof) {
-    		throw new RuntimeException("Scan has reached EOF");
-    	}
-    	DeleteRowMessage message = new DeleteRowMessage(scanId);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.DELETE_CURRENT_ROW);
-        request.setSessionId(getSession().getSessionId());
-        Response response = getSession().getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-    }    
+    /**
+     * Deletes the current row.
+     */
+    public void deleteRow();  
     
-	public void close() {
-    	CloseScanMessage message = new CloseScanMessage(scanId);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.CLOSE_TABLESCAN);
-        request.setSessionId(getSession().getSessionId());
-        Response response = getSession().getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-	}
+    /**
+     * Closes the scan, releasing any locks that are not required.
+     */
+	public void close();
 
-	Session getSession() {
-		return session;
-	}
+	/**
+	 * Obtains the session that is associated with this scan.
+	 * @return
+	 */
+	Session getSession();
 }
