@@ -58,7 +58,8 @@ import org.simpledbm.rss.api.st.StorageException;
  */
 public final class FileStorageContainer implements StorageContainer, Dumpable {
 
-    private final Logger log;
+    @SuppressWarnings("unused")
+	private final Logger log;
 
     private final ExceptionHandler exceptionHandler;
     

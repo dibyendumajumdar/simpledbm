@@ -63,7 +63,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     
     private final MessageCatalog mcat;
     
-    private final Platform platform;
+    @SuppressWarnings("unused")
+	private final Platform platform;
     
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
@@ -89,6 +90,28 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
     	mcat = po.getMessageCatalog();
+    	
+        // Object Registry messages
+        mcat.addMessage(
+            "WR0001",
+            "SIMPLEDBM-WR0001: Duplicate registration of type {0} ignored");
+        mcat.addMessage(
+                "ER0002",
+                "SIMPLEDBM-ER0002: Duplicate registration of type {0} does not match previous registration: previous type {1}, new type {2}");
+        mcat.addMessage(
+                "WR0003",
+                "SIMPLEDBM-WR0003: Duplicate registration of singleton {0} ignored");
+        mcat.addMessage(
+                "ER0004",
+                "SIMPLEDBM-ER0004: Duplicate registration of singleton {0} does not match previous registration: previous object {1}, new object {2}");
+        mcat.addMessage(
+                "ER0005",
+                "SIMPLEDBM-ER0005: Error occurred when attempting to load class {0}");
+        mcat.addMessage("ER0006", "SIMPLEDBM-ER0006: Unknown typecode {0}");
+        mcat.addMessage(
+                "ER0007",
+                "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");      
+
     }
     
     public synchronized final void registerObjectFactory(int tc,

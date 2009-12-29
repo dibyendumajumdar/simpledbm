@@ -237,6 +237,41 @@ public final class BufferManagerImpl implements BufferManager {
         for (int i = 0; i < hashsize; i++) {
             bufferHash[i] = new BufferHashBucket();
         }
+        
+        // setup messages
+        // Buffer Manager messages
+        mcat.addMessage(
+                "EM0001",
+                "SIMPLEDBM-EM0001: Error occurred while shutting down Buffer Manager");
+        mcat.addMessage(
+                "EM0002",
+                "SIMPLEDBM-EM0002: Error occurred while attempting to read page {0}");
+        mcat.addMessage(
+                "EM0003",
+                "SIMPLEDBM-EM0003: Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
+        mcat.addMessage(
+                "EM0004",
+                "SIMPLEDBM-EM0004: Unexpected error - while attempting to read page {0} an empty frame could not be found: ");
+        mcat.addMessage(
+                "EM0005",
+                "SIMPLEDBM-EM0005: Unable to complete operation because Buffer Manager is shutting down");
+        mcat.addMessage(
+                "EM0006",
+                "SIMPLEDBM-EM0006: Unexpected error - while attempting to locate page {0} an empty frame could not be found or buffer manager is shutting down");
+        mcat.addMessage("EM0007", "SIMPLEDBM-EM0007: Latch mode in inconsistent state");
+        mcat.addMessage(
+                "EM0008",
+                "SIMPLEDBM-EM0008: Page can be marked dirty only if it has been latched exclusively");
+        mcat.addMessage(
+                "EM0009",
+                "SIMPLEDBM-EM0009: Upgrade of update latch requested but latch is not held in update mode currently");
+        mcat.addMessage(
+                "EM0010",
+                "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
+        mcat.addMessage("IM0011", "SIMPLEDBM-IM0011: Buffer Writer STARTED");
+        mcat.addMessage("IM0012", "SIMPLEDBM-IM0012: Buffer Writer STOPPED");
+
+        
         statistics.bufferpoolsize = bufferpoolsize;
         statistics.hashTableSize = hashsize;
         statistics.writersleepinterval = bufferWriterSleepInterval;

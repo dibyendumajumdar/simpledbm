@@ -52,7 +52,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.ByteString;
@@ -944,9 +943,8 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a default LogImpl.
      */
-    public LogManagerImpl(Platform platform, StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
+    public LogManagerImpl(PlatformObjects po, StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
 
-    	PlatformObjects po = platform.getPlatformObjects(LogManager.LOGGER_NAME);
     	this.logger = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
     	this.mcat = po.getMessageCatalog();

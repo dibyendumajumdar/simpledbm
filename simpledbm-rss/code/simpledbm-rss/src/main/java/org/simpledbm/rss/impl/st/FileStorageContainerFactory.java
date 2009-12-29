@@ -115,6 +115,71 @@ public final class FileStorageContainerFactory implements
     private static final String FLUSH_MODE = "storage.flushMode";
     private static final String DEFAULT_FLUSH_MODE = "force.true";
 
+    void initMessages(MessageCatalog mcat) {
+        // storage manager messages
+        mcat.addMessage(
+            "ES0001",
+            "SIMPLEDBM-ES0001: StorageContainer {0} is not valid");
+        mcat.addMessage(
+                "ES0003",
+                "SIMPLEDBM-ES0003: Error occurred while writing to StorageContainer {0}");
+        mcat.addMessage(
+                "ES0004",
+                "SIMPLEDBM-ES0004: Error occurred while reading from StorageContainer {0}");
+        mcat.addMessage(
+                "ES0005",
+                "SIMPLEDBM-ES0005: Error occurred while flushing StorageContainer {0}");
+        mcat.addMessage(
+                "ES0006",
+                "SIMPLEDBM-ES0006: Error occurred while closing StorageContainer {0}");
+        mcat.addMessage(
+            "ES0007",
+            "SIMPLEDBM-ES0007: StorageContainer {0} is already locked");
+        mcat.addMessage(
+                "ES0008",
+                "SIMPLEDBM-ES0008: An exclusive lock could not be obtained on StorageContainer {0}");
+        mcat.addMessage(
+            "ES0009",
+            "SIMPLEDBM-ES0009: StorageContainer {0} is not locked");
+        mcat.addMessage(
+                "ES0010",
+                "SIMPLEDBM-ES0010: Error occurred while releasing lock on StorageContainer {0}");
+        mcat.addMessage(
+            "ES0011",
+            "SIMPLEDBM-ES0011: Directory specified by {0}={1} does not exist");
+        mcat.addMessage(
+            "ES0012",
+            "SIMPLEDBM-ES0012: Error creating directory specified by {0}={1}");
+        mcat.addMessage(
+                "ES0013",
+                "SIMPLEDBM-ES0013: Specified base path {0}={1} is not a directory or is not accessible");
+        mcat.addMessage(
+            "ES0014",
+            "SIMPLEDBM-ES0014: Path name {0} must be a directory");
+        mcat.addMessage("ES0015", "SIMPLEDBM-ES0015: Error creating directory {0}");
+        mcat.addMessage(
+            "ES0016",
+            "SIMPLEDBM-ES0016: Unable to delete StorageContainer {0}");
+        mcat.addMessage(
+                "ES0017",
+                "SIMPLEDBM-ES0017: Unable to create StorageContainer {0} because an object of the name already exists");
+        mcat.addMessage(
+                "ES0018",
+                "SIMPLEDBM-ES0018: Unexpected error occurred while creating StorageContainer {0}");
+        mcat.addMessage(
+                "ES0019",
+                "SIMPLEDBM-ES0019: StorageContainer {0} does not exist or is not accessible");
+        mcat.addMessage(
+                "ES0020",
+                "SIMPLEDBM-ES0020: Unexpected error occurred while opening StorageContainer {0}");
+        mcat.addMessage(
+                "ES0021",
+                "SIMPLEDBM-ES0021: Unable to delete {0} as named object is not a StorageContainer");
+        mcat.addMessage(
+                "ES0024",
+                "SIMPLEDBM-ES0024: Unable to delete path name {0}");
+    }    
+    
     public FileStorageContainerFactory(Platform platform, Properties props) {
     	po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
     	log = po.getLogger();
@@ -124,6 +189,7 @@ public final class FileStorageContainerFactory implements
         createMode = props.getProperty(CREATE_MODE, defaultCreateMode);
         openMode = props.getProperty(OPEN_MODE, defaultOpenMode);
         flushMode = props.getProperty(FLUSH_MODE, DEFAULT_FLUSH_MODE);
+        initMessages(mcat);
     }
 
     public FileStorageContainerFactory(Platform platform) {
@@ -135,6 +201,7 @@ public final class FileStorageContainerFactory implements
         createMode = defaultCreateMode;
         openMode = defaultOpenMode;
         flushMode = DEFAULT_FLUSH_MODE;
+        initMessages(mcat);
     }
 
     /**

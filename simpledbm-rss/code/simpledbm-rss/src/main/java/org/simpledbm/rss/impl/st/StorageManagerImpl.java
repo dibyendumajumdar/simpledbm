@@ -62,7 +62,8 @@ public final class StorageManagerImpl implements StorageManager {
 
     private final Logger log;
     
-    private final ExceptionHandler exceptionHandler;
+    @SuppressWarnings("unused")
+	private final ExceptionHandler exceptionHandler;
 
     private final MessageCatalog mcat;
     
@@ -73,6 +74,10 @@ public final class StorageManagerImpl implements StorageManager {
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
     	mcat = po.getMessageCatalog();
+        mcat.addMessage("IS0022", "SIMPLEDBM-IS0022: StorageManager STOPPED");
+        mcat.addMessage(
+                "ES0023",
+                "SIMPLEDBM-ES0023: Unexpected error occurred while closing StorageContainer {0}");
     }
     
     public final void register(int id, StorageContainer container) {

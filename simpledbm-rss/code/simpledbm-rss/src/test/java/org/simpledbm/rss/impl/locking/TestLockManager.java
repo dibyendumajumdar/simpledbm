@@ -1402,7 +1402,8 @@ public class TestLockManager extends BaseTestCase {
         properties.setProperty("logging.properties.type", "log4j");
         Platform platform = new PlatformImpl(properties);
     	LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        LockManager lockmgr = new LockManagerImpl(platform, latchFactory, properties);
+        LockManager lockmgr = new LockManagerImpl(platform.getPlatformObjects(LockManager.LOGGER_NAME), 
+        		latchFactory, properties);
         return lockmgr;
     }
 
