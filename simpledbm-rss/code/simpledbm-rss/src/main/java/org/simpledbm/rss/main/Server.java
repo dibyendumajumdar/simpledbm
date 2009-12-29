@@ -242,6 +242,19 @@ public class Server {
         log = po.getLogger();
         exceptionHandler = po.getExceptionHandler();
         mcat = po.getMessageCatalog();
+        
+        // Server messages
+        mcat.addMessage("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server STARTED");
+        mcat.addMessage("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server STOPPED");
+        mcat.addMessage(
+                "EV0003",
+                "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
+        mcat.addMessage(
+            "EV0004",
+            "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
+        mcat.addMessage(
+                "EV0005",
+                "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
 
         final LogFactory logFactory = new LogFactoryImpl(platform, props);
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);

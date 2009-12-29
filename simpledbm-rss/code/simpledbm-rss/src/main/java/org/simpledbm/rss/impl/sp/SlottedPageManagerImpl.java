@@ -45,6 +45,7 @@ import java.util.Properties;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectRegistry;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.sp.SlottedPageManager;
 
@@ -62,6 +63,24 @@ public class SlottedPageManagerImpl implements SlottedPageManager {
     public SlottedPageManagerImpl(Platform platform, ObjectRegistry objectFactory, PageManager pageFactory, Properties p) {
     	this.platform = platform;
     	this.po = platform.getPlatformObjects(SlottedPageManager.LOGGER_NAME);
+    	MessageCatalog mcat = po.getMessageCatalog();
+        // Slotted Page Manager
+        mcat.addMessage(
+                "EO0001",
+                "SIMPLEDBM-EO0001: Cannot insert item {0} into page {1} due to lack of space");
+        mcat.addMessage(
+                "EO0002",
+                "SIMPLEDBM-EO0002: Cannot insert item {0} of size {3} into page at slot {2} due to lack of space: page contents = {1}");
+        mcat.addMessage(
+                "EO0003",
+                "SIMPLEDBM-EO0003: Cannot access item at slot {0}, number of slots in page is {1}");
+        mcat.addMessage(
+                "EO0004",
+                "SIMPLEDBM-EO0004: Cannot modify page contents as page is not latched EXCLUSIVELY");
+        mcat.addMessage("EO0005", "SIMPLEDBM-EO0005: Invalid page contents");
+        mcat.addMessage(
+                "EO0006",
+                "SIMPLEDBM-EO0006: Unexpected error: failed to find insertion point in page");
         objectFactory.registerSingleton(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(po, pageFactory));
     }
 

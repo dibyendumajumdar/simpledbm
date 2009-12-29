@@ -203,6 +203,24 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             TYPE_UNDOSPACEMAPPAGEUPDATE, new UndoSpaceMapPageUpdate.UndoSpaceMapUpdateFactory());
         objectFactory.registerObjectFactory(
         	TYPE_DROPCONTAINER, new DropContainer.DropContainerFactory());
+        
+        // Free Space Manager messages
+        mcat.addMessage(
+                "EF0001",
+                "SIMPLEDBM-EF0001: Invalid number of bits [{0}] specified for space map page");
+        mcat.addMessage("EF0002", "SIMPLEDBM-EF0002: Container {0} does not exist");
+        mcat.addMessage(
+                "EF0003",
+                "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type {0}");
+        mcat.addMessage(
+                "EF0004",
+                "SIMPLEDBM-EF0004: Unexpected error - page {0} does not belong to this map page {1}");
+        mcat.addMessage(
+                "EF0005",
+                "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
+        mcat.addMessage(
+                "EF0006",
+                "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
     }
 
     public final void setTesting(int level) {

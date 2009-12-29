@@ -48,7 +48,6 @@ import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.locking.LockMode;
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.SimpleTimer;
@@ -205,8 +204,7 @@ public final class LockManagerImpl implements LockManager {
     /**
 	 * Creates a new LockMgrImpl, ready for use.
 	 */
-	public LockManagerImpl(Platform platform, LatchFactory latchFactory, Properties p) {
-		PlatformObjects po = platform.getPlatformObjects(LockManager.LOGGER_NAME);
+	public LockManagerImpl(PlatformObjects po, LatchFactory latchFactory, Properties p) {
 		log = po.getLogger();
 		exceptionHandler = po.getExceptionHandler();
 		mcat = po.getMessageCatalog();

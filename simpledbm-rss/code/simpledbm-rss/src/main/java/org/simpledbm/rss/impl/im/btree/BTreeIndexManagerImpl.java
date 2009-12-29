@@ -301,6 +301,48 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						objectFactory));
 		objectFactory.registerObjectFactory(TYPE_LOADPAGE_OPERATION,
 				new LoadPageOperation.LoadPageOperationFactory(objectFactory));
+		
+        // BTree Index Manager messages
+        mcat.addMessage(
+                "EB0001",
+                "SIMPLEDBM-EB0001: Unexpected error - missing child pointer in parent node");
+        mcat.addMessage(
+                "EB0002",
+                "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
+        mcat.addMessage(
+                "WB0003",
+                "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of key={0} and location={1}");
+        mcat.addMessage(
+            "EB0004",
+            "SIMPLEDBM-EB0004: Unexpected error - key {0} not found");
+        mcat.addMessage(
+                "EB0005",
+                "SIMPLEDBM-EB0005: Unexpected error - current key k1={0} does not match expected key k2={1}");
+        mcat.addMessage(
+                "EB0006",
+                "SIMPLEDBM-EB0006: Unexpected error - search result returned null, B-Tree may be corrupt : search key = {0}");
+        mcat.addMessage(
+                "EB0007",
+                "SIMPLEDBM-EB0007: Unexpected error - while attempting to locate the split key in page {0}");
+        mcat.addMessage(
+                "EB0008",
+                "SIMPLEDBM-EB0008: Unexpected error - invalid binary search result while searching for {0}");
+        mcat.addMessage(
+                "EB0009",
+                "SIMPLEDBM-EB0009: Unexpected error - leaf page {0} encountered when expecting an index page");
+        mcat.addMessage(
+            "EB0010",
+            "SIMPLEDBM-EB0010: Index item {0} is not setup as leaf");
+        mcat.addMessage(
+                "WB0011",
+                "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
+        mcat.addMessage(
+            "EB0012",
+            "SIMPLEDBM-EB0012: Unexpected error - exception caught");
+        mcat.addMessage(
+        	"EB0013",
+        	"SIMPLEDBM-EB0013: Cannot insert or delete logical max key");
+		
     }
 
     /* (non-Javadoc)

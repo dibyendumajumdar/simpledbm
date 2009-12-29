@@ -104,6 +104,23 @@ public final class PageManagerImpl implements PageManager {
      * LatchFactory is used to create latches that are assigned to pages.
      */
     private final LatchFactory latchFactory;
+    
+    void initMessages(MessageCatalog mcat) {
+        // Page Manager messages
+        mcat.addMessage(
+                "EP0001",
+                "SIMPLEDBM-EP0001: Error occurred while reading page {0}: the number of bytes read is {1}; but expected {2} bytes");
+        mcat.addMessage(
+                "EP0002",
+                "SIMPLEDBM-EP0002: Error occurred while reading page {0}: container not available");
+        mcat.addMessage(
+                "EP0003",
+                "SIMPLEDBM-EP0003: Error occurred while writing page {0}: container not available");
+        mcat.addMessage(
+        	    "EP0004",
+                "SIMPLEDBM-EP0004: Error occurred while reading page {0}: checksum invalid");
+        mcat.addMessage("EP0005", "SIMPLEDBM-EP0005: A PageFactory was not available to handle page type {0}");
+    }
 
     public PageManagerImpl(Platform platform, int pageSize, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
@@ -116,6 +133,7 @@ public final class PageManagerImpl implements PageManager {
         this.storageManager = storageManager;
         this.latchFactory = latchFactory;
         objectRegistry.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
+        initMessages(mcat);
     }
 
     public PageManagerImpl(Platform platform, ObjectRegistry objectRegistry,

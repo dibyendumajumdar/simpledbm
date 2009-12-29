@@ -262,6 +262,27 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 spMgr.getPageType(),
                 new PageId());
         emptyPage.init();
+
+        // tuple manager messages
+        mcat.addMessage(
+            "ET0001",
+            "SIMPLEDBM-ET0001: This operation has not yet been implemented");
+        mcat.addMessage(
+                "ET0002",
+                "SIMPLEDBM-ET0002: Comparison is not possible because the supplied argument {0} is not of type {1}");
+        mcat.addMessage(
+            "ET0003",
+            "SIMPLEDBM-ET0003: TupleId {0} has not been initialized");
+        mcat.addMessage(
+                "ET0004",
+                "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
+        mcat.addMessage("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
+        mcat.addMessage(
+                "ET0006",
+                "SIMPLEDBM-ET0006: Unexpected IO error occurred while reading tuple data");
+        mcat.addMessage(
+                "ET0007",
+                "SIMPLEDBM-ET0007: Invalid call to completeInsert() as startInsert() did not succeed");
     }
 
     /**

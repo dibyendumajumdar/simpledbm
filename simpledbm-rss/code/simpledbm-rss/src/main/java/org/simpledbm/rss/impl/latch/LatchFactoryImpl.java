@@ -40,6 +40,7 @@ import java.util.Properties;
 
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchFactory;
 
@@ -55,6 +56,35 @@ public final class LatchFactoryImpl implements LatchFactory {
 	public LatchFactoryImpl(Platform platform, Properties properties) {
 		this.platform = platform;
 		this.po = platform.getPlatformObjects(LatchFactory.LOGGER_NAME);
+		
+		MessageCatalog mcat = po.getMessageCatalog();
+        // Latch Manager messages
+        mcat.addMessage(
+                "EH0001",
+                "SIMPLEDBM-EH0001: Upgrade request {0} is invalid, as there is no prior lock");
+        mcat.addMessage(
+                "WH0002",
+                "SIMPLEDBM-WH0002: Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
+        mcat.addMessage(
+                "EH0003",
+                "SIMPLEDBM-EH0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
+        mcat.addMessage(
+                "WH0004",
+                "SIMPLEDBM-WH0004: Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
+        mcat.addMessage(
+                "EH0005",
+                "SIMPLEDBM-EH0005: Unexpected error while handling conversion request");
+        mcat.addMessage("EH0006", "SIMPLEDBM-EH0006: Latch request {0} has timed out");
+        mcat.addMessage(
+                "EH0007",
+                "SIMPLEDBM-EH0007: Invalid request as caller does not hold a lock on {0}");
+        mcat.addMessage(
+                "EH0008",
+                "SIMPLEDBM-EH0008: Cannot release lock {0} as it is being waited for");
+        mcat.addMessage(
+                "EH0009",
+                "SIMPLEDBM-EH0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
+
 	}
 	
     /* (non-Javadoc)

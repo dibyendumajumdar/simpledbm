@@ -373,6 +373,58 @@ public final class TransactionManagerImpl implements TransactionManager {
         this.lockWaitTimeout = getNumericProperty(p, PROPERTY_LOCK_TIMEOUT, DEFAULT_LOCK_TIMEOUT);
         this.checkpointInterval = getNumericProperty(p, PROPERTY_CHECKPOINT_INTERVAL, DEFAULT_CHECKPOINT_INTERVAL);
         
+        // transaction manager messages
+        mcat.addMessage("EX0001", "SIMPLEDBM-EX0001: Unknown transaction module {0}");
+        mcat.addMessage(
+                "EX0002",
+                "SIMPLEDBM-EX0002: Invalid log operation {0}: A Redoable log record must not implement the NonTransactionRelatedOperation interface");
+        mcat.addMessage(
+                "EX0003",
+                "SIMPLEDBM-EX0003: Invalid log operation {0}: A Redoable log record must not implement the PostCommitAction interface");
+        mcat.addMessage(
+                "EX0004",
+                "SIMPLEDBM-EX0004: Invalid log operation {0}: A Redoable log record must not implement the Checkpoint interface");
+        mcat.addMessage(
+                "EX0005",
+                "SIMPLEDBM-EX0005: Invalid log operation {0}: A Redoable log record must not implement the TrxControl interface");
+        mcat.addMessage(
+                "EX0006",
+                "SIMPLEDBM-EX0006: Invalid log operation {0}: An Undoable record must not implement MultiPageRedo interface");
+        mcat.addMessage(
+                "EX0007",
+                "SIMPLEDBM-EX0007: Invalid log operation {0}: An Undoable record must not implement Compensation interface");
+        mcat.addMessage(
+                "EX0008",
+                "SIMPLEDBM-EX0008: Invalid log operation {0}: An Undoable record must not implement ContainerDelete interface");
+        mcat.addMessage(
+            "EX0009",
+            "SIMPLEDBM-EX0009: Log operation {0} is not an instance of {1}");
+        mcat.addMessage(
+                "EX0010",
+                "SIMPLEDBM-EX0010: The StorageContainer registered as {0} is named {1} instead of {2}");
+        mcat.addMessage(
+                "EX0011",
+                "SIMPLEDBM-EX0011: Unexpected EOF occurred in write ahead log while reading checkpoint records");
+        mcat.addMessage(
+            "WX0012",
+            "SIMPLEDBM-WX0012: Ignoring exception caused due to {0}");
+        mcat.addMessage("IX0013", "SIMPLEDBM-IX0013: Checkpoint Writer STARTED");
+        mcat.addMessage(
+                "EX0014",
+                "SIMPLEDBM-EX0014: Error occurred while shutting down Transaction Manager");
+        mcat.addMessage("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
+        mcat.addMessage("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
+        mcat.addMessage(
+                "EX0016",
+                "SIMPLEDBM-EX0016: Invalid state: Nested top action cannot be started as one is already active");
+        mcat.addMessage(
+                "EX0017",
+                "SIMPLEDBM-EX0017: Invalid state: Nested top action cannot be completed as there is none active");
+        mcat.addMessage(
+            "EX0018",
+            "SIMPLEDBM-EX0018: Error occurred while writing a Checkpoint");
+        mcat.addMessage("IX0019", "Property {0} set to {1}");
+        
         log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_LOCK_TIMEOUT, lockWaitTimeout));
         log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_CHECKPOINT_INTERVAL, checkpointInterval));
     }
