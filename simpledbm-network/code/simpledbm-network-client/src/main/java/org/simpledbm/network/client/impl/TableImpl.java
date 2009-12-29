@@ -37,48 +37,51 @@
 package org.simpledbm.network.client.impl;
 
 import org.simpledbm.network.client.api.SessionException;
-import org.simpledbm.network.common.api.QueryDictionaryMessage;
+import org.simpledbm.network.client.api.Table;
+import org.simpledbm.network.client.api.TableScan;
+import org.simpledbm.network.common.api.AddRowMessage;
 import org.simpledbm.network.common.api.RequestCode;
-import org.simpledbm.network.nio.api.Connection;
 import org.simpledbm.network.nio.api.Response;
-import org.simpledbm.typesystem.api.DictionaryCache;
-import org.simpledbm.typesystem.api.TypeDescriptor;
-import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.Row;
+import org.simpledbm.typesystem.api.TableDefinition;
 
-public class DictionaryCacheProxy implements DictionaryCache {
+public class TableImpl implements Table {
 	
-	SessionManagerImpl sessionManager;
-//	Connection connection;
-	TypeFactory typeFactory;
+	SessionImpl session;
+	TableDefinition tableDefinition;
 	
-	public DictionaryCacheProxy(SessionManagerImpl sessionManager, Connection connection, TypeFactory typeFactory) {
-		this.sessionManager = sessionManager;
-//		this.connection = connection;
-		this.typeFactory = typeFactory;
+	public TableImpl(SessionImpl session, TableDefinition tableDefinition) {
+		super();
+		this.session = session;
+		this.tableDefinition = tableDefinition;
 	}
 
-	public TypeDescriptor[] getTypeDescriptor(int containerId) {
-//		System.err.println("Sending query to server");
-        QueryDictionaryMessage message = new QueryDictionaryMessage(containerId);
-        Response response = sessionManager.sendMessage(0, RequestCode.QUERY_DICTIONARY, message);
+	public TableScan openScan(int indexno, Row startRow,
+            boolean forUpdate) {
+		return new TableScanImpl(session, tableDefinition, indexno, startRow, forUpdate);
+	}
+	
+	public Row getRow() {
+		return tableDefinition.getRow();
+	}
+	
+	public void addRow(Row row) {
+    	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
 //        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
 //        message.store(data);
 //        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.QUERY_DICTIONARY);
-//        Response response = connection.submit(request);
+//        request.setRequestCode(RequestCode.ADD_ROW);
+//        request.setSessionId(session.getSessionId());
+//        Response response = session.getSessionManager().getConnection().submit(request);
+    	Response response = session.sendMessage(RequestCode.ADD_ROW, message);
         if (response.getStatusCode() < 0) {
+        	// FIXME
             throw new SessionException("server returned error");
-        }
-        TypeDescriptor[] td = typeFactory.retrieve(response.getData());
-        return td;
+        }  		
 	}
-
-	public void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc) {
-		throw new UnsupportedOperationException();
+	
+	public String toString() {
+		return "Table(" + tableDefinition.toString() + ")";
 	}
-
-	public void unregisterRowType(int containerId) {
-		throw new UnsupportedOperationException();
-	}
-
+	
 }

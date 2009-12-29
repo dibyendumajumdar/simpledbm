@@ -36,52 +36,40 @@
  */
 package org.simpledbm.network.client.api;
 
-import java.nio.ByteBuffer;
-
-import org.simpledbm.network.common.api.AddRowMessage;
-import org.simpledbm.network.common.api.RequestCode;
-import org.simpledbm.network.nio.api.NetworkUtil;
-import org.simpledbm.network.nio.api.Request;
-import org.simpledbm.network.nio.api.Response;
 import org.simpledbm.typesystem.api.Row;
-import org.simpledbm.typesystem.api.TableDefinition;
 
-public class Table {
+/**
+ * A Table represents a collection of related containers, one of which is
+ * a Data Container, and the others, Index Containers. The Data Container 
+ * hold rows of table data, and the Index Containers provide access paths to
+ * the table rows. At least one index must be created because the database
+ * uses the index to manage the primary key and lock isolation modes.
+ * 
+ * @author Dibyendu Majumdar
+ */
+public interface Table {
 	
-	Session session;
-	TableDefinition tableDefinition;
-	
-	public Table(Session session, TableDefinition tableDefinition) {
-		super();
-		this.session = session;
-		this.tableDefinition = tableDefinition;
-	}
-
+	/**
+	 * Returns a new scan object.
+	 * @param indexno
+	 * @param startRow
+	 * @param forUpdate
+	 * @return
+	 */
 	public TableScan openScan(int indexno, Row startRow,
-            boolean forUpdate) {
-		return new TableScan(session, tableDefinition, indexno, startRow, forUpdate);
-	}
+            boolean forUpdate);
 	
-	public Row getRow() {
-		return tableDefinition.getRow();
-	}
+	/**
+	 * Obtains an empty row, in which all columns are set to NULL.
+	 * @return
+	 */
+	public Row getRow();
 	
-	public void addRow(Row row) {
-    	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
-        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-        message.store(data);
-        Request request = NetworkUtil.createRequest(data.array());
-        request.setRequestCode(RequestCode.ADD_ROW);
-        request.setSessionId(session.getSessionId());
-        Response response = session.getSessionManager().getConnection().submit(request);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }  		
-	}
-	
-	public String toString() {
-		return "Table(" + tableDefinition.toString() + ")";
-	}
+	/**
+	 * Adds the given row to the table. The add operation may fail
+	 * if another row with the same primary key already exists.
+	 * @param row
+	 */
+	public void addRow(Row row);
 	
 }
