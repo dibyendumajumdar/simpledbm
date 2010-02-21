@@ -67,12 +67,6 @@ public class TableImpl implements Table {
 	
 	public void addRow(Row row) {
     	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.ADD_ROW);
-//        request.setSessionId(session.getSessionId());
-//        Response response = session.getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.ADD_ROW, message);
         if (response.getStatusCode() < 0) {
         	// FIXME

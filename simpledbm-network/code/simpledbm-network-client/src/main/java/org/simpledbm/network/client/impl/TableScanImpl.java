@@ -100,16 +100,10 @@ public class TableScanImpl implements TableScan {
     public int open() {
     	OpenScanMessage message = new OpenScanMessage(tableDefinition.getContainerId(),
     			indexNo, startRow, forUpdate);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.OPEN_TABLESCAN);
-//        request.setSessionId(getSession().getSessionId());
-//        Response response = getSession().getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.OPEN_TABLESCAN, message);
         if (response.getStatusCode() < 0) {
         	// FIXME
-            throw new SessionException("server returned error");
+            throw new SessionException("server returned error: ");
         }    	
         int scanNo = response.getData().getInt();
 //        System.err.println("Scan id = " + scanNo);
@@ -121,12 +115,6 @@ public class TableScanImpl implements TableScan {
     		return null;
     	}
     	FetchNextRowMessage message = new FetchNextRowMessage(scanId);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.FETCH_NEXT_ROW);
-//        request.setSessionId(getSession().getSessionId());
-//        Response response = getSession().getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.FETCH_NEXT_ROW, message);
         if (response.getStatusCode() < 0) {
         	// FIXME
@@ -146,12 +134,6 @@ public class TableScanImpl implements TableScan {
     		throw new RuntimeException("Scan has reached EOF");
     	}
     	UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.UPDATE_CURRENT_ROW);
-//        request.setSessionId(getSession().getSessionId());
-//        Response response = getSession().getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
         if (response.getStatusCode() < 0) {
         	// FIXME
@@ -168,12 +150,6 @@ public class TableScanImpl implements TableScan {
     		throw new RuntimeException("Scan has reached EOF");
     	}
     	DeleteRowMessage message = new DeleteRowMessage(scanId);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.DELETE_CURRENT_ROW);
-//        request.setSessionId(getSession().getSessionId());
-//        Response response = getSession().getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.DELETE_CURRENT_ROW, message);        
         if (response.getStatusCode() < 0) {
         	// FIXME
@@ -183,12 +159,6 @@ public class TableScanImpl implements TableScan {
     
 	public void close() {
     	CloseScanMessage message = new CloseScanMessage(scanId);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.CLOSE_TABLESCAN);
-//        request.setSessionId(getSession().getSessionId());
-//        Response response = getSession().getSessionManager().getConnection().submit(request);
     	Response response = session.sendMessage(RequestCode.CLOSE_TABLESCAN, message);
         if (response.getStatusCode() < 0) {
         	// FIXME
