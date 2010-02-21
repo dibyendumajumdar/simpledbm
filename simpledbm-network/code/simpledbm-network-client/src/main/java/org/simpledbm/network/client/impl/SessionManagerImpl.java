@@ -103,11 +103,6 @@ public class SessionManagerImpl extends SessionManager {
     
     public Session openSession() {
         SessionRequestMessage message = new SessionRequestMessage();
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.OPEN_SESSION);
-//        Response response = connection.submit(request);
     	Response response = sendMessage(0, RequestCode.OPEN_SESSION, message);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error");

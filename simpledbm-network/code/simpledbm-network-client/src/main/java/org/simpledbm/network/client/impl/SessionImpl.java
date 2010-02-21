@@ -66,7 +66,7 @@ public class SessionImpl implements Session {
         this.sessionId = sessionId;
     }
     
-    private String getError(Response response) {
+    String getError(Response response) {
     	byte[] data = response.getData().array();
     	String msg;
 		try {
@@ -79,12 +79,6 @@ public class SessionImpl implements Session {
     
     public synchronized void close() {
         SessionRequestMessage message = new SessionRequestMessage();
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.CLOSE_SESSION);
-//        request.setSessionId(getSessionId());
-//        Response response = getSessionManager().getConnection().submit(request);
     	Response response = sendMessage(RequestCode.CLOSE_SESSION, message);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
@@ -93,12 +87,6 @@ public class SessionImpl implements Session {
     
     public synchronized void startTransaction(IsolationMode isolationMode) {
         StartTransactionMessage message = new StartTransactionMessage(isolationMode);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.START_TRANSACTION);
-//        request.setSessionId(getSessionId());
-//        Response response = getSessionManager().getConnection().submit(request);
     	Response response = sendMessage(RequestCode.START_TRANSACTION, message);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
@@ -107,12 +95,6 @@ public class SessionImpl implements Session {
 
     private synchronized void endTransaction(boolean commit) {
         EndTransactionMessage message = new EndTransactionMessage(commit);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.END_TRANSACTION);
-//        request.setSessionId(getSessionId());
-//        Response response = getSessionManager().getConnection().submit(request);
     	Response response = sendMessage(RequestCode.END_TRANSACTION, message);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
@@ -128,13 +110,6 @@ public class SessionImpl implements Session {
     }
     
     public synchronized void createTable(TableDefinition tableDefinition) {
-//        ByteBuffer data = ByteBuffer.allocate(tableDefinition.getStoredLength());
-//        tableDefinition.store(data);
-//        byte[] arr = data.array();
-//        Request request = NetworkUtil.createRequest(arr);
-//        request.setSessionId(getSessionId());
-//        request.setRequestCode(RequestCode.CREATE_TABLE);
-//        Response response = getSessionManager().getConnection().submit(request);
     	Response response = sendMessage(RequestCode.CREATE_TABLE, tableDefinition);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error" + getError(response));
@@ -143,12 +118,6 @@ public class SessionImpl implements Session {
 
     public Table getTable(int containerId) {
     	GetTableMessage message = new GetTableMessage(containerId);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.GET_TABLE);
-//        request.setSessionId(getSessionId());
-//        Response response = getSessionManager().getConnection().submit(request);
     	Response response = sendMessage(RequestCode.GET_TABLE, message);
         if (response.getStatusCode() < 0) {
             throw new SessionException("server returned error: " + getError(response));
