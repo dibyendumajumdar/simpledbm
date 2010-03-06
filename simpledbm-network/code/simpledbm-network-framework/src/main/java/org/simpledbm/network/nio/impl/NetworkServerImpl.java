@@ -570,12 +570,15 @@ public class NetworkServerImpl implements NetworkServer {
             catch (SimpleDBMException e) {
                 responseHeader.setStatusCode(-1);
                 responseHeader.setHasException(true);
-                ByteBuffer bb = ByteBuffer.allocate(e.getStoredLength());
+                int len = e.getStoredLength();
+                ByteBuffer bb = ByteBuffer.allocate(len);
                 e.store(bb);
+                bb.flip();
                 response.setData(bb);
-                responseHeader.setDataSize(response.getData().limit());            	
+                responseHeader.setDataSize(len);  
             }
             catch (Throwable e) {
+            	// FIXME need proper log message
             	e.printStackTrace();
                 responseHeader.setStatusCode(-1);
                 response.setData(ByteBuffer.wrap(e.getMessage().getBytes()));

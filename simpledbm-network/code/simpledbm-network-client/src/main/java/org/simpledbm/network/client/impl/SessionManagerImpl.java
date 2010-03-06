@@ -76,8 +76,9 @@ public class SessionManagerImpl extends SessionManager {
 	final PlatformObjects po;
 	final Logger log;
 	final ExceptionHandler exceptionHandler;
+	int timeout;
 
-    public SessionManagerImpl(Properties properties, String host, int port) {
+    public SessionManagerImpl(Properties properties, String host, int port, int timeout) {
     	super();
 		this.platform = new PlatformImpl(properties);
 		this.po = platform.getPlatformObjects(SessionManagerImpl.LOGGER_NAME);
@@ -87,7 +88,8 @@ public class SessionManagerImpl extends SessionManager {
 	    this.typeFactory = typeSystemFactory.getDefaultTypeFactory();
         this.host = host;
         this.port = port;
-        this.connection = NetworkUtil.createConnection(host, port);
+        this.timeout = timeout;
+        this.connection = NetworkUtil.createConnection(host, port, timeout);
         this.dictionaryCache = new DictionaryCacheProxy(this, connection, typeFactory);
         this.rowFactory = typeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
     }

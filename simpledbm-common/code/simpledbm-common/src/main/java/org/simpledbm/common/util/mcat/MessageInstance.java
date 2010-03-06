@@ -113,6 +113,10 @@ public class MessageInstance implements Storable {
 		return m.getType();
 	}
 	
+	public String getKey() {
+		return m.getKey();
+	}
+	
 	private void deflate() {
 		if (cached) return;
 		synchronized(this) {

@@ -42,6 +42,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.Socket;
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeUnit;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.Message;
@@ -83,9 +84,10 @@ public class ConnectionImpl implements Connection {
     	return msg;
     }    
 
-    public ConnectionImpl(String host, int port) {
+    public ConnectionImpl(String host, int port, int timeout) {
         try {
             this.socket = new Socket(host, port);
+            socket.setSoTimeout(timeout);
         } catch (IOException e) {
             handleException(e, "connect");
         }
@@ -145,6 +147,7 @@ public class ConnectionImpl implements Connection {
         try {
             len = is.read(data, 0, len);
         } catch (IOException e) {
+        	System.err.println("Expected length = " + len);
             handleException(e, "submit");
         }
 

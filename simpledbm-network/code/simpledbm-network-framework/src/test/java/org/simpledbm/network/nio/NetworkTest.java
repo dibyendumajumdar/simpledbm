@@ -97,7 +97,7 @@ public class NetworkTest extends BaseTestCase {
             Connection c = null;
             try {
                 System.err.println("Connecting ...");
-                c = NetworkUtil.createConnection("localhost", 8000);
+                c = NetworkUtil.createConnection("localhost", 8000, 10000);
                 for (int i = 0; i < 5; i++) {
                     System.err.println("Connected, sending message");
                     Response response = c.submit(NetworkUtil.createRequest("hello world!"));
