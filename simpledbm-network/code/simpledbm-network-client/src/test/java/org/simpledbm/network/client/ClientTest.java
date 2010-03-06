@@ -184,6 +184,14 @@ public class ClientTest extends BaseTestCase {
 				tableRow.setDate(5, getDOB(1930, 12, 31));
 				tableRow.setString(6, "500.00");
 				table.addRow(tableRow);
+				
+				try {
+					// following should fail due to unique constraint violation
+					table.addRow(tableRow);
+					fail("Unique constraint failed");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				TableScan scan = table.openScan(0, null, false);
 				try {
 					Row row = scan.fetchNext();

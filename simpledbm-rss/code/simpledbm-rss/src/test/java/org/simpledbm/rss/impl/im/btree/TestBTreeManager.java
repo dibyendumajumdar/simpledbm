@@ -3635,7 +3635,53 @@ public class TestBTreeManager extends BaseTestCase {
         page.unlatchExclusive();
         compressKeys = false;
 	}	
+
+	void doKeyInsert(boolean testUnique, boolean commit, String k,
+			String loc)
+			throws Exception {
+		final BTreeDB db = new BTreeDB(false);
+		try {
+			final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
+					TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
+
+			IndexKeyFactory keyFactory = (IndexKeyFactory) db.objectFactory
+					.getSingleton(TYPE_STRINGKEYFACTORY);
+			LocationFactory locationFactory = (LocationFactory) db.objectFactory
+					.getSingleton(TYPE_ROWLOCATIONFACTORY);
+			IndexKey key = keyFactory.parseIndexKey(1, k);
+			Location location = locationFactory.newLocation(loc);
+			Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
+			boolean okay = false;
+			try {
+				// System.out.println("--> INSERTING KEY");
+				btree.insert(trx, key, location);
+				okay = true;
+			} finally {
+				if (okay && commit) {
+					// System.out.println("--> COMMITTING INSERT");
+					trx.commit();
+				} else {
+					// System.out.println("--> ABORTING INSERT");
+					trx.abort();
+				}
+			}
+		} finally {
+			db.shutdown();
+		}
+	}	
 	
+	public void testUniqueConstraintViolation() throws Exception {
+		doInitContainer2();
+		doLoadData("org/simpledbm/rss/impl/im/btree/data1.txt");
+		try {
+			doKeyInsert(true, true, "ai", "10");
+			fail("Unique constraint failed to work");
+		}
+		catch (UniqueConstraintViolationException e) {
+			// okay
+			e.printStackTrace();
+		}
+	}
 	
 	
 	/**
@@ -3717,6 +3763,8 @@ public class TestBTreeManager extends BaseTestCase {
 		doFindKeyLockTest(IsolationMode.SERIALIZABLE, "zz", 21, true);		
 	}
 
+	
+	
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new TestBTreeManager("testPageSplitLeafUnique"));
@@ -3755,6 +3803,7 @@ public class TestBTreeManager extends BaseTestCase {
 		suite.addTest(new TestBTreeManager("testMultiThreadedInsertsRandom"));
 		suite.addTest(new TestBTreeManager("testMultiThreadedInsertsDescending"));
 		suite.addTest(new TestBTreeManager("testCanAccomodate"));
+		suite.addTest(new TestBTreeManager("testUniqueConstraintViolation"));
 		return suite;
 	}
 
