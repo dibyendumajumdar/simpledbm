@@ -41,7 +41,9 @@ import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.network.client.api.Session;
@@ -147,9 +149,9 @@ public class ClientTest extends BaseTestCase {
 		}
 
 		Properties properties = parseProperties("test.properties");
-		SessionManager sessionManager = SessionManager.getSessionManager(properties, "localhost", 8000);
+		SessionManager sessionManager = SessionManager.getSessionManager(properties, "localhost", 8000,
+				(int) TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES));
 		TypeFactory ff = sessionManager.getTypeFactory();		
-//		sessionManager.createTestTables();
 		Session session = sessionManager.openSession();
 		try {
 			TypeDescriptor employee_rowtype[] = { 
@@ -189,8 +191,9 @@ public class ClientTest extends BaseTestCase {
 					// following should fail due to unique constraint violation
 					table.addRow(tableRow);
 					fail("Unique constraint failed");
-				} catch (Exception e) {
-					e.printStackTrace();
+				} catch (SimpleDBMException e) {
+					assertEquals("WRB00003", e.getMessageKey());
+					System.err.println("Error: " + e.getMessage());
 				}
 				TableScan scan = table.openScan(0, null, false);
 				try {

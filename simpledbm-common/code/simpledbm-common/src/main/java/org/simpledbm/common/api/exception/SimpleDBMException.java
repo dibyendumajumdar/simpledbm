@@ -68,10 +68,24 @@ public class SimpleDBMException extends RuntimeException implements Storable {
     }    
     
     public SimpleDBMException(ByteBuffer bb) {
-    	super();
+        super();
     	m = new MessageInstance(bb);
     }
-    
+
+	@Override
+	public String getMessage() {
+		return m.toString();
+	}
+
+	@Override
+	public String toString() {
+        return getClass().getName() + ": " + getMessage();
+	}
+
+	public String getMessageKey() {
+		return m.getKey();
+	}
+	
 	public int getStoredLength() {
 		return m.getStoredLength();
 	}

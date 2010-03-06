@@ -63,8 +63,8 @@ public abstract class SessionManager {
 	 * @param port
 	 * @return
 	 */
-    public static SessionManager getSessionManager(Properties properties, String host, int port) {
-    	return new SessionManagerImpl(properties, host, port);
+    public static SessionManager getSessionManager(Properties properties, String host, int port, int timeout) {
+    	return new SessionManagerImpl(properties, host, port, timeout);
     }
 
     /**

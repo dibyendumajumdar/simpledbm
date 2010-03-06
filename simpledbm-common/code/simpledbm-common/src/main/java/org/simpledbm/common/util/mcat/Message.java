@@ -93,6 +93,10 @@ public class Message implements Storable {
 		cached = true;
 	}
 	
+	public String getKey() {
+		return "" + type.toText() + subsystem + module + pad(code);
+	}
+	
 	/**
 	 * Creates the formatted/storable version
 	 */

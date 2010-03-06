@@ -181,6 +181,9 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	
 	private void setError(Response response, int statusCode, String message,
 			Throwable e) {
+		if (e instanceof SimpleDBMException) {
+			throw (SimpleDBMException) e;
+		}
 		response.setStatusCode(statusCode);
 		StringBuilder sb = new StringBuilder();
 		sb.append(message);
