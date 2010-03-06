@@ -39,12 +39,15 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -63,8 +66,13 @@ import org.simpledbm.typesystem.api.TypeFactory;
 public class TableDefinitionImpl implements Storable, TableDefinition {
 
 	final Logger log;
-	final MessageCatalog mcat;
+	final ExceptionHandler exceptionHandler;
 	final PlatformObjects po;
+
+	static final Message m_EY0012 = new Message('T', 'Y', MessageType.ERROR,
+			12, "The first index for the table must be the primary index");
+	static final Message m_EY0014 = new Message('T', 'Y', MessageType.ERROR,
+			14, "Index {0} is not defined");
 	
 	/**
 	 * Database to which this table definition belongs to.
@@ -105,7 +113,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
     	this.po = po;
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
 //		this.database = database;
     	this.typeFactory = typeFactory;
     	this.rowFactory = rowFactory;
@@ -125,7 +133,7 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
             TypeDescriptor[] rowType) {
     	this.po = po;
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
     	this.typeFactory = typeFactory;
     	this.rowFactory = rowFactory;
 //        this.database = database;
@@ -140,8 +148,8 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     public void addIndex(int containerId, String name, int[] columns,
             boolean primary, boolean unique) {
         if (!primary && indexes.size() == 0) {
-        	log.error(getClass().getName(), "addIndex", mcat.getMessage("ED0012"));
-        	throw new TypeException(mcat.getMessage("ED0012"));
+        	exceptionHandler.errorThrow(getClass().getName(), "addIndex", 
+        			new TypeException(new MessageInstance(m_EY0012)));
         }
         indexes.add(new IndexDefinitionImpl(po, this, containerId, name, columns, primary, unique));
     }
@@ -289,9 +297,8 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
 	 */
 	public IndexDefinition getIndex(int indexNo) {
 		if (indexNo < 0 || indexNo  >= indexes.size()) {
-			// FIXME
-			// log error
-			throw new TypeException();
+			exceptionHandler.errorThrow(getClass().getName(), "getIndex", 
+					new TypeException(new MessageInstance(m_EY0014, indexNo)));
 		}
 		return indexes.get(indexNo);
 	}

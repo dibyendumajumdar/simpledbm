@@ -25,8 +25,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.simpledbm.common.api.locking.LockMode;
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.tx.IsolationMode;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.DiagnosticLogger;
 import org.simpledbm.rss.api.im.IndexContainer;
@@ -48,6 +51,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
+import org.simpledbm.typesystem.impl.TypeSystemFactoryImpl;
 
 /**
  * This class demonstrates how to interface with the BTree module.
@@ -202,11 +206,13 @@ public class BTreeDemo {
 		
 		final DictionaryCache dictionaryCache = new SimpleDictionaryCache();
 		
-		final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+		final TypeSystemFactory typeSystemFactory;
+		
+		final TypeFactory fieldFactory;
 
-		final RowFactory keyFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
+		final RowFactory keyFactory;
 
-		final TypeDescriptor[] rowtype1 = new TypeDescriptor[] { fieldFactory.getIntegerType() };
+		final TypeDescriptor[] rowtype1;
 
 		IndexContainer btree;
 
@@ -235,11 +241,21 @@ public class BTreeDemo {
     		properties.setProperty("log.flush.interval", "5");
     		properties.setProperty("storage.basePath", "demodata/BTreeDemo");
 
+    		Platform platform = new PlatformImpl(properties);
+    		PlatformObjects po = platform.getPlatformObjects("org.simpledbm.samples.btreedemo");
+    		
+    		typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
+    		fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+    		keyFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);   
+    		rowtype1 = new TypeDescriptor[] { fieldFactory.getIntegerType() };
+    		
     		if (create) {
     			Server.create(properties);
     		}
 
-    		server = new Server(properties);
+    		server = new Server(platform, properties);
+    		
+    		
     		server.start();
 
 			dictionaryCache.registerRowType(1, rowtype1);
@@ -369,7 +385,7 @@ public class BTreeDemo {
 						DiagnosticLogger.log("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
 						System.err.println("SCAN NEXT=" + scan.getCurrentKey() + "," + scan.getCurrentLocation());
 						// trx.releaseLock(scan.getCurrentLocation());
-						scan.fetchCompleted(true);
+//						scan.fetchCompleted(true);
 					}
 				} finally {
 					if (scan != null) {

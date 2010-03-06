@@ -39,10 +39,6 @@ package org.simpledbm.typesystem.api;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.typesystem.impl.DefaultTypeFactory;
-import org.simpledbm.typesystem.impl.GenericRowFactory;
-import org.simpledbm.typesystem.impl.SimpleDictionaryCache;
-import org.simpledbm.typesystem.impl.TableDefinitionImpl;
 
 /**
  * TypeSystemFactory is the entry point for external clients to obtain access
@@ -50,27 +46,18 @@ import org.simpledbm.typesystem.impl.TableDefinitionImpl;
  * 
  * @author dibyendumajumdar
  */
-public class TypeSystemFactory {
-
-	public static TypeFactory getDefaultTypeFactory() {
-		return new DefaultTypeFactory();
-	}
+public interface TypeSystemFactory {
 	
-	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
-		return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
-	}
+	public static String LOGGER_NAME = "org.simpledbm.typesystem";
 	
-	public static RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache) {
-		return new GenericRowFactory(typeFactory, dictionaryCache);
-	}
+	public TypeFactory getDefaultTypeFactory();
 	
-	public static TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, bb);
-	}
+	public RowFactory getDefaultRowFactory(TypeFactory typeFactory);
 	
-	public static TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
-            TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name,
-            rowType);
-	}	
+	public RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache);
+	
+	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb);
+	
+	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
+            TypeDescriptor[] rowType);
 }

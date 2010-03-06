@@ -36,24 +36,25 @@
  */
 package org.simpledbm.exception;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 public class DatabaseException extends SimpleDBMException {
 
 	private static final long serialVersionUID = 8471449892397523231L;
 
-	public DatabaseException() {
+	public DatabaseException(ByteBuffer bb) {
+		super(bb);
 	}
 
-	public DatabaseException(String arg0) {
-		super(arg0);
+	public DatabaseException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
 	}
 
-	public DatabaseException(Throwable arg0) {
-		super(arg0);
+	public DatabaseException(MessageInstance m) {
+		super(m);
 	}
 
-	public DatabaseException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
-	}
 }

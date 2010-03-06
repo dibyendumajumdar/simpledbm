@@ -36,7 +36,10 @@
  */
 package org.simpledbm.rss.api.wal;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * Base class for all exceptions thrown by the Log implementations.
@@ -48,19 +51,15 @@ public class LogException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public LogException() {
-        super();
-    }
+	public LogException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public LogException(String arg0) {
-        super(arg0);
-    }
+	public LogException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public LogException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public LogException(Throwable arg0) {
-        super(arg0);
-    }
+	public LogException(MessageInstance m) {
+		super(m);
+	}
 }

@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.Properties;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectFactory;
@@ -50,7 +51,9 @@ import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
@@ -101,8 +104,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
     
     final ExceptionHandler exceptionHandler;
 
-    final MessageCatalog mcat;
-
     final PageManager pageFactory;
 
     final BufferManager bufmgr;
@@ -148,6 +149,28 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
     private int Testing = 0;
 
+    // Free Space Manager messages
+	static Message m_EF0001 = new Message('R', 'F', MessageType.ERROR, 1,
+			"Invalid number of bits [{0}] specified for space map page");
+	static Message m_EF0002 = new Message('R', 'F', MessageType.ERROR, 2,
+			"Container {0} does not exist");
+	static Message m_EF0003 = new Message('R', 'F', MessageType.ERROR, 3,
+			"Unable to generate compensation for unknown log record type {0}");
+	static Message m_EF0004 = new Message('R', 'F', MessageType.ERROR, 4,
+			"Unexpected error - page {0} does not belong to this map page {1}");
+	static Message m_EF0005 = new Message('R', 
+			'F',
+			MessageType.ERROR,
+			5,
+			"Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
+	static Message m_EF0006 = new Message('R', 
+			'F',
+			MessageType.ERROR,
+			6,
+			"Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
+	static Message m_EF0007 = new Message('R', 'F', MessageType.ERROR, 7,
+			"Test Condition");    
+    
     public FreeSpaceManagerImpl(Platform platform, ObjectRegistry objectFactory,
             PageManager pageFactory, LogManager logmgr, BufferManager bufmgr,
             StorageManager storageManager,
@@ -165,7 +188,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         PlatformObjects po = platform.getPlatformObjects(FreeSpaceManager.LOGGER_NAME);
         this.log = po.getLogger();
         this.exceptionHandler = po.getExceptionHandler();
-        this.mcat = po.getMessageCatalog();
         
         moduleRegistry.registerModule(MODULE_ID, this);
 
@@ -203,24 +225,6 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             TYPE_UNDOSPACEMAPPAGEUPDATE, new UndoSpaceMapPageUpdate.UndoSpaceMapUpdateFactory());
         objectFactory.registerObjectFactory(
         	TYPE_DROPCONTAINER, new DropContainer.DropContainerFactory());
-        
-        // Free Space Manager messages
-        mcat.addMessage(
-                "EF0001",
-                "SIMPLEDBM-EF0001: Invalid number of bits [{0}] specified for space map page");
-        mcat.addMessage("EF0002", "SIMPLEDBM-EF0002: Container {0} does not exist");
-        mcat.addMessage(
-                "EF0003",
-                "SIMPLEDBM-EF0003: Unable to generate compensation for unknown log record type {0}");
-        mcat.addMessage(
-                "EF0004",
-                "SIMPLEDBM-EF0004: Unexpected error - page {0} does not belong to this map page {1}");
-        mcat.addMessage(
-                "EF0005",
-                "SIMPLEDBM-EF0005: Invalid state for Free Space Cursor - attempt to fix an SMP page when another page is already fixed");
-        mcat.addMessage(
-                "EF0006",
-                "SIMPLEDBM-EF0006: Invalid state for Free Space Cursor - attempt to access an SMP page that has not been fixed");
     }
 
     public final void setTesting(int level) {
@@ -276,7 +280,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
         }
         exceptionHandler.errorThrow(FreeSpaceManagerImpl.class.getName(), 
         		"generateCompensation", 
-        		new FreeSpaceManagerException(mcat.getMessage("EF0003", undoable)));
+        		new FreeSpaceManagerException(new MessageInstance(m_EF0003, undoable)));
         return null;
     }
 
@@ -398,7 +402,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             		FreeSpaceManagerImpl.class.getName(), 
             		"createContainer", 
             		new FreeSpaceManagerException(
-            				mcat.getMessage("EF0001", spaceBits)));
+            				new MessageInstance(m_EF0001, spaceBits)));
         }
         SpaceMapPageImpl smpPage = (SpaceMapPageImpl) pageFactory.getInstance(
             spaceMapType,
@@ -435,7 +439,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
 
             if (Testing == 2) {
                 Testing = 0;
-                throw new FreeSpaceManagerException.TestException();
+                throw new FreeSpaceManagerException.TestException(new MessageInstance(m_EF0007));
             }
 
             // Log an open container operation. This is a redoable action that will always be
@@ -533,7 +537,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             }
             if (Testing != 0) {
                 Testing = 0;
-                throw new FreeSpaceManagerException.TestException();
+                throw new FreeSpaceManagerException.TestException(new MessageInstance(m_EF0007));
             }
 //            commitNTA = true;
         } finally {
@@ -725,7 +729,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             exceptionHandler.errorThrow(FreeSpaceManagerImpl.class.getName(), 
             		"dropContainer", 
             		new FreeSpaceManagerException(
-            				mcat.getMessage("EF0002", containerId)));
+            				new MessageInstance(m_EF0002, containerId)));
         } else {
             logrec.setContainerId(containerId);
             logrec.setName(sc.getName());
@@ -2025,7 +2029,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             spacemgr.exceptionHandler.errorThrow(SpaceMapPageImpl.class.getName(), 
             		"getSpaceBits", 
             		new FreeSpaceManagerException(
-            				spacemgr.mcat.getMessage("EF0004",pageNumber,this)));
+            				new MessageInstance(m_EF0004, pageNumber,this)));
             return 0;
         }
 
@@ -2037,7 +2041,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             	spacemgr.exceptionHandler.errorThrow(SpaceMapPageImpl.class.getName(), 
                 		"setSpaceBits", 
                 		new FreeSpaceManagerException(
-                				spacemgr.mcat.getMessage("EF0004",pageNumber,this)));
+                				new MessageInstance(m_EF0004, pageNumber,this)));
             }
         }
 
@@ -2529,7 +2533,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (bab != null) {
             	spacemgr.exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
             			"fixSpaceMapPageExclusively", 
-            			new IllegalStateException(spacemgr.mcat.getMessage("EF0005")));
+            			new SimpleDBMException(new MessageInstance(m_EF0005)));
             }
             PageId smpPageId = new PageId(containerId, spaceMapPageNumber);
             bab = spacemgr.bufmgr.fixExclusive(smpPageId, false, -1, 0);
@@ -2540,7 +2544,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
                 spacemgr.exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
                 		"fixSpaceMapPageExclusively", 
                 		new FreeSpaceManagerException(
-                				spacemgr.mcat.getMessage("EF0004",pageNumber,smpPage)));
+                				new MessageInstance(m_EF0004,pageNumber,smpPage)));
             }
             currentSMP = spaceMapPageNumber;
             currentPageNumber = pageNumber;
@@ -2566,7 +2570,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (bab == null) {
             	spacemgr.exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
                 		"getCurrentSpaceMapPage", 
-                		new IllegalStateException(spacemgr.mcat.getMessage("EF0006")));
+                		new SimpleDBMException(new MessageInstance(m_EF0006)));
             }
             return (FreeSpaceMapPage) bab.getPage();
         }
@@ -2584,7 +2588,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (bab == null) {
             	spacemgr.exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
                 		"doUpdateAndLogRedoOnly", 
-                		new IllegalStateException(spacemgr.mcat.getMessage("EF0006")));
+                		new SimpleDBMException(new MessageInstance(m_EF0006)));
             }
             UpdateSpaceMapPage updateSpaceMapLog = new UpdateSpaceMapPage(
                 MODULE_ID,
@@ -2610,7 +2614,7 @@ public final class FreeSpaceManagerImpl extends BaseTransactionalModule
             if (bab == null) {
             	spacemgr.exceptionHandler.errorThrow(SpaceCursorImpl.class.getName(), 
                 		"doUpdateAndLogUndoably", 
-                		new IllegalStateException(spacemgr.mcat.getMessage("EF0006")));
+                		new SimpleDBMException(new MessageInstance(m_EF0006)));
             }
             UndoableUpdateSpaceMapPage updateSpaceMapLog = new UndoableUpdateSpaceMapPage(
                 MODULE_ID,

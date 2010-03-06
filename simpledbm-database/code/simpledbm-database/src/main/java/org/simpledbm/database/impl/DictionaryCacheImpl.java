@@ -36,8 +36,11 @@
  */
 package org.simpledbm.database.impl;
 
+import static org.simpledbm.database.impl.DatabaseImpl.m_ED0013;
+
 import java.util.HashMap;
 
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.exception.DatabaseException;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.TypeDescriptor;
@@ -59,8 +62,8 @@ public class DictionaryCacheImpl implements DictionaryCache {
     	return typeDescMap.get(keytype);
     }
     
-    public TypeDescriptor[] getTypeDescriptor(int keytype) {
-        TypeDescriptor rowType[] = findTypeDescriptor(keytype);
+    public TypeDescriptor[] getTypeDescriptor(int containerId) {
+        TypeDescriptor rowType[] = findTypeDescriptor(containerId);
         if (rowType == null) {
         	/*
 			 * Normally, the table definitions are always accessed from the data
@@ -70,16 +73,16 @@ public class DictionaryCacheImpl implements DictionaryCache {
 			 * definition here.
 			 * Note that this will also populate the dictionary cache
 			 */
-            database.retrieveTableDefinition(keytype);
+            database.retrieveTableDefinition(containerId);
         }
         /*
          * We may be looking for an index row type, or a table
          * row type. So let's look in the cache again.
          */
-        rowType = findTypeDescriptor(keytype);
+        rowType = findTypeDescriptor(containerId);
         if (rowType == null) {
-        	// FIXME Proper error message is needed (see ED0013)
-        	throw new DatabaseException();
+        	this.database.exceptionHandler.errorThrow(getClass().getName(), "getTypeDescriptor",
+        			new DatabaseException(new MessageInstance(m_ED0013, containerId)));
         }
         return rowType;
     }

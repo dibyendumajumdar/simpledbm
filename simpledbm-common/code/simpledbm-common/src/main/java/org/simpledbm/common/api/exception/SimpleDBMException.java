@@ -36,29 +36,55 @@
  */
 package org.simpledbm.common.api.exception;
 
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
+
 /**
- * Base exception class for SimpleDBM exceptions.
+ * Base exception class for SimpleDBM exceptions. SimpleDBMException class
+ * implements Storable so that the exception can be transferred 
+ * over the network; however, stack traces and underlying exceptions are
+ * not included in the serialized format. 
  * 
  * @author Dibyendu Majumdar
  * @since 27 Dec 2006
  */
-public class SimpleDBMException extends RuntimeException {
+public class SimpleDBMException extends RuntimeException implements Storable {
 
     private static final long serialVersionUID = 1L;
 
-    public SimpleDBMException() {
-        super();
+    final MessageInstance m;
+
+    public SimpleDBMException(MessageInstance m, Throwable arg1) {
+        super(m.toString(), arg1);
+        this.m = m;
     }
 
-    public SimpleDBMException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
+    public SimpleDBMException(MessageInstance m) {
+        super(m.toString());
+        this.m = m;
+    }    
+    
+    public SimpleDBMException(ByteBuffer bb) {
+    	super();
+    	m = new MessageInstance(bb);
     }
+    
+	public int getStoredLength() {
+		return m.getStoredLength();
+	}
 
-    public SimpleDBMException(String arg0) {
-        super(arg0);
-    }
-
-    public SimpleDBMException(Throwable arg0) {
-        super(arg0);
-    }
+	public void store(ByteBuffer bb) {
+		m.store(bb);
+	}
+	
+	public int getErrorCode() {
+		return m.getCode();
+	}
+ 
+	public MessageType getType() {
+		return m.getType();
+	}
 }

@@ -1244,7 +1244,7 @@ public class TestTransactionManager2 extends BaseTestCase {
                 /* check if the container already exists */
                 StorageContainer sc = storageManager.getInstance(containerId);
                 if (sc != null) {
-                    throw new StorageException(); // TODO change exception type
+                    throw new IllegalStateException(); // TODO change exception type
                 }
 
                 BufferAccessBlock bab1 = bufmgr.fixExclusive(

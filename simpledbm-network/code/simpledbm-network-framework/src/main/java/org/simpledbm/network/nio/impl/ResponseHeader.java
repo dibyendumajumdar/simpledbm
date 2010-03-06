@@ -45,6 +45,7 @@ public class ResponseHeader {
     int sessionId = 0;
     int correlationId = 0;
     int dataSize = 0;
+    boolean hasException = false;
 
     public int getStatusCode() {
         return statusCode;
@@ -85,9 +86,17 @@ public class ResponseHeader {
     public void setDataSize(int dataSize) {
         this.dataSize = dataSize;
     }
+    
+    public boolean hasException() {
+		return hasException;
+	}
 
-    static ByteBuffer allocate() {
-        return ByteBuffer.allocate(24);
+	public void setHasException(boolean hasException) {
+		this.hasException = hasException;
+	}
+
+	static ByteBuffer allocate() {
+        return ByteBuffer.allocate(25);
     }
 
     void store(ByteBuffer bb) {
@@ -100,6 +109,7 @@ public class ResponseHeader {
         bb.putInt(correlationId);
         bb.putInt(statusCode);
         bb.putInt(dataSize);
+        bb.put((byte) (hasException? 1 : 0));
     }
 
     void retrieve(ByteBuffer bb) throws IOException {
@@ -115,5 +125,7 @@ public class ResponseHeader {
         correlationId = bb.getInt();
         statusCode = bb.getInt();
         dataSize = bb.getInt();
+        byte b = bb.get();
+        hasException = (b == 1) ? true : false;
     }
 }

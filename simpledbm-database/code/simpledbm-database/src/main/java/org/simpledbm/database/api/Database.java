@@ -45,6 +45,7 @@ import org.simpledbm.typesystem.api.RowFactory;
 import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 /**
  * A SimpleDBM Database is a collection of Tables. The Database runs as an embedded server, and 
@@ -114,6 +115,8 @@ public interface Database {
 	 * Starts a new Transaction
 	 */
 	public abstract Transaction startTransaction(IsolationMode isolationMode);
+	
+	public abstract TypeSystemFactory getTypeSystemFactory();
 	
 	/**
 	 * Returns the TypeFactory instance associated with this database.

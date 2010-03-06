@@ -41,7 +41,6 @@ import java.io.UnsupportedEncodingException;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.network.client.api.Session;
-import org.simpledbm.network.client.api.SessionException;
 import org.simpledbm.network.client.api.SessionManager;
 import org.simpledbm.network.client.api.Table;
 import org.simpledbm.network.common.api.EndTransactionMessage;
@@ -51,7 +50,6 @@ import org.simpledbm.network.common.api.SessionRequestMessage;
 import org.simpledbm.network.common.api.StartTransactionMessage;
 import org.simpledbm.network.nio.api.Response;
 import org.simpledbm.typesystem.api.TableDefinition;
-import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 /**
  * Session represents a session with the server.
@@ -79,26 +77,17 @@ public class SessionImpl implements Session {
     
     public synchronized void close() {
         SessionRequestMessage message = new SessionRequestMessage();
-    	Response response = sendMessage(RequestCode.CLOSE_SESSION, message);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error: " + getError(response));
-        } 
+    	sendMessage(RequestCode.CLOSE_SESSION, message);
     }
     
     public synchronized void startTransaction(IsolationMode isolationMode) {
         StartTransactionMessage message = new StartTransactionMessage(isolationMode);
-    	Response response = sendMessage(RequestCode.START_TRANSACTION, message);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error: " + getError(response));
-        }
+    	sendMessage(RequestCode.START_TRANSACTION, message);
     }
 
     private synchronized void endTransaction(boolean commit) {
         EndTransactionMessage message = new EndTransactionMessage(commit);
-    	Response response = sendMessage(RequestCode.END_TRANSACTION, message);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error: " + getError(response));
-        }    	
+    	sendMessage(RequestCode.END_TRANSACTION, message);
     }
     
     public void commit() {
@@ -110,19 +99,13 @@ public class SessionImpl implements Session {
     }
     
     public synchronized void createTable(TableDefinition tableDefinition) {
-    	Response response = sendMessage(RequestCode.CREATE_TABLE, tableDefinition);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error" + getError(response));
-        }     	
+    	sendMessage(RequestCode.CREATE_TABLE, tableDefinition);
     }
 
     public Table getTable(int containerId) {
     	GetTableMessage message = new GetTableMessage(containerId);
-    	Response response = sendMessage(RequestCode.GET_TABLE, message);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error: " + getError(response));
-        }    	
-        TableDefinition tableDefinition = TypeSystemFactory.getTableDefinition(sessionManager.po, getSessionManager().getTypeFactory(),
+    	Response response = sendMessage(RequestCode.GET_TABLE, message);   	
+        TableDefinition tableDefinition = sessionManager.typeSystemFactory.getTableDefinition(sessionManager.po, getSessionManager().getTypeFactory(),
         		getSessionManager().getRowFactory(), response.getData());
     	return new TableImpl(this, tableDefinition);
     }

@@ -43,7 +43,9 @@ import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.tx.TransactionException;
 import org.simpledbm.rss.api.tx.TransactionManager;
 import org.simpledbm.rss.api.tx.TransactionalModule;
@@ -53,16 +55,17 @@ public final class TransactionalModuleRegistryImpl implements
         TransactionalModuleRegistry {
 
     final Logger log;
-    final MessageCatalog mcat;
     final ExceptionHandler exceptionHandler;
 
     private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
+    static Message m_EX0001 = 
+    		new Message('R', 'X', MessageType.ERROR, 1, "Unknown transaction module {0}");
 
+    
     public TransactionalModuleRegistryImpl(Platform platform, Properties p) {
     	PlatformObjects po = platform.getPlatformObjects(TransactionManager.LOGGER_NAME);
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
-    	mcat = po.getMessageCatalog();
     }
     
     public final synchronized void registerModule(int moduleId,
@@ -74,7 +77,7 @@ public final class TransactionalModuleRegistryImpl implements
         TransactionalModule module = moduleMap.get((short) moduleId);
         if (module == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "getModule", 
-            		new TransactionException(mcat.getMessage("EX0001", moduleId)));
+            		new TransactionException(new MessageInstance(m_EX0001, moduleId)));
         }
         return module;
     }

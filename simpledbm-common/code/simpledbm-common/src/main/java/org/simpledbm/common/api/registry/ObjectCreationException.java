@@ -37,6 +37,7 @@
 package org.simpledbm.common.api.registry;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * Thrown when the Object Registry is unable to create an
@@ -50,20 +51,12 @@ public class ObjectCreationException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    ObjectCreationException() {
-        super();
-    }
-
-    public ObjectCreationException(String message) {
+    public ObjectCreationException(MessageInstance message) {
         super(message);
     }
 
-    public ObjectCreationException(String message, Throwable cause) {
+    public ObjectCreationException(MessageInstance message, Throwable cause) {
         super(message, cause);
-    }
-
-    public ObjectCreationException(Throwable cause) {
-        super(cause);
     }
 
     public static final class UnknownTypeException extends
@@ -71,20 +64,12 @@ public class ObjectCreationException extends SimpleDBMException {
 
         private static final long serialVersionUID = 1L;
 
-        public UnknownTypeException() {
-            super();
-        }
-
-        public UnknownTypeException(String message) {
+        public UnknownTypeException(MessageInstance message) {
             super(message);
         }
 
-        public UnknownTypeException(String message, Throwable cause) {
+        public UnknownTypeException(MessageInstance message, Throwable cause) {
             super(message, cause);
-        }
-
-        public UnknownTypeException(Throwable cause) {
-            super(cause);
         }
     }
 }

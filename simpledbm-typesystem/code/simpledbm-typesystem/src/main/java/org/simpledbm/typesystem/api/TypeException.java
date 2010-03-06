@@ -36,26 +36,26 @@
  */
 package org.simpledbm.typesystem.api;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 
 public class TypeException extends SimpleDBMException {
 
 	private static final long serialVersionUID = 1L;
 
-	public TypeException() {
+	public TypeException(ByteBuffer bb) {
+		super(bb);
 	}
 
-	public TypeException(String arg0, Throwable arg1) {
-		super(arg0, arg1);
+	public TypeException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
 	}
 
-	public TypeException(String arg0) {
-		super(arg0);
-	}
-
-	public TypeException(Throwable arg0) {
-		super(arg0);
+	public TypeException(MessageInstance m) {
+		super(m);
 	}
 
 }

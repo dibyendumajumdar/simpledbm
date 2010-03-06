@@ -36,23 +36,25 @@
  */
 package org.simpledbm.network.nio.api;
 
-public class NetworkException extends RuntimeException {
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
+
+public class NetworkException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public NetworkException() {
-    }
+	public NetworkException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public NetworkException(String arg0) {
-        super(arg0);
-    }
+	public NetworkException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public NetworkException(Throwable arg0) {
-        super(arg0);
-    }
-
-    public NetworkException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
+	public NetworkException(MessageInstance m) {
+		super(m);
+	}
+    
 }

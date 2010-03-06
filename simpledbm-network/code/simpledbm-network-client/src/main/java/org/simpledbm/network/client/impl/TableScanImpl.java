@@ -37,7 +37,6 @@
 package org.simpledbm.network.client.impl;
 
 import org.simpledbm.network.client.api.Session;
-import org.simpledbm.network.client.api.SessionException;
 import org.simpledbm.network.client.api.TableScan;
 import org.simpledbm.network.common.api.CloseScanMessage;
 import org.simpledbm.network.common.api.DeleteRowMessage;
@@ -101,10 +100,6 @@ public class TableScanImpl implements TableScan {
     	OpenScanMessage message = new OpenScanMessage(tableDefinition.getContainerId(),
     			indexNo, startRow, forUpdate);
     	Response response = session.sendMessage(RequestCode.OPEN_TABLESCAN, message);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error: ");
-        }    	
         int scanNo = response.getData().getInt();
 //        System.err.println("Scan id = " + scanNo);
         return scanNo;
@@ -116,10 +111,6 @@ public class TableScanImpl implements TableScan {
     	}
     	FetchNextRowMessage message = new FetchNextRowMessage(scanId);
     	Response response = session.sendMessage(RequestCode.FETCH_NEXT_ROW, message);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
         FetchNextRowReply reply = new FetchNextRowReply(getSession().getSessionManager().getRowFactory(), response.getData());
         if (reply.isEof()) {
         	eof = true;
@@ -134,15 +125,7 @@ public class TableScanImpl implements TableScan {
     		throw new RuntimeException("Scan has reached EOF");
     	}
     	UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
-    	Response response = session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
+    	session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
     }
 
     public void deleteRow() {
@@ -150,20 +133,12 @@ public class TableScanImpl implements TableScan {
     		throw new RuntimeException("Scan has reached EOF");
     	}
     	DeleteRowMessage message = new DeleteRowMessage(scanId);
-    	Response response = session.sendMessage(RequestCode.DELETE_CURRENT_ROW, message);        
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
+    	session.sendMessage(RequestCode.DELETE_CURRENT_ROW, message);           	
     }    
     
 	public void close() {
     	CloseScanMessage message = new CloseScanMessage(scanId);
-    	Response response = session.sendMessage(RequestCode.CLOSE_TABLESCAN, message);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }    	
+    	session.sendMessage(RequestCode.CLOSE_TABLESCAN, message);
 	}
 
 	public Session getSession() {

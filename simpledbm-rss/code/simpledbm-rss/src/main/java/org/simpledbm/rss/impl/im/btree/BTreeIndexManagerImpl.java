@@ -61,7 +61,9 @@ import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.DiagnosticLogger;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
@@ -215,8 +217,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     final Logger log;
     
     final ExceptionHandler exceptionHandler;
-
-    final MessageCatalog mcat;
     
     final TraceBuffer tracer;
     
@@ -246,6 +246,52 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     
 	private static final boolean Validating = false;
 	private static final boolean QuickValidate = false;
+	
+    // BTree Index Manager messages
+	static Message m_EB0001 = new Message('R', 'B', MessageType.ERROR, 1,
+			"Unexpected error - missing child pointer in parent node");
+	static Message m_EB0002 = new Message('R', 'B', MessageType.ERROR, 2,
+			"Unable to allocate a new page in the B-Tree container");
+	static Message m_WB0003 = new Message('R', 'B', MessageType.WARN, 3,
+			"Unique constraint would be violated by insertion of key={0} and location={1}");
+	static Message m_EB0004 = new Message('R', 'B', MessageType.ERROR, 4,
+			"Unexpected error - key {0} not found");
+	static Message m_EB0005 = new Message('R', 'B', MessageType.ERROR, 5,
+			"Unexpected error - current key k1={0} does not match expected key k2={1}");
+	static Message m_EB0006 = new Message('R', 
+			'B',
+			MessageType.ERROR,
+			6,
+			"Unexpected error - search result returned null, B-Tree may be corrupt : search key = {0}");
+	static Message m_EB0007 = new Message('R', 'B', MessageType.ERROR, 7,
+			"Unexpected error - while attempting to locate the split key in page {0}");
+	static Message m_EB0008 = new Message('R', 'B', MessageType.ERROR, 8,
+			"Unexpected error - invalid binary search result while searching for {0}");
+	static Message m_EB0009 = new Message('R', 'B', MessageType.ERROR, 9,
+			"Unexpected error - leaf page {0} encountered when expecting an index page");
+	static Message m_EB0010 = new Message('R', 'B', MessageType.ERROR, 10, "Index item {0} is not setup as leaf");
+	static Message m_WB0011 = new Message('R', 'B', MessageType.WARN, 11,
+			"fetchCompleted() has not been called after fetchNext()");
+	static Message m_EB0012 = new Message('R', 'B', MessageType.ERROR, 12,
+			"Unexpected error - exception caught");
+	static Message m_EB0013 = new Message('R', 'B', MessageType.ERROR, 13,
+			"Cannot insert or delete logical max key");
+	static Message m_EB0014 = new Message('R', 'B', MessageType.ERROR, 14,
+			"The BTreeNode no longer refers to the correct page");
+	static Message m_EB0015 = new Message('R', 'B', MessageType.ERROR, 15,
+			"Item at slot {0} is in wrong order");
+	static Message m_EB0016 = new Message('R', 'B', MessageType.ERROR, 16,
+			"Page {0} is marked for deallocation");
+	static Message m_EB0017 = new Message('R', 'B', MessageType.ERROR, 17,
+			"Page {0} has not been assigned a space map page");
+	static Message m_EB0018 = new Message('R', 'B', MessageType.ERROR, 18,
+			"Page {0} has a mismatch in keycount");
+	static Message m_EB0019 = new Message('R', 'B', MessageType.ERROR, 19,
+			"Deleted count on page {0} is > 0");
+	static Message m_EB0020 = new Message('R', 'B', MessageType.ERROR, 20,
+			"There is a mismatch between the node and the key type");
+	
+	static Message itemNotLeaf = new Message('R', 'B', MessageType.ERROR, 10, "Index item {0} is not setup as leaf");
 
     public BTreeIndexManagerImpl(Platform platform, ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
@@ -255,7 +301,6 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     	this.po = platform.getPlatformObjects(IndexManager.LOGGER_NAME);
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
-    	this.mcat = po.getMessageCatalog();
     	this.tracer = po.getTraceBuffer();
         this.objectFactory = objectFactory;
         this.loggableFactory = loggableFactory;
@@ -302,47 +347,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 		objectFactory.registerObjectFactory(TYPE_LOADPAGE_OPERATION,
 				new LoadPageOperation.LoadPageOperationFactory(objectFactory));
 		
-        // BTree Index Manager messages
-        mcat.addMessage(
-                "EB0001",
-                "SIMPLEDBM-EB0001: Unexpected error - missing child pointer in parent node");
-        mcat.addMessage(
-                "EB0002",
-                "SIMPLEDBM-EB0002: Unable to allocate a new page in the B-Tree container");
-        mcat.addMessage(
-                "WB0003",
-                "SIMPLEDBM-WB0003: Unique constraint would be violated by insertion of key={0} and location={1}");
-        mcat.addMessage(
-            "EB0004",
-            "SIMPLEDBM-EB0004: Unexpected error - key {0} not found");
-        mcat.addMessage(
-                "EB0005",
-                "SIMPLEDBM-EB0005: Unexpected error - current key k1={0} does not match expected key k2={1}");
-        mcat.addMessage(
-                "EB0006",
-                "SIMPLEDBM-EB0006: Unexpected error - search result returned null, B-Tree may be corrupt : search key = {0}");
-        mcat.addMessage(
-                "EB0007",
-                "SIMPLEDBM-EB0007: Unexpected error - while attempting to locate the split key in page {0}");
-        mcat.addMessage(
-                "EB0008",
-                "SIMPLEDBM-EB0008: Unexpected error - invalid binary search result while searching for {0}");
-        mcat.addMessage(
-                "EB0009",
-                "SIMPLEDBM-EB0009: Unexpected error - leaf page {0} encountered when expecting an index page");
-        mcat.addMessage(
-            "EB0010",
-            "SIMPLEDBM-EB0010: Index item {0} is not setup as leaf");
-        mcat.addMessage(
-                "WB0011",
-                "SIMPLEDBM-WB0011: fetchCompleted() has not been called after fetchNext()");
-        mcat.addMessage(
-            "EB0012",
-            "SIMPLEDBM-EB0012: Unexpected error - exception caught");
-        mcat.addMessage(
-        	"EB0013",
-        	"SIMPLEDBM-EB0013: Cannot insert or delete logical max key");
-		
+
     }
 
     /* (non-Javadoc)
@@ -566,7 +571,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         if (k == -1 || k > parent.header.keyCount) {
             // child pointer not found - corrupt b-tree?
             exceptionHandler.unexpectedErrorThrow(getClass().getName(), 
-            		"redoLinkOperation", new IndexException(mcat.getMessage("EB0001")));
+            		"redoLinkOperation", new IndexException(new MessageInstance(m_EB0001)));
         }
         IndexItem item = parent.getItem(k);
        
@@ -602,7 +607,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         k = parent.findPosition(unlinkOperation.leftSibling);
         if (k == -1 || k > parent.header.keyCount) {
             exceptionHandler.unexpectedErrorThrow(getClass().getName(), 
-            		"redoUnlinkOperation", new IndexException(mcat.getMessage("EB0001")));
+            		"redoUnlinkOperation", new IndexException(new MessageInstance(m_EB0001)));
         }
         if (QuickValidate) {
         	parent.validateItemAt(k);
@@ -614,7 +619,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             p.insertAt(k, item, true);
         } else {
             exceptionHandler.unexpectedErrorThrow(getClass().getName(), 
-            		"redoUnlinkOperation", new IndexException(mcat.getMessage("EB0001")));
+            		"redoUnlinkOperation", new IndexException(new MessageInstance(m_EB0001)));
         }
         parent.header.keyCount = parent.header.keyCount - 1;
         parent.updateHeader();
@@ -1402,7 +1407,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
                     if (newSiblingPageNumber == -1) {
                         po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), 
-                        		"doSplit", new IndexException(po.getMessageCatalog().getMessage("EB0002")));
+                        		"doSplit", new IndexException(new MessageInstance(m_EB0002)));
                     }
                 }
                 undoNextLsn = trx.getLastLsn();
@@ -1994,7 +1999,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     if (newSiblingPageNumber == -1) {
                     	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), 
                         		"doIncreaseTreeHeight", 
-                        		new IndexException(po.getMessageCatalog().getMessage("EB0002")));
+                        		new IndexException(new MessageInstance(m_EB0002)));
                     }
                 }
                 // Make a note of current lsn so that we can link the Compensation record to it.
@@ -3081,7 +3086,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //                                		new UniqueConstraintViolationException(
 //                                    mcat.getMessage("WB0003", key, location)));
                                 throw new UniqueConstraintViolationException(
-                                		po.getMessageCatalog().getMessage("WB0003", key, location));
+                                		new MessageInstance(m_WB0003, key, location));
 
                             }
                             /*
@@ -3170,7 +3175,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 Location location) {
         	if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
         		po.getExceptionHandler().errorThrow(getClass().getName(), "insert", 
-						new IndexException(po.getMessageCatalog().getMessage("EB0013")));
+						new IndexException(new MessageInstance(m_EB0013)));
 			}
         	tracer.event(112);
             Savepoint savepoint = trx.createSavepoint(false);
@@ -3222,7 +3227,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 if (!sr.exactMatch) {
                     // key not found?? something is wrong
                 	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doDelete", 
-                    		new IndexException(po.getMessageCatalog().getMessage("EB0004",
+                    		new IndexException(new MessageInstance(m_EB0004,
                         bcursor.searchKey.toString())));
                 }
 
@@ -3288,7 +3293,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 Location location) {
         	if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
         		po.getExceptionHandler().errorThrow(getClass().getName(), "delete", 
-        				new IndexException(po.getMessageCatalog().getMessage("EB0013")));
+        				new IndexException(new MessageInstance(m_EB0013)));
         	}
         	tracer.event(113);
             Savepoint savepoint = trx.createSavepoint(false);
@@ -3329,7 +3334,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr.exactMatch = true;
                 if (!node.getItem(sr.k).equals(icursor.currentKey)) {
                 	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doSearchAtLeafLevel", 
-                    		new IndexException(po.getMessageCatalog().getMessage("EB0005", node
+                    		new IndexException(new MessageInstance(m_EB0005, node
                         .getItem(sr.k), icursor.currentKey)));
                 }
             } else {
@@ -3549,8 +3554,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     if (sr.item == null) {
                     	tracer.event(139, icursor.btree.containerId);
                     	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "doFetch", 
-                        		new IndexException(po.getMessageCatalog().getMessage(
-                            "EB0006",
+                        		new IndexException(new MessageInstance(m_EB0006,
                             icursor.currentKey.toString())));
                     }
                     trx.acquireLockNowait(
@@ -4303,7 +4307,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         		return true;
         	}
         	po.getExceptionHandler().unexpectedErrorThrow(this.getClass().getName(), "sanityCheck", 
-        			new IndexException("The BTreeNode no longer refers to the correct page"));
+        			new IndexException(new MessageInstance(m_EB0014)));
         	return false;
         }
         
@@ -4443,7 +4447,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 					if (prevItem.compareTo(thisItem) >= 0) {
 						po.getExceptionHandler().unexpectedErrorThrow(
 								this.getClass().getName(), "validateItemAt",
-								new IndexException("Item at slot " + slot + " is in wrong order"));
+								new IndexException(new MessageInstance(m_EB0015, slot)));
 					}
 				}
 				if (isLeaf()) {
@@ -4453,8 +4457,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						if (thisItem.compareTo(nextItem) > 0) {
 							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
-									new IndexException("Item at slot " + slot
-									+ " is in wrong order"));
+									new IndexException(new MessageInstance(m_EB0015, slot)));
 						}
 					}
 					else if (slot < header.keyCount - 1) {
@@ -4462,8 +4465,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						if (thisItem.compareTo(nextItem) >= 0) {
 							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
-									new IndexException("Item at slot " + slot
-									+ " is in wrong order"));
+									new IndexException(new MessageInstance(m_EB0015, slot)));
 						}
 					}
 				}
@@ -4473,8 +4475,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 						if (thisItem.compareTo(nextItem) >= 0) {
 							po.getExceptionHandler().unexpectedErrorThrow(
 									this.getClass().getName(), "validateItemAt",
-									new IndexException("Item at slot " + slot
-									+ " is in wrong order"));
+									new IndexException(new MessageInstance(m_EB0015, slot)));
 						}
 					}
 				}
@@ -4492,18 +4493,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				if (isDeallocated()) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
-							new IndexException("Page is marked for deallocation"));
+							new IndexException(new MessageInstance(m_EB0016, page.getPageId())));
 				}
 				if (page.getSpaceMapPageNumber() == -1) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
-							new IndexException(
-							"Page has not been assigned a space map page"));
+							new IndexException(new MessageInstance(m_EB0017, page.getPageId())));
 				}
 				if (page.getNumberOfSlots() != header.keyCount + 1) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validateItemAt",
-							new IndexException("Mismatch is keycount"));
+							new IndexException(new MessageInstance(m_EB0018, page.getPageId())));
 				}
 			} catch (SimpleDBMException e) {
 				dumpAsXml();
@@ -4524,18 +4524,17 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				if (isDeallocated()) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
-							new IndexException("Page is marked for deallocation"));
+							new IndexException(new MessageInstance(m_EB0016, page.getPageId())));
 				}
 				if (page.getSpaceMapPageNumber() == -1) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
-							new IndexException(
-							"Page has not been assigned a space map page"));
+							new IndexException(new MessageInstance(m_EB0017, page.getPageId())));
 				}
 				if (page.getNumberOfSlots() != header.keyCount + 1) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
-							new IndexException("Mismatch is keycount"));
+							new IndexException(new MessageInstance(m_EB0018, page.getPageId())));
 				}
 				BTreeNodeHeader header = (BTreeNodeHeader) page.get(
 						HEADER_KEY_POS, new BTreeNodeHeader.BTreeNodeHeaderStorabeFactory());
@@ -4557,14 +4556,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 									po.getExceptionHandler().unexpectedErrorThrow(
 											this.getClass().getName(), "validate",
 											new IndexException(
-											"Item is not in order"));
+													new MessageInstance(m_EB0015, k)));
 								}
 							} else {
 								if (item.compareTo(prevItem) <= 0) {
 									po.getExceptionHandler().unexpectedErrorThrow(
 											this.getClass().getName(), "validate",
 											new IndexException(
-											"Item is not in order"));
+													new MessageInstance(m_EB0015, k)));
 								}
 							}
 						}
@@ -4572,7 +4571,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 							if (item.compareTo(prevItem) <= 0) {
 								po.getExceptionHandler().unexpectedErrorThrow(
 										this.getClass().getName(), "validate",
-										new IndexException("Item is not in order"));
+										new IndexException(new MessageInstance(m_EB0015, k)));
 							}
 						}
 					}
@@ -4581,12 +4580,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 				if (deletedCount > 0) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
-							new IndexException("Deleted count on page > 0"));
+							new IndexException(new MessageInstance(m_EB0015, page.getPageId())));
 				}
 				if (keyCount != header.keyCount) {
 					po.getExceptionHandler().unexpectedErrorThrow(
 							this.getClass().getName(), "validate",
-							new IndexException("Mismatch is keycount"));
+							new IndexException(new MessageInstance(m_EB0018, page.getPageId())));
 				}
 			} catch (SimpleDBMException e) {
 				dumpAsXml();
@@ -4629,7 +4628,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         	if (item.isLeaf != isLeaf() || item.isUnique != isUnique()) {
         		po.getExceptionHandler().unexpectedErrorThrow(
 						this.getClass().getName(), "validateItem",
-						new IndexException("There is a mismatch between the node and the key type"));
+						new IndexException(new MessageInstance(m_EB0020)));
         	}
         }
         
@@ -4793,7 +4792,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
             }
             po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "getSplitKey", 
-            		new IndexException(po.getMessageCatalog().getMessage("EB0007", page)));
+            		new IndexException(new MessageInstance(m_EB0007, page)));
             return -1;
         }
 
@@ -4843,7 +4842,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int mid = (low + high) >>> 1;
                 if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
                 	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "search", 
-                    		new IndexException(po.getMessageCatalog().getMessage("EB0008", key
+                    		new IndexException(new MessageInstance(m_EB0008, key
                         .toString())));
                 }
                 IndexItem item = getItem(mid);
@@ -4878,7 +4877,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final int findChildPage(IndexItem key) {
             if (isLeaf()) {
             	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findChildPage", 
-                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
+                		new IndexException(new MessageInstance(m_EB0009, page)));
             }
             SearchResult sr = search(key);
             assert sr.k != SearchResult.KEY_OUT_OF_BOUNDS;
@@ -4891,7 +4890,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final IndexItem findIndexItem(int childPageNumber) {
             if (isLeaf()) {
             	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findIndexItem", 
-                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
+                		new IndexException(new MessageInstance(m_EB0009, page)));
             }
             /*
              * We avoid reading the full item until we have found the one we want.
@@ -4911,7 +4910,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final int findPosition(int childPageNumber) {
             if (isLeaf()) {
             	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findPosition", 
-                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
+                		new IndexException(new MessageInstance(m_EB0009, page)));
             }
             for (int k = FIRST_KEY_POS; k <= getKeyCount(); k++) {
             	PartialIndexItem item = getPartialItem(k);
@@ -4930,7 +4929,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final IndexItem findPrevIndexItem(int childPageNumber) {
             if (isLeaf()) {
             	po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(), "findPrevIndexItem", 
-                		new IndexException(po.getMessageCatalog().getMessage("EB0009", page)));
+                		new IndexException(new MessageInstance(m_EB0009, page)));
             }
             int k = FIRST_KEY_POS;
             for (; k <= getKeyCount(); k++) {
@@ -5453,11 +5452,9 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void setItem(IndexItem item) {
             this.item = item;
             if (!item.isLeaf()) {
-            	// FIXME
-            	throw new IndexException();
-//                exceptionHandler.unexpectedErrorThrow(getClass().getName(), "setItem", 
-//                		new IndexException(mcat.getMessage("EB0010", item)));
-                
+            	// FIXME need to use exceptionHandler
+            	MessageInstance m = new MessageInstance(itemNotLeaf, item);
+            	throw new IndexException(m);
             }
         }
 

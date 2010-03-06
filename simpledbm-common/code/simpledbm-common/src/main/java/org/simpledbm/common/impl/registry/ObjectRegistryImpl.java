@@ -47,7 +47,9 @@ import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 
 /**
  * Default implementation of the Object Registry.
@@ -61,11 +63,31 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     
     private final ExceptionHandler exceptionHandler;
     
-    private final MessageCatalog mcat;
-    
     @SuppressWarnings("unused")
 	private final Platform platform;
-    
+
+    // Object Registry messages
+	static Message m_WR0001 = new Message('C', 'R', MessageType.WARN, 1,
+			"Duplicate registration of type {0} ignored");
+	static Message m_ER0002 = new Message(
+			'R','R',
+			MessageType.ERROR,
+			2,
+			"Duplicate registration of type {0} does not match previous registration: previous type {1}, new type {2}");
+	static Message m_WR0003 = new Message('C','R', MessageType.WARN, 3,
+			"Duplicate registration of singleton {0} ignored");
+	static Message m_ER0004 = new Message(
+			'R','R',
+			MessageType.ERROR,
+			4,
+			"Duplicate registration of singleton {0} does not match previous registration: previous object {1}, new object {2}");
+	static Message m_ER0005 = new Message('C','R', MessageType.ERROR, 5,
+			"Error occurred when attempting to load class {0}");
+	static Message m_ER0006 = new Message('C','R', MessageType.ERROR, 6,
+			"Unknown typecode {0}");
+	static Message m_ER0007 = new Message('C','R', MessageType.ERROR, 7,
+			"Error occurred when attempting to create new instance of type {0} class {1}");
+
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
 
@@ -89,29 +111,6 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     	PlatformObjects po = platform.getPlatformObjects(ObjectRegistry.LOGGER_NAME);
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
-    	mcat = po.getMessageCatalog();
-    	
-        // Object Registry messages
-        mcat.addMessage(
-            "WR0001",
-            "SIMPLEDBM-WR0001: Duplicate registration of type {0} ignored");
-        mcat.addMessage(
-                "ER0002",
-                "SIMPLEDBM-ER0002: Duplicate registration of type {0} does not match previous registration: previous type {1}, new type {2}");
-        mcat.addMessage(
-                "WR0003",
-                "SIMPLEDBM-WR0003: Duplicate registration of singleton {0} ignored");
-        mcat.addMessage(
-                "ER0004",
-                "SIMPLEDBM-ER0004: Duplicate registration of singleton {0} does not match previous registration: previous object {1}, new object {2}");
-        mcat.addMessage(
-                "ER0005",
-                "SIMPLEDBM-ER0005: Error occurred when attempting to load class {0}");
-        mcat.addMessage("ER0006", "SIMPLEDBM-ER0006: Unknown typecode {0}");
-        mcat.addMessage(
-                "ER0007",
-                "SIMPLEDBM-ER0007: Error occurred when attempting to create new instance of type {0} class {1}");      
-
     }
     
     public synchronized final void registerObjectFactory(int tc,
@@ -127,12 +126,12 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 		ObjectDefinition od = typeRegistry.get(typecode);
 		if (od != null) {
 			if (!od.isSingleton() && od.getClassName().equals(classname)) {
-				log.warn(getClass().getName(), "register", mcat.getMessage("WR0001",
-						typecode));
+				log.warn(getClass().getName(), "register", new MessageInstance(m_WR0001,
+						typecode).toString());
 				return;
 			}
 			exceptionHandler.errorThrow(this.getClass().getName(), "register", 
-					new ObjectCreationException(mcat.getMessage("ER0002",
+					new ObjectCreationException(new MessageInstance(m_ER0002,
 					typecode, od.getClassName(), classname)));
 		}
 		typeRegistry.put(typecode, new FactoryObjectDefinition(typecode,
@@ -153,14 +152,14 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         ObjectDefinition od = typeRegistry.get(typecode);
         if (od != null) {
             if (od.isSingleton() && od.getInstance() == object) {
-                log.warn(getClass().getName(), "register", mcat.getMessage(
-                    "WR0003",
-                    typecode));
+                log.warn(getClass().getName(), "register", new MessageInstance(
+                    m_WR0003,
+                    typecode).toString());
                 return;
             }
             exceptionHandler.errorThrow(this.getClass().getName(), "register", 
-            	new ObjectCreationException(mcat.getMessage(
-                "ER0004",
+            	new ObjectCreationException(new MessageInstance(
+                m_ER0004,
                 typecode,
                 od.getInstance(),
                 object)));
@@ -179,8 +178,7 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "getInstance", 
-            	new ObjectCreationException.UnknownTypeException(mcat
-            			.getMessage("ER0006", typecode)));
+            	new ObjectCreationException.UnknownTypeException(new MessageInstance(m_ER0006, typecode)));
         }
         return od.getInstance();
     }
@@ -200,8 +198,8 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
         ObjectDefinition od = typeRegistry.get((short) typecode);
         if (od == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "getInstance", 
-            	new ObjectCreationException.UnknownTypeException(mcat
-            			.getMessage("ER0006", typecode)));
+            	new ObjectCreationException.UnknownTypeException(
+            			new MessageInstance(m_ER0006, typecode)));
         }
         return od.getInstance(buf);
 	}

@@ -51,9 +51,13 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.network.nio.api.NetworkException;
 import org.simpledbm.network.nio.api.NetworkServer;
 import org.simpledbm.network.nio.api.Request;
@@ -72,10 +76,21 @@ public class NetworkServerImpl implements NetworkServer {
     ExecutorService requestHandlerService;
     volatile boolean stop = false;
     volatile boolean opened = false;
+    volatile boolean errored = false;
     final RequestHandler requestHandler;
     final PlatformObjects platformObjects;
     final Logger log;
 
+    static final Message m_startingIOException = new Message('N', 'S', MessageType.ERROR, 1, "IO Error occurred when attemptiong to start the server");
+    static final Message m_erroredException = new Message('N', 'S', MessageType.ERROR, 2, "Unable to perform operation as server has had previous errors");
+    static final Message m_alreadyStartedException = new Message('N', 'S', MessageType.ERROR, 3, "Server is already started");
+    static final Message m_readIOException = new Message('N', 'S', MessageType.ERROR, 4, "IO Error occurred while reading from a channel");
+    static final Message m_writeIOException = new Message('N', 'S', MessageType.ERROR, 5, "IO Error occurred while writing to a channel");
+    static final Message m_selectIOException = new Message('N', 'S', MessageType.ERROR, 6, "IO Error occurred while selecting a channel for IO");
+    static final Message m_acceptIOException = new Message('N', 'S', MessageType.ERROR, 7, "IO Error occurred while accepting a channel for IO");
+    static final Message m_channelErroredException = new Message('N', 'S', MessageType.ERROR, 8, "Unable to perform {0} operation as the channel has had previous errors");
+
+    
     /**
      * Timeout for select operations; default is 10 secs.
      */
@@ -87,36 +102,58 @@ public class NetworkServerImpl implements NetworkServer {
     }
 
     public NetworkServerImpl(Platform platform, RequestHandler requestHandler, Properties properties) {
-        this.hostname = properties.getProperty("network.server.host", "localhost");
-        this.port = Integer.parseInt(properties.getProperty("network.server.port", "8000"));
-        this.serverSocketAddress = new InetSocketAddress(hostname, port);
-        this.platformObjects = platform.getPlatformObjects(LOG_NAME);
-        this.log = platformObjects.getLogger();
-        this.requestHandler = requestHandler;
-        requestHandler.onInitialize(platform, properties);
+		try {
+			this.hostname = properties.getProperty("network.server.host",
+					"localhost");
+			this.port = Integer.parseInt(properties.getProperty(
+					"network.server.port", "8000"));
+			this.serverSocketAddress = new InetSocketAddress(hostname, port);
+			this.platformObjects = platform.getPlatformObjects(LOG_NAME);
+			this.log = platformObjects.getLogger();
+			this.requestHandler = requestHandler;
+			requestHandler.onInitialize(platform, properties);
+		} catch (RuntimeException e) {
+			errored = true;
+			throw e;
+		}
     }
 
     /**
      * Starts the network server.
      */
     public void start() {
+    	if (opened) {
+    		return;
+    	}
+    	if (errored) {
+    		throw new NetworkException(new MessageInstance(m_erroredException));
+    	}
         try {
             requestHandler.onStart();
-//        	System.err.println("Opening selector");
+            if (log.isDebugEnabled()) {
+            	log.debug(getClass().getName(), "start", "Opening selector");
+            }
             selector = Selector.open();
-//        	System.err.println("Opening server socket");
+            if (log.isDebugEnabled()) {
+            	log.debug(getClass().getName(), "start", "Opening server socket");
+            }
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
-//        	System.err.println("Binding to " + serverSocketAddress);
+            if (log.isDebugEnabled()) {
+            	log.debug(getClass().getName(), "start", "Binding to " + serverSocketAddress);
+            }
             serverSocketChannel.socket().bind(serverSocketAddress);
-//        	System.err.println("Registering " + serverSocketChannel + " for accepting connections");
+            if (log.isDebugEnabled()) {
+            	log.debug(getClass().getName(), "start", "Registering " + serverSocketChannel + " for accepting connections");
+            }            
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
-        } catch (Exception e) {
+        } catch (IOException e) {
             NIOUtil.close(selector);
             selector = null;
             NIOUtil.close(serverSocketChannel);
             serverSocketChannel = null;
-            throw new NetworkException(e);
+            errored = true;
+            throw new NetworkException(new MessageInstance(m_startingIOException), e);
         }
         requestHandlerService = Executors.newFixedThreadPool(1);
         opened = true;
@@ -128,7 +165,9 @@ public class NetworkServerImpl implements NetworkServer {
         } else {
             return;
         }
-//        System.err.println("Closing server " + serverSocketAddress);
+        if (log.isDebugEnabled()) {
+        	log.debug(getClass().getName(), "shutdown", "Closing server " + serverSocketAddress);
+        }
         stop = true;
         selector.wakeup();
         requestHandlerService.shutdown();
@@ -140,89 +179,120 @@ public class NetworkServerImpl implements NetworkServer {
         }
         NIOUtil.close(selector);
         NIOUtil.close(serverSocketChannel);
-        requestHandler.onShutdown();
+        try {
+        	requestHandler.onShutdown();
+        }
+        catch (RuntimeException e) {
+        	errored = true;
+        	throw e;
+        }
+        errored = false;
     }
 
     public void select() {
+    	if (errored) {
+    		throw new NetworkException(new MessageInstance(m_erroredException));
+    	}
         if (!opened || stop) {
             return;
         }
-        try {
-            for (SelectionKey key : selector.keys()) {
-                if (!key.isValid()) {
-                    continue;
-                }
-                ProtocolHandler handler = (ProtocolHandler) key.attachment();
-                if (handler == null) {
-                    /*
-                     * Must be the serverSocketChannel which doesn't have an
-                     * attached handler.
-                     */
-                    continue;
-                }
-                if (!handler.isOkay()) {
-                    /*
-                     * Handler has errored or the client has closed connection.
-                     */
-                    key.cancel();
-                    NIOUtil.close(key.channel());
-                    continue;
-                }
-                if (handler.isWritable()) {
-                    key.interestOps(SelectionKey.OP_WRITE);
-                } else {
-                    key.interestOps(SelectionKey.OP_READ);
-                }
-            }
-//        	System.err.println("Selecting events");
-            selector.select(selectTimeout);
-            Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
-            while (iter.hasNext()) {
-                SelectionKey key = iter.next();
-                iter.remove();
+		for (SelectionKey key : selector.keys()) {
+			if (!key.isValid()) {
+				continue;
+			}
+			ProtocolHandler handler = (ProtocolHandler) key.attachment();
+			if (handler == null) {
+				/*
+				 * Must be the serverSocketChannel which doesn't have an
+				 * attached handler.
+				 */
+				continue;
+			}
+			if (!handler.isOkay()) {
+				/*
+				 * Handler has errored or the client has closed connection.
+				 */
+				key.cancel();
+				NIOUtil.close(key.channel());
+				continue;
+			}
+			if (handler.isWritable()) {
+				key.interestOps(SelectionKey.OP_WRITE);
+			} else {
+				key.interestOps(SelectionKey.OP_READ);
+			}
+		}
+		if (log.isTraceEnabled()) {
+			log.trace(getClass().getName(), "select", "Selecting events");
+		}
+		try {
+			int n = selector.select(selectTimeout);
+			if (n == 0) {
+				return;
+			}
+		} catch (IOException e) {
+			errored = true;
+			throw new NetworkException(
+					new MessageInstance(m_selectIOException), e);
+		}
+		Iterator<SelectionKey> iter = selector.selectedKeys().iterator();
+		while (iter.hasNext()) {
+			SelectionKey key = iter.next();
+			iter.remove();
 
-                if (!key.isValid()) {
-                    continue;
-                }
-                if (key.isAcceptable()) {
-                    handleAccept(key);
-                } else if (key.isReadable()) {
-                    handleRead(key);
-                } else if (key.isWritable()) {
-                    handleWrite(key);
-                }
-            }
-        } catch (IOException e) {
-            throw new NetworkException(e);
-        }
+			if (!key.isValid()) {
+				continue;
+			}
+			if (key.isAcceptable()) {
+				handleAccept(key);
+			} else if (key.isReadable()) {
+				handleRead(key);
+			} else if (key.isWritable()) {
+				handleWrite(key);
+			}
+		}
     }
 
     private void handleWrite(SelectionKey key) {
         ProtocolHandler protocolHandler = (ProtocolHandler) key.attachment();
-//    	System.err.println("Writing to channel " + protocolHandler.socketChannel);
+        if (log.isTraceEnabled()) {
+        	log.trace(getClass().getName(), "handleWrite", "Writing to channel " + protocolHandler.socketChannel);
+        }
         protocolHandler.doWrite(key);
     }
 
     private void handleRead(SelectionKey key) {
         ProtocolHandler protocolHandler = (ProtocolHandler) key.attachment();
-//    	System.err.println("Reading from channel " + protocolHandler.socketChannel);
+        if (log.isTraceEnabled()) {
+        	log.trace(getClass().getName(), "handleWrite", "Reading from channel " + protocolHandler.socketChannel);
+        }
         protocolHandler.doRead(key);
     }
 
-    private void handleAccept(SelectionKey key) throws IOException {
+    private void handleAccept(SelectionKey key) {
         // For an accept to be pending the channel must be a server socket channel.
         ServerSocketChannel serverSocketChannel = (ServerSocketChannel) key.channel();
         SocketChannel socketChannel = null;
+        SelectionKey channelKey = null;
         try {
-//        	System.err.println("Accepting new channel");
+            if (log.isDebugEnabled()) {
+            	log.debug(getClass().getName(), "handleWrite", "Accepting new channel");
+            }
             socketChannel = serverSocketChannel.accept();
             socketChannel.configureBlocking(false);
-            SelectionKey channelKey = socketChannel.register(this.selector, SelectionKey.OP_READ);
+            channelKey = socketChannel.register(this.selector, SelectionKey.OP_READ);
             ProtocolHandler channelHandler = new ProtocolHandler(this, socketChannel);
             channelKey.attach(channelHandler);
         } catch (IOException e) {
+        	/*
+        	 * If we failed to accept a new channel, we can still continue serving
+        	 * existing channels, so do not treat this as a fatal error
+        	 */
+        	log.error(getClass().getName(), "handleAccept", new MessageInstance(m_acceptIOException).toString());
+        	if (channelKey != null) {
+        		channelKey.cancel();
+        	}
             NIOUtil.close(socketChannel);
-            throw e;
         }
     }
 
@@ -230,7 +300,9 @@ public class NetworkServerImpl implements NetworkServer {
         ResponseHeader responseHeader = new ResponseHeader();
         responseHeader.setCorrelationId(requestHeader.getCorrelationId());
         RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHandler, requestHeader, request);
-//    	System.err.println("Scheduling request handler for channel " + protocolHandler.socketChannel);
+        if (log.isTraceEnabled()) {
+        	log.trace(getClass().getName(), "queueRequest", "Scheduling request handler for channel " + protocolHandler.socketChannel);
+        }
         requestHandlerService.submit(requestDispatcher);
     }
 
@@ -294,7 +366,7 @@ public class NetworkServerImpl implements NetworkServer {
         synchronized void doRead(SelectionKey key) {
 
             if (!okay) {
-                throw new IllegalStateException("Channel is in error");
+                throw new NetworkException(new MessageInstance(m_channelErroredException));
             }
             try {
                 while (true) {
@@ -368,7 +440,7 @@ public class NetworkServerImpl implements NetworkServer {
                     }
                 }
             } catch (IOException e) {
-                // FIXME log error
+            	networkServer.log.error(getClass().getName(), "doRead", new MessageInstance(m_readIOException, e).toString());
                 failed();
             }
         }
@@ -387,7 +459,7 @@ public class NetworkServerImpl implements NetworkServer {
 
         synchronized void doWrite(SelectionKey key) {
             if (!okay) {
-                throw new IllegalStateException("Channel is in error");
+                throw new NetworkException(new MessageInstance(m_channelErroredException));
             }
             try {
                 while (true) {
@@ -447,13 +519,15 @@ public class NetworkServerImpl implements NetworkServer {
                     }
                 }
             } catch (IOException e) {
-                // FIXME log error
+            	networkServer.log.error(getClass().getName(), "doWrite", new MessageInstance(m_writeIOException, e).toString());
                 failed();
             }
         }
 
         synchronized void queueWrite(WriteRequest wr) {
-//        	System.err.println("queuing write " + wr.response.limit());
+        	if (networkServer.log.isTraceEnabled()) {
+        		networkServer.log.trace(getClass().getName(), "queueWrite", "queuing write " + wr.response.limit());
+        	}
         	wr.responseHeader.setDataSize(wr.response.limit());
             writeQueue.add(wr);
             networkServer.selector.wakeup();
@@ -488,11 +562,21 @@ public class NetworkServerImpl implements NetworkServer {
             responseHeader.setCorrelationId(requestHeader.getCorrelationId());
             responseHeader.setStatusCode(0);
             responseHeader.setSessionId(requestHeader.getSessionId());
+            responseHeader.setHasException(false);
             Response response = new ResponseImpl(responseHeader, defaultData);
             try {
                 requestHandler.handleRequest(request, response);
             }
-            catch (RuntimeException e) {
+            catch (SimpleDBMException e) {
+                responseHeader.setStatusCode(-1);
+                responseHeader.setHasException(true);
+                ByteBuffer bb = ByteBuffer.allocate(e.getStoredLength());
+                e.store(bb);
+                response.setData(bb);
+                responseHeader.setDataSize(response.getData().limit());            	
+            }
+            catch (Throwable e) {
+            	e.printStackTrace();
                 responseHeader.setStatusCode(-1);
                 response.setData(ByteBuffer.wrap(e.getMessage().getBytes()));
                 responseHeader.setDataSize(response.getData().limit());

@@ -45,6 +45,9 @@ import java.util.ArrayList;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.logging.Logger;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 
 /**
  * An efficient thread safe but lock free mechanism to generate trace messages.
@@ -95,7 +98,8 @@ public class Trace implements TraceBuffer.TraceVisitor {
         InputStream is = null;
         is = cl.getResourceAsStream(name);
         if (is == null) {
-            throw new SimpleDBMException();
+        	// FIXME
+            throw new SimpleDBMException(new MessageInstance(new Message('C', 'U', MessageType.ERROR, 2, "Unable to load resource {0}"), name));
         }
         return is;
 	}

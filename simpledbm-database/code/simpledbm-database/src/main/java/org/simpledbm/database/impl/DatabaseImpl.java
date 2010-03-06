@@ -51,7 +51,9 @@ import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.exception.DatabaseException;
@@ -78,6 +80,7 @@ import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
+import org.simpledbm.typesystem.impl.TypeSystemFactoryImpl;
 
 /**
  * The Database Manager is implemented as a Transactional Module because it
@@ -117,16 +120,17 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	/** Flag to indicate whether the database has been started */
 	private boolean serverStarted = false;
 	/** The TypeSystem Factory we will use for constructing types */
-	final TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+	final TypeSystemFactory typeSystemFactory;
+	/** TypeFactory for creating various data types */
+	final TypeFactory fieldFactory;
 	/** Dictonary cache for maintaining all table definitions in memory */
 	final DictionaryCache dictionaryCache = new DictionaryCacheImpl(this); 
 	/** The RowFactory we will use for constructing rows */
-	final RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
+	final RowFactory rowFactory;
 
 	final Platform platform;
 	final PlatformObjects po;
 	final Logger log;
-	final MessageCatalog mcat;
 	final ExceptionHandler exceptionHandler;
 	
 	/**
@@ -136,35 +140,32 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
 	ArrayList<TableDefinition> tables = new ArrayList<TableDefinition>();
 
-	private void addMessages() {
-		/*
-		 * Add messages to the Message Catalog.
-		 */
-		mcat.addMessage("WD0001",
-				"SIMPLEDBM-WD0001: Table {0} already loaded");
-		mcat
-				.addMessage("ID0002",
-						"SIMPLEDBM-ID0002: Loading definition for table {0} at startup");
-		mcat.addMessage("ED0003",
-				"SIMPLEDBM-ED0003: Database is already started");
-		mcat.addMessage("ID0004",
-				"SIMPLEDBM-ID0004: SimpleDBM Database startup complete");
-		mcat
-				.addMessage(
-						"ED0005",
-						"SIMPLEDBM-ED0005: The table definition for {0} lacks a primary index definition");
-		mcat.addMessage("ED0006", 
-				"SIMPLEDBM-ED0006: A container already exists with specified container Id {0}");
-		mcat.addMessage("ED0007", "SIMPLEDBM-ED0007: A container already exists with the specified name {0}");
-		mcat.addMessage("ED0008", "SIMPLEDBM-ED0008: Table {0} already exists");
-		mcat.addMessage("ED0009", "SIMPLEDBM-ED0009: Unexpected error occurred while reading a log record");
-		mcat.addMessage("ED0010", "SIMPLEDBM-ED0010: An index must have at least one column");
-		mcat.addMessage("ED0011", "SIMPLEDBM-ED0011: The column {0} does not exist in table definition for {1}");
-		mcat.addMessage("ED0012", "SIMPLEDBM-ED0012: The first index for the table must be the primary index");
-		mcat.addMessage("ED0013", "SIMPLEDBM-ED0013: Unexpected error occurred while reading the data dictionary for container {0}");
-		mcat.addMessage("ED0014", "SIMPLEDBM-ED0014: Cannot update row as primary key is different");
-		mcat.addMessage("ED0015", "SIMPLEDBM-ED0015: Row failed validation: {0}");
-	}
+	static final Message m_WD0001 = new Message('D', 'D', MessageType.WARN, 1,
+			"Table {0} already loaded");
+	static final Message m_ID0002 = new Message('D', 'D', MessageType.INFO, 2,
+			"Loading definition for table {0} at startup");
+	static final Message m_ED0003 = new Message('D', 'D', MessageType.ERROR, 3,
+			"Database is already started");
+	static final Message m_ID0004 = new Message('D', 'D', MessageType.INFO, 4,
+			"SimpleDBM Database startup complete");
+	static final Message m_ED0005 = new Message('D', 'D', MessageType.ERROR, 5,
+			"The table definition for {0} lacks a primary index definition");
+	static final Message m_ED0006 = new Message('D', 'D', MessageType.ERROR, 6,
+			"A container already exists with specified container Id {0}");
+	static final Message m_ED0007 = new Message('D', 'D', MessageType.ERROR, 7,
+			"A container already exists with the specified name {0}");
+	static final Message m_ED0008 = new Message('D', 'D', MessageType.ERROR, 8,
+			"Table {0} already exists");
+	static final Message m_ED0009 = new Message('D', 'D', MessageType.ERROR, 9,
+			"Unexpected error occurred while reading a log record");
+	static final Message m_ED0013 = new Message('D', 'D', MessageType.ERROR,
+			13,
+			"Unexpected error occurred while reading the data dictionary for container {0}");
+	static final Message m_ED0014 = new Message('D', 'D', MessageType.ERROR,
+			14, "Cannot update row as primary key is different");
+	static final Message m_ED0015 = new Message('D', 'D', MessageType.ERROR,
+			15, "Row failed validation: {0}");
+	
 	
 	public DictionaryCache getDictionaryCache() {
 		return dictionaryCache;
@@ -189,8 +190,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		for (TableDefinition td : tables) {
 			if (td.getContainerId() == tableDefinition.getContainerId()) {
 				log.warn(DatabaseImpl.class.getName(),
-						"registerTableDefinition", mcat.getMessage("WD0001",
-								tableDefinition));
+						"registerTableDefinition", new MessageInstance(m_WD0001,
+								tableDefinition).toString());
 				return;
 			}
 		}
@@ -223,8 +224,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             }
         }
         if (tableDefinition == null) {
-            // FIXME throw proper error
-            throw new DatabaseException();
+        	exceptionHandler.errorThrow(getClass().getName(), "unregisterTableDefinition", 
+        			new DatabaseException(new MessageInstance(m_ED0013, containerId)));
         }
         /* Remove the table's type descriptor from the Row Factory */
         getDictionaryCache().unregisterRowType(tableDefinition.getContainerId());
@@ -242,7 +243,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
 	public TableDefinition newTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return TypeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, containerId, name, rowType);
+		return typeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, containerId, name, rowType);
 	}
 
 	/*
@@ -285,7 +286,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			if (factory.exists(tableName)
 					&& getTableDefinition(containerId) == null) {
 				log.info(getClass().getName(), "loadTableDefinitonsAtStartup",
-						mcat.getMessage("ID0002", containerId));
+						new MessageInstance(m_ID0002, containerId).toString());
 				retrieveTableDefinition(containerId);
 			}
 		}
@@ -305,9 +306,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		platform = new PlatformImpl(properties);
 		po = platform.getPlatformObjects(Database.LOGGER_NAME);
 		log = po.getLogger();
-		mcat = po.getMessageCatalog();
 		exceptionHandler = po.getExceptionHandler();
-		addMessages();
+		typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
+		fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+		rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
 	}
 
 	/**
@@ -324,9 +326,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		this.platform = platform; 
 		po = platform.getPlatformObjects(Database.LOGGER_NAME);
 		log = po.getLogger();
-		mcat = po.getMessageCatalog();
 		exceptionHandler = po.getExceptionHandler();
-		addMessages();
+		typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
+		fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+		rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
 	}	
 	
 	private void validateProperties(Properties properties2) {
@@ -353,7 +356,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		 */
 		if (serverStarted) {
 			exceptionHandler.errorThrow(getClass().getName(), "start", 
-					new DatabaseException(mcat.getMessage("ED0003")));
+					new DatabaseException(new MessageInstance(m_ED0003)));
 		}
 
 		/*
@@ -393,7 +396,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		/*
 		 * Finally, let's set the started flag to true.
 		 */
-		log.info(getClass().getName(), "start", mcat.getMessage("ID0004"));
+		log.info(getClass().getName(), "start", new MessageInstance(m_ID0004).toString());
 		serverStarted = true;
 	}
 
@@ -417,6 +420,10 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 	 */
 	public Server getServer() {
 		return server;
+	}
+	
+	public TypeSystemFactory getTypeSystemFactory() {
+		return typeSystemFactory;
 	}
 
 	/*
@@ -451,7 +458,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		if (tableDefinition.getIndexes().size() == 0
 				|| !tableDefinition.getIndexes().get(0).isUnique()) {
 			exceptionHandler.errorThrow(getClass().getName(), "validateTableDefinition", 
-				new DatabaseException(mcat.getMessage("ED0005",
+				new DatabaseException(new MessageInstance(m_ED0005,
 					tableDefinition.getName())));
 		}
 		/*
@@ -515,11 +522,11 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			for (StorageContainerInfo sc : containers) {
 				if (containerIdSet.contains(sc.getContainerId())) {
 					exceptionHandler.errorThrow(getClass().getName(), "createTable", 
-						new DatabaseException(mcat.getMessage("ED0006", sc.getContainerId())));
+						new DatabaseException(new MessageInstance(m_ED0006, sc.getContainerId())));
 				}
 				if (namesSet.contains(sc.getName())) {
 					exceptionHandler.errorThrow(getClass().getName(), "createTable", 
-						new DatabaseException(mcat.getMessage("ED0007", sc.getName())));
+						new DatabaseException(new MessageInstance(m_ED0007, sc.getName())));
 				}
 			}
 
@@ -533,7 +540,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 					registerTableDefinition(tableDefinition);
 				} else {
 					exceptionHandler.errorThrow(getClass().getName(), "createTable", 
-						new DatabaseException(mcat.getMessage("ED0008", tableDefinition.getName())));
+						new DatabaseException(new MessageInstance(m_ED0008, tableDefinition.getName())));
 				}
 			}
 
@@ -776,7 +783,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 			buffer = new byte[n];
 			sc.read(TypeSize.BYTE + TypeSize.INTEGER, buffer, 0, buffer.length);
 			bb = ByteBuffer.wrap(buffer);
-			table = TypeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, bb);
+			table = typeSystemFactory.getTableDefinition(po, fieldFactory, rowFactory, bb);
 		} finally {
 			sc.close();
 		}
@@ -801,7 +808,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 		public CreateTableDefinition(DatabaseImpl database, ByteBuffer bb) {
 			super(bb);
 			this.database = database;
-			table = TypeSystemFactory.getTableDefinition(database.po, database.fieldFactory, database.rowFactory, bb);
+			table = database.typeSystemFactory.getTableDefinition(database.po, database.fieldFactory, database.rowFactory, bb);
 		}
 
 		public CreateTableDefinition(int moduleId, int typeCode, DatabaseImpl database) {

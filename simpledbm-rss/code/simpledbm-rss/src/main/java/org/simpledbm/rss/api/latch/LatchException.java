@@ -36,7 +36,10 @@
  */
 package org.simpledbm.rss.api.latch;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * Parent Exception class for all Latch exceptions. This is a RuntimeException
@@ -49,20 +52,16 @@ public class LatchException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public LatchException() {
-        super();
-    }
+	public LatchException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public LatchException(String arg0) {
-        super(arg0);
-    }
+	public LatchException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public LatchException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
+	public LatchException(MessageInstance m) {
+		super(m);
+	}
 
-    public LatchException(Throwable arg0) {
-        super(arg0);
-    }
-
-}
+ }

@@ -36,7 +36,6 @@
  */
 package org.simpledbm.common.util;
 
-import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -46,93 +45,83 @@ import org.simpledbm.common.api.registry.Storable;
  * A format for String objects that is easier to persist. 
  * 
  * @author Dibyendu Majumdar
- * @since 26-Jun-2005
+ * @since 6 Mar 2010
  */
-public final class ByteString implements Storable, Comparable<ByteString> {
+public final class StorableString implements Storable, Comparable<StorableString> {
 
-    private final byte[] bytes;
+    private final char[] data;
 
-    public ByteString() {
-        bytes = new byte[0];
+    public StorableString() {
+        data = new char[0];
     }
 
-    public ByteString(String s) {
-        try {
-            bytes = s.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException(e);
-        }
+    public StorableString(String s) {            
+    	data = s.toCharArray();
     }
 
-    public ByteString(byte[] bytes) {
-    	// FIXME unsafe as incoming bytes may not be valid string
-        this.bytes = bytes.clone();
+    public StorableString(char[] charArray) {
+        this.data = charArray.clone();
     }
     
-    public ByteString(ByteString s) {
-    	this.bytes = s.bytes.clone();
+    public StorableString(StorableString s) {
+    	this.data = s.data.clone();
     }
     
-    public ByteString(ByteBuffer bb) {
+    public StorableString(ByteBuffer bb) {
         short n = bb.getShort();
         if (n > 0) {
-            bytes = new byte[n];
-            bb.get(bytes);
+            data = new char[n];
+            bb.asCharBuffer().get(data);
+            bb.position(bb.position()+n*TypeSize.CHARACTER);
         } else {
-            bytes = new byte[0];
+            data = new char[0];
         }
     }
 
     @Override
     public String toString() {
-        try {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
+    	return new String(data);
     }
 
     public int getStoredLength() {
-        return bytes.length + TypeSize.SHORT;
+        return data.length * TypeSize.CHARACTER + TypeSize.SHORT;
     }
 
     public void store(ByteBuffer bb) {
         short n = 0;
-        if (bytes != null) {
-            n = (short) bytes.length;
+        if (data != null) {
+            n = (short) data.length;
         }
         bb.putShort(n);
         if (n > 0) {
-            bb.put(bytes, 0, n);
+            bb.asCharBuffer().put(data);
+            bb.position(bb.position()+n*TypeSize.CHARACTER);
         }
     }
 
-    public int compareTo(ByteString o) {
-        int len = (bytes.length <= o.bytes.length) ? bytes.length
-                : o.bytes.length;
+    public int compareTo(StorableString o) {
+        int len = (data.length <= o.data.length) ? data.length
+                : o.data.length;
         for (int i = 0; i < len; i++) {
-            int result = bytes[i] - o.bytes[i];
+            int result = data[i] - o.data[i];
             if (result != 0) {
                 return result;
             }
         }
-        return bytes.length - o.bytes.length;
+        return data.length - o.data.length;
     }
 
     public int length() {
-        return bytes.length;
+        return data.length;
     }
 
-    public byte get(int offset) {
-        return bytes[offset];
+    public char get(int offset) {
+        return data[offset];
     }
 
     @Override
     public int hashCode() {
-        final int PRIME = 31;
-        int result = 1;
-        result = PRIME * result + Arrays.hashCode(bytes);
-        return result;
+    	return Arrays.hashCode(data);
     }
 
     @Override
@@ -143,8 +132,8 @@ public final class ByteString implements Storable, Comparable<ByteString> {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        final ByteString other = (ByteString) obj;
-        if (!Arrays.equals(bytes, other.bytes))
+        final StorableString other = (StorableString) obj;
+        if (!Arrays.equals(data, other.data))
             return false;
         return true;
     }

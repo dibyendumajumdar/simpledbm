@@ -39,6 +39,7 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeException;
@@ -65,7 +66,7 @@ public class VarbinaryValue extends BaseDataValue {
 		if (isValue()) {
 			short n = bb.getShort();
 			if (n < 0 || n > getType().getMaxLength()) {
-				throw new TypeException();
+				throw new TypeException(new MessageInstance(TypeSystemFactoryImpl.outOfRange, n, 0, getType().getMaxLength()));
 			}
 			byteArray = new byte[n];
 			bb.get(byteArray);

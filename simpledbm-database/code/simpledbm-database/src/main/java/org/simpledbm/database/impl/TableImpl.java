@@ -36,11 +36,13 @@
  */
 package org.simpledbm.database.impl;
 
+import static org.simpledbm.database.impl.DatabaseImpl.m_ED0015;
+
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableScan;
@@ -64,7 +66,6 @@ import org.simpledbm.typesystem.api.TableDefinition;
 public class TableImpl implements Table {
 
 	final Logger log;	
-	final MessageCatalog mcat;
 	final PlatformObjects po;
 	
 	final Database database;
@@ -73,7 +74,6 @@ public class TableImpl implements Table {
     TableImpl(PlatformObjects po, Database database, TableDefinition definition) {
     	this.po = po;
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
     	this.database = database;
     	this.definition = definition;
     }
@@ -100,8 +100,8 @@ public class TableImpl implements Table {
     public Location addRow(Transaction trx, Row tableRow) {
 
     	if (!validateRow(tableRow)) {
-    		log.error(getClass().getName(), "addRow", mcat.getMessage("ED0015", tableRow));
-    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    		log.error(getClass().getName(), "addRow", new MessageInstance(m_ED0015, tableRow).toString());
+    		throw new DatabaseException(new MessageInstance(m_ED0015, tableRow));
     	}
         Location location = null;
         // Create a savepoint so that we can rollback to a consistent
@@ -145,8 +145,8 @@ public class TableImpl implements Table {
     public void updateRow(Transaction trx, Row tableRow) {
 
     	if (!validateRow(tableRow)) {
-    		log.error(getClass().getName(), "updateRow", mcat.getMessage("ED0015", tableRow));
-    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    		log.error(getClass().getName(), "updateRow", new MessageInstance(m_ED0015, tableRow).toString());
+    		throw new DatabaseException(new MessageInstance(m_ED0015, tableRow));
     	}
         // Start a new transaction
         Savepoint sp = trx.createSavepoint(false);
@@ -210,7 +210,7 @@ public class TableImpl implements Table {
 							}
 						}
 					} finally {
-						indexScan.fetchCompleted(matched);
+//						indexScan.fetchCompleted(matched);
 					}
 				}
 			} finally {
@@ -284,7 +284,7 @@ public class TableImpl implements Table {
 							primaryIndex.delete(trx, primaryKeyRow, location);
 						}
 					} finally {
-						indexScan.fetchCompleted(matched);
+//						indexScan.fetchCompleted(matched);
 					}
 				}
 			} finally {

@@ -40,7 +40,10 @@
  */
 package org.simpledbm.rss.api.locking;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * LockException is the base class for all exceptions raised by the Locking sub-system.
@@ -51,19 +54,17 @@ public class LockException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public LockException() {
-        super();
-    }
+	public LockException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public LockException(String arg0) {
-        super(arg0);
-    }
+	public LockException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public LockException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
+	public LockException(MessageInstance m) {
+		super(m);
+	}
 
-    public LockException(Throwable arg0) {
-        super(arg0);
-    }
+    
 }

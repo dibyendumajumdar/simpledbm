@@ -40,26 +40,24 @@
  */
 package org.simpledbm.rss.api.pm;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 public class PageException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public PageException() {
-        super();
-    }
+	public PageException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public PageException(String arg0) {
-        super(arg0);
-    }
+	public PageException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public PageException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public PageException(Throwable arg0) {
-        super(arg0);
-    }
-
+	public PageException(MessageInstance m) {
+		super(m);
+	}
 }

@@ -36,6 +36,8 @@
  */
 package org.simpledbm.rss.api.im;
 
+import org.simpledbm.common.util.mcat.MessageInstance;
+
 /**
  * @author Dibyendu Majumdar
  * @since 12-Oct-2005
@@ -44,19 +46,12 @@ public final class UniqueConstraintViolationException extends IndexException {
 
     private static final long serialVersionUID = 3412075595754021391L;
 
-    public UniqueConstraintViolationException() {
-        super();
-    }
+	public UniqueConstraintViolationException(MessageInstance message,
+			Throwable cause) {
+		super(message, cause);
+	}
 
-    public UniqueConstraintViolationException(String message) {
-        super(message);
-    }
-
-    public UniqueConstraintViolationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-
-    public UniqueConstraintViolationException(Throwable cause) {
-        super(cause);
-    }
+	public UniqueConstraintViolationException(MessageInstance message) {
+		super(message);
+	}
 }

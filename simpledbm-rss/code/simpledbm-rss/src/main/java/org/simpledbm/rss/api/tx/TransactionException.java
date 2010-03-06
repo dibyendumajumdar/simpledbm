@@ -36,7 +36,10 @@
  */
 package org.simpledbm.rss.api.tx;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * @author Dibyendu Majumdar
@@ -46,20 +49,15 @@ public class TransactionException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public TransactionException() {
-        super();
-    }
+	public TransactionException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public TransactionException(String arg0) {
-        super(arg0);
-    }
+	public TransactionException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public TransactionException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public TransactionException(Throwable arg0) {
-        super(arg0);
-    }
-
+	public TransactionException(MessageInstance m) {
+		super(m);
+	}
 }

@@ -40,7 +40,6 @@ import java.util.Properties;
 
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockManager;
 import org.simpledbm.rss.api.locking.LockMgrFactory;
@@ -57,47 +56,7 @@ public final class LockManagerFactoryImpl implements LockMgrFactory {
 	
 	public LockManagerFactoryImpl(Platform platform, Properties props) {
 		this.platform = platform;
-		this.po = platform.getPlatformObjects(LockManager.LOGGER_NAME);
-		MessageCatalog mcat = po.getMessageCatalog();
-		
-        // Lock Manager messages
-        mcat.addMessage("EC0001", "SIMPLEDBM-EC0001: Lock request {0} timed out");
-        mcat.addMessage(
-            "WC0002",
-            "SIMPLEDBM-WC0002: Lock request {0} failed due to a deadlock");
-        mcat.addMessage(
-                "EC0099",
-                "SIMPLEDBM-EC0099: Unexpected error occurred while attempting to acquire lock request {0}");
-        mcat.addMessage(
-                "EC0003",
-                "SIMPLEDBM-EC0003: Invalid request because lock requested {0} is already being waited for by requester {1}");
-        mcat.addMessage(
-                "WC0004",
-                "SIMPLEDBM-WC0004: Lock request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
-        mcat.addMessage(
-                "EC0005",
-                "SIMPLEDBM-EC0005: Unexpected error while handling conversion request");
-        mcat.addMessage(
-                "EC0008",
-                "SIMPLEDBM-EC0008: Invalid request to release lock {0} as it is being waited for");
-        mcat.addMessage(
-                "EC0009",
-                "SIMPLEDBM-EC0009: Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
-        mcat.addMessage(
-                "EC0010",
-                "SIMPLEDBM-EC0010: Listener {0} failed unexpectedly: lock parameters {1}");
-//        msgs
-//            .put(
-//                "WC0011",
-//                "SIMPLEDBM-WC0011: Detected deadlock cycle: \nR1 {0} \n\t(victim) waiting for \n\tR2 {1}\n\tlock items:\n\tR1 {2}\n\tR2 {3}");
-        mcat.addMessage(
-            "WC0011",
-            "SIMPLEDBM-WC0011: Detected deadlock cycle: {2} {3}");
-        mcat.addMessage("IC0012", "SIMPLEDBM-IC0012: Deadlock detector STARTED");
-        mcat.addMessage("IC0013", "SIMPLEDBM-IC0013: Deadlock detector STOPPED");
-        mcat.addMessage("IC0014", "SIMPLEDBM-IC0014: Dumping lock table");
-        mcat.addMessage("IC0015", "SIMPLEDBM-IC0015: LockItem = {0}");
-		
+		this.po = platform.getPlatformObjects(LockManager.LOGGER_NAME);		
 	}
 	
     /**
