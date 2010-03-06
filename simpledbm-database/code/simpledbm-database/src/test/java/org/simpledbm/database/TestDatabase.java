@@ -47,6 +47,7 @@ import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableScan;
+import org.simpledbm.rss.api.im.UniqueConstraintViolationException;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
 import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.Row;
@@ -159,6 +160,14 @@ public class TestDatabase extends BaseTestCase {
 				tableRow.setString(6, "500.00");
 
 				table.addRow(trx, tableRow);
+				// following should fail
+				try {
+					table.addRow(trx, tableRow);
+					fail("Unique constraint was ignored");
+				}
+				catch (UniqueConstraintViolationException e) {
+					// okay
+				}
 				okay = true;
 			} finally {
 				if (okay) {

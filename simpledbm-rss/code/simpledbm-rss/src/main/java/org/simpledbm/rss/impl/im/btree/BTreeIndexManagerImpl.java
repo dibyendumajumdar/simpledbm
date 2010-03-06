@@ -253,7 +253,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 	static Message m_EB0002 = new Message('R', 'B', MessageType.ERROR, 2,
 			"Unable to allocate a new page in the B-Tree container");
 	static Message m_WB0003 = new Message('R', 'B', MessageType.WARN, 3,
-			"Unique constraint would be violated by insertion of key={0} and location={1}");
+			"Unique constraint would be violated by insertion of (key=[{0}], location=[{1}]): conflicts with (key=[{2}], location=[{3}])");
 	static Message m_EB0004 = new Message('R', 'B', MessageType.ERROR, 4,
 			"Unexpected error - key {0} not found");
 	static Message m_EB0005 = new Message('R', 'B', MessageType.ERROR, 5,
@@ -3086,7 +3086,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
 //                                		new UniqueConstraintViolationException(
 //                                    mcat.getMessage("WB0003", key, location)));
                                 throw new UniqueConstraintViolationException(
-                                		new MessageInstance(m_WB0003, key, location));
+                                		new MessageInstance(m_WB0003, key, location, sr.item.getKey(), sr.item.getLocation()));
 
                             }
                             /*
@@ -6718,7 +6718,8 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final int compareTo(
                 org.simpledbm.rss.impl.im.btree.BTreeIndexManagerImpl.IndexItem o) {
             int comp = key.compareTo(o.key);
-            if (comp == 0 && isLocationRequired() && o.isLocationRequired()) {
+//            if (comp == 0 && isLocationRequired() && o.isLocationRequired()) {                
+            if (comp == 0 && !isUnique() && !o.isUnique()) {
                 return location.compareTo(o.location);
             }
             return comp;
