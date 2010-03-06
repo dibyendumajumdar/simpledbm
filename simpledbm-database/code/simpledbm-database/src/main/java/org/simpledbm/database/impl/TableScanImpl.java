@@ -36,11 +36,14 @@
  */
 package org.simpledbm.database.impl;
 
+import static org.simpledbm.database.impl.DatabaseImpl.m_ED0014;
+import static org.simpledbm.database.impl.DatabaseImpl.m_ED0015;
+
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.database.api.Table;
 import org.simpledbm.database.api.TableScan;
 import org.simpledbm.exception.DatabaseException;
@@ -56,7 +59,6 @@ import org.simpledbm.typesystem.api.Row;
 public class TableScanImpl implements TableScan {
 
 	final Logger log;	
-	final MessageCatalog mcat;
 	
     private final Table table;
     final IndexScan indexScan;
@@ -68,7 +70,6 @@ public class TableScanImpl implements TableScan {
 
     TableScanImpl(PlatformObjects po, Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
         this.table = table;
         this.trx = trx;
         tcont = table.getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
@@ -138,8 +139,8 @@ public class TableScanImpl implements TableScan {
 	 */
     public void updateCurrentRow(Row tableRow) {
     	if (!getTable().validateRow(tableRow)) {
-    		log.error(getClass().getName(), "updateCurrentRow", mcat.getMessage("ED0015", tableRow));
-    		throw new DatabaseException(mcat.getMessage("ED0015", tableRow));
+    		log.error(getClass().getName(), "updateCurrentRow", new MessageInstance(m_ED0015, tableRow).toString());
+    		throw new DatabaseException(new MessageInstance(m_ED0015, tableRow));
     	}    	
     	Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
@@ -177,8 +178,9 @@ public class TableScanImpl implements TableScan {
             } else {
                 // getTable().addRow(trx, tableRow);
             	// Can't add as we do not know that this was intended
-            	log.error(getClass().getName(), "updateCurrentRow", mcat.getMessage("ED0014"));
-            	throw new DatabaseException(mcat.getMessage("ED0014"));
+            	// FIXME use exceptionHandler
+            	log.error(getClass().getName(), "updateCurrentRow", new MessageInstance(m_ED0014).toString());
+            	throw new DatabaseException(new MessageInstance(m_ED0014));
             }
             success = true;
         } finally {

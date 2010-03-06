@@ -36,19 +36,17 @@
  */
 package org.simpledbm.network.client.impl;
 
-import org.simpledbm.network.client.api.SessionException;
 import org.simpledbm.network.client.api.Table;
 import org.simpledbm.network.client.api.TableScan;
 import org.simpledbm.network.common.api.AddRowMessage;
 import org.simpledbm.network.common.api.RequestCode;
-import org.simpledbm.network.nio.api.Response;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TableDefinition;
 
 public class TableImpl implements Table {
 	
-	SessionImpl session;
-	TableDefinition tableDefinition;
+	final SessionImpl session;
+	final TableDefinition tableDefinition;
 	
 	public TableImpl(SessionImpl session, TableDefinition tableDefinition) {
 		super();
@@ -67,11 +65,7 @@ public class TableImpl implements Table {
 	
 	public void addRow(Row row) {
     	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
-    	Response response = session.sendMessage(RequestCode.ADD_ROW, message);
-        if (response.getStatusCode() < 0) {
-        	// FIXME
-            throw new SessionException("server returned error");
-        }  		
+    	session.sendMessage(RequestCode.ADD_ROW, message);
 	}
 	
 	public String toString() {

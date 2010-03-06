@@ -34,46 +34,69 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.rss.api.fsm;
+package org.simpledbm.junit;
 
-import java.nio.ByteBuffer;
+import java.util.Properties;
+import java.util.Vector;
 
-import org.simpledbm.common.api.exception.SimpleDBMException;
-import org.simpledbm.common.util.mcat.MessageInstance;
+import junit.framework.TestCase;
 
-/**
- * Exception class for the Space Manager module.
- */
-public class FreeSpaceManagerException extends SimpleDBMException {
+import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.impl.platform.PlatformImpl;
 
-    public static class TestException extends FreeSpaceManagerException {
-		private static final long serialVersionUID = 1L;
+public abstract class BaseTestCase extends TestCase {
 
-		public TestException(ByteBuffer bb) {
-			super(bb);
-		}
+    Vector<ThreadFailure> threadFailureExceptions;
+    
+    protected Properties properties;
+    protected Platform platform;
 
-		public TestException(MessageInstance m, Throwable arg1) {
-			super(m, arg1);
-		}
-
-		public TestException(MessageInstance m) {
-			super(m);
-		}
+    public BaseTestCase() {
     }
 
-    private static final long serialVersionUID = 5065727917034813269L;
+    public BaseTestCase(String arg0) {
+        super(arg0);
+    }
 
-	public FreeSpaceManagerException(ByteBuffer bb) {
-		super(bb);
-	}
+    public final void setThreadFailed(Thread thread, Throwable exception) {
+        threadFailureExceptions.add(new ThreadFailure(thread, exception));
+    }
 
-	public FreeSpaceManagerException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    @Override
+    protected void setUp() throws Exception {
+        super.setUp();
+        threadFailureExceptions = new Vector<ThreadFailure>();
+        properties = new Properties();
+        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.type", "log4j");
+        platform = new PlatformImpl(properties);
+    }
 
-	public FreeSpaceManagerException(MessageInstance m) {
-		super(m);
-	}
+    @Override
+    protected void tearDown() throws Exception {
+        threadFailureExceptions = null;
+        super.tearDown();
+    }
+
+    public final void checkThreadFailures() throws Exception {
+        for (ThreadFailure tf : threadFailureExceptions) {
+            System.err.println("Thread [" + tf.threadName + " failed");
+            tf.exception.printStackTrace();
+        }
+        if (threadFailureExceptions.size() > 0) {
+            fail(threadFailureExceptions.size()
+                    + " number of threads have failed the test");
+        }
+    }
+
+    final static class ThreadFailure {
+        Throwable exception;
+        String threadName;
+
+        public ThreadFailure(Thread thread, Throwable exception) {
+            this.threadName = thread.getName();
+            this.exception = exception;
+        }
+    }
 
 }

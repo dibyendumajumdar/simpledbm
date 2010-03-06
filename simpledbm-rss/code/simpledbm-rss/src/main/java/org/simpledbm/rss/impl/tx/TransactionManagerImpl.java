@@ -60,7 +60,9 @@ import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.DirtyPageInfo;
@@ -170,7 +172,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 
     final Logger log;
     final ExceptionHandler exceptionHandler;
-    final MessageCatalog mcat;
 
     private static final short MODULE_ID = 1;
 
@@ -314,6 +315,66 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     int lockWaitTimeout = DEFAULT_LOCK_TIMEOUT;
 
+	static Message m_EX0001 = new Message('R', 'X', MessageType.ERROR, 1,
+			"Unknown transaction module {0}");
+	static Message m_EX0002 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			2,
+			"Invalid log operation {0}: A Redoable log record must not implement the NonTransactionRelatedOperation interface");
+	static Message m_EX0003 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			3,
+			"Invalid log operation {0}: A Redoable log record must not implement the PostCommitAction interface");
+	static Message m_EX0004 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			4,
+			"Invalid log operation {0}: A Redoable log record must not implement the Checkpoint interface");
+	static Message m_EX0005 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			5,
+			"Invalid log operation {0}: A Redoable log record must not implement the TrxControl interface");
+	static Message m_EX0006 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			6,
+			"Invalid log operation {0}: An Undoable record must not implement MultiPageRedo interface");
+	static Message m_EX0007 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			7,
+			"Invalid log operation {0}: An Undoable record must not implement Compensation interface");
+	static Message m_EX0008 = new Message('R', 
+			'X',
+			MessageType.ERROR,
+			8,
+			"Invalid log operation {0}: An Undoable record must not implement ContainerDelete interface");
+	static Message m_EX0009 = new Message('R', 'X', MessageType.ERROR, 9,
+			"Log operation {0} is not an instance of {1}");
+	static Message m_EX0010 = new Message('R', 'X', MessageType.ERROR, 10,
+			"The StorageContainer registered as {0} is named {1} instead of {2}");
+	static Message m_EX0011 = new Message('R', 'X', MessageType.ERROR, 11,
+			"Unexpected EOF occurred in write ahead log while reading checkpoint records");
+	static Message m_WX0012 = new Message('R', 'X', MessageType.WARN, 12,
+			"Ignoring exception caused due to {0}");
+	static Message m_IX0013 = new Message('R', 'X', MessageType.INFO, 13,
+			"Checkpoint Writer STARTED");
+	static Message m_EX0014 = new Message('R', 'X', MessageType.ERROR, 14,
+			"Error occurred while shutting down Transaction Manager");
+	static Message m_IX0015 = new Message('R', 'X', MessageType.INFO, 15,
+			"Checkpoint Writer STOPPED");
+	static Message m_EX0016 = new Message('R', 'X', MessageType.ERROR, 16,
+			"Invalid state: Nested top action cannot be started as one is already active");
+	static Message m_EX0017 = new Message('R', 'X', MessageType.ERROR, 17,
+			"Invalid state: Nested top action cannot be completed as there is none active");
+	static Message m_EX0018 = new Message('R', 'X', MessageType.ERROR, 18,
+			"Error occurred while writing a Checkpoint");
+	static Message m_IX0019 = new Message('R', 'X', MessageType.INFO, 19,
+			"Property {0} set to {1}");  
+    
     private int getNumericProperty(Properties props, String name,
             int defaultValue) {
         String value = props.getProperty(name);
@@ -339,7 +400,6 @@ public final class TransactionManagerImpl implements TransactionManager {
     	PlatformObjects po = platform.getPlatformObjects(TransactionManager.LOGGER_NAME);
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
-    	this.mcat = po.getMessageCatalog();
     	
         this.logmgr = logmgr;
         this.storageFactory = storageFactory;
@@ -374,59 +434,10 @@ public final class TransactionManagerImpl implements TransactionManager {
         this.checkpointInterval = getNumericProperty(p, PROPERTY_CHECKPOINT_INTERVAL, DEFAULT_CHECKPOINT_INTERVAL);
         
         // transaction manager messages
-        mcat.addMessage("EX0001", "SIMPLEDBM-EX0001: Unknown transaction module {0}");
-        mcat.addMessage(
-                "EX0002",
-                "SIMPLEDBM-EX0002: Invalid log operation {0}: A Redoable log record must not implement the NonTransactionRelatedOperation interface");
-        mcat.addMessage(
-                "EX0003",
-                "SIMPLEDBM-EX0003: Invalid log operation {0}: A Redoable log record must not implement the PostCommitAction interface");
-        mcat.addMessage(
-                "EX0004",
-                "SIMPLEDBM-EX0004: Invalid log operation {0}: A Redoable log record must not implement the Checkpoint interface");
-        mcat.addMessage(
-                "EX0005",
-                "SIMPLEDBM-EX0005: Invalid log operation {0}: A Redoable log record must not implement the TrxControl interface");
-        mcat.addMessage(
-                "EX0006",
-                "SIMPLEDBM-EX0006: Invalid log operation {0}: An Undoable record must not implement MultiPageRedo interface");
-        mcat.addMessage(
-                "EX0007",
-                "SIMPLEDBM-EX0007: Invalid log operation {0}: An Undoable record must not implement Compensation interface");
-        mcat.addMessage(
-                "EX0008",
-                "SIMPLEDBM-EX0008: Invalid log operation {0}: An Undoable record must not implement ContainerDelete interface");
-        mcat.addMessage(
-            "EX0009",
-            "SIMPLEDBM-EX0009: Log operation {0} is not an instance of {1}");
-        mcat.addMessage(
-                "EX0010",
-                "SIMPLEDBM-EX0010: The StorageContainer registered as {0} is named {1} instead of {2}");
-        mcat.addMessage(
-                "EX0011",
-                "SIMPLEDBM-EX0011: Unexpected EOF occurred in write ahead log while reading checkpoint records");
-        mcat.addMessage(
-            "WX0012",
-            "SIMPLEDBM-WX0012: Ignoring exception caused due to {0}");
-        mcat.addMessage("IX0013", "SIMPLEDBM-IX0013: Checkpoint Writer STARTED");
-        mcat.addMessage(
-                "EX0014",
-                "SIMPLEDBM-EX0014: Error occurred while shutting down Transaction Manager");
-        mcat.addMessage("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
-        mcat.addMessage("IX0015", "SIMPLEDBM-IX0015: Checkpoint Writer STOPPED");
-        mcat.addMessage(
-                "EX0016",
-                "SIMPLEDBM-EX0016: Invalid state: Nested top action cannot be started as one is already active");
-        mcat.addMessage(
-                "EX0017",
-                "SIMPLEDBM-EX0017: Invalid state: Nested top action cannot be completed as there is none active");
-        mcat.addMessage(
-            "EX0018",
-            "SIMPLEDBM-EX0018: Error occurred while writing a Checkpoint");
-        mcat.addMessage("IX0019", "Property {0} set to {1}");
+
         
-        log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_LOCK_TIMEOUT, lockWaitTimeout));
-        log.info(getClass().getName(), "ctor", mcat.getMessage("IX0019", PROPERTY_CHECKPOINT_INTERVAL, checkpointInterval));
+        log.info(getClass().getName(), "ctor", new MessageInstance(m_IX0019, PROPERTY_LOCK_TIMEOUT, lockWaitTimeout).toString());
+        log.info(getClass().getName(), "ctor", new MessageInstance(m_IX0019, PROPERTY_CHECKPOINT_INTERVAL, checkpointInterval).toString());
     }
 
     /**
@@ -567,31 +578,31 @@ public final class TransactionManagerImpl implements TransactionManager {
      * Validate Loggable hierarchy to help catch potential bugs in client code.
      */
     void validateLoggableHierarchy(Loggable loggable) {
-        String errCode = null;
+        Message errCode = null;
         if (loggable instanceof Redoable) {
             if (loggable instanceof NonTransactionRelatedOperation) {
-                errCode = "EX0002";
+                errCode = m_EX0002;
             } else if (loggable instanceof PostCommitAction) {
-                errCode = "EX0003";
+                errCode = m_EX0003;
             } else if (loggable instanceof Checkpoint) {
-                errCode = "EX0004";
+                errCode = m_EX0004;
             } else if (loggable instanceof TrxControl) {
-                errCode = "EX0005";
+                errCode = m_EX0005;
             }
         } else if (loggable instanceof Undoable) {
             if (loggable instanceof MultiPageRedo) {
-                errCode = "EX0006";
+                errCode = m_EX0006;
             } else if (loggable instanceof Compensation) {
-                errCode = "EX0007";
+                errCode = m_EX0007;
             } else if (loggable instanceof ContainerDeleteOperation) {
-                errCode = "EX0008";
+                errCode = m_EX0008;
             }
         }
         if (null != errCode) {
             exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "validateLoggableHierarchy",
-                new TransactionException(mcat.getMessage(errCode, loggable)));
+                new TransactionException(new MessageInstance(errCode, loggable)));
         }
     }
 
@@ -625,7 +636,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "logNonTransactionRelatedOperation",
-                new TransactionException(mcat.getMessage("EX0009", 
+                new TransactionException(new MessageInstance(m_EX0009, 
                 	operation.getClass().getName(), 
                 	NonTransactionRelatedOperation.class.getName())));
             return null;
@@ -794,8 +805,7 @@ public final class TransactionManagerImpl implements TransactionManager {
                     exceptionHandler.errorThrow(
                         this.getClass().getName(),
                         "reopenActiveContainers",
-                        new TransactionException(mcat.getMessage(
-                        "EX0010",
+                        new TransactionException(new MessageInstance(m_EX0010,
                         getActiveContainers()[i].containerId,
                         sc.getName(),
                         getActiveContainers()[i].name.toString())));
@@ -822,7 +832,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         LogRecord logrec = reader.getNext();
         if (logrec == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "readCheckpoint", 
-            		new TransactionException(mcat.getMessage("EX0011")));
+            		new TransactionException(new MessageInstance(m_EX0011)));
         }
         CheckpointBegin checkpointBegin = (CheckpointBegin) loggableFactory
             .getInstance(logrec);
@@ -831,7 +841,7 @@ public final class TransactionManagerImpl implements TransactionManager {
         logrec = reader.getNext();
         if (logrec == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "readCheckpoint", 
-            		new TransactionException(mcat.getMessage("EX0011")));
+            		new TransactionException(new MessageInstance(m_EX0011)));
         }
         CheckpointEnd checkpointBody = (CheckpointEnd) loggableFactory
             .getInstance(logrec);
@@ -1579,7 +1589,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             new CheckpointWriter(this),
             "CheckpointWriter");
         checkpointWriter.start();
-        log.info(this.getClass().getName(), "start", mcat.getMessage("IX0013"));
+        log.info(this.getClass().getName(), "start", new MessageInstance(m_IX0013).toString());
     }
 
     /*
@@ -1598,12 +1608,10 @@ public final class TransactionManagerImpl implements TransactionManager {
             try {
                 checkpointWriter.join();
             } catch (InterruptedException e) {
-                log.error(this.getClass().getName(), "shutdown", mcat
-                    .getMessage("EX0014"), e);
+                log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EX0014).toString(), e);
             }
         }
-        log.info(this.getClass().getName(), "shutdown", mcat
-            .getMessage("IX0015"));
+        log.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IX0015).toString());
     }
 
     /**
@@ -2326,7 +2334,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             	trxmgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "startNestedTopAction",
-                    new TransactionException(trxmgr.mcat.getMessage("EX0016")));
+                    new TransactionException(new MessageInstance(m_EX0016)));
             }
             dummyCLR = new DummyCLR(
                     TransactionManagerImpl.MODULE_ID,
@@ -2342,7 +2350,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             	trxmgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "startNestedTopAction",
-                    new TransactionException(trxmgr.mcat.getMessage("EX0017")));
+                    new TransactionException(new MessageInstance(m_EX0017)));
             }
             logInsert(null, dummyCLR);
             resetNestedTopAction();
@@ -3285,8 +3293,8 @@ public final class TransactionManagerImpl implements TransactionManager {
                 try {
                     trxmgr.checkpoint();
                 } catch (TransactionException e) {
-                	trxmgr.log.error(CheckpointWriter.class.getName(), "run", trxmgr.mcat
-                        .getMessage("EX0018"), e);
+                	trxmgr.log.error(CheckpointWriter.class.getName(), "run", 
+                			new MessageInstance(m_EX0018).toString(), e);
                     trxmgr.errored = true;
                     break;
                 }

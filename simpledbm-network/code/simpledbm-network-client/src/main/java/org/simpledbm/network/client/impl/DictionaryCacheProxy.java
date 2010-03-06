@@ -36,7 +36,6 @@
  */
 package org.simpledbm.network.client.impl;
 
-import org.simpledbm.network.client.api.SessionException;
 import org.simpledbm.network.common.api.QueryDictionaryMessage;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.nio.api.Connection;
@@ -48,12 +47,10 @@ import org.simpledbm.typesystem.api.TypeFactory;
 public class DictionaryCacheProxy implements DictionaryCache {
 	
 	SessionManagerImpl sessionManager;
-//	Connection connection;
 	TypeFactory typeFactory;
 	
 	public DictionaryCacheProxy(SessionManagerImpl sessionManager, Connection connection, TypeFactory typeFactory) {
 		this.sessionManager = sessionManager;
-//		this.connection = connection;
 		this.typeFactory = typeFactory;
 	}
 
@@ -61,14 +58,6 @@ public class DictionaryCacheProxy implements DictionaryCache {
 //		System.err.println("Sending query to server");
         QueryDictionaryMessage message = new QueryDictionaryMessage(containerId);
         Response response = sessionManager.sendMessage(0, RequestCode.QUERY_DICTIONARY, message);
-//        ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
-//        message.store(data);
-//        Request request = NetworkUtil.createRequest(data.array());
-//        request.setRequestCode(RequestCode.QUERY_DICTIONARY);
-//        Response response = connection.submit(request);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
-        }
         TypeDescriptor[] td = typeFactory.retrieve(response.getData());
         return td;
 	}

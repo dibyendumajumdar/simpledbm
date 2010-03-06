@@ -142,7 +142,7 @@ public class TestServer extends BaseTestCase {
         try {
             server2.start();
         } catch (SimpleDBMException e) {
-            assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0005"));
+            assertTrue(e.getErrorCode() == 5);
             server.shutdown();
             Server.drop(properties);
             return;
@@ -172,7 +172,7 @@ public class TestServer extends BaseTestCase {
         try {
             server.start();
         } catch (SimpleDBMException e) {
-            assertTrue(e.getMessage().startsWith("SIMPLEDBM-EV0003"));
+            assertTrue(e.getErrorCode() == 3);
             Server.drop(properties);
             return;
         }

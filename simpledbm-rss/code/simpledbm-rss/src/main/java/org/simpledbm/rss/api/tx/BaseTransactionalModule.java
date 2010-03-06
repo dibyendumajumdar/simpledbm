@@ -49,20 +49,20 @@ import org.simpledbm.rss.api.pm.Page;
 public abstract class BaseTransactionalModule implements TransactionalModule {
 
 	public void undo(Transaction trx, Undoable undoable) {
-		throw new TransactionException();
+		throw new UnsupportedOperationException();
 	}
 
 	public final BufferAccessBlock findAndFixPageForUndo(Undoable undoable) {
-		throw new TransactionException();
+		throw new UnsupportedOperationException();
 	}
 
 	public Compensation generateCompensation(Undoable undoable) {
-		throw new TransactionException();
+		throw new UnsupportedOperationException();
 	}
 
 	public abstract void redo(Page page, Redoable loggable);
 
 	public void redo(Loggable loggable) {
-		throw new TransactionException();
+		throw new UnsupportedOperationException();
 	}
 }

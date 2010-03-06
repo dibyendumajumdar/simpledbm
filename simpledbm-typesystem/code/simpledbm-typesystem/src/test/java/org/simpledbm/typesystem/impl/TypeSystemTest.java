@@ -43,8 +43,7 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 import java.util.Date;
 
-import junit.framework.TestCase;
-
+import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.typesystem.api.DictionaryCache;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -52,7 +51,7 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 
-public class TypeSystemTest extends TestCase {
+public class TypeSystemTest extends BaseTestCase {
 
     public static void main(String[] args) {
     }
@@ -63,8 +62,9 @@ public class TypeSystemTest extends TestCase {
 
     public void testRowFactory() throws Exception {
     	DictionaryCache dictionaryCache = new SimpleDictionaryCache();
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
-        RowFactory rowFactory = TypeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+        RowFactory rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
         };
@@ -122,7 +122,8 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testBigDecimal() {
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+    	TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getNumberType(2);
         NumberValue f1 = (NumberValue) fieldFactory.getInstance(type);
         f1.setString("780.919");
@@ -136,7 +137,8 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testDateTime() {
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getDateTimeType();
         DateTimeValue f1 = (DateTimeValue) fieldFactory.getInstance(type);
         assertTrue(f1.isNull());
@@ -155,7 +157,8 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testVarchar() {
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarcharType(10);
     	VarcharValue f1 = (VarcharValue) fieldFactory.getInstance(type);
     	assertTrue(f1.isNull());
@@ -213,7 +216,8 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testVarbinary() {
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarbinaryType(10);
     	VarbinaryValue f1 = (VarbinaryValue) fieldFactory.getInstance(type);
     	f1.setString("68656c6c");
@@ -229,7 +233,8 @@ public class TypeSystemTest extends TestCase {
     }
     
     public void testStorage() {
-        TypeFactory fieldFactory = TypeSystemFactory.getDefaultTypeFactory();
+    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+    	TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
             fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
             fieldFactory.getDateTimeType(), fieldFactory.getNumberType(),

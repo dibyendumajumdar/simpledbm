@@ -84,7 +84,7 @@ public class TestStorageContainer extends BaseTestCase {
 			sc = factory.createIfNotExisting(name);
 			fail("Error: should fail to create a container if it already exists");
 		} catch (StorageException e) {
-			assertTrue(e.getMessage().contains("ES0017"));
+			assertTrue(e.getErrorCode() == 17);
 		}
 		assertTrue(file.exists());
 		assertTrue(file.length() == 10);

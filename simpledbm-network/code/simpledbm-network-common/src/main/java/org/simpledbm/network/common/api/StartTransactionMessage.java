@@ -42,20 +42,24 @@ import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 
 public class StartTransactionMessage implements Storable {
 	
 	private final IsolationMode isolationMode;
 	private static final IsolationMode[] values = IsolationMode.values();
 
+	static final Message noSuchIsolationMode = new Message('N', 'O', MessageType.ERROR, 1, "IsolationMode {0} does not exist");
+	
 	private static IsolationMode enumFrom(int mode) {
 		for (int i = 0; i < values.length; i++) {
 			if (values[i].ordinal() == mode) {
 				return values[i];
 			}
 		}
-		// FIXME
-		throw new SimpleDBMException("Unknown Isolation Mode");
+		throw new SimpleDBMException(new MessageInstance(noSuchIsolationMode, mode));
 	}
 	
     public StartTransactionMessage(IsolationMode isolationMode) {

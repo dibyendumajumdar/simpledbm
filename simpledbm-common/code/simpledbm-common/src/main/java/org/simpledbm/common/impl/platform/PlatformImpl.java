@@ -36,6 +36,7 @@
  */
 package org.simpledbm.common.impl.platform;
 
+import java.util.HashMap;
 import java.util.Properties;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
@@ -44,11 +45,11 @@ import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
 
 public class PlatformImpl implements Platform {
 	
 	final TraceBuffer traceBuffer = new TraceBuffer();
+	HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
 
 	public PlatformImpl(Properties props) {
         Logger.configure(props);		
@@ -62,35 +63,37 @@ public class PlatformImpl implements Platform {
 		return Logger.getLogger(loggerName);
 	}
 
-	MessageCatalog getMessageCatalog() {
-		return MessageCatalog.getMessageCatalog();
-	}
-
 	public TraceBuffer getTraceBuffer() {
 		return traceBuffer;
 	}
 	
 	public PlatformObjects getPlatformObjects(String loggerName) {
-		Logger log = getLogger(loggerName);
-		ExceptionHandler exceptionHandler = getExceptionHandler(log);
-		MessageCatalog messageCatalog = getMessageCatalog();
-		ClassUtils classUtils = new ClassUtils();
-		return new PlatformObjectsImpl(traceBuffer, log, exceptionHandler, messageCatalog, classUtils);
+		PlatformObjects po = null;
+		synchronized (pomap) {
+			pomap.get(loggerName);
+			if (po != null) {
+				return po;
+			}
+			Logger log = getLogger(loggerName);
+			ExceptionHandler exceptionHandler = getExceptionHandler(log);
+			ClassUtils classUtils = new ClassUtils();
+			po = new PlatformObjectsImpl(traceBuffer, log, exceptionHandler, classUtils);
+			pomap.put(loggerName, po);
+		}
+		return po;
 	}
 	
 	static final class PlatformObjectsImpl implements PlatformObjects {
 		
 		final Logger log;
 		final ExceptionHandler exceptionHandler;
-		final MessageCatalog messageCatalog;
 		final ClassUtils classUtils;
 		final TraceBuffer traceBuffer;
 
-		PlatformObjectsImpl(TraceBuffer traceBuffer, Logger log, ExceptionHandler exceptionHandler, MessageCatalog messageCatalog, ClassUtils classUtils) {
+		PlatformObjectsImpl(TraceBuffer traceBuffer, Logger log, ExceptionHandler exceptionHandler, ClassUtils classUtils) {
 			this.traceBuffer = traceBuffer;
 			this.log = log;
 			this.exceptionHandler = exceptionHandler;
-			this.messageCatalog = messageCatalog;
 			this.classUtils = classUtils;
 		}
 
@@ -102,18 +105,12 @@ public class PlatformImpl implements Platform {
 			return log;
 		}
 
-		public final MessageCatalog getMessageCatalog() {
-			return messageCatalog;
-		}
-
 		public ClassUtils getClassUtils() {
 			return classUtils;
 		}
 
 		public TraceBuffer getTraceBuffer() {
 			return traceBuffer;
-		}
-		
+		}	
 	}
-
 }

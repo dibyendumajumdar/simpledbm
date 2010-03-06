@@ -47,6 +47,8 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class SimpleDBMServer {
+	
+	static String LOGGER_NAME = "org.simpledbm.network.server";
 
     NetworkServer networkServer = null;
 

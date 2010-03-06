@@ -40,6 +40,10 @@
  */
 package org.simpledbm.rss.api.locking;
 
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.util.mcat.MessageInstance;
+
 /**
  * LockTimeoutException is thrown when a lock cannot be acquired
  * within a given period of time.
@@ -50,20 +54,16 @@ public final class LockTimeoutException extends LockException {
 
     private static final long serialVersionUID = 1L;
 
-    public LockTimeoutException() {
-        super();
-    }
+	public LockTimeoutException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public LockTimeoutException(String arg0) {
-        super(arg0);
-    }
+	public LockTimeoutException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public LockTimeoutException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public LockTimeoutException(Throwable arg0) {
-        super(arg0);
-    }
+	public LockTimeoutException(MessageInstance m) {
+		super(m);
+	}
 
 }

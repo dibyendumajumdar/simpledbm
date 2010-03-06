@@ -45,7 +45,7 @@ import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.SimpleTimer;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
 
@@ -91,8 +91,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
     final Logger log;
 
     final ExceptionHandler exceptionHandler;
-    
-    final MessageCatalog mcat;    
     
     /**
      * Queue of latch requests, contains granted or conversion requests followed
@@ -170,7 +168,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
     public NewReadWriteUpdateLatch(PlatformObjects po) { 
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
-    	this.mcat = po.getMessageCatalog();
     }
 
     /*
@@ -323,7 +320,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              * An upgrade request without a prior lock request is an error.
              */
             exceptionHandler.errorThrow(this.getClass().getName(), "handleNewRequest", 
-            		new LatchException(mcat.getMessage("EH0001", lockState.parms)));
+            		new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0001, lockState.parms)));
         }
 
         /*
@@ -339,7 +336,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 //            exceptionHandler.warnAndThrow(getClass().getName(), "handleNewRequest", 
 //            		new LatchException(mcat.getMessage("WH0002",
 //                this, lockState.parms.mode)));
-            throw new LatchException(mcat.getMessage("WH0002",
+            throw new LatchException(new MessageInstance(LatchFactoryImpl.m_WH0002,
                     this, lockState.parms.mode));
         }
 
@@ -392,8 +389,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "handleConversionRequest",
-                new LatchException(mcat.getMessage(
-                "EH0003",
+                new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0003,
                 this,
                 lockState.parms.owner)));
         }
@@ -455,8 +451,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 //                        "WH0004",
 //                        lockState.parms,
 //                        this)));
-                    throw new LatchException(mcat.getMessage(
-                            "WH0004",
+                    throw new LatchException(new MessageInstance(LatchFactoryImpl.m_WH0004,
                             lockState.parms,
                             this));
                 }
@@ -470,7 +465,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             exceptionHandler.errorThrow(
                 this.getClass().getName(),
                 "handleConversionRequest",
-                new LatchException(mcat.getMessage("EH0005")));
+                new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0005)));
         }
         return false;
     }
@@ -569,7 +564,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             lockState.lockRequest.waitingThread = lockState.prevThread;
         }
         exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
-        		new LatchException(mcat.getMessage("EH0006", lockState.parms)));
+        		new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0006, lockState.parms)));
     }
 
     private void grantWaiters(ReleaseAction action) {
@@ -715,14 +710,14 @@ public final class NewReadWriteUpdateLatch implements Latch {
         if (lockState.lockRequest == null) {
             /* 4. If not found, throw exception. */
             exceptionHandler.errorThrow(this.getClass().getName(), "releaseLock", 
-            		new LatchException(mcat.getMessage("EH0007", this)));
+            		new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0007, this)));
         }
 
         if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
                 || lockState.lockRequest.status == LockRequestStatus.WAITING) {
             /* 5. If lock in invalid state, return error. */
             exceptionHandler.errorThrow(this.getClass().getName(), "releaseLock", 
-            		new LatchException(mcat.getMessage("EH0008", this)));
+            		new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0008, this)));
         }
 
         if (lockState.parms.action == ReleaseAction.DOWNGRADE
@@ -807,8 +802,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
             } else {
                 exceptionHandler.errorThrow(this.getClass().getName(), "releaseLock", 
-                		new LatchException(mcat.getMessage(
-                				"EH0009", lockState.lockRequest.mode,
+                		new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0009, 
+                				lockState.lockRequest.mode,
                 				lockState.parms.downgradeMode)));
             }
             released = false;

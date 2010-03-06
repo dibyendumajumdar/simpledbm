@@ -38,6 +38,8 @@ package org.simpledbm.rss.impl.latch;
 
 import java.util.concurrent.locks.LockSupport;
 
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
 
@@ -65,6 +67,8 @@ public final class ReadWriteUpdateLatch implements Latch {
 
     static final int FREE = -1;
 
+    PlatformObjects po;    
+    
     static final class Link {
         final Thread thread;
 
@@ -91,6 +95,10 @@ public final class ReadWriteUpdateLatch implements Latch {
     private volatile int sharedCount = 0;
 
     private volatile int exclusiveCount = 0;
+    
+    public ReadWriteUpdateLatch(PlatformObjects po) {
+    	this.po = po;
+    }
 
     /**
      * Adds a waiter to the end of the wait queue.
@@ -489,9 +497,8 @@ public final class ReadWriteUpdateLatch implements Latch {
             }
         } else if (grantedMode == EXCLUSIVE) {
             if (owner != Thread.currentThread()) {
-                throw new LatchException(
-                    "SIMPLEDBM-ERROR: Invalid unlatch request by thread "
-                            + Thread.currentThread());
+            	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
+            			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0007, this)));
             }
             exclusiveCount--;
             assert exclusiveCount >= 0;
@@ -555,9 +562,8 @@ public final class ReadWriteUpdateLatch implements Latch {
             grantedMode = UPDATE;
             performGrants();
         } else {
-            throw new LatchException(
-                "SIMPLEDBM-ERROR: Invalid request for latch downgrade by thread "
-                        + Thread.currentThread());
+        	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
+        			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0009, grantedMode, UPDATE)));
         }
     }
 
@@ -573,9 +579,8 @@ public final class ReadWriteUpdateLatch implements Latch {
             exclusiveCount = 0;
             performGrants();
         } else {
-            throw new LatchException(
-                "SIMPLEDBM-ERROR: Invalid request for latch downgrade by thread "
-                        + Thread.currentThread());
+        	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
+        			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0009, grantedMode, SHARED)));
         }
     }
 

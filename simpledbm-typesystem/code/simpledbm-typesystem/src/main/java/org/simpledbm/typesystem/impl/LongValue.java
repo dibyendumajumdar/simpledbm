@@ -39,6 +39,7 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.typesystem.api.DataValue;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeException;
@@ -84,14 +85,6 @@ public class LongValue extends BaseDataValue {
     		bb.putLong(i);
     	}
     }
-    
-//    @Override
-//    public void retrieve(ByteBuffer bb) {
-//    	super.retrieve(bb);
-//    	if (isValue()) {
-//    		i = bb.getLong();
-//    	}
-//    }
 
 	@Override
 	public int getInt() {
@@ -99,7 +92,7 @@ public class LongValue extends BaseDataValue {
 			return 0;
 		}
 		if (i > Integer.MAX_VALUE || i < Integer.MIN_VALUE) {
-			throw new TypeException();
+			throw new TypeException(new MessageInstance(TypeSystemFactoryImpl.outOfRange, i, Integer.MIN_VALUE, Integer.MAX_VALUE));
 		}
 		return (int)i;
 	}

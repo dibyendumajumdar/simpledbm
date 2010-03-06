@@ -149,14 +149,14 @@ public class TestObjectRegistry extends BaseTestCase {
             s = factory.getSingleton(5);
             fail();
         } catch (ObjectCreationException e) {
-            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0006"));
+            assertTrue(e.getErrorCode() == 6);
         }
         Integer x = new Integer(10);
         try {
             factory.registerSingleton(2, x);
             fail();
         } catch (ObjectCreationException e) {
-            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0004"));
+            assertTrue(e.getErrorCode() == 4);
         }
         assertTrue(i == factory.getSingleton(2));
         factory.registerObjectFactory(1, new StringFactory());
@@ -164,7 +164,7 @@ public class TestObjectRegistry extends BaseTestCase {
             factory.registerObjectFactory(1, new IntegerFactory());
             fail();
         } catch (ObjectCreationException e) {
-            assertTrue(e.getMessage().startsWith("SIMPLEDBM-ER0002"));
+            assertTrue(e.getErrorCode() == 2);
         }
         
         factory.registerObjectFactory(3, new MyStorable.MyStorableFactory());

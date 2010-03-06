@@ -36,24 +36,23 @@
  */
 package org.simpledbm.rss.api.pm;
 
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.util.mcat.MessageInstance;
+
 public final class PageReadException extends PageException {
 
     private static final long serialVersionUID = 1L;
 
-    public PageReadException() {
-        super();
-    }
+	public PageReadException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public PageReadException(String arg0) {
-        super(arg0);
-    }
+	public PageReadException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public PageReadException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public PageReadException(Throwable arg0) {
-        super(arg0);
-    }
-
+	public PageReadException(MessageInstance m) {
+		super(m);
+	}
 }

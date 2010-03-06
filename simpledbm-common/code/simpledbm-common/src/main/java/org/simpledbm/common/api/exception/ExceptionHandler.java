@@ -64,7 +64,7 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void errorThrow(String sourceClass, String sourceMethod, RuntimeException e) {
+	public void errorThrow(String sourceClass, String sourceMethod, SimpleDBMException e) {
 		log.error(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
 	}
@@ -76,7 +76,7 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void unexpectedErrorThrow(String sourceClass, String sourceMethod, RuntimeException e) {
+	public void unexpectedErrorThrow(String sourceClass, String sourceMethod, SimpleDBMException e) {
 		log.error(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
 	}
@@ -89,7 +89,7 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void warnAndThrow(String sourceClass, String sourceMethod, RuntimeException e) {
+	public void warnAndThrow(String sourceClass, String sourceMethod, SimpleDBMException e) {
 		log.warn(sourceClass, sourceMethod, e.getMessage(), e);
 		throw e;
 	}
@@ -101,7 +101,7 @@ public class ExceptionHandler {
 	 * @param sourceMethod The method where the exception was raised
 	 * @param e The exception to throw
 	 */
-	public void throwSilently(String sourceClass, String sourceMethod, RuntimeException e) {
+	public void throwSilently(String sourceClass, String sourceMethod, SimpleDBMException e) {
 		throw e;
 	}
 	

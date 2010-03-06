@@ -36,7 +36,10 @@
  */
 package org.simpledbm.rss.api.bm;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 
 /**
@@ -50,19 +53,16 @@ public class BufferManagerException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public BufferManagerException() {
-        super();
-    }
+	public BufferManagerException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public BufferManagerException(String message) {
-        super(message);
-    }
+	public BufferManagerException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public BufferManagerException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	public BufferManagerException(MessageInstance m) {
+		super(m);
+	}
 
-    public BufferManagerException(Throwable cause) {
-        super(cause);
-    }
 }

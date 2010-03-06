@@ -34,21 +34,56 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.api.platform;
+package org.simpledbm.typesystem.impl;
 
-import org.simpledbm.common.api.exception.ExceptionHandler;
-import org.simpledbm.common.tools.diagnostics.TraceBuffer;
-import org.simpledbm.common.util.ClassUtils;
-import org.simpledbm.common.util.logging.Logger;
+import java.nio.ByteBuffer;
+import java.util.Properties;
 
-public interface PlatformObjects {
+import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageType;
+import org.simpledbm.typesystem.api.DictionaryCache;
+import org.simpledbm.typesystem.api.RowFactory;
+import org.simpledbm.typesystem.api.TableDefinition;
+import org.simpledbm.typesystem.api.TypeDescriptor;
+import org.simpledbm.typesystem.api.TypeFactory;
+import org.simpledbm.typesystem.api.TypeSystemFactory;
 
-	Logger getLogger();
+/**
+ * TypeSystemFactory is the entry point for external clients to obtain access
+ * to the type system interfaces.
+ * 
+ * @author dibyendumajumdar
+ */
+public class TypeSystemFactoryImpl implements TypeSystemFactory {
 	
-	ExceptionHandler getExceptionHandler();
+	PlatformObjects po;
+	static final Message outOfRange = new Message('T', 'Y', MessageType.ERROR, 13,
+			"Value {0} is outside the range ({1}, {2})");
 	
-	ClassUtils getClassUtils();
+	public TypeSystemFactoryImpl(Properties properties, PlatformObjects po) {
+		this.po = po;
+	}
+
+	public TypeFactory getDefaultTypeFactory() {
+		return new DefaultTypeFactory();
+	}
 	
-	TraceBuffer getTraceBuffer();
+	public RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
+		return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
+	}
 	
+	public RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache) {
+		return new GenericRowFactory(typeFactory, dictionaryCache);
+	}
+	
+	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
+		return new TableDefinitionImpl(po, typeFactory, rowFactory, bb);
+	}
+	
+	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
+            TypeDescriptor[] rowType) {
+		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name,
+            rowType);
+	}	
 }

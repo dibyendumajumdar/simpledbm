@@ -45,9 +45,7 @@ import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.network.client.api.Session;
-import org.simpledbm.network.client.api.SessionException;
 import org.simpledbm.network.client.api.SessionManager;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.common.api.SessionRequestMessage;
@@ -61,6 +59,7 @@ import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
+import org.simpledbm.typesystem.impl.TypeSystemFactoryImpl;
 
 public class SessionManagerImpl extends SessionManager {
 	
@@ -69,13 +68,13 @@ public class SessionManagerImpl extends SessionManager {
     String host;
     int port;
     Connection connection;
-    TypeFactory typeFactory = TypeSystemFactory.getDefaultTypeFactory();
-    DictionaryCache dictionaryCache;
-    RowFactory rowFactory;
+    final TypeSystemFactory typeSystemFactory;
+    final TypeFactory typeFactory;
+    final DictionaryCache dictionaryCache;
+    final RowFactory rowFactory;
 	final Platform platform;
 	final PlatformObjects po;
 	final Logger log;
-	final MessageCatalog mcat;
 	final ExceptionHandler exceptionHandler;
 
     public SessionManagerImpl(Properties properties, String host, int port) {
@@ -83,13 +82,14 @@ public class SessionManagerImpl extends SessionManager {
 		this.platform = new PlatformImpl(properties);
 		this.po = platform.getPlatformObjects(SessionManagerImpl.LOGGER_NAME);
 		this.log = po.getLogger();
-		this.mcat = po.getMessageCatalog();
 		this.exceptionHandler = po.getExceptionHandler();
+	    this.typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
+	    this.typeFactory = typeSystemFactory.getDefaultTypeFactory();
         this.host = host;
         this.port = port;
         this.connection = NetworkUtil.createConnection(host, port);
         this.dictionaryCache = new DictionaryCacheProxy(this, connection, typeFactory);
-        this.rowFactory = TypeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
+        this.rowFactory = typeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
     }
 
     public TypeFactory getTypeFactory() {
@@ -98,15 +98,12 @@ public class SessionManagerImpl extends SessionManager {
 
 	public TableDefinition newTableDefinition(String name, int containerId,
 			TypeDescriptor[] rowType) {
-		return TypeSystemFactory.getTableDefinition(po, typeFactory, rowFactory, containerId, name, rowType);
+		return typeSystemFactory.getTableDefinition(po, typeFactory, rowFactory, containerId, name, rowType);
 	}    
     
     public Session openSession() {
         SessionRequestMessage message = new SessionRequestMessage();
     	Response response = sendMessage(0, RequestCode.OPEN_SESSION, message);
-        if (response.getStatusCode() < 0) {
-            throw new SessionException("server returned error");
-        }
         Session session = new SessionImpl(this, response.getSessionId());
         return session;
     }

@@ -41,6 +41,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.rss.api.latch.Latch;
 
 /**
@@ -53,8 +54,10 @@ public final class ReadWriteLatch implements Latch {
     private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     private final ReadLock rlock = lock.readLock();
     private final WriteLock wlock = lock.writeLock();
+    PlatformObjects po;
 
-    public ReadWriteLatch() {
+    public ReadWriteLatch(PlatformObjects po) {
+    	this.po = po;
     }
 
     public boolean tryExclusiveLock() {

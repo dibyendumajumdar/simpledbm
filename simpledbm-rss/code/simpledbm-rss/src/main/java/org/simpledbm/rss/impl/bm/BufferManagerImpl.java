@@ -49,13 +49,16 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.Linkable;
 import org.simpledbm.common.util.SimpleLinkedList;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.bm.BufferManagerException;
@@ -91,8 +94,6 @@ public final class BufferManagerImpl implements BufferManager {
 
     final ExceptionHandler exceptionHandler;
     
-    final MessageCatalog mcat;
-
     private static final int LATCH_EXCLUSIVE = 2;
 
     private static final int LATCH_UPDATE = 3;
@@ -195,6 +196,48 @@ public final class BufferManagerImpl implements BufferManager {
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
 
+    // setup messages
+    // Buffer Manager messages
+	static final Message m_EM0001 = new Message('R', 'M', MessageType.ERROR, 1,
+			"Error occurred while shutting down Buffer Manager");
+	static final Message m_EM0002 = new Message('R', 'M', MessageType.ERROR, 2,
+			"Error occurred while attempting to read page {0}");
+	static final Message m_EM0003 = new Message('R', 
+			'M',
+			MessageType.ERROR,
+			3,
+			"Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
+	static final Message m_EM0004 = new Message('R', 
+			'M',
+			MessageType.ERROR,
+			4,
+			"Unexpected error - while attempting to read page {0} an empty frame could not be found: ");
+	static final Message m_EM0005 = new Message('R', 'M', MessageType.ERROR, 5,
+			"Unable to complete operation because Buffer Manager is shutting down");
+	static final Message m_EM0006 = new Message('R', 
+			'M',
+			MessageType.ERROR,
+			6,
+			"Unexpected error - while attempting to locate page {0} an empty frame could not be found or buffer manager is shutting down");
+	static final Message m_EM0007 = new Message('R', 'M', MessageType.ERROR, 7,
+			"Latch mode in inconsistent state");
+	static final Message m_EM0008 = new Message('R', 'M', MessageType.ERROR, 8,
+			"Page can be marked dirty only if it has been latched exclusively");
+	static final Message m_EM0009 = new Message('R', 
+			'M',
+			MessageType.ERROR,
+			9,
+			"Upgrade of update latch requested but latch is not held in update mode currently");
+	static final Message m_EM0010 = new Message('R', 
+			'M',
+			MessageType.ERROR,
+			10,
+			"Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
+	static final Message m_IM0011 = new Message('R', 'M', MessageType.INFO, 11,
+			"Buffer Writer STARTED");
+	static final Message m_IM0012 = new Message('R', 'M', MessageType.INFO, 12,
+			"Buffer Writer STOPPED");
+    
     private int getNumericProperty(Properties props, String name,
             int defaultValue) {
         String value = props.getProperty(name);
@@ -238,39 +281,7 @@ public final class BufferManagerImpl implements BufferManager {
             bufferHash[i] = new BufferHashBucket();
         }
         
-        // setup messages
-        // Buffer Manager messages
-        mcat.addMessage(
-                "EM0001",
-                "SIMPLEDBM-EM0001: Error occurred while shutting down Buffer Manager");
-        mcat.addMessage(
-                "EM0002",
-                "SIMPLEDBM-EM0002: Error occurred while attempting to read page {0}");
-        mcat.addMessage(
-                "EM0003",
-                "SIMPLEDBM-EM0003: Error occurred while writing buffer pages, buffer writer failed causing buffer manager shutdown");
-        mcat.addMessage(
-                "EM0004",
-                "SIMPLEDBM-EM0004: Unexpected error - while attempting to read page {0} an empty frame could not be found: ");
-        mcat.addMessage(
-                "EM0005",
-                "SIMPLEDBM-EM0005: Unable to complete operation because Buffer Manager is shutting down");
-        mcat.addMessage(
-                "EM0006",
-                "SIMPLEDBM-EM0006: Unexpected error - while attempting to locate page {0} an empty frame could not be found or buffer manager is shutting down");
-        mcat.addMessage("EM0007", "SIMPLEDBM-EM0007: Latch mode in inconsistent state");
-        mcat.addMessage(
-                "EM0008",
-                "SIMPLEDBM-EM0008: Page can be marked dirty only if it has been latched exclusively");
-        mcat.addMessage(
-                "EM0009",
-                "SIMPLEDBM-EM0009: Upgrade of update latch requested but latch is not held in update mode currently");
-        mcat.addMessage(
-                "EM0010",
-                "SIMPLEDBM-EM0010: Downgrade of exclusive latch requested but latch is not held in exclusive mode currently");
-        mcat.addMessage("IM0011", "SIMPLEDBM-IM0011: Buffer Writer STARTED");
-        mcat.addMessage("IM0012", "SIMPLEDBM-IM0012: Buffer Writer STOPPED");
-
+ 
         
         statistics.bufferpoolsize = bufferpoolsize;
         statistics.hashTableSize = hashsize;
@@ -289,7 +300,6 @@ public final class BufferManagerImpl implements BufferManager {
             int bufferpoolsize, int unused) {
     	PlatformObjects po = platform.getPlatformObjects(BufferManager.LOGGER_NAME);
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
     	this.exceptionHandler = po.getExceptionHandler();
     	this.platform = platform;
         init(logMgr, pageFactory, bufferpoolsize);
@@ -306,7 +316,6 @@ public final class BufferManagerImpl implements BufferManager {
             Properties props) {
     	PlatformObjects po = platform.getPlatformObjects(BufferManager.LOGGER_NAME);
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
     	this.exceptionHandler = po.getExceptionHandler();
     	this.platform = platform;
         int bufferpoolsize = getNumericProperty(
@@ -364,8 +373,7 @@ public final class BufferManagerImpl implements BufferManager {
         		bufferWriter.join();
         	}
         } catch (InterruptedException e) {
-            log.error(this.getClass().getName(), "shutdown", mcat
-                .getMessage("EM0001"), e);
+            log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EM0001).toString(), e);
         }
         writeBuffers();
         dumpStatistics();
@@ -711,7 +719,7 @@ public final class BufferManagerImpl implements BufferManager {
              */
             setStop();
             exceptionHandler.errorThrow(this.getClass().getName(), "locatePage", 
-            		new BufferManagerException(mcat.getMessage("EM0004", pageId)));
+            		new BufferManagerException(new MessageInstance(m_EM0004, pageId)));
         }
 
         assert bufferpool[frameNo] == null;
@@ -737,8 +745,7 @@ public final class BufferManagerImpl implements BufferManager {
                      * state. We want to remove the invalid BCB from the hash chain,
                      * and return the buffer pool frame to the freelist. 
                      */
-                    log.error(this.getClass().getName(), "locatePage", mcat
-                        .getMessage("EM0002", pageId));
+                    log.error(this.getClass().getName(), "locatePage", new MessageInstance(m_EM0002, pageId).toString());
                     bucket.lockExclusive();
                     try {
                         bucket.chain.remove(nextBcb);
@@ -776,7 +783,7 @@ public final class BufferManagerImpl implements BufferManager {
     private void checkStatus() {
         if (stop) {
             exceptionHandler.errorThrow(this.getClass().getName(), "checkStatus", 
-            		new BufferManagerException(mcat.getMessage("EM0005")));
+            		new BufferManagerException(new MessageInstance(m_EM0005)));
         }
     }
 
@@ -1653,8 +1660,7 @@ public final class BufferManagerImpl implements BufferManager {
                 page.unlatchShared();
             } else {
             	bufMgr.exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"unlatch", new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0007")));
+            			"unlatch", new SimpleDBMException(new MessageInstance(m_EM0007)));
             }
             latchMode = 0;
         }
@@ -1680,8 +1686,7 @@ public final class BufferManagerImpl implements BufferManager {
                 page.setPageLsn(lsn);
             } else {
             	bufMgr.exceptionHandler.errorThrow(this.getClass().getName(), 
-            			"setDirty", new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0008")));
+            			"setDirty", new SimpleDBMException(new MessageInstance(m_EM0008)));
             }
         }
 
@@ -1706,8 +1711,7 @@ public final class BufferManagerImpl implements BufferManager {
             if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
             	bufMgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
-                    "upgradeUpdateLatch",new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0009")));
+                    "upgradeUpdateLatch",new SimpleDBMException(new MessageInstance(m_EM0009)));
             }
             page.upgradeUpdate();
             latchMode = BufferManagerImpl.LATCH_EXCLUSIVE;
@@ -1721,8 +1725,7 @@ public final class BufferManagerImpl implements BufferManager {
                 bufMgr.exceptionHandler.errorThrow(
                     this.getClass().getName(),
                     "downgradeExclusiveLatch",
-                    new IllegalStateException(bufMgr.mcat
-                    .getMessage("EM0010")));
+                    new SimpleDBMException(new MessageInstance(m_EM0010)));
             }
             page.downgradeExclusive();
             latchMode = BufferManagerImpl.LATCH_UPDATE;
@@ -1748,8 +1751,7 @@ public final class BufferManagerImpl implements BufferManager {
         }
 
         public final void run() {
-            bufmgr.log.info(this.getClass().getName(), "run", bufmgr.mcat
-                .getMessage("IM0011"));
+            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0011).toString());
             for (;;) {
                 LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
                     bufmgr.bufferWriterSleepInterval,
@@ -1780,16 +1782,14 @@ public final class BufferManagerImpl implements BufferManager {
                                         + " millisecs to complete writing pages to disk");
                     }
                 } catch (Exception e) {
-                	bufmgr.log.error(this.getClass().getName(), "run", bufmgr.mcat
-                        .getMessage("EM0003"), e);
+                	bufmgr.log.error(this.getClass().getName(), "run", new MessageInstance(m_EM0003).toString(), e);
                     bufmgr.setStop();
                 }
                 if (bufmgr.stop) {
                     break;
                 }
             }
-            bufmgr.log.info(this.getClass().getName(), "run", bufmgr.mcat
-                .getMessage("IM0012"));
+            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0012).toString());
         }
     }
 

@@ -46,7 +46,9 @@ import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.util.ChecksumCalculator;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.pm.PageException;
@@ -75,8 +77,6 @@ public final class PageManagerImpl implements PageManager {
     
     final ExceptionHandler exceptionHandler;
 
-	final MessageCatalog mcat;
-
 	/**
      * Default page size is 8 KB.
      */
@@ -104,36 +104,32 @@ public final class PageManagerImpl implements PageManager {
      * LatchFactory is used to create latches that are assigned to pages.
      */
     private final LatchFactory latchFactory;
-    
-    void initMessages(MessageCatalog mcat) {
-        // Page Manager messages
-        mcat.addMessage(
-                "EP0001",
-                "SIMPLEDBM-EP0001: Error occurred while reading page {0}: the number of bytes read is {1}; but expected {2} bytes");
-        mcat.addMessage(
-                "EP0002",
-                "SIMPLEDBM-EP0002: Error occurred while reading page {0}: container not available");
-        mcat.addMessage(
-                "EP0003",
-                "SIMPLEDBM-EP0003: Error occurred while writing page {0}: container not available");
-        mcat.addMessage(
-        	    "EP0004",
-                "SIMPLEDBM-EP0004: Error occurred while reading page {0}: checksum invalid");
-        mcat.addMessage("EP0005", "SIMPLEDBM-EP0005: A PageFactory was not available to handle page type {0}");
-    }
 
+    // Page Manager messages
+	static Message m_EP0001 = new Message('R', 
+			'P',
+			MessageType.ERROR,
+			1,
+			"Error occurred while reading page {0}: the number of bytes read is {1}; but expected {2} bytes");
+	static Message m_EP0002 = new Message('R', 'P', MessageType.ERROR, 2,
+			"Error occurred while reading page {0}: container not available");
+	static Message m_EP0003 = new Message('R', 'P', MessageType.ERROR, 3,
+			"Error occurred while writing page {0}: container not available");
+	static Message m_EP0004 = new Message('R', 'P', MessageType.ERROR, 4,
+			"Error occurred while reading page {0}: checksum invalid");
+	static Message m_EP0005 = new Message('R', 'P', MessageType.ERROR, 5,
+			"A PageFactory was not available to handle page type {0}");    
+    
     public PageManagerImpl(Platform platform, int pageSize, ObjectRegistry objectRegistry,
             StorageManager storageManager, LatchFactory latchFactory, Properties p) {
     	PlatformObjects po = platform.getPlatformObjects(PageManager.LOGGER_NAME);
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
-    	this.mcat = po.getMessageCatalog();
         this.pageSize = pageSize;
         this.objectRegistry = objectRegistry;
         this.storageManager = storageManager;
         this.latchFactory = latchFactory;
         objectRegistry.registerSingleton(TYPE_RAW_PAGE, new RawPage.RawPageFactory(this));
-        initMessages(mcat);
     }
 
     public PageManagerImpl(Platform platform, ObjectRegistry objectRegistry,
@@ -163,7 +159,7 @@ public final class PageManagerImpl implements PageManager {
     	PageFactory pf = (PageFactory) objectRegistry.getSingleton(pagetype);
     	if (null == pf) {
             exceptionHandler.errorThrow(this.getClass().getName(), "getPageFactory", 
-            		new PageException(mcat.getMessage("EP0005", pagetype)));
+            		new PageException(new MessageInstance(m_EP0005, pagetype)));
     	}
     	return pf;
     }
@@ -214,15 +210,14 @@ public final class PageManagerImpl implements PageManager {
             .getContainerId());
         if (container == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
-            		new PageException(mcat.getMessage("EP0002", pageId)));
+            		new PageException(new MessageInstance(m_EP0002, pageId)));
         }
         long offset = pageId.getPageNumber() * pageSize;
         byte[] data = new byte[pageSize];
         int n = container.read(offset, data, 0, pageSize);
         if (n != pageSize) {
             exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
-            	new PageReadException(mcat.getMessage(
-            			"EP0001",
+            	new PageReadException(new MessageInstance(m_EP0001,
             			pageId,
             			n,
             			pageSize)));
@@ -237,8 +232,7 @@ public final class PageManagerImpl implements PageManager {
         long checksumOnPage = bb.getLong();
         if (checksumOnPage != checksumCalculated) {
         	exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
-        			new PageReadException(mcat.getMessage(
-        					"EP0004",
+        			new PageReadException(new MessageInstance(m_EP0004,
         					pageId)));
         }
         return getInstance(pageId, bb);
@@ -253,7 +247,7 @@ public final class PageManagerImpl implements PageManager {
             .getContainerId());
         if (container == null) {
             exceptionHandler.errorThrow(this.getClass().getName(), "retrieve", 
-            		new PageException(mcat.getMessage("EP0003", page.getPageId())));
+            		new PageException(new MessageInstance(m_EP0003, page.getPageId())));
         }
 
         byte[] data = new byte[pageSize];

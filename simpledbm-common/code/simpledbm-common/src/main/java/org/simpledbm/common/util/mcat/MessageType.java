@@ -34,21 +34,24 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.api.platform;
+package org.simpledbm.common.util.mcat;
 
-import org.simpledbm.common.api.exception.ExceptionHandler;
-import org.simpledbm.common.tools.diagnostics.TraceBuffer;
-import org.simpledbm.common.util.ClassUtils;
-import org.simpledbm.common.util.logging.Logger;
+public enum MessageType {
 
-public interface PlatformObjects {
-
-	Logger getLogger();
+	WARN('W'), INFO('I'), ERROR('E');
+	final char text;
 	
-	ExceptionHandler getExceptionHandler();
+	MessageType(char text) {
+		this.text = text;
+	}
 	
-	ClassUtils getClassUtils();
+	public char toText() {
+		return text;
+	}
 	
-	TraceBuffer getTraceBuffer();
-	
+	public static MessageType fromText(char t) {
+		if (t == 'I') return INFO;
+		else if (t == 'W') return WARN;
+		else return ERROR;
+	}
 }

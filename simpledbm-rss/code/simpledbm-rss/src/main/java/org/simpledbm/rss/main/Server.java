@@ -47,7 +47,9 @@ import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceManager;
 import org.simpledbm.rss.api.im.IndexContainer;
@@ -105,7 +107,6 @@ public class Server {
 	
     final Logger log;
     final ExceptionHandler exceptionHandler;
-    final MessageCatalog mcat;
     
     private static final String VIRTUAL_TABLE = "_internal/dual";
     private static final String LOCK_TABLE = "_internal/lock";
@@ -132,17 +133,32 @@ public class Server {
 
     private boolean started = false;
 
+    // Server messages
+	static Message m_IV0001 = new Message('R', 'V', MessageType.INFO, 1,
+			"SimpleDBM RSS Server STARTED");
+	static Message m_IV0002 = new Message('R', 'V', MessageType.INFO, 2,
+			"SimpleDBM RSS Server STOPPED");
+	static Message m_EV0003 = new Message('R', 'V', MessageType.ERROR, 3,
+			"SimpleDBM RSS Server cannot be started more than once");
+	static Message m_EV0004 = new Message('R', 'V', MessageType.ERROR, 4,
+			"SimpleDBM RSS Server has not been started");
+	static Message m_EV0005 = new Message('R', 
+			'V',
+			MessageType.ERROR,
+			5,
+			"Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");    
+    
     private void assertNotStarted() {
         if (started) {
             exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-            	new SimpleDBMException(mcat.getMessage("EV0003")));
+            	new SimpleDBMException(new MessageInstance(m_EV0003)));
         }
     }
 
     private void assertStarted() {
         if (!started) {
         	exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-        		new SimpleDBMException(mcat.getMessage("EV0004")));
+        		new SimpleDBMException(new MessageInstance(m_EV0004)));
         }
     }
 
@@ -169,7 +185,7 @@ public class Server {
             lockObtained = true;
         } catch (StorageException e) {
             exceptionHandler.errorThrow(getClass().getName(), "start", 
-            	new SimpleDBMException(mcat.getMessage("EV0005", e.getMessage()), e));
+            	new SimpleDBMException(new MessageInstance(m_EV0005, e.getMessage()), e));
         } finally {
             if (!lockObtained) {
                 if (lock != null) {
@@ -241,21 +257,7 @@ public class Server {
     	PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
         log = po.getLogger();
         exceptionHandler = po.getExceptionHandler();
-        mcat = po.getMessageCatalog();
         
-        // Server messages
-        mcat.addMessage("IV0001", "SIMPLEDBM-IV0001: SimpleDBM RSS Server STARTED");
-        mcat.addMessage("IV0002", "SIMPLEDBM-IV0002: SimpleDBM RSS Server STOPPED");
-        mcat.addMessage(
-                "EV0003",
-                "SIMPLEDBM-EV0003: SimpleDBM RSS Server cannot be started more than once");
-        mcat.addMessage(
-            "EV0004",
-            "SIMPLEDBM-EV0004: SimpleDBM RSS Server has not been started");
-        mcat.addMessage(
-                "EV0005",
-                "SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
-
         final LogFactory logFactory = new LogFactoryImpl(platform, props);
         final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);
 
@@ -430,7 +432,7 @@ public class Server {
         logManager.start();
         bufferManager.start();
         transactionManager.start();
-        log.info(getClass().getName(), "start", mcat.getMessage("IV0001"));
+        log.info(getClass().getName(), "start", new MessageInstance(m_IV0001).toString());
         started = true;
     }
 
@@ -460,7 +462,7 @@ public class Server {
         storageManager.shutdown();
         lockManager.shutdown();
         unlockServerInstance();
-        log.info(getClass().getName(), "shutdown", mcat.getMessage("IV0002"));
+        log.info(getClass().getName(), "shutdown", new MessageInstance(m_IV0002).toString());
     }
 
     public synchronized final IndexManager getIndexManager() {

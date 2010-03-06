@@ -36,25 +36,25 @@
  */
 package org.simpledbm.network.client.api;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 public class SessionException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public SessionException() {
-    }
+	public SessionException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public SessionException(String arg0) {
-        super(arg0);
-    }
+	public SessionException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public SessionException(Throwable arg0) {
-        super(arg0);
-    }
-
-    public SessionException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
+	public SessionException(MessageInstance m) {
+		super(m);
+	}
 
 }

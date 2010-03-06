@@ -42,7 +42,6 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.Latch;
-import org.simpledbm.rss.api.latch.LatchFactory;
 
 /**
  * 
@@ -53,7 +52,7 @@ public class TestLatch extends BaseTestCase {
 
     static Properties properties;
 	static Platform platform;
-	static LatchFactory latchFactory;
+	static LatchFactoryImpl latchFactory;
 
 	static {
 		properties = new Properties();
@@ -498,7 +497,7 @@ public class TestLatch extends BaseTestCase {
 	 * write lockInterruptibly succeeds if lock free else is interruptible
 	 */
 	public void testWriteLockInterruptibly() throws Exception {
-		final ReadWriteUpdateLatch lock = new ReadWriteUpdateLatch();
+		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatchV1();
 		lock.exclusiveLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {
@@ -522,7 +521,7 @@ public class TestLatch extends BaseTestCase {
 	 * read lockInterruptibly succeeds if lock free else is interruptible
 	 */
 	public void testReadLockInterruptibly() throws Exception {
-		final ReadWriteUpdateLatch lock = new ReadWriteUpdateLatch();
+		final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory.newReadWriteUpdateLatchV1();
 		lock.exclusiveLock();
 		testfailed = false;
 		Thread t = new Thread(new Runnable() {

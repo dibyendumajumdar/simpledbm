@@ -44,8 +44,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
+import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
@@ -69,12 +73,12 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.typesystem.api.TableDefinition;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
-import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 public class SimpleDBMRequestHandler implements RequestHandler {
 
 	Database database;
 	Platform platform;
+	PlatformObjects po;
 
 	/**
 	 * A map of all active sessions
@@ -85,7 +89,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 * A sequence number generator used to allocate new session ids.
 	 */
 	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
-	
+
+	/*
+	 * Messages
+	 */
+	static final Message UnexpectedError = new Message('N', 'S', MessageType.ERROR, 1, "Unexpected error while converting message to UTF-8 format");
+	static final Message noSuchScan = new Message('N', 'S', MessageType.ERROR, 2, "Table Scan {0} does not exist");
 	
 	private ClientSession validateSession(Request request, Response response) {
 		ClientSession session = null;
@@ -132,6 +141,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 	public void onInitialize(Platform platform, Properties properties) {
 		this.platform = platform;
+		this.po = platform.getPlatformObjects(SimpleDBMServer.LOGGER_NAME);
 		database = DatabaseFactory.getDatabase(platform, properties);
 	}
 
@@ -149,7 +159,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			bytes = message.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new SimpleDBMException(e);
+			throw new SimpleDBMException(new MessageInstance(UnexpectedError), e);
 		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
@@ -186,7 +196,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			bytes = sb.toString().getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e1) {
-			throw new SimpleDBMException(e1);
+			throw new SimpleDBMException(new MessageInstance(UnexpectedError), e1);
 		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
@@ -275,7 +285,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 			return;
 		}
 		try {
-			TableDefinition tableDefinition = TypeSystemFactory.getTableDefinition(
+			TableDefinition tableDefinition = database.getTypeSystemFactory().getTableDefinition(
 					database.getPlatformObjects(), database.getTypeFactory(),
 					database.getRowFactory(), request.getData());
 			database.createTable(tableDefinition);
@@ -444,7 +454,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			TableScan tableScan = session.getTableScan(message.getScanId());
 			if (tableScan == null) {
-				throw new SimpleDBMException("No such table scan");
+				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
 			}
 			FetchNextRowReply reply = null;
 			boolean hasNext = tableScan.fetchNext();
@@ -479,7 +489,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			TableScan tableScan = session.getTableScan(message.getScanId());
 			if (tableScan == null) {
-				throw new RuntimeException("No such table scan");
+				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
 			}
 			tableScan.updateCurrentRow(message.getRow());
 		}
@@ -505,7 +515,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			TableScan tableScan = session.getTableScan(message.getScanId());
 			if (tableScan == null) {
-				throw new SimpleDBMException("No such table scan");
+				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
 			}
 			tableScan.deleteRow();
 		}

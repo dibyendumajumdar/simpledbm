@@ -41,7 +41,6 @@ import java.util.Properties;
 
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
-import org.simpledbm.common.util.mcat.MessageCatalog;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogException;
 import org.simpledbm.rss.api.wal.LogFactory;
@@ -109,92 +108,6 @@ public final class LogFactoryImpl implements LogFactory {
 	public LogFactoryImpl(Platform platform, Properties props) {
 		this.platform = platform;
     	this.po = platform.getPlatformObjects(LogManager.LOGGER_NAME);
-    	MessageCatalog mcat = po.getMessageCatalog();
-		
-        // Write Ahead Log Manager messages
-        mcat.addMessage(
-                "EW0001",
-                "SIMPLEDBM-EW0001: Log record is {0} bytes whereas maximum allowed log record size is {0}");
-        mcat.addMessage(
-                "EW0002",
-                "SIMPLEDBM-EW0002: Unexpected error ocurred while attempting to insert a log record");
-        mcat.addMessage(
-                "EW0003",
-                "SIMPLEDBM-EW0003: Log is already open or has encountered an error");
-        mcat.addMessage(
-            "EW0004",
-            "SIMPLEDBM-EW0004: Unexpected error occurred during shutdown");
-        mcat.addMessage("EW0005", "SIMPLEDBM-EW0005: Unexpected error occurred");
-        mcat.addMessage(
-                "EW0006",
-                "SIMPLEDBM-EW0006: Specified number of log control files {0} exceeds the maximum limit of {1}");
-        mcat.addMessage(
-                "EW0007",
-                "SIMPLEDBM-EW0007: Specified number of log groups {0} exceeds the maximum limit of {1}");
-        mcat.addMessage(
-                "EW0008",
-                "SIMPLEDBM-EW0008: Specified number of log files {0} exceeds the maximum limit of {1}");
-        mcat.addMessage(
-                "EW0009",
-                "SIMPLEDBM-EW0009: Error occurred while reading Log Anchor header information");
-        mcat.addMessage(
-            "EW0010",
-            "SIMPLEDBM-EW0010: Error occurred while reading Log Anchor body");
-        mcat.addMessage(
-                "EW0011",
-                "SIMPLEDBM-EW0011: Error occurred while validating Log Anchor - checksums do not match");
-        mcat.addMessage(
-                "EW0012",
-                "SIMPLEDBM-EW0012: Error occurred while reading header record for Log File {0}");
-        mcat.addMessage(
-                "EW0013",
-                "SIMPLEDBM-EW0013: Error occurred while opening Log File {0} - header is corrupted");
-        mcat.addMessage(
-                "EW0014",
-                "SIMPLEDBM-EW0014: Unexpected error occurred while closing Log File");
-        mcat.addMessage(
-                "EW0015",
-                "SIMPLEDBM-EW0015: Unexpected error occurred while closing Control File");
-        mcat.addMessage(
-            "EW0016",
-            "SIMPLEDBM-EW0016: Log file is not open or has encountered errors");
-        mcat.addMessage(
-            "EW0017",
-            "SIMPLEDBM-EW0017: Log file {0} has unexpected status {1}");
-        mcat.addMessage("EW0018", "SIMPLEDBM-EW0018: Unexpected error occurred");
-        mcat.addMessage(
-                "EW0019",
-                "SIMPLEDBM-EW0019: Error occurred while attempting to archive Log File");
-        mcat.addMessage(
-                "EW0020",
-                "SIMPLEDBM-EW0020: Error occurred while processing archive request - expected request {0} but got {1}");
-        mcat.addMessage(
-                "EW0021",
-                "SIMPLEDBM-EW0021: Error occurred while reading Log Record {0} - checksum mismatch");
-        mcat.addMessage(
-                "EW0022",
-                "SIMPLEDBM-EW0022: Error occurred while reading Log Record {0} - invalid log index");
-        mcat.addMessage(
-                "EW0023",
-                "SIMPLEDBM-EW0023: Error occurred while reading Log Record {0} - log header cannot be read");
-        mcat.addMessage(
-                "EW0024",
-                "SIMPLEDBM-EW0024: Log Record {0} has invalid length {1} - possibly garbage");
-        mcat.addMessage(
-                "EW0025",
-                "SIMPLEDBM-EW0025: Error occurred while reading Log Record {0} - read error");
-        mcat.addMessage(
-            "EW0026",
-            "SIMPLEDBM-EW0026: Error occurred while flushing the Log");
-        mcat.addMessage(
-            "EW0027",
-            "SIMPLEDBM-EW0027: Error occurred while archiving a Log File");
-        mcat.addMessage("IW0028", "SIMPLEDBM-IW0028: Log Writer STARTED");
-        mcat.addMessage("IW0029", "SIMPLEDBM-IW0029: Archive Cleaner STARTED");
-        mcat.addMessage("IW0030", "SIMPLEDBM-IW0030: Log Writer STOPPED");
-        mcat.addMessage("IW0031", "SIMPLEDBM-IW0031: Archive Cleaner STOPPED");
-        mcat.addMessage("IW0032", "SIMPLEDBM-IW0032: Write Ahead Log Manager STOPPED");
-
 	}
 
     public final void createLog(StorageContainerFactory storageFactory,

@@ -45,7 +45,9 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.st.StorageContainerInfo;
@@ -65,19 +67,17 @@ public final class StorageManagerImpl implements StorageManager {
     @SuppressWarnings("unused")
 	private final ExceptionHandler exceptionHandler;
 
-    private final MessageCatalog mcat;
-    
     private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
+
+	static Message m_IS0022 = new Message('R', 'S', MessageType.INFO, 22,
+			"StorageManager STOPPED");
+	static Message m_ES0023 = new Message('R', 'S', MessageType.INFO, 23,
+			"Unexpected error occurred while closing StorageContainer {0}");
 
     public StorageManagerImpl(Platform platform, Properties properties) {
     	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
     	log = po.getLogger();
     	exceptionHandler = po.getExceptionHandler();
-    	mcat = po.getMessageCatalog();
-        mcat.addMessage("IS0022", "SIMPLEDBM-IS0022: StorageManager STOPPED");
-        mcat.addMessage(
-                "ES0023",
-                "SIMPLEDBM-ES0023: Unexpected error occurred while closing StorageContainer {0}");
     }
     
     public final void register(int id, StorageContainer container) {
@@ -127,12 +127,11 @@ public final class StorageManagerImpl implements StorageManager {
                     remove(sc.getContainerId());
                 } catch (StorageException e) {
                     log.error(this.getClass().getName(), "shutdown", 
-                    		mcat.getMessage("ES0023", sc), e);
+                    		new MessageInstance(m_ES0023, sc).toString(), e);
                 }
             }
         }
-        log.info(this.getClass().getName(), "shutdown", mcat
-            .getMessage("IS0022"));
+        log.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IS0022).toString());
     }
 
     public StorageContainerInfo[] getActiveContainers() {

@@ -38,13 +38,16 @@ package org.simpledbm.typesystem.impl;
 
 import java.nio.ByteBuffer;
 
+import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.common.api.key.IndexKeyFactory;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.typesystem.api.IndexDefinition;
 import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.RowFactory;
@@ -59,7 +62,13 @@ import org.simpledbm.typesystem.api.TypeException;
 public class IndexDefinitionImpl implements IndexDefinition {
 
 	final Logger log;
-	final MessageCatalog mcat;
+	final ExceptionHandler exceptionHandler;
+
+	static final Message m_EY0010 = new Message('T', 'Y',
+			MessageType.ERROR, 10, "An index must have at least one column");
+	static final Message m_EY0011 = new Message('T', 'Y',
+			MessageType.ERROR, 11,
+			"The column {0} does not exist in table definition for {1}");
 	
     /**
      * Table to which this index belongs.
@@ -92,7 +101,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
 
     IndexDefinitionImpl(PlatformObjects po, TableDefinition table, ByteBuffer bb) {
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
 		this.table = table;
 		containerId = bb.getInt();
 		ByteString s = new ByteString(bb);
@@ -123,11 +132,11 @@ public class IndexDefinitionImpl implements IndexDefinition {
     IndexDefinitionImpl(PlatformObjects po, TableDefinition table, int containerId, String name,
             int columns[], boolean primary, boolean unique) {
     	this.log = po.getLogger();
-    	this.mcat = po.getMessageCatalog();
+    	this.exceptionHandler = po.getExceptionHandler();
     	this.table = table;
     	if (columns.length == 0) {
-    		log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0010"));
-    		throw new TypeException(mcat.getMessage("ED0010"));
+    		exceptionHandler.errorThrow(getClass().getName(), "IndexDefinitionImpl", 
+    				new TypeException(new MessageInstance(m_EY0010)));
     	}
         this.containerId = containerId;
         this.name = name;
@@ -141,8 +150,8 @@ public class IndexDefinitionImpl implements IndexDefinition {
         rowType = new TypeDescriptor[columns.length];
         for (int i = 0; i < columns.length; i++) {
             if (columns[i] >= table.getRowType().length || columns[i] < 0) {
-            	log.error(getClass().getName(), "IndexDefinitionImpl", mcat.getMessage("ED0011", columns[i], table.getName()));
-            	throw new TypeException(mcat.getMessage("ED0011", columns[i], table.getName()));
+            	exceptionHandler.errorThrow(getClass().getName(), "IndexDefinitionImpl", 
+            			new TypeException(new MessageInstance(m_EY0011, columns[i], table.getName())));
             }
             rowType[i] = table.getRowType()[columns[i]];
         }

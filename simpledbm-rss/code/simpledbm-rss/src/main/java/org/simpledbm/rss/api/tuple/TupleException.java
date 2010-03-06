@@ -40,7 +40,10 @@
  */
 package org.simpledbm.rss.api.tuple;
 
+import java.nio.ByteBuffer;
+
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * Exceptions thrown by the Tuple Manager module are all sub-types of 
@@ -50,19 +53,15 @@ public class TupleException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-    public TupleException() {
-        super();
-    }
+	public TupleException(ByteBuffer bb) {
+		super(bb);
+	}
 
-    public TupleException(String arg0) {
-        super(arg0);
-    }
+	public TupleException(MessageInstance m, Throwable arg1) {
+		super(m, arg1);
+	}
 
-    public TupleException(String arg0, Throwable arg1) {
-        super(arg0, arg1);
-    }
-
-    public TupleException(Throwable arg0) {
-        super(arg0);
-    }
+	public TupleException(MessageInstance m) {
+		super(m);
+	}
 }

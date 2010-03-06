@@ -34,21 +34,27 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.api.platform;
+package org.simpledbm.common.util.mcat;
 
-import org.simpledbm.common.api.exception.ExceptionHandler;
-import org.simpledbm.common.tools.diagnostics.TraceBuffer;
-import org.simpledbm.common.util.ClassUtils;
-import org.simpledbm.common.util.logging.Logger;
+import java.nio.ByteBuffer;
 
-public interface PlatformObjects {
+import org.simpledbm.junit.BaseTestCase;
 
-	Logger getLogger();
-	
-	ExceptionHandler getExceptionHandler();
-	
-	ClassUtils getClassUtils();
-	
-	TraceBuffer getTraceBuffer();
-	
+public class TestMessageCatalog extends BaseTestCase {
+
+    static Message notFoundMessage = new Message('C', 'L', MessageType.WARN, 999, "Unknown message key {0}");
+
+	public TestMessageCatalog(String name) {
+		super(name);
+	}
+
+	public void testMessageCatalog() {
+		MessageInstance m = new MessageInstance(notFoundMessage, "TEST");
+		ByteBuffer bb = ByteBuffer.allocate(m.getStoredLength());
+		m.store(bb);
+		bb.flip();
+		MessageInstance m2 = new MessageInstance(bb);
+		System.out.println(m2.toString());
+		assertEquals(m.toString(), m2.toString());
+	}
 }

@@ -58,7 +58,9 @@ import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
-import org.simpledbm.common.util.mcat.MessageCatalog;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
 import org.simpledbm.rss.api.bm.BufferManager;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
@@ -170,8 +172,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     final Logger log;
     
     final ExceptionHandler exceptionHandler;
-
-    final MessageCatalog mcat;
     
     private static final short MODULE_ID = 6;
 
@@ -213,6 +213,27 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     
     final TraceBuffer tracer;
 
+    // tuple manager messages
+	static Message m_ET0001 = new Message('R', 'T', MessageType.ERROR, 1,
+			"This operation has not yet been implemented");
+	static Message m_ET0002 = new Message('R', 
+			'T',
+			MessageType.ERROR,
+			2,
+			"Comparison is not possible because the supplied argument {0} is not of type {1}");
+	static Message m_ET0003 = new Message('R', 'T', MessageType.ERROR, 3,
+			"TupleId {0} has not been initialized");
+	static Message m_ET0004 = new Message('R', 'T', MessageType.ERROR, 4,
+			"Failed to allocate space for TupleContainer {0}");
+	static Message m_ET0005 = new Message('R', 'T', MessageType.ERROR, 5,
+			"Invalid location {0}");
+	static Message m_ET0006 = new Message('R', 'T', MessageType.ERROR, 6,
+			"Unexpected IO error occurred while reading tuple data");
+	static Message m_ET0007 = new Message('R', 'T', MessageType.ERROR, 7,
+			"Invalid call to completeInsert() as startInsert() did not succeed");
+	static Message m_ET0009 = new Message('R', 'T', MessageType.ERROR, 9,
+			"Unexpected error");  
+    
     public TupleManagerImpl(Platform platform, ObjectRegistry objectFactory,
             LoggableFactory loggableFactory, FreeSpaceManager spaceMgr,
             BufferManager bufMgr, SlottedPageManager spMgr,
@@ -223,7 +244,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
     	this.tracer = po.getTraceBuffer();
         this.log = po.getLogger();
         this.exceptionHandler = po.getExceptionHandler();
-        this.mcat = po.getMessageCatalog();
     	this.lockAdaptor = lockAdaptor;
         this.locationFactory = new TupleIdFactory();
         this.objectFactory = objectFactory;
@@ -263,26 +283,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 new PageId());
         emptyPage.init();
 
-        // tuple manager messages
-        mcat.addMessage(
-            "ET0001",
-            "SIMPLEDBM-ET0001: This operation has not yet been implemented");
-        mcat.addMessage(
-                "ET0002",
-                "SIMPLEDBM-ET0002: Comparison is not possible because the supplied argument {0} is not of type {1}");
-        mcat.addMessage(
-            "ET0003",
-            "SIMPLEDBM-ET0003: TupleId {0} has not been initialized");
-        mcat.addMessage(
-                "ET0004",
-                "SIMPLEDBM-ET0004: Failed to allocate space for TupleContainer {0}");
-        mcat.addMessage("ET0005", "SIMPLEDBM-ET0005: Invalid location {0}");
-        mcat.addMessage(
-                "ET0006",
-                "SIMPLEDBM-ET0006: Unexpected IO error occurred while reading tuple data");
-        mcat.addMessage(
-                "ET0007",
-                "SIMPLEDBM-ET0007: Invalid call to completeInsert() as startInsert() did not succeed");
+
     }
 
     /**
@@ -683,7 +684,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 									maxPageSpace, requiredSpace));
 					if (pageNumber == -1) {
 						exceptionHandler.errorThrow(this.getClass().getName(),
-								"doCompleteInsert", new TupleException(mcat.getMessage("ET0004",
+								"doCompleteInsert", new TupleException(new MessageInstance(m_ET0004,
 								containerId)));
 					}
 					previouslySeenPageNumber = -1;
@@ -728,7 +729,9 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 		/*
 		 * Should never reach here.
 		 */
-		throw new TupleException();
+		exceptionHandler.errorThrow(this.getClass().getName(), "locateEmptyPage", 
+				new TupleException(new MessageInstance(m_ET0009)));
+		return null;
 	}
 
 	/**
@@ -1402,7 +1405,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public void completeInsert() {
             if (!proceedWithInsert) {
             	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "completInsert", 
-                		new TupleException(tuplemgr.mcat.getMessage("ET0007")));
+                		new TupleException(new MessageInstance(m_ET0007)));
             }
             boolean success = false;
             try {
@@ -1458,7 +1461,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
             if (location.getContainerId() != containerId) {
             	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doDelete", 
-                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
+                		new TupleException(new MessageInstance(m_ET0005, location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1494,8 +1497,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         	tuplemgr.exceptionHandler.errorThrow(
                                 this.getClass().getName(),
                                 "doDelete",
-                                new TupleException(tuplemgr.mcat.getMessage(
-                                "ET0005",
+                                new TupleException(new MessageInstance(m_ET0005,
                                 location)));
                         }
                         validated = true;
@@ -1566,7 +1568,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
             if (location.getContainerId() != containerId) {
             	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
+                		new TupleException(new MessageInstance(m_ET0005, location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;
@@ -1593,8 +1595,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                     .isFirstSegment(page, slotNumber))) {
                         	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                            	new TupleException(tuplemgr.mcat.getMessage(
-                                "ET0005",
+                            	new TupleException(new MessageInstance(m_ET0005,
                                 location)));
                         }
                         validated = true;
@@ -1605,7 +1606,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         os.write(ts.data);
                     } catch (IOException e) {
                     	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                        		new TupleException(tuplemgr.mcat.getMessage("ET0006"), e));
+                        		new TupleException(new MessageInstance(m_ET0006), e));
                     }
 
                     if (TupleHelper.isSegmented(page, slotNumber)) {
@@ -1647,7 +1648,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
 
             if (location.getContainerId() != containerId) {
             	tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(), "doRead", 
-                		new TupleException(tuplemgr.mcat.getMessage("ET0005", location)));
+                		new TupleException(new MessageInstance(m_ET0005, location)));
             }
 
             BufferManager bufmgr = tuplemgr.bufmgr;

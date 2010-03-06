@@ -36,16 +36,21 @@
  */
 package org.simpledbm.network.nio.impl;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.Socket;
+import java.nio.ByteBuffer;
+
+import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.network.nio.api.Connection;
 import org.simpledbm.network.nio.api.NetworkException;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.Response;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.Socket;
-import java.nio.ByteBuffer;
 
 public class ConnectionImpl implements Connection {
 
@@ -61,27 +66,44 @@ public class ConnectionImpl implements Connection {
     static final int ERRORED = 1;
     static final int CLOSED = 2;
 
+    static final Message m_IOException = new Message('N', 'C', MessageType.ERROR, 1, "An IO Error occurred while performing {0} operation");    
+    static final Message m_erroredException = new Message('N', 'C', MessageType.ERROR, 2, "Unable to perform operation as the connection has had previous errors");
+    static final Message m_invalidResponseHeaderException = new Message('N', 'C', MessageType.ERROR, 3, "Invalid response header, length received does not match expected length");
+    static final Message m_invalidResponseDataException = new Message('N', 'C', MessageType.ERROR, 4, "Invalid response data, length received does not match expected length");
+    static final Message m_serverError = new Message('N', 'C', MessageType.ERROR, 5, "Server returned error message: {0}");
+  
+    String getError(Response response) {
+    	byte[] data = response.getData().array();
+    	String msg;
+		try {
+			msg = new String(data, "UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			msg = "Error message could not be decoded";
+		}
+    	return msg;
+    }    
+
     public ConnectionImpl(String host, int port) {
         try {
             this.socket = new Socket(host, port);
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "connect");
         }
         try {
             this.is = socket.getInputStream();
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "connect");
         }
         try {
             this.os = socket.getOutputStream();
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "connect");
         }
     }
 
     public Response submit(Request request) {
         if (status != OKAY) {
-            handleException(new IllegalStateException());
+            throw new NetworkException(new MessageInstance(m_erroredException, "submit"));
         }
 
         /* Send the request */
@@ -91,7 +113,7 @@ public class ConnectionImpl implements Connection {
             os.write(prefix);
             os.write(request.getData().array());
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "submit");
         }
 
         /* Now wait/get the response */
@@ -101,11 +123,12 @@ public class ConnectionImpl implements Connection {
         try {
             len = is.read(prefix, 0, prefix.length);
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "submit");
         }
 
         if (len != prefix.length) {
-            handleException(new IllegalArgumentException());
+        	status = ERRORED;
+            throw new NetworkException(new MessageInstance(m_invalidResponseHeaderException));
         }
 
         /* Parse the response header */
@@ -113,7 +136,7 @@ public class ConnectionImpl implements Connection {
         try {
             responseHeader.retrieve(header);
         } catch (IOException e1) {
-            handleException(e1);
+            handleException(e1, "submit");
         }
 
         /* Now get the response data */
@@ -122,13 +145,24 @@ public class ConnectionImpl implements Connection {
         try {
             len = is.read(data, 0, len);
         } catch (IOException e) {
-            handleException(e);
+            handleException(e, "submit");
         }
 
         if (len != data.length) {
-            handleException(new IllegalArgumentException());
+        	status = ERRORED;
+            throw new NetworkException(new MessageInstance(m_invalidResponseDataException));
         }
         Response response = new ResponseImpl(responseHeader, ByteBuffer.wrap(data));
+        if (response.getStatusCode() == -1) {
+        	if (responseHeader.hasException()) {
+        		// We try to propagate an exception raised by the server
+        		throw new SimpleDBMException(response.getData());
+        	}
+        	else {
+        		// error cannot be propagated; so throw a new exception
+        		throw new NetworkException(new MessageInstance(m_serverError, getError(response)));
+        	}
+        }	
         return response;
     }
 
@@ -149,9 +183,9 @@ public class ConnectionImpl implements Connection {
         status = CLOSED;
     }
 
-    void handleException(Exception e) {
+    void handleException(Exception e, String op) {
         status = ERRORED;
-        NetworkException ne = new NetworkException(e);
+        NetworkException ne = new NetworkException(new MessageInstance(m_IOException, op), e);
 //		logger.error(getClass().getName(), "handleException", e.getMessage(),
 //				e);
         e.printStackTrace();
