@@ -3,7 +3,7 @@
 	<groupId>org.simpledbm.database</groupId>
 	<artifactId>simpledbm-database</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.14</version>
+	<version>1.0.15-SNAPSHOT</version>
 	<name>SimpleDBM Database</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
