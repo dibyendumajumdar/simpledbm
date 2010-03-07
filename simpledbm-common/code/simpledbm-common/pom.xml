@@ -3,7 +3,7 @@
  <groupId>org.simpledbm.rss</groupId>
  <artifactId>simpledbm-common</artifactId>
  <packaging>jar</packaging>
- <version>1.0.3</version>
+ <version>1.0.4-SNAPSHOT</version>
  <name>SimpleDBM</name>
  <description>SimpleDBM Common</description>
  <url>http://www.simpledbm.org</url>
