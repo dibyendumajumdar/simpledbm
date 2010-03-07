@@ -42,6 +42,8 @@ import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.network.nio.api.NetworkServer;
 import org.simpledbm.network.nio.api.NetworkUtil;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -86,6 +88,7 @@ public class SimpleDBMServer {
         Platform platform = new PlatformImpl(properties);
         SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
         networkServer = NetworkUtil.createNetworkServer(platform, simpleDBMRequestHandler, properties);
+        Runtime.getRuntime().addShutdownHook(new MyShutdownThread(networkServer));
         networkServer.start();
     }
 
@@ -102,6 +105,12 @@ public class SimpleDBMServer {
 
     private Properties parseProperties(String arg) {
         InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(arg);
+        if (null == in) {
+        	try {
+				in = new FileInputStream(arg);
+			} catch (FileNotFoundException e) {
+			}
+        }
         if (null == in) {
             System.err.println("Unable to access resource [" + arg + "]");
             return null;
@@ -124,6 +133,21 @@ public class SimpleDBMServer {
         return properties;
     }
 
+    public static class MyShutdownThread extends Thread {
+    	final NetworkServer server;
+    	
+    	MyShutdownThread(NetworkServer server) {
+    		super();
+    		this.server = server;
+    	}
+    	
+    	public void run() {
+    		if (server != null) {
+    			server.shutdown();
+    		}
+    	}
+    }    
+    
     public static void main(String[] args) {
         SimpleDBMServer server = new SimpleDBMServer();
         server.run(args);
