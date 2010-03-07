@@ -13,3 +13,5 @@ rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footn
 rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc typesystem.rst typesystem.tex
 
 rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc database-api.rst database-api.tex
+
+rst2latex.py --documentclass="book" --documentoptions="onside" --use-latex-footnotes --use-latex-citations --use-latex-abstract --use-verbatim-when-possible --table-style="standard" --use-latex-docinfo --use-latex-toc network-api.rst network-api.tex

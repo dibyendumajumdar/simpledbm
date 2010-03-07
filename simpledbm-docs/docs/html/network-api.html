@@ -1,0 +1,702 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>SimpleDBM Network API &mdash; SimpleDBM v1.0.12 BETA documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '#',
+        VERSION:     '1.0.12 BETA',
+        COLLAPSE_MODINDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="SimpleDBM v1.0.12 BETA documentation" href="index.html" />
+    <link rel="next" title="SimpleDBM TypeSystem" href="typesystem.html" />
+    <link rel="prev" title="SimpleDBM Database API" href="database-api.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             accesskey="N">next</a></li>
+        <li class="right" >
+          <a href="database-api.html" title="SimpleDBM Database API"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="simpledbm-network-api">
+<h1><a class="toc-backref" href="#id1">SimpleDBM Network API</a><a class="headerlink" href="#simpledbm-network-api" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field"><th class="field-name">Author:</th><td class="field-body">Dibyendu Majumdar</td>
+</tr>
+<tr class="field"><th class="field-name">Contact:</th><td class="field-body">d dot majumdar at gmail dot com</td>
+</tr>
+<tr class="field"><th class="field-name">Version:</th><td class="field-body">0.0.1</td>
+</tr>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">10 March 2010</td>
+</tr>
+<tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2010</td>
+</tr>
+</tbody>
+</table>
+<div class="contents topic" id="contents">
+<p class="topic-title first">Contents</p>
+<ul class="simple">
+<li><a class="reference internal" href="#simpledbm-network-api" id="id1">SimpleDBM Network API</a><ul>
+<li><a class="reference internal" href="#introduction" id="id2">Introduction</a><ul>
+<li><a class="reference internal" href="#intended-audience" id="id3">Intended Audience</a></li>
+<li><a class="reference internal" href="#pre-requisite-reading" id="id4">Pre-requisite Reading</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#getting-started" id="id5">Getting Started</a><ul>
+<li><a class="reference internal" href="#simpledbm-binaries" id="id6">SimpleDBM binaries</a></li>
+<li><a class="reference internal" href="#summary-of-steps-required" id="id7">Summary of Steps Required</a></li>
+<li><a class="reference internal" href="#writing-your-application" id="id8">Writing your Application</a></li>
+<li><a class="reference internal" href="#creating-a-simpledbm-database" id="id9">Creating a SimpleDBM database</a></li>
+<li><a class="reference internal" href="#starting-a-database" id="id10">Starting a database</a></li>
+<li><a class="reference internal" href="#problems-starting-a-database" id="id11">Problems starting a database</a></li>
+<li><a class="reference internal" href="#managing-log-messages" id="id12">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#the-network-api" id="id13">The Network API</a><ul>
+<li><a class="reference internal" href="#sessionmanager" id="id14">SessionManager</a></li>
+<li><a class="reference internal" href="#session" id="id15">Session</a></li>
+<li><a class="reference internal" href="#table" id="id16">Table</a></li>
+<li><a class="reference internal" href="#tablescan" id="id17">TableScan</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="introduction">
+<h2><a class="toc-backref" href="#id2">Introduction</a><a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes the SimpleDBM Network API.</p>
+<div class="section" id="intended-audience">
+<h3><a class="toc-backref" href="#id3">Intended Audience</a><a class="headerlink" href="#intended-audience" title="Permalink to this headline">¶</a></h3>
+<p>This documented is targetted at users of <a class="reference external" href="http://www.simpledbm.org">SimpleDBM</a>.</p>
+</div>
+<div class="section" id="pre-requisite-reading">
+<h3><a class="toc-backref" href="#id4">Pre-requisite Reading</a><a class="headerlink" href="#pre-requisite-reading" title="Permalink to this headline">¶</a></h3>
+<p>Before reading this document, the reader is advised to go through
+the <a class="reference external" href="http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html">SimpleDBM Overview</a> document.</p>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h2><a class="toc-backref" href="#id5">Getting Started</a><a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="simpledbm-binaries">
+<h3><a class="toc-backref" href="#id6">SimpleDBM binaries</a><a class="headerlink" href="#simpledbm-binaries" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.5
+or above if you want to work with SimpleDBM.</p>
+<p>You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
+project download area. The following jar files are required:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-network-client-0.0.1-ALPHA.jar</a> - client API.</li>
+<li><a class="reference external" href="http://simpledbm.googlecode.com/files/">simpledbm-network-server-0.0.1-ALPHA.jar</a> - server engine.</li>
+</ul>
+<p>You should make sure that required jars are in your class path.</p>
+</div>
+<div class="section" id="summary-of-steps-required">
+<h3><a class="toc-backref" href="#id7">Summary of Steps Required</a><a class="headerlink" href="#summary-of-steps-required" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic simple">
+<li>Write your client application, using the SimpleDBM Network Client API.</li>
+<li>Create a new SimpleDBM database.</li>
+<li>Start the SimpleDBM Network Server.</li>
+<li>Run your application.</li>
+</ol>
+</div>
+<div class="section" id="writing-your-application">
+<h3><a class="toc-backref" href="#id8">Writing your Application</a><a class="headerlink" href="#writing-your-application" title="Permalink to this headline">¶</a></h3>
+<p>At present only Java language bindings are available, therefore you must write your application
+in Java. All you need is the SimpleDBM Network Client jar, which includes all other required
+SimpleDBM modules.</p>
+<p>This document will in future contain a tutorial on how to use the Client API. For now,
+the Java Interface for the API is available in the Appendix. An example client interaction
+is given below:</p>
+<div class="highlight-python"><pre>Properties properties = parseProperties("test.properties");</pre>
+</div>
+<p>Start a session:</p>
+<div class="highlight-python"><pre>SessionManager sessionManager = new SessionManager(properties,
+  "localhost", 8000);</pre>
+</div>
+<p>Create the table definition:</p>
+<div class="highlight-python"><pre>TypeFactory ff = sessionManager.getTypeFactory();
+Session session = sessionManager.openSession();
+try {
+ // create a table definition
+ TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /* pk */
+ ff.getVarcharType(20), /* name */
+ ff.getVarcharType(20), /* surname */
+ ff.getVarcharType(20), /* city */
+ ff.getVarcharType(45), /* email address */
+ ff.getDateTimeType(), /* date of birth */
+ ff.getNumberType(2) /* salary */
+ };
+ TableDefinition tableDefinition = sessionManager
+   .newTableDefinition("employee", 1, employee_rowtype);
+ tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+   true);
+ tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
+   false, false);
+ tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
+   false, false);
+ tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
+   false, false);</pre>
+</div>
+<p>Create the table in the database:</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">session</span><span class="o">.</span><span class="n">createTable</span><span class="p">(</span><span class="n">tableDefinition</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>Insert a row:</p>
+<div class="highlight-python"><pre>session.startTransaction(IsolationMode.READ_COMMITTED);
+boolean success = false;
+try {
+ Table table = session.getTable(1);
+ Row tableRow = table.getRow();
+ tableRow.setInt(0, 1);
+ tableRow.setString(1, "Joe");
+ tableRow.setString(2, "Blogg");
+ tableRow.setDate(5, getDOB(1930, 12, 31));
+ tableRow.setString(6, "500.00");
+ table.addRow(tableRow);</pre>
+</div>
+<p>In the same transaction, scan the table:</p>
+<div class="highlight-python"><pre>TableScan scan = table.openScan(0, null, false);
+try {
+ Row row = scan.fetchNext();
+ while (row != null) {
+  System.out.println("Fetched row " + row);
+  row.setString(6, "501.00");
+  scan.updateCurrentRow(row);
+  row = scan.fetchNext();
+ }
+} finally {
+ scan.close();
+}
+success = true;</pre>
+</div>
+<p>Commit the transaction:</p>
+<div class="highlight-python"><pre>} finally {
+ if (success) {
+  session.commit();
+ } else {
+  session.rollback();
+ }
+}</pre>
+</div>
+<p>Now lets delete the newly added row.
+First start a new transaction:</p>
+<div class="highlight-python"><pre>session.startTransaction(IsolationMode.READ_COMMITTED);
+success = false;
+try {
+ Table table = session.getTable(1);</pre>
+</div>
+<p>Scan the table and delete all rows:</p>
+<div class="highlight-python"><pre>TableScan scan = table.openScan(0, null, false);
+try {
+ Row row = scan.fetchNext();
+ while (row != null) {
+  System.out.println("Deleting row " + row);
+  scan.deleteRow();
+  row = scan.fetchNext();
+ }
+} finally {
+ scan.close();
+}
+success = true;</pre>
+</div>
+<p>Commit the transaction:</p>
+<div class="highlight-python"><pre> } finally {
+  if (success) {
+   session.commit();
+  } else {
+   session.rollback();
+  }
+ }
+} catch (Exception e) {
+ e.printStackTrace();</pre>
+</div>
+<p>Finally, close the session:</p>
+<div class="highlight-python"><pre>} finally {
+ session.close();
+}</pre>
+</div>
+</div>
+<div class="section" id="creating-a-simpledbm-database">
+<h3><a class="toc-backref" href="#id9">Creating a SimpleDBM database</a><a class="headerlink" href="#creating-a-simpledbm-database" title="Permalink to this headline">¶</a></h3>
+<p>The database configuration is defined in a properties file. Example of the
+properties file:</p>
+<div class="highlight-python"><pre>logging.properties.file = classpath:simpledbm.logging.properties
+logging.properties.type = log4j
+network.server.host = localhost
+network.server.port = 8000
+log.ctl.1 = ctl.a
+log.ctl.2 = ctl.b
+log.groups.1.path = .
+log.archive.path = .
+log.group.files = 3
+log.file.size = 5242880
+log.buffer.size = 5242880
+log.buffer.limit = 4
+log.flush.interval = 30
+log.disableFlushRequests = true
+storage.basePath = testdata/DatabaseTests
+storage.createMode = rw
+storage.openMode = rw
+storage.flushMode = noforce
+bufferpool.numbuffers = 1500
+bufferpool.writerSleepInterval = 60000
+transaction.ckpt.interval = 60000
+lock.deadlock.detection.interval = 3</pre>
+</div>
+<p>Notice that most of these properties are the standard options supported by SimpleDBM.
+You also need to create a log4j config file, in this example, the server is being
+instructed to search for simpledbm.logging.properties file in the classpath.
+An example of the logging properties file can be found in the SimpleDBM
+distribution.</p>
+<p>To create your new database, invoke SimpleDBM Network Server as follows:</p>
+<blockquote>
+java -jar simpledbm-network-server-0.0.1-ALPHA.jar create &lt;properties file&gt;</blockquote>
+<p>This will create an empty database in the location specified by the property
+<cite>storage.basePath</cite>.</p>
+</div>
+<div class="section" id="starting-a-database">
+<h3><a class="toc-backref" href="#id10">Starting a database</a><a class="headerlink" href="#starting-a-database" title="Permalink to this headline">¶</a></h3>
+<p>Once a database has been created, it can be started using the following
+commad:</p>
+<blockquote>
+java -jar simpledbm-network-server-0.0.1-ALPHA.jar open &lt;properties file&gt;</blockquote>
+<p>To stop the database server, simply press Control-C.</p>
+</div>
+<div class="section" id="problems-starting-a-database">
+<h3><a class="toc-backref" href="#id11">Problems starting a database</a><a class="headerlink" href="#problems-starting-a-database" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM uses a lock file to determine whether an instance is already
+running. At startup, it creates the file at the location <tt class="docutils literal"><span class="pre">_internal\lock</span></tt> relative
+to the path where the database is created. If this file already exists, then
+SimpleDBM will report a failure such as:</p>
+<div class="highlight-python"><pre>SIMPLEDBM-EV0005: Error starting SimpleDBM RSS Server, another
+instance may be running - error was: SIMPLEDBM-ES0017: Unable to create
+StorageContainer .._internal\lock because an object of the name already exists</pre>
+</div>
+<p>This message indicates either that some other instance is running, or that
+an earlier instance of SimpleDBM terminated without properly sutting down.
+If the latter is the case, then the <tt class="docutils literal"><span class="pre">_internal/lock</span></tt> file may be deleted enabling
+SimpleDBM to start.</p>
+</div>
+<div class="section" id="managing-log-messages">
+<h3><a class="toc-backref" href="#id12">Managing log messages</a><a class="headerlink" href="#managing-log-messages" title="Permalink to this headline">¶</a></h3>
+<p>SimpleDBM has support for JDK 1.4 style logging as well as
+Log4J logging. By default, if Log4J library is available on the
+classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
+package is used.</p>
+<p>You can specify the type of logging to be used using the
+Server Property <tt class="docutils literal"><span class="pre">logging.properties.type</span></tt>. If this is set to
+&#8220;log4j&#8221;, SimpleDBM will use Log4J logging. Any other value causes
+SimpleDBM to use default JDK logging.</p>
+<p>The configuration of the logging can be specified using a
+properties file. The name and location of the properties file
+is specified using the Server property <tt class="docutils literal"><span class="pre">logging.properties.file</span></tt>.
+If the filename is prefixed with the string &#8220;classpath:&#8221;, then
+SimpleDBM will search for the properties file in the classpath.
+Otherwise, the filename is searched for in the current filesystem.</p>
+<p>A sample logging properties file is shown below. Note that this
+sample contains both JDK style and Log4J style configuration.:</p>
+<div class="highlight-python"><pre>############################################################
+#      JDK 1.4 Logging
+############################################################
+handlers= java.util.logging.FileHandler, java.util.logging.ConsoleHandler
+.level= INFO
+
+java.util.logging.FileHandler.pattern = simpledbm.log.%g
+java.util.logging.FileHandler.limit = 50000
+java.util.logging.FileHandler.count = 1
+java.util.logging.FileHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.FileHandler.level = ALL
+
+java.util.logging.ConsoleHandler.formatter = java.util.logging.SimpleFormatter
+java.util.logging.ConsoleHandler.level = ALL
+
+org.simpledbm.registry.level = INFO
+org.simpledbm.bufmgr.level = INFO
+org.simpledbm.indexmgr.level = INFO
+org.simpledbm.storagemgr.level = INFO
+org.simpledbm.walogmgr.level = INFO
+org.simpledbm.lockmgr.level = INFO
+org.simpledbm.freespacemgr.level = INFO
+org.simpledbm.slotpagemgr.level = INFO
+org.simpledbm.transactionmgr.level = INFO
+org.simpledbm.tuplemgr.level = INFO
+org.simpledbm.latchmgr.level = INFO
+org.simpledbm.pagemgr.level = INFO
+org.simpledbm.rss.util.level = INFO
+org.simpledbm.util.level = INFO
+org.simpledbm.server.level = INFO
+org.simpledbm.trace.level = INFO
+org.simpledbm.database.level = INFO
+
+# Default Log4J configuration
+
+# Console appender
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# File Appender
+log4j.appender.A2=org.apache.log4j.RollingFileAppender
+log4j.appender.A2.MaxFileSize=10MB
+log4j.appender.A2.MaxBackupIndex=1
+log4j.appender.A2.File=simpledbm.log
+log4j.appender.A2.layout=org.apache.log4j.PatternLayout
+log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
+
+# Root logger set to DEBUG using the A1 and A2 appenders defined above.
+log4j.rootLogger=DEBUG, A1, A2
+
+# Various loggers
+log4j.logger.org.simpledbm.registry=INFO
+log4j.logger.org.simpledbm.bufmgr=INFO
+log4j.logger.org.simpledbm.indexmgr=INFO
+log4j.logger.org.simpledbm.storagemgr=INFO
+log4j.logger.org.simpledbm.walogmgr=INFO
+log4j.logger.org.simpledbm.lockmgr=INFO
+log4j.logger.org.simpledbm.freespacemgr=INFO
+log4j.logger.org.simpledbm.slotpagemgr=INFO
+log4j.logger.org.simpledbm.transactionmgr=INFO
+log4j.logger.org.simpledbm.tuplemgr=INFO
+log4j.logger.org.simpledbm.latchmgr=INFO
+log4j.logger.org.simpledbm.pagemgr=INFO
+log4j.logger.org.simpledbm.rss.util=INFO
+log4j.logger.org.simpledbm.util=INFO
+log4j.logger.org.simpledbm.server=INFO
+log4j.logger.org.simpledbm.trace=INFO
+log4j.logger.org.simpledbm.database=INFO</pre>
+</div>
+<p>By default, SimpleDBM looks for a logging properties file named
+&#8220;simpledbm.logging.properties&#8221;.</p>
+</div>
+</div>
+<div class="section" id="the-network-api">
+<h2><a class="toc-backref" href="#id13">The Network API</a><a class="headerlink" href="#the-network-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sessionmanager">
+<h3><a class="toc-backref" href="#id14">SessionManager</a><a class="headerlink" href="#sessionmanager" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * The SessionManager manages the connection to the SimpleDBM
+ * Network Server, and initiates sessions used by the clients.
+ *
+ * @author dibyendu majumdar
+ */
+public abstract class SessionManager {
+
+  /**
+   * Obtains an instance of the SessionManager for the specified
+   * connection parameters. The client should allow for the fact
+   * that the returned instance may be a shared one.
+   *
+   * @param properties
+   * @param host
+   * @param port
+   */
+  public static SessionManager getSessionManager(
+                Properties properties,
+                String host,
+                int port,
+                int timeout);
+
+  /**
+   * Gets the TypeFactory associated with the database.
+   */
+  public abstract TypeFactory getTypeFactory();
+
+  /**
+   * Gets the RowFactory for the database.
+   */
+  public abstract RowFactory getRowFactory();
+
+  /**
+   * Creates a new TableDefinition.
+   * @param name
+   * @param containerId
+   * @param rowType
+   */
+  public abstract TableDefinition newTableDefinition(
+                  String name, int containerId,
+                  TypeDescriptor[] rowType);
+
+  /**
+   * Starts a new session.
+   */
+  public abstract Session openSession();
+
+  /**
+   * Gets the underlying connection object associated with
+   * this SessionManager.
+   *
+   * The connection object must be handled with care, as
+   * its correct operation is vital to the client server
+   * communication.
+   */
+  public abstract Connection getConnection();
+}</pre>
+</div>
+</div>
+<div class="section" id="session">
+<h3><a class="toc-backref" href="#id15">Session</a><a class="headerlink" href="#session" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A Session encapsulates an interactive session with the server.
+ * Each session can only have one active transaction at any
+ * point in time. Clients can open multiple simultaneous
+ * sessions.
+ */
+public interface Session {
+
+  /**
+   * Closes the session. If there is any outstanding transaction, it will
+   * be aborted. Sessions should be closed by client applications when no
+   * longer required, as this will free up resources on the server.
+   */
+  public void close();
+
+  /**
+   * Starts a new transaction. In the context of a session,
+   * only one transaction can be active at a point in time, hence if
+   * this method will fail if there is already an active transaction.
+   * @param isolationMode
+   */
+  public void startTransaction(IsolationMode isolationMode);
+
+  /**
+   * Commits the current transaction; an exception will be thrown if
+   * there is no active transaction.
+   */
+  public void commit();
+
+  /**
+   * Aborts the current transaction; an exception will be thrown if
+   * there is no active transaction
+   */
+  public void rollback();
+
+  /**
+   * Creates a table as specified. The table will be created using its own
+   * transaction.
+   * @param tableDefinition
+   */
+  public void createTable(TableDefinition tableDefinition);
+
+  /**
+   * Obtains a reference to the table. The Table container will be
+   * locked in SHARED mode.
+   * @param containerId
+   * @return
+   */
+  public Table getTable(int containerId);
+
+  /**
+   * Gets the SessionManager that is managing this session.
+   * @return
+   */
+  public SessionManager getSessionManager();
+
+  /**
+   * Gets the unique id associated with this session.
+   * @return
+   */
+  public int getSessionId();
+}</pre>
+</div>
+</div>
+<div class="section" id="table">
+<h3><a class="toc-backref" href="#id16">Table</a><a class="headerlink" href="#table" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A Table represents a collection of related containers, one of which is
+ * a Data Container, and the others, Index Containers. The Data Container
+ * hold rows of table data, and the Index Containers provide access paths to
+ * the table rows. At least one index must be created because the database
+ * uses the index to manage the primary key and lock isolation modes.
+ *
+ * @author Dibyendu Majumdar
+ */
+public interface Table {
+
+    /**
+     * Returns a new scan object.
+     * @param indexno
+     * @param startRow
+     * @param forUpdate
+     * @return
+     */
+    public TableScan openScan(int indexno, Row startRow,
+         boolean forUpdate);
+
+    /**
+     * Obtains an empty row, in which all columns are set to NULL.
+     * @return
+     */
+    public Row getRow();
+
+    /**
+     * Adds the given row to the table. The add operation may fail
+     * if another row with the same primary key already exists.
+     * @param row
+     */
+    public void addRow(Row row);
+}</pre>
+</div>
+</div>
+<div class="section" id="tablescan">
+<h3><a class="toc-backref" href="#id17">TableScan</a><a class="headerlink" href="#tablescan" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-python"><pre>/**
+ * A TableScan is used to traverse the rows in a table, ordered
+ * by an Index. The initial position of the scan is determined by
+ * the keys supplied when the scan is opened. The table scan
+ * respects the lock isolation mode of the transaction.
+ * &lt;p&gt;
+ * As rows are fetched, the scan maintains its position. The current
+ * row may be updated or deleted.
+ *
+ * @author Dibyendu Majumdar
+ */
+public interface TableScan {
+
+  /**
+   * Opens the scan, preparing for data to be fetched.
+   * @return
+   */
+  public int open();
+
+  /**
+   * Fetches the next row. If EOF is reached, null will
+   * be returned.
+   * @return
+   */
+  public Row fetchNext();
+
+  /**
+   * Updates the current row.
+   * @param tableRow
+   */
+  public void updateCurrentRow(Row tableRow);
+
+  /**
+   * Deletes the current row.
+   */
+  public void deleteRow();
+
+  /**
+   * Closes the scan, releasing any locks that are not required.
+   */
+  public void close();
+
+  /**
+   * Obtains the session that is associated with this scan.
+   * @return
+   */
+  Session getSession();
+}</pre>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+            <h3><a href="index.html">Table Of Contents</a></h3>
+            <ul>
+<li><a class="reference external" href="#">SimpleDBM Network API</a><ul>
+<li><a class="reference external" href="#introduction">Introduction</a><ul>
+<li><a class="reference external" href="#intended-audience">Intended Audience</a></li>
+<li><a class="reference external" href="#pre-requisite-reading">Pre-requisite Reading</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#getting-started">Getting Started</a><ul>
+<li><a class="reference external" href="#simpledbm-binaries">SimpleDBM binaries</a></li>
+<li><a class="reference external" href="#summary-of-steps-required">Summary of Steps Required</a></li>
+<li><a class="reference external" href="#writing-your-application">Writing your Application</a></li>
+<li><a class="reference external" href="#creating-a-simpledbm-database">Creating a SimpleDBM database</a></li>
+<li><a class="reference external" href="#starting-a-database">Starting a database</a></li>
+<li><a class="reference external" href="#problems-starting-a-database">Problems starting a database</a></li>
+<li><a class="reference external" href="#managing-log-messages">Managing log messages</a></li>
+</ul>
+</li>
+<li><a class="reference external" href="#the-network-api">The Network API</a><ul>
+<li><a class="reference external" href="#sessionmanager">SessionManager</a></li>
+<li><a class="reference external" href="#session">Session</a></li>
+<li><a class="reference external" href="#table">Table</a></li>
+<li><a class="reference external" href="#tablescan">TableScan</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+            <h4>Previous topic</h4>
+            <p class="topless"><a href="database-api.html"
+                                  title="previous chapter">SimpleDBM Database API</a></p>
+            <h4>Next topic</h4>
+            <p class="topless"><a href="typesystem.html"
+                                  title="next chapter">SimpleDBM TypeSystem</a></p>
+            <h3>This Page</h3>
+            <ul class="this-page-menu">
+              <li><a href="_sources/network-api.txt"
+                     rel="nofollow">Show Source</a></li>
+            </ul>
+          <div id="searchbox" style="display: none">
+            <h3>Quick search</h3>
+              <form class="search" action="search.html" method="get">
+                <input type="text" name="q" size="18" />
+                <input type="submit" value="Go" />
+                <input type="hidden" name="check_keywords" value="yes" />
+                <input type="hidden" name="area" value="default" />
+              </form>
+              <p class="searchtip" style="font-size: 90%">
+              Enter search terms or a module, class or function name.
+              </p>
+          </div>
+          <script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="typesystem.html" title="SimpleDBM TypeSystem"
+             >next</a></li>
+        <li class="right" >
+          <a href="database-api.html" title="SimpleDBM Database API"
+             >previous</a> |</li>
+        <li><a href="index.html">SimpleDBM v1.0.12 BETA documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2009, Dibyendu Majumdar.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 0.6.5.
+    </div>
+  </body>
+</html>

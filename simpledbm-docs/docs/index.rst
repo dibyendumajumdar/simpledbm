@@ -13,6 +13,7 @@ Contents:
 
    overview
    database-api
+   network-api
    typesystem
    usermanual
    developerguide
