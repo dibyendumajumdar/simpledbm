@@ -1,3 +1,7 @@
+1.0.17-BETA:
+ * dm: Issue-89: Unique index allows duplicate key insert
+ * dm: Issue-88: Enhance exceptions to use numeric error codes
+
 1.0.16-BETA:
  * dm: Issue-56: Documented settings that impact performance
  * dm: Issue-67: Exception stack traces are not captured when the error is initially logged
