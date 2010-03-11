@@ -36,7 +36,9 @@
  */
 package org.simpledbm.common.api.platform;
 
+import org.simpledbm.common.api.event.EventPublisher;
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
@@ -50,5 +52,9 @@ public interface PlatformObjects {
 	ClassUtils getClassUtils();
 	
 	TraceBuffer getTraceBuffer();
+	
+	InformationManager getInformationManager();
+	
+	EventPublisher getEventPublisher();
 	
 }

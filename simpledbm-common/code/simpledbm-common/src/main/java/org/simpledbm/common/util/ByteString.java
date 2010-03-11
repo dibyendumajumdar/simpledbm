@@ -40,17 +40,25 @@ import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.util.mcat.Message;
+import org.simpledbm.common.util.mcat.MessageInstance;
+import org.simpledbm.common.util.mcat.MessageType;
 
 /**
- * A format for String objects that is easier to persist. 
+ * A format for String objects that is easier to persist. The string contents are
+ * stored in UTF-8 format. 
  * 
  * @author Dibyendu Majumdar
  * @since 26-Jun-2005
  */
 public final class ByteString implements Storable, Comparable<ByteString> {
+	
+	final static Message illegalEncodingMessage = new Message('C', 'U', MessageType.ERROR, 1, "Unexpected error: invalid encoding encountered when converting bytes to String");
 
     private final byte[] bytes;
+    private String s;
 
     public ByteString() {
         bytes = new byte[0];
@@ -58,9 +66,10 @@ public final class ByteString implements Storable, Comparable<ByteString> {
 
     public ByteString(String s) {
         try {
+        	this.s = s;
             bytes = s.getBytes("UTF-8");
         } catch (UnsupportedEncodingException e) {
-            throw new IllegalArgumentException(e);
+            throw new SimpleDBMException(new MessageInstance(illegalEncodingMessage), e);
         }
     }
 
@@ -70,6 +79,7 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     }
     
     public ByteString(ByteString s) {
+    	this.s = s.s;
     	this.bytes = s.bytes.clone();
     }
     
@@ -84,13 +94,22 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     }
 
     @Override
-    public String toString() {
-        try {
-            return new String(bytes, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new IllegalStateException(e);
-        }
-    }
+	public String toString() {
+		if (s != null) {
+			return s;
+		}
+		try {
+			synchronized (this) {
+				if (null == s) {
+					s = new String(bytes, "UTF-8");
+				}
+			}
+		} catch (UnsupportedEncodingException e) {
+			throw new SimpleDBMException(new MessageInstance(
+					illegalEncodingMessage), e);
+		}
+		return s;
+	}
 
     public int getStoredLength() {
         return bytes.length + TypeSize.SHORT;

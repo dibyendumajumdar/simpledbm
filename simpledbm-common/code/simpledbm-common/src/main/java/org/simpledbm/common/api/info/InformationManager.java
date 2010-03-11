@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,51 +34,20 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.impl.event;
+package org.simpledbm.common.api.info;
 
-import org.simpledbm.common.api.event.Event;
-import org.simpledbm.common.api.event.EventListener;
-import org.simpledbm.common.api.event.EventPublisher;
-import org.simpledbm.common.api.event.common.ShutdownEvent;
-import org.simpledbm.junit.BaseTestCase;
+import java.io.OutputStream;
 
-public class EventPublisherTests extends BaseTestCase {
+/**
+ * Provides an interface for publishing information.
+ * 
+ * @author dibyendu majumdar
+ * @since 9 March 2010
+ */
+public interface InformationManager {
 
-	public EventPublisherTests() {
-	}
-
-	public EventPublisherTests(String arg0) {
-		super(arg0);
-	}
-
-	public void testBasicFunctions() {
-		EventPublisher ep = new EventPublisherImpl();
-		MyListener el = new MyListener();
-		MyListener el2 = new MyListener();
-		
-		ep.addEventListener(el);
-		ep.addEventListener(el2);
-		ep.publishEvent(new ShutdownEvent());
-		assertTrue(el.isEventReceived());
-		assertTrue(el2.isEventReceived());
-	}
-
-	
-	static class MyListener implements EventListener {
-
-		boolean eventReceived = false;
-		
-		public Object handleEvent(Event event) {
-			if (event != null && event instanceof ShutdownEvent) {
-				eventReceived = true;
-			}
-			return null;
-		}
-		
-		boolean isEventReceived() {
-			return eventReceived;
-		}
-		
-	}
+	Statistic getStatistic(String name);
+	LongStatistic newLongStatistic(String name);
+	void printStatistics(OutputStream stream);
 	
 }
