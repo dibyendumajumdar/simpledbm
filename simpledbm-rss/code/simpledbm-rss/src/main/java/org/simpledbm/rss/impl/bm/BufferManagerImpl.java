@@ -41,7 +41,6 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -50,6 +49,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.info.InformationManager;
+import org.simpledbm.common.api.info.LongStatistic;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
@@ -100,7 +101,7 @@ public final class BufferManagerImpl implements BufferManager {
 
     private static final int LATCH_SHARED = 1;
 
-    static BufferManagerStatistics statistics = new BufferManagerStatistics();
+    final BufferManagerStatistics statistics;
     
     final Platform platform;
     
@@ -191,7 +192,7 @@ public final class BufferManagerImpl implements BufferManager {
      * A count of number of pages estimated to be
      * dirty.
      */
-    private AtomicInteger dirtyBuffersCount = new AtomicInteger(0);
+//    private AtomicInteger dirtyBuffersCount = new AtomicInteger(0);
 
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
@@ -281,11 +282,9 @@ public final class BufferManagerImpl implements BufferManager {
             bufferHash[i] = new BufferHashBucket();
         }
         
- 
-        
-        statistics.bufferpoolsize = bufferpoolsize;
-        statistics.hashTableSize = hashsize;
-        statistics.writersleepinterval = bufferWriterSleepInterval;
+        statistics.setBufferPoolSize(bufferpoolsize);
+        statistics.setHashTableSize(hashsize);
+        statistics.setWriterSleepInterval(bufferWriterSleepInterval);
     }
 
     /**
@@ -302,6 +301,7 @@ public final class BufferManagerImpl implements BufferManager {
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
     	this.platform = platform;
+    	this.statistics = new BufferManagerStatistics(po.getInformationManager());
         init(logMgr, pageFactory, bufferpoolsize);
     }
 
@@ -326,6 +326,7 @@ public final class BufferManagerImpl implements BufferManager {
             props,
             BUFFER_WRITER_WAIT,
             5000);
+    	this.statistics = new BufferManagerStatistics(po.getInformationManager());
         init(logMgr, pageFactory, bufferpoolsize);
     }
 
@@ -656,7 +657,7 @@ public final class BufferManagerImpl implements BufferManager {
 								/*
 								 * Okay, we have the page we want, so we are done.
 								 */
-								statistics.cachehits++;
+								statistics.getCacheHits().increment();
 								return useBCB(pageId, latchMode, bcb);
 							}
 						}
@@ -847,7 +848,7 @@ public final class BufferManagerImpl implements BufferManager {
 								pendingIO = true;
 							}
 							else {
-								statistics.cachehits++;
+								statistics.getCacheHits().increment();
 								return useBCB(pageid, latchMode, bcb);
 							}
 							break;
@@ -944,7 +945,7 @@ public final class BufferManagerImpl implements BufferManager {
     private BufferAccessBlock fix(PageId pageid, boolean isNew, int pagetype,
             int latchMode, int hint) {
 
-    	statistics.fixcount++;
+    	statistics.getFixCounts().increment();
     	
         checkStatus();
 
@@ -1043,13 +1044,13 @@ public final class BufferManagerImpl implements BufferManager {
     }
 
     private void incrementDirtyBuffersCount() {
-        dirtyBuffersCount.incrementAndGet();
-        statistics.dirtybuffers++;
+//        dirtyBuffersCount.incrementAndGet();
+        statistics.getDirtyBuffers().increment();
     }
 
     private void decrementDirtyBuffersCount() {
-        dirtyBuffersCount.decrementAndGet();
-        statistics.dirtybuffers--;
+//        dirtyBuffersCount.decrementAndGet();
+        statistics.getDirtyBuffers().decrement();
     }
 
     /**
@@ -1758,21 +1759,21 @@ public final class BufferManagerImpl implements BufferManager {
                     TimeUnit.MILLISECONDS));
                 try {
                     if (bufmgr.log.isTraceEnabled()) {
-                    	bufmgr.log.trace(
-                            this.getClass().getName(),
-                            "run",
-                            "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = "
-                                    + bufmgr.getDirtyBuffersCount());
+//                    	bufmgr.log.trace(
+//                            this.getClass().getName(),
+//                            "run",
+//                            "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = "
+//                                    + bufmgr.getDirtyBuffersCount());
                     }
                     long start = System.currentTimeMillis();
                     bufmgr.writeBuffers();
                     long end = System.currentTimeMillis();
                     if (bufmgr.log.isTraceEnabled()) {
-                    	bufmgr.log.trace(
-                            this.getClass().getName(),
-                            "run",
-                            "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = "
-                                    + bufmgr.getDirtyBuffersCount());
+//                    	bufmgr.log.trace(
+//                            this.getClass().getName(),
+//                            "run",
+//                            "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = "
+//                                    + bufmgr.getDirtyBuffersCount());
                     	bufmgr.log
                             .trace(
                                 this.getClass().getName(),
@@ -1797,33 +1798,56 @@ public final class BufferManagerImpl implements BufferManager {
         this.bufferWriterSleepInterval = bufferWriterSleepInterval;
     }
 
-    int getDirtyBuffersCount() {
-        return dirtyBuffersCount.get();
-    }
+//    int getDirtyBuffersCount() {
+//        return dirtyBuffersCount.get();
+//    }
     
     final static class BufferManagerStatistics {
-    	int bufferpoolsize;
-    	volatile int dirtybuffers;
-    	volatile int fixcount;
-    	volatile int cachehits;
-    	int writersleepinterval;
-    	int hashTableSize;
     	
-    	Properties getStatistics() {
-    		Properties p = new Properties();
-    		p.setProperty("bufferpoolsize", Integer.toString(bufferpoolsize));
-    		p.setProperty("dirtybuffers", Integer.toString(dirtybuffers));
-    		p.setProperty("fixcount", Integer.toString(fixcount));
-    		p.setProperty("cachehits", Integer.toString(cachehits));
-    		p.setProperty("writersleepinterval", Integer.toString(writersleepinterval));
-    		p.setProperty("hashtablesize", Integer.toString(hashTableSize));
-    		return p;
+    	LongStatistic bufferPoolSize;
+    	LongStatistic dirtyBuffers;
+    	LongStatistic fixCount;
+    	LongStatistic cacheHits;
+    	LongStatistic writerSleepInterval;
+    	LongStatistic hashTableSize;
+    	
+    	BufferManagerStatistics(InformationManager im) {
+    		bufferPoolSize = im.newLongStatistic("bufmgr.bufferPoolSize");
+    		dirtyBuffers = im.newLongStatistic("bufmgr.dirtyBuffers");
+    		fixCount = im.newLongStatistic("bufmgr.fixCount");
+    		cacheHits = im.newLongStatistic("bufmgr.cacheHits");
+    		writerSleepInterval = im.newLongStatistic("bufmgr.writerSleepInterval");
+    		hashTableSize = im.newLongStatistic("bufmgr.hasTableSize");
     	}
+
+		public LongStatistic getDirtyBuffers() {
+			return dirtyBuffers;
+		}
+
+		public LongStatistic getFixCounts() {
+			return fixCount;
+		}
+
+		public LongStatistic getCacheHits() {
+			return cacheHits;
+		}
+
+		public void setWriterSleepInterval(int bufferWriterSleepInterval) {
+			writerSleepInterval.set(bufferWriterSleepInterval);
+		}
+
+		public void setHashTableSize(int hashsize) {
+			hashTableSize.set(hashsize);
+		}
+
+		public void setBufferPoolSize(int bpsz) {
+			bufferPoolSize.set(bpsz);
+		}    	
     }
 
     void dumpStatistics() {
     	System.err.println("BufferManager Statistics:");
-    	System.err.println(statistics.getStatistics());
+    	System.err.println(platform.getInfoManager().toString());
     }
     
 }

@@ -39,9 +39,13 @@ package org.simpledbm.common.impl.platform;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.simpledbm.common.api.event.EventPublisher;
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.impl.event.EventPublisherImpl;
+import org.simpledbm.common.impl.info.InformationManagerImpl;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
@@ -50,6 +54,8 @@ public class PlatformImpl implements Platform {
 	
 	final TraceBuffer traceBuffer = new TraceBuffer();
 	HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
+	final InformationManager infoManager = new InformationManagerImpl();
+	final EventPublisher eventPublisher = new EventPublisherImpl();
 
 	public PlatformImpl(Properties props) {
         Logger.configure(props);		
@@ -67,6 +73,14 @@ public class PlatformImpl implements Platform {
 		return traceBuffer;
 	}
 	
+	public InformationManager getInfoManager() {
+		return infoManager;
+	}
+
+	public EventPublisher getEventPublisher() {
+		return eventPublisher;
+	}
+
 	public PlatformObjects getPlatformObjects(String loggerName) {
 		PlatformObjects po = null;
 		synchronized (pomap) {
@@ -74,10 +88,7 @@ public class PlatformImpl implements Platform {
 			if (po != null) {
 				return po;
 			}
-			Logger log = getLogger(loggerName);
-			ExceptionHandler exceptionHandler = getExceptionHandler(log);
-			ClassUtils classUtils = new ClassUtils();
-			po = new PlatformObjectsImpl(traceBuffer, log, exceptionHandler, classUtils);
+			po = new PlatformObjectsImpl(this, loggerName);
 			pomap.put(loggerName, po);
 		}
 		return po;
@@ -85,16 +96,16 @@ public class PlatformImpl implements Platform {
 	
 	static final class PlatformObjectsImpl implements PlatformObjects {
 		
+		final PlatformImpl platform;
 		final Logger log;
 		final ExceptionHandler exceptionHandler;
 		final ClassUtils classUtils;
-		final TraceBuffer traceBuffer;
 
-		PlatformObjectsImpl(TraceBuffer traceBuffer, Logger log, ExceptionHandler exceptionHandler, ClassUtils classUtils) {
-			this.traceBuffer = traceBuffer;
-			this.log = log;
-			this.exceptionHandler = exceptionHandler;
-			this.classUtils = classUtils;
+		PlatformObjectsImpl(PlatformImpl platform, String loggerName) {
+			this.platform = platform;
+			this.log = platform.getLogger(loggerName);
+			this.exceptionHandler = platform.getExceptionHandler(log);
+			this.classUtils = new ClassUtils();
 		}
 
 		public final ExceptionHandler getExceptionHandler() {
@@ -110,7 +121,15 @@ public class PlatformImpl implements Platform {
 		}
 
 		public TraceBuffer getTraceBuffer() {
-			return traceBuffer;
+			return platform.getTraceBuffer();
+		}
+
+		public EventPublisher getEventPublisher() {
+			return platform.eventPublisher;
+		}
+
+		public InformationManager getInformationManager() {
+			return platform.infoManager;
 		}	
 	}
 }
