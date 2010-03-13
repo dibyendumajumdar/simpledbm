@@ -36,6 +36,13 @@
  */
 package org.simpledbm.network.server;
 
+import static org.simpledbm.network.server.Messages.UnexpectedError;
+import static org.simpledbm.network.server.Messages.noActiveTransaction;
+import static org.simpledbm.network.server.Messages.noSuchSession;
+import static org.simpledbm.network.server.Messages.noSuchTableMessage;
+import static org.simpledbm.network.server.Messages.noSuchTableScanMessage;
+import static org.simpledbm.network.server.Messages.transactionActive;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -47,9 +54,7 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
-import org.simpledbm.common.util.mcat.Message;
 import org.simpledbm.common.util.mcat.MessageInstance;
-import org.simpledbm.common.util.mcat.MessageType;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
 import org.simpledbm.database.api.Table;
@@ -66,6 +71,7 @@ import org.simpledbm.network.common.api.QueryDictionaryMessage;
 import org.simpledbm.network.common.api.RequestCode;
 import org.simpledbm.network.common.api.StartTransactionMessage;
 import org.simpledbm.network.common.api.UpdateRowMessage;
+import org.simpledbm.network.nio.api.NetworkException;
 import org.simpledbm.network.nio.api.Request;
 import org.simpledbm.network.nio.api.RequestHandler;
 import org.simpledbm.network.nio.api.Response;
@@ -89,21 +95,16 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 * A sequence number generator used to allocate new session ids.
 	 */
 	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
-
-	/*
-	 * Messages
-	 */
-	static final Message UnexpectedError = new Message('N', 'S', MessageType.ERROR, 1, "Unexpected error while converting message to UTF-8 format");
-	static final Message noSuchScan = new Message('N', 'S', MessageType.ERROR, 2, "Table Scan {0} does not exist");
 	
 	private ClientSession validateSession(Request request, Response response) {
 		ClientSession session = null;
 		synchronized(sessions) {
 			session = sessions.get(request.getSessionId());
-			if (session == null) {
-				setError(response, -1, "Unknown session identifier");
-			}
 		}
+		if (session == null) {
+			throw new NetworkException(new MessageInstance(noSuchSession, request.getSessionId()));
+		}
+		session.setLastUpdated();
 		return session;
 	}
 
@@ -146,6 +147,8 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	}
 
 	public void onShutdown() {
+		// abort any sessions that are still open
+		abortSessions();
 		database.shutdown();
 	}
 
@@ -179,7 +182,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		}		
 	}
 	
-	private void setError(Response response, int statusCode, String message,
+	void setError(Response response, int statusCode, String message,
 			Throwable e) {
 		if (e instanceof SimpleDBMException) {
 			throw (SimpleDBMException) e;
@@ -218,32 +221,30 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	void handleCloseSessionRequest(Request request, Response response) {
 		int sessionId = request.getSessionId();
 //		System.err.println("Request to close session " + sessionId);
+		ClientSession session = null;
 		synchronized (sessions) {
-			ClientSession session = sessions.get(sessionId);
+			session = sessions.get(sessionId);
 			if (session == null) {
-				setError(response, -1, "Unknown session identifier: " + sessionId);
+				throw new NetworkException(new MessageInstance(noSuchSession, sessionId));
 			} else {
-//				System.err.println("session removed");
+//				System.err.println("session removed");		
 				sessions.remove(sessionId);
 			}
 		}
+		session.abortTransaction();
 		response.setSessionId(0);
 	}
 	
 	void handleQueryDictionaryRequest(Request request, Response response) {
-		try {
-			QueryDictionaryMessage message = new QueryDictionaryMessage(request
-					.getData());
-			TypeDescriptor[] td = database.getDictionaryCache()
-					.getTypeDescriptor(message.containerId);
-			ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
-					.getStoredLength(td));
-			database.getTypeFactory().store(td, bb);
-			bb.flip();
-			response.setData(bb);
-		} catch (Exception e) {
-			setError(response, -1, "Failed to query data dictionary", e);
-		}
+		QueryDictionaryMessage message = new QueryDictionaryMessage(request
+				.getData());
+		TypeDescriptor[] td = database.getDictionaryCache().getTypeDescriptor(
+				message.containerId);
+		ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
+				.getStoredLength(td));
+		database.getTypeFactory().store(td, bb);
+		bb.flip();
+		response.setData(bb);
 	}
 
 	void handleUnknownRequest(Request request, Response response) {
@@ -254,32 +255,30 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	}
 
 	void handleCreateTestTables(Request request, Response response) {
-		try {
-			TypeFactory ff = database.getTypeFactory();
-			TypeDescriptor employee_rowtype[] = { 
-					ff.getIntegerType(), /* primary key */
-					ff.getVarcharType(20), /* name */
-					ff.getVarcharType(20), /* surname */
-					ff.getVarcharType(20), /* city */
-					ff.getVarcharType(45), /* email address */
-					ff.getDateTimeType(), /* date of birth */
-					ff.getNumberType(2) /* salary */
-			};
-			TableDefinition tableDefinition = database.newTableDefinition(
-					"employee", 1, employee_rowtype);
-			tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
-					true);
-			tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
-					false, false);
-			tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 },
-					false, false);
-			tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
-					false, false);
+		TypeFactory ff = database.getTypeFactory();
+		TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
+																	 * primary
+																	 * key
+																	 */
+		ff.getVarcharType(20), /* name */
+		ff.getVarcharType(20), /* surname */
+		ff.getVarcharType(20), /* city */
+		ff.getVarcharType(45), /* email address */
+		ff.getDateTimeType(), /* date of birth */
+		ff.getNumberType(2) /* salary */
+		};
+		TableDefinition tableDefinition = database.newTableDefinition(
+				"employee", 1, employee_rowtype);
+		tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+				true);
+		tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+				false);
+		tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false,
+				false);
+		tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false,
+				false);
 
-			database.createTable(tableDefinition);
-		} catch (Exception e) {
-			setError(response, -1, "Failed to create test tables", e);
-		}
+		database.createTable(tableDefinition);
 	}
 	
 	void handleCreateTable(Request request, Response response) {
@@ -287,218 +286,152 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		if (session == null) {
 			return;
 		}
-		try {
-			TableDefinition tableDefinition = database.getTypeSystemFactory().getTableDefinition(
-					database.getPlatformObjects(), database.getTypeFactory(),
-					database.getRowFactory(), request.getData());
-			database.createTable(tableDefinition);
-		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to create table", e);
-		}
+		TableDefinition tableDefinition = database.getTypeSystemFactory()
+				.getTableDefinition(database.getPlatformObjects(),
+						database.getTypeFactory(), database.getRowFactory(),
+						request.getData());
+		database.createTable(tableDefinition);
 	}
 
 	void handleStartTransaction(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction != null) {
-			setError(response, -1, "Has an active transaction: " + transaction);
-			return;
+			throw new NetworkException(new MessageInstance(transactionActive,
+					transaction));
 		}
-		StartTransactionMessage message = new StartTransactionMessage(request.getData());
-		try {
-			transaction = database.startTransaction(message.getIsolationMode());
-			session.setTransaction(transaction);
-		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to start transaction", e);
-		}
+		StartTransactionMessage message = new StartTransactionMessage(request
+				.getData());
+		transaction = database.startTransaction(message.getIsolationMode());
+		session.setTransaction(transaction);
 	}
 
 	void handleEndTransaction(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
-		EndTransactionMessage message = new EndTransactionMessage(request.getData());
-		try {
-			if (message.isCommit()) {
-				transaction.commit();
-			}
-			else {
-				transaction.abort();
-			}
-			session.setTransaction(null);
-		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to end transaction", e);
+		EndTransactionMessage message = new EndTransactionMessage(request
+				.getData());
+		if (message.isCommit()) {
+			session.commitTransaction();
+		} else {
+			session.abortTransaction();
 		}
 	}
 	
 	void handleGetTable(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
 		GetTableMessage message = new GetTableMessage(request.getData());
-		try {
-			Table table = session.getTable(message.containerId);
-			TableDefinition tableDefinition = table.getDefinition();
-			ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
-			tableDefinition.store(bb);
-			bb.flip();
-			response.setData(bb);
-		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to get table " + message.containerId, e);
-		}
+		Table table = session.getTable(message.containerId);
+		TableDefinition tableDefinition = table.getDefinition();
+		ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
+		tableDefinition.store(bb);
+		bb.flip();
+		response.setData(bb);
 	}
 	
 	void handleOpenTableScan(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
-		OpenScanMessage message = new OpenScanMessage(database.getRowFactory(), request.getData());
-		try {
-			Table table = session.getTable(message.getContainerId());
-			if (table == null) {
-				throw new RuntimeException("No such table");
-			}
-			TableScan tableScan = table.openScan(transaction, message.getIndexNo(), 
-					message.getStartRow(), message.isForUpdate());
-			int scanId = session.registerTableScan(tableScan);
-			ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
-			bb.putInt(scanId);
-			bb.flip();
-			response.setData(bb);
+		OpenScanMessage message = new OpenScanMessage(database.getRowFactory(),
+				request.getData());
+		Table table = session.getTable(message.getContainerId());
+		if (table == null) {
+			throw new NetworkException(new MessageInstance(noSuchTableMessage,
+					message.getContainerId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to open scan for table " + message.getContainerId(), e);
-		}
+		TableScan tableScan = table.openScan(transaction, message.getIndexNo(),
+				message.getStartRow(), message.isForUpdate());
+		int scanId = session.registerTableScan(tableScan);
+		ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
+		bb.putInt(scanId);
+		bb.flip();
+		response.setData(bb);
 	}
 
 	void handleCloseTableScan(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
 		CloseScanMessage message = new CloseScanMessage(request.getData());
-		try {
-			TableScan tableScan = session.getTableScan(message.getScanId());
-			if (tableScan == null) {
-				throw new RuntimeException("No such table scan");
-			}
-			tableScan.close();
+		TableScan tableScan = session.getTableScan(message.getScanId());
+		if (tableScan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, message.getScanId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to close scan # " + message.getScanId(), e);
-		}
+		tableScan.close();
 	}
 	
 	void handleAddRow(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
-		AddRowMessage message = new AddRowMessage(database.getRowFactory(), request.getData());
-		try {
-			Table table = session.getTable(message.getContainerId());
-			if (table == null) {
-				throw new RuntimeException("No such table");
-			}
-//			System.err.println("Adding row " + message.getRow());
-			table.addRow(transaction, message.getRow());
+		AddRowMessage message = new AddRowMessage(database.getRowFactory(),
+				request.getData());
+		Table table = session.getTable(message.getContainerId());
+		if (table == null) {
+			throw new NetworkException(new MessageInstance(noSuchTableMessage,
+					message.getContainerId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to add row to table " + message.getContainerId(), e);
-		}
-	}	
+		// System.err.println("Adding row " + message.getRow());
+		table.addRow(transaction, message.getRow());
+	}
 
 	void handleFetchNextRow(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
-		FetchNextRowMessage message = new FetchNextRowMessage(database.getRowFactory(), request.getData());
-		try {
-			TableScan tableScan = session.getTableScan(message.getScanId());
-			if (tableScan == null) {
-				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
-			}
-			FetchNextRowReply reply = null;
-			boolean hasNext = tableScan.fetchNext();
-			if (hasNext) {
-				reply = new FetchNextRowReply(tableScan.getTable().getDefinition().getContainerId(), 
-						false, tableScan.getCurrentRow());
-			}
-			else {
-				reply = new FetchNextRowReply(tableScan.getTable().getDefinition().getContainerId(), true, null);
-			}
-			ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
-			reply.store(bb);
-			bb.flip();
-			response.setData(bb);
+		FetchNextRowMessage message = new FetchNextRowMessage(database
+				.getRowFactory(), request.getData());
+		TableScan tableScan = session.getTableScan(message.getScanId());
+		if (tableScan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, message.getScanId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to fetch the next row", e);
+		FetchNextRowReply reply = null;
+		boolean hasNext = tableScan.fetchNext();
+		if (hasNext) {
+			reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
+					.getContainerId(), false, tableScan.getCurrentRow());
+		} else {
+			reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
+					.getContainerId(), true, null);
 		}
+		ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
+		reply.store(bb);
+		bb.flip();
+		response.setData(bb);
 	}
 	
 	void handleUpdateCurrentRow(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
-		UpdateRowMessage message = new UpdateRowMessage(database.getRowFactory(), request.getData());
-		try {
-			TableScan tableScan = session.getTableScan(message.getScanId());
-			if (tableScan == null) {
-				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
-			}
-			tableScan.updateCurrentRow(message.getRow());
+		UpdateRowMessage message = new UpdateRowMessage(database
+				.getRowFactory(), request.getData());
+		TableScan tableScan = session.getTableScan(message.getScanId());
+		if (tableScan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, message.getScanId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to update row", e);
-		}
+		tableScan.updateCurrentRow(message.getRow());
 	}
 
 	/**
@@ -506,25 +439,17 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 */
 	void handleDeleteCurrentRow(Request request, Response response) {
 		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
 		Transaction transaction = session.getTransaction();
 		if (transaction == null) {
-			setError(response, -1, "There is no active transaction");
-			return;
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
 		DeleteRowMessage message = new DeleteRowMessage(request.getData());
-		try {
-			TableScan tableScan = session.getTableScan(message.getScanId());
-			if (tableScan == null) {
-				throw new SimpleDBMException(new MessageInstance(noSuchScan, message.getScanId()));
-			}
-			tableScan.deleteRow();
+		TableScan tableScan = session.getTableScan(message.getScanId());
+		if (tableScan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, message.getScanId()));
 		}
-		catch (Exception e) {
-			setError(response, -1, "Failed to delete row", e);
-		}
+		tableScan.deleteRow();
 	}
 	
 	/*
@@ -532,4 +457,20 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 * respective clients We should also periodically check on the session
 	 * activity and timeout sessions that are inactive for a while.
 	 */
+	
+	void abortSessions() {
+		HashMap<Integer, ClientSession> oldsessions = null;
+		synchronized(sessions) {
+			oldsessions = sessions;
+			sessions = new HashMap<Integer, ClientSession>();
+		}
+		for (ClientSession session: oldsessions.values()) {
+			try {
+				session.abortTransaction();
+			}
+			catch (Throwable e) {
+				e.printStackTrace();
+			}
+		}
+	}
 }
