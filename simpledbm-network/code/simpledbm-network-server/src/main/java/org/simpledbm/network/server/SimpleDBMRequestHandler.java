@@ -36,17 +36,21 @@
  */
 package org.simpledbm.network.server;
 
-import static org.simpledbm.network.server.Messages.UnexpectedError;
+import static org.simpledbm.network.server.Messages.LOGGER_NAME;
+import static org.simpledbm.network.server.Messages.encodingError;
 import static org.simpledbm.network.server.Messages.noActiveTransaction;
 import static org.simpledbm.network.server.Messages.noSuchSession;
-import static org.simpledbm.network.server.Messages.noSuchTableMessage;
+import static org.simpledbm.network.server.Messages.noSuchTable;
 import static org.simpledbm.network.server.Messages.noSuchTableScanMessage;
 import static org.simpledbm.network.server.Messages.transactionActive;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
@@ -54,6 +58,7 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
+import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
@@ -85,6 +90,18 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	Database database;
 	Platform platform;
 	PlatformObjects po;
+	
+	Logger log;
+	
+	/**
+	 * Session timeout in seconds, default 300 seconds.
+	 */
+	int timeout = 10;
+	
+	/**
+	 * Intervals at which sessions are checked for timeout.
+	 */
+	int sessionMonitorInterval = 10;
 
 	/**
 	 * A map of all active sessions
@@ -96,6 +113,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	 */
 	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
 	
+	ScheduledFuture<?> sessionMonitorFuture;
+	
+	/**
+	 * Checks that the session exists and has not timed out. If the session is good,
+	 * its last updated time is refreshed.
+	 */
 	private ClientSession validateSession(Request request, Response response) {
 		ClientSession session = null;
 		synchronized(sessions) {
@@ -104,6 +127,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		if (session == null) {
 			throw new NetworkException(new MessageInstance(noSuchSession, request.getSessionId()));
 		}
+		session.checkSessionIsValid();
 		session.setLastUpdated();
 		return session;
 	}
@@ -142,11 +166,15 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 	public void onInitialize(Platform platform, Properties properties) {
 		this.platform = platform;
-		this.po = platform.getPlatformObjects(SimpleDBMServer.LOGGER_NAME);
+		this.po = platform.getPlatformObjects(LOGGER_NAME);
+		this.log = po.getLogger();
 		database = DatabaseFactory.getDatabase(platform, properties);
+		sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(new SessionMonitor(this), sessionMonitorInterval, sessionMonitorInterval, TimeUnit.SECONDS);
 	}
 
 	public void onShutdown() {
+		// stop scheduling 
+		sessionMonitorFuture.cancel(false);
 		// abort any sessions that are still open
 		abortSessions();
 		database.shutdown();
@@ -162,7 +190,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			bytes = message.getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			throw new SimpleDBMException(new MessageInstance(UnexpectedError), e);
+			throw new SimpleDBMException(new MessageInstance(encodingError), e);
 		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
@@ -202,7 +230,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		try {
 			bytes = sb.toString().getBytes("UTF-8");
 		} catch (UnsupportedEncodingException e1) {
-			throw new SimpleDBMException(new MessageInstance(UnexpectedError), e1);
+			throw new SimpleDBMException(new MessageInstance(encodingError), e1);
 		}
 		ByteBuffer data = ByteBuffer.wrap(bytes);
 		data.limit(bytes.length);
@@ -211,7 +239,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 	
 	void handleOpenSessionRequest(Request request, Response response) {
 		int sessionId = sessionIdGenerator.incrementAndGet();
-		ClientSession session = new ClientSession(sessionId, database);
+		ClientSession session = new ClientSession(this, sessionId, database);
 		synchronized (session) {
 			sessions.put(sessionId, session);
 		}
@@ -346,7 +374,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 				request.getData());
 		Table table = session.getTable(message.getContainerId());
 		if (table == null) {
-			throw new NetworkException(new MessageInstance(noSuchTableMessage,
+			throw new NetworkException(new MessageInstance(noSuchTable,
 					message.getContainerId()));
 		}
 		TableScan tableScan = table.openScan(transaction, message.getIndexNo(),
@@ -383,7 +411,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 				request.getData());
 		Table table = session.getTable(message.getContainerId());
 		if (table == null) {
-			throw new NetworkException(new MessageInstance(noSuchTableMessage,
+			throw new NetworkException(new MessageInstance(noSuchTable,
 					message.getContainerId()));
 		}
 		// System.err.println("Adding row " + message.getRow());
@@ -469,8 +497,55 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 				session.abortTransaction();
 			}
 			catch (Throwable e) {
+				// FIXME log error
 				e.printStackTrace();
 			}
 		}
+	}
+
+	/**
+	 * Time out sessions that have expired - have been idle too long.
+	 * Any pending transactions started by timeout sessions should be aborted.
+	 * 
+	 */
+	void timeoutSessions() {
+		synchronized(sessions) {
+			Iterator<ClientSession> iter = sessions.values().iterator();
+			while (iter.hasNext()) {
+				ClientSession session = iter.next();
+				try {
+					if (session.checkTimeout(timeout)) {
+						session.abortTransaction();
+						iter.remove();
+					}
+				}
+				catch (Throwable e) {
+					// FIXME log error
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	
+	/**
+	 * The SessionMonitor times out sessions and removes them
+	 * from the session cache. This task should be executed periodically.
+	 * 
+	 * @author dibyendumajumdar
+	 */
+	static final class SessionMonitor implements Runnable {
+		
+		final SimpleDBMRequestHandler myHandler;
+		
+		SessionMonitor(SimpleDBMRequestHandler handler) {
+			this.myHandler = handler;
+		}
+
+		public void run() {
+			// FIXME log message
+			System.err.println("Timing out sessions");
+			myHandler.timeoutSessions();
+		}		
 	}
 }

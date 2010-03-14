@@ -81,14 +81,15 @@ public class NetworkServerImpl implements NetworkServer {
     final PlatformObjects platformObjects;
     final Logger log;
 
-    static final Message m_startingIOException = new Message('N', 'S', MessageType.ERROR, 1, "IO Error occurred when attemptiong to start the server");
-    static final Message m_erroredException = new Message('N', 'S', MessageType.ERROR, 2, "Unable to perform operation as server has had previous errors");
-    static final Message m_alreadyStartedException = new Message('N', 'S', MessageType.ERROR, 3, "Server is already started");
-    static final Message m_readIOException = new Message('N', 'S', MessageType.ERROR, 4, "IO Error occurred while reading from a channel");
-    static final Message m_writeIOException = new Message('N', 'S', MessageType.ERROR, 5, "IO Error occurred while writing to a channel");
-    static final Message m_selectIOException = new Message('N', 'S', MessageType.ERROR, 6, "IO Error occurred while selecting a channel for IO");
-    static final Message m_acceptIOException = new Message('N', 'S', MessageType.ERROR, 7, "IO Error occurred while accepting a channel for IO");
-    static final Message m_channelErroredException = new Message('N', 'S', MessageType.ERROR, 8, "Unable to perform {0} operation as the channel has had previous errors");
+    static final Message m_startingIOException = new Message('N', 'F', MessageType.ERROR, 1, "IO Error occurred when attemptiong to start the server");
+    static final Message m_erroredException = new Message('N', 'F', MessageType.ERROR, 2, "Unable to perform operation as server has had previous errors");
+    static final Message m_alreadyStartedException = new Message('N', 'F', MessageType.ERROR, 3, "Server is already started");
+    static final Message m_readIOException = new Message('N', 'F', MessageType.ERROR, 4, "IO Error occurred while reading from a channel");
+    static final Message m_writeIOException = new Message('N', 'F', MessageType.ERROR, 5, "IO Error occurred while writing to a channel");
+    static final Message m_selectIOException = new Message('N', 'F', MessageType.ERROR, 6, "IO Error occurred while selecting a channel for IO");
+    static final Message m_acceptIOException = new Message('N', 'F', MessageType.ERROR, 7, "IO Error occurred while accepting a channel for IO");
+    static final Message m_channelErroredException = new Message('N', 'F', MessageType.ERROR, 8, "Unable to perform {0} operation as the channel has had previous errors");
+    static final Message m_shutdownException = new Message('N', 'F', MessageType.ERROR, 9, "An error occurred during shutdown");
 
     
     /**
@@ -155,7 +156,8 @@ public class NetworkServerImpl implements NetworkServer {
             errored = true;
             throw new NetworkException(new MessageInstance(m_startingIOException), e);
         }
-        requestHandlerService = Executors.newFixedThreadPool(1);
+        requestHandlerService = Executors.newCachedThreadPool();
+//        requestHandlerService = platformObjects.getPlatform().getExecutorService("default");
         opened = true;
     }
 
@@ -171,6 +173,12 @@ public class NetworkServerImpl implements NetworkServer {
         stop = true;
         selector.wakeup();
         requestHandlerService.shutdown();
+        try {
+			requestHandlerService.awaitTermination(60, TimeUnit.SECONDS);
+		} catch (InterruptedException e1) {
+			log.warn(getClass().getName(), "shutdown", new MessageInstance(m_shutdownException).toString(), e1);
+		}
+        platformObjects.getPlatform().shutdown();
         for (SelectionKey key : selector.keys()) {
             if (key.isValid() && key.attachment() != null) {
                 key.cancel();
@@ -299,7 +307,7 @@ public class NetworkServerImpl implements NetworkServer {
     void queueRequest(ProtocolHandler protocolHandler, RequestHeader requestHeader, ByteBuffer request) {
         ResponseHeader responseHeader = new ResponseHeader();
         responseHeader.setCorrelationId(requestHeader.getCorrelationId());
-        RequestDispatcher requestDispatcher = new RequestDispatcher(protocolHandler, requestHandler, requestHeader, request);
+        RequestDispatcher requestDispatcher = new RequestDispatcher(this, protocolHandler, requestHandler, requestHeader, request);
         if (log.isTraceEnabled()) {
         	log.trace(getClass().getName(), "queueRequest", "Scheduling request handler for channel " + protocolHandler.socketChannel);
         }
@@ -540,6 +548,7 @@ public class NetworkServerImpl implements NetworkServer {
 
     static final class RequestDispatcher implements Callable<Object> {
 
+    	final NetworkServerImpl server;
         final ProtocolHandler protocolHandler;
         final RequestHeader requestHeader;
         final ByteBuffer requestData;
@@ -547,7 +556,8 @@ public class NetworkServerImpl implements NetworkServer {
         
         static final ByteBuffer defaultData = ByteBuffer.allocate(0);
 
-        RequestDispatcher(ProtocolHandler protocolHandler, RequestHandler requestHandler, RequestHeader requestHeader, ByteBuffer requestData) {
+        RequestDispatcher(NetworkServerImpl server, ProtocolHandler protocolHandler, RequestHandler requestHandler, RequestHeader requestHeader, ByteBuffer requestData) {
+        	this.server = server;
             this.protocolHandler = protocolHandler;
             this.requestHandler = requestHandler;
             this.requestHeader = requestHeader;

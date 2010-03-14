@@ -57,4 +57,6 @@ public interface PlatformObjects {
 	
 	EventPublisher getEventPublisher();
 	
+	Platform getPlatform();
+	
 }
