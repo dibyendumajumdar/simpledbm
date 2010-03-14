@@ -244,11 +244,14 @@ public class ClientTest extends BaseTestCase {
 					session.rollback();
 				}
 			}
+			
+			System.out.println("Sleeping for 30 secs");
+			Thread.sleep(30*1000);
+			session.close();
 		}
 		catch (Exception e) {
 			e.printStackTrace();
 		} finally {
-			session.close();
 		}
 //		try {
 //			TypeDescriptor[] td = sessionManager.getRowType(1);

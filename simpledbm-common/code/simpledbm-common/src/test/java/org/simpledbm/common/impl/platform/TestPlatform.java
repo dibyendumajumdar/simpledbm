@@ -34,93 +34,60 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.api.thread;
+package org.simpledbm.common.impl.platform;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public class SimpleDBMThread extends Thread {
+import org.simpledbm.common.api.thread.Scheduler;
+import org.simpledbm.junit.BaseTestCase;
 
-	Lock threadLock = new ReentrantLock();
-	Condition cond = threadLock.newCondition();
-	boolean ticket = false;
-	boolean waiting = false;
+/**
+ * Test cases for the Object Registry module.
+ * 
+ * @author Dibyendu Majumdar
+ * @since 21-Aug-2005
+ */
+public class TestPlatform extends BaseTestCase {
 	
-	public SimpleDBMThread() {
+	public TestPlatform() {
+		super();
 	}
 
-	public SimpleDBMThread(Runnable arg0) {
+	public TestPlatform(String arg0) {
 		super(arg0);
 	}
 
-	public SimpleDBMThread(String arg0) {
-		super(arg0);
-	}
 
-	public SimpleDBMThread(ThreadGroup arg0, Runnable arg1) {
-		super(arg0, arg1);
-	}
+	static final class MyTask implements Runnable {
+		static AtomicInteger TaskId = new AtomicInteger();
+		int taskId = TaskId.incrementAndGet();
+		
+		public void run() {
+			System.err.println("I am running " + this);
+		}	
 
-	public SimpleDBMThread(ThreadGroup arg0, String arg1) {
-		super(arg0, arg1);
-	}
-
-	public SimpleDBMThread(Runnable arg0, String arg1) {
-		super(arg0, arg1);
-	}
-
-	public SimpleDBMThread(ThreadGroup arg0, Runnable arg1, String arg2) {
-		super(arg0, arg1, arg2);
-	}
-
-	public SimpleDBMThread(ThreadGroup arg0, Runnable arg1, String arg2,
-			long arg3) {
-		super(arg0, arg1, arg2, arg3);
-	}
-
-	public void park() {
-		threadLock.lock();
-		try {
-			if (!ticket) {
-				waiting = true;
-				cond.await();
-				waiting = false;
-			}
-			ticket = false;
-		} catch (InterruptedException e) {
-		} finally {
-			threadLock.unlock();
+		public String toString() {
+			return "MyTask(" + taskId + ")";
 		}
+		
 	}
 	
-	public void park(long nanos) {
-		threadLock.lock();
+	public void testScheduler() throws InterruptedException {
+		Scheduler scheduler = platform.getScheduler();
+		scheduler.scheduleWithFixedDelay(new MyTask(), 5, 5, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(new MyTask(), 3, 3, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(new MyTask(), 10, 10, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(new MyTask(), 1, 1, TimeUnit.SECONDS);
+		
 		try {
-			if (!ticket) {
-				waiting = true;
-				cond.await(nanos, TimeUnit.NANOSECONDS);
-				waiting = false;
-			}
-			ticket = false;
+			Thread.sleep(30*1000);
 		} catch (InterruptedException e) {
-		} finally {
-			threadLock.unlock();
 		}
+
+		scheduler.shutdown();
+		scheduler.awaitTermination(5, TimeUnit.SECONDS);
 	}
 	
-	public void unpark() {
-		threadLock.lock();
-		try {
-			if (!waiting) {
-				ticket = true;
-			}
-			else {
-				cond.signal();
-			}
-		} finally {
-			threadLock.unlock();
-		}
-	}
+	
 }

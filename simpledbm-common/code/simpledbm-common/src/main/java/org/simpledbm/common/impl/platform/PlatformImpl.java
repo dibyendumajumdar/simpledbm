@@ -38,14 +38,19 @@ package org.simpledbm.common.impl.platform;
 
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.simpledbm.common.api.event.EventPublisher;
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler;
 import org.simpledbm.common.impl.event.EventPublisherImpl;
 import org.simpledbm.common.impl.info.InformationManagerImpl;
+import org.simpledbm.common.impl.thread.SimpleScheduler;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
@@ -56,9 +61,15 @@ public class PlatformImpl implements Platform {
 	HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
 	final InformationManager infoManager = new InformationManagerImpl();
 	final EventPublisher eventPublisher = new EventPublisherImpl();
-
+	final ThreadPoolExecutor executorService;
+	final Scheduler scheduler;
+	
 	public PlatformImpl(Properties props) {
         Logger.configure(props);		
+        this.executorService = new ThreadPoolExecutor(0, 25,
+                60L, TimeUnit.SECONDS,
+                new SynchronousQueue<Runnable>());
+        this.scheduler = new SimpleScheduler(executorService, 1);
 	}
 	
 	ExceptionHandler getExceptionHandler(Logger log) {
@@ -131,5 +142,23 @@ public class PlatformImpl implements Platform {
 		public InformationManager getInformationManager() {
 			return platform.infoManager;
 		}	
+		
+		public Platform getPlatform() {
+			return platform;
+		}
 	}
+
+	public ThreadPoolExecutor getExecutorService() {
+		return executorService;
+	}
+
+	public void shutdown() {
+		scheduler.shutdown();
+		executorService.shutdown();
+	}
+
+	public Scheduler getScheduler() {
+		return scheduler;
+	}
+	
 }

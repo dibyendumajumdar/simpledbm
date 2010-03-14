@@ -36,12 +36,15 @@
  */
 package org.simpledbm.network.server;
 
-import static org.simpledbm.network.server.Messages.noSuchTableMessage;
+import static org.simpledbm.network.server.Messages.unexpectedError;
+import static org.simpledbm.network.server.Messages.noSuchTable;
 import static org.simpledbm.network.server.Messages.noSuchTableScanMessage;
 import static org.simpledbm.network.server.Messages.timedOutMessage;
+import static org.simpledbm.network.server.Messages.noActiveTransaction;
 
 import java.util.HashMap;
 
+import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.Table;
@@ -49,16 +52,58 @@ import org.simpledbm.database.api.TableScan;
 import org.simpledbm.network.nio.api.NetworkException;
 import org.simpledbm.rss.api.tx.Transaction;
 
+/**
+ * Represents a session from the client.  
+ * @author dibyendu majumdar
+ */
 public class ClientSession {
-    
+
+	/**
+	 * The requestHandler that is managing this sessoion.
+	 */
+	final SimpleDBMRequestHandler requestHandler;
+	
+	/**
+	 * Unique session id.
+	 */
     final int sessionId;
+    
+    /**
+     * The database we are associated with.
+     */
     final Database database;
+    
+    /**
+     * Cached tables related to the current transaction.
+     */
     final HashMap<Integer, Table> tables = new HashMap<Integer, Table>();
+    
+    /**
+     * Cached table scans related to the current transaction.
+     */
     final HashMap<Integer, TableScan> tableScans = new HashMap<Integer, TableScan>();
+    
+    /**
+     * Each scan is allocated a unique id within the context of the session.
+     */
     volatile int scanId = 1;
+    
+    /**
+     * Current transaction. Session can have only one transaction active.
+     */
     volatile Transaction transaction;
+    
+    /**
+     * Tracks the last time any activity happened on the session.
+     */
     volatile long lastUpdated;
+    
+    /**
+     * If set indicates that the session has timed out.
+     */
     volatile boolean timedOut;  
+    
+    final Logger log;
     
     /**
      * Check the session for timeout etc.
@@ -81,58 +126,67 @@ public class ClientSession {
 		this.transaction = transaction;
 	}
 	
-	ClientSession(int sessionId, Database database) {
+	ClientSession(SimpleDBMRequestHandler requestHandler, int sessionId, Database database) {
+		this.requestHandler = requestHandler;
         this.sessionId = sessionId;
         this.database = database;
         this.lastUpdated = System.currentTimeMillis();
         this.timedOut = false;
+        this.log = requestHandler.po.getLogger();
     }
 
 	int getSessionId() {
 		return sessionId;
 	}
 	
-	Table getTable(int containerId) {
+	synchronized Table getTable(int containerId) {
+		if (transaction == null) {
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
+		}
 		Table table = null;
-		synchronized(tables) {
-			table = tables.get(containerId);
+		table = tables.get(containerId);
+		if (table == null) {
+			table = database.getTable(transaction, containerId);
 			if (table == null) {
-				table = database.getTable(transaction, containerId);
-				if (table == null) {
-					throw new NetworkException(new MessageInstance(noSuchTableMessage, containerId));
-				}
-				tables.put(containerId, table);
+				throw new NetworkException(new MessageInstance(
+						noSuchTable, containerId));
 			}
+			tables.put(containerId, table);
 		}
 		return table;
 	}
     
-	int registerTableScan(TableScan scan) {
-		synchronized(tableScans) {
-			int s = scanId++;
-			tableScans.put(s, scan);
-			return s;
+	synchronized int registerTableScan(TableScan scan) {
+		if (transaction == null) {
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
+		int s = scanId++;
+		tableScans.put(s, scan);
+		return s;
 	}
 	
-	TableScan getTableScan(int scanId) {
-		synchronized(tableScans) {
-			TableScan scan = tableScans.get(scanId);
-			if (scan == null) {
-				throw new NetworkException(new MessageInstance(noSuchTableScanMessage, scanId));
-			}
-			return scan;
+	synchronized TableScan getTableScan(int scanId) {
+		if (transaction == null) {
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
+		TableScan scan = tableScans.get(scanId);
+		if (scan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, scanId));
+		}
+		return scan;
 	}
 	
-	void closeTableScan(int scanId) {
-		synchronized(tableScans) {
-			TableScan scan = tableScans.remove(scanId);
-			if (scan == null) {
-				throw new NetworkException(new MessageInstance(noSuchTableScanMessage, scanId));
-			}
-			scan.close();
+	synchronized void closeTableScan(int scanId) {
+		if (transaction == null) {
+			throw new NetworkException(new MessageInstance(noActiveTransaction));
 		}
+		TableScan scan = tableScans.remove(scanId);
+		if (scan == null) {
+			throw new NetworkException(new MessageInstance(
+					noSuchTableScanMessage, scanId));
+		}
+		scan.close();
 	}
 	
 	synchronized void closeScans() {
@@ -141,8 +195,7 @@ public class ClientSession {
 				scan.close();
 			}
 			catch (Throwable e) {
-				// FIXME
-				e.printStackTrace();
+				log.error(getClass().getName(), "closeScans", new MessageInstance(unexpectedError).toString(), e);
 			}
 		}
 		tableScans.clear();
@@ -166,14 +219,16 @@ public class ClientSession {
 		}
 	}
 	
-	synchronized void checkTimeout(int timeout) {
+	synchronized boolean checkTimeout(int timeout) {
 		if (timedOut) {
-			return;
+			return true;
 		}
 		long currentTime = System.currentTimeMillis();
 		if (currentTime - lastUpdated > timeout) {
+			System.err.println("Session timed out");
 			timedOut = true;
 		}
+		return timedOut;
 	}
 	
 }
