@@ -40,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.common.api.thread.Scheduler;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.junit.BaseTestCase;
 
 /**
@@ -62,23 +63,28 @@ public class TestPlatform extends BaseTestCase {
 	static final class MyTask implements Runnable {
 		static AtomicInteger TaskId = new AtomicInteger();
 		int taskId = TaskId.incrementAndGet();
+		final int delay;
+		
+		MyTask(int delay) {
+			this.delay = delay;
+		}
 		
 		public void run() {
 			System.err.println("I am running " + this);
 		}	
 
 		public String toString() {
-			return "MyTask(" + taskId + ")";
+			return "MyTask(id=" + taskId + ", delay=" + delay + ")";
 		}
 		
 	}
 	
 	public void testScheduler() throws InterruptedException {
 		Scheduler scheduler = platform.getScheduler();
-		scheduler.scheduleWithFixedDelay(new MyTask(), 5, 5, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(new MyTask(), 3, 3, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(new MyTask(), 10, 10, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(new MyTask(), 1, 1, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(5), 5, 5, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(3), 3, 3, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(10), 10, 10, TimeUnit.SECONDS);
+		scheduler.scheduleWithFixedDelay(Priority.SERVER_TASK, new MyTask(1), 1, 1, TimeUnit.SECONDS);
 		
 		try {
 			Thread.sleep(30*1000);
@@ -86,7 +92,6 @@ public class TestPlatform extends BaseTestCase {
 		}
 
 		scheduler.shutdown();
-		scheduler.awaitTermination(5, TimeUnit.SECONDS);
 	}
 	
 	

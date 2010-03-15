@@ -38,9 +38,6 @@ package org.simpledbm.common.impl.platform;
 
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.concurrent.SynchronousQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 import org.simpledbm.common.api.event.EventPublisher;
 import org.simpledbm.common.api.exception.ExceptionHandler;
@@ -61,15 +58,11 @@ public class PlatformImpl implements Platform {
 	HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
 	final InformationManager infoManager = new InformationManagerImpl();
 	final EventPublisher eventPublisher = new EventPublisherImpl();
-	final ThreadPoolExecutor executorService;
 	final Scheduler scheduler;
 	
 	public PlatformImpl(Properties props) {
         Logger.configure(props);		
-        this.executorService = new ThreadPoolExecutor(0, 25,
-                60L, TimeUnit.SECONDS,
-                new SynchronousQueue<Runnable>());
-        this.scheduler = new SimpleScheduler(executorService, 1);
+        this.scheduler = new SimpleScheduler(props);
 	}
 	
 	ExceptionHandler getExceptionHandler(Logger log) {
@@ -148,13 +141,8 @@ public class PlatformImpl implements Platform {
 		}
 	}
 
-	public ThreadPoolExecutor getExecutorService() {
-		return executorService;
-	}
-
 	public void shutdown() {
 		scheduler.shutdown();
-		executorService.shutdown();
 	}
 
 	public Scheduler getScheduler() {

@@ -42,6 +42,23 @@ import java.util.concurrent.TimeUnit;
 
 public interface Scheduler {
 	
+	enum Priority {
+		NORMAL,
+		SERVER_TASK
+	}
+	
+    /**
+     * Executes the given command at some time in the future.  The command
+     * may execute in a new thread, in a pooled thread, or in the calling
+     * thread, at the discretion of the <tt>Executor</tt> implementation.
+     *
+     * @param command the runnable task
+     * @throws RejectedExecutionException if this task cannot be
+     * accepted for execution.
+     * @throws NullPointerException if command is null
+     */
+    void execute(Priority priority, Runnable command);
+	
     /**
      * Creates and executes a periodic action that becomes enabled first
      * after the given initial delay, and subsequently with the
@@ -61,7 +78,8 @@ public interface Scheduler {
      * @throws NullPointerException if command is null
      * @throws IllegalArgumentException if delay less than or equal to zero
      */
-    public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command,
+    public ScheduledFuture<?> scheduleWithFixedDelay(Priority priority,
+    		                                         Runnable command,
                                                      long initialDelay,
                                                      long delay,
                                                      TimeUnit unit);
@@ -84,34 +102,5 @@ public interface Scheduler {
      *         denies access.
      */
     void shutdown();
-    
-    /**
-     * Returns <tt>true</tt> if this executor has been shut down.
-     *
-     * @return <tt>true</tt> if this executor has been shut down
-     */
-    boolean isShutdown();
 
-    /**
-     * Returns <tt>true</tt> if all tasks have completed following shut down.
-     * Note that <tt>isTerminated</tt> is never <tt>true</tt> unless
-     * either <tt>shutdown</tt> or <tt>shutdownNow</tt> was called first.
-     *
-     * @return <tt>true</tt> if all tasks have completed following shut down
-     */
-    boolean isTerminated();
-
-    /**
-     * Blocks until all tasks have completed execution after a shutdown
-     * request, or the timeout occurs, or the current thread is
-     * interrupted, whichever happens first.
-     *
-     * @param timeout the maximum time to wait
-     * @param unit the time unit of the timeout argument
-     * @return <tt>true</tt> if this executor terminated and
-     *         <tt>false</tt> if the timeout elapsed before termination
-     * @throws InterruptedException if interrupted while waiting
-     */
-    boolean awaitTermination(long timeout, TimeUnit unit)
-        throws InterruptedException;
 }
