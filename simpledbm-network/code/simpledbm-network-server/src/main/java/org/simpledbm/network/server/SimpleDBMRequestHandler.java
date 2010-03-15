@@ -56,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
@@ -169,7 +170,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 		this.po = platform.getPlatformObjects(LOGGER_NAME);
 		this.log = po.getLogger();
 		database = DatabaseFactory.getDatabase(platform, properties);
-		sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(new SessionMonitor(this), sessionMonitorInterval, sessionMonitorInterval, TimeUnit.SECONDS);
+		sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(Priority.NORMAL, new SessionMonitor(this), sessionMonitorInterval, sessionMonitorInterval, TimeUnit.SECONDS);
 	}
 
 	public void onShutdown() {
@@ -544,7 +545,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
 		public void run() {
 			// FIXME log message
-			System.err.println("Timing out sessions");
+//			System.err.println("Timing out sessions");
 			myHandler.timeoutSessions();
 		}		
 	}

@@ -36,8 +36,6 @@
  */
 package org.simpledbm.common.api.platform;
 
-import java.util.concurrent.ThreadPoolExecutor;
-
 import org.simpledbm.common.api.event.EventPublisher;
 import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.thread.Scheduler;
@@ -60,8 +58,6 @@ public interface Platform {
 	InformationManager getInfoManager();
 
 	EventPublisher getEventPublisher();
-	
-	ThreadPoolExecutor getExecutorService();
 	
 	Scheduler getScheduler();
 	

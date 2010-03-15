@@ -46,14 +46,12 @@ import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.Message;
 import org.simpledbm.common.util.mcat.MessageInstance;
@@ -73,12 +71,13 @@ public class NetworkServerImpl implements NetworkServer {
     final InetSocketAddress serverSocketAddress;
     ServerSocketChannel serverSocketChannel;
     Selector selector;
-    ExecutorService requestHandlerService;
+//    ExecutorService requestHandlerService;
     volatile boolean stop = false;
     volatile boolean opened = false;
     volatile boolean errored = false;
     final RequestHandler requestHandler;
     final PlatformObjects platformObjects;
+    final Platform platform;
     final Logger log;
 
     static final Message m_startingIOException = new Message('N', 'F', MessageType.ERROR, 1, "IO Error occurred when attemptiong to start the server");
@@ -109,6 +108,7 @@ public class NetworkServerImpl implements NetworkServer {
 			this.port = Integer.parseInt(properties.getProperty(
 					"network.server.port", "8000"));
 			this.serverSocketAddress = new InetSocketAddress(hostname, port);
+			this.platform = platform;
 			this.platformObjects = platform.getPlatformObjects(LOG_NAME);
 			this.log = platformObjects.getLogger();
 			this.requestHandler = requestHandler;
@@ -156,7 +156,7 @@ public class NetworkServerImpl implements NetworkServer {
             errored = true;
             throw new NetworkException(new MessageInstance(m_startingIOException), e);
         }
-        requestHandlerService = Executors.newCachedThreadPool();
+//        requestHandlerService = Executors.newCachedThreadPool();
 //        requestHandlerService = platformObjects.getPlatform().getExecutorService("default");
         opened = true;
     }
@@ -172,13 +172,12 @@ public class NetworkServerImpl implements NetworkServer {
         }
         stop = true;
         selector.wakeup();
-        requestHandlerService.shutdown();
-        try {
-			requestHandlerService.awaitTermination(60, TimeUnit.SECONDS);
-		} catch (InterruptedException e1) {
-			log.warn(getClass().getName(), "shutdown", new MessageInstance(m_shutdownException).toString(), e1);
-		}
-        platformObjects.getPlatform().shutdown();
+//        requestHandlerService.shutdown();
+//        try {
+//			requestHandlerService.awaitTermination(60, TimeUnit.SECONDS);
+//		} catch (InterruptedException e1) {
+//			log.warn(getClass().getName(), "shutdown", new MessageInstance(m_shutdownException).toString(), e1);
+//		}
         for (SelectionKey key : selector.keys()) {
             if (key.isValid() && key.attachment() != null) {
                 key.cancel();
@@ -194,6 +193,7 @@ public class NetworkServerImpl implements NetworkServer {
         	errored = true;
         	throw e;
         }
+        platformObjects.getPlatform().shutdown();
         errored = false;
     }
 
@@ -311,7 +311,8 @@ public class NetworkServerImpl implements NetworkServer {
         if (log.isTraceEnabled()) {
         	log.trace(getClass().getName(), "queueRequest", "Scheduling request handler for channel " + protocolHandler.socketChannel);
         }
-        requestHandlerService.submit(requestDispatcher);
+//        requestHandlerService.submit(requestDispatcher);
+        platform.getScheduler().execute(Priority.NORMAL, requestDispatcher);
     }
 
     public void requestStop() {
@@ -546,7 +547,8 @@ public class NetworkServerImpl implements NetworkServer {
         }
     }
 
-    static final class RequestDispatcher implements Callable<Object> {
+//    static final class RequestDispatcher implements Callable<Object> {
+      static final class RequestDispatcher implements Runnable {
 
     	final NetworkServerImpl server;
         final ProtocolHandler protocolHandler;
@@ -564,7 +566,8 @@ public class NetworkServerImpl implements NetworkServer {
             this.requestData = requestData;
         }
 
-        public Object call() throws Exception {
+//        public Object call() throws Exception {
+        public void run() {
             requestData.rewind();
             Request request = new RequestImpl(requestHeader, requestData);
             // setup default response
@@ -596,7 +599,7 @@ public class NetworkServerImpl implements NetworkServer {
             }
             // TODO support the no reply option
             protocolHandler.queueWrite(new WriteRequest(responseHeader, response.getData()));
-            return null;
+//            return null;
         }
     }
 }
