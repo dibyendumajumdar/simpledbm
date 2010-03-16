@@ -53,100 +53,100 @@ import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
 
 public class PlatformImpl implements Platform {
-	
-	final TraceBuffer traceBuffer = new TraceBuffer();
-	HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
-	final InformationManager infoManager = new InformationManagerImpl();
-	final EventPublisher eventPublisher = new EventPublisherImpl();
-	final Scheduler scheduler;
-	
-	public PlatformImpl(Properties props) {
-        Logger.configure(props);		
+
+    final TraceBuffer traceBuffer = new TraceBuffer();
+    final HashMap<String, PlatformObjects> pomap = new HashMap<String, PlatformObjects>();
+    final InformationManager infoManager = new InformationManagerImpl();
+    final EventPublisher eventPublisher = new EventPublisherImpl();
+    final Scheduler scheduler;
+
+    public PlatformImpl(Properties props) {
+        Logger.configure(props);
         this.scheduler = new SimpleScheduler(props);
-	}
-	
-	ExceptionHandler getExceptionHandler(Logger log) {
-		return ExceptionHandler.getExceptionHandler(log);
-	}
+    }
 
-	Logger getLogger(String loggerName) {
-		return Logger.getLogger(loggerName);
-	}
+    ExceptionHandler getExceptionHandler(Logger log) {
+        return ExceptionHandler.getExceptionHandler(log);
+    }
 
-	public TraceBuffer getTraceBuffer() {
-		return traceBuffer;
-	}
-	
-	public InformationManager getInfoManager() {
-		return infoManager;
-	}
+    Logger getLogger(String loggerName) {
+        return Logger.getLogger(loggerName);
+    }
 
-	public EventPublisher getEventPublisher() {
-		return eventPublisher;
-	}
+    public TraceBuffer getTraceBuffer() {
+        return traceBuffer;
+    }
 
-	public PlatformObjects getPlatformObjects(String loggerName) {
-		PlatformObjects po = null;
-		synchronized (pomap) {
-			pomap.get(loggerName);
-			if (po != null) {
-				return po;
-			}
-			po = new PlatformObjectsImpl(this, loggerName);
-			pomap.put(loggerName, po);
-		}
-		return po;
-	}
-	
-	static final class PlatformObjectsImpl implements PlatformObjects {
-		
-		final PlatformImpl platform;
-		final Logger log;
-		final ExceptionHandler exceptionHandler;
-		final ClassUtils classUtils;
+    public InformationManager getInfoManager() {
+        return infoManager;
+    }
 
-		PlatformObjectsImpl(PlatformImpl platform, String loggerName) {
-			this.platform = platform;
-			this.log = platform.getLogger(loggerName);
-			this.exceptionHandler = platform.getExceptionHandler(log);
-			this.classUtils = new ClassUtils();
-		}
+    public EventPublisher getEventPublisher() {
+        return eventPublisher;
+    }
 
-		public final ExceptionHandler getExceptionHandler() {
-			return exceptionHandler;
-		}
+    public PlatformObjects getPlatformObjects(String loggerName) {
+        PlatformObjects po = null;
+        synchronized (pomap) {
+            pomap.get(loggerName);
+            if (po != null) {
+                return po;
+            }
+            po = new PlatformObjectsImpl(this, loggerName);
+            pomap.put(loggerName, po);
+        }
+        return po;
+    }
 
-		public final Logger getLogger() {
-			return log;
-		}
+    static final class PlatformObjectsImpl implements PlatformObjects {
 
-		public ClassUtils getClassUtils() {
-			return classUtils;
-		}
+        final PlatformImpl platform;
+        final Logger log;
+        final ExceptionHandler exceptionHandler;
+        final ClassUtils classUtils;
 
-		public TraceBuffer getTraceBuffer() {
-			return platform.getTraceBuffer();
-		}
+        PlatformObjectsImpl(PlatformImpl platform, String loggerName) {
+            this.platform = platform;
+            this.log = platform.getLogger(loggerName);
+            this.exceptionHandler = platform.getExceptionHandler(log);
+            this.classUtils = new ClassUtils();
+        }
 
-		public EventPublisher getEventPublisher() {
-			return platform.eventPublisher;
-		}
+        public final ExceptionHandler getExceptionHandler() {
+            return exceptionHandler;
+        }
 
-		public InformationManager getInformationManager() {
-			return platform.infoManager;
-		}	
-		
-		public Platform getPlatform() {
-			return platform;
-		}
-	}
+        public final Logger getLogger() {
+            return log;
+        }
 
-	public void shutdown() {
-		scheduler.shutdown();
-	}
+        public ClassUtils getClassUtils() {
+            return classUtils;
+        }
 
-	public Scheduler getScheduler() {
-		return scheduler;
-	}
-	
+        public TraceBuffer getTraceBuffer() {
+            return platform.getTraceBuffer();
+        }
+
+        public EventPublisher getEventPublisher() {
+            return platform.eventPublisher;
+        }
+
+        public InformationManager getInformationManager() {
+            return platform.infoManager;
+        }
+
+        public Platform getPlatform() {
+            return platform;
+        }
+    }
+
+    public void shutdown() {
+        scheduler.shutdown();
+    }
+
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
 }

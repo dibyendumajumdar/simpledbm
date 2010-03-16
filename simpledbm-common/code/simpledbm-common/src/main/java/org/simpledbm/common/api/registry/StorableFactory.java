@@ -38,7 +38,6 @@ package org.simpledbm.common.api.registry;
 
 import java.nio.ByteBuffer;
 
-
 /**
  * A factory interface for creating Storable objects from ByteBuffers.
  * 
@@ -47,12 +46,11 @@ import java.nio.ByteBuffer;
  */
 public interface StorableFactory {
 
-	/**
-	 * Constructs a new Storable object from the supplied
-	 * ByteBuffer.
-	 * 
-	 * @param buf ByteBuffer containing a serialized version of the object
-	 * @return Newly constructed object
-	 */
-	Storable getStorable(ByteBuffer buf);
+    /**
+     * Constructs a new Storable object from the supplied ByteBuffer.
+     * 
+     * @param buf ByteBuffer containing a serialized version of the object
+     * @return Newly constructed object
+     */
+    Storable getStorable(ByteBuffer buf);
 }

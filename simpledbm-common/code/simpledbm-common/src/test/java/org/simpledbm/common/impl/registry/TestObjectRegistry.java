@@ -55,79 +55,86 @@ import org.simpledbm.junit.BaseTestCase;
  * @since 21-Aug-2005
  */
 public class TestObjectRegistry extends BaseTestCase {
-	
-	static class MyStorable implements Storable {
 
-		final int value;
-		
-		public MyStorable(int i) {
-			this.value = i;
-		}
-		
-		public MyStorable(ByteBuffer buf) {
-			buf.getShort();
-			this.value = buf.getInt();
-		}
-		
-		public int getStoredLength() {
-			return 6;
-		}
+    static class MyStorable implements Storable {
 
-		public void retrieve(ByteBuffer bb) {
-			throw new UnsupportedOperationException();
-		}
+        final int value;
 
-		public void store(ByteBuffer bb) {
-			bb.putInt(3);
-			bb.putInt(value);
-		}
-		
-		static class MyStorableFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return MyStorable.class;
-			}
-			public Object newInstance() {
-				return new MyStorable(0);
-			}
-			public Object newInstance(ByteBuffer buf) {
-				return new MyStorable(buf);
-			}
-		}
-	}
+        public MyStorable(int i) {
+            this.value = i;
+        }
 
-	static class StringFactory implements ObjectFactory {
-		public Class<?> getType() {
-			return String.class;
-		}
-		public Object newInstance() {
-			return new String();
-		}
-		public Object newInstance(ByteBuffer buf) {
-			buf.getShort();
-			return new String();
-		}
-	}
+        public MyStorable(ByteBuffer buf) {
+            buf.getShort();
+            this.value = buf.getInt();
+        }
 
-	static class IntegerFactory implements ObjectFactory {
-		public Class<?> getType() {
-			return Integer.class;
-		}
-		public Object newInstance() {
-			return new Integer(0);
-		}
-		public Object newInstance(ByteBuffer buf) {
-			buf.getShort();
-			return new Integer(0);
-		}
-	}
+        public int getStoredLength() {
+            return 6;
+        }
+
+        public void retrieve(ByteBuffer bb) {
+            throw new UnsupportedOperationException();
+        }
+
+        public void store(ByteBuffer bb) {
+            bb.putInt(3);
+            bb.putInt(value);
+        }
+
+        static class MyStorableFactory implements ObjectFactory {
+            public Class<?> getType() {
+                return MyStorable.class;
+            }
+
+            public Object newInstance() {
+                return new MyStorable(0);
+            }
+
+            public Object newInstance(ByteBuffer buf) {
+                return new MyStorable(buf);
+            }
+        }
+    }
+
+    static class StringFactory implements ObjectFactory {
+        public Class<?> getType() {
+            return String.class;
+        }
+
+        public Object newInstance() {
+            return new String();
+        }
+
+        public Object newInstance(ByteBuffer buf) {
+            buf.getShort();
+            return new String();
+        }
+    }
+
+    static class IntegerFactory implements ObjectFactory {
+        public Class<?> getType() {
+            return Integer.class;
+        }
+
+        public Object newInstance() {
+            return new Integer(0);
+        }
+
+        public Object newInstance(ByteBuffer buf) {
+            buf.getShort();
+            return new Integer(0);
+        }
+    }
 
     public TestObjectRegistry(String arg0) {
         super(arg0);
     }
 
     public void testRegistry() throws Exception {
-    	Properties properties = new Properties();
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        Properties properties = new Properties();
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
         ObjectRegistry factory = new ObjectRegistryImpl(platform, properties);
@@ -137,15 +144,15 @@ public class TestObjectRegistry extends BaseTestCase {
         factory.registerSingleton(2, i);
         assertTrue(i == factory.getSingleton(2));
         assertTrue(i == factory.getSingleton(2));
-//        Object s = factory.getInstance(1);
-//        assertFalse(s == null);
-//        assertTrue(s instanceof String);
-//        Object s1 = factory.getInstance(1);
-//        assertFalse(s1 == null);
-//        assertTrue(s1 instanceof String);
-//        assertFalse(s == s1);
+        // Object s = factory.getInstance(1);
+        // assertFalse(s == null);
+        // assertTrue(s instanceof String);
+        // Object s1 = factory.getInstance(1);
+        // assertFalse(s1 == null);
+        // assertTrue(s1 instanceof String);
+        // assertFalse(s == s1);
         @SuppressWarnings("unused")
-		Object s = null;
+        Object s = null;
         try {
             s = factory.getSingleton(5);
             fail();
@@ -167,7 +174,7 @@ public class TestObjectRegistry extends BaseTestCase {
         } catch (ObjectCreationException e) {
             assertTrue(e.getErrorCode() == 2);
         }
-        
+
         factory.registerObjectFactory(3, new MyStorable.MyStorableFactory());
         ByteBuffer buf = ByteBuffer.allocate(6);
         buf.putShort((short) 3);

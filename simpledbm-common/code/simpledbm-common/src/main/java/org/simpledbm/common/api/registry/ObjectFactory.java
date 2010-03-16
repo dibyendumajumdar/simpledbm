@@ -39,9 +39,9 @@ package org.simpledbm.common.api.registry;
 import java.nio.ByteBuffer;
 
 /**
- * ObjectFactory interface provides methods for creating instances of objects from
- * a byte stream wrapped by a ByteBuffer. It is the primary mechanism for restoring
- * persisted objects.
+ * ObjectFactory interface provides methods for creating instances of objects
+ * from a byte stream wrapped by a ByteBuffer. It is the primary mechanism for
+ * restoring persisted objects.
  * <p>
  * Non-singleton object types that want to register with the ObjectRegistry must
  * provide a ObjectFactory implementation for constructing objects.
@@ -51,15 +51,15 @@ import java.nio.ByteBuffer;
  */
 public interface ObjectFactory {
 
-	/**
-	 * Construct an object from the supplied ByteBuffer.
-	 * The first two bytes should be interpreted as a type code. 
-	 */
-	Object newInstance(ByteBuffer buf);
-	
-	/**
-	 * Gets the class of the objects managed by this factory.
-	 */
-	Class<?> getType();
-	
+    /**
+     * Construct an object from the supplied ByteBuffer. The first two bytes
+     * should be interpreted as a type code.
+     */
+    Object newInstance(ByteBuffer buf);
+
+    /**
+     * Gets the class of the objects managed by this factory.
+     */
+    Class<?> getType();
+
 }

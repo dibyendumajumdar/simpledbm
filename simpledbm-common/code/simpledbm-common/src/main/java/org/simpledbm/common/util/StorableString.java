@@ -42,12 +42,13 @@ import java.util.Arrays;
 import org.simpledbm.common.api.registry.Storable;
 
 /**
- * A format for String objects that is easier to persist. 
+ * A format for String objects that is easier to persist.
  * 
  * @author Dibyendu Majumdar
  * @since 6 Mar 2010
  */
-public final class StorableString implements Storable, Comparable<StorableString> {
+public final class StorableString implements Storable,
+        Comparable<StorableString> {
 
     private final char[] data;
 
@@ -55,24 +56,24 @@ public final class StorableString implements Storable, Comparable<StorableString
         data = new char[0];
     }
 
-    public StorableString(String s) {            
-    	data = s.toCharArray();
+    public StorableString(String s) {
+        data = s.toCharArray();
     }
 
     public StorableString(char[] charArray) {
         this.data = charArray.clone();
     }
-    
+
     public StorableString(StorableString s) {
-    	this.data = s.data.clone();
+        this.data = s.data.clone();
     }
-    
+
     public StorableString(ByteBuffer bb) {
         short n = bb.getShort();
         if (n > 0) {
             data = new char[n];
             bb.asCharBuffer().get(data);
-            bb.position(bb.position()+n*TypeSize.CHARACTER);
+            bb.position(bb.position() + n * TypeSize.CHARACTER);
         } else {
             data = new char[0];
         }
@@ -80,7 +81,7 @@ public final class StorableString implements Storable, Comparable<StorableString
 
     @Override
     public String toString() {
-    	return new String(data);
+        return new String(data);
     }
 
     public int getStoredLength() {
@@ -95,13 +96,12 @@ public final class StorableString implements Storable, Comparable<StorableString
         bb.putShort(n);
         if (n > 0) {
             bb.asCharBuffer().put(data);
-            bb.position(bb.position()+n*TypeSize.CHARACTER);
+            bb.position(bb.position() + n * TypeSize.CHARACTER);
         }
     }
 
     public int compareTo(StorableString o) {
-        int len = (data.length <= o.data.length) ? data.length
-                : o.data.length;
+        int len = (data.length <= o.data.length) ? data.length : o.data.length;
         for (int i = 0; i < len; i++) {
             int result = data[i] - o.data[i];
             if (result != 0) {
@@ -121,7 +121,7 @@ public final class StorableString implements Storable, Comparable<StorableString
 
     @Override
     public int hashCode() {
-    	return Arrays.hashCode(data);
+        return Arrays.hashCode(data);
     }
 
     @Override

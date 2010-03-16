@@ -39,34 +39,42 @@ package org.simpledbm.common.api.registry;
 import java.nio.ByteBuffer;
 
 /**
- * A Storable object can be written to (stored into) or read from (retrieved from) 
- * a ByteBuffer. The object must be able to predict its length in bytes; this 
- * not only allows clients to allocate ByteBuffer objects of suitable size, it is also 
- * be used by a StorageContainer to ensure that objects can be restored from
- * secondary storage.
- * <p>Storable objects must provide constructors that accept ByteBuffer as the sole
- * argument. In order to create such objects, implementations of {@link org.simpledbm.common.api.registry.ObjectFactory ObjectFactory} must be
- * registered with the {@link org.simpledbm.common.api.registry.ObjectRegistry ObjectRegistry}.
- * <p>The asymmetry between the way objects are serialized through calling {@link #store(ByteBuffer) store()} and
- * de-serialized using the ObjectFactory is to allow constructor based initialization of
- * objects during de-serialization. This allows objects to be defined as immutable without
+ * A Storable object can be written to (stored into) or read from (retrieved
+ * from) a ByteBuffer. The object must be able to predict its length in bytes;
+ * this not only allows clients to allocate ByteBuffer objects of suitable size,
+ * it is also be used by a StorageContainer to ensure that objects can be
+ * restored from secondary storage.
+ * <p>
+ * Storable objects must provide constructors that accept ByteBuffer as the sole
+ * argument. In order to create such objects, implementations of
+ * {@link org.simpledbm.common.api.registry.ObjectFactory ObjectFactory} must be
+ * registered with the {@link org.simpledbm.common.api.registry.ObjectRegistry
+ * ObjectRegistry}.
+ * <p>
+ * The asymmetry between the way objects are serialized through calling
+ * {@link #store(ByteBuffer) store()} and de-serialized using the ObjectFactory
+ * is to allow constructor based initialization of objects during
+ * de-serialization. This allows objects to be defined as immutable without
  * introducing a back door facility for reading/writing final fields.
+ * 
  * @author dibyendu
  * @since 10-June-2005
  */
 public interface Storable {
 
     /**
-     * Store this object into the supplied ByteBuffer in a format that can 
-     * be subsequently used to reconstruct the object. ByteBuffer is assumed
-     * to be setup correctly for writing.
+     * Store this object into the supplied ByteBuffer in a format that can be
+     * subsequently used to reconstruct the object. ByteBuffer is assumed to be
+     * setup correctly for writing.
+     * 
      * @param bb ByteBuffer that will a stored representation of the object.
      */
     void store(ByteBuffer bb);
 
     /**
-     * Predict the length of this object in bytes when it will be stored
-     * in a ByteBuffer.
+     * Predict the length of this object in bytes when it will be stored in a
+     * ByteBuffer.
+     * 
      * @return The length of this object when stored in a ByteBuffer.
      */
     int getStoredLength();

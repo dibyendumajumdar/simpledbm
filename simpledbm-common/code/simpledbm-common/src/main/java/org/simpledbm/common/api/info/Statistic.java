@@ -39,10 +39,11 @@ package org.simpledbm.common.api.info;
 import org.simpledbm.common.util.Dumpable;
 
 /**
- * A statistic is a holder of a name value pair that can be
- * used to track various configuration and runtime parameters.
+ * A statistic is a holder of a name value pair that can be used to track
+ * various configuration and runtime parameters.
+ * 
  * @author dibyendu majumdar
- *
+ * 
  */
 public interface Statistic extends Dumpable {
 

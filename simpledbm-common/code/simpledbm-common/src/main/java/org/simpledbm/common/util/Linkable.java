@@ -37,8 +37,8 @@
 package org.simpledbm.common.util;
 
 /**
- * Objects that need to be managed through the SimpleLinkedList must
- * extend this class.
+ * Objects that need to be managed through the SimpleLinkedList must extend this
+ * class.
  * 
  * @author Dibyendu Majumdar
  * @since 06 Jan 2007

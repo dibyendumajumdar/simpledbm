@@ -44,19 +44,20 @@ import java.util.Properties;
 
 /**
  * A simple wrapper around Log4J/JDK logging facilities.
- *
+ * 
  * @author Dibyendu Majumdar
  */
 public abstract class Logger {
 
     /**
-     * LoggerFactory for creating Loggers. By default, a JDK1.4 Logger
-     * Factory will be used.
+     * LoggerFactory for creating Loggers. By default, a JDK1.4 Logger Factory
+     * will be used.
      */
     private static LoggerFactory loggerFactory = new Jdk4LoggerFactory();
 
     /**
      * Obtain a new or existing Logger instance.
+     * 
      * @param name Name of the logger, package names are recommended
      */
     public static Logger getLogger(String name) {
@@ -73,20 +74,23 @@ public abstract class Logger {
     }
 
     /**
-     * Configures the logging system using properties in the supplied properties.
-     * Two properties are supported:
+     * Configures the logging system using properties in the supplied
+     * properties. Two properties are supported:
      * <dl>
      * <dt>logging.properties.file</dt>
-     * <dd>Configuration file. If the filename is prefixed by &quot;classpath:&quot;, the file must exist
-     * in the classpath, else it must exist on the specified location on the filesystem.</dd>
+     * <dd>Configuration file. If the filename is prefixed by
+     * &quot;classpath:&quot;, the file must exist in the classpath, else it
+     * must exist on the specified location on the filesystem.</dd>
      * <dt>logging.properties.type</dt>
-     * <dd>If the type is set to <tt>log4j</tt>, the logging system uses log4j, else it
-     * uses jdk4 logging.</dd>
+     * <dd>If the type is set to <tt>log4j</tt>, the logging system uses log4j,
+     * else it uses jdk4 logging.</dd>
      * </dl>
      */
     public static void configure(Properties properties) {
-        String logFile = properties.getProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
-        String logType = properties.getProperty("logging.properties.type", "log4j");
+        String logFile = properties.getProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
+        String logType = properties.getProperty("logging.properties.type",
+                "log4j");
         if ("log4j".equalsIgnoreCase(logType) && log4JAvailable()) {
             Logger.configureLog4JLogging(logFile);
         } else {
@@ -108,9 +112,11 @@ public abstract class Logger {
             isXml = true;
         }
         if (searchClasspath) {
-            URL url = Thread.currentThread().getContextClassLoader().getResource(filename);
+            URL url = Thread.currentThread().getContextClassLoader()
+                    .getResource(filename);
             if (url == null) {
-                System.err.println("SIMPLEDBM-WL0002: Failed to initialize Log4J logging system");
+                System.err
+                        .println("SIMPLEDBM-WL0002: Failed to initialize Log4J logging system");
             }
             if (isXml) {
                 org.apache.log4j.xml.DOMConfigurator.configure(url);
@@ -138,13 +144,16 @@ public abstract class Logger {
         InputStream is = null;
         try {
             if (searchClasspath) {
-                is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filename);
+                is = Thread.currentThread().getContextClassLoader()
+                        .getResourceAsStream(filename);
             } else {
                 is = new FileInputStream(filename);
             }
             java.util.logging.LogManager.getLogManager().readConfiguration(is);
         } catch (Exception e) {
-            System.err.println("SIMPLEDBM-WL0001: Failed to initialize JDK 1.4 logging system due to following error:" + e.getMessage());
+            System.err
+                    .println("SIMPLEDBM-WL0001: Failed to initialize JDK 1.4 logging system due to following error:"
+                            + e.getMessage());
         } finally {
             try {
                 if (is != null) {
@@ -155,25 +164,35 @@ public abstract class Logger {
         }
     }
 
-    public abstract void info(String sourceClass, String sourceMethod, String message);
+    public abstract void info(String sourceClass, String sourceMethod,
+            String message);
 
-    public abstract void info(String sourceClass, String sourceMethod, String message, Throwable t);
+    public abstract void info(String sourceClass, String sourceMethod,
+            String message, Throwable t);
 
-    public abstract void debug(String sourceClass, String sourceMethod, String message);
+    public abstract void debug(String sourceClass, String sourceMethod,
+            String message);
 
-    public abstract void debug(String sourceClass, String sourceMethod, String message, Throwable thrown);
+    public abstract void debug(String sourceClass, String sourceMethod,
+            String message, Throwable thrown);
 
-    public abstract void trace(String sourceClass, String sourceMethod, String message);
+    public abstract void trace(String sourceClass, String sourceMethod,
+            String message);
 
-    public abstract void trace(String sourceClass, String sourceMethod, String message, Throwable thrown);
+    public abstract void trace(String sourceClass, String sourceMethod,
+            String message, Throwable thrown);
 
-    public abstract void warn(String sourceClass, String sourceMethod, String message);
+    public abstract void warn(String sourceClass, String sourceMethod,
+            String message);
 
-    public abstract void warn(String sourceClass, String sourceMethod, String message, Throwable thrown);
+    public abstract void warn(String sourceClass, String sourceMethod,
+            String message, Throwable thrown);
 
-    public abstract void error(String sourceClass, String sourceMethod, String message);
+    public abstract void error(String sourceClass, String sourceMethod,
+            String message);
 
-    public abstract void error(String sourceClass, String sourceMethod, String message, Throwable thrown);
+    public abstract void error(String sourceClass, String sourceMethod,
+            String message, Throwable thrown);
 
     public abstract boolean isTraceEnabled();
 
@@ -211,43 +230,61 @@ public abstract class Logger {
         }
 
         public void info(String sourceClass, String sourceMethod, String message) {
-            realLogger.logp(java.util.logging.Level.INFO, sourceClass, sourceMethod, message);
+            realLogger.logp(java.util.logging.Level.INFO, sourceClass,
+                    sourceMethod, message);
         }
 
-        public void info(String sourceClass, String sourceMethod, String message, Throwable thrown) {
-            realLogger.logp(java.util.logging.Level.INFO, sourceClass, sourceMethod, message, thrown);
+        public void info(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
+            realLogger.logp(java.util.logging.Level.INFO, sourceClass,
+                    sourceMethod, message, thrown);
         }
 
-        public void debug(String sourceClass, String sourceMethod, String message) {
-            realLogger.logp(java.util.logging.Level.FINE, sourceClass, sourceMethod, message);
+        public void debug(String sourceClass, String sourceMethod,
+                String message) {
+            realLogger.logp(java.util.logging.Level.FINE, sourceClass,
+                    sourceMethod, message);
         }
 
-        public void debug(String sourceClass, String sourceMethod, String message, Throwable thrown) {
-            realLogger.logp(java.util.logging.Level.FINE, sourceClass, sourceMethod, message, thrown);
+        public void debug(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
+            realLogger.logp(java.util.logging.Level.FINE, sourceClass,
+                    sourceMethod, message, thrown);
         }
 
-        public void trace(String sourceClass, String sourceMethod, String message) {
-            realLogger.logp(java.util.logging.Level.FINER, sourceClass, sourceMethod, message);
+        public void trace(String sourceClass, String sourceMethod,
+                String message) {
+            realLogger.logp(java.util.logging.Level.FINER, sourceClass,
+                    sourceMethod, message);
         }
 
-        public void trace(String sourceClass, String sourceMethod, String message, Throwable thrown) {
-            realLogger.logp(java.util.logging.Level.FINER, sourceClass, sourceMethod, message, thrown);
+        public void trace(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
+            realLogger.logp(java.util.logging.Level.FINER, sourceClass,
+                    sourceMethod, message, thrown);
         }
 
         public void warn(String sourceClass, String sourceMethod, String message) {
-            realLogger.logp(java.util.logging.Level.WARNING, sourceClass, sourceMethod, message);
+            realLogger.logp(java.util.logging.Level.WARNING, sourceClass,
+                    sourceMethod, message);
         }
 
-        public void warn(String sourceClass, String sourceMethod, String message, Throwable thrown) {
-            realLogger.logp(java.util.logging.Level.WARNING, sourceClass, sourceMethod, message, thrown);
+        public void warn(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
+            realLogger.logp(java.util.logging.Level.WARNING, sourceClass,
+                    sourceMethod, message, thrown);
         }
 
-        public void error(String sourceClass, String sourceMethod, String message) {
-            realLogger.logp(java.util.logging.Level.SEVERE, sourceClass, sourceMethod, message);
+        public void error(String sourceClass, String sourceMethod,
+                String message) {
+            realLogger.logp(java.util.logging.Level.SEVERE, sourceClass,
+                    sourceMethod, message);
         }
 
-        public void error(String sourceClass, String sourceMethod, String message, Throwable thrown) {
-            realLogger.logp(java.util.logging.Level.SEVERE, sourceClass, sourceMethod, message, thrown);
+        public void error(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
+            realLogger.logp(java.util.logging.Level.SEVERE, sourceClass,
+                    sourceMethod, message, thrown);
         }
 
         public boolean isTraceEnabled() {
@@ -255,7 +292,8 @@ public abstract class Logger {
         }
 
         public boolean isDebugEnabled() {
-            return realLogger.isLoggable(java.util.logging.Level.FINE) || realLogger.isLoggable(java.util.logging.Level.FINER);
+            return realLogger.isLoggable(java.util.logging.Level.FINE)
+                    || realLogger.isLoggable(java.util.logging.Level.FINER);
         }
 
         public void enableDebug() {
@@ -279,23 +317,28 @@ public abstract class Logger {
             realLogger.info(message);
         }
 
-        public void info(String sourceClass, String sourceMethod, String message, Throwable t) {
+        public void info(String sourceClass, String sourceMethod,
+                String message, Throwable t) {
             realLogger.info(message, t);
         }
 
-        public void debug(String sourceClass, String sourceMethod, String message) {
+        public void debug(String sourceClass, String sourceMethod,
+                String message) {
             realLogger.debug(message);
         }
 
-        public void debug(String sourceClass, String sourceMethod, String message, Throwable thrown) {
+        public void debug(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
             realLogger.debug(message, thrown);
         }
 
-        public void trace(String sourceClass, String sourceMethod, String message) {
+        public void trace(String sourceClass, String sourceMethod,
+                String message) {
             realLogger.trace(message);
         }
 
-        public void trace(String sourceClass, String sourceMethod, String message, Throwable thrown) {
+        public void trace(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
             realLogger.trace(message, thrown);
         }
 
@@ -303,15 +346,18 @@ public abstract class Logger {
             realLogger.warn(message);
         }
 
-        public void warn(String sourceClass, String sourceMethod, String message, Throwable thrown) {
+        public void warn(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
             realLogger.warn(message, thrown);
         }
 
-        public void error(String sourceClass, String sourceMethod, String message) {
+        public void error(String sourceClass, String sourceMethod,
+                String message) {
             realLogger.error(message);
         }
 
-        public void error(String sourceClass, String sourceMethod, String message, Throwable thrown) {
+        public void error(String sourceClass, String sourceMethod,
+                String message, Throwable thrown) {
             realLogger.error(message, thrown);
         }
 

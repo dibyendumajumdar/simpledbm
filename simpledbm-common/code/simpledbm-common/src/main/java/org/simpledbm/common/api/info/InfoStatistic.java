@@ -12,12 +12,12 @@
  *    You should have received a copy of the GNU General Public License
  *    along with this program; if not, write to the Free Software
  *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
+ *
  *    Linking this library statically or dynamically with other modules 
  *    is making a combined work based on this library. Thus, the terms and
  *    conditions of the GNU General Public License cover the whole
  *    combination.
- *    
+ *
  *    As a special exception, the copyright holders of this library give 
  *    you permission to link this library with independent modules to 
  *    produce an executable, regardless of the license terms of these 
@@ -34,23 +34,18 @@
  *    Author : Dibyendu Majumdar
  *    Email  : d dot majumdar at gmail dot com ignore
  */
-package org.simpledbm.common.util;
+package org.simpledbm.common.api.info;
 
 /**
- * Supports methods for dumping object contents.
+ * InfoStatistic is for informational items that change infrequently.
  * 
- * @author Dibyendu Majumdar
- * @since 18 May 2007
+ * @author dibyendumajumdar
+ * 
  */
-public interface Dumpable {
+public interface InfoStatistic extends Statistic {
 
-    String newline = System.getProperty("line.separator");
+    void set(String value);
 
-    String TAB = "    ";
-
-    /**
-     * Appends contents to supplied StringBuilder.
-     */
-    StringBuilder appendTo(StringBuilder sb);
+    String get();
 
 }

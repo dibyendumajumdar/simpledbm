@@ -42,19 +42,20 @@ import org.simpledbm.junit.BaseTestCase;
 
 public class TestMessageCatalog extends BaseTestCase {
 
-    static Message notFoundMessage = new Message('C', 'L', MessageType.WARN, 999, "Unknown message key {0}");
+    static Message notFoundMessage = new Message('C', 'L', MessageType.WARN,
+            999, "Unknown message key {0}");
 
-	public TestMessageCatalog(String name) {
-		super(name);
-	}
+    public TestMessageCatalog(String name) {
+        super(name);
+    }
 
-	public void testMessageCatalog() {
-		MessageInstance m = new MessageInstance(notFoundMessage, "TEST");
-		ByteBuffer bb = ByteBuffer.allocate(m.getStoredLength());
-		m.store(bb);
-		bb.flip();
-		MessageInstance m2 = new MessageInstance(bb);
-		System.out.println(m2.toString());
-		assertEquals(m.toString(), m2.toString());
-	}
+    public void testMessageCatalog() {
+        MessageInstance m = new MessageInstance(notFoundMessage, "TEST");
+        ByteBuffer bb = ByteBuffer.allocate(m.getStoredLength());
+        m.store(bb);
+        bb.flip();
+        MessageInstance m2 = new MessageInstance(bb);
+        System.out.println(m2.toString());
+        assertEquals(m.toString(), m2.toString());
+    }
 }

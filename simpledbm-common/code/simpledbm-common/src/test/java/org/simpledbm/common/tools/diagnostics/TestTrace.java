@@ -43,22 +43,22 @@ import org.simpledbm.junit.BaseTestCase;
 
 public class TestTrace extends BaseTestCase {
 
-	public TestTrace() {
-	}
+    public TestTrace() {
+    }
 
-	public TestTrace(String arg0) {
-		super(arg0);
-	}
+    public TestTrace(String arg0) {
+        super(arg0);
+    }
 
-	public void testBasics() {
-		String traceMessages = "traceMessages.txt";
-		PlatformObjects po = platform.getPlatformObjects("org.simpledbm.trace");
-		po.getLogger().enableDebug();
-		TraceBuffer traceBuffer = po.getTraceBuffer();
-		traceBuffer.event(1);
-		traceBuffer.event(20);
-		Trace trace = new Trace(traceBuffer, po.getLogger(), traceMessages);
-		trace.dump();
-	}
-	
+    public void testBasics() {
+        String traceMessages = "traceMessages.txt";
+        PlatformObjects po = platform.getPlatformObjects("org.simpledbm.trace");
+        po.getLogger().enableDebug();
+        TraceBuffer traceBuffer = po.getTraceBuffer();
+        traceBuffer.event(1);
+        traceBuffer.event(20);
+        Trace trace = new Trace(traceBuffer, po.getLogger(), traceMessages);
+        trace.dump();
+    }
+
 }

@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
+import org.simpledbm.common.api.info.InfoStatistic;
 import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.info.LongStatistic;
 import org.simpledbm.common.api.info.Statistic;
@@ -53,57 +54,69 @@ import org.simpledbm.common.util.mcat.MessageType;
 
 public class InformationManagerImpl implements InformationManager {
 
-	final HashMap<String, Statistic> map = new HashMap<String, Statistic>();
-	
-	static final Message typeMismatch = new Message('C', 'I', MessageType.ERROR, 1, "A statistic already exists with the name {0} and type {1}");
-	
-	public Statistic getStatistic(String name) {
-		synchronized (map) {
-			return map.get(name);			
-		}
-	}
+    final HashMap<String, Statistic> map = new HashMap<String, Statistic>();
 
-	public LongStatistic newLongStatistic(String name) {
-		synchronized(map) {
-			Statistic ls = map.get(name);
-			if (ls != null) {
-				if (ls instanceof LongStatistic)
-					return (LongStatistic) ls;
-				throw new SimpleDBMException(new MessageInstance(typeMismatch, name, ls.getClass().getName()));
-			}
-			ls = new LongStatisticImpl(name);
-			map.put(name, ls);
-			return (LongStatistic) ls;
-		}
-	}
-	
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		synchronized(map) {
-			Collection<Statistic> entries = map.values();
-			for (Statistic s: entries) {
-				s.appendTo(sb);
-				sb.append(Dumpable.newline);
-			}
-		}
-		return sb.toString();
-	}
-	
-	public void printStatistics(OutputStream stream) {
-		try {
-			stream.write(toString().getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException e) {
-		} catch (IOException e) {
-		}
-	}
-	
-	public static void main(String args[]) {
-		InformationManager im = new InformationManagerImpl();
-		LongStatistic ls1 = im.newLongStatistic("org.simpledbm.common.info.Test");
-		ls1.increment();
-		LongStatistic ls2 = im.newLongStatistic("org.simpledbm.common.info.Test2");
-		ls2.increment();
-		im.printStatistics(System.out);
-	}
+    static final Message alreadyExists = new Message('C', 'I',
+            MessageType.ERROR, 1,
+            "A statistic already exists with the name {0} and type {1}");
+
+    public Statistic getStatistic(String name) {
+        synchronized (map) {
+            return map.get(name);
+        }
+    }
+
+    private <T extends Statistic> T newStatistic(String name, T statistic) {
+        synchronized (map) {
+            Statistic s = map.get(name);
+            if (s != null) {
+                throw new SimpleDBMException(new MessageInstance(alreadyExists,
+                        name, s.getClass().getName()));
+            }
+            map.put(name, statistic);
+            return statistic;
+        }
+    }
+
+    public LongStatistic newLongStatistic(String name) {
+        return newStatistic(name, new LongStatisticImpl(name));
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        synchronized (map) {
+            Collection<Statistic> entries = map.values();
+            for (Statistic s : entries) {
+                s.appendTo(sb);
+                sb.append(Dumpable.newline);
+            }
+        }
+        return sb.toString();
+    }
+
+    public void printStatistics(OutputStream stream) {;
+        try {
+            stream.write(toString().getBytes("UTF-8"));
+        } catch (UnsupportedEncodingException e) {
+        } catch (IOException e) {
+        }
+    }
+
+    public static void main(String args[]) {
+        InformationManager im = new InformationManagerImpl();
+        LongStatistic ls1 = im
+                .newLongStatistic("org.simpledbm.common.info.Test");
+        ls1.increment();
+        LongStatistic ls2 = im
+                .newLongStatistic("org.simpledbm.common.info.Test2");
+        ls2.increment();
+        InfoStatistic is = im.newInfoStatistic("test");
+        is.set("value");
+        im.printStatistics(System.out);
+    }
+
+    public InfoStatistic newInfoStatistic(String name) {
+        return newStatistic(name, new InfoStatisticImpl(name));
+    }
 
 }

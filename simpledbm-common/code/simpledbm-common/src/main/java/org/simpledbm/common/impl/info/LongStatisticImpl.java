@@ -42,35 +42,35 @@ import org.simpledbm.common.api.info.LongStatistic;
 
 public class LongStatisticImpl extends StatisticImpl implements LongStatistic {
 
-	AtomicLong l = new AtomicLong();
-	
-	public LongStatisticImpl(String name) {
-		super(name);
-	}
+    AtomicLong l = new AtomicLong();
 
-	public long get() {
-		return l.get();
-	}
+    public LongStatisticImpl(String name) {
+        super(name);
+    }
 
-	public void increment() {
-		l.incrementAndGet();
-		setLastUpdated();
-	}
+    public long get() {
+        return l.get();
+    }
 
-	@Override
-	public StringBuilder appendTo(StringBuilder sb) {
-		super.appendTo(sb);
-		sb.append(get());
-		return sb;
-	}
+    public void increment() {
+        l.incrementAndGet();
+        setLastUpdated();
+    }
 
-	public void set(long value) {
-		l.set(value);
-		setLastUpdated();
-	}
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        super.appendTo(sb);
+        sb.append(get());
+        return sb;
+    }
 
-	public void decrement() {
-		l.decrementAndGet();
-		setLastUpdated();
-	}
+    public void set(long value) {
+        l.set(value);
+        setLastUpdated();
+    }
+
+    public void decrement() {
+        l.decrementAndGet();
+        setLastUpdated();
+    }
 }

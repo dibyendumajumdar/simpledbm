@@ -39,12 +39,13 @@ package org.simpledbm.common.util;
 import java.util.Iterator;
 
 /**
- * This implementation of LinkedList that is optimized for element removal.
- * The standard Java linked list implementation is non-intrusive and 
- * inefficient for element removals. This implementation requires elements to
- * extend the {@link Linkable} abstract class.
+ * This implementation of LinkedList that is optimized for element removal. The
+ * standard Java linked list implementation is non-intrusive and inefficient for
+ * element removals. This implementation requires elements to extend the
+ * {@link Linkable} abstract class.
  * <p>
  * The implementation is not thread-safe. Caller must ensure thread safety.
+ * 
  * @author Dibyendu Majumdar
  */
 public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
@@ -57,7 +58,7 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
      * Tracks the number of members in the list.
      */
     int count;
-    
+
     private void setOwner(E link) {
         assert !link.isMemberOf(this);
         link.setOwner(this);
@@ -67,10 +68,10 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
         assert link.isMemberOf(this);
         link.setOwner(null);
     }
-    
+
     public final void addLast(E link) {
-    	setOwner(link);
-    	if (head == null)
+        setOwner(link);
+        if (head == null)
             head = link;
         link.setPrev(tail);
         if (tail != null)
@@ -81,7 +82,7 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
     }
 
     public final void addFirst(E link) {
-    	setOwner(link);
+        setOwner(link);
         if (tail == null)
             tail = link;
         link.setNext(head);
@@ -93,7 +94,7 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
     }
 
     public final void insertBefore(E anchor, E link) {
-    	setOwner(link);
+        setOwner(link);
         if (anchor == null) {
             addFirst(link);
         } else {
@@ -111,7 +112,7 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
     }
 
     public final void insertAfter(E anchor, E link) {
-    	setOwner(link);
+        setOwner(link);
         if (anchor == null) {
             addLast(link);
         } else {
@@ -129,7 +130,7 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
     }
 
     private void removeInternal(Linkable link) {
-    	removeOwner(link);
+        removeOwner(link);
         Linkable next = link.getNext();
         Linkable prev = link.getPrev();
         if (next != null) {

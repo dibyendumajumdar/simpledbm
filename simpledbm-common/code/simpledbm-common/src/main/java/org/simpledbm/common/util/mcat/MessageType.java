@@ -38,20 +38,23 @@ package org.simpledbm.common.util.mcat;
 
 public enum MessageType {
 
-	WARN('W'), INFO('I'), ERROR('E');
-	final char text;
-	
-	MessageType(char text) {
-		this.text = text;
-	}
-	
-	public char toText() {
-		return text;
-	}
-	
-	public static MessageType fromText(char t) {
-		if (t == 'I') return INFO;
-		else if (t == 'W') return WARN;
-		else return ERROR;
-	}
+    WARN('W'), INFO('I'), ERROR('E');
+    final char text;
+
+    MessageType(char text) {
+        this.text = text;
+    }
+
+    public char toText() {
+        return text;
+    }
+
+    public static MessageType fromText(char t) {
+        if (t == 'I')
+            return INFO;
+        else if (t == 'W')
+            return WARN;
+        else
+            return ERROR;
+    }
 }
