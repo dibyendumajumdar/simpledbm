@@ -36,9 +36,32 @@
  */
 package org.simpledbm.common.api.info;
 
+/**
+ * A LongStatistic holds a long value that can be updated frequently
+ * in a thread safe manner. All statistic is lock-free and uses atomic updates.
+ * @author dibyendu majumdar
+ */
 public interface LongStatistic extends Statistic {
-	public long get();
-	public void increment();
-	public void decrement();
-	public void set(long value);
+
+    /**
+     * Get the current value of the statistic.
+     */
+    public long get();
+
+    /**
+     * Increment the current value by 1.
+     */
+    public void increment();
+
+    /**
+     * Decrement the current value by 1.
+     */
+    public void decrement();
+
+    /**
+     * Set a new value.
+     * 
+     * @param value Value to be set.
+     */
+    public void set(long value);
 }

@@ -38,7 +38,8 @@ package org.simpledbm.common.api.lifecycle;
 
 public interface LifeCycle {
 
-	void start(Context context);
-	void shudown(Context context);
-	
+    void start(Context context);
+
+    void shudown(Context context);
+
 }

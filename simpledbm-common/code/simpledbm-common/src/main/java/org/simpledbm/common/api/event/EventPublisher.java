@@ -45,26 +45,27 @@ package org.simpledbm.common.api.event;
  */
 public interface EventPublisher {
 
-	/**
-	 * Adds specified EventListener to the list of registered event listeners.
-	 */
-	void addEventListener(EventListener listener);
+    /**
+     * Adds specified EventListener to the list of registered event listeners.
+     */
+    void addEventListener(EventListener listener);
 
-	/**
-	 * Removes specified EventListener from the list of registered event listeners.
-	 */
-	void removeEventListener(EventListener listener);
-	
-	/**
-	 * Clears all the EventListeners.
-	 */
-	void removeEventListeners();
-	
-	/**
-	 * Publishes an event to all the registered EventListeners. Note that the
-	 * event will be broadcast to all listeners;  it is the responsibility of the listener
-	 * to decide which events are of interest.
-	 */
-	void publishEvent(Event event);
+    /**
+     * Removes specified EventListener from the list of registered event
+     * listeners.
+     */
+    void removeEventListener(EventListener listener);
+
+    /**
+     * Clears all the EventListeners.
+     */
+    void removeEventListeners();
+
+    /**
+     * Publishes an event to all the registered EventListeners. Note that the
+     * event will be broadcast to all listeners; it is the responsibility of the
+     * listener to decide which events are of interest.
+     */
+    void publishEvent(Event event);
 
 }

@@ -41,25 +41,43 @@ import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.thread.Scheduler;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 
-
 /**
- * The Platform is an abstraction of the runtime environment.
- * It provides access to basic facilities such as logging, event publication,
- * exception management.
+ * The Platform is an abstraction of the runtime environment. It provides access
+ * to basic facilities such as logging, event publication, exception management.
  * 
  * @author dibyendumajumdar
  */
 public interface Platform {
-	
-	PlatformObjects getPlatformObjects(String loggerName);
-	
-	TraceBuffer getTraceBuffer();
-	
-	InformationManager getInfoManager();
 
-	EventPublisher getEventPublisher();
-	
-	Scheduler getScheduler();
-	
-	void shutdown();
+    /**
+     * Get the set of platform objects associated with the supplied logger name.
+     * 
+     * @param loggerName Name of the Logger
+     */
+    PlatformObjects getPlatformObjects(String loggerName);
+
+    /**
+     * Get the TraceBuffer object.
+     */
+    TraceBuffer getTraceBuffer();
+
+    /**
+     * Get the Information Manager.
+     */
+    InformationManager getInfoManager();
+
+    /**
+     * Get the Event Publisher.
+     */
+    EventPublisher getEventPublisher();
+
+    /**
+     * Get the Scheduler.
+     */
+    Scheduler getScheduler();
+
+    /**
+     * Shutdown any
+     */
+    void shutdown();
 }
