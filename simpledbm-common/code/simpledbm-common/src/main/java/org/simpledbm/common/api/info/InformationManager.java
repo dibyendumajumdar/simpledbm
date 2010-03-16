@@ -46,8 +46,33 @@ import java.io.OutputStream;
  */
 public interface InformationManager {
 
-	Statistic getStatistic(String name);
-	LongStatistic newLongStatistic(String name);
-	void printStatistics(OutputStream stream);
-	
+    /**
+     * Gets the named statistic.
+     * 
+     * @param name Name of the statistic
+     */
+    Statistic getStatistic(String name);
+
+    /**
+     * Allocates a new LongStatistic.
+     * 
+     * @param name Name of the statistic
+     */
+    LongStatistic newLongStatistic(String name);
+
+    /**
+     * Allocates a new InfoStatistic.
+     * 
+     * @param name Name of the statistic
+     */
+    InfoStatistic newInfoStatistic(String name);
+
+    /**
+     * Prints all available statistics to the provided stream. Also toString()
+     * will provide all the statistics in a String format.
+     * 
+     * @param stream Stream to be used for printing statistics
+     */
+    void printStatistics(OutputStream stream);
+
 }

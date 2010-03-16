@@ -41,11 +41,11 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.registry.Storable;
 
 /**
- * Specifies the requirements to be met by Index Keys. Index Keys
- * must be {@link Comparable} and {@link Storable}. Note that this interface does not say
- * anything about the contents of the key, in particular it says
- * nothing about multi-attribute keys. This is deliberate; we want the
- * interface to be as generic as possible. 
+ * Specifies the requirements to be met by Index Keys. Index Keys must be
+ * {@link Comparable} and {@link Storable}. Note that this interface does not
+ * say anything about the contents of the key, in particular it says nothing
+ * about multi-attribute keys. This is deliberate; we want the interface to be
+ * as generic as possible.
  * <p>
  * Implementations are required to provide a constructor that takes
  * {@link ByteBuffer} as the sole parameter.

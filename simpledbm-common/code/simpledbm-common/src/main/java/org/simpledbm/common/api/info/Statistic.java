@@ -38,8 +38,25 @@ package org.simpledbm.common.api.info;
 
 import org.simpledbm.common.util.Dumpable;
 
+/**
+ * A statistic is a holder of a name value pair that can be
+ * used to track various configuration and runtime parameters.
+ * @author dibyendu majumdar
+ *
+ */
 public interface Statistic extends Dumpable {
-	
-	String getName();
-	long getLastUpdated();
+
+    /**
+     * Get the name of the statistic.
+     * 
+     * @return
+     */
+    String getName();
+
+    /**
+     * Get the time (in milliseconds) when the statistic was last updated.
+     * 
+     * @return
+     */
+    long getLastUpdated();
 }
