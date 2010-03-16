@@ -39,30 +39,32 @@ package org.simpledbm.common.api.registry;
 import java.nio.ByteBuffer;
 
 /**
- * The ObjectRegistry has a dual purpose; it provides a mechanism to cache singletons, 
- * and secondly, it enables type codes to be assigned to persistable classes, so that 
- * the type information can be used in serialization and de-serialization of objects.
+ * The ObjectRegistry has a dual purpose; it provides a mechanism to cache
+ * singletons, and secondly, it enables type codes to be assigned to persistable
+ * classes, so that the type information can be used in serialization and
+ * de-serialization of objects.
  * <p>
- * The ObjectRegistry provides methods for registering {@link ObjectFactory} instances and 
- * singleton objects, associating each ObjectFactory/singleton with a unique
- * integer typecode. The typecode can be used subsequently to
- * re-construct instances of registered classes from byte streams, or to retrieve the singletons.
+ * The ObjectRegistry provides methods for registering {@link ObjectFactory}
+ * instances and singleton objects, associating each ObjectFactory/singleton
+ * with a unique integer typecode. The typecode can be used subsequently to
+ * re-construct instances of registered classes from byte streams, or to
+ * retrieve the singletons.
  * <p>
- * The typecode is useful for recording type information when 
- * objects are persisted, and allows objects to be re-created when
- * data is read from persistent store.
+ * The typecode is useful for recording type information when objects are
+ * persisted, and allows objects to be re-created when data is read from
+ * persistent store.
  * 
  * @author Dibyendu Majumdar
  * @since 07-Aug-2005
  */
 public interface ObjectRegistry {
-	
-	public final String LOGGER_NAME = "org.simpledbm.registry";
+
+    public final String LOGGER_NAME = "org.simpledbm.registry";
 
     /**
      * Registers a type to the Object Registry. An ObjectFactory must be
-     * provided for creating instances of the type. 
-     *  
+     * provided for creating instances of the type.
+     * 
      * @param typecode A unique type code for the type.
      * @param objectFactory The ObjectFactory implementation.
      */
@@ -77,27 +79,29 @@ public interface ObjectRegistry {
     public void registerSingleton(int typecode, Object object);
 
     /**
-     * Gets the registered instance of the specified type. 
+     * Gets the registered instance of the specified type.
      * 
      * @param typecode The code for the type
      * @return Object of the specified type.
      */
     Object getSingleton(int typecode);
-    
+
     /**
-     * Creates an instance of an object from the supplied ByteBuffer.
-     * The first two bytes of the ByteBuffer must contain the 
-     * the type code of the desired object; the class in question must have
-     * a constructor that takes a ByteBuffer as the only parameter.
+     * Creates an instance of an object from the supplied ByteBuffer. The first
+     * two bytes of the ByteBuffer must contain the the type code of the desired
+     * object; the class in question must have a constructor that takes a
+     * ByteBuffer as the only parameter.
      * 
-     * <p>It is an error to invoke this on a singleton.
+     * <p>
+     * It is an error to invoke this on a singleton.
      * 
-     * <p>Note that the supplied ByteBuffer will be passed on to the
-     * object in the same state as it is passed to this method, ie,
-     * the object constructor must expect the first two bytes to be 
-     * the typecode.
+     * <p>
+     * Note that the supplied ByteBuffer will be passed on to the object in the
+     * same state as it is passed to this method, ie, the object constructor
+     * must expect the first two bytes to be the typecode.
      * 
-     * @param buf The ByteBuffer to supply as argument to the object being created
+     * @param buf The ByteBuffer to supply as argument to the object being
+     *            created
      * @return Newly constructed object of the type
      */
     Object getInstance(ByteBuffer buf);

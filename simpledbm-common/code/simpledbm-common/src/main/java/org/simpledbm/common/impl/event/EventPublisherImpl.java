@@ -52,63 +52,58 @@ import org.simpledbm.common.api.event.EventPublisher;
  * @since 1 March 2008
  */
 public class EventPublisherImpl implements EventPublisher {
-	
-	ReadWriteLock lock = new ReentrantReadWriteLock();
-	Lock readLock = lock.readLock();
-	Lock writeLock = lock.writeLock();
-	
-	ArrayList<EventListener> listeners = new ArrayList<EventListener>();
 
-	public EventPublisherImpl() {
-		
-	}
-	
-	public void addEventListener(EventListener listener) {
-		writeLock.lock();
-		try {
-			if (!listeners.contains(listener)) {
-				listeners.add(listener);
-			}
-		}
-		finally {
-			writeLock.unlock();
-		}
-	}
+    ReadWriteLock lock = new ReentrantReadWriteLock();
+    Lock readLock = lock.readLock();
+    Lock writeLock = lock.writeLock();
 
-	public void publishEvent(Event event) {
-		readLock.lock();
-		try {
-			for (EventListener listener: listeners) {
-				try {
-					listener.handleEvent(event);
-				}
-				catch (Throwable t) {
-					//FIXME - report error
-				}
-			}
-		}
-		finally {
-			readLock.unlock();
-		}
-	}
-	
-	public void removeEventListeners() {
-		writeLock.lock();
-		try {
-			listeners.clear();
-		}
-		finally {
-			writeLock.unlock();
-		}
-	}
+    ArrayList<EventListener> listeners = new ArrayList<EventListener>();
 
-	public void removeEventListener(EventListener listener) {
-		writeLock.lock();
-		try {
-			listeners.remove(listener);
-		}
-		finally {
-			writeLock.unlock();
-		}
-	}
+    public EventPublisherImpl() {
+
+    }
+
+    public void addEventListener(EventListener listener) {
+        writeLock.lock();
+        try {
+            if (!listeners.contains(listener)) {
+                listeners.add(listener);
+            }
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public void publishEvent(Event event) {
+        readLock.lock();
+        try {
+            for (EventListener listener : listeners) {
+                try {
+                    listener.handleEvent(event);
+                } catch (Throwable t) {
+                    // FIXME - report error
+                }
+            }
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    public void removeEventListeners() {
+        writeLock.lock();
+        try {
+            listeners.clear();
+        } finally {
+            writeLock.unlock();
+        }
+    }
+
+    public void removeEventListener(EventListener listener) {
+        writeLock.lock();
+        try {
+            listeners.remove(listener);
+        } finally {
+            writeLock.unlock();
+        }
+    }
 }

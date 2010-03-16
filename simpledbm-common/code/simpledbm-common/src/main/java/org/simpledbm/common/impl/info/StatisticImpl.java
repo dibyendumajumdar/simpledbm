@@ -42,31 +42,35 @@ import org.simpledbm.common.api.info.Statistic;
 
 public abstract class StatisticImpl implements Statistic {
 
-	final String name;
-	volatile long updateTime;
-	
-	public StatisticImpl(String name) {
-		this.name = name;
-	}
-	
-	public long getLastUpdated() {
-		return 0;
-	}
-	
-	protected void setLastUpdated() {
-		updateTime = System.currentTimeMillis();
-	}
+    final String name;
+    volatile long updateTime;
 
-	public String getName() {
-		return name;
-	}
+    public StatisticImpl(String name) {
+        this.name = name;
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append(name);
-		sb.append(" [lastUpdated = ");
-		sb.append(new Date(updateTime));
-		sb.append("] = ");
-		return sb;
-	}
+    public long getLastUpdated() {
+        return 0;
+    }
+
+    protected void setLastUpdated() {
+        updateTime = System.currentTimeMillis();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append(name);
+        sb.append(" [lastUpdated = ");
+        sb.append(new Date(updateTime));
+        sb.append("] = ");
+        return sb;
+    }
+
+    public String toString() {
+        return appendTo(new StringBuilder()).toString();
+    }
 
 }

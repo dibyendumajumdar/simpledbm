@@ -74,8 +74,8 @@ public final class DiagnosticLogger {
     }
 
     /**
-     * Sets the diagnostics level. A value higher than 0 enables special 
-     * debug messages.
+     * Sets the diagnostics level. A value higher than 0 enables special debug
+     * messages.
      */
     public static final void setDiagnosticsLevel(int diagnosticsLevel) {
         DiagnosticLogger.diagnosticsLevel = diagnosticsLevel;

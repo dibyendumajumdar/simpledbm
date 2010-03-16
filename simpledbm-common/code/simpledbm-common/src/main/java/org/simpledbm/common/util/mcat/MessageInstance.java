@@ -45,122 +45,119 @@ import org.simpledbm.common.util.TypeSize;
 
 /**
  * MessageInstance holds a message and its arguments.
+ * 
  * @author dibyendumajumdar
  */
 public class MessageInstance implements Storable {
 
-	final Message m;
-	final Object[] args;
-	final String formattedText;
+    final Message m;
+    final Object[] args;
+    final String formattedText;
 
-	volatile boolean cached = false;
-	StorableString storableText;
-	StorableString[] storableArgs;
+    volatile boolean cached = false;
+    StorableString storableText;
+    StorableString[] storableArgs;
 
-	public MessageInstance(Message m, Object... args) {
-		super();
-		this.m = m;
-		this.args = args;
-		if (args != null) {				
-			this.formattedText = MessageFormat.format(m.toString(), args);
-		}
-		else {
-			this.formattedText = m.toString();
-		}
-	}
+    public MessageInstance(Message m, Object... args) {
+        super();
+        this.m = m;
+        this.args = args;
+        if (args != null) {
+            this.formattedText = MessageFormat.format(m.toString(), args);
+        } else {
+            this.formattedText = m.toString();
+        }
+    }
 
-	public MessageInstance(Message m) {
-		super();
-		this.m = m;
-		this.args = null;
-		if (args != null) {				
-			this.formattedText = MessageFormat.format(m.toString(), args);
-		}
-		else {
-			this.formattedText = m.toString();
-		}
-	}
+    public MessageInstance(Message m) {
+        super();
+        this.m = m;
+        this.args = null;
+        if (args != null) {
+            this.formattedText = MessageFormat.format(m.toString(), args);
+        } else {
+            this.formattedText = m.toString();
+        }
+    }
 
-	public MessageInstance(ByteBuffer bb) {
-		this.m = new Message(bb);
-		short n = bb.getShort();
-		if (n != 0) {
-			storableArgs = new StorableString[n];
-			for (int i = 0; i < n; i++) {
-				storableArgs[i] = new StorableString(bb);
-			}
-			args = new String[n];
-			for (int i = 0; i < n; i++) {
-				args[i] = storableArgs[i].toString();
-			}
-		}
-		else {
-			args = null;
-		}
-		if (args != null) {				
-			this.formattedText = MessageFormat.format(m.toString(), args);
-		}
-		else {
-			this.formattedText = m.toString();
-		}
-	}
-	
-	public int getCode() {
-		return m.getCode();
-	}
-	
-	public MessageType getType() {
-		return m.getType();
-	}
-	
-	public String getKey() {
-		return m.getKey();
-	}
-	
-	private void deflate() {
-		if (cached) return;
-		synchronized(this) {
-			if (storableText == null) {
-				storableText = new StorableString(formattedText);
-			}
-			if (storableArgs == null) {
-				storableArgs = new StorableString[args.length];
-				for (int i = 0; i < args.length; i++) {
-					storableArgs[i] = new StorableString(args[i].toString());
-				}
-			}
-			cached = true;
-		}
-	}
-	
-	@Override
-	public String toString() {
-		return formattedText;
-	}
+    public MessageInstance(ByteBuffer bb) {
+        this.m = new Message(bb);
+        short n = bb.getShort();
+        if (n != 0) {
+            storableArgs = new StorableString[n];
+            for (int i = 0; i < n; i++) {
+                storableArgs[i] = new StorableString(bb);
+            }
+            args = new String[n];
+            for (int i = 0; i < n; i++) {
+                args[i] = storableArgs[i].toString();
+            }
+        } else {
+            args = null;
+        }
+        if (args != null) {
+            this.formattedText = MessageFormat.format(m.toString(), args);
+        } else {
+            this.formattedText = m.toString();
+        }
+    }
 
-	public int getStoredLength() {
-		deflate();
-		int n = m.getStoredLength();
-		n += TypeSize.SHORT;
-		if (storableArgs != null) {
-			for (int i = 0; i < storableArgs.length; i++) {
-				n += storableArgs[i].getStoredLength();
-			}
-		}
-		return n;
-	}
+    public int getCode() {
+        return m.getCode();
+    }
 
-	public void store(ByteBuffer bb) {
-		deflate();
-		m.store(bb);
-		if (args == null) {
-			bb.putShort((short) 0);
-		}
-		else {
-			bb.putShort((short) args.length);
-			for (int i = 0; i < storableArgs.length; i++) {
-				storableArgs[i].store(bb);
-			}
-		}
-	}
+    public MessageType getType() {
+        return m.getType();
+    }
+
+    public String getKey() {
+        return m.getKey();
+    }
+
+    private void deflate() {
+        if (cached)
+            return;
+        synchronized (this) {
+            if (storableText == null) {
+                storableText = new StorableString(formattedText);
+            }
+            if (storableArgs == null) {
+                storableArgs = new StorableString[args.length];
+                for (int i = 0; i < args.length; i++) {
+                    storableArgs[i] = new StorableString(args[i].toString());
+                }
+            }
+            cached = true;
+        }
+    }
+
+    @Override
+    public String toString() {
+        return formattedText;
+    }
+
+    public int getStoredLength() {
+        deflate();
+        int n = m.getStoredLength();
+        n += TypeSize.SHORT;
+        if (storableArgs != null) {
+            for (int i = 0; i < storableArgs.length; i++) {
+                n += storableArgs[i].getStoredLength();
+            }
+        }
+        return n;
+    }
+
+    public void store(ByteBuffer bb) {
+        deflate();
+        m.store(bb);
+        if (args == null) {
+            bb.putShort((short) 0);
+        } else {
+            bb.putShort((short) args.length);
+            for (int i = 0; i < storableArgs.length; i++) {
+                storableArgs[i].store(bb);
+            }
+        }
+    }
 }

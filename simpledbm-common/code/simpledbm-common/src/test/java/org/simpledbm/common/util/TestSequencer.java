@@ -41,68 +41,63 @@ import org.simpledbm.junit.BaseTestCase;
 
 public class TestSequencer extends BaseTestCase {
 
-	public TestSequencer(String name) {
-		super(name);
-	}
+    public TestSequencer(String name) {
+        super(name);
+    }
 
-	public void testSequencer() {
-		
-		WrappingSequencer sequencer = new WrappingSequencer(4);
-		assertEquals(0, sequencer.getNext());
-		assertEquals(1, sequencer.getNext());
-		assertEquals(2, sequencer.getNext());
-		assertEquals(3, sequencer.getNext());
-		assertEquals(0, sequencer.getNext());
-		assertEquals(1, sequencer.getNext());
-		assertEquals(2, sequencer.getNext());
-		assertEquals(3, sequencer.getNext());
-		assertEquals(0, sequencer.getNext());
-		assertEquals(1, sequencer.getNext());
-		assertEquals(2, sequencer.getNext());
-		assertEquals(3, sequencer.getNext());
-		assertEquals(0, sequencer.getNext());
+    public void testSequencer() {
 
-		/*
-		WrappingSequencer seq = new WrappingSequencer(Integer.MAX_VALUE);
-		seq.getAndSet(Integer.MAX_VALUE-3);
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
-		System.err.println(seq.getNext());
+        WrappingSequencer sequencer = new WrappingSequencer(4);
+        assertEquals(0, sequencer.getNext());
+        assertEquals(1, sequencer.getNext());
+        assertEquals(2, sequencer.getNext());
+        assertEquals(3, sequencer.getNext());
+        assertEquals(0, sequencer.getNext());
+        assertEquals(1, sequencer.getNext());
+        assertEquals(2, sequencer.getNext());
+        assertEquals(3, sequencer.getNext());
+        assertEquals(0, sequencer.getNext());
+        assertEquals(1, sequencer.getNext());
+        assertEquals(2, sequencer.getNext());
+        assertEquals(3, sequencer.getNext());
+        assertEquals(0, sequencer.getNext());
 
-		AtomicInteger x = new AtomicInteger(Integer.MAX_VALUE);
-		x.getAndSet(Integer.MAX_VALUE-3);
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		System.err.println(x.getAndIncrement());
-		*/
-		
-//		assertEquals((int)2147483644, sequencer.getNext());
-//		assertEquals((int)2147482645, sequencer.getNext());
-//		assertEquals((int)2147482646, sequencer.getNext());
-//		assertEquals(0, sequencer.getNext());
-//		assertEquals(1, sequencer.getNext());
-//		assertEquals(2, sequencer.getNext());
-//		assertEquals(3, sequencer.getNext());
-	}
+        /*
+         * WrappingSequencer seq = new WrappingSequencer(Integer.MAX_VALUE);
+         * seq.getAndSet(Integer.MAX_VALUE-3);
+         * System.err.println(seq.getNext()); System.err.println(seq.getNext());
+         * System.err.println(seq.getNext()); System.err.println(seq.getNext());
+         * System.err.println(seq.getNext()); System.err.println(seq.getNext());
+         * System.err.println(seq.getNext()); System.err.println(seq.getNext());
+         * System.err.println(seq.getNext()); System.err.println(seq.getNext());
+         * 
+         * AtomicInteger x = new AtomicInteger(Integer.MAX_VALUE);
+         * x.getAndSet(Integer.MAX_VALUE-3);
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         * System.err.println(x.getAndIncrement());
+         */
+
+        // assertEquals((int)2147483644, sequencer.getNext());
+        // assertEquals((int)2147482645, sequencer.getNext());
+        // assertEquals((int)2147482646, sequencer.getNext());
+        // assertEquals(0, sequencer.getNext());
+        // assertEquals(1, sequencer.getNext());
+        // assertEquals(2, sequencer.getNext());
+        // assertEquals(3, sequencer.getNext());
+    }
 }

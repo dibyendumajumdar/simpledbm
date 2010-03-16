@@ -39,44 +39,44 @@ package org.simpledbm.common.util;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * Lock free number generator similar to AtomicInteger, except that 
- * supports wrapping around of the value within a specified range.
+ * Lock free number generator similar to AtomicInteger, except that supports
+ * wrapping around of the value within a specified range.
  * 
  * @author dibyendu majumdar
  * @since 26 July 2008
  */
 public class WrappingSequencer extends AtomicInteger {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	private final int range;
-	
-	/**
-	 * Constructs a new WrappingSequencer initialized to wrap values
-	 * between 0 and range-1. Initial value is set to 0.
-	 * 
-	 * @param range The value will wrap between 0 and range-1.
-	 */
-	public WrappingSequencer(int range) {
-		super(0);
-		this.range = Math.abs(range);
-	}
-	
-	/**
-	 * Gets the next value atomically. If the value hits the
-	 * upper limit, it is wrapped around to 0.
-	 */
-	public int getNext() {
-		while (true) {
-			int current = get();
-			int next = current + 1;
-			if (next >= range) {
-				next = 0;
-			}
-			if (compareAndSet(current, next)) {
-				return current;
-			}
-		}
-	}
-	
+    private final int range;
+
+    /**
+     * Constructs a new WrappingSequencer initialized to wrap values between 0
+     * and range-1. Initial value is set to 0.
+     * 
+     * @param range The value will wrap between 0 and range-1.
+     */
+    public WrappingSequencer(int range) {
+        super(0);
+        this.range = Math.abs(range);
+    }
+
+    /**
+     * Gets the next value atomically. If the value hits the upper limit, it is
+     * wrapped around to 0.
+     */
+    public int getNext() {
+        while (true) {
+            int current = get();
+            int next = current + 1;
+            if (next >= range) {
+                next = 0;
+            }
+            if (compareAndSet(current, next)) {
+                return current;
+            }
+        }
+    }
+
 }

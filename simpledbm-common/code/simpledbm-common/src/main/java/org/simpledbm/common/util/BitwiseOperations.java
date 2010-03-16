@@ -44,6 +44,7 @@ public class BitwiseOperations {
 
     /**
      * Gets the specified bit (0-31) from the integer argument.
+     * 
      * @param x Integer argument
      * @param p Position of the bit (0-31)
      */
@@ -54,6 +55,7 @@ public class BitwiseOperations {
 
     /**
      * Sets the specified bit (0-31) in the integer argument.
+     * 
      * @param x Integer argument
      * @param p Position of the bit to be set.
      * @return Modified integer
@@ -64,6 +66,7 @@ public class BitwiseOperations {
 
     /**
      * Clears a range of bits in the specified integer.
+     * 
      * @param x Integer argument
      * @param p Position (0-31)
      * @param n Number of bits to clear
@@ -72,18 +75,18 @@ public class BitwiseOperations {
     static final int clearbits(final int x, final int p, final int n) {
         return x & ~((~0 << (32 - n)) >>> p);
     }
-    
+
     public static void main(String args[]) {
-    	
-    	int value = 0;
-    	
-    	for (int j = 0; j < 32; j++) {
-    		value = setbit(value, j);
-    		for (int i = 0; i < 32; i++) {
-    			System.err.print(getbit(value, i));
-    		}
-    		System.err.println();
-    	}
+
+        int value = 0;
+
+        for (int j = 0; j < 32; j++) {
+            value = setbit(value, j);
+            for (int i = 0; i < 32; i++) {
+                System.err.print(getbit(value, i));
+            }
+            System.err.println();
+        }
     }
-    
+
 }

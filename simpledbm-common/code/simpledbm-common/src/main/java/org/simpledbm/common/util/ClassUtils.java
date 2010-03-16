@@ -44,7 +44,8 @@ import java.lang.reflect.Method;
 import java.util.Properties;
 
 /**
- * Various Class Loader utilities. 
+ * Various Class Loader utilities.
+ * 
  * @author Dibyendu Majumdar
  * @since 14.Jan.2005
  */
@@ -52,12 +53,11 @@ public final class ClassUtils {
 
     public ClassUtils() {
     }
-    
 
     /**
-     * Get the ClassLoader to use. We always use the current Thread's
-     * Context ClassLoader. Assumption is that all threads within the
-     * application share the same ClassLoader.
+     * Get the ClassLoader to use. We always use the current Thread's Context
+     * ClassLoader. Assumption is that all threads within the application share
+     * the same ClassLoader.
      */
     private ClassLoader getClassLoader() {
         ClassLoader cl = Thread.currentThread().getContextClassLoader();
@@ -84,8 +84,7 @@ public final class ClassUtils {
      * @param name Name of the properties file
      * @throws IOException If the properties file could not be loaded
      */
-    public InputStream getResourceAsStream(String name)
-            throws IOException {
+    public InputStream getResourceAsStream(String name) throws IOException {
         ClassLoader cl = getClassLoader();
         InputStream is = null;
         is = cl.getResourceAsStream(name);
@@ -101,8 +100,7 @@ public final class ClassUtils {
      * @param name Name of the properties file
      * @throws IOException If the properties file could not be loaded
      */
-    public Properties getResourceAsProperties(String name)
-            throws IOException {
+    public Properties getResourceAsProperties(String name) throws IOException {
         ClassLoader cl = getClassLoader();
         InputStream is = null;
         is = cl.getResourceAsStream(name);
@@ -122,18 +120,14 @@ public final class ClassUtils {
      * Helper for invoking an instance method that takes a single parameter.
      * This method also handles parameters of primitive type.
      * 
-     * @param cl
-     *            The class that the instance belongs to
-     * @param instance
-     *            The object on which we will invoke the method
-     * @param methodName
-     *            The method name
-     * @param param
-     *            The parameter
+     * @param cl The class that the instance belongs to
+     * @param instance The object on which we will invoke the method
+     * @param methodName The method name
+     * @param param The parameter
      * @throws Throwable
      */
-    public Object invokeMethod(Class<?> cl, Object instance,
-            String methodName, Object param) throws Throwable {
+    public Object invokeMethod(Class<?> cl, Object instance, String methodName,
+            Object param) throws Throwable {
         Class<? extends Object> paramClass;
         if (param instanceof Integer)
             paramClass = Integer.TYPE;
@@ -164,14 +158,10 @@ public final class ClassUtils {
     /**
      * Helper for invoking a static method that takes one parameter.
      * 
-     * @param cl
-     *            The class that implements the static method
-     * @param methodName
-     *            The method name
-     * @param param
-     *            A parameter
-     * @param paramClass
-     *            Class of the parameter
+     * @param cl The class that implements the static method
+     * @param methodName The method name
+     * @param param A parameter
+     * @param paramClass Class of the parameter
      * @throws Throwable
      */
     public Object invokeStaticMethod(Class<?> cl, String methodName,
@@ -199,12 +189,13 @@ public final class ClassUtils {
      * @throws InvocationTargetException
      */
     public Object createObject(String className, Object param,
-            Class<?> paramClass) throws ClassNotFoundException, SecurityException,
-            NoSuchMethodException, IllegalArgumentException,
+            Class<?> paramClass) throws ClassNotFoundException,
+            SecurityException, NoSuchMethodException, IllegalArgumentException,
             InstantiationException, IllegalAccessException,
             InvocationTargetException {
         Class<?> clazzImpl = forName(className);
-        Constructor<?> ctor = clazzImpl.getConstructor(new Class[] { paramClass });
+        Constructor<?> ctor = clazzImpl
+                .getConstructor(new Class[] { paramClass });
         Object instance = ctor.newInstance(new Object[] { param });
         return instance;
     }

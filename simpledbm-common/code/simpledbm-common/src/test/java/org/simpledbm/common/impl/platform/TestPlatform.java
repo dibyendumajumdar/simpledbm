@@ -50,49 +50,51 @@ import org.simpledbm.junit.BaseTestCase;
  * @since 21-Aug-2005
  */
 public class TestPlatform extends BaseTestCase {
-	
-	public TestPlatform() {
-		super();
-	}
 
-	public TestPlatform(String arg0) {
-		super(arg0);
-	}
+    public TestPlatform() {
+        super();
+    }
 
+    public TestPlatform(String arg0) {
+        super(arg0);
+    }
 
-	static final class MyTask implements Runnable {
-		static AtomicInteger TaskId = new AtomicInteger();
-		int taskId = TaskId.incrementAndGet();
-		final int delay;
-		
-		MyTask(int delay) {
-			this.delay = delay;
-		}
-		
-		public void run() {
-			System.err.println("I am running " + this);
-		}	
+    static final class MyTask implements Runnable {
+        static AtomicInteger TaskId = new AtomicInteger();
+        int taskId = TaskId.incrementAndGet();
+        final int delay;
 
-		public String toString() {
-			return "MyTask(id=" + taskId + ", delay=" + delay + ")";
-		}
-		
-	}
-	
-	public void testScheduler() throws InterruptedException {
-		Scheduler scheduler = platform.getScheduler();
-		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(5), 5, 5, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(3), 3, 3, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(10), 10, 10, TimeUnit.SECONDS);
-		scheduler.scheduleWithFixedDelay(Priority.SERVER_TASK, new MyTask(1), 1, 1, TimeUnit.SECONDS);
-		
-		try {
-			Thread.sleep(30*1000);
-		} catch (InterruptedException e) {
-		}
+        MyTask(int delay) {
+            this.delay = delay;
+        }
 
-		scheduler.shutdown();
-	}
-	
-	
+        public void run() {
+            System.err.println("I am running " + this);
+        }
+
+        public String toString() {
+            return "MyTask(id=" + taskId + ", delay=" + delay + ")";
+        }
+
+    }
+
+    public void testScheduler() throws InterruptedException {
+        Scheduler scheduler = platform.getScheduler();
+        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(5), 5, 5,
+                TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(3), 3, 3,
+                TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(10), 10,
+                10, TimeUnit.SECONDS);
+        scheduler.scheduleWithFixedDelay(Priority.SERVER_TASK, new MyTask(1),
+                1, 1, TimeUnit.SECONDS);
+
+        try {
+            Thread.sleep(30 * 1000);
+        } catch (InterruptedException e) {
+        }
+
+        scheduler.shutdown();
+    }
+
 }

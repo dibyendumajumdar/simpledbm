@@ -43,20 +43,27 @@ import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ClassUtils;
 import org.simpledbm.common.util.logging.Logger;
 
+/**
+ * PlatformObjects contain a set of objects that are
+ * related to the specific Logger instance.
+ * 
+ * @author dibyendu majumdar
+ *
+ */
 public interface PlatformObjects {
 
-	Logger getLogger();
-	
-	ExceptionHandler getExceptionHandler();
-	
-	ClassUtils getClassUtils();
-	
-	TraceBuffer getTraceBuffer();
-	
-	InformationManager getInformationManager();
-	
-	EventPublisher getEventPublisher();
-	
-	Platform getPlatform();
-	
+    Logger getLogger();
+
+    ExceptionHandler getExceptionHandler();
+
+    ClassUtils getClassUtils();
+
+    TraceBuffer getTraceBuffer();
+
+    InformationManager getInformationManager();
+
+    EventPublisher getEventPublisher();
+
+    Platform getPlatform();
+
 }

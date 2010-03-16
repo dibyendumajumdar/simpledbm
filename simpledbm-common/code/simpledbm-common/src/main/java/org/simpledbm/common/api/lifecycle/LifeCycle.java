@@ -36,10 +36,16 @@
  */
 package org.simpledbm.common.api.lifecycle;
 
+/**
+ * Simple marker interface for components that support a lifecycle.
+ * 
+ * @author dibyendu majumdar
+ * 
+ */
 public interface LifeCycle {
 
-    void start(Context context);
+    void start();
 
-    void shudown(Context context);
+    void shudown();
 
 }
