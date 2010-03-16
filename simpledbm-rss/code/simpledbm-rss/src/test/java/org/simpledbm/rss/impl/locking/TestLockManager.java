@@ -1286,7 +1286,8 @@ public class TestLockManager extends BaseTestCase {
                 }
             }
         });
-        Thread t3 = new Thread(new Runnable() {
+        @SuppressWarnings("unused")
+		Thread t3 = new Thread(new Runnable() {
             public void run() {
                 try {
                     Thread.sleep(1500);
@@ -1356,7 +1357,8 @@ public class TestLockManager extends BaseTestCase {
         long size = 0;
         Object[] objects = new Object[10000];
         try {
-            Object primer = clazz.newInstance();
+            @SuppressWarnings("unused")
+			Object primer = clazz.newInstance();
             long startingMemoryUse = getUsedMemory();
             for (int i = 0; i < objects.length; i++) {
                 objects[i] = clazz.newInstance();

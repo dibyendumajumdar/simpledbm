@@ -40,10 +40,10 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -53,6 +53,7 @@ import org.simpledbm.common.api.info.InformationManager;
 import org.simpledbm.common.api.info.LongStatistic;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.Linkable;
 import org.simpledbm.common.util.SimpleLinkedList;
@@ -91,16 +92,14 @@ public final class BufferManagerImpl implements BufferManager {
     private static final String BUFFERPOOL_NUMBUFFERS = "bufferpool.numbuffers";
     private static final String BUFFER_WRITER_WAIT = "bufferpool.writerSleepInterval";
 
+    private static final int LATCH_EXCLUSIVE = 2;
+    private static final int LATCH_UPDATE = 3;
+    private static final int LATCH_SHARED = 1;
+
     final Logger log;
 
     final ExceptionHandler exceptionHandler;
     
-    private static final int LATCH_EXCLUSIVE = 2;
-
-    private static final int LATCH_UPDATE = 3;
-
-    private static final int LATCH_SHARED = 1;
-
     final BufferManagerStatistics statistics;
     
     final Platform platform;
@@ -160,7 +159,8 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Background thread for writing dirty pages.
      */
-    private Thread bufferWriter;
+//    private Thread bufferWriter;
+    private ScheduledFuture<?> bufferWriter;
 
     /**
      * Flag that triggers Buffer Manager to shutdown. Should be set
@@ -337,29 +337,31 @@ public final class BufferManagerImpl implements BufferManager {
         /* 
          * Setup background thread for buffer writer.
          */
-        bufferWriter = new Thread(new BufferWriter(this), "BufferWriter");
-        bufferWriter.start();
+//        bufferWriter = new Thread(new BufferWriter(this), "BufferWriter");
+//        bufferWriter.start();
+        bufferWriter = platform.getScheduler().scheduleWithFixedDelay(Priority.SERVER_TASK, new BufferWriter(this), bufferWriterSleepInterval, bufferWriterSleepInterval, TimeUnit.MILLISECONDS);
+        log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0011).toString());
     }
 
     /**
      * Wakes up the Buffer Writer thread.
      */
     void signalBufferWriter() {
-        if (log.isTraceEnabled()) {
-            log.trace(
-                this.getClass().getName(),
-                "signalBufferWriter",
-                "SIMPLEDBM-DEBUG: SIGNALLING Buffer Writer");
-        }
-        if (bufferWriter != null && bufferWriter.isAlive()) {
-        	LockSupport.unpark(bufferWriter);
-        }
+//        if (log.isTraceEnabled()) {
+//            log.trace(
+//                this.getClass().getName(),
+//                "signalBufferWriter",
+//                "SIMPLEDBM-DEBUG: SIGNALLING Buffer Writer");
+//        }
+//        if (bufferWriter != null && bufferWriter.isAlive()) {
+//        	LockSupport.unpark(bufferWriter);
+//        }
     }
 
     /**
      * Instructs the Buffer Manager to shutdown.
      */
-    private void setStop() {
+    private synchronized void setStop() {
         stop = true;
     }
 
@@ -368,16 +370,18 @@ public final class BufferManagerImpl implements BufferManager {
      */
     public void shutdown() {
         setStop();
-        signalBufferWriter();
-        try {
-        	if (bufferWriter != null && bufferWriter.isAlive()) {
-        		bufferWriter.join();
-        	}
-        } catch (InterruptedException e) {
-            log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EM0001).toString(), e);
-        }
+//        signalBufferWriter();
+//        try {
+//        	if (bufferWriter != null && bufferWriter.isAlive()) {
+//        		bufferWriter.join();
+//        	}
+//        } catch (InterruptedException e) {
+//            log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EM0001).toString(), e);
+//        }
+        bufferWriter.cancel(false);
         writeBuffers();
         dumpStatistics();
+        log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0012).toString());
     }
 
     /**
@@ -1751,47 +1755,73 @@ public final class BufferManagerImpl implements BufferManager {
             this.bufmgr = bufmgr;
         }
 
-        public final void run() {
-            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0011).toString());
-            for (;;) {
-                LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-                    bufmgr.bufferWriterSleepInterval,
-                    TimeUnit.MILLISECONDS));
-                try {
-                    if (bufmgr.log.isTraceEnabled()) {
-//                    	bufmgr.log.trace(
-//                            this.getClass().getName(),
-//                            "run",
-//                            "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = "
-//                                    + bufmgr.getDirtyBuffersCount());
-                    }
-                    long start = System.currentTimeMillis();
-                    bufmgr.writeBuffers();
-                    long end = System.currentTimeMillis();
-                    if (bufmgr.log.isTraceEnabled()) {
-//                    	bufmgr.log.trace(
-//                            this.getClass().getName(),
-//                            "run",
-//                            "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = "
-//                                    + bufmgr.getDirtyBuffersCount());
-                    	bufmgr.log
-                            .trace(
-                                this.getClass().getName(),
-                                "run",
-                                "SIMPLEDBM-DEBUG: BUFFER WRITER took "
-                                        + (end - start)
-                                        + " millisecs to complete writing pages to disk");
-                    }
-                } catch (Exception e) {
-                	bufmgr.log.error(this.getClass().getName(), "run", new MessageInstance(m_EM0003).toString(), e);
-                    bufmgr.setStop();
-                }
-                if (bufmgr.stop) {
-                    break;
-                }
-            }
-            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0012).toString());
-        }
+		public final void run() {
+
+			if (bufmgr.stop) {
+				return;
+			}
+			try {
+				long start = System.currentTimeMillis();
+				bufmgr.writeBuffers();
+				long end = System.currentTimeMillis();
+				if (bufmgr.log.isTraceEnabled()) {
+					bufmgr.log
+							.trace(
+									this.getClass().getName(),
+									"run",
+									"SIMPLEDBM-DEBUG: BUFFER WRITER took "
+											+ (end - start)
+											+ " millisecs to complete writing pages to disk");
+				}
+			} catch (Exception e) {
+				bufmgr.log.error(this.getClass().getName(), "run",
+						new MessageInstance(m_EM0003).toString(), e);
+				bufmgr.setStop();
+			}
+
+		}
+        
+//        public final void run() {
+//            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0011).toString());
+//            for (;;) {
+//                LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
+//                    bufmgr.bufferWriterSleepInterval,
+//                    TimeUnit.MILLISECONDS));
+//                try {
+//                    if (bufmgr.log.isTraceEnabled()) {
+////                    	bufmgr.log.trace(
+////                            this.getClass().getName(),
+////                            "run",
+////                            "SIMPLEDBM-DEBUG: Before Writing Buffers: Dirty Buffers Count = "
+////                                    + bufmgr.getDirtyBuffersCount());
+//                    }
+//                    long start = System.currentTimeMillis();
+//                    bufmgr.writeBuffers();
+//                    long end = System.currentTimeMillis();
+//                    if (bufmgr.log.isTraceEnabled()) {
+////                    	bufmgr.log.trace(
+////                            this.getClass().getName(),
+////                            "run",
+////                            "SIMPLEDBM-DEBUG: After Writing Buffers: Dirty Buffers Count = "
+////                                    + bufmgr.getDirtyBuffersCount());
+//                    	bufmgr.log
+//                            .trace(
+//                                this.getClass().getName(),
+//                                "run",
+//                                "SIMPLEDBM-DEBUG: BUFFER WRITER took "
+//                                        + (end - start)
+//                                        + " millisecs to complete writing pages to disk");
+//                    }
+//                } catch (Exception e) {
+//                	bufmgr.log.error(this.getClass().getName(), "run", new MessageInstance(m_EM0003).toString(), e);
+//                    bufmgr.setStop();
+//                }
+//                if (bufmgr.stop) {
+//                    break;
+//                }
+//            }
+//            bufmgr.log.info(this.getClass().getName(), "run", new MessageInstance(m_IM0012).toString());
+//        }
     }
 
     public void setBufferWriterSleepInterval(int bufferWriterSleepInterval) {
@@ -1817,7 +1847,7 @@ public final class BufferManagerImpl implements BufferManager {
     		fixCount = im.newLongStatistic("bufmgr.fixCount");
     		cacheHits = im.newLongStatistic("bufmgr.cacheHits");
     		writerSleepInterval = im.newLongStatistic("bufmgr.writerSleepInterval");
-    		hashTableSize = im.newLongStatistic("bufmgr.hasTableSize");
+    		hashTableSize = im.newLongStatistic("bufmgr.hashTableSize");
     	}
 
 		public LongStatistic getDirtyBuffers() {
