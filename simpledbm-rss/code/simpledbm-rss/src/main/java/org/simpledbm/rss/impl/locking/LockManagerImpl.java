@@ -43,12 +43,15 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.locking.LockMode;
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.SimpleTimer;
 import org.simpledbm.common.util.logging.Logger;
@@ -80,13 +83,15 @@ import org.simpledbm.rss.api.locking.LockTimeoutException;
  */
 public final class LockManagerImpl implements LockManager {
 
-    final Logger log;
-    
-    final ExceptionHandler exceptionHandler;
- 
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
 
+    final Platform platform;
+
+    final Logger log;
+    
+    final ExceptionHandler exceptionHandler;    
+    
     /**
      * Offset into {@link #hashPrimes}
      */
@@ -139,7 +144,8 @@ public final class LockManagerImpl implements LockManager {
 
     volatile boolean stop = false;
 
-    Thread deadlockDetectorThread;
+//    Thread deadlockDetectorThread;
+    ScheduledFuture<?> deadlockDetectorThread;
 
     /**
      * The interval between deadlock detection scans, specified in seconds.
@@ -247,6 +253,7 @@ public final class LockManagerImpl implements LockManager {
 	 * Creates a new LockMgrImpl, ready for use.
 	 */
 	public LockManagerImpl(PlatformObjects po, LatchFactory latchFactory, Properties p) {
+		platform = po.getPlatform();
 		log = po.getLogger();
 		exceptionHandler = po.getExceptionHandler();
 		globalLock = latchFactory.newReadWriteLatch();
@@ -261,23 +268,27 @@ public final class LockManagerImpl implements LockManager {
 	}
 
 	public void start() {
-	    deadlockDetectorThread = new Thread(
-	        new DeadlockDetector(this),
-	        "DeadlockDetector");
-	    deadlockDetectorThread.start();
+//	    deadlockDetectorThread = new Thread(
+//	        new DeadlockDetector(this),
+//	        "DeadlockDetector");
+//	    deadlockDetectorThread.start();
+		deadlockDetectorThread = platform.getScheduler().scheduleWithFixedDelay(Priority.SERVER_TASK, new DeadlockDetector(this), deadlockDetectorInterval, deadlockDetectorInterval, TimeUnit.SECONDS);
+        log.info(this.getClass().getName(), "start", new MessageInstance(m_IC0012).toString());
 	}
 
 	public void shutdown() {
 	    stop = true;
-	    if (deadlockDetectorThread.isAlive()) {
-	        LockSupport.unpark(deadlockDetectorThread);
-	        try {
-	            deadlockDetectorThread
-	                .join(deadlockDetectorInterval * 2 * 1000);
-	        } catch (InterruptedException e) {
-	            // ignored
-	        }
-	    }
+	    deadlockDetectorThread.cancel(false);
+//	    if (deadlockDetectorThread.isAlive()) {
+//	        LockSupport.unpark(deadlockDetectorThread);
+//	        try {
+//	            deadlockDetectorThread
+//	                .join(deadlockDetectorInterval * 2 * 1000);
+//	        } catch (InterruptedException e) {
+//	            // ignored
+//	        }
+//	    }
+	    log.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IC0013).toString());
 	}
 
 	/**
@@ -1908,18 +1919,25 @@ public final class LockManagerImpl implements LockManager {
         }
 
         public void run() {
-            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0012).toString());
-            while (!lockManager.stop) {
-                lockManager.detectDeadlocks();
-                LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-                    lockManager.deadlockDetectorInterval,
-                    TimeUnit.SECONDS));
-                if (lockManager.stop) {
-                    break;
-                }
+            if (lockManager.stop) {
+            	return;
             }
-            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0013).toString());
+            lockManager.detectDeadlocks();
         }
+
+//        public void run() {
+//            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0012).toString());
+//            while (!lockManager.stop) {
+//                lockManager.detectDeadlocks();
+//                LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
+//                    lockManager.deadlockDetectorInterval,
+//                    TimeUnit.SECONDS));
+//                if (lockManager.stop) {
+//                    break;
+//                }
+//            }
+//            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0013).toString());
+//        }
     }
 
     public void setDeadlockDetectorInterval(int seconds) {

@@ -44,9 +44,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Properties;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.locking.LockMode;
@@ -55,6 +55,7 @@ import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.Dumpable;
@@ -170,9 +171,6 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public final class TransactionManagerImpl implements TransactionManager {
 
-    final Logger log;
-    final ExceptionHandler exceptionHandler;
-
     private static final short MODULE_ID = 1;
 
     private static final short TYPE_BASE = 0;
@@ -187,6 +185,12 @@ public final class TransactionManagerImpl implements TransactionManager {
         TRX_UNPREPARED, TRX_PREPARED, TRX_DEAD
     }
 
+
+    final Platform platform;
+    final Logger log;
+    final ExceptionHandler exceptionHandler;    
+    
+    
     /**
      * Holds the list of dirty pages; used during restart recovery only.
      */
@@ -253,7 +257,7 @@ public final class TransactionManagerImpl implements TransactionManager {
     static final String PROPERTY_CHECKPOINT_INTERVAL = "transaction.ckpt.interval";
 
     /**
-     * The time interval between each checkpoint.
+     * The time interval between each checkpoint (in millisecs).
      */
     int checkpointInterval = DEFAULT_CHECKPOINT_INTERVAL;
 
@@ -285,12 +289,13 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     volatile boolean stop = false;
 
-    /**
-     * CheckpointWriter thread is responsible for taking checkpoints at
-     * periodic intervals.
-     */
-    Thread checkpointWriter;
-
+	/**
+	 * CheckpointWriter thread is responsible for taking checkpoints at periodic
+	 * intervals.
+	 */
+	// Thread checkpointWriter;
+	ScheduledFuture<?> checkpointWriter;
+    
     /**
      * This sync object is used for signalling the CheckpointWriter 
      * thread.
@@ -398,6 +403,7 @@ public final class TransactionManagerImpl implements TransactionManager {
             Properties p) {
  
     	PlatformObjects po = platform.getPlatformObjects(TransactionManager.LOGGER_NAME);
+    	this.platform = platform;
     	this.log = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
     	
@@ -432,9 +438,6 @@ public final class TransactionManagerImpl implements TransactionManager {
 
         this.lockWaitTimeout = getNumericProperty(p, PROPERTY_LOCK_TIMEOUT, DEFAULT_LOCK_TIMEOUT);
         this.checkpointInterval = getNumericProperty(p, PROPERTY_CHECKPOINT_INTERVAL, DEFAULT_CHECKPOINT_INTERVAL);
-        
-        // transaction manager messages
-
         
         log.info(getClass().getName(), "ctor", new MessageInstance(m_IX0019, PROPERTY_LOCK_TIMEOUT, lockWaitTimeout).toString());
         log.info(getClass().getName(), "ctor", new MessageInstance(m_IX0019, PROPERTY_CHECKPOINT_INTERVAL, checkpointInterval).toString());
@@ -1585,10 +1588,13 @@ public final class TransactionManagerImpl implements TransactionManager {
      */
     public final void start() {
         doRestart();
-        checkpointWriter = new Thread(
-            new CheckpointWriter(this),
-            "CheckpointWriter");
-        checkpointWriter.start();
+        checkpointWriter = platform.getScheduler().scheduleWithFixedDelay(
+        		Priority.SERVER_TASK, new CheckpointWriter(this), 
+        		checkpointInterval, checkpointInterval, TimeUnit.MILLISECONDS);
+//        checkpointWriter = new Thread(
+//            new CheckpointWriter(this),
+//            "CheckpointWriter");
+//        checkpointWriter.start();
         log.info(this.getClass().getName(), "start", new MessageInstance(m_IX0013).toString());
     }
 
@@ -1603,14 +1609,28 @@ public final class TransactionManagerImpl implements TransactionManager {
          * By writing out the buffers prior to checkpoint we can cust down restart recovery time.
          */
         bufmgr.writeBuffers();
-        while (checkpointWriter.isAlive()) {
-            LockSupport.unpark(checkpointWriter);
-            try {
-                checkpointWriter.join();
-            } catch (InterruptedException e) {
-                log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EX0014).toString(), e);
-            }
+        latch.exclusiveLock();
+        try {
+        	/*
+        	 * We ensure that checkpoint writer can't be running while we
+        	 * cancel any future runs.
+        	 */
+            checkpointWriter.cancel(false);
+        } finally {
+            latch.unlockExclusive();
         }
+        /*
+         * Create a checkpoint.
+         */
+        checkpoint();
+//        while (checkpointWriter.isAlive()) {
+//            LockSupport.unpark(checkpointWriter);
+//            try {
+//                checkpointWriter.join();
+//            } catch (InterruptedException e) {
+//                log.error(this.getClass().getName(), "shutdown", new MessageInstance(m_EX0014).toString(), e);
+//            }
+//        }
         log.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IX0015).toString());
     }
 
@@ -3274,35 +3294,48 @@ public final class TransactionManagerImpl implements TransactionManager {
             this.trxmgr = trxmgr;
         }
 
-        public void run() {
-
-            for (;;) {
-                long then = System.nanoTime();
-                long timeout = TimeUnit.NANOSECONDS.convert(
-                    trxmgr.checkpointInterval,
-                    TimeUnit.MILLISECONDS);
-                while (timeout > 0) {
-                    LockSupport.parkNanos(timeout);
-                    long now = System.nanoTime();
-                    timeout -= (now - then);
-                    then = now;
-                    if (timeout <= 0 || trxmgr.stop) {
-                        break;
-                    }
-                }
-                try {
-                    trxmgr.checkpoint();
-                } catch (TransactionException e) {
-                	trxmgr.log.error(CheckpointWriter.class.getName(), "run", 
-                			new MessageInstance(m_EX0018).toString(), e);
-                    trxmgr.errored = true;
-                    break;
-                }
-                if (trxmgr.stop) {
-                    break;
-                }
-            }
-        }
+//        public void run() {
+//
+//            for (;;) {
+//                long then = System.nanoTime();
+//                long timeout = TimeUnit.NANOSECONDS.convert(
+//                    trxmgr.checkpointInterval,
+//                    TimeUnit.MILLISECONDS);
+//                while (timeout > 0) {
+//                    LockSupport.parkNanos(timeout);
+//                    long now = System.nanoTime();
+//                    timeout -= (now - then);
+//                    then = now;
+//                    if (timeout <= 0 || trxmgr.stop) {
+//                        break;
+//                    }
+//                }
+//                try {
+//                    trxmgr.checkpoint();
+//                } catch (TransactionException e) {
+//                	trxmgr.log.error(CheckpointWriter.class.getName(), "run", 
+//                			new MessageInstance(m_EX0018).toString(), e);
+//                    trxmgr.errored = true;
+//                    break;
+//                }
+//                if (trxmgr.stop) {
+//                    break;
+//                }
+//            }
+//        }
+        
+		public void run() {
+			if (trxmgr.errored || trxmgr.stop) {
+				return;
+			}
+			try {
+				trxmgr.checkpoint();
+			} catch (TransactionException e) {
+				trxmgr.log.error(CheckpointWriter.class.getName(), "run",
+						new MessageInstance(m_EX0018).toString(), e);
+				trxmgr.errored = true;
+			}
+		}
     }
 
 }

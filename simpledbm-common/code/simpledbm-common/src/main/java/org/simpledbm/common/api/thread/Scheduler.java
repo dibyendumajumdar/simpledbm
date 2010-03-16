@@ -40,6 +40,14 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * The Scheduler allows background tasks to be executed.
+ * It is possible to submit tasks for immediate or delayed 
+ * execution. it is also possible to request that a task
+ * be rerun at regular intervals.
+ * 
+ * @author dibyendumajumdar
+ */
 public interface Scheduler {
 	
 	enum Priority {
@@ -48,9 +56,7 @@ public interface Scheduler {
 	}
 	
     /**
-     * Executes the given command at some time in the future.  The command
-     * may execute in a new thread, in a pooled thread, or in the calling
-     * thread, at the discretion of the <tt>Executor</tt> implementation.
+     * Executes the given command at some time in the future.  
      *
      * @param command the runnable task
      * @throws RejectedExecutionException if this task cannot be
@@ -89,12 +95,8 @@ public interface Scheduler {
      * tasks are executed, but no new tasks will be accepted.
      * Invocation has no additional effect if already shut down.
      *
-     * <p>This method does not wait for previously submitted tasks to
-     * complete execution.  Use {@link #awaitTermination awaitTermination}
-     * to do that.
-     *
      * @throws SecurityException if a security manager exists and
-     *         shutting down this ExecutorService may manipulate
+     *         shutting down may manipulate
      *         threads that the caller is not permitted to modify
      *         because it does not hold {@link
      *         java.lang.RuntimePermission}<tt>("modifyThread")</tt>,

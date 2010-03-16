@@ -11,20 +11,45 @@ import java.util.concurrent.TimeUnit;
 
 import org.simpledbm.common.api.thread.Scheduler;
 
+/**
+ * Implements the Scheduler interface.
+ * 
+ * @author dibyendumajumdar
+ */
 public class SimpleScheduler implements Scheduler {
+
+	/*
+	 * Three different thread pools are used:
+	 * 
+	 * ScheduledThreadPoolExecutor is used to trigger tasks that are
+	 * required to run repeatedly. This threadpool does not execute any tasks
+	 * itself; instead it delegates to one or the other threadpools, depending upon
+	 * priority of the task.
+	 * 
+	 * Two ThreadPoolExecutors are used for running tasks, one for priority
+	 * tasks and the other for normal tasks. There is no actual difference in
+	 * thread priority, but the high priority pool is meant to execute a restricted
+	 * set of tasks that should not be blocked because of normal priority tasks.
+	 * It is okay for a task to be blocked by another at the same priority level.
+	 */
 	
 	final ThreadPoolExecutor priorityThreadPool;
 	final ThreadPoolExecutor normalThreadPool;
 	final ScheduledThreadPoolExecutor scheduledThreadPoolExecutor;
 
 	public SimpleScheduler(Properties properties) {
-		int priorityThreadPoolSize = Integer.valueOf(properties.getProperty("scheduler.priorityThreadPoolSize", "5"));
+		int priorityThreadPoolSize = Integer.valueOf(properties.getProperty("scheduler.priorityThreadPoolSize", "10"));
+		int priorityCoreThreads = Integer.valueOf(properties.getProperty("scheduler.priorityCoreThreads", "1"));
+		int priorityKeepAlive = Integer.valueOf(properties.getProperty("scheduler.priorityKeepAliveTime", "180"));
 		int normalThreadPoolSize = Integer.valueOf(properties.getProperty("scheduler.normalThreadPoolSize", "25"));
+		int normalCoreThreads = Integer.valueOf(properties.getProperty("scheduler.normalCoreThreads", "1"));
+		int normalKeepAlive = Integer.valueOf(properties.getProperty("scheduler.normalKeepAliveTime", "60"));
 		
-		priorityThreadPool = new ThreadPoolExecutor(1, priorityThreadPoolSize, 180L, TimeUnit.SECONDS,
+		priorityThreadPool = new ThreadPoolExecutor(priorityCoreThreads, priorityThreadPoolSize, priorityKeepAlive, TimeUnit.SECONDS,
 				new LinkedBlockingQueue<Runnable>());
-		normalThreadPool = new ThreadPoolExecutor(1, normalThreadPoolSize, 60L, TimeUnit.SECONDS,
+		normalThreadPool = new ThreadPoolExecutor(normalCoreThreads, normalThreadPoolSize, normalKeepAlive, TimeUnit.SECONDS,
 				new LinkedBlockingQueue<Runnable>());
+		// The scheduler pool always has 1 core thread
 		scheduledThreadPoolExecutor = (ScheduledThreadPoolExecutor) Executors.newScheduledThreadPool(1);		
 	}
 
@@ -70,9 +95,7 @@ public class SimpleScheduler implements Scheduler {
 			this.runnable = runnable;
 		}
 		public void run() {
-//			System.err.println("Submitting task " + runnable);
 			executor.submit(runnable);
-//			System.err.println("Pool size " + ((ThreadPoolExecutor)executor).getPoolSize());
 		}
 	}
 }

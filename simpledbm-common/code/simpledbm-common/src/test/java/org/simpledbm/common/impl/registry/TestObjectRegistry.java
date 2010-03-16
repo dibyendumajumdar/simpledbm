@@ -144,7 +144,8 @@ public class TestObjectRegistry extends BaseTestCase {
 //        assertFalse(s1 == null);
 //        assertTrue(s1 instanceof String);
 //        assertFalse(s == s1);
-        Object s = null;
+        @SuppressWarnings("unused")
+		Object s = null;
         try {
             s = factory.getSingleton(5);
             fail();

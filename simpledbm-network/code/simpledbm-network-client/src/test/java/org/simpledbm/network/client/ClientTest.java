@@ -150,7 +150,7 @@ public class ClientTest extends BaseTestCase {
 
 		Properties properties = parseProperties("test.properties");
 		SessionManager sessionManager = SessionManager.getSessionManager(properties, "localhost", 8000,
-				(int) TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES));
+				(int) TimeUnit.MILLISECONDS.convert(5*60, TimeUnit.SECONDS));
 		TypeFactory ff = sessionManager.getTypeFactory();		
 		Session session = sessionManager.openSession();
 		try {

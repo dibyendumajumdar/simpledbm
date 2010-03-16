@@ -42,18 +42,18 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.Storable;
+import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.ChecksumCalculator;
 import org.simpledbm.common.util.TypeSize;
@@ -170,10 +170,6 @@ import org.simpledbm.rss.api.wal.Lsn;
  */
 public final class LogManagerImpl implements LogManager {
 
-    final Logger logger;
-    
-    final ExceptionHandler exceptionHandler;
-    
     static final String DEFAULT_GROUP_PATH = ".";
 
     static final String DEFAULT_ARCHIVE_PATH = ".";
@@ -184,6 +180,12 @@ public final class LogManagerImpl implements LogManager {
 
     static final int DEFAULT_CTL_FILES = 2;
 
+    final Logger logger;
+    
+    final ExceptionHandler exceptionHandler;
+    
+    final Platform platform;    
+    
     /**
      * A valid Log Group has status set to {@value}.
      */
@@ -325,6 +327,11 @@ public final class LogManagerImpl implements LogManager {
      * closed.
      */
     private volatile boolean errored;
+    
+    /**
+     * Flag to indicate that the LogManager is stopping/stopped.
+     */
+    private volatile boolean stopped;
 
     /**
      * LogAnchor is normally written out only during logSwitches, or log
@@ -364,7 +371,9 @@ public final class LogManagerImpl implements LogManager {
      * @see LogWriter
      * @see #setupBackgroundThreads()
      */
-    private ScheduledExecutorService flushService;
+//    private ScheduledExecutorService flushService;
+    ScheduledFuture<?> flushService;
+    
 
     /**
      * A Single Threaded Executor service is used to handle archive log file
@@ -373,8 +382,20 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      * @see #setupBackgroundThreads()
      */
-    private ExecutorService archiveService;
+//    private ExecutorService archiveService;
+ 
+ 
+    /**
+     * The ArchiveCleaner task is responsible for deleting
+     * redundant archived logs.
+     */
+    ScheduledFuture<?> archiveCleaner;
 
+    /**
+     * Tracks the logIndex of the last archived file.
+     */
+    private volatile int lastArchivedFile = -1;    
+    
     /*
      * Note on multi-threading issues. The goals of the design are to ensure
      * that:
@@ -681,23 +702,26 @@ public final class LogManagerImpl implements LogManager {
         setupBackgroundThreads();
         errored = false;
         started = true;
+        stopped = false;
     }
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.wal.LogManager#shutdown()
      */
     public final synchronized void shutdown() {
+    	stopped = true;
         if (started) {
             /*
              * We shutdown the flush service before attempting to flush the Log -
              * to avoid unnecessary conflicts.
              */
-            flushService.shutdown();
-            try {
-                flushService.awaitTermination(60, TimeUnit.SECONDS);
-            } catch (InterruptedException e1) {
-                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-            }
+        	flushService.cancel(false);
+//            flushService.shutdown();
+//            try {
+//                flushService.awaitTermination(60, TimeUnit.SECONDS);
+//            } catch (InterruptedException e1) {
+//                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
+//            }
             logger.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IW0030).toString());
             if (!errored) {
                 try {
@@ -706,12 +730,13 @@ public final class LogManagerImpl implements LogManager {
                     logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e);
                 }
             }
-            archiveService.shutdown();
-            try {
-                archiveService.awaitTermination(60, TimeUnit.SECONDS);
-            } catch (InterruptedException e1) {
-                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-            }
+            archiveCleaner.cancel(false);
+//            archiveService.shutdown();
+//            try {
+//                archiveService.awaitTermination(60, TimeUnit.SECONDS);
+//            } catch (InterruptedException e1) {
+//                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
+//            }
             logger.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IW0031).toString());
             closeLogFiles();
             closeCtlFiles();
@@ -794,8 +819,6 @@ public final class LogManagerImpl implements LogManager {
      * that will be used to coordinate actions between the background threads.
      * 
      * @see #logFilesSemaphore
-     * @see #flushService
-     * @see #archiveService
      */
     private void setupBackgroundThreads() {
         logFilesSemaphore = new Semaphore(anchor.n_LogFiles - 1);
@@ -809,20 +832,26 @@ public final class LogManagerImpl implements LogManager {
                 }
             }
         }
-        flushService = Executors.newSingleThreadScheduledExecutor();
-        archiveService = Executors.newSingleThreadExecutor();
+//        flushService = Executors.newSingleThreadScheduledExecutor();
+//        archiveService = Executors.newSingleThreadExecutor();
 
-        flushService.scheduleWithFixedDelay(
-            new LogWriter(this),
-            logFlushInterval,
-            logFlushInterval,
-            TimeUnit.SECONDS);
+//        flushService.scheduleWithFixedDelay(
+//            new LogWriter(this),
+//            logFlushInterval,
+//            logFlushInterval,
+//            TimeUnit.SECONDS);
+		flushService = platform.getScheduler().scheduleWithFixedDelay(
+				Priority.SERVER_TASK, new LogWriter(this), logFlushInterval,
+				logFlushInterval, TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads", new MessageInstance(m_IW0028).toString());
-        flushService.scheduleWithFixedDelay(
-            new ArchiveCleaner(this),
-            logFlushInterval,
-            logFlushInterval,
-            TimeUnit.SECONDS);
+//      flushService.scheduleWithFixedDelay(
+//      new ArchiveCleaner(this),
+//      logFlushInterval,
+//      logFlushInterval,
+//      TimeUnit.SECONDS);		
+        archiveCleaner = platform.getScheduler().scheduleWithFixedDelay(
+				Priority.SERVER_TASK, new ArchiveCleaner(this),
+				logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads", new MessageInstance(m_IW0029).toString());
     }
 
@@ -1004,7 +1033,7 @@ public final class LogManagerImpl implements LogManager {
 
     	this.logger = po.getLogger();
     	this.exceptionHandler = po.getExceptionHandler();
-    	
+    	this.platform = po.getPlatform();
     	
     	this.logBufferSize = logBufferSize;
     	this.maxBuffers = maxBuffers;
@@ -1400,11 +1429,11 @@ public final class LogManagerImpl implements LogManager {
      * the archive thread.
      * 
      * @param req
-     * @see #archiveService
      * @see ArchiveRequestHandler
      */
     private void submitArchiveRequest(ArchiveRequest req) {
-        archiveService.submit(new ArchiveRequestHandler(this, req));
+//        archiveService.submit(new ArchiveRequestHandler(this, req));
+    	platform.getScheduler().execute(Priority.SERVER_TASK, new ArchiveRequestHandler(this, req));
     }
 
     /**
@@ -1801,12 +1830,11 @@ public final class LogManagerImpl implements LogManager {
         // validateLogFile(anchor.logIndexes[f], name);
     }
 
-    private volatile int lastArchivedFile = -1;
 
     /**
      * Process the next archive log file request, ensuring that only one archive
      * can run at any time. All of the real work is done in
-     * {@link #handleNextArchiveRequest}.
+     * {@link #handleNextArchiveRequest_}.
      * 
      * @see #handleNextArchiveRequest_(ArchiveRequest)
      */
@@ -2166,6 +2194,14 @@ public final class LogManagerImpl implements LogManager {
         errored = true;
     }
 
+    final boolean isErrored() {
+    	return errored;
+    }
+    
+    final boolean isStopped() {
+    	return stopped;
+    }
+    
     /**
      * Default (forward scanning) implementation of a <code>LogReader</code>.
      * 
@@ -2822,7 +2858,7 @@ public final class LogManagerImpl implements LogManager {
      */
     static final class LogBuffer {
 
-        static volatile int nextID = 0;
+        static AtomicInteger nextID = new AtomicInteger(0);
 
         /**
          * The buffer contents.
@@ -2844,7 +2880,7 @@ public final class LogManagerImpl implements LogManager {
          */
         final TreeMap<Lsn, LogRecordBuffer> records;
 
-        final int id = ++nextID;
+        final int id = nextID.incrementAndGet();
 
         /**
          * Create a LogBuffer of specified size.
@@ -3006,6 +3042,9 @@ public final class LogManagerImpl implements LogManager {
         }
 
         public void run() {
+        	if (logManager.isErrored() || logManager.isStopped()) {
+        		return;
+        	}
             Lsn oldestInterestingLsn = logManager.getOldestInterestingLsn();
             int archivedLogIndex = oldestInterestingLsn.getIndex() - 1;
             while (archivedLogIndex > 0) {
@@ -3051,6 +3090,9 @@ public final class LogManagerImpl implements LogManager {
          * @see java.util.concurrent.Callable#call()
          */
         public void run() {
+        	if (logManager.isErrored() || logManager.isStopped()) {
+        		return;
+        	}
             try {
                 logManager.flush();
             } catch (Exception e) {
@@ -3065,9 +3107,10 @@ public final class LogManagerImpl implements LogManager {
      * @author Dibyendu Majumdar
      * @since Jul 5, 2005
      */
-    static final class ArchiveRequestHandler implements Callable<Boolean> {
+//    static final class ArchiveRequestHandler implements Callable<Boolean> {
+    static final class ArchiveRequestHandler implements Runnable {
 
-        final private LogManagerImpl logManager;
+    	final private LogManagerImpl logManager;
 
         final private ArchiveRequest request;
 
@@ -3081,7 +3124,18 @@ public final class LogManagerImpl implements LogManager {
          * 
          * @see java.util.concurrent.Callable#call()
          */
-        public Boolean call() {
+        public void run() {
+//          public Boolean call() {
+        	
+        	/*
+        	 * We do not perform a check on error/stopped state
+        	 * because the request to archive may have come during shutdown
+        	 * sequence.
+        	 * TODO Need to validate that this is the right thing to do.
+        	 */
+//        	if (logManager.isErrored() || logManager.isStopped()) {
+//        		return;
+//        	}
             try {
                 logManager.handleNextArchiveRequest(request);
             } catch (Exception e) {
@@ -3091,7 +3145,7 @@ public final class LogManagerImpl implements LogManager {
                     m_EW0027,
                     e);
             }
-            return Boolean.TRUE;
+//            return Boolean.TRUE;
         }
     }
 
