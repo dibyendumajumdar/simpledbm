@@ -29,32 +29,33 @@ package org.simpledbm.samples.tupledemo;
  * <li>Inserting tuples and index keys.</li>
  * <li>Listing tuples by index order.</li>
  * </ol>
+ * 
  * @author Dibyendu Majumdar
- *
+ * 
  */
 public class TupleDemo1 {
 
-	public static void main(String[] args) {
+    public static void main(String[] args) {
 
-		TupleDemoDb.createServer();
-		
-		TupleDemoDb db = new TupleDemoDb();
-		db.startServer();
-		try {
-			db.addRow(1, "Rabindranath", "Tagore", "Shanti Niketan");
-			db.addRow(2, "John", "Lennon", "New York");
-			db.addRow(3, "Albert", "Einstein", "Princeton");
-			db.addRow(4, "Mahatma", "Gandhi", "Delhi");
-			
-			System.out.println("Listing rows ordered by surname, name");
-			db.listRowsByKey(TupleDemoDb.SKEY1_CONTNO);
+        TupleDemoDb.createServer();
 
-			System.out.println("Listing rows ordered by ID");
-			db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
-			
-			System.out.println("Changing John Lennon to Paul McCartney");
-			db.updateRow(2, "Paul", "McCartney", "London");
-			
+        TupleDemoDb db = new TupleDemoDb();
+        db.startServer();
+        try {
+            db.addRow(1, "Rabindranath", "Tagore", "Shanti Niketan");
+            db.addRow(2, "John", "Lennon", "New York");
+            db.addRow(3, "Albert", "Einstein", "Princeton");
+            db.addRow(4, "Mahatma", "Gandhi", "Delhi");
+
+            System.out.println("Listing rows ordered by surname, name");
+            db.listRowsByKey(TupleDemoDb.SKEY1_CONTNO);
+
+            System.out.println("Listing rows ordered by ID");
+            db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
+
+            System.out.println("Changing John Lennon to Paul McCartney");
+            db.updateRow(2, "Paul", "McCartney", "London");
+
             System.out.println("Listing rows ordered by surname, name");
             db.listRowsByKey(TupleDemoDb.SKEY1_CONTNO);
 
@@ -63,7 +64,7 @@ public class TupleDemo1 {
 
             System.out.println("Deleting Paul McCartney");
             db.deleteRow(2);
-            
+
             System.out.println("Adding John Lennon");
             db.addRow(2, "John", "Lennon", "New York");
 
@@ -75,10 +76,9 @@ public class TupleDemo1 {
 
             System.out.println("Listing rows ordered by ID");
             db.listRowsByKey(TupleDemoDb.PKEY_CONTNO);
-		} 
-		finally {
-			db.shutdownServer();
-		}
-	}
+        } finally {
+            db.shutdownServer();
+        }
+    }
 
 }

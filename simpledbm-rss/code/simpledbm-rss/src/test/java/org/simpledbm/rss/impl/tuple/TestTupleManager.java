@@ -114,7 +114,8 @@ public class TestTupleManager extends BaseTestCase {
         properties.setProperty("log.buffer.limit", "4");
         properties.setProperty("log.flush.interval", "30");
         properties.setProperty("storage.basePath", "testdata/TestTupleManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         return properties;
     }
@@ -132,7 +133,7 @@ public class TestTupleManager extends BaseTestCase {
             StorageContainer sc = db.storageFactory.create("dual");
             db.storageManager.register(0, sc);
             Page page = db.pageFactory.getInstance(db.pageFactory
-                .getRawPageType(), new PageId(0, 0));
+                    .getRawPageType(), new PageId(0, 0));
             db.pageFactory.store(page);
 
             db.trxmgr.start();
@@ -234,7 +235,7 @@ public class TestTupleManager extends BaseTestCase {
                 i++;
             }
             assertEquals(i + 1, ((TransactionManagerImpl.TransactionImpl) trx)
-                .countLocks());
+                    .countLocks());
             trx.commit();
         } finally {
             db.shutdown();
@@ -244,10 +245,10 @@ public class TestTupleManager extends BaseTestCase {
     Location location = null;
 
     /**
-     * This test case uses two threads. The first thread creates a
-     * new tuple. The second thread starts a scan and should wait for the
-     * first thread to commit or abort. The first thread aborts and the 
-     * second thread completes the scan.
+     * This test case uses two threads. The first thread creates a new tuple.
+     * The second thread starts a scan and should wait for the first thread to
+     * commit or abort. The first thread aborts and the second thread completes
+     * the scan.
      */
     void doTestCase4(final boolean commit) throws Exception {
 
@@ -259,9 +260,9 @@ public class TestTupleManager extends BaseTestCase {
             Thread thr = new Thread(new Runnable() {
                 public void run() {
                     Transaction trx = db.trxmgr
-                        .begin(IsolationMode.SERIALIZABLE);
+                            .begin(IsolationMode.SERIALIZABLE);
                     TupleContainer tcont = db.tuplemgr
-                        .getTupleContainer(trx, 1);
+                            .getTupleContainer(trx, 1);
                     try {
                         StringTuple t = new StringTuple();
                         t.parseString("sample", 10000);
@@ -269,7 +270,7 @@ public class TestTupleManager extends BaseTestCase {
                         inserter.getLocation();
                         inserter.completeInsert();
                         System.err
-                            .println("Inserted new tuple - going to sleep");
+                                .println("Inserted new tuple - going to sleep");
                         Thread.sleep(1000);
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -281,7 +282,7 @@ public class TestTupleManager extends BaseTestCase {
                                     trx.abort();
                                 } else {
                                     System.err
-                                        .println("Committing tuple insert");
+                                            .println("Committing tuple insert");
                                     trx.commit();
                                 }
                             } catch (TransactionException e) {
@@ -326,7 +327,7 @@ public class TestTupleManager extends BaseTestCase {
             }
             System.err.println("Scan completed");
             assertEquals(1, ((TransactionManagerImpl.TransactionImpl) trx)
-                .countLocks());
+                    .countLocks());
             trx.commit();
 
             thr.join(2000);
@@ -362,9 +363,8 @@ public class TestTupleManager extends BaseTestCase {
                 if (data.length < 100) {
                     Location location = scan.getCurrentLocation();
                     StringTuple t = new StringTuple();
-                    t.parseString(
-                        "updating tuple " + location.toString(),
-                        16524);
+                    t.parseString("updating tuple " + location.toString(),
+                            16524);
                     tcont.update(trx, location, t);
                     newLens.add(16524 + 2);
                 } else {
@@ -407,11 +407,12 @@ public class TestTupleManager extends BaseTestCase {
 
     /**
      * This test opens an UPDATE scan and deletes tuples that exceed 100 bytes.
-     * It then does another scan to verify that the transaction does not see the deleted tuples.
-     * The transaction is committed and another scan is performed to verify.
-     * 20 new tuples are added, increasing in size. This is meant to exercise the
-     * reclaiming of deleted tuples, as well as trigger a container extension.
-     * Transaction is committed and a scan performed to verify the data. 
+     * It then does another scan to verify that the transaction does not see the
+     * deleted tuples. The transaction is committed and another scan is
+     * performed to verify. 20 new tuples are added, increasing in size. This is
+     * meant to exercise the reclaiming of deleted tuples, as well as trigger a
+     * container extension. Transaction is committed and a scan performed to
+     * verify the data.
      */
     public void doTestDeleteInsertScan() throws Exception {
         final TupleDB db = new TupleDB(getLogProperties(), false);
@@ -539,14 +540,13 @@ public class TestTupleManager extends BaseTestCase {
         }
 
         public StringTuple(ByteBuffer bb) {
-			string = new ByteString(bb);
-		}
-    
-        public StringTuple() {
-        	string = new ByteString("");
+            string = new ByteString(bb);
         }
-        
-        
+
+        public StringTuple() {
+            string = new ByteString("");
+        }
+
         public void setString(String s) {
             parseString(s);
         }
@@ -586,7 +586,7 @@ public class TestTupleManager extends BaseTestCase {
     }
 
     public static class TupleDB {
-    	final Platform platform;
+        final Platform platform;
         final LogFactoryImpl logFactory;
         final ObjectRegistry objectFactory;
         final StorageContainerFactory storageFactory;
@@ -607,8 +607,8 @@ public class TestTupleManager extends BaseTestCase {
 
         public TupleDB(Properties props, boolean create) throws Exception {
 
-        	platform = new PlatformImpl(props);
-        	storageFactory = new FileStorageContainerFactory(platform, props);
+            platform = new PlatformImpl(props);
+            storageFactory = new FileStorageContainerFactory(platform, props);
             logFactory = new LogFactoryImpl(platform, props);
             if (create) {
                 logFactory.createLog(storageFactory, props);
@@ -617,66 +617,34 @@ public class TestTupleManager extends BaseTestCase {
             objectFactory = new ObjectRegistryImpl(platform, props);
             storageManager = new StorageManagerImpl(platform, props);
             latchFactory = new LatchFactoryImpl(platform, props);
-            pageFactory = new PageManagerImpl(
-            	platform, 
-                objectFactory,
-                storageManager,
-                latchFactory,
-                props);
-            spmgr = new SlottedPageManagerImpl(platform, objectFactory, pageFactory, props);
+            pageFactory = new PageManagerImpl(platform, objectFactory,
+                    storageManager, latchFactory, props);
+            spmgr = new SlottedPageManagerImpl(platform, objectFactory,
+                    pageFactory, props);
             lockmgrFactory = new LockManagerFactoryImpl(platform, props);
             lockmgr = lockmgrFactory.create(latchFactory, props);
             logmgr = logFactory.getLog(storageFactory, props);
             logmgr.start();
             bufmgr = new BufferManagerImpl(platform, logmgr, pageFactory, 5, 11);
             bufmgr.start();
-            loggableFactory = new LoggableFactoryImpl(platform, objectFactory, props);
-            moduleRegistry = new TransactionalModuleRegistryImpl(platform, props);
-            trxmgr = new TransactionManagerImpl(
-            	platform,
-                logmgr,
-                storageFactory,
-                storageManager,
-                bufmgr,
-                lockmgr,
-                loggableFactory,
-                latchFactory,
-                objectFactory,
-                moduleRegistry,
-                props);
-            spacemgr = new FreeSpaceManagerImpl(
-            	platform,
-                objectFactory,
-                pageFactory,
-                logmgr,
-                bufmgr,
-                storageManager,
-                storageFactory,
-                loggableFactory,
-                trxmgr,
-                moduleRegistry,
-                props);
-            btreeMgr = new BTreeIndexManagerImpl(
-            	platform,
-                objectFactory,
-                loggableFactory,
-                spacemgr,
-                bufmgr,
-                spmgr,
-                moduleRegistry,
-                lockAdaptor,
-                props);
-            tuplemgr = new TupleManagerImpl(
-            	platform,
-                objectFactory,
-                loggableFactory,
-                spacemgr,
-                bufmgr,
-                spmgr,
-                moduleRegistry,
-                pageFactory,
-                lockAdaptor,
-                props);
+            loggableFactory = new LoggableFactoryImpl(platform, objectFactory,
+                    props);
+            moduleRegistry = new TransactionalModuleRegistryImpl(platform,
+                    props);
+            trxmgr = new TransactionManagerImpl(platform, logmgr,
+                    storageFactory, storageManager, bufmgr, lockmgr,
+                    loggableFactory, latchFactory, objectFactory,
+                    moduleRegistry, props);
+            spacemgr = new FreeSpaceManagerImpl(platform, objectFactory,
+                    pageFactory, logmgr, bufmgr, storageManager,
+                    storageFactory, loggableFactory, trxmgr, moduleRegistry,
+                    props);
+            btreeMgr = new BTreeIndexManagerImpl(platform, objectFactory,
+                    loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry,
+                    lockAdaptor, props);
+            tuplemgr = new TupleManagerImpl(platform, objectFactory,
+                    loggableFactory, spacemgr, bufmgr, spmgr, moduleRegistry,
+                    pageFactory, lockAdaptor, props);
         }
 
         public void shutdown() {

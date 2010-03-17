@@ -48,25 +48,26 @@ import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
- * The VarChar type represents a variable length byte string, that has a specified
- * maximum length.
+ * The VarChar type represents a variable length byte string, that has a
+ * specified maximum length.
+ * 
  * @author Dibyendu Majumdar
  */
 public class VarcharType implements TypeDescriptor {
 
     int maxLength;
-    
+
     public VarcharType() {
-	}
-    
+    }
+
     public VarcharType(int maxLength) {
         this.maxLength = maxLength;
     }
 
     public VarcharType(ByteBuffer bb) {
-		maxLength = bb.getInt();
+        maxLength = bb.getInt();
     }
-    
+
     public final int getTypeCode() {
         return TYPE_VARCHAR;
     }
@@ -75,59 +76,60 @@ public class VarcharType implements TypeDescriptor {
         return maxLength;
     }
 
-	public int getScale() {
-		return -1;
-	}
+    public int getScale() {
+        return -1;
+    }
 
-	public DateFormat getDateFormat() {
-		return null;
-	}
+    public DateFormat getDateFormat() {
+        return null;
+    }
 
-	public TimeZone getTimeZone() {
-		return null;
-	}
+    public TimeZone getTimeZone() {
+        return null;
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER;
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER;
+    }
 
-//	public void retrieve(ByteBuffer bb) {
-//		maxLength = bb.getInt();
-//	}
+    //	public void retrieve(ByteBuffer bb) {
+    //		maxLength = bb.getInt();
+    //	}
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(maxLength);
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(maxLength);
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + maxLength;
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + maxLength;
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final VarcharType other = (VarcharType) obj;
-		if (maxLength != other.maxLength)
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final VarcharType other = (VarcharType) obj;
+        if (maxLength != other.maxLength)
+            return false;
+        return true;
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		return sb.append("VarcharType(maxLength=").append(maxLength).append(")");
-	}
-	
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
+    public StringBuilder appendTo(StringBuilder sb) {
+        return sb.append("VarcharType(maxLength=").append(maxLength)
+                .append(")");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
 }

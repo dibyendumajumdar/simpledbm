@@ -41,17 +41,18 @@ import org.simpledbm.common.api.platform.Platform;
 import java.util.Properties;
 
 /**
- * RequestHandler interface specifies the contract between the framework and
- * the business logic. The framework supplies the Request received from the
- * client, and provides a placeholder Response object for the handler to set
- * the reply message.
+ * RequestHandler interface specifies the contract between the framework and the
+ * business logic. The framework supplies the Request received from the client,
+ * and provides a placeholder Response object for the handler to set the reply
+ * message.
  * <p>
  * The request handler must operate in a thread safe manner. The framework
- * reuses the same instance of the RequestHandler instance for handling all requests across
- * multiple threads. Hence the RequestHandler must ensure that any data that is
- * not local to the handler's stack is synchronized.
+ * reuses the same instance of the RequestHandler instance for handling all
+ * requests across multiple threads. Hence the RequestHandler must ensure that
+ * any data that is not local to the handler's stack is synchronized.
  * <p>
- * The handler does not need to synchronize the the request and response objects.
+ * The handler does not need to synchronize the the request and response
+ * objects.
  * <p>
  * Errors should preferably be communicated by setting the status code to a
  * negative value. If an exception is thrown, the framework will catch it and
@@ -62,20 +63,23 @@ import java.util.Properties;
 public interface RequestHandler {
 
     /**
-     * This method will be invoked by the framework when the server is initialized.
+     * This method will be invoked by the framework when the server is
+     * initialized.
+     * 
      * @param properties
      */
     void onInitialize(Platform platform, Properties properties);
 
     /**
-     * This method will be invoked by the framework when the server opens
-     * for business.
+     * This method will be invoked by the framework when the server opens for
+     * business.
      */
     void onStart();
 
     /**
      * Should perform the required business logic and set the Response object
      * values.
+     * 
      * @param request The Request supplied by the client.
      * @param response The Response to be sent back to the client.
      */

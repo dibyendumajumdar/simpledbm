@@ -57,19 +57,19 @@ import org.simpledbm.typesystem.api.TypeException;
 
 /**
  * An implementation of IndexDefinition.
+ * 
  * @author dibyendumajumdar
  */
 public class IndexDefinitionImpl implements IndexDefinition {
 
-	final Logger log;
-	final ExceptionHandler exceptionHandler;
+    final Logger log;
+    final ExceptionHandler exceptionHandler;
 
-	static final Message m_EY0010 = new Message('T', 'Y',
-			MessageType.ERROR, 10, "An index must have at least one column");
-	static final Message m_EY0011 = new Message('T', 'Y',
-			MessageType.ERROR, 11,
-			"The column {0} does not exist in table definition for {1}");
-	
+    static final Message m_EY0010 = new Message('T', 'Y', MessageType.ERROR,
+            10, "An index must have at least one column");
+    static final Message m_EY0011 = new Message('T', 'Y', MessageType.ERROR,
+            11, "The column {0} does not exist in table definition for {1}");
+
     /**
      * Table to which this index belongs.
      */
@@ -100,44 +100,46 @@ public class IndexDefinitionImpl implements IndexDefinition {
     boolean unique;
 
     IndexDefinitionImpl(PlatformObjects po, TableDefinition table, ByteBuffer bb) {
-    	this.log = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
-		this.table = table;
-		containerId = bb.getInt();
-		ByteString s = new ByteString(bb);
-		name = s.toString();
-		byte b = bb.get();
-		if (b == 1) {
-			primary = true;
-		} else {
-			primary = false;
-		}
-		b = bb.get();
-		if (b == 1 || primary) {
-			unique = true;
-		} else {
-			unique = false;
-		}
-		int n = bb.getShort();
-		columns = new int[n];
-		for (int i = 0; i < n; i++) {
-			columns[i] = bb.getShort();
-		}
-		rowType = new TypeDescriptor[columns.length];
-		for (int i = 0; i < columns.length; i++) {
-			rowType[i] = table.getRowType()[columns[i]];
-		}
-	}
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.table = table;
+        containerId = bb.getInt();
+        ByteString s = new ByteString(bb);
+        name = s.toString();
+        byte b = bb.get();
+        if (b == 1) {
+            primary = true;
+        } else {
+            primary = false;
+        }
+        b = bb.get();
+        if (b == 1 || primary) {
+            unique = true;
+        } else {
+            unique = false;
+        }
+        int n = bb.getShort();
+        columns = new int[n];
+        for (int i = 0; i < n; i++) {
+            columns[i] = bb.getShort();
+        }
+        rowType = new TypeDescriptor[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            rowType[i] = table.getRowType()[columns[i]];
+        }
+    }
 
-    IndexDefinitionImpl(PlatformObjects po, TableDefinition table, int containerId, String name,
-            int columns[], boolean primary, boolean unique) {
-    	this.log = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
-    	this.table = table;
-    	if (columns.length == 0) {
-    		exceptionHandler.errorThrow(getClass().getName(), "IndexDefinitionImpl", 
-    				new TypeException(new MessageInstance(m_EY0010)));
-    	}
+    IndexDefinitionImpl(PlatformObjects po, TableDefinition table,
+            int containerId, String name, int columns[], boolean primary,
+            boolean unique) {
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.table = table;
+        if (columns.length == 0) {
+            exceptionHandler.errorThrow(getClass().getName(),
+                    "IndexDefinitionImpl", new TypeException(
+                            new MessageInstance(m_EY0010)));
+        }
         this.containerId = containerId;
         this.name = name;
         this.columns = columns;
@@ -150,65 +152,67 @@ public class IndexDefinitionImpl implements IndexDefinition {
         rowType = new TypeDescriptor[columns.length];
         for (int i = 0; i < columns.length; i++) {
             if (columns[i] >= table.getRowType().length || columns[i] < 0) {
-            	exceptionHandler.errorThrow(getClass().getName(), "IndexDefinitionImpl", 
-            			new TypeException(new MessageInstance(m_EY0011, columns[i], table.getName())));
+                exceptionHandler.errorThrow(getClass().getName(),
+                        "IndexDefinitionImpl", new TypeException(
+                                new MessageInstance(m_EY0011, columns[i], table
+                                        .getName())));
             }
             rowType[i] = table.getRowType()[columns[i]];
         }
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getTable()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getTable()
+     */
     public TableDefinition getTable() {
         return table;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getContainerId()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getContainerId()
+     */
     public int getContainerId() {
         return containerId;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getName()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getName()
+     */
     public String getName() {
         return name;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getColumns()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getColumns()
+     */
     public int[] getColumns() {
         return columns;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getRowType()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getRowType()
+     */
     public TypeDescriptor[] getRowType() {
         return rowType;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#isPrimary()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#isPrimary()
+     */
     public boolean isPrimary() {
         return primary;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#isUnique()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#isUnique()
+     */
     public boolean isUnique() {
         return unique;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.IndexDefinition#getRow()
-	 */
+     * @see org.simpledbm.database.IndexDefinition#getRow()
+     */
     public Row getRow() {
         RowFactory rowFactory = table.getRowFactory();
         return rowFactory.newRow(containerId);
@@ -217,8 +221,7 @@ public class IndexDefinitionImpl implements IndexDefinition {
     /**
      * Create a row with values that are less than any other row in the index.
      * 
-     * @param containerId
-     *            ID of the container
+     * @param containerId ID of the container
      * @return Appropriate row type
      */
     IndexKey makeMinRow(int containerId) {
@@ -301,25 +304,24 @@ public class IndexDefinitionImpl implements IndexDefinition {
         return true;
     }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append("IndexDefinition(containerId=").append(containerId).append(", name=").append(name).
-			append(", unique=").append(unique).append(", primary=").append(primary).
-			append(", columns={");
-		for (int i = 0; i < columns.length; i++) {
-			if (i == columns.length - 1) {
-				sb.append(columns[i]);
-			}
-			else {
-				sb.append(columns[i]).append(", ");
-			}
-		}
-		sb.append("})");
-		return sb;
-	}
-    
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append("IndexDefinition(containerId=").append(containerId).append(
+                ", name=").append(name).append(", unique=").append(unique)
+                .append(", primary=").append(primary).append(", columns={");
+        for (int i = 0; i < columns.length; i++) {
+            if (i == columns.length - 1) {
+                sb.append(columns[i]);
+            } else {
+                sb.append(columns[i]).append(", ");
+            }
+        }
+        sb.append("})");
+        return sb;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
 }

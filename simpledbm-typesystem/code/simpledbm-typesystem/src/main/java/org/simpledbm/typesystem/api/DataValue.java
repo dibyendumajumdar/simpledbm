@@ -48,10 +48,12 @@ import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.Dumpable;
 
 /**
- * A DataValue is a data item with a type, and suitable for use in a multi-column row.
- * The set of values that a DataValue can hold is called its value domain. The value domain is logically
- * bounded by "negative infinity" and "positive infinity", such that:
+ * A DataValue is a data item with a type, and suitable for use in a
+ * multi-column row. The set of values that a DataValue can hold is called its
+ * value domain. The value domain is logically bounded by "negative infinity"
+ * and "positive infinity", such that:
  * <p>
+ * 
  * <pre>
  * null &lt; negative_infinity &lt; value &lt; positive_infinity
  * </pre>
@@ -60,101 +62,112 @@ import org.simpledbm.common.util.Dumpable;
  */
 public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
 
-	/**
-	 * Returns an integer representation of the data value.
-	 * @throws UnsupportedOperationException.
-	 */
-	int getInt();
+    /**
+     * Returns an integer representation of the data value.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    int getInt();
 
-	/**
-	 * Converts the supplied integer value to a suitable value for the data value 
-	 * @throws UnsupportedOperationException.
-	 */
-	void setInt(Integer integer);
+    /**
+     * Converts the supplied integer value to a suitable value for the data
+     * value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setInt(Integer integer);
 
-	/**
-	 * Returns a string representation of the data value.
-	 */
-	String getString();
+    /**
+     * Returns a string representation of the data value.
+     */
+    String getString();
 
-	/**
-	 * Converts the supplied string value to a suitable value for the data value
-	 */
-	void setString(String string);
+    /**
+     * Converts the supplied string value to a suitable value for the data value
+     */
+    void setString(String string);
 
-	/**
-	 * Sets the value of the field to the date. 
-	 * @throws UnsupportedOperationException.
-	 */
-	void setDate(Date date);
-	
-	/**
-	 * Gets the current value as a date.
-	 * @throws UnsupportedOperationException.
-	 */
-	Date getDate();
-	
-	/**
-	 * Converts the supplied long value to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setLong(long l);
-	
-	/**
-	 * Returns the data value as a long
-	 * @throws UnsupportedOperationException.
-	 */
-	long getLong();
-	
-	/**
-	 * Converts the supplied BigInteger to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setBigInteger(BigInteger i);
-	
-	/**
-	 * Returns the data value as a long
-	 * @throws UnsupportedOperationException.
-	 */
-	BigInteger getBigInteger();
-	
-	/**
-	 * Converts the supplied BigDecimal to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setBigDecimal(BigDecimal d);
-	
-	/**
-	 * Returns the Data Value as a BigDecimal
-	 * @throws UnsupportedOperationException.
-	 */
-	BigDecimal getBigDecimal();
-	
-	/**
-	 * Returns the DataValue as a byte array
-	 */
-	byte[] getBytes();
+    /**
+     * Sets the value of the field to the date.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setDate(Date date);
 
-	/**
-	 * Sets the DataValue to the byte array
-	 */
-	void setBytes(byte[] bytes);
-	
-	/**
-	 * Checks if the data value is NULL, which is a special value indicating that the field's value
-	 * has not been set.
-	 */
-	boolean isNull();
-	
-	/**
-	 * Sets the field to be NULL.
-	 */
+    /**
+     * Gets the current value as a date.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    Date getDate();
+
+    /**
+     * Converts the supplied long value to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setLong(long l);
+
+    /**
+     * Returns the data value as a long
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    long getLong();
+
+    /**
+     * Converts the supplied BigInteger to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setBigInteger(BigInteger i);
+
+    /**
+     * Returns the data value as a long
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    BigInteger getBigInteger();
+
+    /**
+     * Converts the supplied BigDecimal to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setBigDecimal(BigDecimal d);
+
+    /**
+     * Returns the Data Value as a BigDecimal
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    BigDecimal getBigDecimal();
+
+    /**
+     * Returns the DataValue as a byte array
+     */
+    byte[] getBytes();
+
+    /**
+     * Sets the DataValue to the byte array
+     */
+    void setBytes(byte[] bytes);
+
+    /**
+     * Checks if the data value is NULL, which is a special value indicating
+     * that the field's value has not been set.
+     */
+    boolean isNull();
+
+    /**
+     * Sets the field to be NULL.
+     */
     void setNull();
 
     /**
      * Checks if this field is set to the value signifying negative infinity.
-     * Negative infinity represents a value that is less than all the valid values
-     * in the field's domain.
+     * Negative infinity represents a value that is less than all the valid
+     * values in the field's domain.
      */
     boolean isNegativeInfinity();
 
@@ -162,19 +175,19 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
      * Sets this field to the value of negative infinity.
      */
     void setNegativeInfinity();
-    
+
     /**
      * Checks if this field is set to the value signifying positive infinity.
-     * Positive infinity represents a value that is greater than all the valid values
-     * in the field's domain.
+     * Positive infinity represents a value that is greater than all the valid
+     * values in the field's domain.
      */
     boolean isPositiveInfinity();
-    
+
     /**
      * Sets this field to the value of positive infinity.
      */
     void setPositiveInfinity();
-    
+
     /**
      * Checks if this field is set to a value in the field's domain.
      */

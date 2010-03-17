@@ -40,24 +40,24 @@ import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.typesystem.api.TableDefinition;
 
 /**
- * A Session encapsulates an interactive session with the server.
- * Each session can only have one active transaction at any
- * point in time. Clients can open multiple simultaneous
- * sessions.
+ * A Session encapsulates an interactive session with the server. Each session
+ * can only have one active transaction at any point in time. Clients can open
+ * multiple simultaneous sessions.
  */
 public interface Session {
 
-	/**
-	 * Closes the session. If there is any outstanding transaction, it will
-	 * be aborted. Sessions should be closed by client applications when no 
-	 * longer required, as this will free up resources on the server.
-	 */
-    public void close();
-    
     /**
-     * Starts a new transaction. In the context of a session, only one transaction can be active at
-     * a point in time, hence if this method will fail if there is already an
-     * active transaction.
+     * Closes the session. If there is any outstanding transaction, it will be
+     * aborted. Sessions should be closed by client applications when no longer
+     * required, as this will free up resources on the server.
+     */
+    public void close();
+
+    /**
+     * Starts a new transaction. In the context of a session, only one
+     * transaction can be active at a point in time, hence if this method will
+     * fail if there is already an active transaction.
+     * 
      * @param isolationMode
      */
     public void startTransaction(IsolationMode isolationMode);
@@ -67,23 +67,25 @@ public interface Session {
      * no active transaction.
      */
     public void commit();
-    
+
     /**
      * Aborts the current transaction; an exception will be thrown if there is
      * no active transaction
      */
     public void rollback();
-    
+
     /**
      * Creates a table as specified. The table will be created using its own
      * transaction.
+     * 
      * @param tableDefinition
      */
     public void createTable(TableDefinition tableDefinition);
 
     /**
-     * Obtains a reference to the table. The Table container will be
-     * locked in SHARED mode.
+     * Obtains a reference to the table. The Table container will be locked in
+     * SHARED mode.
+     * 
      * @param containerId
      * @return
      */
@@ -91,14 +93,16 @@ public interface Session {
 
     /**
      * Gets the SessionManager that is managing this session.
+     * 
      * @return
      */
-	public SessionManager getSessionManager();
+    public SessionManager getSessionManager();
 
-	/**
-	 * Gets the unique id associated with this session.
-	 * @return
-	 */
-	public int getSessionId();
-    
+    /**
+     * Gets the unique id associated with this session.
+     * 
+     * @return
+     */
+    public int getSessionId();
+
 }

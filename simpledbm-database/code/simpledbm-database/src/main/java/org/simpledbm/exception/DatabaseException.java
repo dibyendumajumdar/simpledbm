@@ -43,18 +43,18 @@ import org.simpledbm.common.util.mcat.MessageInstance;
 
 public class DatabaseException extends SimpleDBMException {
 
-	private static final long serialVersionUID = 8471449892397523231L;
+    private static final long serialVersionUID = 8471449892397523231L;
 
-	public DatabaseException(ByteBuffer bb) {
-		super(bb);
-	}
+    public DatabaseException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public DatabaseException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public DatabaseException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public DatabaseException(MessageInstance m) {
-		super(m);
-	}
+    public DatabaseException(MessageInstance m) {
+        super(m);
+    }
 
 }

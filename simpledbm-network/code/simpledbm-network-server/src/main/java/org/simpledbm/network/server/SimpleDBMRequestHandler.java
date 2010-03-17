@@ -88,465 +88,466 @@ import org.simpledbm.typesystem.api.TypeFactory;
 
 public class SimpleDBMRequestHandler implements RequestHandler {
 
-	Database database;
-	Platform platform;
-	PlatformObjects po;
-	
-	Logger log;
-	
-	/**
-	 * Session timeout in seconds, default 300 seconds.
-	 */
-	int timeout = 10;
-	
-	/**
-	 * Intervals at which sessions are checked for timeout.
-	 */
-	int sessionMonitorInterval = 10;
+    Database database;
+    Platform platform;
+    PlatformObjects po;
 
-	/**
-	 * A map of all active sessions
-	 */
-	HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
+    Logger log;
 
-	/**
-	 * A sequence number generator used to allocate new session ids.
-	 */
-	AtomicInteger sessionIdGenerator = new AtomicInteger(0);
-	
-	ScheduledFuture<?> sessionMonitorFuture;
-	
-	/**
-	 * Checks that the session exists and has not timed out. If the session is good,
-	 * its last updated time is refreshed.
-	 */
-	private ClientSession validateSession(Request request, Response response) {
-		ClientSession session = null;
-		synchronized(sessions) {
-			session = sessions.get(request.getSessionId());
-		}
-		if (session == null) {
-			throw new NetworkException(new MessageInstance(noSuchSession, request.getSessionId()));
-		}
-		session.checkSessionIsValid();
-		session.setLastUpdated();
-		return session;
-	}
+    /**
+     * Session timeout in seconds, default 300 seconds.
+     */
+    int timeout = 10;
 
-	public void handleRequest(Request request, Response response) {
-		if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
-			handleOpenSessionRequest(request, response);
-		} else if (request.getRequestCode() == RequestCode.CLOSE_SESSION) {
-			handleCloseSessionRequest(request, response);
-		} else if (request.getRequestCode() == RequestCode.QUERY_DICTIONARY) {
-			handleQueryDictionaryRequest(request, response);
-		} else if (request.getRequestCode() == RequestCode.CREATE_TABLE) {
-			handleCreateTable(request, response);
-		} else if (request.getRequestCode() == RequestCode.START_TRANSACTION) {
-			handleStartTransaction(request, response);
-		} else if (request.getRequestCode() == RequestCode.END_TRANSACTION) {
-			handleEndTransaction(request, response);
-		} else if (request.getRequestCode() == RequestCode.GET_TABLE) {
-			handleGetTable(request, response);
-		} else if (request.getRequestCode() == RequestCode.OPEN_TABLESCAN) {
-			handleOpenTableScan(request, response);
-		} else if (request.getRequestCode() == RequestCode.CLOSE_TABLESCAN) {
-			handleCloseTableScan(request, response);
-		} else if (request.getRequestCode() == RequestCode.ADD_ROW) {
-			handleAddRow(request, response);
-		} else if (request.getRequestCode() == RequestCode.FETCH_NEXT_ROW) {
-			handleFetchNextRow(request, response);
-		} else if (request.getRequestCode() == RequestCode.UPDATE_CURRENT_ROW) {
-			handleUpdateCurrentRow(request, response);
-		} else if (request.getRequestCode() == RequestCode.DELETE_CURRENT_ROW) {
-			handleDeleteCurrentRow(request, response);
-		} else {
-			handleUnknownRequest(request, response);
-		}
-	}
+    /**
+     * Intervals at which sessions are checked for timeout.
+     */
+    int sessionMonitorInterval = 10;
 
-	public void onInitialize(Platform platform, Properties properties) {
-		this.platform = platform;
-		this.po = platform.getPlatformObjects(LOGGER_NAME);
-		this.log = po.getLogger();
-		database = DatabaseFactory.getDatabase(platform, properties);
-		sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(Priority.NORMAL, new SessionMonitor(this), sessionMonitorInterval, sessionMonitorInterval, TimeUnit.SECONDS);
-	}
+    /**
+     * A map of all active sessions
+     */
+    HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
 
-	public void onShutdown() {
-		// stop scheduling 
-		sessionMonitorFuture.cancel(false);
-		// abort any sessions that are still open
-		abortSessions();
-		database.shutdown();
-	}
+    /**
+     * A sequence number generator used to allocate new session ids.
+     */
+    AtomicInteger sessionIdGenerator = new AtomicInteger(0);
 
-	public void onStart() {
-		database.start();
-	}
+    ScheduledFuture<?> sessionMonitorFuture;
 
-	private void setError(Response response, int statusCode, String message) {
-		response.setStatusCode(statusCode);
-		byte[] bytes;
-		try {
-			bytes = message.getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			throw new SimpleDBMException(new MessageInstance(encodingError), e);
-		}
-		ByteBuffer data = ByteBuffer.wrap(bytes);
-		data.limit(bytes.length);
-		response.setData(data);
-	}
+    /**
+     * Checks that the session exists and has not timed out. If the session is
+     * good, its last updated time is refreshed.
+     */
+    private ClientSession validateSession(Request request, Response response) {
+        ClientSession session = null;
+        synchronized (sessions) {
+            session = sessions.get(request.getSessionId());
+        }
+        if (session == null) {
+            throw new NetworkException(new MessageInstance(noSuchSession,
+                    request.getSessionId()));
+        }
+        session.checkSessionIsValid();
+        session.setLastUpdated();
+        return session;
+    }
 
-	private void formatException(StringBuilder sb, Throwable e) {
-		sb.append(e.getClass().getName());
-		sb.append(": ");
-		sb.append(e.getMessage());
-		sb.append(Dumpable.newline);
-		for (StackTraceElement se : e.getStackTrace()) {
-			sb.append(Dumpable.TAB);
-			sb.append("at ");
-			sb.append(se.toString());
-			sb.append(Dumpable.newline);
-		}		
-	}
-	
-	void setError(Response response, int statusCode, String message,
-			Throwable e) {
-		if (e instanceof SimpleDBMException) {
-			throw (SimpleDBMException) e;
-		}
-		response.setStatusCode(statusCode);
-		StringBuilder sb = new StringBuilder();
-		sb.append(message);
-		sb.append(Dumpable.newline);
-		do {
-			formatException(sb, e);
-			e = e.getCause();
-			if (e != null) {
-				sb.append("Caused by: ");
-			}
-		} while (e != null);
-		byte[] bytes;
-		try {
-			bytes = sb.toString().getBytes("UTF-8");
-		} catch (UnsupportedEncodingException e1) {
-			throw new SimpleDBMException(new MessageInstance(encodingError), e1);
-		}
-		ByteBuffer data = ByteBuffer.wrap(bytes);
-		data.limit(bytes.length);
-		response.setData(data);
-	}
-	
-	void handleOpenSessionRequest(Request request, Response response) {
-		int sessionId = sessionIdGenerator.incrementAndGet();
-		ClientSession session = new ClientSession(this, sessionId, database);
-		synchronized (session) {
-			sessions.put(sessionId, session);
-		}
-		response.setSessionId(sessionId);
-	}
+    public void handleRequest(Request request, Response response) {
+        if (request.getRequestCode() == RequestCode.OPEN_SESSION) {
+            handleOpenSessionRequest(request, response);
+        } else if (request.getRequestCode() == RequestCode.CLOSE_SESSION) {
+            handleCloseSessionRequest(request, response);
+        } else if (request.getRequestCode() == RequestCode.QUERY_DICTIONARY) {
+            handleQueryDictionaryRequest(request, response);
+        } else if (request.getRequestCode() == RequestCode.CREATE_TABLE) {
+            handleCreateTable(request, response);
+        } else if (request.getRequestCode() == RequestCode.START_TRANSACTION) {
+            handleStartTransaction(request, response);
+        } else if (request.getRequestCode() == RequestCode.END_TRANSACTION) {
+            handleEndTransaction(request, response);
+        } else if (request.getRequestCode() == RequestCode.GET_TABLE) {
+            handleGetTable(request, response);
+        } else if (request.getRequestCode() == RequestCode.OPEN_TABLESCAN) {
+            handleOpenTableScan(request, response);
+        } else if (request.getRequestCode() == RequestCode.CLOSE_TABLESCAN) {
+            handleCloseTableScan(request, response);
+        } else if (request.getRequestCode() == RequestCode.ADD_ROW) {
+            handleAddRow(request, response);
+        } else if (request.getRequestCode() == RequestCode.FETCH_NEXT_ROW) {
+            handleFetchNextRow(request, response);
+        } else if (request.getRequestCode() == RequestCode.UPDATE_CURRENT_ROW) {
+            handleUpdateCurrentRow(request, response);
+        } else if (request.getRequestCode() == RequestCode.DELETE_CURRENT_ROW) {
+            handleDeleteCurrentRow(request, response);
+        } else {
+            handleUnknownRequest(request, response);
+        }
+    }
 
-	void handleCloseSessionRequest(Request request, Response response) {
-		int sessionId = request.getSessionId();
-//		System.err.println("Request to close session " + sessionId);
-		ClientSession session = null;
-		synchronized (sessions) {
-			session = sessions.get(sessionId);
-			if (session == null) {
-				throw new NetworkException(new MessageInstance(noSuchSession, sessionId));
-			} else {
-//				System.err.println("session removed");		
-				sessions.remove(sessionId);
-			}
-		}
-		session.abortTransaction();
-		response.setSessionId(0);
-	}
-	
-	void handleQueryDictionaryRequest(Request request, Response response) {
-		QueryDictionaryMessage message = new QueryDictionaryMessage(request
-				.getData());
-		TypeDescriptor[] td = database.getDictionaryCache().getTypeDescriptor(
-				message.containerId);
-		ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
-				.getStoredLength(td));
-		database.getTypeFactory().store(td, bb);
-		bb.flip();
-		response.setData(bb);
-	}
+    public void onInitialize(Platform platform, Properties properties) {
+        this.platform = platform;
+        this.po = platform.getPlatformObjects(LOGGER_NAME);
+        this.log = po.getLogger();
+        database = DatabaseFactory.getDatabase(platform, properties);
+        sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(
+                Priority.NORMAL, new SessionMonitor(this),
+                sessionMonitorInterval, sessionMonitorInterval,
+                TimeUnit.SECONDS);
+    }
 
-	void handleUnknownRequest(Request request, Response response) {
-		int sessionId = request.getSessionId();
-		setError(response, -1, "Received invalid request "
-				+ request.getRequestCode() + " from " + sessionId);
-		response.setSessionId(0);
-	}
+    public void onShutdown() {
+        // stop scheduling 
+        sessionMonitorFuture.cancel(false);
+        // abort any sessions that are still open
+        abortSessions();
+        database.shutdown();
+    }
 
-	void handleCreateTestTables(Request request, Response response) {
-		TypeFactory ff = database.getTypeFactory();
-		TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
-																	 * primary
-																	 * key
-																	 */
-		ff.getVarcharType(20), /* name */
-		ff.getVarcharType(20), /* surname */
-		ff.getVarcharType(20), /* city */
-		ff.getVarcharType(45), /* email address */
-		ff.getDateTimeType(), /* date of birth */
-		ff.getNumberType(2) /* salary */
-		};
-		TableDefinition tableDefinition = database.newTableDefinition(
-				"employee", 1, employee_rowtype);
-		tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
-				true);
-		tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
-				false);
-		tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false,
-				false);
-		tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false,
-				false);
+    public void onStart() {
+        database.start();
+    }
 
-		database.createTable(tableDefinition);
-	}
-	
-	void handleCreateTable(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		if (session == null) {
-			return;
-		}
-		TableDefinition tableDefinition = database.getTypeSystemFactory()
-				.getTableDefinition(database.getPlatformObjects(),
-						database.getTypeFactory(), database.getRowFactory(),
-						request.getData());
-		database.createTable(tableDefinition);
-	}
+    private void setError(Response response, int statusCode, String message) {
+        response.setStatusCode(statusCode);
+        byte[] bytes;
+        try {
+            bytes = message.getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new SimpleDBMException(new MessageInstance(encodingError), e);
+        }
+        ByteBuffer data = ByteBuffer.wrap(bytes);
+        data.limit(bytes.length);
+        response.setData(data);
+    }
 
-	void handleStartTransaction(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction != null) {
-			throw new NetworkException(new MessageInstance(transactionActive,
-					transaction));
-		}
-		StartTransactionMessage message = new StartTransactionMessage(request
-				.getData());
-		transaction = database.startTransaction(message.getIsolationMode());
-		session.setTransaction(transaction);
-	}
+    private void formatException(StringBuilder sb, Throwable e) {
+        sb.append(e.getClass().getName());
+        sb.append(": ");
+        sb.append(e.getMessage());
+        sb.append(Dumpable.newline);
+        for (StackTraceElement se : e.getStackTrace()) {
+            sb.append(Dumpable.TAB);
+            sb.append("at ");
+            sb.append(se.toString());
+            sb.append(Dumpable.newline);
+        }
+    }
 
-	void handleEndTransaction(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		EndTransactionMessage message = new EndTransactionMessage(request
-				.getData());
-		if (message.isCommit()) {
-			session.commitTransaction();
-		} else {
-			session.abortTransaction();
-		}
-	}
-	
-	void handleGetTable(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		GetTableMessage message = new GetTableMessage(request.getData());
-		Table table = session.getTable(message.containerId);
-		TableDefinition tableDefinition = table.getDefinition();
-		ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
-		tableDefinition.store(bb);
-		bb.flip();
-		response.setData(bb);
-	}
-	
-	void handleOpenTableScan(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		OpenScanMessage message = new OpenScanMessage(database.getRowFactory(),
-				request.getData());
-		Table table = session.getTable(message.getContainerId());
-		if (table == null) {
-			throw new NetworkException(new MessageInstance(noSuchTable,
-					message.getContainerId()));
-		}
-		TableScan tableScan = table.openScan(transaction, message.getIndexNo(),
-				message.getStartRow(), message.isForUpdate());
-		int scanId = session.registerTableScan(tableScan);
-		ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
-		bb.putInt(scanId);
-		bb.flip();
-		response.setData(bb);
-	}
+    void setError(Response response, int statusCode, String message, Throwable e) {
+        if (e instanceof SimpleDBMException) {
+            throw (SimpleDBMException) e;
+        }
+        response.setStatusCode(statusCode);
+        StringBuilder sb = new StringBuilder();
+        sb.append(message);
+        sb.append(Dumpable.newline);
+        do {
+            formatException(sb, e);
+            e = e.getCause();
+            if (e != null) {
+                sb.append("Caused by: ");
+            }
+        } while (e != null);
+        byte[] bytes;
+        try {
+            bytes = sb.toString().getBytes("UTF-8");
+        } catch (UnsupportedEncodingException e1) {
+            throw new SimpleDBMException(new MessageInstance(encodingError), e1);
+        }
+        ByteBuffer data = ByteBuffer.wrap(bytes);
+        data.limit(bytes.length);
+        response.setData(data);
+    }
 
-	void handleCloseTableScan(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		CloseScanMessage message = new CloseScanMessage(request.getData());
-		TableScan tableScan = session.getTableScan(message.getScanId());
-		if (tableScan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, message.getScanId()));
-		}
-		tableScan.close();
-	}
-	
-	void handleAddRow(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		AddRowMessage message = new AddRowMessage(database.getRowFactory(),
-				request.getData());
-		Table table = session.getTable(message.getContainerId());
-		if (table == null) {
-			throw new NetworkException(new MessageInstance(noSuchTable,
-					message.getContainerId()));
-		}
-		// System.err.println("Adding row " + message.getRow());
-		table.addRow(transaction, message.getRow());
-	}
+    void handleOpenSessionRequest(Request request, Response response) {
+        int sessionId = sessionIdGenerator.incrementAndGet();
+        ClientSession session = new ClientSession(this, sessionId, database);
+        synchronized (session) {
+            sessions.put(sessionId, session);
+        }
+        response.setSessionId(sessionId);
+    }
 
-	void handleFetchNextRow(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		FetchNextRowMessage message = new FetchNextRowMessage(database
-				.getRowFactory(), request.getData());
-		TableScan tableScan = session.getTableScan(message.getScanId());
-		if (tableScan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, message.getScanId()));
-		}
-		FetchNextRowReply reply = null;
-		boolean hasNext = tableScan.fetchNext();
-		if (hasNext) {
-			reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
-					.getContainerId(), false, tableScan.getCurrentRow());
-		} else {
-			reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
-					.getContainerId(), true, null);
-		}
-		ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
-		reply.store(bb);
-		bb.flip();
-		response.setData(bb);
-	}
-	
-	void handleUpdateCurrentRow(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		UpdateRowMessage message = new UpdateRowMessage(database
-				.getRowFactory(), request.getData());
-		TableScan tableScan = session.getTableScan(message.getScanId());
-		if (tableScan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, message.getScanId()));
-		}
-		tableScan.updateCurrentRow(message.getRow());
-	}
+    void handleCloseSessionRequest(Request request, Response response) {
+        int sessionId = request.getSessionId();
+        //		System.err.println("Request to close session " + sessionId);
+        ClientSession session = null;
+        synchronized (sessions) {
+            session = sessions.get(sessionId);
+            if (session == null) {
+                throw new NetworkException(new MessageInstance(noSuchSession,
+                        sessionId));
+            } else {
+                //				System.err.println("session removed");		
+                sessions.remove(sessionId);
+            }
+        }
+        session.abortTransaction();
+        response.setSessionId(0);
+    }
 
-	/**
-	 * Process a delete row request
-	 */
-	void handleDeleteCurrentRow(Request request, Response response) {
-		ClientSession session = validateSession(request, response);
-		Transaction transaction = session.getTransaction();
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		DeleteRowMessage message = new DeleteRowMessage(request.getData());
-		TableScan tableScan = session.getTableScan(message.getScanId());
-		if (tableScan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, message.getScanId()));
-		}
-		tableScan.deleteRow();
-	}
-	
-	/*
-	 * On shutdown we must abort transactions that weren't committed by
-	 * respective clients We should also periodically check on the session
-	 * activity and timeout sessions that are inactive for a while.
-	 */
-	
-	void abortSessions() {
-		HashMap<Integer, ClientSession> oldsessions = null;
-		synchronized(sessions) {
-			oldsessions = sessions;
-			sessions = new HashMap<Integer, ClientSession>();
-		}
-		for (ClientSession session: oldsessions.values()) {
-			try {
-				session.abortTransaction();
-			}
-			catch (Throwable e) {
-				// FIXME log error
-				e.printStackTrace();
-			}
-		}
-	}
+    void handleQueryDictionaryRequest(Request request, Response response) {
+        QueryDictionaryMessage message = new QueryDictionaryMessage(request
+                .getData());
+        TypeDescriptor[] td = database.getDictionaryCache().getTypeDescriptor(
+                message.containerId);
+        ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
+                .getStoredLength(td));
+        database.getTypeFactory().store(td, bb);
+        bb.flip();
+        response.setData(bb);
+    }
 
-	/**
-	 * Time out sessions that have expired - have been idle too long.
-	 * Any pending transactions started by timeout sessions should be aborted.
-	 * 
-	 */
-	void timeoutSessions() {
-		synchronized(sessions) {
-			Iterator<ClientSession> iter = sessions.values().iterator();
-			while (iter.hasNext()) {
-				ClientSession session = iter.next();
-				try {
-					if (session.checkTimeout(timeout)) {
-						session.abortTransaction();
-						iter.remove();
-					}
-				}
-				catch (Throwable e) {
-					// FIXME log error
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-	
-	
-	/**
-	 * The SessionMonitor times out sessions and removes them
-	 * from the session cache. This task should be executed periodically.
-	 * 
-	 * @author dibyendumajumdar
-	 */
-	static final class SessionMonitor implements Runnable {
-		
-		final SimpleDBMRequestHandler myHandler;
-		
-		SessionMonitor(SimpleDBMRequestHandler handler) {
-			this.myHandler = handler;
-		}
+    void handleUnknownRequest(Request request, Response response) {
+        int sessionId = request.getSessionId();
+        setError(response, -1, "Received invalid request "
+                + request.getRequestCode() + " from " + sessionId);
+        response.setSessionId(0);
+    }
 
-		public void run() {
-			// FIXME log message
-//			System.err.println("Timing out sessions");
-			myHandler.timeoutSessions();
-		}		
-	}
+    void handleCreateTestTables(Request request, Response response) {
+        TypeFactory ff = database.getTypeFactory();
+        TypeDescriptor employee_rowtype[] = { ff.getIntegerType(), /*
+                                                                    * primary
+                                                                    * key
+                                                                    */
+        ff.getVarcharType(20), /* name */
+        ff.getVarcharType(20), /* surname */
+        ff.getVarcharType(20), /* city */
+        ff.getVarcharType(45), /* email address */
+        ff.getDateTimeType(), /* date of birth */
+        ff.getNumberType(2) /* salary */
+        };
+        TableDefinition tableDefinition = database.newTableDefinition(
+                "employee", 1, employee_rowtype);
+        tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
+                true);
+        tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 }, false,
+                false);
+        tableDefinition.addIndex(4, "employee3.idx", new int[] { 5 }, false,
+                false);
+        tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 }, false,
+                false);
+
+        database.createTable(tableDefinition);
+    }
+
+    void handleCreateTable(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        if (session == null) {
+            return;
+        }
+        TableDefinition tableDefinition = database.getTypeSystemFactory()
+                .getTableDefinition(database.getPlatformObjects(),
+                        database.getTypeFactory(), database.getRowFactory(),
+                        request.getData());
+        database.createTable(tableDefinition);
+    }
+
+    void handleStartTransaction(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction != null) {
+            throw new NetworkException(new MessageInstance(transactionActive,
+                    transaction));
+        }
+        StartTransactionMessage message = new StartTransactionMessage(request
+                .getData());
+        transaction = database.startTransaction(message.getIsolationMode());
+        session.setTransaction(transaction);
+    }
+
+    void handleEndTransaction(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        EndTransactionMessage message = new EndTransactionMessage(request
+                .getData());
+        if (message.isCommit()) {
+            session.commitTransaction();
+        } else {
+            session.abortTransaction();
+        }
+    }
+
+    void handleGetTable(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        GetTableMessage message = new GetTableMessage(request.getData());
+        Table table = session.getTable(message.containerId);
+        TableDefinition tableDefinition = table.getDefinition();
+        ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
+        tableDefinition.store(bb);
+        bb.flip();
+        response.setData(bb);
+    }
+
+    void handleOpenTableScan(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        OpenScanMessage message = new OpenScanMessage(database.getRowFactory(),
+                request.getData());
+        Table table = session.getTable(message.getContainerId());
+        if (table == null) {
+            throw new NetworkException(new MessageInstance(noSuchTable, message
+                    .getContainerId()));
+        }
+        TableScan tableScan = table.openScan(transaction, message.getIndexNo(),
+                message.getStartRow(), message.isForUpdate());
+        int scanId = session.registerTableScan(tableScan);
+        ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
+        bb.putInt(scanId);
+        bb.flip();
+        response.setData(bb);
+    }
+
+    void handleCloseTableScan(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        CloseScanMessage message = new CloseScanMessage(request.getData());
+        TableScan tableScan = session.getTableScan(message.getScanId());
+        if (tableScan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, message.getScanId()));
+        }
+        tableScan.close();
+    }
+
+    void handleAddRow(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        AddRowMessage message = new AddRowMessage(database.getRowFactory(),
+                request.getData());
+        Table table = session.getTable(message.getContainerId());
+        if (table == null) {
+            throw new NetworkException(new MessageInstance(noSuchTable, message
+                    .getContainerId()));
+        }
+        // System.err.println("Adding row " + message.getRow());
+        table.addRow(transaction, message.getRow());
+    }
+
+    void handleFetchNextRow(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        FetchNextRowMessage message = new FetchNextRowMessage(database
+                .getRowFactory(), request.getData());
+        TableScan tableScan = session.getTableScan(message.getScanId());
+        if (tableScan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, message.getScanId()));
+        }
+        FetchNextRowReply reply = null;
+        boolean hasNext = tableScan.fetchNext();
+        if (hasNext) {
+            reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
+                    .getContainerId(), false, tableScan.getCurrentRow());
+        } else {
+            reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
+                    .getContainerId(), true, null);
+        }
+        ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
+        reply.store(bb);
+        bb.flip();
+        response.setData(bb);
+    }
+
+    void handleUpdateCurrentRow(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        UpdateRowMessage message = new UpdateRowMessage(database
+                .getRowFactory(), request.getData());
+        TableScan tableScan = session.getTableScan(message.getScanId());
+        if (tableScan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, message.getScanId()));
+        }
+        tableScan.updateCurrentRow(message.getRow());
+    }
+
+    /**
+     * Process a delete row request
+     */
+    void handleDeleteCurrentRow(Request request, Response response) {
+        ClientSession session = validateSession(request, response);
+        Transaction transaction = session.getTransaction();
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        DeleteRowMessage message = new DeleteRowMessage(request.getData());
+        TableScan tableScan = session.getTableScan(message.getScanId());
+        if (tableScan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, message.getScanId()));
+        }
+        tableScan.deleteRow();
+    }
+
+    /*
+     * On shutdown we must abort transactions that weren't committed by
+     * respective clients We should also periodically check on the session
+     * activity and timeout sessions that are inactive for a while.
+     */
+
+    void abortSessions() {
+        HashMap<Integer, ClientSession> oldsessions = null;
+        synchronized (sessions) {
+            oldsessions = sessions;
+            sessions = new HashMap<Integer, ClientSession>();
+        }
+        for (ClientSession session : oldsessions.values()) {
+            try {
+                session.abortTransaction();
+            } catch (Throwable e) {
+                // FIXME log error
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Time out sessions that have expired - have been idle too long. Any
+     * pending transactions started by timeout sessions should be aborted.
+     * 
+     */
+    void timeoutSessions() {
+        synchronized (sessions) {
+            Iterator<ClientSession> iter = sessions.values().iterator();
+            while (iter.hasNext()) {
+                ClientSession session = iter.next();
+                try {
+                    if (session.checkTimeout(timeout)) {
+                        session.abortTransaction();
+                        iter.remove();
+                    }
+                } catch (Throwable e) {
+                    // FIXME log error
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * The SessionMonitor times out sessions and removes them from the session
+     * cache. This task should be executed periodically.
+     * 
+     * @author dibyendumajumdar
+     */
+    static final class SessionMonitor implements Runnable {
+
+        final SimpleDBMRequestHandler myHandler;
+
+        SessionMonitor(SimpleDBMRequestHandler handler) {
+            this.myHandler = handler;
+        }
+
+        public void run() {
+            // FIXME log message
+            //			System.err.println("Timing out sessions");
+            myHandler.timeoutSessions();
+        }
+    }
 }

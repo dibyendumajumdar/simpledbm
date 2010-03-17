@@ -53,81 +53,83 @@ import org.simpledbm.network.nio.api.NetworkException;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
- * Represents a session from the client.  
+ * Represents a session from the client.
+ * 
  * @author dibyendu majumdar
  */
 public class ClientSession {
 
-	/**
-	 * The requestHandler that is managing this sessoion.
-	 */
-	final SimpleDBMRequestHandler requestHandler;
-	
-	/**
-	 * Unique session id.
-	 */
+    /**
+     * The requestHandler that is managing this sessoion.
+     */
+    final SimpleDBMRequestHandler requestHandler;
+
+    /**
+     * Unique session id.
+     */
     final int sessionId;
-    
+
     /**
      * The database we are associated with.
      */
     final Database database;
-    
+
     /**
      * Cached tables related to the current transaction.
      */
     final HashMap<Integer, Table> tables = new HashMap<Integer, Table>();
-    
+
     /**
      * Cached table scans related to the current transaction.
      */
     final HashMap<Integer, TableScan> tableScans = new HashMap<Integer, TableScan>();
-    
+
     /**
      * Each scan is allocated a unique id within the context of the session.
      */
     volatile int scanId = 1;
-    
+
     /**
      * Current transaction. Session can have only one transaction active.
      */
     volatile Transaction transaction;
-    
+
     /**
      * Tracks the last time any activity happened on the session.
      */
     volatile long lastUpdated;
-    
+
     /**
      * If set indicates that the session has timed out.
      */
-    volatile boolean timedOut;  
-    
+    volatile boolean timedOut;
+
     final Logger log;
-    
+
     /**
      * Check the session for timeout etc.
      */
     void checkSessionIsValid() {
-		if (timedOut) {
-			throw new NetworkException(new MessageInstance(timedOutMessage));
-		}
+        if (timedOut) {
+            throw new NetworkException(new MessageInstance(timedOutMessage));
+        }
     }
-    
+
     Transaction getTransaction() {
-		return transaction;
-	}
+        return transaction;
+    }
 
     synchronized void setLastUpdated() {
-    	lastUpdated = System.currentTimeMillis();
+        lastUpdated = System.currentTimeMillis();
     }
-    
+
     synchronized void setTransaction(Transaction transaction) {
-		this.transaction = transaction;
-	}
-	
-	ClientSession(SimpleDBMRequestHandler requestHandler, int sessionId, Database database) {
-		this.requestHandler = requestHandler;
+        this.transaction = transaction;
+    }
+
+    ClientSession(SimpleDBMRequestHandler requestHandler, int sessionId,
+            Database database) {
+        this.requestHandler = requestHandler;
         this.sessionId = sessionId;
         this.database = database;
         this.lastUpdated = System.currentTimeMillis();
@@ -135,100 +137,100 @@ public class ClientSession {
         this.log = requestHandler.po.getLogger();
     }
 
-	int getSessionId() {
-		return sessionId;
-	}
-	
-	synchronized Table getTable(int containerId) {
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		Table table = null;
-		table = tables.get(containerId);
-		if (table == null) {
-			table = database.getTable(transaction, containerId);
-			if (table == null) {
-				throw new NetworkException(new MessageInstance(
-						noSuchTable, containerId));
-			}
-			tables.put(containerId, table);
-		}
-		return table;
-	}
-    
-	synchronized int registerTableScan(TableScan scan) {
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		int s = scanId++;
-		tableScans.put(s, scan);
-		return s;
-	}
-	
-	synchronized TableScan getTableScan(int scanId) {
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		TableScan scan = tableScans.get(scanId);
-		if (scan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, scanId));
-		}
-		return scan;
-	}
-	
-	synchronized void closeTableScan(int scanId) {
-		if (transaction == null) {
-			throw new NetworkException(new MessageInstance(noActiveTransaction));
-		}
-		TableScan scan = tableScans.remove(scanId);
-		if (scan == null) {
-			throw new NetworkException(new MessageInstance(
-					noSuchTableScanMessage, scanId));
-		}
-		scan.close();
-	}
-	
-	synchronized void closeScans() {
-		for (TableScan scan: tableScans.values()) {
-			try {
-				scan.close();
-			}
-			catch (Throwable e) {
-				log.error(getClass().getName(), "closeScans", new MessageInstance(unexpectedError).toString(), e);
-			}
-		}
-		tableScans.clear();
-	}
-	
-	synchronized void abortTransaction() {
-		if (transaction != null) {
-			closeScans();
-			tables.clear();
-			transaction.abort();
-			transaction = null;
-		}
-	}
-	
-	synchronized void commitTransaction() {
-		if (transaction != null) {
-			closeScans();
-			tables.clear();
-			transaction.commit();
-			transaction = null;
-		}
-	}
-	
-	synchronized boolean checkTimeout(int timeout) {
-		if (timedOut) {
-			return true;
-		}
-		long currentTime = System.currentTimeMillis();
-		if (currentTime - lastUpdated > timeout) {
-			System.err.println("Session timed out");
-			timedOut = true;
-		}
-		return timedOut;
-	}
-	
+    int getSessionId() {
+        return sessionId;
+    }
+
+    synchronized Table getTable(int containerId) {
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        Table table = null;
+        table = tables.get(containerId);
+        if (table == null) {
+            table = database.getTable(transaction, containerId);
+            if (table == null) {
+                throw new NetworkException(new MessageInstance(noSuchTable,
+                        containerId));
+            }
+            tables.put(containerId, table);
+        }
+        return table;
+    }
+
+    synchronized int registerTableScan(TableScan scan) {
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        int s = scanId++;
+        tableScans.put(s, scan);
+        return s;
+    }
+
+    synchronized TableScan getTableScan(int scanId) {
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        TableScan scan = tableScans.get(scanId);
+        if (scan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, scanId));
+        }
+        return scan;
+    }
+
+    synchronized void closeTableScan(int scanId) {
+        if (transaction == null) {
+            throw new NetworkException(new MessageInstance(noActiveTransaction));
+        }
+        TableScan scan = tableScans.remove(scanId);
+        if (scan == null) {
+            throw new NetworkException(new MessageInstance(
+                    noSuchTableScanMessage, scanId));
+        }
+        scan.close();
+    }
+
+    synchronized void closeScans() {
+        for (TableScan scan : tableScans.values()) {
+            try {
+                scan.close();
+            } catch (Throwable e) {
+                log.error(getClass().getName(), "closeScans",
+                        new MessageInstance(unexpectedError).toString(), e);
+            }
+        }
+        tableScans.clear();
+    }
+
+    synchronized void abortTransaction() {
+        if (transaction != null) {
+            closeScans();
+            tables.clear();
+            transaction.abort();
+            transaction = null;
+        }
+    }
+
+    synchronized void commitTransaction() {
+        if (transaction != null) {
+            closeScans();
+            tables.clear();
+            transaction.commit();
+            transaction = null;
+        }
+    }
+
+    synchronized boolean checkTimeout(int timeout) {
+        if (timedOut) {
+            return true;
+        }
+        long currentTime = System.currentTimeMillis();
+        if (currentTime - lastUpdated > timeout) {
+            System.err.println("Session timed out");
+            timedOut = true;
+        }
+        return timedOut;
+    }
+
 }

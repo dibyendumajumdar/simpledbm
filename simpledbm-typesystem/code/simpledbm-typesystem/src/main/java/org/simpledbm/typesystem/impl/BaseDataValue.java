@@ -55,29 +55,29 @@ abstract class BaseDataValue implements DataValue {
     private static final int MINUS_INFINITY_FIELD = 2;
     private static final int VALUE_FIELD = 4;
     private static final int PLUS_INFINITY_FIELD = 8;
-    
+
     private static final String NULL_VALUE = "null";
     private static final String MAX_VALUE = "+infinity";
     private static final String MIN_VALUE = "-infinity";
-    
-    private byte statusByte = 0; 
+
+    private byte statusByte = 0;
     private final TypeDescriptor typeDesc;
-    
+
     protected BaseDataValue(BaseDataValue other) {
-    	this.statusByte = other.statusByte;
-    	this.typeDesc = other.typeDesc;
+        this.statusByte = other.statusByte;
+        this.typeDesc = other.typeDesc;
     }
-    
+
     protected BaseDataValue(TypeDescriptor typeDesc) {
         statusByte = NULL_FIELD;
         this.typeDesc = typeDesc;
     }
-    
+
     protected BaseDataValue(TypeDescriptor typeDesc, ByteBuffer bb) {
-    	this.typeDesc = typeDesc;
+        this.typeDesc = typeDesc;
         statusByte = bb.get();
     }
-    
+
     public int getInt() {
         throw new UnsupportedOperationException();
     }
@@ -93,50 +93,50 @@ abstract class BaseDataValue implements DataValue {
     public void setString(String string) {
         throw new UnsupportedOperationException();
     }
-    
+
     public BigDecimal getBigDecimal() {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public BigInteger getBigInteger() {
+    public BigInteger getBigInteger() {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public Date getDate() {
+    public Date getDate() {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public long getLong() {
+    public long getLong() {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public void setBigDecimal(BigDecimal d) {
+    public void setBigDecimal(BigDecimal d) {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public void setBigInteger(BigInteger i) {
+    public void setBigInteger(BigInteger i) {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public void setDate(Date date) {
+    public void setDate(Date date) {
         throw new UnsupportedOperationException();
-	}
+    }
 
-	public void setLong(long l) {
+    public void setLong(long l) {
         throw new UnsupportedOperationException();
-	}
-	
-	public byte[] getBytes() {
-        throw new UnsupportedOperationException();
-	}
+    }
 
-	public void setBytes(byte[] bytes) {
+    public byte[] getBytes() {
         throw new UnsupportedOperationException();
-	}
+    }
 
-//	public void retrieve(ByteBuffer bb) {
-//        statusByte = bb.get();
-//    }
+    public void setBytes(byte[] bytes) {
+        throw new UnsupportedOperationException();
+    }
+
+    //	public void retrieve(ByteBuffer bb) {
+    //        statusByte = bb.get();
+    //    }
 
     public void store(ByteBuffer bb) {
         bb.put(statusByte);
@@ -149,18 +149,19 @@ abstract class BaseDataValue implements DataValue {
     protected int compare(BaseDataValue o) {
         return statusByte - o.statusByte;
     }
-    
+
     public int compareTo(DataValue other) {
-    	if (this == other) {
-    		return 0;
-    	}
-    	if (other == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(other instanceof BaseDataValue)) {
-    		throw new ClassCastException("Cannot cast " + other.getClass() + " to " + this.getClass());
-    	}
-        return compare((BaseDataValue)other);
+        if (this == other) {
+            return 0;
+        }
+        if (other == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(other instanceof BaseDataValue)) {
+            throw new ClassCastException("Cannot cast " + other.getClass()
+                    + " to " + this.getClass());
+        }
+        return compare((BaseDataValue) other);
     }
 
     public final boolean isNull() {
@@ -195,49 +196,49 @@ abstract class BaseDataValue implements DataValue {
         statusByte = VALUE_FIELD;
     }
 
-	@Override
+    @Override
     public boolean equals(Object o) {
-    	if (this == o) {
-    		return true;
-    	}
-    	if (o == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(o instanceof BaseDataValue)) {
-    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
-    	}
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(o instanceof BaseDataValue)) {
+            throw new ClassCastException("Cannot cast " + o.getClass() + " to "
+                    + this.getClass());
+        }
         return compare((BaseDataValue) o) == 0;
     }
 
     public final TypeDescriptor getType() {
         return typeDesc;
     }
-    
+
     public String toString() {
-    	if (isNull()) {
-    		return NULL_VALUE;
-    	}
-    	if (isPositiveInfinity()) {
-    		return MAX_VALUE;
-    	}
-    	if (isNegativeInfinity()) {
-    		return MIN_VALUE;
-    	}
-    	return "";
+        if (isNull()) {
+            return NULL_VALUE;
+        }
+        if (isPositiveInfinity()) {
+            return MAX_VALUE;
+        }
+        if (isNegativeInfinity()) {
+            return MIN_VALUE;
+        }
+        return "";
     }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-    	if (isNull()) {
-    		return sb.append(NULL_VALUE);
-    	}
-    	if (isPositiveInfinity()) {
-    		return sb.append(MAX_VALUE);
-    	}
-    	if (isNegativeInfinity()) {
-    		return sb.append(MIN_VALUE);
-    	}
-		return sb;
-	}
+    public StringBuilder appendTo(StringBuilder sb) {
+        if (isNull()) {
+            return sb.append(NULL_VALUE);
+        }
+        if (isPositiveInfinity()) {
+            return sb.append(MAX_VALUE);
+        }
+        if (isNegativeInfinity()) {
+            return sb.append(MIN_VALUE);
+        }
+        return sb;
+    }
 
-    
 }

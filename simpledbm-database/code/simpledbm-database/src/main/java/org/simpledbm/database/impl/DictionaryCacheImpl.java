@@ -53,26 +53,26 @@ public class DictionaryCacheImpl implements DictionaryCache {
      * Contains a mapping of container IDs to row type descriptors.
      */
     private HashMap<Integer, TypeDescriptor[]> typeDescMap = new HashMap<Integer, TypeDescriptor[]>();
-    
+
     public DictionaryCacheImpl(DatabaseImpl database) {
         this.database = database;
-    }	
-	
-    private synchronized TypeDescriptor[] findTypeDescriptor(int keytype) {
-    	return typeDescMap.get(keytype);
     }
-    
+
+    private synchronized TypeDescriptor[] findTypeDescriptor(int keytype) {
+        return typeDescMap.get(keytype);
+    }
+
     public TypeDescriptor[] getTypeDescriptor(int containerId) {
         TypeDescriptor rowType[] = findTypeDescriptor(containerId);
         if (rowType == null) {
-        	/*
-			 * Normally, the table definitions are always accessed from the data
-			 * dictionary cache. However, during restart recovery it is possible
-			 * that the table definition will be needed prior to initialization
-			 * of the dictionary cache. To allow for this, we load the table
-			 * definition here.
-			 * Note that this will also populate the dictionary cache
-			 */
+            /*
+             * Normally, the table definitions are always accessed from the data
+             * dictionary cache. However, during restart recovery it is possible
+             * that the table definition will be needed prior to initialization
+             * of the dictionary cache. To allow for this, we load the table
+             * definition here.
+             * Note that this will also populate the dictionary cache
+             */
             database.retrieveTableDefinition(containerId);
         }
         /*
@@ -81,18 +81,20 @@ public class DictionaryCacheImpl implements DictionaryCache {
          */
         rowType = findTypeDescriptor(containerId);
         if (rowType == null) {
-        	this.database.exceptionHandler.errorThrow(getClass().getName(), "getTypeDescriptor",
-        			new DatabaseException(new MessageInstance(m_ED0013, containerId)));
+            this.database.exceptionHandler.errorThrow(getClass().getName(),
+                    "getTypeDescriptor", new DatabaseException(
+                            new MessageInstance(m_ED0013, containerId)));
         }
         return rowType;
     }
-    
-    public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
-    	typeDescMap.put(keytype, rowTypeDesc);
+
+    public synchronized void registerRowType(int keytype,
+            TypeDescriptor[] rowTypeDesc) {
+        typeDescMap.put(keytype, rowTypeDesc);
     }
 
     public synchronized void unregisterRowType(int keytype) {
         typeDescMap.remove(keytype);
     }
-    
+
 }

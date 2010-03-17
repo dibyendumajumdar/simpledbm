@@ -52,38 +52,39 @@ import org.simpledbm.typesystem.api.TypeFactory;
 
 public class GenericRowFactory implements RowFactory {
 
-	/**
-	 * Maintains a cache of row factories by container ID.
-	 * When a row factory is accessed for the first time for a particular container ID, it 
-	 * is put into this hash table. 
-	 */
+    /**
+     * Maintains a cache of row factories by container ID. When a row factory is
+     * accessed for the first time for a particular container ID, it is put into
+     * this hash table.
+     */
     private HashMap<Integer, IndexRowFactory> rowCache = new HashMap<Integer, IndexRowFactory>();
-    
+
     /**
      * The field factory instance that will be used to create fields.
      */
     private final TypeFactory fieldFactory;
-    
+
     /**
-     * A mapping between container Ids and TypeDescriptor[] is
-     * stored in the Dictionary Cache
+     * A mapping between container Ids and TypeDescriptor[] is stored in the
+     * Dictionary Cache
      */
     private final DictionaryCache dictionaryCache;
-    
-    public GenericRowFactory(TypeFactory fieldFactory, DictionaryCache dictionaryCache) {
+
+    public GenericRowFactory(TypeFactory fieldFactory,
+            DictionaryCache dictionaryCache) {
         this.fieldFactory = fieldFactory;
         this.dictionaryCache = dictionaryCache;
     }
-    
+
     public IndexKey newIndexKey(int containerId) {
-    	return newRow(containerId);
+        return newRow(containerId);
     }
 
-	public IndexKey newIndexKey(int containerId, ByteBuffer bb) {
-		return newRow(containerId, bb);
-	}
-        
-	private synchronized IndexRowFactory getIndexRowFactory(int containerId) {
+    public IndexKey newIndexKey(int containerId, ByteBuffer bb) {
+        return newRow(containerId, bb);
+    }
+
+    private synchronized IndexRowFactory getIndexRowFactory(int containerId) {
         IndexRowFactory rowFactory = rowCache.get(containerId);
         if (rowFactory == null) {
             TypeDescriptor[] rowTypeDesc = getTypeDescriptor(containerId);
@@ -91,61 +92,62 @@ public class GenericRowFactory implements RowFactory {
             rowCache.put(containerId, rowFactory);
         }
         return rowFactory;
-	}
-    
+    }
+
     public synchronized Row newRow(int containerId) {
         IndexRowFactory rowFactory = getIndexRowFactory(containerId);
         return rowFactory.makeRow();
     }
 
-	public synchronized Row newRow(int containerId, ByteBuffer bb) {
+    public synchronized Row newRow(int containerId, ByteBuffer bb) {
         IndexRowFactory rowFactory = getIndexRowFactory(containerId);
-		return rowFactory.makeRow(bb);
-	}    
-    
+        return rowFactory.makeRow(bb);
+    }
+
     public IndexKey maxIndexKey(int keytype) {
-    	GenericRow row = (GenericRow) newIndexKey(keytype);
-    	for (int i = 0; i < row.getNumberOfColumns(); i++) {
-    		row.setPositiveInfinity(i);
-    	}
-    	return row;
+        GenericRow row = (GenericRow) newIndexKey(keytype);
+        for (int i = 0; i < row.getNumberOfColumns(); i++) {
+            row.setPositiveInfinity(i);
+        }
+        return row;
     }
 
     public IndexKey minIndexKey(int keytype) {
-    	GenericRow row = (GenericRow) newIndexKey(keytype);
-    	for (int i = 0; i < row.getNumberOfColumns(); i++) {
-    		row.setNegativeInfinity(i);
-    	}
-    	return row;
+        GenericRow row = (GenericRow) newIndexKey(keytype);
+        for (int i = 0; i < row.getNumberOfColumns(); i++) {
+            row.setNegativeInfinity(i);
+        }
+        return row;
     }
-    
+
     protected TypeDescriptor[] getTypeDescriptor(int keytype) {
         return dictionaryCache.getTypeDescriptor(keytype);
     }
-    
+
     public void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
-    	dictionaryCache.registerRowType(keytype, rowTypeDesc);
+        dictionaryCache.registerRowType(keytype, rowTypeDesc);
     }
 
     public void unregisterRowType(int keytype) {
         dictionaryCache.unregisterRowType(keytype);
     }
-    
-    public DictionaryCache getDictionaryCache() {
-		return dictionaryCache;
-	}
 
-	static class IndexRowFactory {
+    public DictionaryCache getDictionaryCache() {
+        return dictionaryCache;
+    }
+
+    static class IndexRowFactory {
 
         final TypeDescriptor[] rowTypeDesc;
-        
+
         final TypeFactory fieldFactory;
-        
-        public IndexRowFactory(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
+
+        public IndexRowFactory(TypeFactory fieldFactory,
+                TypeDescriptor[] rowTypeDesc) {
             this.fieldFactory = fieldFactory;
             this.rowTypeDesc = rowTypeDesc;
         }
-        
+
         public GenericRow makeRow() {
             return new GenericRow(fieldFactory, rowTypeDesc);
         }
@@ -155,7 +157,7 @@ public class GenericRowFactory implements RowFactory {
         }
     }
 
-	public IndexKey parseIndexKey(int arg0, String arg1) {
-		throw new UnsupportedOperationException();
-	}
+    public IndexKey parseIndexKey(int arg0, String arg1) {
+        throw new UnsupportedOperationException();
+    }
 }

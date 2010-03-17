@@ -45,16 +45,16 @@ public class SessionException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public SessionException(ByteBuffer bb) {
-		super(bb);
-	}
+    public SessionException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public SessionException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public SessionException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public SessionException(MessageInstance m) {
-		super(m);
-	}
+    public SessionException(MessageInstance m) {
+        super(m);
+    }
 
 }

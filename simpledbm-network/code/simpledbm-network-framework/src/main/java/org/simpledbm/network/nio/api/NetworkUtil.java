@@ -49,13 +49,18 @@ public class NetworkUtil {
     public static Request createRequest(byte[] data) {
         return new RequestImpl(new RequestHeader(), ByteBuffer.wrap(data));
     }
+
     public static Request createRequest(String s) {
-        return new RequestImpl(new RequestHeader(), ByteBuffer.wrap(s.getBytes()));
+        return new RequestImpl(new RequestHeader(), ByteBuffer.wrap(s
+                .getBytes()));
     }
+
     public static Connection createConnection(String host, int port, int timeout) {
         return new ConnectionImpl(host, port, timeout);
     }
-    public static NetworkServer createNetworkServer(Platform platform, RequestHandler requestHandler, Properties properties) {
+
+    public static NetworkServer createNetworkServer(Platform platform,
+            RequestHandler requestHandler, Properties properties) {
         return new NetworkServerImpl(platform, requestHandler, properties);
     }
 }

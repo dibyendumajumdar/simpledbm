@@ -45,29 +45,31 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
 public class DictionaryCacheProxy implements DictionaryCache {
-	
-	SessionManagerImpl sessionManager;
-	TypeFactory typeFactory;
-	
-	public DictionaryCacheProxy(SessionManagerImpl sessionManager, Connection connection, TypeFactory typeFactory) {
-		this.sessionManager = sessionManager;
-		this.typeFactory = typeFactory;
-	}
 
-	public TypeDescriptor[] getTypeDescriptor(int containerId) {
-//		System.err.println("Sending query to server");
+    SessionManagerImpl sessionManager;
+    TypeFactory typeFactory;
+
+    public DictionaryCacheProxy(SessionManagerImpl sessionManager,
+            Connection connection, TypeFactory typeFactory) {
+        this.sessionManager = sessionManager;
+        this.typeFactory = typeFactory;
+    }
+
+    public TypeDescriptor[] getTypeDescriptor(int containerId) {
+        //		System.err.println("Sending query to server");
         QueryDictionaryMessage message = new QueryDictionaryMessage(containerId);
-        Response response = sessionManager.sendMessage(0, RequestCode.QUERY_DICTIONARY, message);
+        Response response = sessionManager.sendMessage(0,
+                RequestCode.QUERY_DICTIONARY, message);
         TypeDescriptor[] td = typeFactory.retrieve(response.getData());
         return td;
-	}
+    }
 
-	public void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc) {
-		throw new UnsupportedOperationException();
-	}
+    public void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc) {
+        throw new UnsupportedOperationException();
+    }
 
-	public void unregisterRowType(int containerId) {
-		throw new UnsupportedOperationException();
-	}
+    public void unregisterRowType(int containerId) {
+        throw new UnsupportedOperationException();
+    }
 
 }

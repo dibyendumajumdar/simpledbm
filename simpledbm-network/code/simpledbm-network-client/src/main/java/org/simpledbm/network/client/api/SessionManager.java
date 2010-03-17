@@ -46,60 +46,68 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 import org.simpledbm.typesystem.api.TypeFactory;
 
 /**
- * The SessionManager manages the connection to the SimpleDBM
- * Network Server, and initiates sessions used by the clients.
+ * The SessionManager manages the connection to the SimpleDBM Network Server,
+ * and initiates sessions used by the clients.
  * 
  * @author dibyendu majumdar
  */
 public abstract class SessionManager {
 
-	/**
-	 * Obtains an instance of the SessionManager for the specified
-	 * connection parameters. The client should allow for the fact that the
-	 * returned instance may be a shared one.
-	 * 
-	 * @param properties
-	 * @param host
-	 * @param port
-	 * @return
-	 */
-    public static SessionManager getSessionManager(Properties properties, String host, int port, int timeout) {
-    	return new SessionManagerImpl(properties, host, port, timeout);
+    /**
+     * Obtains an instance of the SessionManager for the specified connection
+     * parameters. The client should allow for the fact that the returned
+     * instance may be a shared one.
+     * 
+     * @param properties
+     * @param host
+     * @param port
+     * @return
+     */
+    public static SessionManager getSessionManager(Properties properties,
+            String host, int port, int timeout) {
+        return new SessionManagerImpl(properties, host, port, timeout);
     }
 
     /**
      * Gets the TypeFactory associated with the database.
+     * 
      * @return
      */
     public abstract TypeFactory getTypeFactory();
-    
+
     /**
      * Gets the RowFactory for the database.
+     * 
      * @return
      */
     public abstract RowFactory getRowFactory();
 
     /**
      * Creates a new TableDefinition.
+     * 
      * @param name
      * @param containerId
      * @param rowType
      * @return
      */
-	public abstract TableDefinition newTableDefinition(String name, int containerId,
-			TypeDescriptor[] rowType);
-    
-	/**
-	 * Starts a new session.
-	 * @return
-	 */
-    public abstract Session openSession();
-    
+    public abstract TableDefinition newTableDefinition(String name,
+            int containerId, TypeDescriptor[] rowType);
+
     /**
-     * Gets the underlying connection object associated with this SessionManager.
-     * <p>The connection object must be handled with care, as its correct
-     * operation is vital to the client server communication.
+     * Starts a new session.
+     * 
      * @return
      */
-    public abstract Connection getConnection();    
+    public abstract Session openSession();
+
+    /**
+     * Gets the underlying connection object associated with this
+     * SessionManager.
+     * <p>
+     * The connection object must be handled with care, as its correct operation
+     * is vital to the client server communication.
+     * 
+     * @return
+     */
+    public abstract Connection getConnection();
 }

@@ -45,16 +45,16 @@ public class NetworkException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public NetworkException(ByteBuffer bb) {
-		super(bb);
-	}
+    public NetworkException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public NetworkException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public NetworkException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public NetworkException(MessageInstance m) {
-		super(m);
-	}
-    
+    public NetworkException(MessageInstance m) {
+        super(m);
+    }
+
 }

@@ -45,50 +45,49 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class FetchNextRowReply implements Storable {
 
-	int containerId;
-	boolean eof;
-	Row row;
+    int containerId;
+    boolean eof;
+    Row row;
 
-	public FetchNextRowReply(int containerId, boolean eof, Row row) {
-		this.containerId = containerId;
-		this.eof = eof;
-		this.row = row;
-	}
+    public FetchNextRowReply(int containerId, boolean eof, Row row) {
+        this.containerId = containerId;
+        this.eof = eof;
+        this.row = row;
+    }
 
-	public FetchNextRowReply(RowFactory rowFactory, ByteBuffer bb) {
-		eof = (bb.get() == 1 ? true: false);
-		if (!eof) {
-			containerId = bb.getInt();
-			row = rowFactory.newRow(containerId, bb);
-		}
-		else {
-			row = null;
-		}
-	}
+    public FetchNextRowReply(RowFactory rowFactory, ByteBuffer bb) {
+        eof = (bb.get() == 1 ? true : false);
+        if (!eof) {
+            containerId = bb.getInt();
+            row = rowFactory.newRow(containerId, bb);
+        } else {
+            row = null;
+        }
+    }
 
-	public int getStoredLength() {
-		return TypeSize.BYTE 
-				+ (!eof? (row.getStoredLength() + TypeSize.INTEGER): 0);
-	}
+    public int getStoredLength() {
+        return TypeSize.BYTE
+                + (!eof ? (row.getStoredLength() + TypeSize.INTEGER) : 0);
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.put((byte)(eof?1:0));
-		if (!eof) {
-			bb.putInt(containerId);
-			row.store(bb);
-		}
-	}
+    public void store(ByteBuffer bb) {
+        bb.put((byte) (eof ? 1 : 0));
+        if (!eof) {
+            bb.putInt(containerId);
+            row.store(bb);
+        }
+    }
 
-	public Row getRow() {
-		return row;
-	}
+    public Row getRow() {
+        return row;
+    }
 
-	public void setRow(Row row) {
-		this.row = row;
-	}
+    public void setRow(Row row) {
+        this.row = row;
+    }
 
-	public boolean isEof() {
-		return eof;
-	}
+    public boolean isEof() {
+        return eof;
+    }
 
 }

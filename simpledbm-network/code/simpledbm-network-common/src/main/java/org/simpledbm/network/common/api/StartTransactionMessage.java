@@ -47,42 +47,42 @@ import org.simpledbm.common.util.mcat.MessageInstance;
 import org.simpledbm.common.util.mcat.MessageType;
 
 public class StartTransactionMessage implements Storable {
-	
-	private final IsolationMode isolationMode;
-	private static final IsolationMode[] values = IsolationMode.values();
 
-	static final Message noSuchIsolationMode = new Message('N', 'O', MessageType.ERROR, 1, "IsolationMode {0} does not exist");
-	
-	private static IsolationMode enumFrom(int mode) {
-		for (int i = 0; i < values.length; i++) {
-			if (values[i].ordinal() == mode) {
-				return values[i];
-			}
-		}
-		throw new SimpleDBMException(new MessageInstance(noSuchIsolationMode, mode));
-	}
-	
+    private final IsolationMode isolationMode;
+    private static final IsolationMode[] values = IsolationMode.values();
+
+    static final Message noSuchIsolationMode = new Message('N', 'O',
+            MessageType.ERROR, 1, "IsolationMode {0} does not exist");
+
+    private static IsolationMode enumFrom(int mode) {
+        for (int i = 0; i < values.length; i++) {
+            if (values[i].ordinal() == mode) {
+                return values[i];
+            }
+        }
+        throw new SimpleDBMException(new MessageInstance(noSuchIsolationMode,
+                mode));
+    }
+
     public StartTransactionMessage(IsolationMode isolationMode) {
-    	this.isolationMode = isolationMode;
+        this.isolationMode = isolationMode;
     }
-    
+
     public StartTransactionMessage(ByteBuffer bb) {
-    	int mode = bb.getInt();
-    	isolationMode = enumFrom(mode);
+        int mode = bb.getInt();
+        isolationMode = enumFrom(mode);
     }
-    
+
     public int getStoredLength() {
         return TypeSize.INTEGER;
     }
 
     public void store(ByteBuffer bb) {
-    	bb.putInt(isolationMode.ordinal());
+        bb.putInt(isolationMode.ordinal());
     }
 
-	public IsolationMode getIsolationMode() {
-		return isolationMode;
-	}
-    
-    
+    public IsolationMode getIsolationMode() {
+        return isolationMode;
+    }
 
 }

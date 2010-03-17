@@ -66,8 +66,7 @@ public class NIOUtil {
         if (closeable != null) {
             try {
                 closeable.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
             }
         }
     }
@@ -76,8 +75,7 @@ public class NIOUtil {
         if (socket != null) {
             try {
                 socket.close();
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
             }
         }
     }

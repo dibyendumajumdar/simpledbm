@@ -54,128 +54,129 @@ import org.simpledbm.rss.api.st.StorageManager;
  */
 public class TestStorageContainer extends BaseTestCase {
 
-	public TestStorageContainer(String arg0) {
-		super(arg0);
-	}
+    public TestStorageContainer(String arg0) {
+        super(arg0);
+    }
 
-	public void testCreate() throws Exception {
-		String name = "testfile";
-		File file = new File("testdata/TestStorageContainer/" + name);
-		file.delete();
-		assertTrue(!file.exists());
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath",
-				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
-				properties);
-		StorageContainer sc = factory.create(name);
-		sc.write(0, new byte[10], 0, 10);
-		sc.flush();
-		assertTrue(file.exists());
-		assertTrue(file.length() == 10);
-		sc.close();
-		assertTrue(file.exists());
-		assertTrue(file.length() == 10);
-		sc = factory.open(name);
-		sc.close();
-		assertTrue(file.exists());
-		assertTrue(file.length() == 10);
-		try {
-			sc = factory.createIfNotExisting(name);
-			fail("Error: should fail to create a container if it already exists");
-		} catch (StorageException e) {
-			assertTrue(e.getErrorCode() == 17);
-		}
-		assertTrue(file.exists());
-		assertTrue(file.length() == 10);
-		file.delete();
-		try {
-			sc = factory.open(name);
-			fail("Error: should fail as the container has been deleted");
-		} catch (Exception e) {
-		}
-	}
+    public void testCreate() throws Exception {
+        String name = "testfile";
+        File file = new File("testdata/TestStorageContainer/" + name);
+        file.delete();
+        assertTrue(!file.exists());
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath",
+                "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+                platform, properties);
+        StorageContainer sc = factory.create(name);
+        sc.write(0, new byte[10], 0, 10);
+        sc.flush();
+        assertTrue(file.exists());
+        assertTrue(file.length() == 10);
+        sc.close();
+        assertTrue(file.exists());
+        assertTrue(file.length() == 10);
+        sc = factory.open(name);
+        sc.close();
+        assertTrue(file.exists());
+        assertTrue(file.length() == 10);
+        try {
+            sc = factory.createIfNotExisting(name);
+            fail("Error: should fail to create a container if it already exists");
+        } catch (StorageException e) {
+            assertTrue(e.getErrorCode() == 17);
+        }
+        assertTrue(file.exists());
+        assertTrue(file.length() == 10);
+        file.delete();
+        try {
+            sc = factory.open(name);
+            fail("Error: should fail as the container has been deleted");
+        } catch (Exception e) {
+        }
+    }
 
-	public void testCase2() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath",
-				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
-				properties);
-		StorageManager storageManager = new StorageManagerImpl(platform, properties);
-		String name = "testfile";
-		File file = new File("testdata/TestStorageContainer/" + name);
-		file.delete();
-		assertTrue(!file.exists());
-		StorageContainerInfo[] activeContainers = storageManager
-				.getActiveContainers();
-		assertEquals(activeContainers.length, 0);
-		StorageContainer sc = factory.create(name);
-		storageManager.register(1, sc);
-		activeContainers = storageManager.getActiveContainers();
-		assertEquals(activeContainers.length, 1);
-		assertEquals(activeContainers[0].getContainerId(), 1);
-		assertEquals(activeContainers[0].getName(), "testfile");
-		storageManager.shutdown();
-		activeContainers = storageManager.getActiveContainers();
-		assertEquals(activeContainers.length, 0);
-		assertTrue(file.exists());
-		factory.delete("testfile");
-		assertFalse(file.exists());
-	}
+    public void testCase2() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath",
+                "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+                platform, properties);
+        StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        String name = "testfile";
+        File file = new File("testdata/TestStorageContainer/" + name);
+        file.delete();
+        assertTrue(!file.exists());
+        StorageContainerInfo[] activeContainers = storageManager
+                .getActiveContainers();
+        assertEquals(activeContainers.length, 0);
+        StorageContainer sc = factory.create(name);
+        storageManager.register(1, sc);
+        activeContainers = storageManager.getActiveContainers();
+        assertEquals(activeContainers.length, 1);
+        assertEquals(activeContainers[0].getContainerId(), 1);
+        assertEquals(activeContainers[0].getName(), "testfile");
+        storageManager.shutdown();
+        activeContainers = storageManager.getActiveContainers();
+        assertEquals(activeContainers.length, 0);
+        assertTrue(file.exists());
+        factory.delete("testfile");
+        assertFalse(file.exists());
+    }
 
-	public void testCase3() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath",
-				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
-				properties);
-		factory.create("testfile1").close();
-		factory.create("./testfile2").close();
-		factory.create("./mypath/testfile2").close();
-		factory.delete("./mypath/testfile2");
-		factory.delete("./testfile2");
-		factory.delete("testfile1");
-	}
+    public void testCase3() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath",
+                "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+                platform, properties);
+        factory.create("testfile1").close();
+        factory.create("./testfile2").close();
+        factory.create("./mypath/testfile2").close();
+        factory.delete("./mypath/testfile2");
+        factory.delete("./testfile2");
+        factory.delete("testfile1");
+    }
 
-	// test case disabled
-	public void _testCase4() throws Exception {
-		Properties properties = new Properties();
-		properties.setProperty("storage.basePath",
-				"testdata/TestStorageContainer");
-		final StorageContainerFactory factory = new FileStorageContainerFactory(platform, 
-				properties);
-		factory.create("lockfile").close();
-		try {
-			StorageContainer sc = factory.open("lockfile");
-			try {
-				sc.lock();
+    // test case disabled
+    public void _testCase4() throws Exception {
+        Properties properties = new Properties();
+        properties.setProperty("storage.basePath",
+                "testdata/TestStorageContainer");
+        final StorageContainerFactory factory = new FileStorageContainerFactory(
+                platform, properties);
+        factory.create("lockfile").close();
+        try {
+            StorageContainer sc = factory.open("lockfile");
+            try {
+                sc.lock();
 
-				Thread t = new Thread(new Runnable() {
-					public void run() {
-						StorageContainer sc2 = factory.open("lockfile");
-						try {
-							sc2.lock();
-							// THIS TEST DOES NOT WORK ON MAC OS X
-						
-							sc2.unlock();
-						} catch (Exception e) {
-							setThreadFailed(Thread.currentThread(), e);
-						} finally {
-							sc2.close();
-						}
-					}
-				});
-				sc.unlock();
-			} finally {
-				sc.close();
-			}
-		} catch (Exception e) {
-			fail(e.getMessage());
-		} finally {
-			factory.delete("lockfile");
-		}
-		checkThreadFailures();
-	}
+                Thread t = new Thread(new Runnable() {
+                    public void run() {
+                        StorageContainer sc2 = factory.open("lockfile");
+                        try {
+                            sc2.lock();
+                            // THIS TEST DOES NOT WORK ON MAC OS X
+
+                            sc2.unlock();
+                        } catch (Exception e) {
+                            setThreadFailed(Thread.currentThread(), e);
+                        } finally {
+                            sc2.close();
+                        }
+                    }
+                });
+                sc.unlock();
+            } finally {
+                sc.close();
+            }
+        } catch (Exception e) {
+            fail(e.getMessage());
+        } finally {
+            factory.delete("lockfile");
+        }
+        checkThreadFailures();
+    }
 
 }

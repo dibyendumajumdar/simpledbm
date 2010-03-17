@@ -41,45 +41,45 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.key.IndexKeyFactory;
 
 /**
- * A factory for generating rows. Also provides the ability to register row types 
- * for containers, keyed by the container id.
+ * A factory for generating rows. Also provides the ability to register row
+ * types for containers, keyed by the container id.
  * 
  * @author Dibyendu Majumdar
  * @since 7 May 2007
  */
 public interface RowFactory extends IndexKeyFactory {
 
-	/**
-	 * Creates a new row for a specified container ID. The container ID is
-	 * used to locate the type information for the row.
-	 */
-	Row newRow(int containerId);
-	
-	/**
-	 * Creates a new row for a specified container ID. The container ID is
-	 * used to locate the type information for the row.
-	 */
-	Row newRow(int containerId, ByteBuffer bb);
-	
-	/**
-	 * Retrieves the DictionaryCache associated with this Row Factory.
-	 */
-//	DictionaryCache getDictionaryCache();
-	
-	/**
-	 * Registers the row definition for a particular container ID.
-	 * @param containerId container ID for which the row type information is being registered
-	 * @param rowTypeDesc An array of types that describe the fields in the row.
-	 */
-//	void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
+    /**
+     * Creates a new row for a specified container ID. The container ID is used
+     * to locate the type information for the row.
+     */
+    Row newRow(int containerId);
 
-	
+    /**
+     * Creates a new row for a specified container ID. The container ID is used
+     * to locate the type information for the row.
+     */
+    Row newRow(int containerId, ByteBuffer bb);
+
+    /**
+     * Retrieves the DictionaryCache associated with this Row Factory.
+     */
+    //	DictionaryCache getDictionaryCache();
+
+    /**
+     * Registers the row definition for a particular container ID.
+     * 
+     * @param containerId container ID for which the row type information is
+     *            being registered
+     * @param rowTypeDesc An array of types that describe the fields in the row.
+     */
+    //	void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
+
     /**
      * Removes the row definition for a particular container ID.
      * 
-     * @param containerId
-     *            container ID for which the row type information is being
-     *            removed
+     * @param containerId container ID for which the row type information is
+     *            being removed
      */
-//    void unregisterRowType(int containerId);
+    //    void unregisterRowType(int containerId);
 }

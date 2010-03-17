@@ -44,30 +44,30 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class FetchNextRowMessage implements Storable {
 
-	int scanId;
+    int scanId;
 
-	public FetchNextRowMessage(int scanId) {
-		this.scanId = scanId;
-	}
+    public FetchNextRowMessage(int scanId) {
+        this.scanId = scanId;
+    }
 
-	public FetchNextRowMessage(RowFactory rowFactory, ByteBuffer bb) {
-		scanId = bb.getInt();
-	}
+    public FetchNextRowMessage(RowFactory rowFactory, ByteBuffer bb) {
+        scanId = bb.getInt();
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER;
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER;
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(scanId);
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(scanId);
+    }
 
-	public int getScanId() {
-		return scanId;
-	}
+    public int getScanId() {
+        return scanId;
+    }
 
-	public void setScanId(int scanId) {
-		this.scanId = scanId;
-	}
+    public void setScanId(int scanId) {
+        this.scanId = scanId;
+    }
 
 }

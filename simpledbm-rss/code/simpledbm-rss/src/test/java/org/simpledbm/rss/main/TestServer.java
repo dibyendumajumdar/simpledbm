@@ -70,7 +70,7 @@ public class TestServer extends BaseTestCase {
         Server server = new Server(properties);
         server.start();
         server.shutdown();
-        
+
         Server.drop(properties);
     }
 
@@ -107,7 +107,7 @@ public class TestServer extends BaseTestCase {
             TupleContainer container = server.getTupleContainer(trx, 1);
 
             TupleInserter inserter = container.insert(trx, new ByteString(
-                "Hello World!"));
+                    "Hello World!"));
             inserter.completeInsert();
             trx.commit();
         } finally {
@@ -117,7 +117,6 @@ public class TestServer extends BaseTestCase {
         Server.drop(properties);
     }
 
-   
     // test case disabled because it fails on Mac due to different
     // locking behaviour
     public void testCase3() throws Exception {

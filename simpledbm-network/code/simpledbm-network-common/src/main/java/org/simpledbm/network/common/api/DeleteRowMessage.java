@@ -42,30 +42,30 @@ import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.TypeSize;
 
 public class DeleteRowMessage implements Storable {
-	
-	private int scanId;
+
+    private int scanId;
 
     public DeleteRowMessage(int scanId) {
-    	this.setScanId(scanId);
+        this.setScanId(scanId);
     }
-    
+
     public DeleteRowMessage(ByteBuffer bb) {
-    	setScanId(bb.getInt());
+        setScanId(bb.getInt());
     }
-    
+
     public int getStoredLength() {
         return TypeSize.INTEGER;
     }
 
     public void store(ByteBuffer bb) {
-    	bb.putInt(getScanId());
+        bb.putInt(getScanId());
     }
 
-	public void setScanId(int scanId) {
-		this.scanId = scanId;
-	}
+    public void setScanId(int scanId) {
+        this.scanId = scanId;
+    }
 
-	public int getScanId() {
-		return scanId;
-	}
+    public int getScanId() {
+        return scanId;
+    }
 }

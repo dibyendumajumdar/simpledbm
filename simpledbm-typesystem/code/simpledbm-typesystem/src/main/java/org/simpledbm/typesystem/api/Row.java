@@ -44,118 +44,129 @@ import org.simpledbm.common.api.key.IndexKey;
 import org.simpledbm.common.util.Dumpable;
 
 /**
- * A Row is an array of DataValue objects, and can be used as multi-value record within
- * a table or an index.
+ * A Row is an array of DataValue objects, and can be used as multi-value record
+ * within a table or an index.
  * 
  * @author Dibyendu Majumdar
  */
 public interface Row extends IndexKey, Dumpable {
 
-	/**
-	 * Returns the number of fields in the row.
-	 */
-	int getNumberOfColumns();
+    /**
+     * Returns the number of fields in the row.
+     */
+    int getNumberOfColumns();
 
-	/**
-	 * Creates a copy of this row.
-	 */
-	Row cloneMe();	
-	
-	/**
-	 * Returns an integer representation of the data value.
-	 * @throws UnsupportedOperationException.
-	 */
-	int getInt(int column);
+    /**
+     * Creates a copy of this row.
+     */
+    Row cloneMe();
 
-	/**
-	 * Converts the supplied integer value to a suitable value for the data value 
-	 * @throws UnsupportedOperationException.
-	 */
-	void setInt(int column, Integer integer);
+    /**
+     * Returns an integer representation of the data value.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    int getInt(int column);
 
-	/**
-	 * Returns a string representation of the data value.
-	 */
-	String getString(int column);
+    /**
+     * Converts the supplied integer value to a suitable value for the data
+     * value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setInt(int column, Integer integer);
 
-	/**
-	 * Converts the supplied string value to a suitable value for the data value
-	 */
-	void setString(int column, String string);
+    /**
+     * Returns a string representation of the data value.
+     */
+    String getString(int column);
 
-	/**
-	 * Sets the value of the field to the date. 
-	 * @throws UnsupportedOperationException.
-	 */
-	void setDate(int column, Date date);
-	
-	/**
-	 * Gets the current value as a date.
-	 * @throws UnsupportedOperationException.
-	 */
-	Date getDate(int column);
-	
-	/**
-	 * Converts the supplied long value to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setLong(int column, long l);
-	
-	/**
-	 * Returns the data value as a long
-	 * @throws UnsupportedOperationException.
-	 */
-	long getLong(int column);
-	
-	/**
-	 * Converts the supplied BigInteger to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setBigInteger(int column, BigInteger i);
-	
-	/**
-	 * Returns the data value as a long
-	 * @throws UnsupportedOperationException.
-	 */
-	BigInteger getBigInteger(int column);
-	
-	/**
-	 * Converts the supplied BigDecimal to the data value
-	 * @throws UnsupportedOperationException.
-	 */
-	void setBigDecimal(int column, BigDecimal d);
-	
-	/**
-	 * Returns the Data Value as a BigDecimal
-	 * @throws UnsupportedOperationException.
-	 */
-	BigDecimal getBigDecimal(int column);
-	
-	/**
-	 * Returns the DataValue as a byte array
-	 */
-	byte[] getBytes(int column);
+    /**
+     * Converts the supplied string value to a suitable value for the data value
+     */
+    void setString(int column, String string);
 
-	/**
-	 * Sets the DataValue to the byte array
-	 */
-	void setBytes(int column, byte[] bytes);
-	
-	/**
-	 * Checks if the data value is NULL, which is a special value indicating that the field's value
-	 * has not been set.
-	 */
-	boolean isNull(int column);
-	
-	/**
-	 * Sets the field to be NULL.
-	 */
+    /**
+     * Sets the value of the field to the date.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setDate(int column, Date date);
+
+    /**
+     * Gets the current value as a date.
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    Date getDate(int column);
+
+    /**
+     * Converts the supplied long value to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setLong(int column, long l);
+
+    /**
+     * Returns the data value as a long
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    long getLong(int column);
+
+    /**
+     * Converts the supplied BigInteger to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setBigInteger(int column, BigInteger i);
+
+    /**
+     * Returns the data value as a long
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    BigInteger getBigInteger(int column);
+
+    /**
+     * Converts the supplied BigDecimal to the data value
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    void setBigDecimal(int column, BigDecimal d);
+
+    /**
+     * Returns the Data Value as a BigDecimal
+     * 
+     * @throws UnsupportedOperationException.
+     */
+    BigDecimal getBigDecimal(int column);
+
+    /**
+     * Returns the DataValue as a byte array
+     */
+    byte[] getBytes(int column);
+
+    /**
+     * Sets the DataValue to the byte array
+     */
+    void setBytes(int column, byte[] bytes);
+
+    /**
+     * Checks if the data value is NULL, which is a special value indicating
+     * that the field's value has not been set.
+     */
+    boolean isNull(int column);
+
+    /**
+     * Sets the field to be NULL.
+     */
     void setNull(int column);
 
     /**
      * Checks if this field is set to the value signifying negative infinity.
-     * Negative infinity represents a value that is less than all the valid values
-     * in the field's domain.
+     * Negative infinity represents a value that is less than all the valid
+     * values in the field's domain.
      */
     boolean isNegativeInfinity(int column);
 
@@ -163,24 +174,24 @@ public interface Row extends IndexKey, Dumpable {
      * Sets this field to the value of negative infinity.
      */
     void setNegativeInfinity(int column);
-    
+
     /**
      * Checks if this field is set to the value signifying positive infinity.
-     * Positive infinity represents a value that is greater than all the valid values
-     * in the field's domain.
+     * Positive infinity represents a value that is greater than all the valid
+     * values in the field's domain.
      */
     boolean isPositiveInfinity(int column);
-    
+
     /**
      * Sets this field to the value of positive infinity.
      */
     void setPositiveInfinity(int column);
-    
+
     /**
      * Checks if this field is set to a value in the field's domain.
      */
-    boolean isValue(int column);	
-    
+    boolean isValue(int column);
+
     /**
      * Compare a column of this row with column in another row.
      */

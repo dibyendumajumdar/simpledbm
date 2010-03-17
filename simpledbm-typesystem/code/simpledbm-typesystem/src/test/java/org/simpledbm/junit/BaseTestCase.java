@@ -47,7 +47,7 @@ import org.simpledbm.common.impl.platform.PlatformImpl;
 public abstract class BaseTestCase extends TestCase {
 
     Vector<ThreadFailure> threadFailureExceptions;
-    
+
     protected Properties properties;
     protected Platform platform;
 
@@ -67,7 +67,8 @@ public abstract class BaseTestCase extends TestCase {
         super.setUp();
         threadFailureExceptions = new Vector<ThreadFailure>();
         properties = new Properties();
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         platform = new PlatformImpl(properties);
     }

@@ -68,13 +68,13 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
  * <p>
  * TODO: Test accessing page from non-existent container.
  * <p>
- * TODO: Test case when page is written to non-existent container.
- * First fix a new page. And then attempt to write it.
+ * TODO: Test case when page is written to non-existent container. First fix a
+ * new page. And then attempt to write it.
  * <p>
  * TODO: Test interaction between read/write access to pages.
  * <p>
- * TODO: Test that read access is possible while buffer write is
- * going on, but not write access.
+ * TODO: Test that read access is possible while buffer write is going on, but
+ * not write access.
  * 
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
@@ -90,15 +90,15 @@ public class TestBufferManager extends BaseTestCase {
     static public class MyPage extends Page {
 
         int i = 0;
-        
-        MyPage(PageManager pageFactory, int type, PageId pageId) {
-			super(pageFactory, type, pageId);
-		}
 
-		MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-			super(pageFactory, pageId, bb);
+        MyPage(PageManager pageFactory, int type, PageId pageId) {
+            super(pageFactory, type, pageId);
+        }
+
+        MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+            super(pageFactory, pageId, bb);
             i = bb.getInt();
-		}
+        }
 
         /**
          * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
@@ -108,52 +108,49 @@ public class TestBufferManager extends BaseTestCase {
             super.store(bb);
             bb.putInt(i);
         }
-        
+
         static class MyPageFactory implements PageFactory {
 
-        	final PageManager pageManager;
-        	
-        	public MyPageFactory(PageManager pageManager) {
-        		this.pageManager = pageManager;
-        	}
-			public Page getInstance(int type, PageId pageId) {
-				return new MyPage(pageManager, type, pageId);
-			}
+            final PageManager pageManager;
 
-			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new MyPage(pageManager, pageId, bb);
-			}
+            public MyPageFactory(PageManager pageManager) {
+                this.pageManager = pageManager;
+            }
 
-			public int getPageType() {
-				return TYPE_MYPAGE;
-			}
-        	
+            public Page getInstance(int type, PageId pageId) {
+                return new MyPage(pageManager, type, pageId);
+            }
+
+            public Page getInstance(PageId pageId, ByteBuffer bb) {
+                return new MyPage(pageManager, pageId, bb);
+            }
+
+            public int getPageType() {
+                return TYPE_MYPAGE;
+            }
+
         }
     }
 
     public void testCase1() throws Exception {
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        StorageManager storageManager = new StorageManagerImpl(platform, properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
         LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        BufferManagerImpl bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        PageManager pageFactory = new PageManagerImpl(platform, objectFactory,
+                storageManager, latchFactory, properties);
+        BufferManagerImpl bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
 
         String name = "testfile.dat";
         File file = new File(name);
@@ -161,15 +158,13 @@ public class TestBufferManager extends BaseTestCase {
 
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
-        BufferAccessBlock bab = bufmgr.fixExclusive(
-            new PageId(1, 0),
-            true,
-            TYPE_MYPAGE,
-            0);
+        BufferAccessBlock bab = bufmgr.fixExclusive(new PageId(1, 0), true,
+                TYPE_MYPAGE, 0);
         MyPage page = (MyPage) bab.getPage();
         page.i = 534;
         bab.setDirty(new Lsn(97, 45));
@@ -206,31 +201,29 @@ public class TestBufferManager extends BaseTestCase {
     public void testCase2() throws Exception {
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
         final AtomicInteger errCount = new AtomicInteger(0);
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
@@ -300,44 +293,42 @@ public class TestBufferManager extends BaseTestCase {
     }
 
     /**
-     * Multiple thread concurrent read/write test, supporting 3 different scenarios:
+     * Multiple thread concurrent read/write test, supporting 3 different
+     * scenarios:
      * <p>
      * <ul>
      * <li>
-     * If (scenario == 3), 3 threads update the same page.
-     * </li><li>
-     * If (scenario == 2), 3 threads update 5 pages.
-     * </li><li>
-     * If (scenario == 1), 3 threads update 2 pages.
-     * </li>
+     * If (scenario == 3), 3 threads update the same page.</li>
+     * <li>
+     * If (scenario == 2), 3 threads update 5 pages.</li>
+     * <li>
+     * If (scenario == 1), 3 threads update 2 pages.</li>
      * </ul>
      * <p>
-     * BufMgr can only have 3 pages in memory, therefore scenario == 2 results in IO.
+     * BufMgr can only have 3 pages in memory, therefore scenario == 2 results
+     * in IO.
      */
     public void runtests(int scenario) throws Exception {
 
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
         final AtomicInteger errCount = new AtomicInteger(0);
         final int testing = scenario;
         final int ITERATIONS = 10;
@@ -359,7 +350,8 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
@@ -371,18 +363,15 @@ public class TestBufferManager extends BaseTestCase {
                         for (int z = 1; z <= UPDATES_PER_ITERATION; z++) {
                             PageId pageId = new PageId(1, pageno);
                             BufferAccessBlock bab = null;
-                            bab = bufmgr.fixExclusive(
-                                pageId,
-                                false,
-                                TYPE_MYPAGE,
-                                0);
+                            bab = bufmgr.fixExclusive(pageId, false,
+                                    TYPE_MYPAGE, 0);
                             MyPage page = (MyPage) bab.getPage();
                             int i = page.i;
                             i = i + 1;
                             page.i = i;
-//                            System.err.println(Thread.currentThread().getName()
-//                                    + ": Value of i in page " + pageId
-//                                    + " has been set to " + i);
+                            //                            System.err.println(Thread.currentThread().getName()
+                            //                                    + ": Value of i in page " + pageId
+                            //                                    + " has been set to " + i);
                             bab.setDirty(new Lsn());
                             bab.unfix();
                             calculated_values[pageno].incrementAndGet();
@@ -426,8 +415,8 @@ public class TestBufferManager extends BaseTestCase {
             MyPage page = (MyPage) bab.getPage();
             int i = page.i;
             bab.unfix();
-//            System.err.println("Expected value = " + expected_values[testing]);
-//            System.err.println("Calculated value = " + calculated_values[z]);
+            //            System.err.println("Expected value = " + expected_values[testing]);
+            //            System.err.println("Calculated value = " + calculated_values[z]);
             assertEquals(expected_values[testing], i);
             System.err.println(Thread.currentThread().getName()
                     + ": Validated that value of i in page " + pageId + " is "
@@ -457,26 +446,23 @@ public class TestBufferManager extends BaseTestCase {
     public void testCase6() throws Exception {
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
         final AtomicInteger sync = new AtomicInteger(0);
 
         Thread t1 = new Thread() {
@@ -487,7 +473,7 @@ public class TestBufferManager extends BaseTestCase {
                     BufferAccessBlock bab = null;
                     assertTrue(sync.compareAndSet(1, 2));
                     System.err
-                        .println("T2 (2) Trying to obtain shared latch on page");
+                            .println("T2 (2) Trying to obtain shared latch on page");
                     bab = bufmgr.fixShared(pageId, 0);
                     assertTrue(sync.compareAndSet(2, 3));
                     System.err.println("T2 (3) Obtained shared latch on page");
@@ -504,7 +490,8 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
@@ -544,32 +531,29 @@ public class TestBufferManager extends BaseTestCase {
      * Test that update mode latch blocks readers.
      */
     public void disabledTestCase6() throws Exception {
-        
+
         // This test has been disabled because of the change in
         // lock mode that makes SHARED locks compatible with
         // UPDATE locks. 
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
         final AtomicInteger sync = new AtomicInteger(0);
 
         Thread t1 = new Thread() {
@@ -580,7 +564,7 @@ public class TestBufferManager extends BaseTestCase {
                     BufferAccessBlock bab = null;
                     assertTrue(sync.compareAndSet(1, 2));
                     System.err
-                        .println("T2 (2) Trying to obtain shared latch on page");
+                            .println("T2 (2) Trying to obtain shared latch on page");
                     bab = bufmgr.fixShared(pageId, 0);
                     assertTrue(sync.compareAndSet(5, 6));
                     System.err.println("T2 (6) Obtained shared latch on page");
@@ -594,7 +578,8 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
@@ -629,7 +614,6 @@ public class TestBufferManager extends BaseTestCase {
         }
     }
 
-    
     /*
      * Test that Update mode access is possible when page is
      * held in shared mode. Also test that update mode conflicts with
@@ -639,26 +623,23 @@ public class TestBufferManager extends BaseTestCase {
 
         Properties properties = new Properties();
         properties
-            .setProperty("storage.basePath", "testdata/TestBufferManager");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+                .setProperty("storage.basePath", "testdata/TestBufferManager");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            null,
-            pageFactory,
-            3,
-            11);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, null,
+                pageFactory, 3, 11);
         final AtomicInteger sync = new AtomicInteger(0);
 
         Thread t1 = new Thread() {
@@ -669,11 +650,11 @@ public class TestBufferManager extends BaseTestCase {
                     BufferAccessBlock bab = null;
                     assertTrue(sync.compareAndSet(1, 2));
                     System.err
-                        .println("T2 (2) Trying to obtain UPDATE latch on page");
+                            .println("T2 (2) Trying to obtain UPDATE latch on page");
                     bab = bufmgr.fixForUpdate(pageId, 0);
                     assertTrue(sync.compareAndSet(2, 3));
                     System.err
-                        .println("T2 (3) Obtained UPDATE latch on page, waiting");
+                            .println("T2 (3) Obtained UPDATE latch on page, waiting");
                     Thread.sleep(1000);
                     assertTrue(sync.compareAndSet(5, 6));
                     System.err.println("T2 (6) Releasing Update latch on page");
@@ -687,7 +668,8 @@ public class TestBufferManager extends BaseTestCase {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
-        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageFactory));
+        objectFactory.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageFactory));
 
         bufmgr.start();
 
