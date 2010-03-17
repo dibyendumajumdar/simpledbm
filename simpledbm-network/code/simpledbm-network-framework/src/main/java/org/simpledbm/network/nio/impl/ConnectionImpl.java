@@ -204,7 +204,7 @@ public class ConnectionImpl implements Connection {
                 m_IOException, op), e);
         //		logger.error(getClass().getName(), "handleException", e.getMessage(),
         //				e);
-        e.printStackTrace();
+//        e.printStackTrace();
         throw ne;
     }
 
