@@ -76,6 +76,7 @@ public abstract class BaseTestCase extends TestCase {
     @Override
     protected void tearDown() throws Exception {
         threadFailureExceptions = null;
+        platform.shutdown();
         super.tearDown();
     }
 

@@ -227,7 +227,6 @@ public class ClientSession {
         }
         long currentTime = System.currentTimeMillis();
         if (currentTime - lastUpdated > timeout) {
-            System.err.println("Session timed out");
             timedOut = true;
         }
         return timedOut;

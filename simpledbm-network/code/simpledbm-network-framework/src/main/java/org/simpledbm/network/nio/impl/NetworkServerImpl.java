@@ -71,7 +71,6 @@ public class NetworkServerImpl implements NetworkServer {
     final InetSocketAddress serverSocketAddress;
     ServerSocketChannel serverSocketChannel;
     Selector selector;
-    //    ExecutorService requestHandlerService;
     volatile boolean stop = false;
     volatile boolean opened = false;
     volatile boolean errored = false;
@@ -105,6 +104,9 @@ public class NetworkServerImpl implements NetworkServer {
             "Unable to perform {0} operation as the channel has had previous errors");
     static final Message m_shutdownException = new Message('N', 'F',
             MessageType.ERROR, 9, "An error occurred during shutdown");
+    static final Message m_handlerError = new Message('N', 'F',
+            MessageType.ERROR, 10,
+            "An unexpected error was reported by the requestHandler");
 
     /**
      * Timeout for select operations; default is 10 secs.
@@ -123,6 +125,8 @@ public class NetworkServerImpl implements NetworkServer {
                     "localhost");
             this.port = Integer.parseInt(properties.getProperty(
                     "network.server.port", "8000"));
+            this.selectTimeout = Integer.parseInt(properties.getProperty(
+                    "network.server.selectTimeout", "10000"));
             this.serverSocketAddress = new InetSocketAddress(hostname, port);
             this.platform = platform;
             this.platformObjects = platform.getPlatformObjects(LOG_NAME);
@@ -176,8 +180,6 @@ public class NetworkServerImpl implements NetworkServer {
             throw new NetworkException(new MessageInstance(
                     m_startingIOException), e);
         }
-        //        requestHandlerService = Executors.newCachedThreadPool();
-        //        requestHandlerService = platformObjects.getPlatform().getExecutorService("default");
         opened = true;
     }
 
@@ -193,12 +195,6 @@ public class NetworkServerImpl implements NetworkServer {
         }
         stop = true;
         selector.wakeup();
-        //        requestHandlerService.shutdown();
-        //        try {
-        //			requestHandlerService.awaitTermination(60, TimeUnit.SECONDS);
-        //		} catch (InterruptedException e1) {
-        //			log.warn(getClass().getName(), "shutdown", new MessageInstance(m_shutdownException).toString(), e1);
-        //		}
         for (SelectionKey key : selector.keys()) {
             if (key.isValid() && key.attachment() != null) {
                 key.cancel();
@@ -342,7 +338,6 @@ public class NetworkServerImpl implements NetworkServer {
                     "Scheduling request handler for channel "
                             + protocolHandler.socketChannel);
         }
-        //        requestHandlerService.submit(requestDispatcher);
         platform.getScheduler().execute(Priority.NORMAL, requestDispatcher);
     }
 
@@ -376,6 +371,19 @@ public class NetworkServerImpl implements NetworkServer {
         }
     }
 
+    /**
+     * A simple protocol handler. The network protocol is extremely simple. Each
+     * request must have a response. The request and response packets have a
+     * header and a body. The header is of fixed length. The body is variable
+     * length but the length is recorded in the header so that the handler can
+     * determine when a full request/response packet has been received.
+     * <p>
+     * 
+     * @see RequestHeader
+     * @see ResponseHeader
+     * @author dibyendumajumdar
+     * 
+     */
     static final class ProtocolHandler {
         final NetworkServerImpl networkServer;
         final SocketChannel socketChannel;
@@ -404,6 +412,12 @@ public class NetworkServerImpl implements NetworkServer {
             this.socketChannel = socketChannel;
         }
 
+        /**
+         * Perform an incremental read, keeping track of progress. When a full
+         * request is detected, schedule a request handler event.
+         * 
+         * @param key Identifies the channel which is ready for reading
+         */
         synchronized void doRead(SelectionKey key) {
 
             if (!okay) {
@@ -502,6 +516,12 @@ public class NetworkServerImpl implements NetworkServer {
             return okay;
         }
 
+        /**
+         * Perform an incremental write. Keep writing as long as the channel is
+         * writable and there are more packets to be written.
+         * 
+         * @param key Identifies the channel that is ready for writing
+         */
         synchronized void doWrite(SelectionKey key) {
             if (!okay) {
                 throw new NetworkException(new MessageInstance(
@@ -571,6 +591,12 @@ public class NetworkServerImpl implements NetworkServer {
             }
         }
 
+        /**
+         * Add a write request to the queue - it will be picked by in the next
+         * select loop.
+         * 
+         * @param wr A write request
+         */
         synchronized void queueWrite(WriteRequest wr) {
             if (networkServer.log.isTraceEnabled()) {
                 networkServer.log.trace(getClass().getName(), "queueWrite",
@@ -581,12 +607,20 @@ public class NetworkServerImpl implements NetworkServer {
             networkServer.selector.wakeup();
         }
 
+        /**
+         * Checks whether there are queued requests to be written
+         */
         synchronized boolean isWritable() {
             return writeQueue.size() > 0;
         }
     }
 
-    //    static final class RequestDispatcher implements Callable<Object> {
+    /**
+     * RequestDispatcher task is responsible for handling a request. Actual
+     * request handling is delegated to a RequestHandler instance.
+     * 
+     * @author dibyendumajumdar
+     */
     static final class RequestDispatcher implements Runnable {
 
         final NetworkServerImpl server;
@@ -607,7 +641,6 @@ public class NetworkServerImpl implements NetworkServer {
             this.requestData = requestData;
         }
 
-        //        public Object call() throws Exception {
         public void run() {
             requestData.rewind();
             Request request = new RequestImpl(requestHeader, requestData);
@@ -621,6 +654,8 @@ public class NetworkServerImpl implements NetworkServer {
             try {
                 requestHandler.handleRequest(request, response);
             } catch (SimpleDBMException e) {
+                server.log.error(getClass().getName(), "run",
+                        new MessageInstance(m_handlerError).toString(), e);
                 responseHeader.setStatusCode(-1);
                 responseHeader.setHasException(true);
                 int len = e.getStoredLength();
@@ -630,7 +665,8 @@ public class NetworkServerImpl implements NetworkServer {
                 response.setData(bb);
                 responseHeader.setDataSize(len);
             } catch (Throwable e) {
-                // FIXME need proper log message
+                server.log.error(getClass().getName(), "run",
+                        new MessageInstance(m_handlerError).toString(), e);
                 e.printStackTrace();
                 responseHeader.setStatusCode(-1);
                 response.setData(ByteBuffer.wrap(e.getMessage().getBytes()));
@@ -639,7 +675,6 @@ public class NetworkServerImpl implements NetworkServer {
             // TODO support the no reply option
             protocolHandler.queueWrite(new WriteRequest(responseHeader,
                     response.getData()));
-            //            return null;
         }
     }
 }

@@ -97,12 +97,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
     /**
      * Session timeout in seconds, default 300 seconds.
      */
-    int timeout = 10;
+    int timeout;
 
     /**
      * Intervals at which sessions are checked for timeout.
      */
-    int sessionMonitorInterval = 10;
+    int sessionMonitorInterval;
 
     /**
      * A map of all active sessions
@@ -170,6 +170,9 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         this.platform = platform;
         this.po = platform.getPlatformObjects(LOGGER_NAME);
         this.log = po.getLogger();
+        this.timeout = Integer.parseInt(properties.getProperty("network.server.sessionTimeout", "300"));
+        this.sessionMonitorInterval = Integer.parseInt(properties.getProperty("network.session.sessionMonitorInterval", "60"));
+        
         database = DatabaseFactory.getDatabase(platform, properties);
         sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.NORMAL, new SessionMonitor(this),
