@@ -171,7 +171,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         this.po = platform.getPlatformObjects(LOGGER_NAME);
         this.log = po.getLogger();
         this.timeout = Integer.parseInt(properties.getProperty("network.server.sessionTimeout", "300"));
-        this.sessionMonitorInterval = Integer.parseInt(properties.getProperty("network.session.sessionMonitorInterval", "60"));
+        this.sessionMonitorInterval = Integer.parseInt(properties.getProperty("network.server.sessionMonitorInterval", "60"));
         
         database = DatabaseFactory.getDatabase(platform, properties);
         sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(
