@@ -37,8 +37,8 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * A special case of LogicalUndo in which the undo operation is
- * guaranteed to be restricted to a single page.
+ * A special case of LogicalUndo in which the undo operation is guaranteed to be
+ * restricted to a single page.
  * 
  * @author Dibyendu Majumdar
  * @since 01-Sep-2005

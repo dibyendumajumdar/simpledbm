@@ -44,9 +44,9 @@ package org.simpledbm.rss.api.tx;
 
 /**
  * A Loggable record that implements this interface will be injected with the
- * LoggableFactory responsible for generating Loggable objects. This is useful when
- * a Loggable object contains instances of other Loggable objects; it can use the
- * LoggableFactory instance to gain access to Loggable objects it needs.
+ * LoggableFactory responsible for generating Loggable objects. This is useful
+ * when a Loggable object contains instances of other Loggable objects; it can
+ * use the LoggableFactory instance to gain access to Loggable objects it needs.
  * 
  * @author Dibyendu Majumdar
  */

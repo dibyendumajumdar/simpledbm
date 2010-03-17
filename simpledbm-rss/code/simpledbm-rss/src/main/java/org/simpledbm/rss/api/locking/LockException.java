@@ -46,7 +46,9 @@ import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
- * LockException is the base class for all exceptions raised by the Locking sub-system.
+ * LockException is the base class for all exceptions raised by the Locking
+ * sub-system.
+ * 
  * @author Dibyendu Majumdar
  * @since 27-July-2005
  */
@@ -54,17 +56,16 @@ public class LockException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public LockException(ByteBuffer bb) {
-		super(bb);
-	}
+    public LockException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public LockException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public LockException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public LockException(MessageInstance m) {
-		super(m);
-	}
+    public LockException(MessageInstance m) {
+        super(m);
+    }
 
-    
 }

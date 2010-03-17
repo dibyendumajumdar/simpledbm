@@ -43,9 +43,9 @@ import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 
 /**
- * Transaction Identifier. Must be a monotonically increasing value that 
- * can be converted to an integer. This property is useful because it allows the
- * ids to be mapped to bitmaps.
+ * Transaction Identifier. Must be a monotonically increasing value that can be
+ * converted to an integer. This property is useful because it allows the ids to
+ * be mapped to bitmaps.
  * <p>
  * Immutable.
  * 
@@ -69,7 +69,7 @@ public final class TransactionId implements Storable, Dumpable {
     public TransactionId(ByteBuffer bb) {
         id = bb.getLong();
     }
-    
+
     public final void store(ByteBuffer bb) {
         bb.putLong(id);
     }
@@ -82,29 +82,29 @@ public final class TransactionId implements Storable, Dumpable {
         return id;
     }
 
-	@Override
-	public int hashCode() {
-		final int PRIME = 31;
-		int result = 1;
-		result = PRIME * result + (int) (id ^ (id >>> 32));
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int PRIME = 31;
+        int result = 1;
+        result = PRIME * result + (int) (id ^ (id >>> 32));
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final TransactionId other = (TransactionId) obj;
-		if (id != other.id)
-			return false;
-		return true;
-	}
-    
-	public final boolean isNull() {
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final TransactionId other = (TransactionId) obj;
+        if (id != other.id)
+            return false;
+        return true;
+    }
+
+    public final boolean isNull() {
         return id == -1;
     }
 

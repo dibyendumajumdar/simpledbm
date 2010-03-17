@@ -46,36 +46,39 @@ import org.simpledbm.rss.api.wal.Lsn;
  * @since 23-Aug-2005
  */
 public interface TransactionManager {
-	
-	public final String LOGGER_NAME = "org.simpledbm.transactionmgr";
 
-    /** 
+    public final String LOGGER_NAME = "org.simpledbm.transactionmgr";
+
+    /**
      * Begins a new transaction.
      */
     Transaction begin(IsolationMode isolationMode);
 
     /**
-     * Logs an operation that is not part of any specific transaction, but needs to be
-     * redone at system restart. Note that since these updates cannot be tracked via
-     * the status of a disk page, they will always be redone. Also, any actions
-     * prior to the last checkpoint are discarded, therefore, checkpoints should include 
-     * information/data to compensate for this.
+     * Logs an operation that is not part of any specific transaction, but needs
+     * to be redone at system restart. Note that since these updates cannot be
+     * tracked via the status of a disk page, they will always be redone. Also,
+     * any actions prior to the last checkpoint are discarded, therefore,
+     * checkpoints should include information/data to compensate for this.
      * <p>
-     * An example of this type of operation is the opening of containers. If a checkpoint
-     * records all open containers, then any containers opened following the checkpoint
-     * can be logged separately. At system restart, containers recorded in the checkpoint 
-     * will be re-opened, and then any containers encountered in the log will be reopened. 
+     * An example of this type of operation is the opening of containers. If a
+     * checkpoint records all open containers, then any containers opened
+     * following the checkpoint can be logged separately. At system restart,
+     * containers recorded in the checkpoint will be re-opened, and then any
+     * containers encountered in the log will be reopened.
      */
     Lsn logNonTransactionRelatedOperation(Loggable operation);
 
     /**
      * Sets the interval at which checkpoints will be taken.
+     * 
      * @param millisecs Time interval in milliseconds.
      */
     void setCheckpointInterval(int millisecs);
 
     /**
      * Sets the default lock timeopu value.
+     * 
      * @param seconds Timeout in seconds.
      */
     void setLockWaitTimeout(int seconds);

@@ -92,22 +92,22 @@ import org.simpledbm.rss.impl.tx.TransactionalModuleRegistryImpl;
 import org.simpledbm.rss.impl.wal.LogFactoryImpl;
 
 /**
- * A Server instance encapsulates all the modules that comprise the RSS. 
- * It ensures that all modules are initialized in the correct order and provides
- * a mechanism to start and stop the instance.
+ * A Server instance encapsulates all the modules that comprise the RSS. It
+ * ensures that all modules are initialized in the correct order and provides a
+ * mechanism to start and stop the instance.
  * <p>
- * Note that the Server component acts very much like a custom IoC Container.  
+ * Note that the Server component acts very much like a custom IoC Container.
  * 
  * @author Dibyendu Majumdar
  * @since 03-Apr-2006
  */
 public class Server {
 
-	public static final String LOGGER_NAME = "org.simpledbm.server";
-	
+    public static final String LOGGER_NAME = "org.simpledbm.server";
+
     final Logger log;
     final ExceptionHandler exceptionHandler;
-    
+
     private static final String VIRTUAL_TABLE = "_internal/dual";
     private static final String LOCK_TABLE = "_internal/lock";
     private static final int VIRTUAL_TABLE_CONTAINER_ID = 0;
@@ -134,31 +134,34 @@ public class Server {
     private boolean started = false;
 
     // Server messages
-	static Message m_IV0001 = new Message('R', 'V', MessageType.INFO, 1,
-			"SimpleDBM RSS Server STARTED");
-	static Message m_IV0002 = new Message('R', 'V', MessageType.INFO, 2,
-			"SimpleDBM RSS Server STOPPED");
-	static Message m_EV0003 = new Message('R', 'V', MessageType.ERROR, 3,
-			"SimpleDBM RSS Server cannot be started more than once");
-	static Message m_EV0004 = new Message('R', 'V', MessageType.ERROR, 4,
-			"SimpleDBM RSS Server has not been started");
-	static Message m_EV0005 = new Message('R', 
-			'V',
-			MessageType.ERROR,
-			5,
-			"Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");    
-    
+    static Message m_IV0001 = new Message('R', 'V', MessageType.INFO, 1,
+            "SimpleDBM RSS Server STARTED");
+    static Message m_IV0002 = new Message('R', 'V', MessageType.INFO, 2,
+            "SimpleDBM RSS Server STOPPED");
+    static Message m_EV0003 = new Message('R', 'V', MessageType.ERROR, 3,
+            "SimpleDBM RSS Server cannot be started more than once");
+    static Message m_EV0004 = new Message('R', 'V', MessageType.ERROR, 4,
+            "SimpleDBM RSS Server has not been started");
+    static Message m_EV0005 = new Message(
+            'R',
+            'V',
+            MessageType.ERROR,
+            5,
+            "Error starting SimpleDBM RSS Server, another instance may be running - error was: {0}");
+
     private void assertNotStarted() {
         if (started) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-            	new SimpleDBMException(new MessageInstance(m_EV0003)));
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "assertNotStarted", new SimpleDBMException(
+                            new MessageInstance(m_EV0003)));
         }
     }
 
     private void assertStarted() {
         if (!started) {
-        	exceptionHandler.errorThrow(this.getClass().getName(), "assertNotStarted", 
-        		new SimpleDBMException(new MessageInstance(m_EV0004)));
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "assertNotStarted", new SimpleDBMException(
+                            new MessageInstance(m_EV0004)));
         }
     }
 
@@ -184,8 +187,9 @@ public class Server {
             lock.lock();
             lockObtained = true;
         } catch (StorageException e) {
-            exceptionHandler.errorThrow(getClass().getName(), "start", 
-            	new SimpleDBMException(new MessageInstance(m_EV0005, e.getMessage()), e));
+            exceptionHandler.errorThrow(getClass().getName(), "start",
+                    new SimpleDBMException(new MessageInstance(m_EV0005, e
+                            .getMessage()), e));
         } finally {
             if (!lockObtained) {
                 if (lock != null) {
@@ -196,7 +200,7 @@ public class Server {
             }
         }
     }
-    
+
     /**
      * Unlocks the Server instance lock.
      */
@@ -205,12 +209,13 @@ public class Server {
         lock.close();
         storageFactory.delete(LOCK_TABLE);
     }
-    
+
     /**
-     * Creates a new RSS Server instance. An RSS Server instance contains at least a 
-     * LOG instance, two virtual tables - dual and lock. Note that this will overwrite 
-     * any existing database on the same path, hence caller needs to be sure that the
-     * intention is to create a new database.  
+     * Creates a new RSS Server instance. An RSS Server instance contains at
+     * least a LOG instance, two virtual tables - dual and lock. Note that this
+     * will overwrite any existing database on the same path, hence caller needs
+     * to be sure that the intention is to create a new database.
+     * 
      * @see LogFactory#createLog(StorageContainerFactory, Properties)
      * @see LogFactory
      */
@@ -226,7 +231,7 @@ public class Server {
         StorageContainer sc = server.storageFactory.create(VIRTUAL_TABLE);
         server.storageManager.register(VIRTUAL_TABLE_CONTAINER_ID, sc);
         Page page = server.pageFactory.getInstance(server.pageFactory
-            .getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
+                .getRawPageType(), new PageId(VIRTUAL_TABLE_CONTAINER_ID, 0));
         server.pageFactory.store(page);
         server.unlockServerInstance();
         // We start the server so that a checkpoint can be taken which will
@@ -250,104 +255,78 @@ public class Server {
          */
         server.getStorageFactory().delete();
     }
-    
+
     public Server(Platform platform, Properties props) {
-    	
-    	this.platform = platform;
-    	PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
+
+        this.platform = platform;
+        PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
         log = po.getLogger();
         exceptionHandler = po.getExceptionHandler();
-        
+
         final LogFactory logFactory = new LogFactoryImpl(platform, props);
-        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(platform, props);
+        final LockMgrFactory lockMgrFactory = new LockManagerFactoryImpl(
+                platform, props);
 
         LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform, props);
         objectRegistry = new ObjectRegistryImpl(platform, props);
         storageFactory = new FileStorageContainerFactory(platform, props);
         storageManager = new StorageManagerImpl(platform, props);
         latchFactory = new LatchFactoryImpl(platform, props);
-        pageFactory = new PageManagerImpl(
-        	platform,
-            objectRegistry,
-            storageManager,
-            latchFactory,
-            props);
-        slottedPageManager = new SlottedPageManagerImpl(platform, objectRegistry, pageFactory, props);
-        loggableFactory = new LoggableFactoryImpl(platform, objectRegistry, props);
+        pageFactory = new PageManagerImpl(platform, objectRegistry,
+                storageManager, latchFactory, props);
+        slottedPageManager = new SlottedPageManagerImpl(platform,
+                objectRegistry, pageFactory, props);
+        loggableFactory = new LoggableFactoryImpl(platform, objectRegistry,
+                props);
         moduleRegistry = new TransactionalModuleRegistryImpl(platform, props);
         lockManager = lockMgrFactory.create(latchFactory, props);
         logManager = logFactory.getLog(storageFactory, props);
-        bufferManager = new BufferManagerImpl(platform, logManager, pageFactory, props);
-        transactionManager = new TransactionManagerImpl(
-        	platform,
-            logManager,
-            storageFactory,
-            storageManager,
-            bufferManager,
-            lockManager,
-            loggableFactory,
-            latchFactory,
-            objectRegistry,
-            moduleRegistry,
-            props);
-        spaceManager = new FreeSpaceManagerImpl(
-        	platform,
-            objectRegistry,
-            pageFactory,
-            logManager,
-            bufferManager,
-            storageManager,
-            storageFactory,
-            loggableFactory,
-            transactionManager,
-            moduleRegistry,
-            props);
-        indexManager = new BTreeIndexManagerImpl(
-        	platform,
-            objectRegistry,
-            loggableFactory,
-            spaceManager,
-            bufferManager,
-            slottedPageManager,
-            moduleRegistry,
-            lockAdaptor,
-            props);
-        tupleManager = new TupleManagerImpl(
-        	platform,
-            objectRegistry,
-            loggableFactory,
-            spaceManager,
-            bufferManager,
-            slottedPageManager,
-            moduleRegistry,
-            pageFactory,
-            lockAdaptor,
-            props);
+        bufferManager = new BufferManagerImpl(platform, logManager,
+                pageFactory, props);
+        transactionManager = new TransactionManagerImpl(platform, logManager,
+                storageFactory, storageManager, bufferManager, lockManager,
+                loggableFactory, latchFactory, objectRegistry, moduleRegistry,
+                props);
+        spaceManager = new FreeSpaceManagerImpl(platform, objectRegistry,
+                pageFactory, logManager, bufferManager, storageManager,
+                storageFactory, loggableFactory, transactionManager,
+                moduleRegistry, props);
+        indexManager = new BTreeIndexManagerImpl(platform, objectRegistry,
+                loggableFactory, spaceManager, bufferManager,
+                slottedPageManager, moduleRegistry, lockAdaptor, props);
+        tupleManager = new TupleManagerImpl(platform, objectRegistry,
+                loggableFactory, spaceManager, bufferManager,
+                slottedPageManager, moduleRegistry, pageFactory, lockAdaptor,
+                props);
     }
-    
-    
+
     /**
      * Initializes a new RSS Server instance.
+     * 
      * @see #start()
      * @see #shutdown()
      * @param props Properties that define various parameters for the system
      */
     public Server(Properties props) {
-    	this(new PlatformImpl(props), props);
+        this(new PlatformImpl(props), props);
     }
 
     /**
      * Starts the Server instance. This results in following actions:
      * <ol>
-     * <li>The Lock Manager is started. This enables background thread for deadlock detection.</li>
-     * <li>The Log instance is opened. This starts the background threads that manage log writes and log archiving.</li>
-     * <li>The Buffer Manager instance is started. This starts up the background Buffer Writer thread.</li>
-     * <li>The Transaction Manager is started. This initiates restart recovery, and also starts the
-     *     Checkpoint thread.</li>
+     * <li>The Lock Manager is started. This enables background thread for
+     * deadlock detection.</li>
+     * <li>The Log instance is opened. This starts the background threads that
+     * manage log writes and log archiving.</li>
+     * <li>The Buffer Manager instance is started. This starts up the background
+     * Buffer Writer thread.</li>
+     * <li>The Transaction Manager is started. This initiates restart recovery,
+     * and also starts the Checkpoint thread.</li>
      * </ol>
      * <p>
-     * To prevent two server instances running concurrently on the same path, a lock file is used.
-     * If a server is already running on the specified path, the start() will fail with an exception.
+     * To prevent two server instances running concurrently on the same path, a
+     * lock file is used. If a server is already running on the specified path,
+     * the start() will fail with an exception.
      * 
      * @see LockManager#start()
      * @see LogManager#start()
@@ -361,7 +340,8 @@ public class Server {
         logManager.start();
         bufferManager.start();
         transactionManager.start();
-        log.info(getClass().getName(), "start", new MessageInstance(m_IV0001).toString());
+        log.info(getClass().getName(), "start", new MessageInstance(m_IV0001)
+                .toString());
         started = true;
     }
 
@@ -382,16 +362,17 @@ public class Server {
      */
     public synchronized void shutdown() {
         assertStarted();
-        
+
         // Trace.dump();
-        
+
         transactionManager.shutdown();
         bufferManager.shutdown();
         logManager.shutdown();
         storageManager.shutdown();
         lockManager.shutdown();
         unlockServerInstance();
-        log.info(getClass().getName(), "shutdown", new MessageInstance(m_IV0002).toString());
+        log.info(getClass().getName(), "shutdown",
+                new MessageInstance(m_IV0002).toString());
     }
 
     public synchronized final IndexManager getIndexManager() {
@@ -482,65 +463,62 @@ public class Server {
     }
 
     /**
-     * Creates a new index with specified container name and ID. Prior to calling this
-     * method, an exclusive lock should be obtained on the container ID to ensure that no other
-     * transaction is simultaneously attempting to access the same container. If successful, by the
-     * end of this call, the container should have been created and registered with the StorageManager,
-     * and an empty instance of the index created within the container.
+     * Creates a new index with specified container name and ID. Prior to
+     * calling this method, an exclusive lock should be obtained on the
+     * container ID to ensure that no other transaction is simultaneously
+     * attempting to access the same container. If successful, by the end of
+     * this call, the container should have been created and registered with the
+     * StorageManager, and an empty instance of the index created within the
+     * container.
      * 
      * @param trx Transaction managing the creation of the index
      * @param name Name of the container
      * @param containerId ID of the new container, must be unused
      * @param extentSize Number of pages in each extent of the container
-     * @param keyFactoryType Identifies the factory for creating IndexKey objects
+     * @param keyFactoryType Identifies the factory for creating IndexKey
+     *            objects
      * @param unique If true, the new index will not allow duplicates keys
      */
     public void createIndex(Transaction trx, String name, int containerId,
             int extentSize, int keyFactoryType, boolean unique) {
-        getIndexManager().createIndex(
-            trx,
-            name,
-            containerId,
-            extentSize,
-            keyFactoryType,
-            getTupleManager().getLocationFactoryType(),
-            unique);
+        getIndexManager().createIndex(trx, name, containerId, extentSize,
+                keyFactoryType, getTupleManager().getLocationFactoryType(),
+                unique);
     }
 
     /**
-     * Creates a new index with specified container name and ID. Prior to calling this
-     * method, an exclusive lock should be obtained on the container ID to ensure that no other
-     * transaction is simultaneously attempting to access the same container. If successful, by the
-     * end of this call, the container should have been created and registered with the StorageManager,
-     * and an empty instance of the index created within the container.
+     * Creates a new index with specified container name and ID. Prior to
+     * calling this method, an exclusive lock should be obtained on the
+     * container ID to ensure that no other transaction is simultaneously
+     * attempting to access the same container. If successful, by the end of
+     * this call, the container should have been created and registered with the
+     * StorageManager, and an empty instance of the index created within the
+     * container.
      * 
      * @param trx Transaction managing the creation of the index
      * @param name Name of the container
      * @param containerId ID of the new container, must be unused
      * @param extentSize Number of pages in each extent of the container
-     * @param keyFactoryType Identifies the factory for creating IndexKey objects
-     * @param locationFactoryType Identifies the factory for creating Location objects
+     * @param keyFactoryType Identifies the factory for creating IndexKey
+     *            objects
+     * @param locationFactoryType Identifies the factory for creating Location
+     *            objects
      * @param unique If true, the new index will not allow duplicates keys
      */
     public void createIndex(Transaction trx, String name, int containerId,
             int extentSize, int keyFactoryType, int locationFactoryType,
             boolean unique) {
-        indexManager.createIndex(
-            trx,
-            name,
-            containerId,
-            extentSize,
-            keyFactoryType,
-            locationFactoryType,
-            unique);
+        indexManager.createIndex(trx, name, containerId, extentSize,
+                keyFactoryType, locationFactoryType, unique);
     }
 
     /**
-     * Obtains an existing index with specified container ID. A Shared lock is obtained on 
-     * the container ID to ensure that no other transaction is simultaneously attempting to 
-     * create/delete the same container. 
+     * Obtains an existing index with specified container ID. A Shared lock is
+     * obtained on the container ID to ensure that no other transaction is
+     * simultaneously attempting to create/delete the same container.
      * 
-     * @param containerId ID of the container, must have been initialized as an Index prior to this call
+     * @param containerId ID of the container, must have been initialized as an
+     *            Index prior to this call
      */
     public IndexContainer getIndex(Transaction trx, int containerId) {
         return getIndexManager().getIndex(trx, containerId);
@@ -557,19 +535,18 @@ public class Server {
     }
 
     /**
-     * Registers a class to the Object Registry. 
-     * The class must implement a no-arg constructor.
-     * The class may optionally implement {@link ObjectRegistryAware}
-     * interface.
-     *  
+     * Registers a class to the Object Registry. The class must implement a
+     * no-arg constructor. The class may optionally implement
+     * {@link ObjectRegistryAware} interface.
+     * 
      * @param typecode A unique type code for the type.
      * @param classname The class name.
      */
-//    public void registerType(int typecode, String classname) {
-//        getObjectRegistry().registerType(typecode, classname);
-//    }
+    //    public void registerType(int typecode, String classname) {
+    //        getObjectRegistry().registerType(typecode, classname);
+    //    }
 
-    /** 
+    /**
      * Begins a new transaction.
      */
     public Transaction begin(IsolationMode isolationMode) {
@@ -577,25 +554,25 @@ public class Server {
     }
 
     /**
-     * Creates a new Tuple Container. 
+     * Creates a new Tuple Container.
      * 
      * @param trx Transaction to be used for creating the container
      * @param name Name of the container
-     * @param containerId A numeric ID for the container - must be unique for each container
-     * @param extentSize The number of pages that should be part of each extent in the container
+     * @param containerId A numeric ID for the container - must be unique for
+     *            each container
+     * @param extentSize The number of pages that should be part of each extent
+     *            in the container
      */
     public void createTupleContainer(Transaction trx, String name,
             int containerId, int extentSize) {
-        getTupleManager().createTupleContainer(
-            trx,
-            name,
-            containerId,
-            extentSize);
+        getTupleManager().createTupleContainer(trx, name, containerId,
+                extentSize);
     }
 
     /**
-     * Gets an instance of TupleContainer. Specified container must already exist.
-     * Obtains SHARED lock on specified containerId.
+     * Gets an instance of TupleContainer. Specified container must already
+     * exist. Obtains SHARED lock on specified containerId.
+     * 
      * @param containerId ID of the container
      */
     public TupleContainer getTupleContainer(Transaction trx, int containerId) {

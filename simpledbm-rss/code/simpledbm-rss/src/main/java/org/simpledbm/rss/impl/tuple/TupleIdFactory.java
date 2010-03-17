@@ -57,11 +57,11 @@ public class TupleIdFactory implements LocationFactory {
         return new TupleId(pageId, slotNumber);
     }
 
-	public Location newLocation(ByteBuffer bb) {
-		return new TupleId(bb);
-	}
+    public Location newLocation(ByteBuffer bb) {
+        return new TupleId(bb);
+    }
 
-	public Location newLocation(String s) {
-		return new TupleId(s);
-	}
+    public Location newLocation(String s) {
+        return new TupleId(s);
+    }
 }

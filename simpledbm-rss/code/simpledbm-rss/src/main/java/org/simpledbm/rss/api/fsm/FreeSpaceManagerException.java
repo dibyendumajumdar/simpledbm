@@ -47,33 +47,33 @@ import org.simpledbm.common.util.mcat.MessageInstance;
 public class FreeSpaceManagerException extends SimpleDBMException {
 
     public static class TestException extends FreeSpaceManagerException {
-		private static final long serialVersionUID = 1L;
+        private static final long serialVersionUID = 1L;
 
-		public TestException(ByteBuffer bb) {
-			super(bb);
-		}
+        public TestException(ByteBuffer bb) {
+            super(bb);
+        }
 
-		public TestException(MessageInstance m, Throwable arg1) {
-			super(m, arg1);
-		}
+        public TestException(MessageInstance m, Throwable arg1) {
+            super(m, arg1);
+        }
 
-		public TestException(MessageInstance m) {
-			super(m);
-		}
+        public TestException(MessageInstance m) {
+            super(m);
+        }
     }
 
     private static final long serialVersionUID = 5065727917034813269L;
 
-	public FreeSpaceManagerException(ByteBuffer bb) {
-		super(bb);
-	}
+    public FreeSpaceManagerException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public FreeSpaceManagerException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public FreeSpaceManagerException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public FreeSpaceManagerException(MessageInstance m) {
-		super(m);
-	}
+    public FreeSpaceManagerException(MessageInstance m) {
+        super(m);
+    }
 
 }

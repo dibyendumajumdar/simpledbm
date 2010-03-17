@@ -40,7 +40,7 @@ package org.simpledbm.rss.api.fsm;
  * Provides an interface for scanning for non-empty pages within a container.
  * Note that the scan may return pages that are not data pages; the caller must
  * check that the page is of the appropriate type. Pages are returned in order
- * from start of the container. 
+ * from start of the container.
  * 
  * @author Dibyendu Majumdar
  * @since 09-Feb-2006
@@ -48,9 +48,9 @@ package org.simpledbm.rss.api.fsm;
 public interface FreeSpaceScan {
 
     /**
-     * Determines the next page within the container that satisfies the 
-     * search criteria. Note that the returned page may not be a data page; 
-     * the caller must check that the page is of the appropriate type.
+     * Determines the next page within the container that satisfies the search
+     * criteria. Note that the returned page may not be a data page; the caller
+     * must check that the page is of the appropriate type.
      */
     boolean fetchNext();
 

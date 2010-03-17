@@ -38,7 +38,7 @@ package org.simpledbm.rss.api.tx;
 
 /**
  * A Redoable log operation is one that is re-done at system restart. All page
- * based operations are logged as Redoable operations.  
+ * based operations are logged as Redoable operations.
  * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005

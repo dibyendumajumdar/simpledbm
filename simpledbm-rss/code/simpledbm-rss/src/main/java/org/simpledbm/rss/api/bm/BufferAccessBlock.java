@@ -45,9 +45,9 @@ import org.simpledbm.rss.api.wal.Lsn;
  * Buffer Manager.
  * <p>
  * The page associated with the BufferAccessBlock can be obtained by calling
- * {@link #getPage()}. Note that the page should be cast to the appropriate
- * page type by the caller. If the page has been latched exclusively, it is
- * legal to modify it. Once you are done with the page, you should call
+ * {@link #getPage()}. Note that the page should be cast to the appropriate page
+ * type by the caller. If the page has been latched exclusively, it is legal to
+ * modify it. Once you are done with the page, you should call
  * {@link #setDirty(Lsn) setDirty()} if you have modified the page, and then
  * {@link #unfix()} to inform the Buffer Manager that the page can be swapped
  * out if necessary.
@@ -56,11 +56,10 @@ import org.simpledbm.rss.api.wal.Lsn;
  * pages. This means that before you make a change, you should generate a log
  * record that represents the changes, and supply the
  * {@link org.simpledbm.rss.api.wal.Lsn Lsn} of the log record to
- * {@link #setDirty(Lsn) setDirty()}. This will ensure that the log will
- * be flushed up to the Lsn before the page is swapped out.
+ * {@link #setDirty(Lsn) setDirty()}. This will ensure that the log will be
+ * flushed up to the Lsn before the page is swapped out.
  * <p>
- * A BufferAccessBlock must only be used by one thread at any point in
- * time.
+ * A BufferAccessBlock must only be used by one thread at any point in time.
  * 
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
@@ -71,11 +70,9 @@ public interface BufferAccessBlock {
      * Marks the page as dirty. Only applicable if the page was obtained for
      * exclusive access.
      * 
-     * @param lsn
-     *            Lsn of the log record that represents the modifications made
+     * @param lsn Lsn of the log record that represents the modifications made
      *            to the page.
-     * @throws IllegalStateException
-     *             If page is not held in exclusive latch mode
+     * @throws IllegalStateException If page is not held in exclusive latch mode
      */
     public void setDirty(Lsn lsn);
 
@@ -83,7 +80,8 @@ public interface BufferAccessBlock {
      * Gets the page being accessed. It is assumed that the caller will cast the
      * page to appropriate type.
      * 
-     * @return Page object which must be cast to the required type by the caller.
+     * @return Page object which must be cast to the required type by the
+     *         caller.
      */
     public Page getPage();
 
@@ -91,8 +89,7 @@ public interface BufferAccessBlock {
      * Upgrades page latch from UPDATE to EXCLUSIVE. Latch must be held in
      * UPDATE mode, else an Exception will be thrown.
      * 
-     * @throws IllegalStateException
-     *             If latch is not held in update mode
+     * @throws IllegalStateException If latch is not held in update mode
      */
     public void upgradeUpdateLatch();
 
@@ -100,16 +97,15 @@ public interface BufferAccessBlock {
      * Downgrades page latch from EXCLUSIVE to UPDATE. Latch must be held in
      * EXCLUSIVE mode, else an Exception will be thrown.
      * 
-     * @throws IllegalStateException
-     *             If latch is not held exclusively
+     * @throws IllegalStateException If latch is not held exclusively
      */
     public void downgradeExclusiveLatch();
 
     /**
-     * Unfixes the page and releases latch on the page. It is important that this is
-     * called for every fix. Failure to do so will cause pages to get stuck in
-     * the buffer pool, eventually causing the system to run of slots in the
-     * buffer pool.
+     * Unfixes the page and releases latch on the page. It is important that
+     * this is called for every fix. Failure to do so will cause pages to get
+     * stuck in the buffer pool, eventually causing the system to run of slots
+     * in the buffer pool.
      */
     public void unfix();
 

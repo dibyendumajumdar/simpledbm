@@ -49,15 +49,15 @@ public class TransactionException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public TransactionException(ByteBuffer bb) {
-		super(bb);
-	}
+    public TransactionException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public TransactionException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public TransactionException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public TransactionException(MessageInstance m) {
-		super(m);
-	}
+    public TransactionException(MessageInstance m) {
+        super(m);
+    }
 }

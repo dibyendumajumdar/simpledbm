@@ -40,60 +40,64 @@ import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.st.StorageException;
 
 /**
- * The PageManager is responsible for instantiating new Pages of various 
- * types, as well as for storing and retrieving pages from storage containers.
- * Each page type must have a PageFactory registered with the ObjectRegistry.
- * The PageManager delegates the actual reading/writing of pages to the 
- * PageFactory implementations. This division
- * of responsibility allows the PageManager to manage all pages without knowing
- * how to instantiate individual page types. It allows new page types to be added
- * without requiring changes to the PageManager.
+ * The PageManager is responsible for instantiating new Pages of various types,
+ * as well as for storing and retrieving pages from storage containers. Each
+ * page type must have a PageFactory registered with the ObjectRegistry. The
+ * PageManager delegates the actual reading/writing of pages to the PageFactory
+ * implementations. This division of responsibility allows the PageManager to
+ * manage all pages without knowing how to instantiate individual page types. It
+ * allows new page types to be added without requiring changes to the
+ * PageManager.
  * 
  * @author Dibyendu Majumdar
  * @since 14-Aug-2005
  */
 public interface PageManager {
 
-	public final String LOGGER_NAME = "org.simpledbm.pagemgr";
-	
+    public final String LOGGER_NAME = "org.simpledbm.pagemgr";
+
     /**
-     * Gets the on-disk page size of all pages managed by this PageManager. Page sizes can be
-     * upto 32K. 
+     * Gets the on-disk page size of all pages managed by this PageManager. Page
+     * sizes can be upto 32K.
      */
     int getPageSize();
-    
+
     /**
-     * Get the page size that is usable by pages. This is likely to be less
-     * than or equal to {@link #getPageSize()}.
+     * Get the page size that is usable by pages. This is likely to be less than
+     * or equal to {@link #getPageSize()}.
      */
     int getUsablePageSize();
 
     /**
-     * Instantiate a Page of the specified type, and initialize it with the 
+     * Instantiate a Page of the specified type, and initialize it with the
      * PageID.
-     *  
+     * 
      * @param typecode The Page type code as registered in the Object Registry
      * @param pageId The ID of the Page
      */
     Page getInstance(int typecode, PageId pageId);
 
     /**
-     * Retrieves specified Page from the Storage Container. Note that the correct
-     * page type will be automatically created as long as the type has been registered with
-     * the Object Registry. The appropriate Storage Container should have been opened
-     * and registered with the Storage Manager prior to calling this method.
-     *  
+     * Retrieves specified Page from the Storage Container. Note that the
+     * correct page type will be automatically created as long as the type has
+     * been registered with the Object Registry. The appropriate Storage
+     * Container should have been opened and registered with the Storage Manager
+     * prior to calling this method.
+     * 
      * @param pageId ID of the Page to be retrieved
-     * @throws StorageException Thrown if there is an error while retrieving the Page
+     * @throws StorageException Thrown if there is an error while retrieving the
+     *             Page
      */
     Page retrieve(PageId pageId);
 
     /**
-     * Saves the specified Page to the appropriate Storage Container. The appropriate
-     * Storage Container must be open and registered with the Storage Manager.
+     * Saves the specified Page to the appropriate Storage Container. The
+     * appropriate Storage Container must be open and registered with the
+     * Storage Manager.
      * 
      * @param page Page to be saved
-     * @throws StorageException Thrown if there is an error while writing the page.
+     * @throws StorageException Thrown if there is an error while writing the
+     *             page.
      */
     void store(Page page);
 
@@ -103,9 +107,10 @@ public interface PageManager {
     int getRawPageType();
 
     /**
-     * Returns the LatchFactory associated with this PageFactory. The LatchFactory is
-     * used to create latches used by pages for mutual exclusion.
+     * Returns the LatchFactory associated with this PageFactory. The
+     * LatchFactory is used to create latches used by pages for mutual
+     * exclusion.
      */
     LatchFactory getLatchFactory();
-    
+
 }

@@ -58,66 +58,71 @@ import org.simpledbm.rss.api.pm.PageManager;
 import org.simpledbm.rss.api.sp.SlottedPage;
 
 /**
- * SlottedPageImpl is an implementation of SlottedPage that can support page sizes
- * up to 32k. The slot offset, length, and number of slots are stored in short integers,
- * hence the restriction on page size.
+ * SlottedPageImpl is an implementation of SlottedPage that can support page
+ * sizes up to 32k. The slot offset, length, and number of slots are stored in
+ * short integers, hence the restriction on page size.
  * <p>
- * The page data is organized so that the slot table starts from the top,
- * and extends downwards, whereas, the slot data is inserted from the bottom up.
- * <pre> 
+ * The page data is organized so that the slot table starts from the top, and
+ * extends downwards, whereas, the slot data is inserted from the bottom up.
+ * 
+ * <pre>
  * slot table                          slot item 
  * v                                   v                     
  * [  ][  ][  ]........................[                    ] [                  ]
  *             ^                      ^
- *             firstAvailPos          highWaterMark   
+ *             firstAvailPos          highWaterMark
  * </pre>
+ * 
  * <dl>
- * <dt>highWaterMark</dt><dd>points to the position where the next slot will _end_.
- * Slot's start point will be highWaterMark - length(slot).</dd>
- * <dt>firstAvailPos</dt><dd>tracks the end of the slot table. Any slot data
- * must follow the slot table.</dd>
+ * <dt>highWaterMark</dt>
+ * <dd>points to the position where the next slot will _end_. Slot's start point
+ * will be highWaterMark - length(slot).</dd>
+ * <dt>firstAvailPos</dt>
+ * <dd>tracks the end of the slot table. Any slot data must follow the slot
+ * table.</dd>
  * </dl>
- *
+ * 
  * @author Dibyendu Majumdar
  * @since 9 Sep 2005
  */
 public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
     final Logger log;
-    
+
     final ExceptionHandler exceptionHandler;
 
     // Slotted Page Manager
-	static Message m_EO0001 = new Message('R', 'O', MessageType.ERROR, 1,
-			"Cannot insert item {0} into page {1} due to lack of space");
-	static Message m_EO0002 = new Message('R', 
-			'O',
-			MessageType.ERROR,
-			2,
-			"Cannot insert item {0} of size {3} into page at slot {2} due to lack of space: page contents = {1}");
-	static Message m_EO0003 = new Message('R', 'O', MessageType.ERROR, 3,
-			"Cannot access item at slot {0}, number of slots in page is {1}");
-	static Message m_EO0004 = new Message('R', 'O', MessageType.ERROR, 4,
-			"Cannot modify page contents as page is not latched EXCLUSIVELY");
-	static Message m_EO0005 = new Message('R', 'O', MessageType.ERROR, 5,
-			"Invalid page contents: {0}");
-	static Message m_EO0006 = new Message('R', 'O', MessageType.ERROR, 6,
-			"Unexpected error: failed to find insertion point in page");
-    
-    
+    static Message m_EO0001 = new Message('R', 'O', MessageType.ERROR, 1,
+            "Cannot insert item {0} into page {1} due to lack of space");
+    static Message m_EO0002 = new Message(
+            'R',
+            'O',
+            MessageType.ERROR,
+            2,
+            "Cannot insert item {0} of size {3} into page at slot {2} due to lack of space: page contents = {1}");
+    static Message m_EO0003 = new Message('R', 'O', MessageType.ERROR, 3,
+            "Cannot access item at slot {0}, number of slots in page is {1}");
+    static Message m_EO0004 = new Message('R', 'O', MessageType.ERROR, 4,
+            "Cannot modify page contents as page is not latched EXCLUSIVELY");
+    static Message m_EO0005 = new Message('R', 'O', MessageType.ERROR, 5,
+            "Invalid page contents: {0}");
+    static Message m_EO0006 = new Message('R', 'O', MessageType.ERROR, 6,
+            "Unexpected error: failed to find insertion point in page");
+
     /**
-     * This is the length of fixed length header in each page. 
+     * This is the length of fixed length header in each page.
      */
-    private static final int SLOTTEDPAGE_OVERHEAD = TypeSize.SHORT
-            * 3 + TypeSize.INTEGER * 3;    
-    
+    private static final int SLOTTEDPAGE_OVERHEAD = TypeSize.SHORT * 3
+            + TypeSize.INTEGER * 3;
+
     /**
-     * This is the length of fixed length header in each page. 
+     * This is the length of fixed length header in each page.
      */
     private static final int FIXED_OVERHEAD = Page.SIZE + SLOTTEDPAGE_OVERHEAD;
 
     /**
-     * If TESTING is set to true, page space is artificially restricted to 200 bytes.
+     * If TESTING is set to true, page space is artificially restricted to 200
+     * bytes.
      */
     public static boolean TESTING = false;
 
@@ -147,14 +152,14 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     private int highWaterMark;
 
     /**
-     * Space map page that manages the space information in this page.
-     * Not used by SlottedPageImpl itself.
+     * Space map page that manages the space information in this page. Not used
+     * by SlottedPageImpl itself.
      */
     private int spaceMapPageNumber = -1;
 
     /**
-     * The slots and the slot data are stored in this byte array. The size of this
-     * depends on the page size.
+     * The slots and the slot data are stored in this byte array. The size of
+     * this depends on the page size.
      */
     private byte[] data;
 
@@ -164,7 +169,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     private transient ArrayList<Slot> slotTable = new ArrayList<Slot>();
 
     /**
-     * A Slot entry in the slot table.  
+     * A Slot entry in the slot table.
      */
     public static final class Slot implements Storable, Dumpable {
 
@@ -184,27 +189,26 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         private final short flags;
 
         /**
-         * Length of the slot's data. If length == 0, it means that
-         * the slot is deleted.
+         * Length of the slot's data. If length == 0, it means that the slot is
+         * deleted.
          */
         private final short length;
 
-        
         static Slot NULL_SLOT = new Slot();
-        
+
         /**
          * Default constructor
          */
         public Slot() {
-        	offset = 0;
-        	flags = 0;
-        	length = 0;
+            offset = 0;
+            flags = 0;
+            length = 0;
         }
-        
+
         public Slot(int flags, int offset, int length) {
-        	this.offset = (short) offset;
-        	this.flags = (short) flags;
-        	this.length = (short) length;
+            this.offset = (short) offset;
+            this.flags = (short) flags;
+            this.length = (short) length;
         }
 
         /**
@@ -220,8 +224,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             offset = bb.getShort();
             flags = bb.getShort();
             length = bb.getShort();
-        }        
-        
+        }
+
         /* (non-Javadoc)
          * @see org.simpledbm.rss.io.Storable#store(java.nio.ByteBuffer)
          */
@@ -251,14 +255,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         public final StringBuilder appendTo(StringBuilder sb) {
-            sb
-                .append("slot(offset=")
-                .append(offset)
-                .append(", length=")
-                .append(length)
-                .append(", flags=")
-                .append(flags)
-                .append(")");
+            sb.append("slot(offset=").append(offset).append(", length=")
+                    .append(length).append(", flags=").append(flags)
+                    .append(")");
             return sb;
         }
 
@@ -268,18 +267,19 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
     }
 
+    SlottedPageImpl(PlatformObjects po, PageManager pageFactory, int type,
+            PageId pageId) {
+        super(pageFactory, type, pageId);
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        init();
+    }
 
-    SlottedPageImpl(PlatformObjects po, PageManager pageFactory, int type, PageId pageId) {
-		super(pageFactory, type, pageId);
-		this.log = po.getLogger();
-		this.exceptionHandler = po.getExceptionHandler();
-		init();
-	}
-
-	SlottedPageImpl(PlatformObjects po, PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-		super(pageFactory, pageId, bb);
-		this.log = po.getLogger();
-		this.exceptionHandler = po.getExceptionHandler();
+    SlottedPageImpl(PlatformObjects po, PageManager pageFactory, PageId pageId,
+            ByteBuffer bb) {
+        super(pageFactory, pageId, bb);
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
         flags = bb.getShort();
         numberOfSlots = bb.getShort();
         deletedSlots = bb.getShort();
@@ -293,13 +293,13 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         slotTable.ensureCapacity(numberOfSlots);
         ByteBuffer bb1 = ByteBuffer.wrap(data);
         for (int slotNumber = 0; slotNumber < numberOfSlots; slotNumber++) {
-        	Slot slot = new Slot(bb1);
+            Slot slot = new Slot(bb1);
             slotTable.add(slotNumber, slot);
         }
         validatePageSize();
-	}
+    }
 
-	@Override
+    @Override
     public final void store(ByteBuffer bb) {
         super.store(bb);
         bb.putShort(flags);
@@ -320,8 +320,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         if (numberOfSlots < 0 || numberOfSlots > getMaximumSlots()
                 || freeSpace < 0 || freeSpace > getSpace() || highWaterMark < 0
                 || highWaterMark > getSpace()) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "validate", 
-            		new PageException(new MessageInstance(m_EO0005, this)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "validate",
+                    new PageException(new MessageInstance(m_EO0005, this)));
         }
     }
 
@@ -332,26 +332,28 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         length += freeSpace;
         if (length != getSpace()) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "validatePageSize", 
-            		new PageException(new MessageInstance(m_EO0005, this)));
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "validatePageSize", new PageException(new MessageInstance(
+                            m_EO0005, this)));
         }
     }
 
     /**
-     * Returns the theoretical maximum number of slots that can be accomodated in a page.
+     * Returns the theoretical maximum number of slots that can be accomodated
+     * in a page.
      */
     private final int getMaximumSlots() {
         return getSpace() / Slot.SIZE;
     }
 
     /**
-     * Returns the total space available for page data, including the 
-     * slot table.
+     * Returns the total space available for page data, including the slot
+     * table.
      */
     @Override
     public final int getSpace() {
         if (!TESTING) {
-//            return super.getStoredLength() - FIXED_OVERHEAD;
+            //            return super.getStoredLength() - FIXED_OVERHEAD;
             return getAvailableLength() - SLOTTEDPAGE_OVERHEAD;
         }
         // During testing it is useful to artificially restrict the usable space
@@ -374,17 +376,15 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
 
     /**
-     * Calculates the total size of a slot with a given
-     * data length.
+     * Calculates the total size of a slot with a given data length.
      */
     private int calculateSlotLength(int dataLen) {
         return dataLen + Slot.SIZE;
     }
 
     /**
-     * Gets the total length or size of a slot.
-     * This includes the data as well as the space taken by
-     * the entry in the slot table.
+     * Gets the total length or size of a slot. This includes the data as well
+     * as the space taken by the entry in the slot table.
      */
     @Override
     public final int getSlotLength(int slotNo) {
@@ -402,8 +402,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
 
     /**
-     * Checks whether specified slot is deleted.
-     * A deleted slot's length is set to zero. 
+     * Checks whether specified slot is deleted. A deleted slot's length is set
+     * to zero.
+     * 
      * @see #delete(int)
      */
     @Override
@@ -425,8 +426,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
                 }
             }
             if (slotNumber != numberOfSlots) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "findInsertionPoint", 
-                		new PageException(new MessageInstance(m_EO0006)));
+                exceptionHandler.errorThrow(this.getClass().getName(),
+                        "findInsertionPoint", new PageException(
+                                new MessageInstance(m_EO0006)));
             }
         } else {
             slotNumber = numberOfSlots;
@@ -435,13 +437,14 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
 
     /**
-     * Find the insertion point for a slot of specified length.
-     * If we have enough space, return a slot object, else, return null.
-     * Set slot.offset to the start of the space.
-     * Note that this method is called when we already know that there 
-     * is enough space for the slot, but we do not know whether there is
-     * enough contiguous space.
-     * @return Null if there is not enough contiguous space, a Slot object otherwise.
+     * Find the insertion point for a slot of specified length. If we have
+     * enough space, return a slot object, else, return null. Set slot.offset to
+     * the start of the space. Note that this method is called when we already
+     * know that there is enough space for the slot, but we do not know whether
+     * there is enough contiguous space.
+     * 
+     * @return Null if there is not enough contiguous space, a Slot object
+     *         otherwise.
      */
     private Slot findSpace(int slotNumber, int length, int flags) {
         /* To find space between slots we would have to carry out some
@@ -477,17 +480,17 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         Slot slot = new Slot(flags, start_pos, length);
-        
+
         return slot;
     }
 
     /**
-     * Add the slot to the specified slotnumber.
-     * Handles following cases:
+     * Add the slot to the specified slotnumber. Handles following cases:
      * <ol>
      * <li>A new slot to be added at the end.</li>
      * <li>A deleted slot being reused.</li>
-     * <li>A new slot being inserted into the middle of the slot table. This causes existing slots to move right.</li>
+     * <li>A new slot being inserted into the middle of the slot table. This
+     * causes existing slots to move right.</li>
      * </ol>
      */
     private void addSlot(int slotNumber, Storable item, Slot slot) {
@@ -512,7 +515,7 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         highWaterMark -= slot.getLength();
         ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
-            .getLength());
+                .getLength());
         item.store(bb);
     }
 
@@ -530,8 +533,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             Slot slot = slotTable.get(slotNumber);
             int startPos = highWaterMark - slot.getLength();
             System.arraycopy(data, slot.getOffset(), newdata, startPos, slot
-                .getLength());
-            slotTable.set(slotNumber, new Slot(slot.getFlags(), startPos, slot.getLength()));
+                    .getLength());
+            slotTable.set(slotNumber, new Slot(slot.getFlags(), startPos, slot
+                    .getLength()));
             highWaterMark -= slot.getLength();
             freeSpace -= slot.getLength();
         }
@@ -556,8 +560,10 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         int len = item.getStoredLength();
         int slotNumber = findInsertionPoint();
         if (!hasSpace(slotNumber, len)) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "insert", 
-            		new PageException(new MessageInstance(m_EO0001, item, this)));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "insert",
+                            new PageException(new MessageInstance(m_EO0001,
+                                    item, this)));
         }
         /* find contiguous space */
         Slot slot = findSpace(slotNumber, len, 0);
@@ -567,20 +573,20 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         addSlot(slotNumber, item, slot);
-//		if (debug > 0) {
-//			debugout << Thread::getCurrentThread()->getName() <<
-//				": TupleMgr.insertTuple: Inserting tuple [" <<
-//				tno << "] of length " << offset.length <<
-//				" at offset " << offset.offset << "\n";
-//		}
+        //		if (debug > 0) {
+        //			debugout << Thread::getCurrentThread()->getName() <<
+        //				": TupleMgr.insertTuple: Inserting tuple [" <<
+        //				tno << "] of length " << offset.length <<
+        //				" at offset " << offset.offset << "\n";
+        //		}
         return true;
     }
 
     /**
-     * Insert new tuple at specific position.
-     * Note that this will shift existing tuples to the right - hence
-     * this function is not suitable if an allocated tupleid is immutable (such
-     * as for table data). It is more for index pages where tupleid is immaterial.
+     * Insert new tuple at specific position. Note that this will shift existing
+     * tuples to the right - hence this function is not suitable if an allocated
+     * tupleid is immutable (such as for table data). It is more for index pages
+     * where tupleid is immaterial.
      */
     @Override
     public final boolean insertAt(int slotNumber, Storable item,
@@ -606,12 +612,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
         // Do we have enough space in the page?
         if (freeSpace < requiredSpace) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "insertAt", 
-            	new PageException(new MessageInstance(m_EO0002,
-                item,
-                this,
-                slotNumber,
-                requiredSpace)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "insertAt",
+                    new PageException(new MessageInstance(m_EO0002, item, this,
+                            slotNumber, requiredSpace)));
         }
 
         int savedFlags = 0;
@@ -632,19 +635,19 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         }
 
         addSlot(slotNumber, item, slot);
-//		if (debug > 0) {
-//			debugout << Thread::getCurrentThread()->getName() <<
-//				": TupleMgr.insertTupleAt: Inserting tuple [" <<
-//				tno << "] of length " << p->offsets[tno].length <<
-//				" at offset " << p->offsets[tno].offset << "\n";
-//		}
+        //		if (debug > 0) {
+        //			debugout << Thread::getCurrentThread()->getName() <<
+        //				": TupleMgr.insertTupleAt: Inserting tuple [" <<
+        //				tno << "] of length " << p->offsets[tno].length <<
+        //				" at offset " << p->offsets[tno].offset << "\n";
+        //		}
         return true;
     }
 
     /**
      * Delete a tuple. This frees up space but does not meddle with tuplids.
-     * Space allocated to the tuple remains unused until
-     * the page is reorganized.
+     * Space allocated to the tuple remains unused until the page is
+     * reorganized.
      */
     @Override
     public final void delete(int slotNumber) {
@@ -659,14 +662,11 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     }
 
     /**
-     * Remove a tuple physically from the page.
-     * Descreases tuple count.
-     * Space allocated to the tuple remains unused until
-     * the page is reorganized.
-     * Note that this function shifts existing tuples, hence it
-     * cannot be used if there is a need to make tupleids immutable (as in
-     * table data). This is more for manipulating index pages where
-     * tuplid is immaterial.
+     * Remove a tuple physically from the page. Descreases tuple count. Space
+     * allocated to the tuple remains unused until the page is reorganized. Note
+     * that this function shifts existing tuples, hence it cannot be used if
+     * there is a need to make tupleids immutable (as in table data). This is
+     * more for manipulating index pages where tuplid is immaterial.
      */
     @Override
     public final void purge(int slotNumber) {
@@ -682,15 +682,16 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
     /**
      * Validates the slot number.
+     * 
      * @param slotNumber Slot number to be validated
      * @param adding Boolean flag to indcate whether to allow last+1 position
      */
     private final void validateSlotNumber(int slotNumber, boolean adding) {
         if (slotNumber < 0 || slotNumber > (numberOfSlots - (adding ? 0 : 1))) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "validateSlotNumber", 
-            	new PageException(new MessageInstance(m_EO0003,
-                slotNumber,
-                numberOfSlots)));
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "validateSlotNumber", new PageException(
+                            new MessageInstance(m_EO0003, slotNumber,
+                                    numberOfSlots)));
         }
     }
 
@@ -699,8 +700,9 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
      */
     private final void validateLatchHeldExclusively() {
         if (!lock.isLatchedExclusively()) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "validateLatchMode", 
-            	new PageException(new MessageInstance(m_EO0004)));
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "validateLatchMode", new PageException(new MessageInstance(
+                            m_EO0004)));
         }
     }
 
@@ -712,13 +714,14 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         validateSlotNumber(slotNumber, false);
         Slot slot = slotTable.get(slotNumber);
         ByteBuffer bb = ByteBuffer.wrap(data, slot.getOffset(), slot
-            .getLength());
+                .getLength());
         Storable item = storableFactory.getStorable(bb);
         return item;
     }
 
     /**
      * Set flags for a particular slot.
+     * 
      * @param slotNumber
      * @param flags
      */
@@ -727,11 +730,13 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         validateLatchHeldExclusively();
         validateSlotNumber(slotNumber, false);
         Slot slot = slotTable.get(slotNumber);
-        slotTable.set(slotNumber, new Slot(flags, slot.getOffset(), slot.getLength()));
+        slotTable.set(slotNumber, new Slot(flags, slot.getOffset(), slot
+                .getLength()));
     }
 
     /**
      * Get flags.
+     * 
      * @param slotNumber
      */
     @Override
@@ -791,16 +796,14 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
         sb.append(newline);
         sb
-            .append(
-                "=========================================================================")
-            .append(newline);
+                .append(
+                        "=========================================================================")
+                .append(newline);
         sb.append("PAGE DUMP : ");
         super.appendTo(sb).append(newline);
         sb.append("PageSize=").append(getStoredLength()).append(newline);
-        sb
-            .append("FIXED OVERHEAD=")
-            .append(SlottedPageImpl.FIXED_OVERHEAD)
-            .append(newline);
+        sb.append("FIXED OVERHEAD=").append(SlottedPageImpl.FIXED_OVERHEAD)
+                .append(newline);
         sb.append("UsableSpace=").append(getSpace()).append(newline);
         // DiagnosticLogger.log("PageLsn=" + getPageLsn());
         sb.append("PageFlags=").append(getFlags()).append(newline);
@@ -808,7 +811,8 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
         sb.append("#DeletedSlots=").append(getDeletedSlots()).append(newline);
         sb.append("HighWaterMark=").append(highWaterMark).append(newline);
         sb.append("FreeSpace=").append(getFreeSpace()).append(newline);
-        sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append(newline);
+        sb.append("SpaceMapPage=").append(getSpaceMapPageNumber()).append(
+                newline);
         int length = 0;
         for (int i = 0; i < getNumberOfSlots(); i++) {
             sb.append("Slot#").append(i).append("=");
@@ -829,11 +833,11 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
     @Override
     public final void dump() {
         DiagnosticLogger
-            .log("=========================================================================");
+                .log("=========================================================================");
         DiagnosticLogger.log("PAGE DUMP : " + getPageId());
         DiagnosticLogger.log("PageSize=" + getStoredLength());
         DiagnosticLogger
-            .log("FIXED OVERHEAD=" + SlottedPageImpl.FIXED_OVERHEAD);
+                .log("FIXED OVERHEAD=" + SlottedPageImpl.FIXED_OVERHEAD);
         DiagnosticLogger.log("UsableSpace=" + getSpace());
         // DiagnosticLogger.log("PageLsn=" + getPageLsn());
         DiagnosticLogger.log("PageType=" + getType());
@@ -847,23 +851,28 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
             DiagnosticLogger.log("Slot#" + i + "=" + slotTable.get(i));
         }
     }
-    
+
     public static final class SlottedPageImplFactory implements PageFactory {
-    	final PlatformObjects po;
-    	final PageManager pageManager;
-    	public SlottedPageImplFactory(PlatformObjects po, PageManager pageManager) {
-    		this.po = po;
-    		this.pageManager = pageManager;
-    	}
-		public Page getInstance(int type, PageId pageId) {
-			return new SlottedPageImpl(po, pageManager, type, pageId);
-		}
-		public Page getInstance(PageId pageId, ByteBuffer bb) {
-			return new SlottedPageImpl(po, pageManager, pageId, bb);
-		}
-		public int getPageType() {
-			return SlottedPageManagerImpl.TYPE_SLOTTEDPAGE;
-		}
+        final PlatformObjects po;
+        final PageManager pageManager;
+
+        public SlottedPageImplFactory(PlatformObjects po,
+                PageManager pageManager) {
+            this.po = po;
+            this.pageManager = pageManager;
+        }
+
+        public Page getInstance(int type, PageId pageId) {
+            return new SlottedPageImpl(po, pageManager, type, pageId);
+        }
+
+        public Page getInstance(PageId pageId, ByteBuffer bb) {
+            return new SlottedPageImpl(po, pageManager, pageId, bb);
+        }
+
+        public int getPageType() {
+            return SlottedPageManagerImpl.TYPE_SLOTTEDPAGE;
+        }
     }
 
 }

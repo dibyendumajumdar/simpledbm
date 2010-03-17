@@ -44,10 +44,10 @@ import org.simpledbm.rss.api.pm.Page;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
- * Client interface for managing transactions. 
+ * Client interface for managing transactions.
  * <p>
  * <strong>IMPORTANT:</strong> <em>A Transaction object must not
- * be concurrently used by more than one thread.</em> 
+ * be concurrently used by more than one thread.</em>
  * 
  * @see TransactionManager#begin(IsolationMode)
  * @author Dibyendu Majumdar
@@ -56,62 +56,68 @@ import org.simpledbm.rss.api.wal.Lsn;
 public interface Transaction {
 
     /**
-     * Returns the LSN of the most recent log record generated
-     * for this transaction.
+     * Returns the LSN of the most recent log record generated for this
+     * transaction.
      */
     public Lsn getLastLsn();
 
     /**
-     * Generates a transaction related log record. The new log record is linked to the
-     * transaction's list of log records.
+     * Generates a transaction related log record. The new log record is linked
+     * to the transaction's list of log records.
      * <p>
-     * Transaction related log records must always be associated with specific disk pages.
+     * Transaction related log records must always be associated with specific
+     * disk pages.
      */
     public Lsn logInsert(Page page, Loggable logrec);
 
     /**
-     * Acquires a lock in specified mode, and adds it to the transaction's list of locks.
-     * If the lock is not available, waits until the lock is granted or the lock
-     * timeout expires. 
+     * Acquires a lock in specified mode, and adds it to the transaction's list
+     * of locks. If the lock is not available, waits until the lock is granted
+     * or the lock timeout expires.
      * <p>
-     * If the Lock Manager does not support deadlock detection, the lock timeout is
-     * used to detect possible deadlocks.
+     * If the Lock Manager does not support deadlock detection, the lock timeout
+     * is used to detect possible deadlocks.
+     * 
      * @see TransactionManager#setLockWaitTimeout(int)
-     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int, org.simpledbm.rss.api.locking.LockInfo)
+     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int,
+     *      org.simpledbm.rss.api.locking.LockInfo)
      */
     public void acquireLock(Lockable lockable, LockMode mode,
             LockDuration duration);
 
     /**
-     * Same as {@link #acquireLock(Lockable, LockMode, LockDuration)} but does not wait
-     * for lock to be available.
-     * @see #acquireLock(Lockable, LockMode, LockDuration) 
+     * Same as {@link #acquireLock(Lockable, LockMode, LockDuration)} but does
+     * not wait for lock to be available.
+     * 
+     * @see #acquireLock(Lockable, LockMode, LockDuration)
      */
     public void acquireLockNowait(Lockable lockable, LockMode mode,
             LockDuration duration);
 
     /**
-     * Attempts to release a lock, and if this succeeds, the lock is removed from
-     * the transaction's list of locks. Each lock has a reference count which indicates 
-     * how many times the lock was acquired by a transaction. This method will
-     * decrement the reference count, and the lock will be released only when
-     * reference count is 0.
+     * Attempts to release a lock, and if this succeeds, the lock is removed
+     * from the transaction's list of locks. Each lock has a reference count
+     * which indicates how many times the lock was acquired by a transaction.
+     * This method will decrement the reference count, and the lock will be
+     * released only when reference count is 0.
      * <p>
-     * Only SHARED or UPDATE mode locks may be released early. It is an error
-     * to try to release lock held in any other mode.
+     * Only SHARED or UPDATE mode locks may be released early. It is an error to
+     * try to release lock held in any other mode.
      */
     public boolean releaseLock(Lockable lockable);
 
     /**
      * Checks if the specified object is locked by this transaction.
-     * @return Current Lockmode or {@link LockMode#NONE} if lock is not held by this transaction.
+     * 
+     * @return Current Lockmode or {@link LockMode#NONE} if lock is not held by
+     *         this transaction.
      */
     public LockMode hasLock(Lockable lockable);
 
     /**
      * Downgrades a currently held lock to specified mode. If the downgrade
      * request is invalid, an Exception will be thrown.
-     *  
+     * 
      * @param lockable Object to be locked
      * @param downgradeTo The target lock mode
      */
@@ -119,16 +125,16 @@ public interface Transaction {
 
     /**
      * Schedules a post commit action. Post commit actions are used to deal with
-     * operations that should be deferred until it is certain that the transaction 
-     * is definitely committing. For example, dropping a Container. 
+     * operations that should be deferred until it is certain that the
+     * transaction is definitely committing. For example, dropping a Container.
      * <p>
      * PostCommitActions are recorded in the transaction's prepare log record.
      * <p>
      * Once the transaction is committed, the pending post commit actions are
-     * performed. It is the responsibility of the Transactional Modul to
-     * ensure that each post commit action is logged appropriately. The
-     * Transaction Manager must ensure that these actions are performed despite
-     * system failures. 
+     * performed. It is the responsibility of the Transactional Modul to ensure
+     * that each post commit action is logged appropriately. The Transaction
+     * Manager must ensure that these actions are performed despite system
+     * failures.
      */
     public void schedulePostCommitAction(PostCommitAction action);
 
@@ -138,15 +144,14 @@ public interface Transaction {
     public Savepoint createSavepoint(boolean saveCursors);
 
     /**
-     * Commits the transaction. All locks held by the
-     * transaction are released.
+     * Commits the transaction. All locks held by the transaction are released.
      */
     public void commit();
 
     /**
-     * Rolls back a transaction upto a savepoint. Locks acquired
-     * since the Savepoint are released. PostCommitActions queued
-     * after the Savepoint was created are discarded.
+     * Rolls back a transaction upto a savepoint. Locks acquired since the
+     * Savepoint are released. PostCommitActions queued after the Savepoint was
+     * created are discarded.
      */
     public void rollback(Savepoint sp);
 
@@ -156,12 +161,14 @@ public interface Transaction {
     public void abort();
 
     /**
-     * Starts a Nested Top Action. Will throw an exception if a nested top action is already in scope.
+     * Starts a Nested Top Action. Will throw an exception if a nested top
+     * action is already in scope.
      */
     public void startNestedTopAction();
 
     /**
-     * Completes a nested top action. Will throw an exception if there isn't a nested top action in scope.
+     * Completes a nested top action. Will throw an exception if there isn't a
+     * nested top action in scope.
      */
     public void completeNestedTopAction();
 
@@ -181,8 +188,8 @@ public interface Transaction {
     public void setLockTimeout(int seconds);
 
     /**
-     * Informs the transaction about a transactional cursor that needs to participate
-     * in rollbacks.
+     * Informs the transaction about a transactional cursor that needs to
+     * participate in rollbacks.
      */
     public void registerTransactionalCursor(TransactionalCursor cursor);
 

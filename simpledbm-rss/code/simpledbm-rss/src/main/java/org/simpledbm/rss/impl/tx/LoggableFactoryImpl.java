@@ -55,12 +55,13 @@ public final class LoggableFactoryImpl implements LoggableFactory {
 
     private final ObjectRegistry objectFactory;
 
-    public LoggableFactoryImpl(Platform platform, ObjectRegistry objectFactory, Properties p) {
+    public LoggableFactoryImpl(Platform platform, ObjectRegistry objectFactory,
+            Properties p) {
         this.objectFactory = objectFactory;
     }
 
     public final Loggable getInstance(ByteBuffer bb) {
-    	return (Loggable) objectFactory.getInstance(bb);
+        return (Loggable) objectFactory.getInstance(bb);
     }
 
     public final Loggable getInstance(LogRecord logRec) {

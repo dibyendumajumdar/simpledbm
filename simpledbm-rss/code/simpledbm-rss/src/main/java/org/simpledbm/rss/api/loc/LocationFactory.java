@@ -50,18 +50,19 @@ public interface LocationFactory {
      * Creates a new Location object.
      */
     Location newLocation();
-    
+
     /**
      * Re-construct a location object from the byte stream.
+     * 
      * @param bb ByteBuffer that wraps the input byte stream
      */
     Location newLocation(ByteBuffer bb);
 
     /**
-     * Used mainly for building test cases; this method should
-     * parse the input string and initialize itself. The contents 
-     * of the string is expected to match the toString() output.
+     * Used mainly for building test cases; this method should parse the input
+     * string and initialize itself. The contents of the string is expected to
+     * match the toString() output.
      */
     Location newLocation(String s);
-    
+
 }

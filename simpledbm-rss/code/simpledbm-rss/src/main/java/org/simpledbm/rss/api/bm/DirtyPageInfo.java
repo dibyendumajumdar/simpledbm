@@ -44,7 +44,7 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
- * Holds information about a dirty page. 
+ * Holds information about a dirty page.
  * 
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
@@ -59,8 +59,8 @@ public final class DirtyPageInfo implements Storable, Dumpable {
     private final PageId pageId;
 
     /**
-     * The recoveryLsn normally points to the oldest Lsn that may have
-     * updated the page.
+     * The recoveryLsn normally points to the oldest Lsn that may have updated
+     * the page.
      */
     private Lsn recoveryLsn;
 
@@ -77,8 +77,7 @@ public final class DirtyPageInfo implements Storable, Dumpable {
         recoveryLsn = new Lsn(bb);
         realRecoveryLsn = recoveryLsn;
     }
-    
-    
+
     /**
      * Returns the pageId of the dirty page.
      */
@@ -87,9 +86,10 @@ public final class DirtyPageInfo implements Storable, Dumpable {
     }
 
     /**
-     * Returns the recoveryLsn assigned to the page. RecoveryLsn is
-     * the LSN of the oldest log record that could contain changes made to
-     * the page since it was last written out.
+     * Returns the recoveryLsn assigned to the page. RecoveryLsn is the LSN of
+     * the oldest log record that could contain changes made to the page since
+     * it was last written out.
+     * 
      * @return Recovery LSN
      */
     public Lsn getRecoveryLsn() {

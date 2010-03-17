@@ -46,22 +46,22 @@ import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
- * Exceptions thrown by the Tuple Manager module are all sub-types of 
+ * Exceptions thrown by the Tuple Manager module are all sub-types of
  * TupleException.
  */
 public class TupleException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public TupleException(ByteBuffer bb) {
-		super(bb);
-	}
+    public TupleException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public TupleException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public TupleException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public TupleException(MessageInstance m) {
-		super(m);
-	}
+    public TupleException(MessageInstance m) {
+        super(m);
+    }
 }

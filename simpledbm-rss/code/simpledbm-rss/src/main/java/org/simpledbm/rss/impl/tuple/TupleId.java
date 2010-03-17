@@ -45,8 +45,8 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.tx.BaseLockable;
 
 /**
- * TupleId uniquely identifies the location of a tuple within the Relation.
- * It consists of the page ID and the slot number.
+ * TupleId uniquely identifies the location of a tuple within the Relation. It
+ * consists of the page ID and the slot number.
  * <p>
  * Immutable.
  * 
@@ -55,9 +55,9 @@ import org.simpledbm.rss.api.tx.BaseLockable;
  */
 public final class TupleId extends BaseLockable implements Location, Dumpable {
 
-//    private static final Logger log = Logger.getLogger(TupleManager.LOGGER_NAME);
-//    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
-//    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
+    //    private static final Logger log = Logger.getLogger(TupleManager.LOGGER_NAME);
+    //    private static final ExceptionHandler exceptionHandler = ExceptionHandler.getExceptionHandler(log);
+    //    private static final MessageCatalog mcat = MessageCatalog.getMessageCatalog();
 
     private final PageId pageId;
     private final int slotNumber;
@@ -91,15 +91,15 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         pageId = new PageId();
         slotNumber = -1;
         throw new UnsupportedOperationException();
-//        exceptionHandler.errorThrow(this.getClass().getName(), "TupleId", 
-//        		new TupleException(mcat.getMessage("ET0001")));
-    }    
-    
-    public Location cloneLocation() {
-		return new TupleId(this);
-	}
+        //        exceptionHandler.errorThrow(this.getClass().getName(), "TupleId", 
+        //        		new TupleException(mcat.getMessage("ET0001")));
+    }
 
-	public final boolean isNull() {
+    public Location cloneLocation() {
+        return new TupleId(this);
+    }
+
+    public final boolean isNull() {
         return pageId.isNull() || slotNumber == -1;
     }
 
@@ -117,15 +117,15 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
             return 0;
         }
         if (getClass() != location.getClass()) {
-        	throw new IllegalArgumentException();
-//            log.error(this.getClass().getName(), "compareTo", mcat.getMessage(
-//                "ET0002",
-//                location,
-//                getClass().getName()));
-//            throw new TupleException(mcat.getMessage(
-//                "ET0002",
-//                location,
-//                getClass().getName()));
+            throw new IllegalArgumentException();
+            //            log.error(this.getClass().getName(), "compareTo", mcat.getMessage(
+            //                "ET0002",
+            //                location,
+            //                getClass().getName()));
+            //            throw new TupleException(mcat.getMessage(
+            //                "ET0002",
+            //                location,
+            //                getClass().getName()));
         }
         TupleId other = (TupleId) location;
         int comp = pageId.compareTo(other.pageId);
@@ -159,30 +159,30 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
 
     public int getContainerId() {
         if (pageId == null) {
-        	throw new IllegalStateException();
-//            log.error(this.getClass().getName(), "getContainerId", mcat
-//                .getMessage("ET0003", this));
-//            throw new TupleException(mcat.getMessage("ET0003", this));
+            throw new IllegalStateException();
+            //            log.error(this.getClass().getName(), "getContainerId", mcat
+            //                .getMessage("ET0003", this));
+            //            throw new TupleException(mcat.getMessage("ET0003", this));
         }
         return pageId.getContainerId();
     }
-    
+
     public int getX() {
         if (pageId == null) {
-        	throw new IllegalStateException();
-//            log.error(this.getClass().getName(), "getX", mcat
-//                .getMessage("ET0003", this));
-//            throw new TupleException(mcat.getMessage("ET0003", this));
+            throw new IllegalStateException();
+            //            log.error(this.getClass().getName(), "getX", mcat
+            //                .getMessage("ET0003", this));
+            //            throw new TupleException(mcat.getMessage("ET0003", this));
         }
         return pageId.getPageNumber();
     }
-    
+
     public int getY() {
         if (pageId == null) {
-        	throw new IllegalStateException();
-//            log.error(this.getClass().getName(), "getY", mcat
-//                .getMessage("ET0003", this));
-//            throw new TupleException(mcat.getMessage("ET0003", this));
+            throw new IllegalStateException();
+            //            log.error(this.getClass().getName(), "getY", mcat
+            //                .getMessage("ET0003", this));
+            //            throw new TupleException(mcat.getMessage("ET0003", this));
         }
         return slotNumber;
     }

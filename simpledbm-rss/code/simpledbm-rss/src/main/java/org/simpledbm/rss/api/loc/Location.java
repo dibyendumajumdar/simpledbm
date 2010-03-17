@@ -40,24 +40,25 @@ import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.rss.api.tx.Lockable;
 
 /**
- * Location represents a pointer value that will be stored with
- * an IndexKey in an Index. The pointer is used to locate the
- * Tuple (row) that is associated with the IndexKey.
- * <p>Location objects should be immutable, so that they can be
- * safely passed around.
+ * Location represents a pointer value that will be stored with an IndexKey in
+ * an Index. The pointer is used to locate the Tuple (row) that is associated
+ * with the IndexKey.
+ * <p>
+ * Location objects should be immutable, so that they can be safely passed
+ * around.
  * 
  * @author Dibyendu Majumdar
  * @since Oct-2005
  */
 public interface Location extends Lockable, Storable, Comparable<Location> {
     /**
-     * Return first part of the location if applicable. Meaningless other than 
+     * Return first part of the location if applicable. Meaningless other than
      * as an aid to identifying the location.
      */
     int getX();
-    
+
     /**
-     * Return second part of the location if applicable. Meaningless other than 
+     * Return second part of the location if applicable. Meaningless other than
      * as an aid to identifying the location.
      */
     int getY();

@@ -46,12 +46,12 @@ public final class UniqueConstraintViolationException extends IndexException {
 
     private static final long serialVersionUID = 3412075595754021391L;
 
-	public UniqueConstraintViolationException(MessageInstance message,
-			Throwable cause) {
-		super(message, cause);
-	}
+    public UniqueConstraintViolationException(MessageInstance message,
+            Throwable cause) {
+        super(message, cause);
+    }
 
-	public UniqueConstraintViolationException(MessageInstance message) {
-		super(message);
-	}
+    public UniqueConstraintViolationException(MessageInstance message) {
+        super(message);
+    }
 }

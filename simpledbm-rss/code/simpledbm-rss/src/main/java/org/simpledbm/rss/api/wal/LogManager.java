@@ -53,9 +53,8 @@ package org.simpledbm.rss.api.wal;
  * <p>
  * To obtain an instance of Log, you need to first obtain an instance of
  * {@link LogFactory}. A LogFactory implementation provides the
- * {@link LogFactory#getLog(org.simpledbm.rss.api.st.StorageContainerFactory, java.util.Properties)} 
- * method for obtaining an instance
- * of an existing Log.
+ * {@link LogFactory#getLog(org.simpledbm.rss.api.st.StorageContainerFactory, java.util.Properties)}
+ * method for obtaining an instance of an existing Log.
  * <p>
  * Here is an example of how this is done:
  * 
@@ -80,9 +79,8 @@ package org.simpledbm.rss.api.wal;
  * @see LogReader
  */
 public interface LogManager {
-	
-	
-	public final String LOGGER_NAME = "org.simpledbm.walogmgr";
+
+    public final String LOGGER_NAME = "org.simpledbm.walogmgr";
 
     /**
      * Start the LogMgr instance. This may initiate background threads.
@@ -94,10 +92,8 @@ public interface LogManager {
      * The new Log Record may or may not be flushed to disk - if the caller
      * wants to ensure this, the {@link #flush(Lsn)} method should be called.
      * 
-     * @param data
-     *            Data for the log record, will be copied.
-     * @param length
-     *            Length of the data
+     * @param data Data for the log record, will be copied.
+     * @param length Length of the data
      * @return Lsn assigned to the new log record
      */
     Lsn insert(byte[] data, int length);
@@ -109,8 +105,8 @@ public interface LogManager {
     Lsn getMaxLsn();
 
     /**
-     * Returns the Lsn of the last Log Record that is known to have been flushed to
-     * disk.
+     * Returns the Lsn of the last Log Record that is known to have been flushed
+     * to disk.
      */
     Lsn getDurableLsn();
 
@@ -120,25 +116,25 @@ public interface LogManager {
     Lsn getCheckpointLsn();
 
     /**
-     * Get the LSN of the oldest log record that may be of
-     * interest for recovery purposes.
+     * Get the LSN of the oldest log record that may be of interest for recovery
+     * purposes.
      */
     Lsn getOldestInterestingLsn();
 
     /**
-     * Sets the LSN of the latest Checkpoint log record. Log Manager must ensure 
+     * Sets the LSN of the latest Checkpoint log record. Log Manager must ensure
      * that this is reliably recorded on disk.
+     * 
      * @param lsn LSN of the Checkpoint log record.
      */
     void setCheckpointLsn(Lsn lsn, Lsn oldestInterestingLsn);
 
     /**
      * Reads the specified LogRecord, from log buffers if possible, otherwise
-     * from disk. Must handle the situation where a log record has been archived.
-     * Must be thread safe.
+     * from disk. Must handle the situation where a log record has been
+     * archived. Must be thread safe.
      * 
-     * @param lsn
-     *            Lsn of the LogRecord to be read
+     * @param lsn Lsn of the LogRecord to be read
      * @return LogRecord read
      * @throws LogException.StorageException
      * @throws LogException
@@ -151,8 +147,7 @@ public interface LogManager {
      * implementation, flushing the Log may or may not impact other operations
      * such as inserting new records, and reading log records.
      * 
-     * @param upto
-     *            Lsn of the Log Record
+     * @param upto Lsn of the Log Record
      * @throws LogException
      */
     void flush(Lsn upto);
@@ -162,29 +157,30 @@ public interface LogManager {
      * completed. Note that depending upon the implementation, flushing the Log
      * may or may not impact other operations such as inserting new records, and
      * reading log records. Note that after a complete flush, the methods
-     * {@link #getMaxLsn()} and {@link #getDurableLsn()} will return the same Lsn. 
+     * {@link #getMaxLsn()} and {@link #getDurableLsn()} will return the same
+     * Lsn.
      * 
      * @throws LogException
      */
     void flush();
 
     /**
-     * Obtains a forward scanning reader with the start Lsn set to the specified Lsn.
-     * If the startLsn is <code>null</code>, reading will start at the
+     * Obtains a forward scanning reader with the start Lsn set to the specified
+     * Lsn. If the startLsn is <code>null</code>, reading will start at the
      * beginning of the Log. Note that log files typically get archived and
-     * removed after some time, so it may not be possible to access
-     * old log records beyond a point. 
+     * removed after some time, so it may not be possible to access old log
+     * records beyond a point.
      * 
      * @param startLsn
      */
     LogReader getForwardScanningReader(Lsn startLsn);
 
     /**
-     * Obtains a backward scanning reader with the start Lsn set to the specified Lsn.
-     * If the startLsn is <code>null</code>, reading will start at the
-     * end of the Log. Note that log files typically get archived and
-     * removed after some time, so it may not be possible to access
-     * old log records beyond a point. 
+     * Obtains a backward scanning reader with the start Lsn set to the
+     * specified Lsn. If the startLsn is <code>null</code>, reading will start
+     * at the end of the Log. Note that log files typically get archived and
+     * removed after some time, so it may not be possible to access old log
+     * records beyond a point.
      * 
      * @param startLsn
      */

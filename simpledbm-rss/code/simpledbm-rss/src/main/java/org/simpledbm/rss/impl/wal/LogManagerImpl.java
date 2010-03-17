@@ -80,8 +80,8 @@ import org.simpledbm.rss.api.wal.Lsn;
  * <p>
  * Logically, the Log is organized as a never ending sequence of log records.
  * Physically, the Log is split up into log files. There is a fixed set of
- * <em>online</em> log files, and a dynamic set of <em>archived</em> log
- * files. The set of online log files is called a Log Group.
+ * <em>online</em> log files, and a dynamic set of <em>archived</em> log files.
+ * The set of online log files is called a Log Group.
  * <p>
  * Each Log Group consists of a set of pre-allocated log files of the same size.
  * The maximum number of groups possible is defined in {@link #MAX_LOG_GROUPS},
@@ -98,11 +98,11 @@ import org.simpledbm.rss.api.wal.Lsn;
  * Logically, just as the Log can be viewed as a sequence of Log Records, it can
  * also be thought of as a sequence of Log Files. The Log Files are numbered in
  * sequence, starting from 1. The Log File sequence number is called
- * <em>LogIndex</em>. At any point in time, the physical set of online log
- * files will contain a set of logical log files. For example, if there are 3
- * physical files in a Log Group, then at startup, the set of logical log files
- * would be 1, 2 and 3. After some time, the log file 1 would get archived, and
- * in its place a new logical log file 4 would be created. The set now would now
+ * <em>LogIndex</em>. At any point in time, the physical set of online log files
+ * will contain a set of logical log files. For example, if there are 3 physical
+ * files in a Log Group, then at startup, the set of logical log files would be
+ * 1, 2 and 3. After some time, the log file 1 would get archived, and in its
+ * place a new logical log file 4 would be created. The set now would now
  * consist of logical log files 2, 3 and 4.
  * <p>
  * When a log record is written to disk, it is written out to an online log
@@ -133,7 +133,7 @@ import org.simpledbm.rss.api.wal.Lsn;
  * should. In that case, it must wait for some memory to be freed up. To ensure
  * maximum concurrency, the memory calculation is only approximate.</li>
  * <li>A Log flush cannot proceed if all the online log files are full. In this
- * situation, the flush must wait for at least one file to be archived. </li>
+ * situation, the flush must wait for at least one file to be archived.</li>
  * <li>When reading a log record, if the online log file containing the record
  * is being archived, the reader may have to wait for the status of the log file
  * to change, before proceeding with the read. Conversely, if a read is active,
@@ -150,11 +150,12 @@ import org.simpledbm.rss.api.wal.Lsn;
  * buffer. Thus the size of a log record is limited by the size of a log buffer
  * and by the size of a log file. As a workaround to this limitation, clients
  * can split the data into multiple log records, but in that case, clients are
- * responsible for merging the data back when reading from the Log. </li>
+ * responsible for merging the data back when reading from the Log.</li>
  * </ol>
  * <h3>Known issues</h3>
- * <p>The StorageContainerFactory instance needs to be part of the 
- * constructor interface.
+ * <p>
+ * The StorageContainerFactory instance needs to be part of the constructor
+ * interface.
  * </p>
  * 
  * @author Dibyendu Majumdar
@@ -181,58 +182,58 @@ public final class LogManagerImpl implements LogManager {
     static final int DEFAULT_CTL_FILES = 2;
 
     final Logger logger;
-    
+
     final ExceptionHandler exceptionHandler;
-    
-    final Platform platform;    
-    
+
+    final Platform platform;
+
     /**
-     * A valid Log Group has status set to {@value}.
+     * A valid Log Group has status set to {@value} .
      */
     private static final int LOG_GROUP_OK = 1;
 
     /**
-     * An invalid Log Group has its status set to {@value}.
+     * An invalid Log Group has its status set to {@value} .
      */
     static final int LOG_GROUP_INVALID = 2;
 
     /**
-     * Initially a Log File is marked as unused, and its status is set to
-     * {@value}. A Log File also goes into this status once it has been
+     * Initially a Log File is marked as unused, and its status is set to *
+     * {@value} . A Log File also goes into this status once it has been
      * archived.
      */
     private static final int LOG_FILE_UNUSED = 0;
 
     /**
-     * The Log File currently being flushed has its status set to {@value}.
+     * The Log File currently being flushed has its status set to {@value} .
      */
     private static final int LOG_FILE_CURRENT = 1;
 
     /**
-     * Once the log file is full, it status changes to {@value}, and it becomes
+     * Once the log file is full, it status changes to {@value} , and it becomes
      * ready for archiving. An archive request is sent to the archive thread.
      */
     private static final int LOG_FILE_FULL = 2;
 
     /**
-     * If a Log File becomes corrupt, its status is set to {@value}.
+     * If a Log File becomes corrupt, its status is set to {@value} .
      */
     static final int LOG_FILE_INVALID = -1;
 
     /**
-     * The maximum number of control files allowed is {@value}.
+     * The maximum number of control files allowed is {@value} .
      */
     static final int MAX_CTL_FILES = 3;
 
     /**
-     * The maximum number of Log Groups allowed is {@value}.
+     * The maximum number of Log Groups allowed is {@value} .
      * 
      * @see #LOG_GROUP_IDS
      */
     static final int MAX_LOG_GROUPS = 3;
 
     /**
-     * The maximum number of log files in a group is {@value}.
+     * The maximum number of log files in a group is {@value} .
      */
     private static final int MAX_LOG_FILES = 8;
 
@@ -262,21 +263,21 @@ public final class LogManagerImpl implements LogManager {
      * the user, followed by a trailer. The structure of the header portion is
      * as follows:
      * <ol>
-     * <li> length - 4 byte length of the log record </li>
-     * <li> lsn - 8 bytes containing lsn of the log record </li>
-     * <li> prevLsn - 8 bytes containing lsn of previous log record </li>
+     * <li>length - 4 byte length of the log record</li>
+     * <li>lsn - 8 bytes containing lsn of the log record</li>
+     * <li>prevLsn - 8 bytes containing lsn of previous log record</li>
      * </ol>
      * The header is followed by the data. Note that EOF records do not have any
      * data.
      * <ol>
-     * <li> data - byte[length - (length of header fields)] </li>
+     * <li>data - byte[length - (length of header fields)]</li>
      * </ol>
      * Data is followed by a trailer containing a checksum. Checksum is
      * calculated on header and data fields.
      * <ol>
-     * <li> checksum - 8 bytes </li>
+     * <li>checksum - 8 bytes</li>
      * </ol>
-     * The minimum length of a Log Record is {@value}.
+     * The minimum length of a Log Record is {@value} .
      */
     private static final int LOGREC_HEADER_SIZE = TypeSize.INTEGER + // length
             Lsn.SIZE + // lsn
@@ -327,7 +328,7 @@ public final class LogManagerImpl implements LogManager {
      * closed.
      */
     private volatile boolean errored;
-    
+
     /**
      * Flag to indicate that the LogManager is stopping/stopped.
      */
@@ -371,9 +372,8 @@ public final class LogManagerImpl implements LogManager {
      * @see LogWriter
      * @see #setupBackgroundThreads()
      */
-//    private ScheduledExecutorService flushService;
+    //    private ScheduledExecutorService flushService;
     ScheduledFuture<?> flushService;
-    
 
     /**
      * A Single Threaded Executor service is used to handle archive log file
@@ -382,20 +382,19 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      * @see #setupBackgroundThreads()
      */
-//    private ExecutorService archiveService;
- 
- 
+    //    private ExecutorService archiveService;
+
     /**
-     * The ArchiveCleaner task is responsible for deleting
-     * redundant archived logs.
+     * The ArchiveCleaner task is responsible for deleting redundant archived
+     * logs.
      */
     ScheduledFuture<?> archiveCleaner;
 
     /**
      * Tracks the logIndex of the last archived file.
      */
-    private volatile int lastArchivedFile = -1;    
-    
+    private volatile int lastArchivedFile = -1;
+
     /*
      * Note on multi-threading issues. The goals of the design are to ensure
      * that:
@@ -479,21 +478,22 @@ public final class LogManagerImpl implements LogManager {
      * Exceptions encountered by background threads are recorded here.
      */
     private final List<Exception> exceptions = Collections
-        .synchronizedList(new LinkedList<Exception>());
+            .synchronizedList(new LinkedList<Exception>());
 
     /**
-     * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
-     * Log flushes still happen during log switches or when there is a checkpoint.
-     * This option can improve performance at the expense of lost transactions after recovery.
+     * If set, disables log flushes when explicitly requested by the buffer
+     * manager or transactions. Log flushes still happen during log switches or
+     * when there is a checkpoint. This option can improve performance at the
+     * expense of lost transactions after recovery.
      */
     private final boolean disableExplicitFlushRequests;
-    
+
     /**
      * The size of a log buffer.
      * <p>
      * MT safe, because it is updated only once.
      */
-    private final int logBufferSize;    
+    private final int logBufferSize;
 
     /**
      * Specifies the maximum number of log buffers to allocate. Thread safe.
@@ -503,77 +503,78 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Specifies the interval between log flushes in seconds. Thread safe.
      */
-    private final int logFlushInterval;    
+    private final int logFlushInterval;
 
     // Write Ahead Log Manager messages
-	static Message m_EW0001 = new Message('R', 'W', MessageType.ERROR, 1,
-			"Log record is {0} bytes whereas maximum allowed log record size is {0}");
-	static Message m_EW0002 = new Message('R', 'W', MessageType.ERROR, 2,
-			"Unexpected error ocurred while attempting to insert a log record");
-	static Message m_EW0003 = new Message('R', 'W', MessageType.ERROR, 3,
-			"Log is already open or has encountered an error");
-	static Message m_EW0004 = new Message('R', 'W', MessageType.ERROR, 4,
-			"Unexpected error occurred during shutdown");
-	static Message m_EW0005 = new Message('R', 'W', MessageType.ERROR, 5,
-			"Unexpected error occurred");
-	static Message m_EW0006 = new Message('R', 'W', MessageType.ERROR, 6,
-			"Specified number of log control files {0} exceeds the maximum limit of {1}");
-	static Message m_EW0007 = new Message('R', 'W', MessageType.ERROR, 7,
-			"Specified number of log groups {0} exceeds the maximum limit of {1}");
-	static Message m_EW0008 = new Message('R', 'W', MessageType.ERROR, 8,
-			"Specified number of log files {0} exceeds the maximum limit of {1}");
-	static Message m_EW0009 = new Message('R', 'W', MessageType.ERROR, 9,
-			"Error occurred while reading Log Anchor header information");
-	static Message m_EW0010 = new Message('R', 'W', MessageType.ERROR, 10,
-			"Error occurred while reading Log Anchor body");
-	static Message m_EW0011 = new Message('R', 'W', MessageType.ERROR, 11,
-			"Error occurred while validating Log Anchor - checksums do not match");
-	static Message m_EW0012 = new Message('R', 'W', MessageType.ERROR, 12,
-			"Error occurred while reading header record for Log File {0}");
-	static Message m_EW0013 = new Message('R', 'W', MessageType.ERROR, 13,
-			"Error occurred while opening Log File {0} - header is corrupted");
-	static Message m_EW0014 = new Message('R', 'W', MessageType.ERROR, 14,
-			"Unexpected error occurred while closing Log File");
-	static Message m_EW0015 = new Message('R', 'W', MessageType.ERROR, 15,
-			"Unexpected error occurred while closing Control File");
-	static Message m_EW0016 = new Message('R', 'W', MessageType.ERROR, 16,
-			"Log file is not open or has encountered errors");
-	static Message m_EW0017 = new Message('R', 'W', MessageType.ERROR, 17,
-			"Log file {0} has unexpected status {1}");
-	static Message m_EW0018 = new Message('R', 'W', MessageType.ERROR, 18,
-			"Unexpected error occurred");
-	static Message m_EW0019 = new Message('R', 'W', MessageType.ERROR, 19,
-			"Error occurred while attempting to archive Log File");
-	static Message m_EW0020 = new Message('R', 
-			'W',
-			MessageType.ERROR,
-			20,
-			"Error occurred while processing archive request - expected request {0} but got {1}");
-	static Message m_EW0021 = new Message('R', 'W', MessageType.ERROR, 21,
-			"Error occurred while reading Log Record {0} - checksum mismatch");
-	static Message m_EW0022 = new Message('R', 'W', MessageType.ERROR, 22,
-			"Error occurred while reading Log Record {0} - invalid log index");
-	static Message m_EW0023 = new Message('R', 'W', MessageType.ERROR, 23,
-			"Error occurred while reading Log Record {0} - log header cannot be read");
-	static Message m_EW0024 = new Message('R', 'W', MessageType.ERROR, 24,
-			"Log Record {0} has invalid length {1} - possibly garbage");
-	static Message m_EW0025 = new Message('R', 'W', MessageType.ERROR, 25,
-			"Error occurred while reading Log Record {0} - read error");
-	static Message m_EW0026 = new Message('R', 'W', MessageType.ERROR, 26,
-			"Error occurred while flushing the Log");
-	static Message m_EW0027 = new Message('R', 'W', MessageType.ERROR, 27,
-			"Error occurred while archiving a Log File");
-	static Message m_IW0028 = new Message('R', 'W', MessageType.INFO, 28,
-			"Log Writer STARTED");
-	static Message m_IW0029 = new Message('R', 'W', MessageType.INFO, 29,
-			"Archive Cleaner STARTED");
-	static Message m_IW0030 = new Message('R', 'W', MessageType.INFO, 30,
-			"Log Writer STOPPED");
-	static Message m_IW0031 = new Message('R', 'W', MessageType.INFO, 31,
-			"Archive Cleaner STOPPED");
-	static Message m_IW0032 = new Message('R', 'W', MessageType.INFO, 32,
-			"Write Ahead Log Manager STOPPED");    
-    
+    static Message m_EW0001 = new Message('R', 'W', MessageType.ERROR, 1,
+            "Log record is {0} bytes whereas maximum allowed log record size is {0}");
+    static Message m_EW0002 = new Message('R', 'W', MessageType.ERROR, 2,
+            "Unexpected error ocurred while attempting to insert a log record");
+    static Message m_EW0003 = new Message('R', 'W', MessageType.ERROR, 3,
+            "Log is already open or has encountered an error");
+    static Message m_EW0004 = new Message('R', 'W', MessageType.ERROR, 4,
+            "Unexpected error occurred during shutdown");
+    static Message m_EW0005 = new Message('R', 'W', MessageType.ERROR, 5,
+            "Unexpected error occurred");
+    static Message m_EW0006 = new Message('R', 'W', MessageType.ERROR, 6,
+            "Specified number of log control files {0} exceeds the maximum limit of {1}");
+    static Message m_EW0007 = new Message('R', 'W', MessageType.ERROR, 7,
+            "Specified number of log groups {0} exceeds the maximum limit of {1}");
+    static Message m_EW0008 = new Message('R', 'W', MessageType.ERROR, 8,
+            "Specified number of log files {0} exceeds the maximum limit of {1}");
+    static Message m_EW0009 = new Message('R', 'W', MessageType.ERROR, 9,
+            "Error occurred while reading Log Anchor header information");
+    static Message m_EW0010 = new Message('R', 'W', MessageType.ERROR, 10,
+            "Error occurred while reading Log Anchor body");
+    static Message m_EW0011 = new Message('R', 'W', MessageType.ERROR, 11,
+            "Error occurred while validating Log Anchor - checksums do not match");
+    static Message m_EW0012 = new Message('R', 'W', MessageType.ERROR, 12,
+            "Error occurred while reading header record for Log File {0}");
+    static Message m_EW0013 = new Message('R', 'W', MessageType.ERROR, 13,
+            "Error occurred while opening Log File {0} - header is corrupted");
+    static Message m_EW0014 = new Message('R', 'W', MessageType.ERROR, 14,
+            "Unexpected error occurred while closing Log File");
+    static Message m_EW0015 = new Message('R', 'W', MessageType.ERROR, 15,
+            "Unexpected error occurred while closing Control File");
+    static Message m_EW0016 = new Message('R', 'W', MessageType.ERROR, 16,
+            "Log file is not open or has encountered errors");
+    static Message m_EW0017 = new Message('R', 'W', MessageType.ERROR, 17,
+            "Log file {0} has unexpected status {1}");
+    static Message m_EW0018 = new Message('R', 'W', MessageType.ERROR, 18,
+            "Unexpected error occurred");
+    static Message m_EW0019 = new Message('R', 'W', MessageType.ERROR, 19,
+            "Error occurred while attempting to archive Log File");
+    static Message m_EW0020 = new Message(
+            'R',
+            'W',
+            MessageType.ERROR,
+            20,
+            "Error occurred while processing archive request - expected request {0} but got {1}");
+    static Message m_EW0021 = new Message('R', 'W', MessageType.ERROR, 21,
+            "Error occurred while reading Log Record {0} - checksum mismatch");
+    static Message m_EW0022 = new Message('R', 'W', MessageType.ERROR, 22,
+            "Error occurred while reading Log Record {0} - invalid log index");
+    static Message m_EW0023 = new Message('R', 'W', MessageType.ERROR, 23,
+            "Error occurred while reading Log Record {0} - log header cannot be read");
+    static Message m_EW0024 = new Message('R', 'W', MessageType.ERROR, 24,
+            "Log Record {0} has invalid length {1} - possibly garbage");
+    static Message m_EW0025 = new Message('R', 'W', MessageType.ERROR, 25,
+            "Error occurred while reading Log Record {0} - read error");
+    static Message m_EW0026 = new Message('R', 'W', MessageType.ERROR, 26,
+            "Error occurred while flushing the Log");
+    static Message m_EW0027 = new Message('R', 'W', MessageType.ERROR, 27,
+            "Error occurred while archiving a Log File");
+    static Message m_IW0028 = new Message('R', 'W', MessageType.INFO, 28,
+            "Log Writer STARTED");
+    static Message m_IW0029 = new Message('R', 'W', MessageType.INFO, 29,
+            "Archive Cleaner STARTED");
+    static Message m_IW0030 = new Message('R', 'W', MessageType.INFO, 30,
+            "Log Writer STOPPED");
+    static Message m_IW0031 = new Message('R', 'W', MessageType.INFO, 31,
+            "Archive Cleaner STOPPED");
+    static Message m_IW0032 = new Message('R', 'W', MessageType.INFO, 32,
+            "Write Ahead Log Manager STOPPED");
+
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.wal.LogManager#insert(byte[], int)
      */
@@ -581,10 +582,9 @@ public final class LogManagerImpl implements LogManager {
         assertIsOpen();
         int reclen = calculateLogRecordSize(length);
         if (reclen > getMaxLogRecSize()) {
-            exceptionHandler.errorThrow(getClass().getName(), "insert", 
-            	new LogException(new MessageInstance(m_EW0001,
-                reclen,
-                getMaxLogRecSize())));
+            exceptionHandler.errorThrow(getClass().getName(), "insert",
+                    new LogException(new MessageInstance(m_EW0001, reclen,
+                            getMaxLogRecSize())));
         }
         bufferLock.lock();
         /*
@@ -617,7 +617,7 @@ public final class LogManagerImpl implements LogManager {
             flush();
             bufferLock.lock();
         }
-        
+
         try {
             anchorLock.lock();
             try {
@@ -625,11 +625,8 @@ public final class LogManagerImpl implements LogManager {
                 if (nextLsn.getOffset() > getEofPos()) {
                     // Add EOF record
                     // System.err.println("ADDING EOF AT " + anchor.currentLsn);
-                    addToBuffer(
-                        anchor.currentLsn,
-                        new byte[1],
-                        0,
-                        anchor.maxLsn);
+                    addToBuffer(anchor.currentLsn, new byte[1], 0,
+                            anchor.maxLsn);
                     anchor.maxLsn = anchor.currentLsn;
                     anchor.currentLsn = advanceToNextFile(anchor.currentLsn);
                     nextLsn = advanceToNextRecord(anchor.currentLsn, reclen);
@@ -669,9 +666,8 @@ public final class LogManagerImpl implements LogManager {
      */
     public final LogReader getForwardScanningReader(Lsn startLsn) {
         assertIsOpen();
-        return new LogForwardReaderImpl(
-            this,
-            startLsn == null ? LogManagerImpl.FIRST_LSN : startLsn);
+        return new LogForwardReaderImpl(this,
+                startLsn == null ? LogManagerImpl.FIRST_LSN : startLsn);
     }
 
     /* (non-Javadoc)
@@ -693,8 +689,8 @@ public final class LogManagerImpl implements LogManager {
          * for details of why this is necessary.
          */
         if (started || errored) {
-            exceptionHandler.errorThrow(getClass().getName(), "start", 
-            		new LogException(new MessageInstance(m_EW0003)));
+            exceptionHandler.errorThrow(getClass().getName(), "start",
+                    new LogException(new MessageInstance(m_EW0003)));
         }
         openCtlFiles();
         openLogFiles();
@@ -709,38 +705,42 @@ public final class LogManagerImpl implements LogManager {
      * @see org.simpledbm.rss.api.wal.LogManager#shutdown()
      */
     public final synchronized void shutdown() {
-    	stopped = true;
+        stopped = true;
         if (started) {
             /*
              * We shutdown the flush service before attempting to flush the Log -
              * to avoid unnecessary conflicts.
              */
-        	flushService.cancel(false);
-//            flushService.shutdown();
-//            try {
-//                flushService.awaitTermination(60, TimeUnit.SECONDS);
-//            } catch (InterruptedException e1) {
-//                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-//            }
-            logger.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IW0030).toString());
+            flushService.cancel(false);
+            //            flushService.shutdown();
+            //            try {
+            //                flushService.awaitTermination(60, TimeUnit.SECONDS);
+            //            } catch (InterruptedException e1) {
+            //                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
+            //            }
+            logger.info(this.getClass().getName(), "shutdown",
+                    new MessageInstance(m_IW0030).toString());
             if (!errored) {
                 try {
                     flush();
                 } catch (Exception e) {
-                    logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e);
+                    logger.error(getClass().getName(), "shutdown",
+                            new MessageInstance(m_EW0004).toString(), e);
                 }
             }
             archiveCleaner.cancel(false);
-//            archiveService.shutdown();
-//            try {
-//                archiveService.awaitTermination(60, TimeUnit.SECONDS);
-//            } catch (InterruptedException e1) {
-//                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-//            }
-            logger.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IW0031).toString());
+            //            archiveService.shutdown();
+            //            try {
+            //                archiveService.awaitTermination(60, TimeUnit.SECONDS);
+            //            } catch (InterruptedException e1) {
+            //                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
+            //            }
+            logger.info(this.getClass().getName(), "shutdown",
+                    new MessageInstance(m_IW0031).toString());
             closeLogFiles();
             closeCtlFiles();
-            logger.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IW0032).toString());
+            logger.info(this.getClass().getName(), "shutdown",
+                    new MessageInstance(m_IW0032).toString());
             /*
              * TODO // move this to the beginning Let us first set the flag so
              * that further client requests will not be entertained.
@@ -756,29 +756,29 @@ public final class LogManagerImpl implements LogManager {
     public final Lsn getCheckpointLsn() {
         anchorLock.lock();
         Lsn lsn = null;
-		try {
-			lsn = new Lsn(anchor.checkpointLsn);
-		} finally {
-			anchorLock.unlock();
-		}
-		return lsn;
+        try {
+            lsn = new Lsn(anchor.checkpointLsn);
+        } finally {
+            anchorLock.unlock();
+        }
+        return lsn;
     }
 
     /*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.simpledbm.rss.api.wal.LogManager#getOldestInterestingLsn()
-	 */
+     * (non-Javadoc)
+     * 
+     * @see org.simpledbm.rss.api.wal.LogManager#getOldestInterestingLsn()
+     */
     public final Lsn getOldestInterestingLsn() {
-		anchorLock.lock();
-		Lsn lsn = null;
-		try {
-			lsn = new Lsn(anchor.oldestInterestingLsn);
-		} finally {
-			anchorLock.unlock();
-		}
-		return lsn;
-	}
+        anchorLock.lock();
+        Lsn lsn = null;
+        try {
+            lsn = new Lsn(anchor.oldestInterestingLsn);
+        } finally {
+            anchorLock.unlock();
+        }
+        return lsn;
+    }
 
     final void setCheckpointLsn(Lsn lsn) {
         anchorLock.lock();
@@ -827,39 +827,41 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     logFilesSemaphore.acquire();
                 } catch (InterruptedException e) {
-                    exceptionHandler.errorThrow(getClass().getName(), "setupBackgroundThreads", 
-                    	new LogException(new MessageInstance(m_EW0005), e));
+                    exceptionHandler.errorThrow(getClass().getName(),
+                            "setupBackgroundThreads", new LogException(
+                                    new MessageInstance(m_EW0005), e));
                 }
             }
         }
-//        flushService = Executors.newSingleThreadScheduledExecutor();
-//        archiveService = Executors.newSingleThreadExecutor();
+        //        flushService = Executors.newSingleThreadScheduledExecutor();
+        //        archiveService = Executors.newSingleThreadExecutor();
 
-//        flushService.scheduleWithFixedDelay(
-//            new LogWriter(this),
-//            logFlushInterval,
-//            logFlushInterval,
-//            TimeUnit.SECONDS);
-		flushService = platform.getScheduler().scheduleWithFixedDelay(
-				Priority.SERVER_TASK, new LogWriter(this), logFlushInterval,
-				logFlushInterval, TimeUnit.SECONDS);
-        logger.info(this.getClass().getName(), "setupBackgroundThreads", new MessageInstance(m_IW0028).toString());
-//      flushService.scheduleWithFixedDelay(
-//      new ArchiveCleaner(this),
-//      logFlushInterval,
-//      logFlushInterval,
-//      TimeUnit.SECONDS);		
+        //        flushService.scheduleWithFixedDelay(
+        //            new LogWriter(this),
+        //            logFlushInterval,
+        //            logFlushInterval,
+        //            TimeUnit.SECONDS);
+        flushService = platform.getScheduler().scheduleWithFixedDelay(
+                Priority.SERVER_TASK, new LogWriter(this), logFlushInterval,
+                logFlushInterval, TimeUnit.SECONDS);
+        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+                new MessageInstance(m_IW0028).toString());
+        //      flushService.scheduleWithFixedDelay(
+        //      new ArchiveCleaner(this),
+        //      logFlushInterval,
+        //      logFlushInterval,
+        //      TimeUnit.SECONDS);		
         archiveCleaner = platform.getScheduler().scheduleWithFixedDelay(
-				Priority.SERVER_TASK, new ArchiveCleaner(this),
-				logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
-        logger.info(this.getClass().getName(), "setupBackgroundThreads", new MessageInstance(m_IW0029).toString());
+                Priority.SERVER_TASK, new ArchiveCleaner(this),
+                logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
+        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+                new MessageInstance(m_IW0029).toString());
     }
 
     /**
      * Determines the LSN of the first log record in the next log file.
      * 
-     * @param lsn
-     *            Current Lsn
+     * @param lsn Current Lsn
      * @return New value of Lsn
      */
     Lsn advanceToNextFile(Lsn lsn) {
@@ -869,10 +871,8 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Determines LSN of next log record in the same log file.
      * 
-     * @param lsn
-     *            Current Lsn
-     * @param length
-     *            Length of the Log Record
+     * @param lsn Current Lsn
+     * @param length Length of the Log Record
      * @return New value of Lsn
      */
     Lsn advanceToNextRecord(Lsn lsn, int length) {
@@ -882,8 +882,7 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Calculates the size of a log record including any header information.
      * 
-     * @param dataLength
-     *            Length of the data
+     * @param dataLength Length of the data
      * @return Length of the LogRecord
      */
     static int calculateLogRecordSize(int dataLength) {
@@ -927,10 +926,9 @@ public final class LogManagerImpl implements LogManager {
      */
     final void setCtlFiles(String files[]) {
         if (files.length > MAX_CTL_FILES) {
-            exceptionHandler.errorThrow(getClass().getName(), "setCtlFiles", 
-            	new LogException(new MessageInstance(m_EW0006,
-                files.length,
-                MAX_CTL_FILES)));
+            exceptionHandler.errorThrow(getClass().getName(), "setCtlFiles",
+                    new LogException(new MessageInstance(m_EW0006,
+                            files.length, MAX_CTL_FILES)));
         }
         for (int i = 0; i < files.length; i++) {
             anchor.ctlFiles[i] = new ByteString(files[i]);
@@ -948,25 +946,20 @@ public final class LogManagerImpl implements LogManager {
     final void setLogFiles(String groupPaths[], short n_LogFiles) {
         int n_LogGroups = groupPaths.length;
         if (n_LogGroups > MAX_LOG_GROUPS) {
-            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles", 
-            	new LogException(new MessageInstance(m_EW0007,
-                n_LogGroups,
-                MAX_LOG_GROUPS)));
+            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles",
+                    new LogException(new MessageInstance(m_EW0007, n_LogGroups,
+                            MAX_LOG_GROUPS)));
         }
         if (n_LogFiles > MAX_LOG_FILES) {
-            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles", 
-            	new LogException(new MessageInstance(m_EW0008,
-                n_LogFiles,
-                MAX_LOG_FILES)));
+            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles",
+                    new LogException(new MessageInstance(m_EW0008, n_LogFiles,
+                            MAX_LOG_FILES)));
         }
         anchor.n_LogGroups = (short) n_LogGroups;
         anchor.n_LogFiles = n_LogFiles;
         for (int i = 0; i < anchor.n_LogGroups; i++) {
-            anchor.groups[i] = new LogGroup(
-                LOG_GROUP_IDS[i],
-                groupPaths[i],
-                LOG_GROUP_OK,
-                anchor.n_LogFiles);
+            anchor.groups[i] = new LogGroup(LOG_GROUP_IDS[i], groupPaths[i],
+                    LOG_GROUP_OK, anchor.n_LogFiles);
         }
     }
 
@@ -989,11 +982,8 @@ public final class LogManagerImpl implements LogManager {
         }
         anchor.groups = new LogGroup[MAX_LOG_GROUPS];
         for (i = 0; i < MAX_LOG_GROUPS; i++) {
-            anchor.groups[i] = new LogGroup(
-                LOG_GROUP_IDS[i],
-                DEFAULT_GROUP_PATH,
-                LOG_GROUP_OK,
-                anchor.n_LogFiles);
+            anchor.groups[i] = new LogGroup(LOG_GROUP_IDS[i],
+                    DEFAULT_GROUP_PATH, LOG_GROUP_OK, anchor.n_LogFiles);
         }
         anchor.archivePath = new ByteString(DEFAULT_ARCHIVE_PATH);
         anchor.archiveMode = true;
@@ -1029,18 +1019,21 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a default LogImpl.
      */
-    public LogManagerImpl(PlatformObjects po, StorageContainerFactory storageFactory, int logBufferSize, int maxBuffers, int logFlushInterval, boolean disableExplicitFlushRequests) {
+    public LogManagerImpl(PlatformObjects po,
+            StorageContainerFactory storageFactory, int logBufferSize,
+            int maxBuffers, int logFlushInterval,
+            boolean disableExplicitFlushRequests) {
 
-    	this.logger = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
-    	this.platform = po.getPlatform();
-    	
-    	this.logBufferSize = logBufferSize;
-    	this.maxBuffers = maxBuffers;
-    	this.logFlushInterval = logFlushInterval;
-    	this.disableExplicitFlushRequests = disableExplicitFlushRequests;
-    	
-    	archiveLock = new ReentrantLock();
+        this.logger = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.platform = po.getPlatform();
+
+        this.logBufferSize = logBufferSize;
+        this.maxBuffers = maxBuffers;
+        this.logFlushInterval = logFlushInterval;
+        this.disableExplicitFlushRequests = disableExplicitFlushRequests;
+
+        archiveLock = new ReentrantLock();
         flushLock = new ReentrantLock();
         anchorLock = new ReentrantLock();
         bufferLock = new ReentrantLock();
@@ -1089,8 +1082,8 @@ public final class LogManagerImpl implements LogManager {
         byte bufh[] = new byte[TypeSize.INTEGER + TypeSize.LONG];
         long position = 0;
         if (container.read(position, bufh, 0, bufh.length) != bufh.length) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor", 
-            	new LogException(new MessageInstance(m_EW0009)));
+            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+                    new LogException(new MessageInstance(m_EW0009)));
         }
         position += bufh.length;
         ByteBuffer bh = ByteBuffer.wrap(bufh);
@@ -1098,13 +1091,13 @@ public final class LogManagerImpl implements LogManager {
         checksum = bh.getLong();
         byte bufb[] = new byte[n];
         if (container.read(position, bufb, 0, n) != n) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor", 
-            	new LogException(new MessageInstance(m_EW0010)));
+            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+                    new LogException(new MessageInstance(m_EW0010)));
         }
         long newChecksum = ChecksumCalculator.compute(bufb, 0, n);
         if (newChecksum != checksum) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor", 
-            	new LogException(new MessageInstance(m_EW0011)));
+            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+                    new LogException(new MessageInstance(m_EW0011)));
         }
         ByteBuffer bb = ByteBuffer.wrap(bufb);
         LogAnchor anchor = new LogAnchor(bb);
@@ -1118,10 +1111,8 @@ public final class LogManagerImpl implements LogManager {
      */
     private void createLogAnchor(String filename) {
         if (logger.isDebugEnabled()) {
-            logger.debug(
-                getClass().getName(),
-                "createLogAnchor",
-                "SIMPLEDBM-DEBUG: Creating log control file " + filename);
+            logger.debug(getClass().getName(), "createLogAnchor",
+                    "SIMPLEDBM-DEBUG: Creating log control file " + filename);
         }
         StorageContainer file = null;
         try {
@@ -1193,10 +1184,8 @@ public final class LogManagerImpl implements LogManager {
     private void createLogFile(String filename, LogFileHeader header) {
 
         if (logger.isDebugEnabled()) {
-            logger.debug(
-                getClass().getName(),
-                "createLogFile",
-                "SIMPLEDBM-DEBUG: Creating log file " + filename);
+            logger.debug(getClass().getName(), "createLogFile",
+                    "SIMPLEDBM-DEBUG: Creating log file " + filename);
         }
 
         StorageContainer file = null;
@@ -1250,9 +1239,8 @@ public final class LogManagerImpl implements LogManager {
         int i, j;
         for (i = 0; i < anchor.n_LogGroups; i++) {
             for (j = 0; j < anchor.n_LogFiles; j++) {
-                LogFileHeader header = new LogFileHeader(
-                    LOG_GROUP_IDS[i],
-                    anchor.logIndexes[j]);
+                LogFileHeader header = new LogFileHeader(LOG_GROUP_IDS[i],
+                        anchor.logIndexes[j]);
                 createLogFile(anchor.groups[i].files[j].toString(), header);
             }
         }
@@ -1267,7 +1255,8 @@ public final class LogManagerImpl implements LogManager {
         ByteBuffer bb = ByteBuffer.allocate(LogFileHeader.SIZE);
 
         for (int i = 0; i < anchor.n_LogGroups; i++) {
-            LogFileHeader header = new LogFileHeader(anchor.groups[i].id, anchor.logIndexes[logfile]);
+            LogFileHeader header = new LogFileHeader(anchor.groups[i].id,
+                    anchor.logIndexes[logfile]);
             bb.clear();
             header.store(bb);
             bb.flip();
@@ -1292,22 +1281,24 @@ public final class LogManagerImpl implements LogManager {
     private void openLogFile(int groupno, int fileno) {
         byte[] bufh = new byte[LogFileHeader.SIZE];
         files[groupno][fileno] = storageFactory
-            .open(anchor.groups[groupno].files[fileno].toString());
+                .open(anchor.groups[groupno].files[fileno].toString());
         if (anchor.fileStatus[fileno] != LOG_FILE_UNUSED) {
-			if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
-				exceptionHandler.errorThrow(getClass().getName(), "openLogFile", 
-					new LogException(new MessageInstance(m_EW0012,
-						anchor.groups[groupno].files[fileno].toString())));
-			}
-			ByteBuffer bh = ByteBuffer.wrap(bufh);
-			LogFileHeader fh = new LogFileHeader(bh);
-			if (fh.id != LOG_GROUP_IDS[groupno]
-					|| fh.index != anchor.logIndexes[fileno]) {
-				exceptionHandler.errorThrow(getClass().getName(), "openLogFile", 
-					new LogException(new MessageInstance(m_EW0013,
-						anchor.groups[groupno].files[fileno].toString())));
-			}
-		}
+            if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
+                exceptionHandler.errorThrow(getClass().getName(),
+                        "openLogFile", new LogException(new MessageInstance(
+                                m_EW0012, anchor.groups[groupno].files[fileno]
+                                        .toString())));
+            }
+            ByteBuffer bh = ByteBuffer.wrap(bufh);
+            LogFileHeader fh = new LogFileHeader(bh);
+            if (fh.id != LOG_GROUP_IDS[groupno]
+                    || fh.index != anchor.logIndexes[fileno]) {
+                exceptionHandler.errorThrow(getClass().getName(),
+                        "openLogFile", new LogException(new MessageInstance(
+                                m_EW0013, anchor.groups[groupno].files[fileno]
+                                        .toString())));
+            }
+        }
     }
 
     /**
@@ -1333,7 +1324,8 @@ public final class LogManagerImpl implements LogManager {
                     try {
                         files[i][j].close();
                     } catch (Exception e) {
-                        logger.error(getClass().getName(), "closeLogFiles", new MessageInstance(m_EW0014).toString(), e);
+                        logger.error(getClass().getName(), "closeLogFiles",
+                                new MessageInstance(m_EW0014).toString(), e);
                     }
                     files[i][j] = null;
                 }
@@ -1364,7 +1356,8 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     ctlFiles[i].close();
                 } catch (Exception e) {
-                    logger.error(getClass().getName(), "closeCtlFiles", new MessageInstance(m_EW0015).toString(), e);
+                    logger.error(getClass().getName(), "closeCtlFiles",
+                            new MessageInstance(m_EW0015).toString(), e);
                 }
                 ctlFiles[i] = null;
             }
@@ -1400,8 +1393,8 @@ public final class LogManagerImpl implements LogManager {
 
     private void assertIsOpen() {
         if (!started || errored) {
-            exceptionHandler.errorThrow(getClass().getName(), "assertIsOpen", 
-            	new LogException(new MessageInstance(m_EW0016)));
+            exceptionHandler.errorThrow(getClass().getName(), "assertIsOpen",
+                    new LogException(new MessageInstance(m_EW0016)));
         }
     }
 
@@ -1432,8 +1425,9 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      */
     private void submitArchiveRequest(ArchiveRequest req) {
-//        archiveService.submit(new ArchiveRequestHandler(this, req));
-    	platform.getScheduler().execute(Priority.SERVER_TASK, new ArchiveRequestHandler(this, req));
+        //        archiveService.submit(new ArchiveRequestHandler(this, req));
+        platform.getScheduler().execute(Priority.SERVER_TASK,
+                new ArchiveRequestHandler(this, req));
     }
 
     /**
@@ -1457,10 +1451,10 @@ public final class LogManagerImpl implements LogManager {
         anchorLock.lock();
         try {
             if (anchor.fileStatus[anchor.currentLogFile] != LOG_FILE_CURRENT) {
-                exceptionHandler.errorThrow(getClass().getName(), "logSwitch", 
-                	new LogException(new MessageInstance(m_EW0017,
-                    anchor.currentLogFile,
-                    anchor.fileStatus[anchor.currentLogFile])));
+                exceptionHandler.errorThrow(getClass().getName(), "logSwitch",
+                        new LogException(new MessageInstance(m_EW0017,
+                                anchor.currentLogFile,
+                                anchor.fileStatus[anchor.currentLogFile])));
             }
 
             // System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + anchor.currentLogFile + " CHANGED TO FULL");
@@ -1479,10 +1473,8 @@ public final class LogManagerImpl implements LogManager {
         try {
             logFilesSemaphore.acquire();
         } catch (InterruptedException e) {
-            exceptionHandler.errorThrow(
-                getClass().getName(),
-                "logSwitch",
-                new LogException(new MessageInstance(m_EW0018), e));
+            exceptionHandler.errorThrow(getClass().getName(), "logSwitch",
+                    new LogException(new MessageInstance(m_EW0018), e));
         }
 
         ByteBuffer bb = null;
@@ -1513,8 +1505,9 @@ public final class LogManagerImpl implements LogManager {
                     //for (int j = 0; j < anchor.n_LogFiles; j++) {
                     //	System.err.println("FileStatus[" + j + "]=" + anchor.fileStatus[j]);
                     //}
-                    exceptionHandler.errorThrow(getClass().getName(), "logSwitch", 
-                    	new LogException(new MessageInstance(m_EW0018)));
+                    exceptionHandler.errorThrow(getClass().getName(),
+                            "logSwitch", new LogException(new MessageInstance(
+                                    m_EW0018)));
                 } else {
                     anchor.currentLogIndex++;
                     //System.err.println(Thread.currentThread().getName() + ": LogSwitch: LOG FILE STATUS OF " + next_log_file + " CHANGED TO CURRENT");
@@ -1567,11 +1560,8 @@ public final class LogManagerImpl implements LogManager {
 
         int f = anchor.currentLogFile;
         for (int g = 0; g < anchor.n_LogGroups; g++) {
-            files[g][f].write(
-                req.offset,
-                req.buffer.buffer,
-                req.startPosition,
-                req.length);
+            files[g][f].write(req.offset, req.buffer.buffer, req.startPosition,
+                    req.length);
         }
     }
 
@@ -1638,10 +1628,9 @@ public final class LogManagerImpl implements LogManager {
                     // Get the oldest log buffer
                     buf = logBuffers.getFirst();
                     if (logger.isDebugEnabled()) {
-                        logger.debug(
-                            getClass().getName(),
-                            "handleFlushRequest_",
-                            "SIMPLEDBM-DEBUG: Flushing Log Buffer " + buf);
+                        logger.debug(getClass().getName(),
+                                "handleFlushRequest_",
+                                "SIMPLEDBM-DEBUG: Flushing Log Buffer " + buf);
                     }
                     // Did we flush all available records?
                     boolean flushedAllRecs = true;
@@ -1661,9 +1650,8 @@ public final class LogManagerImpl implements LogManager {
                         }
                         // System.err.println("FLUSHING LSN=" + rec.getLsn());
                         if (currentRequest == null
-                                || currentRequest.logIndex != rec
-                                    .getLsn()
-                                    .getIndex()) {
+                                || currentRequest.logIndex != rec.getLsn()
+                                        .getIndex()) {
                             // Either this is the first log record or the log
                             // file has changed
                             currentRequest = createFlushIORequest(buf, rec);
@@ -1722,7 +1710,7 @@ public final class LogManagerImpl implements LogManager {
                     if (deleteBuffer) {
                         // assert buf.records.getLast().getLsn().compareTo(anchor.durableLsn) <= 0;
                         assert buf.records.lastKey().compareTo(
-                            anchor.durableLsn) <= 0;
+                                anchor.durableLsn) <= 0;
                         logBuffers.remove(buf);
                         // Inform inserters that they can proceed to acquire new
                         // buffer
@@ -1818,8 +1806,9 @@ public final class LogManagerImpl implements LogManager {
                 n = files[0][f].read(position, buf, 0, buf.length);
             }
             if (position != anchor.logFileSize) {
-                exceptionHandler.errorThrow(getClass().getName(), "archiveLogFile", 
-                	new LogException(new MessageInstance(m_EW0019)));
+                exceptionHandler.errorThrow(getClass().getName(),
+                        "archiveLogFile", new LogException(new MessageInstance(
+                                m_EW0019)));
             }
             archive.flush();
         } finally {
@@ -1829,7 +1818,6 @@ public final class LogManagerImpl implements LogManager {
         }
         // validateLogFile(anchor.logIndexes[f], name);
     }
-
 
     /**
      * Process the next archive log file request, ensuring that only one archive
@@ -1846,12 +1834,11 @@ public final class LogManagerImpl implements LogManager {
             } else {
                 if (request.logIndex != lastArchivedFile + 1) {
                     this.errored = true;
-                    exceptionHandler.errorThrow(
-                        getClass().getName(),
-                        "handleNextArchiveRequest",
-                        new LogException(new MessageInstance(m_EW0020,
-                        lastArchivedFile + 1,
-                        request.logIndex)));
+                    exceptionHandler.errorThrow(getClass().getName(),
+                            "handleNextArchiveRequest", new LogException(
+                                    new MessageInstance(m_EW0020,
+                                            lastArchivedFile + 1,
+                                            request.logIndex)));
                 }
                 lastArchivedFile = request.logIndex;
             }
@@ -1928,10 +1915,8 @@ public final class LogManagerImpl implements LogManager {
      * does not get confused by a valid but unexpected log record - for example,
      * an old record in a log file.
      * 
-     * @param readLsn
-     *            Lsn of the record being parsed
-     * @param bb
-     *            Data stream
+     * @param readLsn Lsn of the record being parsed
+     * @param bb Data stream
      * @return
      * @see #LOGREC_HEADER_SIZE
      */
@@ -1955,8 +1940,8 @@ public final class LogManagerImpl implements LogManager {
                 - offset);
         long checksum = bb.getLong();
         if (!lsn.equals(readLsn) || checksum != ck) {
-//            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
-//            	new LogException(mcat.getMessage("EW0021", readLsn)));
+            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            	new LogException(mcat.getMessage("EW0021", readLsn)));
             throw new LogException(new MessageInstance(m_EW0021, readLsn));
         }
         return logrec;
@@ -1971,26 +1956,26 @@ public final class LogManagerImpl implements LogManager {
         byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
         int n = container.read(position, lbytes, 0, lbytes.length);
         if (n != lbytes.length) {
-//            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
-//            	new LogException(mcat.getMessage("EW0023", lsn)));
+            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            	new LogException(mcat.getMessage("EW0023", lsn)));
             throw new LogException(new MessageInstance(m_EW0023, lsn));
         }
         position += lbytes.length;
         ByteBuffer bb = ByteBuffer.wrap(lbytes);
         int length = bb.getInt();
         if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-//            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
-//            	new LogException(mcat.getMessage("EW0024", lsn, length)));
-        	throw new LogException(new MessageInstance(m_EW0024, lsn, length));
+            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            	new LogException(mcat.getMessage("EW0024", lsn, length)));
+            throw new LogException(new MessageInstance(m_EW0024, lsn, length));
         }
         byte[] bytes = new byte[length];
         System.arraycopy(lbytes, 0, bytes, 0, lbytes.length);
         n = container.read(position, bytes, lbytes.length, bytes.length
                 - lbytes.length);
         if (n != (bytes.length - lbytes.length)) {
-//            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
-//            	new LogException(mcat.getMessage("EW0025", lsn)));
-        	throw new LogException(new MessageInstance(m_EW0025, lsn));
+            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            	new LogException(mcat.getMessage("EW0025", lsn)));
+            throw new LogException(new MessageInstance(m_EW0025, lsn));
         }
         return bytes;
     }
@@ -2006,8 +1991,7 @@ public final class LogManagerImpl implements LogManager {
      * Must not check the maxlsn or other anchor fields, because this may be
      * called from scanToEof().
      * 
-     * @param lsn
-     *            Lsn of the LogRecord to be read
+     * @param lsn Lsn of the LogRecord to be read
      * @return
      */
     final LogRecordImpl doRead(Lsn lsn) {
@@ -2021,7 +2005,7 @@ public final class LogManagerImpl implements LogManager {
                 LogRecordBuffer rec = buf.find(lsn);
                 if (rec != null) {
                     ByteBuffer bb = ByteBuffer.wrap(buf.buffer, rec
-                        .getPosition(), rec.getLength());
+                            .getPosition(), rec.getLength());
                     return doRead(lsn, bb);
                 }
             }
@@ -2059,9 +2043,11 @@ public final class LogManagerImpl implements LogManager {
                             }
                         }
                         if (fileno == -1) {
-                            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
-                            	new LogException(new MessageInstance(m_EW0022,
-                                lsn)));
+                            exceptionHandler
+                                    .errorThrow(getClass().getName(), "doRead",
+                                            new LogException(
+                                                    new MessageInstance(
+                                                            m_EW0022, lsn)));
                         }
                         /*
                          * Try to obtain a read lock on the file without
@@ -2127,7 +2113,7 @@ public final class LogManagerImpl implements LogManager {
                     break;
                 }
                 lsn = advanceToNextRecord(lsn, calculateLogRecordSize(logrec
-                    .getDataLength()));
+                        .getDataLength()));
             }
         } finally {
             container.close();
@@ -2174,9 +2160,8 @@ public final class LogManagerImpl implements LogManager {
                  */
                 scanLsn = advanceToNextFile(scanLsn);
             } else {
-                scanLsn = advanceToNextRecord(
-                    scanLsn,
-                    calculateLogRecordSize(logrec.getDataLength()));
+                scanLsn = advanceToNextRecord(scanLsn,
+                        calculateLogRecordSize(logrec.getDataLength()));
             }
             currentLsn = scanLsn;
         }
@@ -2189,19 +2174,20 @@ public final class LogManagerImpl implements LogManager {
 
     void logException(String className, String methodName, Message key,
             Exception e) {
-        logger.error(className, methodName, new MessageInstance(key).toString(), e);
+        logger.error(className, methodName,
+                new MessageInstance(key).toString(), e);
         exceptions.add(e);
         errored = true;
     }
 
     final boolean isErrored() {
-    	return errored;
+        return errored;
     }
-    
+
     final boolean isStopped() {
-    	return stopped;
+        return stopped;
     }
-    
+
     /**
      * Default (forward scanning) implementation of a <code>LogReader</code>.
      * 
@@ -2454,7 +2440,7 @@ public final class LogManagerImpl implements LogManager {
             id = bb.getChar();
             index = bb.getInt();
         }
-        
+
         public int getStoredLength() {
             return SIZE;
         }
@@ -2532,8 +2518,7 @@ public final class LogManagerImpl implements LogManager {
                 files[i] = new ByteString(bb);
             }
         }
-        
-        
+
         /*
          * @see org.simpledbm.rss.io.Storable#getStoredLength()
          */
@@ -2655,6 +2640,7 @@ public final class LogManagerImpl implements LogManager {
          * The size of a log buffer. (unused)
          * <p>
          * MT safe, because it is updated only once.
+         * 
          * @deprecated
          */
         int logBufferSize;
@@ -2711,31 +2697,32 @@ public final class LogManagerImpl implements LogManager {
         Lsn checkpointLsn;
 
         /**
-         * This is the oldest LSN that may be needed during restart
-         * recovery. It is the lesser of: 
-         * a) oldest start LSN amongst all active
-         * transactions during a checkpoint.
-         * b) oldest recovery LSN amongst all dirty pages
-         * in the buffer pool.
-         * c) checkpoint LSN.
+         * This is the oldest LSN that may be needed during restart recovery. It
+         * is the lesser of: a) oldest start LSN amongst all active transactions
+         * during a checkpoint. b) oldest recovery LSN amongst all dirty pages
+         * in the buffer pool. c) checkpoint LSN.
          */
         Lsn oldestInterestingLsn;
 
         /**
-         * Specifies the maximum number of log buffers to allocate. Thread safe. (unused)
+         * Specifies the maximum number of log buffers to allocate. Thread safe.
+         * (unused)
+         * 
          * @deprecated
          */
         int maxBuffers;
 
         /**
-         * Specifies the interval between log flushes in seconds. Thread safe. (unused)
+         * Specifies the interval between log flushes in seconds. Thread safe.
+         * (unused)
+         * 
          * @deprecated
          */
         int logFlushInterval;
 
         LogAnchor() {
         }
-        
+
         LogAnchor(ByteBuffer bb) {
             int i;
             n_CtlFiles = bb.getShort();
@@ -2773,8 +2760,8 @@ public final class LogManagerImpl implements LogManager {
             oldestInterestingLsn = new Lsn(bb);
             maxBuffers = bb.getInt();
             logFlushInterval = bb.getInt();
-        }        
-        
+        }
+
         public int getStoredLength() {
             int n = 0;
             int i;
@@ -2905,14 +2892,10 @@ public final class LogManagerImpl implements LogManager {
          * Add a new LogRecord to the buffer. Caller must ensure that there is
          * enough space to add the record.
          * 
-         * @param lsn
-         *            Lsn of the new LogRecord
-         * @param b
-         *            Data contents
-         * @param length
-         *            Length of the data
-         * @param prevLsn
-         *            Lsn of previous LogRecord
+         * @param lsn Lsn of the new LogRecord
+         * @param b Data contents
+         * @param length Length of the data
+         * @param prevLsn Lsn of previous LogRecord
          * @see LogManagerImpl#LOGREC_HEADER_SIZE
          */
         void insert(Lsn lsn, byte[] b, int length, Lsn prevLsn) {
@@ -2935,8 +2918,7 @@ public final class LogManagerImpl implements LogManager {
         /**
          * Search for a particular log record within this LogBuffer.
          * 
-         * @param lsn
-         *            Lsn of the LogRecord being searched for.
+         * @param lsn Lsn of the LogRecord being searched for.
          * @return LogRecordBuffer for the specified LogRecord if found, else
          *         null.
          */
@@ -3042,9 +3024,9 @@ public final class LogManagerImpl implements LogManager {
         }
 
         public void run() {
-        	if (logManager.isErrored() || logManager.isStopped()) {
-        		return;
-        	}
+            if (logManager.isErrored() || logManager.isStopped()) {
+                return;
+            }
             Lsn oldestInterestingLsn = logManager.getOldestInterestingLsn();
             int archivedLogIndex = oldestInterestingLsn.getIndex() - 1;
             while (archivedLogIndex > 0) {
@@ -3053,11 +3035,10 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     logManager.storageFactory.delete(name);
                     if (logManager.logger.isDebugEnabled()) {
-                        logManager.logger.debug(
-                            ArchiveCleaner.class.getName(),
-                            "run",
-                            "SIMPLEDBM-DEBUG: Removed archived log file "
-                                    + name);
+                        logManager.logger.debug(ArchiveCleaner.class.getName(),
+                                "run",
+                                "SIMPLEDBM-DEBUG: Removed archived log file "
+                                        + name);
                     }
                     // System.err.println("REMOVED ARCHIVED LOG FILE " + name);
                 } catch (StorageException e) {
@@ -3090,13 +3071,14 @@ public final class LogManagerImpl implements LogManager {
          * @see java.util.concurrent.Callable#call()
          */
         public void run() {
-        	if (logManager.isErrored() || logManager.isStopped()) {
-        		return;
-        	}
+            if (logManager.isErrored() || logManager.isStopped()) {
+                return;
+            }
             try {
                 logManager.flush();
             } catch (Exception e) {
-                logManager.logException(LogWriter.class.getName(), "run", m_EW0026, e);
+                logManager.logException(LogWriter.class.getName(), "run",
+                        m_EW0026, e);
             }
         }
     }
@@ -3107,10 +3089,10 @@ public final class LogManagerImpl implements LogManager {
      * @author Dibyendu Majumdar
      * @since Jul 5, 2005
      */
-//    static final class ArchiveRequestHandler implements Callable<Boolean> {
+    //    static final class ArchiveRequestHandler implements Callable<Boolean> {
     static final class ArchiveRequestHandler implements Runnable {
 
-    	final private LogManagerImpl logManager;
+        final private LogManagerImpl logManager;
 
         final private ArchiveRequest request;
 
@@ -3125,34 +3107,32 @@ public final class LogManagerImpl implements LogManager {
          * @see java.util.concurrent.Callable#call()
          */
         public void run() {
-//          public Boolean call() {
-        	
-        	/*
-        	 * We do not perform a check on error/stopped state
-        	 * because the request to archive may have come during shutdown
-        	 * sequence.
-        	 * TODO Need to validate that this is the right thing to do.
-        	 */
-//        	if (logManager.isErrored() || logManager.isStopped()) {
-//        		return;
-//        	}
+            //          public Boolean call() {
+
+            /*
+             * We do not perform a check on error/stopped state
+             * because the request to archive may have come during shutdown
+             * sequence.
+             * TODO Need to validate that this is the right thing to do.
+             */
+            //        	if (logManager.isErrored() || logManager.isStopped()) {
+            //        		return;
+            //        	}
             try {
                 logManager.handleNextArchiveRequest(request);
             } catch (Exception e) {
-                logManager.logException(
-                    ArchiveRequestHandler.class.getName(),
-                    "call",
-                    m_EW0027,
-                    e);
+                logManager.logException(ArchiveRequestHandler.class.getName(),
+                        "call", m_EW0027, e);
             }
-//            return Boolean.TRUE;
+            //            return Boolean.TRUE;
         }
     }
 
     /**
-     * If set, disables log flushes when explicitly requested by the buffer manager or transactions.
-     * Log flushes still happen during log switches or when there is a checkpoint.
-     * This option can improve performance at the expense of lost transactions after recovery.
+     * If set, disables log flushes when explicitly requested by the buffer
+     * manager or transactions. Log flushes still happen during log switches or
+     * when there is a checkpoint. This option can improve performance at the
+     * expense of lost transactions after recovery.
      */
     public boolean getDisableExplicitFlushRequests() {
         return disableExplicitFlushRequests;

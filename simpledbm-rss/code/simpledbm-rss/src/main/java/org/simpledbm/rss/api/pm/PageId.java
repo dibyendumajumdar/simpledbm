@@ -43,7 +43,7 @@ import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.TypeSize;
 
 /**
- * Each page in the database is uniquely identified by a pageid consisting of 
+ * Each page in the database is uniquely identified by a pageid consisting of
  * storage container id and the page number.
  * <p>
  * Immutable.
@@ -54,7 +54,7 @@ import org.simpledbm.common.util.TypeSize;
 public final class PageId implements Comparable<PageId>, Storable, Dumpable {
 
     /**
-     * Size of PageId in bytes. 
+     * Size of PageId in bytes.
      */
     public final static int SIZE = TypeSize.INTEGER * 2;
 
@@ -70,7 +70,7 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
         this.containerId = containerId;
         this.pageNumber = pageNumber;
     }
-    
+
     public PageId(PageId pageId) {
         this.containerId = pageId.containerId;
         this.pageNumber = pageId.pageNumber;
@@ -80,7 +80,7 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
         containerId = bb.getInt();
         pageNumber = bb.getInt();
     }
-    
+
     public final int compareTo(PageId pageId) {
         if (containerId == pageId.containerId) {
             if (pageNumber == pageId.pageNumber)
@@ -118,7 +118,7 @@ public final class PageId implements Comparable<PageId>, Storable, Dumpable {
 
     public final StringBuilder appendTo(StringBuilder sb) {
         return sb.append("PageId(").append(containerId).append(",").append(
-            pageNumber).append(")");
+                pageNumber).append(")");
     }
 
     public final String toString() {

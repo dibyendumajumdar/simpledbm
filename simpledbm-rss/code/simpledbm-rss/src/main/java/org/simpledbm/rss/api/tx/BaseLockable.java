@@ -39,8 +39,8 @@ package org.simpledbm.rss.api.tx;
 import org.simpledbm.common.util.Dumpable;
 
 /**
- * BaseLockable provides a convenient base class which transactional modules
- * can use to create their own {@link Lockable} implementations.
+ * BaseLockable provides a convenient base class which transactional modules can
+ * use to create their own {@link Lockable} implementations.
  * 
  * @author Dibyendu Majumdar
  * @since 15 Dec 2006
@@ -48,18 +48,18 @@ import org.simpledbm.common.util.Dumpable;
 public abstract class BaseLockable implements Lockable, Dumpable {
 
     /**
-     * Locks are divided into separate namespaces. For instance,
-     * container locks and tuple locks are in different namespaces.
-     * Locks in different namespaces can never conflict with each other.
+     * Locks are divided into separate namespaces. For instance, container locks
+     * and tuple locks are in different namespaces. Locks in different
+     * namespaces can never conflict with each other.
      */
     final byte namespace;
 
     protected BaseLockable(byte namespace) {
         this.namespace = namespace;
     }
-    
+
     protected BaseLockable(BaseLockable other) {
-    	this.namespace = other.namespace;
+        this.namespace = other.namespace;
     }
 
     protected byte getNameSpace() {

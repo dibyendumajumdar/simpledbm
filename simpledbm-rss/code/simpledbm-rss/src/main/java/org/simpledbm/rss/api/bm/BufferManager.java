@@ -44,19 +44,19 @@ import org.simpledbm.rss.api.wal.Lsn;
 
 /**
  * The Buffer Manager is responsible for maintaining a Buffer Pool in memory
- * where disk pages are temporarily stored (cached) while they are being accessed. The
- * primary reason for this is to improve performance, as memory access is
- * several orders of magnitude faster than disk access. The Buffer Manager also
- * coordinates the flushing of the Write Ahead Log to ensure that any
- * changes to pages are logged before the pages are written to disk. This is the
- * basis for recovery.
+ * where disk pages are temporarily stored (cached) while they are being
+ * accessed. The primary reason for this is to improve performance, as memory
+ * access is several orders of magnitude faster than disk access. The Buffer
+ * Manager also coordinates the flushing of the Write Ahead Log to ensure that
+ * any changes to pages are logged before the pages are written to disk. This is
+ * the basis for recovery.
  * 
  * @author Dibyendu Majumdar
  * @since 18-Aug-2005
  */
 public interface BufferManager {
 
-	public final static String LOGGER_NAME = "org.simpledbm.bufmgr";
+    public final static String LOGGER_NAME = "org.simpledbm.bufmgr";
 
     /**
      * Starts the Buffer Manager instance. This may cause background threads to
@@ -66,8 +66,8 @@ public interface BufferManager {
 
     /**
      * Shuts down the Buffer Manager instance. Any background threads will be
-     * stopped. It is recommended that the Buffer Manager writes all dirty
-     * pages to disk before shutting down.
+     * stopped. It is recommended that the Buffer Manager writes all dirty pages
+     * to disk before shutting down.
      */
     public void shutdown();
 
@@ -78,10 +78,8 @@ public interface BufferManager {
      * Buffer Manager cannot swap it to disk to make room for other pages. Hence
      * it is advisable to fix pages for a short while only.
      * 
-     * @param pageid
-     *            The identity of the page that should be fixed.
-     * @param hint
-     *            A hint to indicate which end of the LRU chain the page should
+     * @param pageid The identity of the page that should be fixed.
+     * @param hint A hint to indicate which end of the LRU chain the page should
      *            be inserted to.
      * @return A {@link BufferAccessBlock} containing a reference to the desired
      *         page.
@@ -100,21 +98,15 @@ public interface BufferManager {
      * exist in persistent storage. Caller must ensure that request for a new
      * page is not made for a page already in the buffer pool.
      * 
-     * @param pageid
-     *            The identity of the page that should be fixed.
-     * @param isNew
-     *            If this is set to true, the page will not be read from disk.
+     * @param pageid The identity of the page that should be fixed.
+     * @param isNew If this is set to true, the page will not be read from disk.
      *            It is assumed that the requested page is new and has not been
      *            previously saved to disk.
-     * @param pagetype
-     *            Specifies the type of page to create; only used when isNew is
-     *            set. The page type must be associated with a subclass of
-     *            {@link Page} and must have a
-     *            {@link PageFactory}
-     *            registered with the
-     *            {@link ObjectRegistry}.
-     * @param hint
-     *            A hint to indicate which end of the LRU chain the page should
+     * @param pagetype Specifies the type of page to create; only used when
+     *            isNew is set. The page type must be associated with a subclass
+     *            of {@link Page} and must have a {@link PageFactory} registered
+     *            with the {@link ObjectRegistry}.
+     * @param hint A hint to indicate which end of the LRU chain the page should
      *            be inserted to. The meaning of the hint is implementation
      *            defined.
      * @return A {@link BufferAccessBlock} containing a reference to the desired
@@ -133,12 +125,11 @@ public interface BufferManager {
      * {@link BufferAccessBlock#upgradeUpdateLatch()}. It is an error if the
      * page does not already exist in persistent storage.
      * 
-     * @param pageid
-     *            The identity of the page that should be fixed.
-     * @param hint
-     *            A hint to indicate which end of the LRU chain the page should
+     * @param pageid The identity of the page that should be fixed.
+     * @param hint A hint to indicate which end of the LRU chain the page should
      *            be inserted to.
-     * @return A {@link BufferAccessBlock} containing a reference to the desired page.
+     * @return A {@link BufferAccessBlock} containing a reference to the desired
+     *         page.
      * @see BufferAccessBlock#unfix()
      * @see BufferAccessBlock#upgradeUpdateLatch()
      */
@@ -161,9 +152,8 @@ public interface BufferManager {
 
     /**
      * Synchronizes recoveryLsns of pages in the buffer pool with the
-     * {@link TransactionManager}.
-     * Typically this is called at system restart after recovery has been
-     * completed.
+     * {@link TransactionManager}. Typically this is called at system restart
+     * after recovery has been completed.
      * <p>
      * The Buffer Manager must maintain for each page in the Buffer Pool a
      * recoveryLsn, which should point to the earliest log record that made
@@ -173,8 +163,8 @@ public interface BufferManager {
      * method is called during restart recovery only, there is no need to make
      * it thread safe.
      * 
-     * @param dirty_pages
-     *            List of dirty pages as determined by Transaction Manager
+     * @param dirty_pages List of dirty pages as determined by Transaction
+     *            Manager
      */
     public void updateRecoveryLsns(DirtyPageInfo[] dirty_pages);
 
@@ -182,8 +172,7 @@ public interface BufferManager {
      * Marks all pages of specified container as invalid. Usually this means
      * that the container has been dropped.
      * 
-     * @param containerId
-     *            ID of the container that is to be invalidated
+     * @param containerId ID of the container that is to be invalidated
      */
     void invalidateContainer(int containerId);
 

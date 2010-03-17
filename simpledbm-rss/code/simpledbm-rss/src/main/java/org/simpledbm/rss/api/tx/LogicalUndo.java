@@ -37,15 +37,13 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * Marker interface for log records that require logical undo.
- * This information is used by the TransactionManager to decide how to
- * coordinate the undo.
+ * Marker interface for log records that require logical undo. This information
+ * is used by the TransactionManager to decide how to coordinate the undo.
  * <p>
- * A LogicalUndo is characterized by the fact that the undo operation may
- * be applied to a different page than the redo operation. Also, undos may 
- * result in further updates to unspecified number of pages, which may generate
- * new log records. This happens, for example, when a BTree insert or delete
- * is undone.
+ * A LogicalUndo is characterized by the fact that the undo operation may be
+ * applied to a different page than the redo operation. Also, undos may result
+ * in further updates to unspecified number of pages, which may generate new log
+ * records. This happens, for example, when a BTree insert or delete is undone.
  * 
  * @author Dibyendu Majumdar
  * @since 31-Aug-2005

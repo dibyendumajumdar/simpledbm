@@ -38,21 +38,22 @@ package org.simpledbm.rss.api.latch;
 
 /**
  * A factory for creating instances of Latches.
+ * 
  * @author Dibyendu Majumdar
  */
 public interface LatchFactory {
-	
-	public final String LOGGER_NAME = "org.simpledbm.latchmgr";
+
+    public final String LOGGER_NAME = "org.simpledbm.latchmgr";
 
     /**
-     * Creates a new ReadWrite Latch. A ReadWrite latch supports
-     * locking in Shared and Exclusive modes. 
+     * Creates a new ReadWrite Latch. A ReadWrite latch supports locking in
+     * Shared and Exclusive modes.
      */
     Latch newReadWriteLatch();
 
     /**
-     * Returns a new ReadWriteUpdate Latch. Similar to ReadWrite latch,
-     * but supports an additional Update lock mode. 
+     * Returns a new ReadWriteUpdate Latch. Similar to ReadWrite latch, but
+     * supports an additional Update lock mode.
      */
     Latch newReadWriteUpdateLatch();
 

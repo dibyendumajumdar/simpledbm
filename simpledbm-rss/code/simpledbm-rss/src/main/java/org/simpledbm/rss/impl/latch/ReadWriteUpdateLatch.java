@@ -44,8 +44,8 @@ import org.simpledbm.rss.api.latch.Latch;
 import org.simpledbm.rss.api.latch.LatchException;
 
 /**
- * Implements a Latch that supports three lock modes, Shared,
- * Update and Exclusive. 
+ * Implements a Latch that supports three lock modes, Shared, Update and
+ * Exclusive.
  * 
  * @author Dibyendu Majumdar
  * @since 22 Aug, 2005
@@ -67,8 +67,8 @@ public final class ReadWriteUpdateLatch implements Latch {
 
     static final int FREE = -1;
 
-    PlatformObjects po;    
-    
+    PlatformObjects po;
+
     static final class Link {
         final Thread thread;
 
@@ -95,9 +95,9 @@ public final class ReadWriteUpdateLatch implements Latch {
     private volatile int sharedCount = 0;
 
     private volatile int exclusiveCount = 0;
-    
+
     public ReadWriteUpdateLatch(PlatformObjects po) {
-    	this.po = po;
+        this.po = po;
     }
 
     /**
@@ -114,8 +114,8 @@ public final class ReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Removes a waiter from the queue - used primarily to cleanup
-     * upon lock failures.
+     * Removes a waiter from the queue - used primarily to cleanup upon lock
+     * failures.
      */
     private synchronized void cleanup(Link link) {
         Link next = waitQueueHead;
@@ -203,14 +203,14 @@ public final class ReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Workhorse for acquiring latch in Update mode. Note that Update mode 
-     * latches are asymmetrical. An Update mode latch
-     * is compatible with Shared requests, but Shared latches are not compatible with
-     * Update latches. Also, an Update latch is incompatible with other Update or
-     * Exclusive requests.
-     * <p> 
-     * If requestor already holds the latch for Update or Exclusively, then
-     * the recursion count in incremented. 
+     * Workhorse for acquiring latch in Update mode. Note that Update mode
+     * latches are asymmetrical. An Update mode latch is compatible with Shared
+     * requests, but Shared latches are not compatible with Update latches.
+     * Also, an Update latch is incompatible with other Update or Exclusive
+     * requests.
+     * <p>
+     * If requestor already holds the latch for Update or Exclusively, then the
+     * recursion count in incremented.
      */
     private boolean doUpdateLock(boolean wait, boolean allowInterrupts) {
         Link link = null;
@@ -275,9 +275,9 @@ public final class ReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Workhorse for acquiring latch in shared mode. Shared mode is compatible with
-     * Shared mode but not with Update or Exclusive. Also, we do not grant shared requests
-     * if there are pending upgrade/exclusive requests.
+     * Workhorse for acquiring latch in shared mode. Shared mode is compatible
+     * with Shared mode but not with Update or Exclusive. Also, we do not grant
+     * shared requests if there are pending upgrade/exclusive requests.
      */
     private boolean doSharedLock(boolean wait, boolean allowInterrupts) {
         Link link = null;
@@ -360,8 +360,8 @@ public final class ReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Requests an update lock to be upgraded to exclusive. Does not affect recursion
-     * count.
+     * Requests an update lock to be upgraded to exclusive. Does not affect
+     * recursion count.
      */
     private boolean doUpgradeUpdateLock(boolean wait, boolean allowInterrupts) {
         Thread me = Thread.currentThread();
@@ -420,8 +420,8 @@ public final class ReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Performs grants to waiting threads after some thread has
-     * released the latch.
+     * Performs grants to waiting threads after some thread has released the
+     * latch.
      */
     private void performGrants() {
         if (pendingUpgrade != null) {
@@ -497,8 +497,11 @@ public final class ReadWriteUpdateLatch implements Latch {
             }
         } else if (grantedMode == EXCLUSIVE) {
             if (owner != Thread.currentThread()) {
-            	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
-            			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0007, this)));
+                po.getExceptionHandler().errorThrow(
+                        this.getClass().getName(),
+                        "unlock",
+                        new LatchException(new MessageInstance(
+                                LatchFactoryImpl.m_EH0007, this)));
             }
             exclusiveCount--;
             assert exclusiveCount >= 0;
@@ -562,8 +565,11 @@ public final class ReadWriteUpdateLatch implements Latch {
             grantedMode = UPDATE;
             performGrants();
         } else {
-        	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
-        			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0009, grantedMode, UPDATE)));
+            po.getExceptionHandler().errorThrow(
+                    this.getClass().getName(),
+                    "unlock",
+                    new LatchException(new MessageInstance(
+                            LatchFactoryImpl.m_EH0009, grantedMode, UPDATE)));
         }
     }
 
@@ -579,8 +585,11 @@ public final class ReadWriteUpdateLatch implements Latch {
             exclusiveCount = 0;
             performGrants();
         } else {
-        	po.getExceptionHandler().errorThrow(this.getClass().getName(), "unlock",
-        			new LatchException(new MessageInstance(LatchFactoryImpl.m_EH0009, grantedMode, SHARED)));
+            po.getExceptionHandler().errorThrow(
+                    this.getClass().getName(),
+                    "unlock",
+                    new LatchException(new MessageInstance(
+                            LatchFactoryImpl.m_EH0009, grantedMode, SHARED)));
         }
     }
 

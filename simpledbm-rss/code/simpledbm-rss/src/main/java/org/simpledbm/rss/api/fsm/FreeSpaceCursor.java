@@ -39,24 +39,27 @@ package org.simpledbm.rss.api.fsm;
 import org.simpledbm.rss.api.tx.Transaction;
 
 /**
- * Interface for searching and updating free space information within a Storage Container.
- * Maintains a "current" space map page, and provides methods for updating space allocation
- * data within the current space map page.
+ * Interface for searching and updating free space information within a Storage
+ * Container. Maintains a "current" space map page, and provides methods for
+ * updating space allocation data within the current space map page.
  */
 public interface FreeSpaceCursor {
 
     /**
      * Finds the next available page that satisfies the requirements of
      * {@link FreeSpaceChecker}, and then latches the concerned Space Map Page
-     * exclusively. This is meant to be followed by a call to {@link #updateAndLogRedoOnly(Transaction, int, int) updateAndLogRedoOnly()}
-     * or {@link #updateAndLogUndoably(Transaction, int, int) updateAndLogUndoably()} and then by {@link #unfixCurrentSpaceMapPage()}.
+     * exclusively. This is meant to be followed by a call to
+     * {@link #updateAndLogRedoOnly(Transaction, int, int)
+     * updateAndLogRedoOnly()} or
+     * {@link #updateAndLogUndoably(Transaction, int, int)
+     * updateAndLogUndoably()} and then by {@link #unfixCurrentSpaceMapPage()}.
      * <p>
      * The fixed page becomes the current space map page.
      * <p>
      * For the sake of efficient searches, this method is allowed to cache data,
-     * such as last used space map page. While this method must search all the available
-     * space map pages before giving up, the order in which the space map pages are 
-     * searched is not defined. 
+     * such as last used space map page. While this method must search all the
+     * available space map pages before giving up, the order in which the space
+     * map pages are searched is not defined.
      * 
      * @param checker FreeSpaceChecker instance
      * @return -1 if page was not found, else page number.
@@ -65,25 +68,26 @@ public interface FreeSpaceCursor {
 
     /**
      * Finds the next available page that satisfies the requirements of
-     * FreeSpaceChecker, and then latches the concerned Space Map Page
-     * in shared mode. 
+     * FreeSpaceChecker, and then latches the concerned Space Map Page in shared
+     * mode.
      * <p>
      * The fixed page becomes the current space map page.
      * <p>
      * For the sake of efficient searches, this method is allowed to cache data,
-     * such as last used space map page. While this method must search all the available
-     * space map pages before giving up, the order in which the space map pages are 
-     * searched is not defined. 
+     * such as last used space map page. While this method must search all the
+     * available space map pages before giving up, the order in which the space
+     * map pages are searched is not defined.
      * 
      * @param checker FreeSpaceChecker instance
      * @return -1 if page was not found, else page number.
      */
     public int findAndFixSpaceMapPageShared(FreeSpaceChecker checker);
-    
+
     /**
-     * Fixes specified Space Map Page exclusively. Note that the space map
-     * page must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}.
-     * <p> 
+     * Fixes specified Space Map Page exclusively. Note that the space map page
+     * must be eventually unfixed by calling {@link #unfixCurrentSpaceMapPage()}
+     * .
+     * <p>
      * The fixed page becomes the current space map page.
      */
     public void fixSpaceMapPageExclusively(int spaceMapPageNumber,
@@ -95,16 +99,14 @@ public interface FreeSpaceCursor {
     public FreeSpaceMapPage getCurrentSpaceMapPage();
 
     /**
-     * Updates space allocation data for specified page within the 
-     * current space map page, and generates a Redo-only log record for the
-     * change.
+     * Updates space allocation data for specified page within the current space
+     * map page, and generates a Redo-only log record for the change.
      */
     public void updateAndLogRedoOnly(Transaction trx, int pageNumber, int value);
 
     /**
-     * Updates space allocation data for specified page within the 
-     * current space map page, and generates a Redo-Undo log record for the
-     * change.
+     * Updates space allocation data for specified page within the current space
+     * map page, and generates a Redo-Undo log record for the change.
      */
     public void updateAndLogUndoably(Transaction trx, int pageNumber, int value);
 
@@ -112,7 +114,7 @@ public interface FreeSpaceCursor {
      * Unfixes the current space map page.
      */
     public void unfixCurrentSpaceMapPage();
-    
+
     /**
      * Gets the container Id associated with this cursor.
      */

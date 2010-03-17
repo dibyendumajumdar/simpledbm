@@ -47,21 +47,21 @@ import java.nio.ByteBuffer;
  * 
  * @author dibyendumajumdar
  */
-public interface PageFactory  {
+public interface PageFactory {
 
-	/**
-	 * Create a new Page of the desired type.
-	 */
-	Page getInstance(int type, PageId pageId);
+    /**
+     * Create a new Page of the desired type.
+     */
+    Page getInstance(int type, PageId pageId);
 
-	/**
-	 * Create a Page instance from the supplied bytestream.
-	 */
-	Page getInstance(PageId pageId, ByteBuffer bb);
+    /**
+     * Create a Page instance from the supplied bytestream.
+     */
+    Page getInstance(PageId pageId, ByteBuffer bb);
 
-	/**
-	 * Return the page type associated with this PageFactory.
-	 */
-	int getPageType();
-	
+    /**
+     * Return the page type associated with this PageFactory.
+     */
+    int getPageType();
+
 }
