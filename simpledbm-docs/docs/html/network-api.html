@@ -54,7 +54,7 @@
 </tr>
 <tr class="field"><th class="field-name">Version:</th><td class="field-body">0.0.1</td>
 </tr>
-<tr class="field"><th class="field-name">Date:</th><td class="field-body">10 March 2010</td>
+<tr class="field"><th class="field-name">Date:</th><td class="field-body">17 March 2010</td>
 </tr>
 <tr class="field"><th class="field-name">Copyright:</th><td class="field-body">Copyright by Dibyendu Majumdar, 2010</td>
 </tr>
@@ -136,7 +136,8 @@ the Java Interface for the API is available in the Appendix. An example client i
 is given below:</p>
 <div class="highlight-python"><pre>Properties properties = parseProperties("test.properties");</pre>
 </div>
-<p>Start a session:</p>
+<p>An example test.properties file is given in the next section.
+Start a session:</p>
 <div class="highlight-python"><pre>SessionManager sessionManager = new SessionManager(properties,
   "localhost", 8000);</pre>
 </div>
@@ -251,6 +252,9 @@ properties file:</p>
 logging.properties.type = log4j
 network.server.host = localhost
 network.server.port = 8000
+network.server.sessionTimeout = 120
+network.server.sessionMonitorInterval = 60
+network.server.selectTimeout = 10000
 log.ctl.1 = ctl.a
 log.ctl.2 = ctl.b
 log.groups.1.path = .

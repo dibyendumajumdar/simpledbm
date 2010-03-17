@@ -8,7 +8,7 @@ SimpleDBM Network API
 :Author: Dibyendu Majumdar
 :Contact: d dot majumdar at gmail dot com
 :Version: 0.0.1
-:Date: 10 March 2010
+:Date: 17 March 2010
 :Copyright: Copyright by Dibyendu Majumdar, 2010
 
 .. contents::
@@ -67,6 +67,7 @@ is given below::
 
   Properties properties = parseProperties("test.properties");
 
+An example test.properties file is given in the next section.
 Start a session::
 
   SessionManager sessionManager = new SessionManager(properties,
@@ -192,6 +193,9 @@ properties file::
   logging.properties.type = log4j
   network.server.host = localhost
   network.server.port = 8000
+  network.server.sessionTimeout = 120
+  network.server.sessionMonitorInterval = 60
+  network.server.selectTimeout = 10000
   log.ctl.1 = ctl.a
   log.ctl.2 = ctl.b
   log.groups.1.path = .
