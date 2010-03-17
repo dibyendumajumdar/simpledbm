@@ -49,15 +49,15 @@ public class PageException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public PageException(ByteBuffer bb) {
-		super(bb);
-	}
+    public PageException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public PageException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public PageException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public PageException(MessageInstance m) {
-		super(m);
-	}
+    public PageException(MessageInstance m) {
+        super(m);
+    }
 }

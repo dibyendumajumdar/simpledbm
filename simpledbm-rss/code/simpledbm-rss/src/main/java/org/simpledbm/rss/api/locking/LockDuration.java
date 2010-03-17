@@ -37,13 +37,14 @@
 package org.simpledbm.rss.api.locking;
 
 /**
- * LockDuration defines how long a lock is to be held. An {@link #INSTANT_DURATION} lock
- * is held only for an instant; its purpose being to delay the caller until the desired lock
- * is grantable. A {@link #MANUAL_DURATION} lock may be released prior to the transaction 
- * completing. Such locks maintain a reference count, so that they are only released
- * when the number of release attempts equals the number of acquire attempts. 
- * A {@link #COMMIT_DURATION} lock is held until the transaction completes and generally 
- * cannot be released early.
+ * LockDuration defines how long a lock is to be held. An
+ * {@link #INSTANT_DURATION} lock is held only for an instant; its purpose being
+ * to delay the caller until the desired lock is grantable. A
+ * {@link #MANUAL_DURATION} lock may be released prior to the transaction
+ * completing. Such locks maintain a reference count, so that they are only
+ * released when the number of release attempts equals the number of acquire
+ * attempts. A {@link #COMMIT_DURATION} lock is held until the transaction
+ * completes and generally cannot be released early.
  * 
  * @author Dibyendu Majumdar
  * @since 26-July-2005

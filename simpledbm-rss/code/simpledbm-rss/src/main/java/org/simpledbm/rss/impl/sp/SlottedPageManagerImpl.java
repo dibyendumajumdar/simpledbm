@@ -54,15 +54,17 @@ public class SlottedPageManagerImpl implements SlottedPageManager {
 
     static final short TYPE_BASE = 15;
     static final short TYPE_SLOTTEDPAGE = TYPE_BASE + 1;
-    
+
     final Platform platform;
-    
+
     final PlatformObjects po;
 
-    public SlottedPageManagerImpl(Platform platform, ObjectRegistry objectFactory, PageManager pageFactory, Properties p) {
-    	this.platform = platform;
-    	this.po = platform.getPlatformObjects(SlottedPageManager.LOGGER_NAME);
-        objectFactory.registerSingleton(TYPE_SLOTTEDPAGE, new SlottedPageImpl.SlottedPageImplFactory(po, pageFactory));
+    public SlottedPageManagerImpl(Platform platform,
+            ObjectRegistry objectFactory, PageManager pageFactory, Properties p) {
+        this.platform = platform;
+        this.po = platform.getPlatformObjects(SlottedPageManager.LOGGER_NAME);
+        objectFactory.registerSingleton(TYPE_SLOTTEDPAGE,
+                new SlottedPageImpl.SlottedPageImplFactory(po, pageFactory));
     }
 
     public int getPageType() {

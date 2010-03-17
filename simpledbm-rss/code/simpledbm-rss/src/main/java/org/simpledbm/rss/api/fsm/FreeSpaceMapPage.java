@@ -43,37 +43,41 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.pm.PageManager;
 
 /**
- * Abstract base class for Free Space Map pages. 
+ * Abstract base class for Free Space Map pages.
  */
 public abstract class FreeSpaceMapPage extends Page {
-	
-	protected FreeSpaceMapPage(PageManager pageFactory, int type,
-			PageId pageId) {
-		super(pageFactory, type, pageId);
-	}
 
-	protected FreeSpaceMapPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-		super(pageFactory, pageId, bb);
-	}
+    protected FreeSpaceMapPage(PageManager pageFactory, int type, PageId pageId) {
+        super(pageFactory, type, pageId);
+    }
 
-	/**
-     * Retrieves the current space value associated with the specified page. For a
-     * single bit space map, the possible values are 1 and 0. For 2 bit space map,
-     * the values range from 0 to 3.
-     *   
-     * @param pageNumber The page number whose space allocation value is to be retrieved.
-     * @throws FreeSpaceManagerException Thrown if the specified page is not handled by this space map page.
+    protected FreeSpaceMapPage(PageManager pageFactory, PageId pageId,
+            ByteBuffer bb) {
+        super(pageFactory, pageId, bb);
+    }
+
+    /**
+     * Retrieves the current space value associated with the specified page. For
+     * a single bit space map, the possible values are 1 and 0. For 2 bit space
+     * map, the values range from 0 to 3.
+     * 
+     * @param pageNumber The page number whose space allocation value is to be
+     *            retrieved.
+     * @throws FreeSpaceManagerException Thrown if the specified page is not
+     *             handled by this space map page.
      */
     public abstract int getSpaceBits(int pageNumber);
 
     /**
      * Updates the current space value associated with the specified page. For a
-     * single bit space map, the possible values are 1 and 0. For 2 bit space map,
-     * the values range from 0 to 3.
+     * single bit space map, the possible values are 1 and 0. For 2 bit space
+     * map, the values range from 0 to 3.
      * 
-     * @param pageNumber The page number whose space allocation value is to be updated.
+     * @param pageNumber The page number whose space allocation value is to be
+     *            updated.
      * @param value New space allocation value
-     * @throws FreeSpaceManagerException Thrown if the specified page is not handled by this space map page.
+     * @throws FreeSpaceManagerException Thrown if the specified page is not
+     *             handled by this space map page.
      */
     public abstract void setSpaceBits(int pageNumber, int value);
 

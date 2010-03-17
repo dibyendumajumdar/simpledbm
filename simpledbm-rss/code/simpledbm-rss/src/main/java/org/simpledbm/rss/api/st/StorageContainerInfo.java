@@ -44,7 +44,7 @@ import org.simpledbm.common.util.Dumpable;
 
 /**
  * Represents information about an active storage container.
- *
+ * 
  * @author Dibyendu Majumdar
  * @since 18-Nov-2005
  */

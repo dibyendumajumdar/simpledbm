@@ -58,16 +58,16 @@ public final class TransactionalModuleRegistryImpl implements
     final ExceptionHandler exceptionHandler;
 
     private final HashMap<Short, TransactionalModule> moduleMap = new HashMap<Short, TransactionalModule>();
-    static Message m_EX0001 = 
-    		new Message('R', 'X', MessageType.ERROR, 1, "Unknown transaction module {0}");
+    static Message m_EX0001 = new Message('R', 'X', MessageType.ERROR, 1,
+            "Unknown transaction module {0}");
 
-    
     public TransactionalModuleRegistryImpl(Platform platform, Properties p) {
-    	PlatformObjects po = platform.getPlatformObjects(TransactionManager.LOGGER_NAME);
-    	log = po.getLogger();
-    	exceptionHandler = po.getExceptionHandler();
+        PlatformObjects po = platform
+                .getPlatformObjects(TransactionManager.LOGGER_NAME);
+        log = po.getLogger();
+        exceptionHandler = po.getExceptionHandler();
     }
-    
+
     public final synchronized void registerModule(int moduleId,
             TransactionalModule module) {
         moduleMap.put((short) moduleId, module);
@@ -76,8 +76,9 @@ public final class TransactionalModuleRegistryImpl implements
     public final synchronized TransactionalModule getModule(int moduleId) {
         TransactionalModule module = moduleMap.get((short) moduleId);
         if (module == null) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "getModule", 
-            		new TransactionException(new MessageInstance(m_EX0001, moduleId)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "getModule",
+                    new TransactionException(new MessageInstance(m_EX0001,
+                            moduleId)));
         }
         return module;
     }

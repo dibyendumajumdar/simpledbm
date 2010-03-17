@@ -40,17 +40,17 @@ import org.simpledbm.rss.api.pm.PageId;
 
 /**
  * Extends the standard Redoable interface to allow the Log Operation to cover
- * multiple pages. At present only Redoable and Compensation records can use this
- * interface.  
+ * multiple pages. At present only Redoable and Compensation records can use
+ * this interface.
  */
 public interface MultiPageRedo extends Redoable {
 
     /**
-     * Returns the IDs of the pages that are affected by the log record.
-     * Must include the default page return by {@link Loggable#getPageId()}.
-     * During redo, the log record will be applied to each of the pages in this
-     * list. Hence redo implementation must check the page the log record is
-     * being applied and accordingly apply the changes.
+     * Returns the IDs of the pages that are affected by the log record. Must
+     * include the default page return by {@link Loggable#getPageId()}. During
+     * redo, the log record will be applied to each of the pages in this list.
+     * Hence redo implementation must check the page the log record is being
+     * applied and accordingly apply the changes.
      */
     public PageId[] getPageIds();
 }

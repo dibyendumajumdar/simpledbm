@@ -43,14 +43,16 @@ package org.simpledbm.rss.api.tuple;
 import org.simpledbm.rss.api.loc.Location;
 
 /**
- * When a new tuple is inserted into a container, the {@link org.simpledbm.rss.api.tuple.TupleContainer#insert(Transaction, Storable)}
- * method returns a TupleInserter object which can be used to complete the Insert operation.
- * The insert operation is split up for reasons of efficiency; at the time of tuple insert, it is 
- * not known whether the tuple insert can proceed, for example, whether primary key constraints are
- * satisfied. The first part of the insert allocates a Location for the tuple and exclusively
- * locks it. Control is then returned to the caller to verify that the tuple insert can proceed.
- * Once it has been determined that the tuple insert can proceed, the {@link #completeInsert()} method
- * should be invoked. 
+ * When a new tuple is inserted into a container, the
+ * {@link org.simpledbm.rss.api.tuple.TupleContainer#insert(Transaction, Storable)}
+ * method returns a TupleInserter object which can be used to complete the
+ * Insert operation. The insert operation is split up for reasons of efficiency;
+ * at the time of tuple insert, it is not known whether the tuple insert can
+ * proceed, for example, whether primary key constraints are satisfied. The
+ * first part of the insert allocates a Location for the tuple and exclusively
+ * locks it. Control is then returned to the caller to verify that the tuple
+ * insert can proceed. Once it has been determined that the tuple insert can
+ * proceed, the {@link #completeInsert()} method should be invoked.
  */
 public interface TupleInserter {
 
@@ -60,9 +62,8 @@ public interface TupleInserter {
     Location getLocation();
 
     /**
-     * Completes the insert, by inserting the tuple data in
-     * one or more pages. The insert process is not complete until
-     * this method is called. 
+     * Completes the insert, by inserting the tuple data in one or more pages.
+     * The insert process is not complete until this method is called.
      */
     void completeInsert();
 }

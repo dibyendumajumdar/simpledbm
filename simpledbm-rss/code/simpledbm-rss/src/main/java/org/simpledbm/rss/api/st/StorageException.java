@@ -43,6 +43,7 @@ import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
  * Exception thrown by the Storage subsystem.
+ * 
  * @author Dibyendu Majumdar
  * @since 18-Jun-05
  */
@@ -50,16 +51,16 @@ public class StorageException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public StorageException(ByteBuffer bb) {
-		super(bb);
-	}
+    public StorageException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public StorageException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public StorageException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public StorageException(MessageInstance m) {
-		super(m);
-	}
+    public StorageException(MessageInstance m) {
+        super(m);
+    }
 
 }

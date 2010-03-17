@@ -38,7 +38,7 @@ package org.simpledbm.rss.api.wal;
 
 /**
  * Defines the interface for a Log Record in very generic terms.
- *
+ * 
  * @author Dibyendu Majumdar
  */
 public interface LogRecord {

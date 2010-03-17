@@ -61,49 +61,50 @@ import org.simpledbm.rss.api.st.StorageException;
 public final class FileStorageContainer implements StorageContainer, Dumpable {
 
     @SuppressWarnings("unused")
-	private final Logger log;
+    private final Logger log;
 
     private final ExceptionHandler exceptionHandler;
-    
+
     /**
      * The underlying file object.
      */
     private final RandomAccessFile file;
 
     private final String name;
-    
+
     private final String flushMode;
 
     private FileLock lock;
 
     // storage manager messages
-	static Message m_ES0001 = new Message('R', 'S', MessageType.ERROR, 1,
-			"StorageContainer {0} is not valid");
-	static Message m_ES0003 = new Message('R', 'S', MessageType.ERROR, 3,
-			"Error occurred while writing to StorageContainer {0}");
-	static Message m_ES0004 = new Message('R', 'S', MessageType.ERROR, 4,
-			"Error occurred while reading from StorageContainer {0}");
-	static Message m_ES0005 = new Message('R', 'S', MessageType.ERROR, 5,
-			"Error occurred while flushing StorageContainer {0}");
-	static Message m_ES0006 = new Message('R', 'S', MessageType.ERROR, 6,
-			"Error occurred while closing StorageContainer {0}");
-	static Message m_ES0007 = new Message('R', 'S', MessageType.ERROR, 7,
-			"StorageContainer {0} is already locked");
-	static Message m_ES0008 = new Message('R', 'S', MessageType.ERROR, 8,
-			"An exclusive lock could not be obtained on StorageContainer {0}");
-	static Message m_ES0009 = new Message('R', 'S', MessageType.ERROR, 9,
-			"StorageContainer {0} is not locked");
-	static Message m_ES0010 = new Message('R', 'S', MessageType.ERROR, 10,
-			"Error occurred while releasing lock on StorageContainer {0}");
-	
+    static Message m_ES0001 = new Message('R', 'S', MessageType.ERROR, 1,
+            "StorageContainer {0} is not valid");
+    static Message m_ES0003 = new Message('R', 'S', MessageType.ERROR, 3,
+            "Error occurred while writing to StorageContainer {0}");
+    static Message m_ES0004 = new Message('R', 'S', MessageType.ERROR, 4,
+            "Error occurred while reading from StorageContainer {0}");
+    static Message m_ES0005 = new Message('R', 'S', MessageType.ERROR, 5,
+            "Error occurred while flushing StorageContainer {0}");
+    static Message m_ES0006 = new Message('R', 'S', MessageType.ERROR, 6,
+            "Error occurred while closing StorageContainer {0}");
+    static Message m_ES0007 = new Message('R', 'S', MessageType.ERROR, 7,
+            "StorageContainer {0} is already locked");
+    static Message m_ES0008 = new Message('R', 'S', MessageType.ERROR, 8,
+            "An exclusive lock could not be obtained on StorageContainer {0}");
+    static Message m_ES0009 = new Message('R', 'S', MessageType.ERROR, 9,
+            "StorageContainer {0} is not locked");
+    static Message m_ES0010 = new Message('R', 'S', MessageType.ERROR, 10,
+            "Error occurred while releasing lock on StorageContainer {0}");
+
     /**
-     * Creates a new FileStorageContainer from an existing
-     * file object.
+     * Creates a new FileStorageContainer from an existing file object.
+     * 
      * @param file Existing file object.
      */
-    FileStorageContainer(PlatformObjects po, String name, RandomAccessFile file, String flushMode) {
-    	this.log = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
+    FileStorageContainer(PlatformObjects po, String name,
+            RandomAccessFile file, String flushMode) {
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
         this.name = name;
         this.file = file;
         this.flushMode = flushMode;
@@ -111,12 +112,13 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
 
     /**
      * Checks if the file is available for reading and writing.
+     * 
      * @throws StorageException Thrown if the file has been closed.
      */
     private void isValid() throws StorageException {
         if (file == null || !file.getChannel().isOpen()) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "isValid", 
-            		new StorageException(new MessageInstance(m_ES0001, name)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "isValid",
+                    new StorageException(new MessageInstance(m_ES0001, name)));
         }
     }
 
@@ -131,8 +133,10 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             file.seek(position);
             file.write(data, offset, length);
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "write", 
-            		new StorageException(new MessageInstance(m_ES0003, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "write",
+                            new StorageException(new MessageInstance(m_ES0003,
+                                    name), e));
         }
     }
 
@@ -148,8 +152,10 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             file.seek(position);
             n = file.read(data, offset, length);
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "read", 
-            		new StorageException(new MessageInstance(m_ES0004, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "read",
+                            new StorageException(new MessageInstance(m_ES0004,
+                                    name), e));
         }
         return n;
     }
@@ -161,16 +167,17 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     public final synchronized void flush() throws StorageException {
         isValid();
         try {
-        	// FIXME hard coded values
-        	if ("force.true".equals(flushMode)) {
-        		file.getChannel().force(true);
-        	}
-        	else if ("force.false".equals(flushMode)) {
-        		file.getChannel().force(false);
-        	}
+            // FIXME hard coded values
+            if ("force.true".equals(flushMode)) {
+                file.getChannel().force(true);
+            } else if ("force.false".equals(flushMode)) {
+                file.getChannel().force(false);
+            }
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "flush", 
-            		new StorageException(new MessageInstance(m_ES0005, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "flush",
+                            new StorageException(new MessageInstance(m_ES0005,
+                                    name), e));
         }
     }
 
@@ -182,17 +189,19 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
         isValid();
         try {
             file.close();
-        } catch (IOException e) {       	
-            exceptionHandler.errorThrow(this.getClass().getName(), "close", 
-            		new StorageException(new MessageInstance(m_ES0006, name), e));
+        } catch (IOException e) {
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "close",
+                            new StorageException(new MessageInstance(m_ES0006,
+                                    name), e));
         }
     }
 
     public final synchronized void lock() {
         isValid();
         if (lock != null) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
-            		new StorageException(new MessageInstance(m_ES0007, name)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+                    new StorageException(new MessageInstance(m_ES0007, name)));
         }
         try {
             FileChannel channel = file.getChannel();
@@ -202,27 +211,32 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
                 // ignore this error
             }
             if (lock == null) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
-                		new StorageException(new MessageInstance(m_ES0008, name)));
+                exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+                        new StorageException(
+                                new MessageInstance(m_ES0008, name)));
             }
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
-            		new StorageException(new MessageInstance(m_ES0008, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "lock",
+                            new StorageException(new MessageInstance(m_ES0008,
+                                    name), e));
         }
     }
 
     public final synchronized void unlock() {
         isValid();
         if (lock == null) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
-            		new StorageException(new MessageInstance(m_ES0009, name)));
+            exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+                    new StorageException(new MessageInstance(m_ES0009, name)));
         }
         try {
             lock.release();
             lock = null;
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock", 
-            		new StorageException(new MessageInstance(m_ES0010, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "lock",
+                            new StorageException(new MessageInstance(m_ES0010,
+                                    name), e));
         }
     }
 
@@ -231,11 +245,8 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     }
 
     public final StringBuilder appendTo(StringBuilder sb) {
-        sb.append("FileStorageContainer(name=")
-            .append(name)
-            .append(", file=")
-            .append(file)
-            .append(")");
+        sb.append("FileStorageContainer(name=").append(name).append(", file=")
+                .append(file).append(")");
         return sb;
     }
 

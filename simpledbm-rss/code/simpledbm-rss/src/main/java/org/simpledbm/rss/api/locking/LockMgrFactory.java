@@ -50,6 +50,7 @@ public interface LockMgrFactory {
 
     /**
      * Create a new {@link LockManager} instance using specified parameters.
+     * 
      * @param props Properties that specify parameters for the Lock Manager.
      * @return A {@link LockManager} object.
      */

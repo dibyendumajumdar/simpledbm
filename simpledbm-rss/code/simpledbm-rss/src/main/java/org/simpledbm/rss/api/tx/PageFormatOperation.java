@@ -37,10 +37,10 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * Marker interface for page formatting operations. This informs the
- * Transaction Manager that the page associated with the log record may
- * require initialization. 
- *
+ * Marker interface for page formatting operations. This informs the Transaction
+ * Manager that the page associated with the log record may require
+ * initialization.
+ * 
  * @author Dibyendu Majumdar
  * @since 28-Aug-2005
  */

@@ -42,64 +42,69 @@ import org.simpledbm.rss.api.tx.Transaction;
 import org.simpledbm.rss.api.tx.TransactionalModule;
 
 /**
- * TupleManager sub-system provides an abstraction for managing
- * data within containers. A TupleContainer is specialized for storing tuples,
- * which correspond to blobs of data. Tuples can be of arbitrary length; although
- * the implementation may impose restrictions on maximum tuple size. Tuples can
- * span multiple pages, however, this is handled by the TupleManager sub-system
+ * TupleManager sub-system provides an abstraction for managing data within
+ * containers. A TupleContainer is specialized for storing tuples, which
+ * correspond to blobs of data. Tuples can be of arbitrary length; although the
+ * implementation may impose restrictions on maximum tuple size. Tuples can span
+ * multiple pages, however, this is handled by the TupleManager sub-system
  * transparently to the caller.
  * <p>
- * Each tuple is uniquely identified by a Location. When a tuple is first inserted,
- * its Location is defined. The Tuple remains at the same Location for the 
- * rest of its life.
- *   
+ * Each tuple is uniquely identified by a Location. When a tuple is first
+ * inserted, its Location is defined. The Tuple remains at the same Location for
+ * the rest of its life.
+ * 
  * @author Dibyendu Majumdar
  * @since 07-Dec-2005
  */
 public interface TupleManager extends TransactionalModule {
 
-	public final String LOGGER_NAME = "org.simpledbm.tuplemgr";
-	
-	
-	/**
-	 * Locks a tuple container in specified mode for COMMIT duration.
-	 * @param trx Transaction acquiring the lock
-	 * @param containerId ID of the tuple container
-	 * @param mode The Lock mode
-	 */
-    void lockTupleContainer(Transaction trx, int containerId, LockMode mode);
-    
-    
+    public final String LOGGER_NAME = "org.simpledbm.tuplemgr";
+
     /**
-     * Creates a new Tuple Container. 
+     * Locks a tuple container in specified mode for COMMIT duration.
+     * 
+     * @param trx Transaction acquiring the lock
+     * @param containerId ID of the tuple container
+     * @param mode The Lock mode
+     */
+    void lockTupleContainer(Transaction trx, int containerId, LockMode mode);
+
+    /**
+     * Creates a new Tuple Container.
      * 
      * @param trx Transaction to be used for creating the container
      * @param name Name of the container
-     * @param containerId A numeric ID for the container - must be unique for each container
-     * @param extentSize The number of pages that should be part of each extent in the container
+     * @param containerId A numeric ID for the container - must be unique for
+     *            each container
+     * @param extentSize The number of pages that should be part of each extent
+     *            in the container
      */
     void createTupleContainer(Transaction trx, String name, int containerId,
             int extentSize);
 
     /**
-     * Gets an instance of TupleContainer. Specified container must already exist.
-     * Caller must obtain SHARED lock on containerId prior to invoking this
-     * method.
+     * Gets an instance of TupleContainer. Specified container must already
+     * exist. Caller must obtain SHARED lock on containerId prior to invoking
+     * this method.
+     * 
      * @param containerId ID of the container
      */
     //TupleContainer getTupleContainer(int containerId);
     /**
-     * Gets an instance of TupleContainer. Specified container must already exist.
-     * Obtains SHARED lock on specified containerId.
+     * Gets an instance of TupleContainer. Specified container must already
+     * exist. Obtains SHARED lock on specified containerId.
+     * 
      * @param containerId ID of the container
      */
     TupleContainer getTupleContainer(Transaction trx, int containerId);
 
     /**
-     * Returns the type ID of the location factory used by the tuple manager.
-     * An instance of the {@link org.simpledbm.rss.api.loc.LocationFactory LocationFactory} may be
-     * obtained from the {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
+     * Returns the type ID of the location factory used by the tuple manager. An
+     * instance of the {@link org.simpledbm.rss.api.loc.LocationFactory
+     * LocationFactory} may be obtained from the
+     * {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
      * <p>
+     * 
      * <pre>
      * TupleManager tupleManager = ...;
      * ObjectRegistry objectRegistry = ...;
@@ -110,6 +115,7 @@ public interface TupleManager extends TransactionalModule {
 
     /**
      * Returns the location factory used by the tuple container.
+     * 
      * @return LocationFactory instance
      */
     LocationFactory getLocationFactory();

@@ -39,13 +39,14 @@ package org.simpledbm.rss.api.tx;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
- * Interface definition for Compensation log records. Compensation log
- * records are used to log Undo operations. For example, if a transaction changed
- * A to B and then aborted, then the change from B to A is recorded as a
- * Compensation log record. It is redo only, which means that a Compensation log
- * record will never be undone. 
- * <p>In Compensation log records, the undoNextLsn is set to the lsn of the 
- * predecessor of the log record being compensated. 
+ * Interface definition for Compensation log records. Compensation log records
+ * are used to log Undo operations. For example, if a transaction changed A to B
+ * and then aborted, then the change from B to A is recorded as a Compensation
+ * log record. It is redo only, which means that a Compensation log record will
+ * never be undone.
+ * <p>
+ * In Compensation log records, the undoNextLsn is set to the lsn of the
+ * predecessor of the log record being compensated.
  * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
@@ -53,12 +54,12 @@ import org.simpledbm.rss.api.wal.Lsn;
 public interface Compensation extends Redoable {
 
     /**
-     * Sets pointer to the next record that should be undone. 
+     * Sets pointer to the next record that should be undone.
      */
     public Lsn getUndoNextLsn();
 
     /**
-     * Gets pointer to the next record that should be undone. 
+     * Gets pointer to the next record that should be undone.
      */
     public void setUndoNextLsn(Lsn undoNextLsn);
 

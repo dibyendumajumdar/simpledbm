@@ -37,8 +37,8 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * A savepoint marks a point within the transaction to which subsequently
- * a rollback operation can be invoked.
+ * A savepoint marks a point within the transaction to which subsequently a
+ * rollback operation can be invoked.
  * 
  * @author Dibyendu Majumdar
  * @since 25-Aug-2005
@@ -46,7 +46,7 @@ package org.simpledbm.rss.api.tx;
 public interface Savepoint {
 
     /**
-     * Saves a specified keyed value in the savepoint object. 
+     * Saves a specified keyed value in the savepoint object.
      */
     void saveValue(Object key, Object value);
 

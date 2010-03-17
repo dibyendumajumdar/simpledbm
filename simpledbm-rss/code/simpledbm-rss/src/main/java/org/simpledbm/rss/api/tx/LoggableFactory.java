@@ -41,7 +41,8 @@ import java.nio.ByteBuffer;
 import org.simpledbm.rss.api.wal.LogRecord;
 
 /**
- * Defines the factory interface for creating {@link Loggable} objects of appropriate types.
+ * Defines the factory interface for creating {@link Loggable} objects of
+ * appropriate types.
  * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
@@ -50,21 +51,20 @@ public interface LoggableFactory {
 
     /**
      * Instantiate a Loggable object using type information stored in the
-     * ByteBuffer. The typecode must be present in the first two bytes (as a short)
-     * of the buffer.
+     * ByteBuffer. The typecode must be present in the first two bytes (as a
+     * short) of the buffer.
      */
     public Loggable getInstance(ByteBuffer bb);
 
-//    /**
-//     * Create a new Loggable object of the specified type. The Loggable
-//     * object's module id field will be set to the specified module id.
-//     */
-//    public Loggable getInstance(int moduleId, int typecode);
+    //    /**
+    //     * Create a new Loggable object of the specified type. The Loggable
+    //     * object's module id field will be set to the specified module id.
+    //     */
+    //    public Loggable getInstance(int moduleId, int typecode);
 
     /**
-     * Create an instance of Loggable object from the raw log data.
-     * The first two bytes in the data must contain the typecode
-     * of the Loggable object.
+     * Create an instance of Loggable object from the raw log data. The first
+     * two bytes in the data must contain the typecode of the Loggable object.
      */
     public Loggable getInstance(LogRecord logRec);
 

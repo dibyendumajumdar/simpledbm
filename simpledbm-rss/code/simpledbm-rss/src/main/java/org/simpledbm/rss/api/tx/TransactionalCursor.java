@@ -38,17 +38,16 @@ package org.simpledbm.rss.api.tx;
 
 /**
  * TransactionalCursor interface should be implemented by Index and Tuple
- * cursors if they want to participate in partial rollbacks. 
+ * cursors if they want to participate in partial rollbacks.
  * 
  * @author Dibyendu Majumdar
  * @since 25 Dec 2006
  */
 public interface TransactionalCursor {
 
-	/**
-	 * Save the state of the cursor for the specified
-	 * Savepoint.
-	 */
+    /**
+     * Save the state of the cursor for the specified Savepoint.
+     */
     void saveState(Savepoint sp);
 
     /**

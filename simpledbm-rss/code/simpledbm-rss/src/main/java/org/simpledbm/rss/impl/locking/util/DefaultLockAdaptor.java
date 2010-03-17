@@ -44,10 +44,10 @@ import org.simpledbm.rss.api.locking.util.LockAdaptor;
 import org.simpledbm.rss.api.tx.Lockable;
 
 public class DefaultLockAdaptor implements LockAdaptor {
-	
-	public DefaultLockAdaptor(Platform platform, Properties p) {
-		
-	}
+
+    public DefaultLockAdaptor(Platform platform, Properties p) {
+
+    }
 
     public Lockable getLockableContainerId(int containerId) {
         return new ContainerId(containerId);

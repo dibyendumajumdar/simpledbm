@@ -63,23 +63,24 @@ import org.simpledbm.rss.api.st.StorageManager;
 public final class StorageManagerImpl implements StorageManager {
 
     private final Logger log;
-    
+
     @SuppressWarnings("unused")
-	private final ExceptionHandler exceptionHandler;
+    private final ExceptionHandler exceptionHandler;
 
     private final HashMap<Integer, StorageContainerHolder> map = new HashMap<Integer, StorageContainerHolder>();
 
-	static Message m_IS0022 = new Message('R', 'S', MessageType.INFO, 22,
-			"StorageManager STOPPED");
-	static Message m_ES0023 = new Message('R', 'S', MessageType.INFO, 23,
-			"Unexpected error occurred while closing StorageContainer {0}");
+    static Message m_IS0022 = new Message('R', 'S', MessageType.INFO, 22,
+            "StorageManager STOPPED");
+    static Message m_ES0023 = new Message('R', 'S', MessageType.INFO, 23,
+            "Unexpected error occurred while closing StorageContainer {0}");
 
     public StorageManagerImpl(Platform platform, Properties properties) {
-    	PlatformObjects po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
-    	log = po.getLogger();
-    	exceptionHandler = po.getExceptionHandler();
+        PlatformObjects po = platform
+                .getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+        log = po.getLogger();
+        exceptionHandler = po.getExceptionHandler();
     }
-    
+
     public final void register(int id, StorageContainer container) {
         synchronized (map) {
             map.put(id, new StorageContainerHolder(id, container));
@@ -91,11 +92,11 @@ public final class StorageManagerImpl implements StorageManager {
         synchronized (map) {
             containerHolder = map.get(id);
         }
-//        if (container == null) {
-//            throw new StorageException(
-//                    "SIMPLEDBM-ESTM-001: Unable to find an instance of StorageContainer "
-//                            + id);
-//        }
+        //        if (container == null) {
+        //            throw new StorageException(
+        //                    "SIMPLEDBM-ESTM-001: Unable to find an instance of StorageContainer "
+        //                            + id);
+        //        }
         if (containerHolder == null) {
             return null;
         }
@@ -126,21 +127,21 @@ public final class StorageManagerImpl implements StorageManager {
                 try {
                     remove(sc.getContainerId());
                 } catch (StorageException e) {
-                    log.error(this.getClass().getName(), "shutdown", 
-                    		new MessageInstance(m_ES0023, sc).toString(), e);
+                    log.error(this.getClass().getName(), "shutdown",
+                            new MessageInstance(m_ES0023, sc).toString(), e);
                 }
             }
         }
-        log.info(this.getClass().getName(), "shutdown", new MessageInstance(m_IS0022).toString());
+        log.info(this.getClass().getName(), "shutdown", new MessageInstance(
+                m_IS0022).toString());
     }
 
     public StorageContainerInfo[] getActiveContainers() {
         ArrayList<StorageContainerInfo> list = new ArrayList<StorageContainerInfo>();
         synchronized (map) {
             for (StorageContainerHolder sc : map.values()) {
-                list.add(new StorageContainerInfoImpl(sc
-                    .getContainer()
-                    .getName(), sc.getContainerId()));
+                list.add(new StorageContainerInfoImpl(sc.getContainer()
+                        .getName(), sc.getContainerId()));
             }
         }
         return list.toArray(new StorageContainerInfo[0]);
@@ -167,7 +168,7 @@ public final class StorageManagerImpl implements StorageManager {
 
         public final StringBuilder appendTo(StringBuilder sb) {
             sb.append("StorageContainerInfoImpl(name=").append(name).append(
-                ", id=").append(containerId).append(")");
+                    ", id=").append(containerId).append(")");
             return sb;
         }
 
@@ -198,12 +199,9 @@ public final class StorageManagerImpl implements StorageManager {
         }
 
         public final StringBuilder appendTo(StringBuilder sb) {
-            sb
-                .append("StorageContainerHolder(containerId=")
-                .append(containerId)
-                .append(", container=")
-                .append(container)
-                .append(")");
+            sb.append("StorageContainerHolder(containerId=")
+                    .append(containerId).append(", container=").append(
+                            container).append(")");
             return sb;
         }
 

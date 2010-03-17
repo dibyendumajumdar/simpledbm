@@ -42,7 +42,7 @@ import org.simpledbm.rss.api.tx.Lockable;
 /**
  * A LockAdaptor encapsulates knowledge about different types of lockable
  * objects. It is responsible for ensuring that different lockable types have
- * different namespaces, for example, locations and containers. 
+ * different namespaces, for example, locations and containers.
  * 
  * @author Dibyendu Majumdar
  * @since 14 Dec 2006
@@ -50,18 +50,19 @@ import org.simpledbm.rss.api.tx.Lockable;
 public interface LockAdaptor {
 
     /**
-     * Creates a lockable object for the specified container id.
-     * All container ids should belong to a distinct namespace.
+     * Creates a lockable object for the specified container id. All container
+     * ids should belong to a distinct namespace.
      */
     Lockable getLockableContainerId(int containerId);
 
     /**
      * Creates a lockable object for the container id associated with the
      * specified location. Note that this method may exhibit implementation
-     * specific behaviour. 
+     * specific behaviour.
+     * 
      * @param location Location object to be mapped to a container id
-     * @throws IllegalArgumentException Thrown if the location argument cannot be converted to
-     * 	a container id
+     * @throws IllegalArgumentException Thrown if the location argument cannot
+     *             be converted to a container id
      */
     Lockable getLockableContainerId(Location location);
 

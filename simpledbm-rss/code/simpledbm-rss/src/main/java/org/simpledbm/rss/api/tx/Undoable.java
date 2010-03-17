@@ -37,8 +37,9 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * A log operation that can be undone. Note that during undo, {@link Compensation} 
- * logs must be generated to record that undo has been executed.
+ * A log operation that can be undone. Note that during undo,
+ * {@link Compensation} logs must be generated to record that undo has been
+ * executed.
  * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005

@@ -41,9 +41,9 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
- * The Loggable interface and its sub-interfaces define the contract between the Transaction Manager
- * and its clients.
- *  
+ * The Loggable interface and its sub-interfaces define the contract between the
+ * Transaction Manager and its clients.
+ * 
  * @author Dibyendu Majumdar
  * @since 23-Aug-2005
  * @see org.simpledbm.rss.api.tx.Redoable
@@ -71,39 +71,39 @@ public interface Loggable extends Storable {
      * Gets the ID of the TransactionalModule that generated this log record.
      * The TransactionalModule is responsible for redoing or undoing the effects
      * of this log record.
+     * 
      * @see TransactionalModule
      */
     public int getModuleId();
 
-//    /**
-//     * Sets the ID of the TransactionalModule that generated this log record. 
-//     * The TransactionalModule is responsible for redoing or undoing the effects
-//     * of this log record.
-//     */
-//    public void setModuleId(int moduleId);
+    //    /**
+    //     * Sets the ID of the TransactionalModule that generated this log record. 
+    //     * The TransactionalModule is responsible for redoing or undoing the effects
+    //     * of this log record.
+    //     */
+    //    public void setModuleId(int moduleId);
 
     /**
-     * Gets the ID of the Page to which this log is related. Most log records are 
-     * related to individual pages. Sometimes
-     * a log record may be related to more than one page, for example, a log record that
-     * implements {@link MultiPageRedo} interface. Note that Dummy Compensation Log records
+     * Gets the ID of the Page to which this log is related. Most log records
+     * are related to individual pages. Sometimes a log record may be related to
+     * more than one page, for example, a log record that implements
+     * {@link MultiPageRedo} interface. Note that Dummy Compensation Log records
      * must return null from this method.
      */
     public PageId getPageId();
 
     /**
-     * Sets the ID of the page for which this log record is being
-     * generated. Also sets the type of the page. 
-     * When the formatting of a new page is being logged, the page type
-     * must be saved so that the correct type of page can be fixed in
-     * the buffer pool during recovery.
+     * Sets the ID of the page for which this log record is being generated.
+     * Also sets the type of the page. When the formatting of a new page is
+     * being logged, the page type must be saved so that the correct type of
+     * page can be fixed in the buffer pool during recovery.
      */
     public void setPageId(int pageType, PageId pageId);
 
     /**
-     * When the formatting of a new page is being logged, the page type
-     * must be saved so that the correct type of page can be fixed in
-     * the buffer pool during recovery.
+     * When the formatting of a new page is being logged, the page type must be
+     * saved so that the correct type of page can be fixed in the buffer pool
+     * during recovery.
      */
     public int getPageType();
 
@@ -118,16 +118,17 @@ public interface Loggable extends Storable {
     public void setPrevTrxLsn(Lsn prevTrxLsn);
 
     /**
-     * Transaction that created the log record. Automatically set when the
-     * log record is inserted by the transaction. Note that for log records
-     * that are not related to transactions, such as {@link NonTransactionRelatedOperation},
-     * the trxid.isNull() will evaluate to true.
+     * Transaction that created the log record. Automatically set when the log
+     * record is inserted by the transaction. Note that for log records that are
+     * not related to transactions, such as
+     * {@link NonTransactionRelatedOperation}, the trxid.isNull() will evaluate
+     * to true.
      */
     public TransactionId getTrxId();
 
     /**
-     * Transaction that created the log record. Automatically set when the
-     * log record is inserted by the transaction.
+     * Transaction that created the log record. Automatically set when the log
+     * record is inserted by the transaction.
      */
     public void setTrxId(TransactionId trxId);
 }

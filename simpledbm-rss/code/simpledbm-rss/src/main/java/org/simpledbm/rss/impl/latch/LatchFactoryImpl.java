@@ -49,45 +49,48 @@ import org.simpledbm.rss.api.latch.LatchFactory;
  * A factory for creating Latches.
  */
 public final class LatchFactoryImpl implements LatchFactory {
-	
-	final Platform platform;
-	
-	final PlatformObjects po;
+
+    final Platform platform;
+
+    final PlatformObjects po;
 
     // Latch Manager messages
-	static Message m_EH0001 = new Message('R', 'H', MessageType.ERROR, 1,
-			"Upgrade request {0} is invalid, as there is no prior lock");
-	static Message m_WH0002 = new Message('R', 
-			'H',
-			MessageType.WARN,
-			2,
-			"Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
-	static Message m_EH0003 = new Message('R', 
-			'H',
-			MessageType.ERROR,
-			3,
-			"Invalid request because lock requested {0} is already being waited for by requester {1}");
-	static Message m_WH0004 = new Message('R', 
-			'H',
-			MessageType.WARN,
-			4,
-			"Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
-	static Message m_EH0005 = new Message('R', 'H', MessageType.ERROR, 5,
-			"Unexpected error while handling conversion request");
-	static Message m_EH0006 = new Message('R', 'H', MessageType.ERROR, 6,
-			"Latch request {0} has timed out");
-	static Message m_EH0007 = new Message('R', 'H', MessageType.ERROR, 7,
-			"Invalid request as caller does not hold a lock on {0}");
-	static Message m_EH0008 = new Message('R', 'H', MessageType.ERROR, 8,
-			"Cannot release lock {0} as it is being waited for");
-	static Message m_EH0009 = new Message('R', 'H', MessageType.ERROR, 9,
-			"Invalid downgrade request: mode held {0}, mode to downgrade to {1}");	
-	
-	public LatchFactoryImpl(Platform platform, Properties properties) {
-		this.platform = platform;
-		this.po = platform.getPlatformObjects(LatchFactory.LOGGER_NAME);
-	}
-	
+    static Message m_EH0001 = new Message('R', 'H', MessageType.ERROR, 1,
+            "Upgrade request {0} is invalid, as there is no prior lock");
+    static Message m_WH0002 = new Message(
+            'R',
+            'H',
+            MessageType.WARN,
+            2,
+            "Latch {0} is not compatible with requested mode {1}, timing out because this is a conditional request");
+    static Message m_EH0003 = new Message(
+            'R',
+            'H',
+            MessageType.ERROR,
+            3,
+            "Invalid request because lock requested {0} is already being waited for by requester {1}");
+    static Message m_WH0004 = new Message(
+            'R',
+            'H',
+            MessageType.WARN,
+            4,
+            "Conversion request {0} is not compatible with granted group {1}, timing out because this is a conditional request");
+    static Message m_EH0005 = new Message('R', 'H', MessageType.ERROR, 5,
+            "Unexpected error while handling conversion request");
+    static Message m_EH0006 = new Message('R', 'H', MessageType.ERROR, 6,
+            "Latch request {0} has timed out");
+    static Message m_EH0007 = new Message('R', 'H', MessageType.ERROR, 7,
+            "Invalid request as caller does not hold a lock on {0}");
+    static Message m_EH0008 = new Message('R', 'H', MessageType.ERROR, 8,
+            "Cannot release lock {0} as it is being waited for");
+    static Message m_EH0009 = new Message('R', 'H', MessageType.ERROR, 9,
+            "Invalid downgrade request: mode held {0}, mode to downgrade to {1}");
+
+    public LatchFactoryImpl(Platform platform, Properties properties) {
+        this.platform = platform;
+        this.po = platform.getPlatformObjects(LatchFactory.LOGGER_NAME);
+    }
+
     /* (non-Javadoc)
      * @see org.simpledbm.common.latch.LatchFactory#newReadWriteLatch()
      */
@@ -115,5 +118,5 @@ public final class LatchFactoryImpl implements LatchFactory {
     public Latch newReadWriteUpdateLatchV1() {
         return new ReadWriteUpdateLatch(po);
     }
-    
+
 }

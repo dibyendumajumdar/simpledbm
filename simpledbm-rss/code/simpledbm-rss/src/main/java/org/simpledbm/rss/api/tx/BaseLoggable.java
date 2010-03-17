@@ -44,16 +44,17 @@ import org.simpledbm.rss.api.pm.PageId;
 import org.simpledbm.rss.api.wal.Lsn;
 
 /**
- * Provides a default implementation of the Loggable interface. Most log records should
- * extend this class. One point to note is that this class includes the methods
- * defined by the {@link Compensation} interface.
+ * Provides a default implementation of the Loggable interface. Most log records
+ * should extend this class. One point to note is that this class includes the
+ * methods defined by the {@link Compensation} interface.
  * <p>
- * Originally the {@link Loggable} interface used to be an abstract class and contained the
- * default implementation. However, that approach caused problems with the inheritance
- * hierarchy - clients were unable to insert common base classes between their implementation
- * of various Loggable types and the base class. By separating the concrete inheritance
- * from the interface hierarchy, it is now possible for clients to implement their own
- * concrete class hierarchy.
+ * Originally the {@link Loggable} interface used to be an abstract class and
+ * contained the default implementation. However, that approach caused problems
+ * with the inheritance hierarchy - clients were unable to insert common base
+ * classes between their implementation of various Loggable types and the base
+ * class. By separating the concrete inheritance from the interface hierarchy,
+ * it is now possible for clients to implement their own concrete class
+ * hierarchy.
  * 
  * @author Dibyendu Majumdar
  * @since 06-Nov-2005
@@ -63,8 +64,8 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     /**
      * Loggable object typecode, used to ensure that the correct type can be
      * instantiated when the log record is retrieved from persistent storage.
-     * The typecode is set by the LoggableFactory that is responsible for creating
-     * the log record.
+     * The typecode is set by the LoggableFactory that is responsible for
+     * creating the log record.
      */
     private final short typecode; // = -1;
 
@@ -74,22 +75,22 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
     private Lsn prevTrxLsn = new Lsn();
 
     /**
-     * Points to the next record that should be undone.
-     * Note that this is not specified by Loggable interface - it is part of the
-     * Compensation interface. 
+     * Points to the next record that should be undone. Note that this is not
+     * specified by Loggable interface - it is part of the Compensation
+     * interface.
      */
     private Lsn undoNextLsn = new Lsn();
 
     /**
-     * Transaction that created the log record. Automatically set when the
-     * log record is inserted by the transaction.
+     * Transaction that created the log record. Automatically set when the log
+     * record is inserted by the transaction.
      */
     private TransactionId trxId = new TransactionId();
 
     /**
-     * When the formatting of a new page is being logged, the page type
-     * must be saved so that the correct type of page can be fixed in
-     * the buffer pool during recovery.
+     * When the formatting of a new page is being logged, the page type must be
+     * saved so that the correct type of page can be fixed in the buffer pool
+     * during recovery.
      */
     private short pageType = -1;
 
@@ -113,10 +114,10 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
             + PageId.SIZE + TypeSize.SHORT * 3;
 
     protected BaseLoggable(int moduleId, int typecode) {
-    	this.moduleId = (short) moduleId;
-    	this.typecode = (short) typecode;
+        this.moduleId = (short) moduleId;
+        this.typecode = (short) typecode;
     }
-    
+
     protected BaseLoggable(ByteBuffer bb) {
         typecode = bb.getShort();
         prevTrxLsn = new Lsn(bb);
@@ -125,8 +126,8 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
         pageType = bb.getShort();
         pageId = new PageId(bb);
         moduleId = bb.getShort();
-    }    
-    
+    }
+
     public final int getTypecode() {
         return typecode;
     }
@@ -201,7 +202,7 @@ public abstract class BaseLoggable implements Loggable, Dumpable {
         prevTrxLsn.appendTo(sb).append(", undoNextLsn=");
         undoNextLsn.appendTo(sb).append(", trxId=");
         trxId.appendTo(sb).append(", pageType=").append(pageType).append(
-            ", pageId=");
+                ", pageId=");
         pageId.appendTo(sb).append(", moduleId=").append(moduleId);
         return sb;
     }

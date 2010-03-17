@@ -45,23 +45,23 @@ import org.simpledbm.common.util.mcat.MessageInstance;
  * Parent Exception class for all Latch exceptions. This is a RuntimeException
  * because a Latching error is not supposed to happen. Sinces latches are used
  * widely, a checked Exception would cause unnecessary exception handling.
- *  
+ * 
  * @author Dibyendu Majumdar
  */
 public class LatchException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public LatchException(ByteBuffer bb) {
-		super(bb);
-	}
+    public LatchException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public LatchException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public LatchException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public LatchException(MessageInstance m) {
-		super(m);
-	}
+    public LatchException(MessageInstance m) {
+        super(m);
+    }
 
- }
+}

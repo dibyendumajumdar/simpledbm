@@ -44,15 +44,15 @@ public final class PageReadException extends PageException {
 
     private static final long serialVersionUID = 1L;
 
-	public PageReadException(ByteBuffer bb) {
-		super(bb);
-	}
+    public PageReadException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public PageReadException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public PageReadException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public PageReadException(MessageInstance m) {
-		super(m);
-	}
+    public PageReadException(MessageInstance m) {
+        super(m);
+    }
 }

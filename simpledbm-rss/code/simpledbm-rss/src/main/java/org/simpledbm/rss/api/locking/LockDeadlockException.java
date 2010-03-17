@@ -41,7 +41,7 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
- * LockDeadLockException is thrown when the system detects that there is a 
+ * LockDeadLockException is thrown when the system detects that there is a
  * Deadlock. Note that the implementation may simply use lock timeouts to detect
  * potential deadlock situations.
  * 
@@ -52,16 +52,16 @@ public final class LockDeadlockException extends LockException {
 
     private static final long serialVersionUID = 1L;
 
-	public LockDeadlockException(ByteBuffer bb) {
-		super(bb);
-	}
+    public LockDeadlockException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public LockDeadlockException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public LockDeadlockException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public LockDeadlockException(MessageInstance m) {
-		super(m);
-	}
+    public LockDeadlockException(MessageInstance m) {
+        super(m);
+    }
 
 }

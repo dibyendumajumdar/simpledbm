@@ -37,10 +37,9 @@
 package org.simpledbm.rss.api.fsm;
 
 /**
- * Defines the interface for the callback that will be
- * used to test whether a page meets the space requirements.
- * Using a callback enables the space manager to delegate this
- * decision to the client.
+ * Defines the interface for the callback that will be used to test whether a
+ * page meets the space requirements. Using a callback enables the space manager
+ * to delegate this decision to the client.
  * 
  * @author Dibyendu Majumdar
  * @since 07-Sep-2005

@@ -37,11 +37,11 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * Defines the interface for the Container Delete operation.
- * ARIES requires container delete operations to be marked so that 
- * during the restart analysis phase, all pages related to the deleted container
- * can be removed from dirty pages table. Also, the container itself is
- * closed and removed from StorageManager to disallow further updates to it.
+ * Defines the interface for the Container Delete operation. ARIES requires
+ * container delete operations to be marked so that during the restart analysis
+ * phase, all pages related to the deleted container can be removed from dirty
+ * pages table. Also, the container itself is closed and removed from
+ * StorageManager to disallow further updates to it.
  * <p>
  * Constraints: Must not be part of the Redoable hierarchy.
  * 
@@ -50,7 +50,7 @@ package org.simpledbm.rss.api.tx;
  */
 public interface ContainerCreateOperation extends Loggable {
     /**
-     * Returns the ID of the container that is to be deleted. 
+     * Returns the ID of the container that is to be deleted.
      */
     int getContainerId();
 }

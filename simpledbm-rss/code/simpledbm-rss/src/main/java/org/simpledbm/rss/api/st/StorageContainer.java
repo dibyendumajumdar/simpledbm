@@ -37,11 +37,12 @@
 package org.simpledbm.rss.api.st;
 
 /**
- * Specifies the interface to a container on secondary storage. The interface
- * is small and generic to allow many different implementations. An important requirement
- * of the interface is to allow reads and writes from specified positions within
- * the container. Conceptually, the container is treated as a stream of bytes.
- *
+ * Specifies the interface to a container on secondary storage. The interface is
+ * small and generic to allow many different implementations. An important
+ * requirement of the interface is to allow reads and writes from specified
+ * positions within the container. Conceptually, the container is treated as a
+ * stream of bytes.
+ * 
  * @author Dibyendu Majumdar
  * @since 18-Jun-05
  */
@@ -53,26 +54,29 @@ public interface StorageContainer {
     String getName();
 
     /**
-     * Writes length number of bytes from byte array, beginning at offset,
-     * to the specified position within the container. Thread safe.
-     *
+     * Writes length number of bytes from byte array, beginning at offset, to
+     * the specified position within the container. Thread safe.
+     * 
      * @param position The position where the write must begin, >= 0.
      * @param buffer Data to be written out.
      * @param bufferOffset The offset with data.
      * @param length The number of bytes that need to be written.
-     * @throws StorageException Thrown if there was an error when writing the data.
+     * @throws StorageException Thrown if there was an error when writing the
+     *             data.
      */
     void write(long position, byte[] buffer, int bufferOffset, int length);
 
     /**
-     * Reads upto length bytes from the container into the byte array beginning at offset,
-     * from the specified position within the container. Thread safe.
-     *
+     * Reads upto length bytes from the container into the byte array beginning
+     * at offset, from the specified position within the container. Thread safe.
+     * 
      * @param position The position where the read must begin, >= 0.
      * @param buffer Data will be read into this array.
-     * @param bufferOffset The offset within the array where the read data will be placed.
+     * @param bufferOffset The offset within the array where the read data will
+     *            be placed.
      * @param length The number of bytes that is to be read.
-     * @throws StorageException Thrown if there was an error when reading the data.
+     * @throws StorageException Thrown if there was an error when reading the
+     *             data.
      * @return Number of bytes read, or <=0 if no more data available.
      */
     int read(long position, byte[] buffer, int bufferOffset, int length);
@@ -80,26 +84,33 @@ public interface StorageContainer {
     /**
      * Ensures that all data written to the container is flushed to secondary
      * storage.
-     * @throws StorageException Thrown if there is an error while flushing the data.
+     * 
+     * @throws StorageException Thrown if there is an error while flushing the
+     *             data.
      */
     void flush();
 
     /**
-     * Locks the container exclusively. Must not wait if lock is unavailable - 
+     * Locks the container exclusively. Must not wait if lock is unavailable -
      * instead should throw a StorageException.
+     * 
      * @throws StorageException Thrown if lock could not be obtained.
      */
     void lock();
 
     /**
-     * Releases lock on the container. 
+     * Releases lock on the container.
+     * 
      * @throws StorageException Thrown if there is an error releasing the lock.
      */
     void unlock();
 
     /**
-     * Closes the container. A container cannot be used after it has been closed.
-     * @throws StorageException Thrown if there is an error while closing the container.
+     * Closes the container. A container cannot be used after it has been
+     * closed.
+     * 
+     * @throws StorageException Thrown if there is an error while closing the
+     *             container.
      */
     void close();
 

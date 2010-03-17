@@ -50,23 +50,23 @@ public interface LogFactory {
 
     /**
      * Creates a new Log based upon parameters supplied.
-     *  
+     * 
      * @param props Set of properties for creating the Log
      * @throws LogException Thrown if there is an error while creating the Log
      * @throws LogException.StorageException Thrown if there is an IO error
      */
-//    void createLog(Properties props);
+    //    void createLog(Properties props);
 
     void createLog(StorageContainerFactory storageFactory, Properties props);
 
     /**
      * Obtains an instance of an existing Log based upon parameters supplied.
-     *  
+     * 
      * @param props Set of properties for identifying the Log
      * @throws LogException Thrown if there is an error while opening the Log
      * @throws LogException.StorageException Thrown if there is an IO error
      */
-//    LogManager getLog(Properties props);
+    //    LogManager getLog(Properties props);
 
     LogManager getLog(StorageContainerFactory storageFactory, Properties props);
 

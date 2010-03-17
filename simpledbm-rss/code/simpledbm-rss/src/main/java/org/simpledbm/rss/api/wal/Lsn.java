@@ -44,7 +44,7 @@ import org.simpledbm.common.util.TypeSize;
 
 /**
  * Lsn is short for Log Sequence Number, and is a unique monotonically
- * increasing numeric id given to log records. 
+ * increasing numeric id given to log records.
  * <p>
  * Immutable.
  * 
@@ -55,7 +55,7 @@ import org.simpledbm.common.util.TypeSize;
 public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
 
     /**
-     * Size of Lsn in bytes. 
+     * Size of Lsn in bytes.
      */
     public final static int SIZE = TypeSize.INTEGER * 2;
 
@@ -87,8 +87,8 @@ public final class Lsn implements Comparable<Lsn>, Storable, Dumpable {
     public Lsn(ByteBuffer bb) {
         index = bb.getInt();
         offset = bb.getInt();
-    }    
-    
+    }
+
     public final boolean isNull() {
         return index == 0 && offset == 0;
     }

@@ -46,7 +46,8 @@ public interface LockInfo {
     void setPreviousMode(LockMode mode);
 
     /**
-     * Sets a boolean value to indicate whether this lock is also held by other transactions.
+     * Sets a boolean value to indicate whether this lock is also held by other
+     * transactions.
      */
     boolean setHeldByOthers(boolean value);
 

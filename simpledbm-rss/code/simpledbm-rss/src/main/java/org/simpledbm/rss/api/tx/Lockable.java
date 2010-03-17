@@ -37,20 +37,19 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * The Lockable interface defines the contract between the
- * Transaction Manager and other modules. All locks that are to be
- * handled by the Transaction Manager must implement this interface.
- * For convenience, the abtract class {@link BaseLockable} is provided.
- * It is recommended that transactional modules extend BaseLockable to 
- * implement their own lockable classes.
- *  
+ * The Lockable interface defines the contract between the Transaction Manager
+ * and other modules. All locks that are to be handled by the Transaction
+ * Manager must implement this interface. For convenience, the abtract class
+ * {@link BaseLockable} is provided. It is recommended that transactional
+ * modules extend BaseLockable to implement their own lockable classes.
+ * 
  * @author Dibyendu Majumdar
  * @since 15 Dec 2006
  */
 public interface Lockable {
 
     /**
-     * Returns the container ID associated with this lock. 
+     * Returns the container ID associated with this lock.
      */
     int getContainerId();
 }

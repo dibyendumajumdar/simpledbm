@@ -47,36 +47,36 @@ import org.simpledbm.rss.api.pm.PageManager;
 /**
  * A SlottedPage is named as such because it contains a slot table, and supports
  * multiple slots of data. By abstracting out the functionality of maintaining
- * slots within the page, other modules are freed from this onerous task, and can
- * build higher level functionality.  
+ * slots within the page, other modules are freed from this onerous task, and
+ * can build higher level functionality.
  * 
  * @author Dibyendu Majumdar
  * @since Oct 5, 2005
  */
 public abstract class SlottedPage extends Page {
 
-	protected SlottedPage(PageManager pageFactory, int type, PageId pageId) {
-		super(pageFactory, type, pageId);
-	}
+    protected SlottedPage(PageManager pageFactory, int type, PageId pageId) {
+        super(pageFactory, type, pageId);
+    }
 
-	protected SlottedPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-		super(pageFactory, pageId, bb);
-	}
+    protected SlottedPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+        super(pageFactory, pageId, bb);
+    }
 
-	/**
-     * Returns the total space available for slot data, including the 
-     * slot table. This is equivalent to Page Size - Overhead in SlottedPage,
-     * or the space available with zero slots in the page.
-     * Note that this does not tell you how much free space is available, 
-     * for that see {@link #getFreeSpace()}.
+    /**
+     * Returns the total space available for slot data, including the slot
+     * table. This is equivalent to Page Size - Overhead in SlottedPage, or the
+     * space available with zero slots in the page. Note that this does not tell
+     * you how much free space is available, for that see
+     * {@link #getFreeSpace()}.
+     * 
      * @see #getFreeSpace()
      */
     public abstract int getSpace();
 
     /**
-     * Get the total length or size of a slot.
-     * This includes the data as well as the space taken by
-     * the entry in the slot table.
+     * Get the total length or size of a slot. This includes the data as well as
+     * the space taken by the entry in the slot table.
      */
     public abstract int getSlotLength(int slotNo);
 
@@ -87,45 +87,46 @@ public abstract class SlottedPage extends Page {
 
     /**
      * Check if a particular slot has been deleted.
+     * 
      * @see #delete(int)
      */
     public abstract boolean isSlotDeleted(int slotNo);
 
     /**
-     * Inserts a new slot at first available position. The new slot will 
-     * be inserted into the first available deleted slot, or if there are not any
+     * Inserts a new slot at first available position. The new slot will be
+     * inserted into the first available deleted slot, or if there are not any
      * deleted slots, it will be added to the end.
      */
     public abstract boolean insert(Storable item);
 
     /**
-     * Inserts slot at specific position. If replaceMode is false,
-     * existing slots will be shifted to the right. If replaceMode is 
-     * false, the new slot will replace existing slot.
+     * Inserts slot at specific position. If replaceMode is false, existing
+     * slots will be shifted to the right. If replaceMode is false, the new slot
+     * will replace existing slot.
      */
     public abstract boolean insertAt(int slotNumber, Storable item,
             boolean replaceMode);
 
     /**
-     * Marks a slot as deleted and release data occupied by the slot. 
-     * This frees up space but does not remove the slot entry in the slot table.
-     * A deleted slot can be reused when inserting new slots.
+     * Marks a slot as deleted and release data occupied by the slot. This frees
+     * up space but does not remove the slot entry in the slot table. A deleted
+     * slot can be reused when inserting new slots.
      */
     public abstract void delete(int slotNumber);
 
     /**
      * Removes a slot physically from the page. Both data and the slot entry in
-     * the slot table are removed. The number of slots in the page is decreased by one.
-     * Note that existing slots may be shifted as a result.
+     * the slot table are removed. The number of slots in the page is decreased
+     * by one. Note that existing slots may be shifted as a result.
      */
     public abstract void purge(int slotNumber);
 
     /**
-     * Returns slot data. The client must supply the correct type of
-     * Storable factory.
+     * Returns slot data. The client must supply the correct type of Storable
+     * factory.
      */
     public abstract Storable get(int slotNumber, StorableFactory storableFactory);
-    
+
     /**
      * Sets slot specific flags.
      */
@@ -147,26 +148,26 @@ public abstract class SlottedPage extends Page {
     public abstract void setFlags(short flags);
 
     /**
-     * Gets the amount of free space available in the page for inserting
-     * new slots.
+     * Gets the amount of free space available in the page for inserting new
+     * slots.
      */
     public abstract int getFreeSpace();
 
     /**
-     * Gets the number of slots present in the page. Note that this
-     * includes deleted slots as well.
+     * Gets the number of slots present in the page. Note that this includes
+     * deleted slots as well.
      */
     public abstract int getNumberOfSlots();
 
     /**
-     * Gets the space map page responsible for maintaining space allocation
-     * data for this page.
+     * Gets the space map page responsible for maintaining space allocation data
+     * for this page.
      */
     public abstract int getSpaceMapPageNumber();
 
     /**
-     * Sets the space map page responsible for maintaining space allocation
-     * data for this page.
+     * Sets the space map page responsible for maintaining space allocation data
+     * for this page.
      */
     public abstract void setSpaceMapPageNumber(int spaceMapPageNumber);
 
@@ -179,10 +180,10 @@ public abstract class SlottedPage extends Page {
      * Returns the overhead of a single slot.
      */
     public abstract int getSlotOverhead();
-    
+
     /**
-     * Reinitialize a page. All page settings must be set to
-     * default and any data should be zapped.
+     * Reinitialize a page. All page settings must be set to default and any
+     * data should be zapped.
      */
     public abstract void init();
 

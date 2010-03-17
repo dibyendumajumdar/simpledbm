@@ -63,9 +63,9 @@ import org.simpledbm.rss.api.wal.LogManager;
  * </tr>
  * <tr>
  * <td>log.groups.{n}.path</td>
- * <td>The path where log files of a group should be stored. The first log
- * group is specified as log.groups.1.path, the second as log.groups.2.path, and
- * so on. Upto a maximum of {@link LogManagerImpl#MAX_LOG_GROUPS} log groups can be
+ * <td>The path where log files of a group should be stored. The first log group
+ * is specified as log.groups.1.path, the second as log.groups.2.path, and so
+ * on. Upto a maximum of {@link LogManagerImpl#MAX_LOG_GROUPS} log groups can be
  * specified.</td>
  * </tr>
  * <tr>
@@ -88,12 +88,11 @@ import org.simpledbm.rss.api.wal.LogManager;
  * </tr>
  * <tr>
  * <td>log.buffer.limit</td>
- * <td> Sets a limit on the maximum number of log buffers that can be allocated.
- * </td>
+ * <td>Sets a limit on the maximum number of log buffers that can be allocated.</td>
  * </tr>
  * <tr>
  * <td>log.flush.interval</td>
- * <td>Sets the interval (in seconds) between log flushes. </td>
+ * <td>Sets the interval (in seconds) between log flushes.</td>
  * </tr>
  * </table>
  * 
@@ -101,21 +100,21 @@ import org.simpledbm.rss.api.wal.LogManager;
  * @since 26-Jun-2005
  */
 public final class LogFactoryImpl implements LogFactory {
-	
-	final Platform platform;
-	final PlatformObjects po;
-	
-	public LogFactoryImpl(Platform platform, Properties props) {
-		this.platform = platform;
-    	this.po = platform.getPlatformObjects(LogManager.LOGGER_NAME);
-	}
+
+    final Platform platform;
+    final PlatformObjects po;
+
+    public LogFactoryImpl(Platform platform, Properties props) {
+        this.platform = platform;
+        this.po = platform.getPlatformObjects(LogManager.LOGGER_NAME);
+    }
 
     public final void createLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(po, storageFactory, 
-        		parms.logBufferSize, parms.maxLogBuffers, 
-        		parms.logFlushInterval, parms.disableExplicitFlushRequests);
+        LogManagerImpl logmgr = new LogManagerImpl(po, storageFactory,
+                parms.logBufferSize, parms.maxLogBuffers,
+                parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         logmgr.setArchivePath(parms.archivePath);
         logmgr.setArchiveMode(true);
@@ -132,9 +131,9 @@ public final class LogFactoryImpl implements LogFactory {
     public final LogManager getLog(StorageContainerFactory storageFactory,
             Properties props) throws LogException {
         LogMgrParms parms = new LogMgrParms(props);
-        LogManagerImpl logmgr = new LogManagerImpl(po, storageFactory, 
-        		parms.logBufferSize, parms.maxLogBuffers, 
-        		parms.logFlushInterval, parms.disableExplicitFlushRequests);
+        LogManagerImpl logmgr = new LogManagerImpl(po, storageFactory,
+                parms.logBufferSize, parms.maxLogBuffers,
+                parms.logFlushInterval, parms.disableExplicitFlushRequests);
         logmgr.setCtlFiles(parms.ctlFiles);
         return logmgr;
     }

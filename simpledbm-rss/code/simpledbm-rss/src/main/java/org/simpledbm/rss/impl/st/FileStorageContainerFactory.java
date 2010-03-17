@@ -65,28 +65,26 @@ public final class FileStorageContainerFactory implements
     final Logger log;
 
     final ExceptionHandler exceptionHandler;
-    
+
     final PlatformObjects po;
-    
+
     /**
-     * Mode for creating new container objects. This should be
-     * configurable.
+     * Mode for creating new container objects. This should be configurable.
      */
     private final String createMode;
     private static final String CREATE_MODE = "storage.createMode";
     private static final String defaultCreateMode = "rws";
 
     /**
-     * Mode for opening existing container objects. This should be 
-     * configurable.
+     * Mode for opening existing container objects. This should be configurable.
      */
     private final String openMode;
     private static final String OPEN_MODE = "storage.openMode";
     private static final String defaultOpenMode = "rws";
 
     /**
-     * Base path for containers. All containers will be
-     * created relative to the base path.
+     * Base path for containers. All containers will be created relative to the
+     * base path.
      */
     private final String basePath;
 
@@ -115,39 +113,40 @@ public final class FileStorageContainerFactory implements
     private static final String FLUSH_MODE = "storage.flushMode";
     private static final String DEFAULT_FLUSH_MODE = "force.true";
 
-        // storage manager messages
-	static Message m_ES0011 = new Message('R', 'S', MessageType.ERROR, 11,
-			"Directory specified by {0}={1} does not exist");
-	static Message m_ES0012 = new Message('R', 'S', MessageType.ERROR, 12,
-			"Error creating directory specified by {0}={1}");
-	static Message m_ES0013 = new Message('R', 'S', MessageType.ERROR, 13,
-			"Specified base path {0}={1} is not a directory or is not accessible");
-	static Message m_ES0014 = new Message('R', 'S', MessageType.ERROR, 14,
-			"Path name {0} must be a directory");
-	static Message m_ES0015 = new Message('R', 'S', MessageType.ERROR, 15,
-			"Error creating directory {0}");
-	static Message m_ES0016 = new Message('R', 'S', MessageType.ERROR, 16,
-			"Unable to delete StorageContainer {0}");
-	static Message m_ES0017 = new Message('R', 
-			'S',
-			MessageType.ERROR,
-			17,
-			"Unable to create StorageContainer {0} because an object of the name already exists");
-	static Message m_ES0018 = new Message('R', 'S', MessageType.ERROR, 18,
-			"Unexpected error occurred while creating StorageContainer {0}");
-	static Message m_ES0019 = new Message('R', 'S', MessageType.ERROR, 19,
-			"StorageContainer {0} does not exist or is not accessible");
-	static Message m_ES0020 = new Message('R', 'S', MessageType.ERROR, 20,
-			"Unexpected error occurred while opening StorageContainer {0}");
-	static Message m_ES0021 = new Message('R', 'S', MessageType.ERROR, 21,
-			"Unable to delete {0} as named object is not a StorageContainer");
-	static Message m_ES0024 = new Message('R', 'S', MessageType.ERROR, 24,
-			"Unable to delete path name {0}");
-    
+    // storage manager messages
+    static Message m_ES0011 = new Message('R', 'S', MessageType.ERROR, 11,
+            "Directory specified by {0}={1} does not exist");
+    static Message m_ES0012 = new Message('R', 'S', MessageType.ERROR, 12,
+            "Error creating directory specified by {0}={1}");
+    static Message m_ES0013 = new Message('R', 'S', MessageType.ERROR, 13,
+            "Specified base path {0}={1} is not a directory or is not accessible");
+    static Message m_ES0014 = new Message('R', 'S', MessageType.ERROR, 14,
+            "Path name {0} must be a directory");
+    static Message m_ES0015 = new Message('R', 'S', MessageType.ERROR, 15,
+            "Error creating directory {0}");
+    static Message m_ES0016 = new Message('R', 'S', MessageType.ERROR, 16,
+            "Unable to delete StorageContainer {0}");
+    static Message m_ES0017 = new Message(
+            'R',
+            'S',
+            MessageType.ERROR,
+            17,
+            "Unable to create StorageContainer {0} because an object of the name already exists");
+    static Message m_ES0018 = new Message('R', 'S', MessageType.ERROR, 18,
+            "Unexpected error occurred while creating StorageContainer {0}");
+    static Message m_ES0019 = new Message('R', 'S', MessageType.ERROR, 19,
+            "StorageContainer {0} does not exist or is not accessible");
+    static Message m_ES0020 = new Message('R', 'S', MessageType.ERROR, 20,
+            "Unexpected error occurred while opening StorageContainer {0}");
+    static Message m_ES0021 = new Message('R', 'S', MessageType.ERROR, 21,
+            "Unable to delete {0} as named object is not a StorageContainer");
+    static Message m_ES0024 = new Message('R', 'S', MessageType.ERROR, 24,
+            "Unable to delete path name {0}");
+
     public FileStorageContainerFactory(Platform platform, Properties props) {
-    	po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
-    	log = po.getLogger();
-    	exceptionHandler = po.getExceptionHandler();
+        po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+        log = po.getLogger();
+        exceptionHandler = po.getExceptionHandler();
         basePath = props.getProperty(BASE_PATH, defaultBasePath);
         createMode = props.getProperty(CREATE_MODE, defaultCreateMode);
         openMode = props.getProperty(OPEN_MODE, defaultOpenMode);
@@ -155,14 +154,14 @@ public final class FileStorageContainerFactory implements
     }
 
     public FileStorageContainerFactory(Platform platform) {
-    	po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
-    	log = po.getLogger();
-    	exceptionHandler = po.getExceptionHandler();
-    	basePath = defaultBasePath;
+        po = platform.getPlatformObjects(StorageContainerFactory.LOGGER_NAME);
+        log = po.getLogger();
+        exceptionHandler = po.getExceptionHandler();
+        basePath = defaultBasePath;
         createMode = defaultCreateMode;
         openMode = defaultOpenMode;
         flushMode = DEFAULT_FLUSH_MODE;
-   }
+    }
 
     /**
      * Checks the existence of the base path. Optionally creates the base path.
@@ -174,26 +173,27 @@ public final class FileStorageContainerFactory implements
         File file = new File(basePath);
         if (!file.exists()) {
             if (!create) {
-            	exceptionHandler.errorThrow(this.getClass().getName(),
-						"checkBasePath", new StorageException(new MessageInstance(m_ES0011, BASE_PATH, basePath)));
+                exceptionHandler.errorThrow(this.getClass().getName(),
+                        "checkBasePath", new StorageException(
+                                new MessageInstance(m_ES0011, BASE_PATH,
+                                        basePath)));
             }
             if (log.isDebugEnabled()) {
-                log.debug(
-                    this.getClass().getName(),
-                    "checkBasePath",
-                    "SIMPLEDBM-DEBUG: Creating base path " + basePath);
+                log.debug(this.getClass().getName(), "checkBasePath",
+                        "SIMPLEDBM-DEBUG: Creating base path " + basePath);
             }
             if (!file.mkdirs()) {
-				exceptionHandler.errorThrow(this.getClass().getName(),
-						"checkBasePath", new StorageException(new MessageInstance(m_ES0012, 
-								BASE_PATH, basePath)));
-			}
+                exceptionHandler.errorThrow(this.getClass().getName(),
+                        "checkBasePath", new StorageException(
+                                new MessageInstance(m_ES0012, BASE_PATH,
+                                        basePath)));
+            }
         }
         if (!file.isDirectory() || !file.canRead() || !file.canWrite()) {
-			exceptionHandler.errorThrow(this.getClass().getName(),
-					"checkBasePath", new StorageException(new MessageInstance(m_ES0013, 
-							BASE_PATH, basePath)));
-		}
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "checkBasePath", new StorageException(new MessageInstance(
+                            m_ES0013, BASE_PATH, basePath)));
+        }
         basePathVerified = true;
     }
 
@@ -211,23 +211,21 @@ public final class FileStorageContainerFactory implements
                 if (!parentFile.isDirectory() || !parentFile.canWrite()
                         || !parentFile.canRead()) {
                     exceptionHandler.errorThrow(this.getClass().getName(),
-							"getFileName",
-							new StorageException(new MessageInstance(m_ES0014,
-									parentFile.getPath())));
+                            "getFileName", new StorageException(
+                                    new MessageInstance(m_ES0014, parentFile
+                                            .getPath())));
                 }
             } else {
                 if (log.isDebugEnabled()) {
-                    log.debug(
-                        this.getClass().getName(),
-                        "getFileName",
-                        "SIMPLEDBM-DEBUG: Creating path "
-                                + parentFile.getPath());
+                    log.debug(this.getClass().getName(), "getFileName",
+                            "SIMPLEDBM-DEBUG: Creating path "
+                                    + parentFile.getPath());
                 }
                 if (!parentFile.mkdirs()) {
                     exceptionHandler.errorThrow(this.getClass().getName(),
-							"getFileName",
-							new StorageException(new MessageInstance(m_ES0015,
-									parentFile.getPath())));
+                            "getFileName", new StorageException(
+                                    new MessageInstance(m_ES0015, parentFile
+                                            .getPath())));
                 }
             }
         }
@@ -235,17 +233,17 @@ public final class FileStorageContainerFactory implements
     }
 
     /**
-     * Creates a new File based Storage Container object. If a container
-     * of the same name already exists, it is over-written. By default
-     * the container is opened in read/write mode.
+     * Creates a new File based Storage Container object. If a container of the
+     * same name already exists, it is over-written. By default the container is
+     * opened in read/write mode.
      */
     public final StorageContainer createIfNotExisting(String logicalName)
             throws StorageException {
         if (log.isDebugEnabled()) {
-            log.debug(
-                this.getClass().getName(),
-                "create",
-                "SIMPLEDBM-DEBUG: Creating StorageContainer " + logicalName);
+            log
+                    .debug(this.getClass().getName(), "create",
+                            "SIMPLEDBM-DEBUG: Creating StorageContainer "
+                                    + logicalName);
         }
         checkBasePath(true);
         String name = getFileName(logicalName, true);
@@ -254,30 +252,32 @@ public final class FileStorageContainerFactory implements
         try {
             // Create the file atomically.
             if (!file.createNewFile()) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "create", 
-                		new StorageException(new MessageInstance(m_ES0017,
-                        name)));
+                exceptionHandler.errorThrow(this.getClass().getName(),
+                        "create", new StorageException(new MessageInstance(
+                                m_ES0017, name)));
             }
             rafile = new RandomAccessFile(name, createMode);
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "create",
-					new StorageException(new MessageInstance(m_ES0018, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "create",
+                            new StorageException(new MessageInstance(m_ES0018,
+                                    name), e));
         }
         return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
 
     /**
-     * Creates a new File based Storage Container object. If a container
-     * of the same name already exists, it is over-written. By default
-     * the container is opened in read/write mode.
+     * Creates a new File based Storage Container object. If a container of the
+     * same name already exists, it is over-written. By default the container is
+     * opened in read/write mode.
      */
     public final StorageContainer create(String logicalName)
             throws StorageException {
         if (log.isDebugEnabled()) {
-            log.debug(
-                this.getClass().getName(),
-                "create",
-                "SIMPLEDBM-DEBUG: Creating StorageContainer " + logicalName);
+            log
+                    .debug(this.getClass().getName(), "create",
+                            "SIMPLEDBM-DEBUG: Creating StorageContainer "
+                                    + logicalName);
         }
         checkBasePath(true);
         String name = getFileName(logicalName, true);
@@ -288,27 +288,30 @@ public final class FileStorageContainerFactory implements
                 if (file.isFile()) {
                     if (!file.delete()) {
                         exceptionHandler.errorThrow(this.getClass().getName(),
-								"create", new StorageException(new MessageInstance(m_ES0016, name)));
+                                "create", new StorageException(
+                                        new MessageInstance(m_ES0016, name)));
                     }
                 } else {
                     exceptionHandler.errorThrow(this.getClass().getName(),
-							"create", new StorageException(new MessageInstance(m_ES0017, name)));
+                            "create", new StorageException(new MessageInstance(
+                                    m_ES0017, name)));
                 }
             }
             rafile = new RandomAccessFile(name, createMode);
         } catch (IOException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "create", 
-            		new StorageException(new MessageInstance(m_ES0018, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "create",
+                            new StorageException(new MessageInstance(m_ES0018,
+                                    name), e));
         }
         return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
-    
-    
+
     /**
      * <p>
-     * Opens an existing File based Storage Container object. If a container
-     * of the specified name does not exist, an Exception is thrown. By default
-     * the container is opened in read/write mode.
+     * Opens an existing File based Storage Container object. If a container of
+     * the specified name does not exist, an Exception is thrown. By default the
+     * container is opened in read/write mode.
      * </p>
      */
     public final StorageContainer open(String logicalName)
@@ -320,13 +323,16 @@ public final class FileStorageContainerFactory implements
         try {
             if (!file.exists() || !file.isFile() || !file.canRead()
                     || !file.canWrite()) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "open", 
-                		new StorageException(new MessageInstance(m_ES0019, name)));
+                exceptionHandler.errorThrow(this.getClass().getName(), "open",
+                        new StorageException(
+                                new MessageInstance(m_ES0019, name)));
             }
             rafile = new RandomAccessFile(name, openMode);
         } catch (FileNotFoundException e) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "open", 
-            		new StorageException(new MessageInstance(m_ES0020, name), e));
+            exceptionHandler
+                    .errorThrow(this.getClass().getName(), "open",
+                            new StorageException(new MessageInstance(m_ES0020,
+                                    name), e));
         }
         return new FileStorageContainer(po, logicalName, rafile, flushMode);
     }
@@ -341,66 +347,68 @@ public final class FileStorageContainerFactory implements
         if (file.exists()) {
             if (file.isFile()) {
                 if (!file.delete()) {
-                    exceptionHandler.errorThrow(this.getClass().getName(), "delete", 
-                    		new StorageException(new MessageInstance(m_ES0016, name)));
+                    exceptionHandler.errorThrow(this.getClass().getName(),
+                            "delete", new StorageException(new MessageInstance(
+                                    m_ES0016, name)));
                 }
             } else {
-                exceptionHandler.errorThrow(this.getClass().getName(), "delete", 
-                		new StorageException(new MessageInstance(m_ES0021, name)));
+                exceptionHandler.errorThrow(this.getClass().getName(),
+                        "delete", new StorageException(new MessageInstance(
+                                m_ES0021, name)));
             }
         }
     }
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.st.StorageContainerFactory#exists(java.lang.String)
-	 */
-	public boolean exists(String logicalName) {
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.StorageContainerFactory#exists(java.lang.String)
+     */
+    public boolean exists(String logicalName) {
         checkBasePath(false);
         String name = getFileName(logicalName, false);
         File file = new File(name);
-		return file.exists();
-	}
+        return file.exists();
+    }
 
-	private void deleteRecursively(File dir) {
-		if (dir.isDirectory()) {
-			File[] files = dir.listFiles();
-			for (File file : files) {
-				if (file.isDirectory()) {
-					deleteRecursively(file);
-				} else {
-			        if (log.isDebugEnabled()) {
-			            log.debug(
-			                this.getClass().getName(),
-			                "deleteRecursively",
-			                "SIMPLEDBM-DEBUG: Deleting " + file.getAbsolutePath());
-			        }
-					if (!file.delete()) {
-						exceptionHandler.errorThrow(this.getClass().getName(),
-								"deleteRecursively", new StorageException(new MessageInstance(m_ES0016,
-								file.getAbsolutePath())));
-					}
-				}
-			}
-		}
-        if (log.isDebugEnabled()) {
-            log.debug(
-                this.getClass().getName(),
-                "deleteRecursively",
-                "SIMPLEDBM-DEBUG: Deleting " + dir.getAbsolutePath());
+    private void deleteRecursively(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    deleteRecursively(file);
+                } else {
+                    if (log.isDebugEnabled()) {
+                        log.debug(this.getClass().getName(),
+                                "deleteRecursively",
+                                "SIMPLEDBM-DEBUG: Deleting "
+                                        + file.getAbsolutePath());
+                    }
+                    if (!file.delete()) {
+                        exceptionHandler.errorThrow(this.getClass().getName(),
+                                "deleteRecursively", new StorageException(
+                                        new MessageInstance(m_ES0016, file
+                                                .getAbsolutePath())));
+                    }
+                }
+            }
         }
-		if (!dir.delete()) {
-			exceptionHandler.errorThrow(this.getClass().getName(), "deleteRecursively", 
-					new StorageException(new MessageInstance(m_ES0024, dir
-					.getAbsolutePath())));
-		}
-	}
-	
-	/* (non-Javadoc)
-	 * @see org.simpledbm.rss.api.st.StorageContainerFactory#deleteTree(java.lang.String)
-	 */
-	public void delete() {
+        if (log.isDebugEnabled()) {
+            log.debug(this.getClass().getName(), "deleteRecursively",
+                    "SIMPLEDBM-DEBUG: Deleting " + dir.getAbsolutePath());
+        }
+        if (!dir.delete()) {
+            exceptionHandler.errorThrow(this.getClass().getName(),
+                    "deleteRecursively",
+                    new StorageException(new MessageInstance(m_ES0024, dir
+                            .getAbsolutePath())));
+        }
+    }
+
+    /* (non-Javadoc)
+     * @see org.simpledbm.rss.api.st.StorageContainerFactory#deleteTree(java.lang.String)
+     */
+    public void delete() {
         checkBasePath(false);
-		File file = new File(basePath);
-		deleteRecursively(file);
-	}
+        File file = new File(basePath);
+        deleteRecursively(file);
+    }
 }

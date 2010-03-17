@@ -41,10 +41,9 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
-
 /**
- * Exceptions thrown by the Buffer Manager module are all
- * derived from this class.
+ * Exceptions thrown by the Buffer Manager module are all derived from this
+ * class.
  * 
  * @author Dibyendu Majumdar
  * @since 20-Aug-2005
@@ -53,16 +52,16 @@ public class BufferManagerException extends SimpleDBMException {
 
     private static final long serialVersionUID = 1L;
 
-	public BufferManagerException(ByteBuffer bb) {
-		super(bb);
-	}
+    public BufferManagerException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public BufferManagerException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public BufferManagerException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public BufferManagerException(MessageInstance m) {
-		super(m);
-	}
+    public BufferManagerException(MessageInstance m) {
+        super(m);
+    }
 
 }

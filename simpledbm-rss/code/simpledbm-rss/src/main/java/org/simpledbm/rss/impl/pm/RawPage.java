@@ -52,33 +52,33 @@ import org.simpledbm.rss.api.pm.PageId;
 public final class RawPage extends Page {
 
     RawPage(PageManager pageFactory, int type, PageId pageId) {
-		super(pageFactory, type, pageId);
-	}
-
-	RawPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-		super(pageFactory, pageId, bb);
-	}
-
-	static final class RawPageFactory implements PageFactory {
-
-    	final PageManager pageManager;
-    	
-    	public RawPageFactory(PageManager pageManager) {
-    		this.pageManager = pageManager;
-    	}
-
-		public Page getInstance(int type, PageId pageId) {
-			return new RawPage(pageManager, type, pageId);
-		}
-
-		public Page getInstance(PageId pageId, ByteBuffer bb) {
-			return new RawPage(pageManager, pageId, bb);
-		}
-
-		public int getPageType() {
-			return PageManagerImpl.TYPE_RAW_PAGE;
-		}
-    	
+        super(pageFactory, type, pageId);
     }
-    
+
+    RawPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+        super(pageFactory, pageId, bb);
+    }
+
+    static final class RawPageFactory implements PageFactory {
+
+        final PageManager pageManager;
+
+        public RawPageFactory(PageManager pageManager) {
+            this.pageManager = pageManager;
+        }
+
+        public Page getInstance(int type, PageId pageId) {
+            return new RawPage(pageManager, type, pageId);
+        }
+
+        public Page getInstance(PageId pageId, ByteBuffer bb) {
+            return new RawPage(pageManager, pageId, bb);
+        }
+
+        public int getPageType() {
+            return PageManagerImpl.TYPE_RAW_PAGE;
+        }
+
+    }
+
 }

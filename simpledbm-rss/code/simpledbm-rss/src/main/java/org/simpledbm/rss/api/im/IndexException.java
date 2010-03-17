@@ -49,16 +49,16 @@ public class IndexException extends SimpleDBMException {
 
     private static final long serialVersionUID = 2680497332718941694L;
 
-	public IndexException(ByteBuffer bb) {
-		super(bb);
-	}
+    public IndexException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public IndexException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public IndexException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public IndexException(MessageInstance m) {
-		super(m);
-	}
+    public IndexException(MessageInstance m) {
+        super(m);
+    }
 
 }

@@ -45,25 +45,26 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
 /**
- * LockTimeoutException is thrown when a lock cannot be acquired
- * within a given period of time.
+ * LockTimeoutException is thrown when a lock cannot be acquired within a given
+ * period of time.
+ * 
  * @author Dibyendu Majumdar
- *
+ * 
  */
 public final class LockTimeoutException extends LockException {
 
     private static final long serialVersionUID = 1L;
 
-	public LockTimeoutException(ByteBuffer bb) {
-		super(bb);
-	}
+    public LockTimeoutException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public LockTimeoutException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public LockTimeoutException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public LockTimeoutException(MessageInstance m) {
-		super(m);
-	}
+    public LockTimeoutException(MessageInstance m) {
+        super(m);
+    }
 
 }

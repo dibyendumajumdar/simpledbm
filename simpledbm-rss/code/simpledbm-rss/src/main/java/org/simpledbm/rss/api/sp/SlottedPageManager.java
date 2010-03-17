@@ -41,8 +41,8 @@
 package org.simpledbm.rss.api.sp;
 
 public interface SlottedPageManager {
-	
-	public final String LOGGER_NAME = "org.simpledbm.slotpagemgr";
+
+    public final String LOGGER_NAME = "org.simpledbm.slotpagemgr";
 
     int getPageType();
 

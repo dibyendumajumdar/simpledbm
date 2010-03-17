@@ -44,26 +44,27 @@ import org.simpledbm.rss.api.loc.Location;
  * IndexScans, TupleScans do not support next-key locking, hence cannot ensure
  * repeatable reads.
  * 
- * @see org.simpledbm.rss.api.tuple.TupleContainer#openScan(org.simpledbm.rss.api.tx.Transaction, boolean)
+ * @see org.simpledbm.rss.api.tuple.TupleContainer#openScan(org.simpledbm.rss.api.tx.Transaction,
+ *      boolean)
  * @author Dibyendu Majumdar
  */
 public interface TupleScan {
 
     /**
-     * Attempts to position the scan cursor on the next available tuple.
-     * Tuple will be locked in the mode specified when the scan was opened.
-     * If there are no more tuples to be retrieved, this method will return false.
+     * Attempts to position the scan cursor on the next available tuple. Tuple
+     * will be locked in the mode specified when the scan was opened. If there
+     * are no more tuples to be retrieved, this method will return false.
      */
     boolean fetchNext();
 
     /**
-     * Retrieves the contents of the current tuple. Valid only after a 
-     * call to {@link #fetchNext()}.
+     * Retrieves the contents of the current tuple. Valid only after a call to
+     * {@link #fetchNext()}.
      */
     byte[] getCurrentTuple();
 
     /**
-     * Returns the current tuple location. Valid only after a call to 
+     * Returns the current tuple location. Valid only after a call to
      * {@link #fetchNext()}.
      */
     Location getCurrentLocation();
@@ -74,8 +75,8 @@ public interface TupleScan {
     boolean isEof();
 
     /**
-     * Closes the scan and releases resources acquired for the scan.
-     * Note that locks obtained during the scan are not released here.
+     * Closes the scan and releases resources acquired for the scan. Note that
+     * locks obtained during the scan are not released here.
      */
     void close();
 }

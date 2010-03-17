@@ -38,57 +38,60 @@ package org.simpledbm.rss.api.st;
 
 /**
  * Factory interface for creating new instances of StorageContainer objects.
- *
+ * 
  * @author Dibyendu Majumdar
  * @since 18-Jun-2005
  */
 public interface StorageContainerFactory {
-	
-	public final String LOGGER_NAME = "org.simpledbm.storagemgr";
+
+    public final String LOGGER_NAME = "org.simpledbm.storagemgr";
 
     /**
      * Creates a new StorageContainer of the specified name. Note that the
-     * behaviour of create is not specified here. It is expected that
-     * an implementation will use some form of configuration data to
-     * define the behaviour.
-     *
+     * behaviour of create is not specified here. It is expected that an
+     * implementation will use some form of configuration data to define the
+     * behaviour.
+     * 
      * @param name Name of the storage container.
      * @return Newly created StorageContainer object.
-     * @throws StorageException Thrown if the StorageContainer cannot be created.
+     * @throws StorageException Thrown if the StorageContainer cannot be
+     *             created.
      */
     StorageContainer create(String name);
 
     /**
-     * Creates a new StorageContainer of the specified name only if
-     * there isn't an existing StorageContainer of the same name.
+     * Creates a new StorageContainer of the specified name only if there isn't
+     * an existing StorageContainer of the same name.
      */
     StorageContainer createIfNotExisting(String name);
-    
+
     /**
-     * Opens an existing StorageContainer. Note that the
-     * behaviour of open is not specified here. It is expected that
-     * an implementation will use some form of configuration data to
-     * define the behaviour.
-     *
+     * Opens an existing StorageContainer. Note that the behaviour of open is
+     * not specified here. It is expected that an implementation will use some
+     * form of configuration data to define the behaviour.
+     * 
      * @param name Name of the storage container.
      * @return Instance of StorageContainer object
-     * @throws StorageException Thrown if the StorageContainer does not exist or cannot be opened.
+     * @throws StorageException Thrown if the StorageContainer does not exist or
+     *             cannot be opened.
      */
     StorageContainer open(String name);
 
     /**
      * Checks whether a container of specified name exists.
+     * 
      * @param name Name of the storage container
      * @return true if the container exists
      */
     boolean exists(String name);
-    
+
     /**
      * Removes a container physically.
-     * @throws StorageException 
+     * 
+     * @throws StorageException
      */
     void delete(String name);
-    
+
     /**
      * Remove an entire storage hierarchy.
      */

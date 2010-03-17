@@ -37,21 +37,21 @@
 package org.simpledbm.rss.api.tx;
 
 /**
- * Marker interface for log records that are not related to
- * any specific transaction. Note that the Transaction Manager cannot track
- * the status of such records; that is, it cannot determine whether the
- * log record has been applied or not. As a result, such log records are
- * applied unconditionally.
+ * Marker interface for log records that are not related to any specific
+ * transaction. Note that the Transaction Manager cannot track the status of
+ * such records; that is, it cannot determine whether the log record has been
+ * applied or not. As a result, such log records are applied unconditionally.
  * <p>
- * Another important point to note is that such records are discarded
- * after a Checkpoint. This means that only those log records will be applied at
- * system restart that are found after the last Checkpoint. It is assumed that
+ * Another important point to note is that such records are discarded after a
+ * Checkpoint. This means that only those log records will be applied at system
+ * restart that are found after the last Checkpoint. It is assumed that
  * checkpoint records contain the effects of all past log records of this type.
  * For example, checkpoints contain a list of open containers. Any containers
- * opened after the last checkpoint can be logged using a NonTransactionRelatedOperation.
- * These records will be replayed at system restart, until the next Checkpoint when 
- * the updated open containers list will be recorded in the checkpoint record.
- *  
+ * opened after the last checkpoint can be logged using a
+ * NonTransactionRelatedOperation. These records will be replayed at system
+ * restart, until the next Checkpoint when the updated open containers list will
+ * be recorded in the checkpoint record.
+ * 
  * @author Dibyendu Majumdar
  * @since 26-Aug-2005
  * @see TransactionManager#logNonTransactionRelatedOperation(Loggable)
