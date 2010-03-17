@@ -48,16 +48,17 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
  * The LongType provides storage for a 64-bit integer.
+ * 
  * @author Dibyendu Majumdar
  */
 public class LongType implements TypeDescriptor {
 
-	public LongType() {
-	}
-	
-	public LongType(ByteBuffer bb) {
-	}
-	
+    public LongType() {
+    }
+
+    public LongType(ByteBuffer bb) {
+    }
+
     public final int getTypeCode() {
         return TYPE_LONG_INTEGER;
     }
@@ -66,50 +67,50 @@ public class LongType implements TypeDescriptor {
         return -1;
     }
 
-	public int getScale() {
-		return -1;
-	}
+    public int getScale() {
+        return -1;
+    }
 
-	public DateFormat getDateFormat() {
-		return null;
-	}
+    public DateFormat getDateFormat() {
+        return null;
+    }
 
-	public TimeZone getTimeZone() {
-		return null;
-	}
+    public TimeZone getTimeZone() {
+        return null;
+    }
 
-	public int getStoredLength() {
-		return 0;
-	}
+    public int getStoredLength() {
+        return 0;
+    }
 
-//	public void retrieve(ByteBuffer bb) {
-//	}
+    //	public void retrieve(ByteBuffer bb) {
+    //	}
 
-	public void store(ByteBuffer bb) {
-	}
-	
-	public int hashCode() {
-		return TYPE_LONG_INTEGER;
-	}
-	
-	public boolean equals(Object other) {
-		if (other == this) 
-			return true;
-		if (other == null) 
-			return false;
-		if (other.getClass() == getClass()) 
-			return true;
-		return false;
-	}
+    public void store(ByteBuffer bb) {
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		return sb.append("LongType()");
-	}
+    public int hashCode() {
+        return TYPE_LONG_INTEGER;
+    }
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
-	
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (other == null)
+            return false;
+        if (other.getClass() == getClass())
+            return true;
+        return false;
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        return sb.append("LongType()");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
+
 }

@@ -58,8 +58,8 @@ import org.simpledbm.typesystem.api.Row;
 
 public class TableScanImpl implements TableScan {
 
-	final Logger log;	
-	
+    final Logger log;
+
     private final Table table;
     final IndexScan indexScan;
     final Row startRow;
@@ -68,31 +68,33 @@ public class TableScanImpl implements TableScan {
     final Transaction trx;
     Row currentRow;
 
-    TableScanImpl(PlatformObjects po, Transaction trx, Table table, int indexNo, Row tableRow, boolean forUpdate) {
-    	this.log = po.getLogger();
+    TableScanImpl(PlatformObjects po, Transaction trx, Table table,
+            int indexNo, Row tableRow, boolean forUpdate) {
+        this.log = po.getLogger();
         this.table = table;
         this.trx = trx;
-        tcont = table.getDatabase().getServer().getTupleContainer(trx, table.getDefinition().getContainerId());
+        tcont = table.getDatabase().getServer().getTupleContainer(trx,
+                table.getDefinition().getContainerId());
         IndexDefinition index = table.getDefinition().getIndex(indexNo);
-        icont = table.getDatabase().getServer().getIndex(trx, index.getContainerId());
+        icont = table.getDatabase().getServer().getIndex(trx,
+                index.getContainerId());
         if (tableRow == null) {
-        	/*
-        	 * Create a start row that begins at negative infinity
-        	 */
-        	this.startRow = table.getDefinition().getIndex(indexNo).getRow();
-        	for (int i = 0; i < startRow.getNumberOfColumns(); i++) {
-        		startRow.setNegativeInfinity(i);
-        	}
-        }
-        else  {
-        	this.startRow = table.getDefinition().getIndexRow(index, tableRow);
+            /*
+             * Create a start row that begins at negative infinity
+             */
+            this.startRow = table.getDefinition().getIndex(indexNo).getRow();
+            for (int i = 0; i < startRow.getNumberOfColumns(); i++) {
+                startRow.setNegativeInfinity(i);
+            }
+        } else {
+            this.startRow = table.getDefinition().getIndexRow(index, tableRow);
         }
         indexScan = icont.openScan(trx, startRow, null, forUpdate);
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#fetchNext()
-	 */
+     * @see org.simpledbm.database.TableScan#fetchNext()
+     */
     public boolean fetchNext() {
         boolean okay = indexScan.fetchNext();
         if (okay) {
@@ -107,47 +109,50 @@ public class TableScanImpl implements TableScan {
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#getCurrentRow()
-	 */
+     * @see org.simpledbm.database.TableScan#getCurrentRow()
+     */
     public Row getCurrentRow() {
         return currentRow.cloneMe();
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#getCurrentIndexRow()
-	 */
+     * @see org.simpledbm.database.TableScan#getCurrentIndexRow()
+     */
     public Row getCurrentIndexRow() {
         return ((Row) indexScan.getCurrentKey()).cloneMe();
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#fetchCompleted(boolean)
-	 */
+     * @see org.simpledbm.database.TableScan#fetchCompleted(boolean)
+     */
     public void fetchCompleted(boolean matched) {
-//        indexScan.fetchCompleted(matched);
+        //        indexScan.fetchCompleted(matched);
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#close()
-	 */
+     * @see org.simpledbm.database.TableScan#close()
+     */
     public void close() {
         indexScan.close();
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#updateCurrentRow(org.simpledbm.typesystem.api.Row)
-	 */
+     * @see org.simpledbm.database.TableScan#updateCurrentRow(org.simpledbm.typesystem.api.Row)
+     */
     public void updateCurrentRow(Row tableRow) {
-    	if (!getTable().validateRow(tableRow)) {
-    		log.error(getClass().getName(), "updateCurrentRow", new MessageInstance(m_ED0015, tableRow).toString());
-    		throw new DatabaseException(new MessageInstance(m_ED0015, tableRow));
-    	}    	
-    	Savepoint sp = trx.createSavepoint(false);
+        if (!getTable().validateRow(tableRow)) {
+            log.error(getClass().getName(), "updateCurrentRow",
+                    new MessageInstance(m_ED0015, tableRow).toString());
+            throw new DatabaseException(new MessageInstance(m_ED0015, tableRow));
+        }
+        Savepoint sp = trx.createSavepoint(false);
         boolean success = false;
         try {
-            IndexDefinition pkey = getTable().getDefinition().getIndexes().get(0);
+            IndexDefinition pkey = getTable().getDefinition().getIndexes().get(
+                    0);
             // New secondary key
-            Row newPrimaryKeyRow = getTable().getDefinition().getIndexRow(pkey, tableRow);
+            Row newPrimaryKeyRow = getTable().getDefinition().getIndexRow(pkey,
+                    tableRow);
             if (indexScan.getCurrentKey().equals(newPrimaryKeyRow)) {
                 // Get location of the tuple
                 Location location = indexScan.getCurrentLocation();
@@ -161,26 +166,33 @@ public class TableScanImpl implements TableScan {
                 tcont.update(trx, location, tableRow);
                 // Update secondary indexes
                 // Old secondary key
-                for (int i = 1; i < getTable().getDefinition().getIndexes().size(); i++) {
-                    IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
-                    IndexContainer secondaryIndex = getTable().getDatabase().getServer().getIndex(trx, skey.getContainerId());
+                for (int i = 1; i < getTable().getDefinition().getIndexes()
+                        .size(); i++) {
+                    IndexDefinition skey = getTable().getDefinition()
+                            .getIndexes().get(i);
+                    IndexContainer secondaryIndex = getTable().getDatabase()
+                            .getServer().getIndex(trx, skey.getContainerId());
                     // old secondary key
-                    Row oldSecondaryKeyRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);
+                    Row oldSecondaryKeyRow = getTable().getDefinition()
+                            .getIndexRow(skey, oldTableRow);
                     // New secondary key
-                    Row secondaryKeyRow = getTable().getDefinition().getIndexRow(skey, tableRow);
+                    Row secondaryKeyRow = getTable().getDefinition()
+                            .getIndexRow(skey, tableRow);
                     if (!oldSecondaryKeyRow.equals(secondaryKeyRow)) {
                         // Delete old key
-                        secondaryIndex.delete(trx, oldSecondaryKeyRow, location);
+                        secondaryIndex
+                                .delete(trx, oldSecondaryKeyRow, location);
                         // Insert new key
                         secondaryIndex.insert(trx, secondaryKeyRow, location);
                     }
                 }
             } else {
                 // getTable().addRow(trx, tableRow);
-            	// Can't add as we do not know that this was intended
-            	// FIXME use exceptionHandler
-            	log.error(getClass().getName(), "updateCurrentRow", new MessageInstance(m_ED0014).toString());
-            	throw new DatabaseException(new MessageInstance(m_ED0014));
+                // Can't add as we do not know that this was intended
+                // FIXME use exceptionHandler
+                log.error(getClass().getName(), "updateCurrentRow",
+                        new MessageInstance(m_ED0014).toString());
+                throw new DatabaseException(new MessageInstance(m_ED0014));
             }
             success = true;
         } finally {
@@ -191,8 +203,8 @@ public class TableScanImpl implements TableScan {
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableScan#deleteRow()
-	 */
+     * @see org.simpledbm.database.TableScan#deleteRow()
+     */
     public void deleteRow() {
         // Start a new transaction
         Savepoint sp = trx.createSavepoint(false);
@@ -210,11 +222,13 @@ public class TableScanImpl implements TableScan {
             tcont.delete(trx, location);
             // Update indexes
             for (int i = getTable().getDefinition().getIndexes().size() - 1; i >= 0; i--) {
-                IndexDefinition skey = getTable().getDefinition().getIndexes().get(i);
-                IndexContainer index = getTable().getDatabase().getServer().getIndex(
-                        trx, skey.getContainerId());
+                IndexDefinition skey = getTable().getDefinition().getIndexes()
+                        .get(i);
+                IndexContainer index = getTable().getDatabase().getServer()
+                        .getIndex(trx, skey.getContainerId());
                 // old secondary key
-                Row indexRow = getTable().getDefinition().getIndexRow(skey, oldTableRow);
+                Row indexRow = getTable().getDefinition().getIndexRow(skey,
+                        oldTableRow);
                 // Delete old key
                 index.delete(trx, indexRow, location);
             }
@@ -226,7 +240,7 @@ public class TableScanImpl implements TableScan {
         }
     }
 
-	public Table getTable() {
-		return table;
-	}
+    public Table getTable() {
+        return table;
+    }
 }

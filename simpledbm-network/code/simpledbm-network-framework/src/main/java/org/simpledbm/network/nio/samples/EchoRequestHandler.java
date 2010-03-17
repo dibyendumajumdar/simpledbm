@@ -44,8 +44,7 @@ import org.simpledbm.network.nio.api.Response;
 import java.util.Properties;
 
 /**
- * Simple request handler that expects string messages and echoes them
- * back.
+ * Simple request handler that expects string messages and echoes them back.
  */
 public class EchoRequestHandler implements RequestHandler {
 

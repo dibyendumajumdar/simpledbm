@@ -42,23 +42,23 @@ import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.TypeSize;
 
 public class GetTableMessage implements Storable {
-	
-	public int containerId;
+
+    public int containerId;
 
     public GetTableMessage(int containerId) {
-    	this.containerId = containerId;
+        this.containerId = containerId;
     }
-    
+
     public GetTableMessage(ByteBuffer bb) {
-    	containerId = bb.getInt();
+        containerId = bb.getInt();
     }
-    
+
     public int getStoredLength() {
         return TypeSize.INTEGER;
     }
 
     public void store(ByteBuffer bb) {
-    	bb.putInt(containerId);
+        bb.putInt(containerId);
     }
 
 }

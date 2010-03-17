@@ -58,67 +58,70 @@ public class SessionImpl implements Session {
 
     private final int sessionId;
     final SessionManagerImpl sessionManager;
-    
+
     public SessionImpl(SessionManager sessionManager, int sessionId) {
-    	this.sessionManager = (SessionManagerImpl) sessionManager;
+        this.sessionManager = (SessionManagerImpl) sessionManager;
         this.sessionId = sessionId;
     }
-    
+
     String getError(Response response) {
-    	byte[] data = response.getData().array();
-    	String msg;
-		try {
-			msg = new String(data, "UTF-8");
-		} catch (UnsupportedEncodingException e) {
-			msg = "Error message could not be decoded";
-		}
-    	return msg;
+        byte[] data = response.getData().array();
+        String msg;
+        try {
+            msg = new String(data, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            msg = "Error message could not be decoded";
+        }
+        return msg;
     }
-    
+
     public synchronized void close() {
         SessionRequestMessage message = new SessionRequestMessage();
-    	sendMessage(RequestCode.CLOSE_SESSION, message);
+        sendMessage(RequestCode.CLOSE_SESSION, message);
     }
-    
+
     public synchronized void startTransaction(IsolationMode isolationMode) {
-        StartTransactionMessage message = new StartTransactionMessage(isolationMode);
-    	sendMessage(RequestCode.START_TRANSACTION, message);
+        StartTransactionMessage message = new StartTransactionMessage(
+                isolationMode);
+        sendMessage(RequestCode.START_TRANSACTION, message);
     }
 
     private synchronized void endTransaction(boolean commit) {
         EndTransactionMessage message = new EndTransactionMessage(commit);
-    	sendMessage(RequestCode.END_TRANSACTION, message);
+        sendMessage(RequestCode.END_TRANSACTION, message);
     }
-    
+
     public void commit() {
-    	endTransaction(true);
+        endTransaction(true);
     }
-    
+
     public void rollback() {
-    	endTransaction(false);
+        endTransaction(false);
     }
-    
+
     public synchronized void createTable(TableDefinition tableDefinition) {
-    	sendMessage(RequestCode.CREATE_TABLE, tableDefinition);
+        sendMessage(RequestCode.CREATE_TABLE, tableDefinition);
     }
 
     public Table getTable(int containerId) {
-    	GetTableMessage message = new GetTableMessage(containerId);
-    	Response response = sendMessage(RequestCode.GET_TABLE, message);   	
-        TableDefinition tableDefinition = sessionManager.typeSystemFactory.getTableDefinition(sessionManager.po, getSessionManager().getTypeFactory(),
-        		getSessionManager().getRowFactory(), response.getData());
-    	return new TableImpl(this, tableDefinition);
+        GetTableMessage message = new GetTableMessage(containerId);
+        Response response = sendMessage(RequestCode.GET_TABLE, message);
+        TableDefinition tableDefinition = sessionManager.typeSystemFactory
+                .getTableDefinition(sessionManager.po, getSessionManager()
+                        .getTypeFactory(), getSessionManager().getRowFactory(),
+                        response.getData());
+        return new TableImpl(this, tableDefinition);
     }
 
-	public SessionManager getSessionManager() {
-		return sessionManager;
-	}
+    public SessionManager getSessionManager() {
+        return sessionManager;
+    }
 
-	public int getSessionId() {
-		return sessionId;
-	}
-	
+    public int getSessionId() {
+        return sessionId;
+    }
+
     Response sendMessage(int requestCode, Storable message) {
-    	return sessionManager.sendMessage(sessionId, requestCode, message);
+        return sessionManager.sendMessage(sessionId, requestCode, message);
     }
 }

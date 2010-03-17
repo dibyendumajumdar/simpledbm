@@ -45,78 +45,77 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class OpenScanMessage implements Storable {
 
-	int containerId;
-	int indexNo;
-	Row startRow;
-	boolean forUpdate;
+    int containerId;
+    int indexNo;
+    Row startRow;
+    boolean forUpdate;
 
-	public OpenScanMessage(int containerId, int indexNo, Row startRow,
-			boolean forUpdate) {
-		this.containerId = containerId;
-		this.indexNo = indexNo;
-		this.startRow = startRow;
-		this.forUpdate = forUpdate;
-	}
+    public OpenScanMessage(int containerId, int indexNo, Row startRow,
+            boolean forUpdate) {
+        this.containerId = containerId;
+        this.indexNo = indexNo;
+        this.startRow = startRow;
+        this.forUpdate = forUpdate;
+    }
 
-	public OpenScanMessage(RowFactory rowFactory, ByteBuffer bb) {
-		containerId = bb.getInt();
-		indexNo = bb.getInt();
-		boolean hasStartRow = (bb.get() == 1);
-		if (hasStartRow) {
-			startRow = rowFactory.newRow(containerId, bb);
-		}
-		else {
-			startRow = null;
-		}
-		forUpdate = (bb.get() == 1 ? true : false);
-	}
+    public OpenScanMessage(RowFactory rowFactory, ByteBuffer bb) {
+        containerId = bb.getInt();
+        indexNo = bb.getInt();
+        boolean hasStartRow = (bb.get() == 1);
+        if (hasStartRow) {
+            startRow = rowFactory.newRow(containerId, bb);
+        } else {
+            startRow = null;
+        }
+        forUpdate = (bb.get() == 1 ? true : false);
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER * 2
-				+ (startRow != null ? startRow.getStoredLength() : 0)
-				+ TypeSize.BYTE * 2;
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER * 2
+                + (startRow != null ? startRow.getStoredLength() : 0)
+                + TypeSize.BYTE * 2;
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(containerId);
-		bb.putInt(indexNo);
-		bb.put((byte) (startRow != null ? 1 : 0));
-		if (startRow != null) {
-			startRow.store(bb);
-		}
-		bb.put((byte) (forUpdate ? 1 : 0));
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(containerId);
+        bb.putInt(indexNo);
+        bb.put((byte) (startRow != null ? 1 : 0));
+        if (startRow != null) {
+            startRow.store(bb);
+        }
+        bb.put((byte) (forUpdate ? 1 : 0));
+    }
 
-	public int getContainerId() {
-		return containerId;
-	}
+    public int getContainerId() {
+        return containerId;
+    }
 
-	public void setContainerId(int containerId) {
-		this.containerId = containerId;
-	}
+    public void setContainerId(int containerId) {
+        this.containerId = containerId;
+    }
 
-	public int getIndexNo() {
-		return indexNo;
-	}
+    public int getIndexNo() {
+        return indexNo;
+    }
 
-	public void setIndexNo(int indexNo) {
-		this.indexNo = indexNo;
-	}
+    public void setIndexNo(int indexNo) {
+        this.indexNo = indexNo;
+    }
 
-	public Row getStartRow() {
-		return startRow;
-	}
+    public Row getStartRow() {
+        return startRow;
+    }
 
-	public void setStartRow(Row startRow) {
-		this.startRow = startRow;
-	}
+    public void setStartRow(Row startRow) {
+        this.startRow = startRow;
+    }
 
-	public boolean isForUpdate() {
-		return forUpdate;
-	}
+    public boolean isForUpdate() {
+        return forUpdate;
+    }
 
-	public void setForUpdate(boolean forUpdate) {
-		this.forUpdate = forUpdate;
-	}
+    public void setForUpdate(boolean forUpdate) {
+        this.forUpdate = forUpdate;
+    }
 
 }

@@ -47,17 +47,18 @@ public class SimpleDictionaryCache implements DictionaryCache {
      * Contains a mapping of container IDs to row type descriptors.
      */
     private HashMap<Integer, TypeDescriptor[]> typeDescMap = new HashMap<Integer, TypeDescriptor[]>();
-    
+
     public synchronized TypeDescriptor[] getTypeDescriptor(int keytype) {
         return typeDescMap.get(keytype);
     }
-    
-    public synchronized void registerRowType(int keytype, TypeDescriptor[] rowTypeDesc) {
-    	typeDescMap.put(keytype, rowTypeDesc);
+
+    public synchronized void registerRowType(int keytype,
+            TypeDescriptor[] rowTypeDesc) {
+        typeDescMap.put(keytype, rowTypeDesc);
     }
 
     public void unregisterRowType(int keytype) {
         typeDescMap.remove(keytype);
     }
-	
+
 }

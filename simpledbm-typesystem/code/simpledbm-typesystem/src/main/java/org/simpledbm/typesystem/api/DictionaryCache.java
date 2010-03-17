@@ -37,31 +37,34 @@
 package org.simpledbm.typesystem.api;
 
 /**
- * DictionaryCache provides a facility to register type information for 
- * SimpleDBM tables and indexes. A table or index is identified by the
- * container Id.
+ * DictionaryCache provides a facility to register type information for
+ * SimpleDBM tables and indexes. A table or index is identified by the container
+ * Id.
  * 
  * @author dibyendu majumdar
  */
 public interface DictionaryCache {
 
-	/**
-	 * Returns the TypeDescriptor[] associated with the container Id.
-	 * Thread safe.
-	 */
-	TypeDescriptor[] getTypeDescriptor(int containerId);
-	
-	/**
-	 * Registers the row definition for a particular container ID.
-	 * Thread safe.
-	 * @param containerId container ID for which the row type information is being registered
-	 * @param rowTypeDesc An array of types that describe the fields in the row.
-	 */
-	void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
-	
+    /**
+     * Returns the TypeDescriptor[] associated with the container Id. Thread
+     * safe.
+     */
+    TypeDescriptor[] getTypeDescriptor(int containerId);
+
+    /**
+     * Registers the row definition for a particular container ID. Thread safe.
+     * 
+     * @param containerId container ID for which the row type information is
+     *            being registered
+     * @param rowTypeDesc An array of types that describe the fields in the row.
+     */
+    void registerRowType(int containerId, TypeDescriptor[] rowTypeDesc);
+
     /**
      * Removes the row definition for a particular container ID.
-     * @param containerId container ID for which the row type information is being removed
+     * 
+     * @param containerId container ID for which the row type information is
+     *            being removed
      */
     void unregisterRowType(int containerId);
 }

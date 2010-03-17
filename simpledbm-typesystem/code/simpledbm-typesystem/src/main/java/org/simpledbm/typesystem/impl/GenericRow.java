@@ -50,70 +50,70 @@ import org.simpledbm.typesystem.api.TypeFactory;
 public class GenericRow implements Row, IndexKey {
 
     DataValue[] fields;
-    
+
     GenericRow(GenericRow row) {
         this.fields = new DataValue[row.fields.length];
         for (int i = 0; i < fields.length; i++) {
             this.fields[i] = row.fields[i].cloneMe();
         }
     }
-    
+
     public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc) {
         fields = new DataValue[rowTypeDesc.length];
         for (int i = 0; i < rowTypeDesc.length; i++) {
-            fields[i] = fieldFactory.getInstance(rowTypeDesc[i]); 
+            fields[i] = fieldFactory.getInstance(rowTypeDesc[i]);
         }
     }
-    
-    public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc, ByteBuffer bb) {
+
+    public GenericRow(TypeFactory fieldFactory, TypeDescriptor[] rowTypeDesc,
+            ByteBuffer bb) {
         fields = new DataValue[rowTypeDesc.length];
         for (int i = 0; i < rowTypeDesc.length; i++) {
-            fields[i] = fieldFactory.getInstance(rowTypeDesc[i], bb); 
+            fields[i] = fieldFactory.getInstance(rowTypeDesc[i], bb);
         }
     }
 
-	public int getNumberOfColumns() {
-		return fields.length;
-	}
+    public int getNumberOfColumns() {
+        return fields.length;
+    }
 
-	public DataValue getColumnValue(int i) {
-		if (i < 0 || i >= fields.length) {
-			throw new IllegalArgumentException();
-		}
-		return fields[i];
-	}
+    public DataValue getColumnValue(int i) {
+        if (i < 0 || i >= fields.length) {
+            throw new IllegalArgumentException();
+        }
+        return fields[i];
+    }
 
-	public void setColumnValue(int i, DataValue field) {
+    public void setColumnValue(int i, DataValue field) {
         fields[i] = field;
-	}
+    }
 
-	public void parseString(String string) {
+    public void parseString(String string) {
         String[] items = string.split(",");
         for (int i = 0; i < items.length; i++) {
             if (i < fields.length) {
                 fields[i].setString(items[i]);
-            }
-            else {
+            } else {
                 break;
             }
         }
-	}
+    }
 
-	public void store(ByteBuffer bb) {
+    public void store(ByteBuffer bb) {
         for (int i = 0; i < fields.length; i++) {
             fields[i].store(bb);
         }
-	}
+    }
 
-	public int getStoredLength() {
+    public int getStoredLength() {
         int n = 0;
-        for (DataValue f: fields) {
+        for (DataValue f : fields) {
             n += f.getStoredLength();
         }
         return n;
-	}
+    }
 
-	public int compareTo(IndexKey o) {
+    public int compareTo(IndexKey o) {
         if (o == null || !(o instanceof GenericRow)) {
             return -1;
         }
@@ -124,134 +124,135 @@ public class GenericRow implements Row, IndexKey {
                 return result > 0 ? 1 : -1;
             }
         }
-		return 0;
-	}
+        return 0;
+    }
 
-	public boolean equals(Object o) {
-		if (o == null || !(o instanceof GenericRow)) {
-			return false;
-		}
+    public boolean equals(Object o) {
+        if (o == null || !(o instanceof GenericRow)) {
+            return false;
+        }
         GenericRow other = (GenericRow) o;
-		return compareTo(other) == 0;
-	}
-	
+        return compareTo(other) == 0;
+    }
+
     public final Row cloneMe() {
         return new GenericRow(this);
     }
-    
-    public IndexKey cloneIndexKey() {
-		return cloneMe();
-	}
 
-	@Override
+    public IndexKey cloneIndexKey() {
+        return cloneMe();
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         return appendTo(sb).toString();
     }
 
-	public StringBuilder appendTo(StringBuilder sb) {
+    public StringBuilder appendTo(StringBuilder sb) {
         for (int i = 0; i < fields.length; i++) {
             if (i != 0) {
                 sb.append(", [");
-            }
-            else {
+            } else {
                 sb.append("[");
             }
             fields[i].appendTo(sb);
             sb.append("]");
         }
-		return sb;
-	}
+        return sb;
+    }
 
-	public BigDecimal getBigDecimal(int column) {
-		return getColumnValue(column).getBigDecimal();
-	}
+    public BigDecimal getBigDecimal(int column) {
+        return getColumnValue(column).getBigDecimal();
+    }
 
-	public BigInteger getBigInteger(int column) {
-		return getColumnValue(column).getBigInteger();
-	}
+    public BigInteger getBigInteger(int column) {
+        return getColumnValue(column).getBigInteger();
+    }
 
-	public byte[] getBytes(int column) {
-		return getColumnValue(column).getBytes();
-	}
+    public byte[] getBytes(int column) {
+        return getColumnValue(column).getBytes();
+    }
 
-	public Date getDate(int column) {
-		return getColumnValue(column).getDate();
-	}
+    public Date getDate(int column) {
+        return getColumnValue(column).getDate();
+    }
 
-	public int getInt(int column) {
-		return getColumnValue(column).getInt();
-	}
+    public int getInt(int column) {
+        return getColumnValue(column).getInt();
+    }
 
-	public long getLong(int column) {
-		return getColumnValue(column).getLong();
-	}
+    public long getLong(int column) {
+        return getColumnValue(column).getLong();
+    }
 
-	public String getString(int column) {
-		return getColumnValue(column).getString();
-	}
+    public String getString(int column) {
+        return getColumnValue(column).getString();
+    }
 
-	public boolean isNegativeInfinity(int column) {
-		return getColumnValue(column).isNegativeInfinity();
-	}
+    public boolean isNegativeInfinity(int column) {
+        return getColumnValue(column).isNegativeInfinity();
+    }
 
-	public boolean isNull(int column) {
-		return getColumnValue(column).isNull();
-	}
+    public boolean isNull(int column) {
+        return getColumnValue(column).isNull();
+    }
 
-	public boolean isPositiveInfinity(int column) {
-		return getColumnValue(column).isPositiveInfinity();
-	}
+    public boolean isPositiveInfinity(int column) {
+        return getColumnValue(column).isPositiveInfinity();
+    }
 
-	public boolean isValue(int column) {
-		return getColumnValue(column).isValue();
-	}
+    public boolean isValue(int column) {
+        return getColumnValue(column).isValue();
+    }
 
-	public void setBigDecimal(int column, BigDecimal d) {
-		getColumnValue(column).setBigDecimal(d);
-	}
+    public void setBigDecimal(int column, BigDecimal d) {
+        getColumnValue(column).setBigDecimal(d);
+    }
 
-	public void setBigInteger(int column, BigInteger i) {
-		getColumnValue(column).setBigInteger(i);
-	}
+    public void setBigInteger(int column, BigInteger i) {
+        getColumnValue(column).setBigInteger(i);
+    }
 
-	public void setBytes(int column, byte[] bytes) {
-		getColumnValue(column).setBytes(bytes);
-	}
+    public void setBytes(int column, byte[] bytes) {
+        getColumnValue(column).setBytes(bytes);
+    }
 
-	public void setDate(int column, Date date) {
-		getColumnValue(column).setDate(date);
-	}
+    public void setDate(int column, Date date) {
+        getColumnValue(column).setDate(date);
+    }
 
-	public void setInt(int column, Integer integer) {
-		getColumnValue(column).setInt(integer);
-	}
+    public void setInt(int column, Integer integer) {
+        getColumnValue(column).setInt(integer);
+    }
 
-	public void setLong(int column, long l) {
-		getColumnValue(column).setLong(l);
-	}
+    public void setLong(int column, long l) {
+        getColumnValue(column).setLong(l);
+    }
 
-	public void setNegativeInfinity(int column) {
-		getColumnValue(column).setNegativeInfinity();
-	}
+    public void setNegativeInfinity(int column) {
+        getColumnValue(column).setNegativeInfinity();
+    }
 
-	public void setNull(int column) {
-		getColumnValue(column).setNull();
-	}
+    public void setNull(int column) {
+        getColumnValue(column).setNull();
+    }
 
-	public void setPositiveInfinity(int column) {
-		getColumnValue(column).setPositiveInfinity();
-	}
+    public void setPositiveInfinity(int column) {
+        getColumnValue(column).setPositiveInfinity();
+    }
 
-	public void setString(int column, String string) {
-		getColumnValue(column).setString(string);
-	}
+    public void setString(int column, String string) {
+        getColumnValue(column).setString(string);
+    }
 
-	public int compareTo(Row row, int column) {
-		return getColumnValue(column).compareTo(((GenericRow)row).getColumnValue(column));
-	}
+    public int compareTo(Row row, int column) {
+        return getColumnValue(column).compareTo(
+                ((GenericRow) row).getColumnValue(column));
+    }
 
-	public void set(int column, Row sourceRow, int sourceColumn) {
-		setColumnValue(column, ((GenericRow)sourceRow).getColumnValue(sourceColumn).cloneMe());
-	}
+    public void set(int column, Row sourceRow, int sourceColumn) {
+        setColumnValue(column, ((GenericRow) sourceRow).getColumnValue(
+                sourceColumn).cloneMe());
+    }
 }

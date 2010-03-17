@@ -86,9 +86,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         try {
             FreeSpaceManagerImpl.OneBitSpaceMapPage onebitsmp = (FreeSpaceManagerImpl.OneBitSpaceMapPage) db.pageFactory
-                .getInstance(
-                    FreeSpaceManagerImpl.TYPE_ONEBITSPACEMAPPAGE,
-                    new PageId(1, 0));
+                    .getInstance(FreeSpaceManagerImpl.TYPE_ONEBITSPACEMAPPAGE,
+                            new PageId(1, 0));
             onebitsmp.setFirstPageNumber(0);
             assertEquals(onebitsmp.getCount(), 65328);
             for (int i = 0; i < onebitsmp.getCount(); i++) {
@@ -108,9 +107,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
             }
 
             FreeSpaceManagerImpl.TwoBitSpaceMapPage twobitsmp = (FreeSpaceManagerImpl.TwoBitSpaceMapPage) db.pageFactory
-                .getInstance(
-                    FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE,
-                    new PageId(1, 0));
+                    .getInstance(FreeSpaceManagerImpl.TYPE_TWOBITSPACEMAPPAGE,
+                            new PageId(1, 0));
             twobitsmp.setFirstPageNumber(0);
             for (int i = 0; i < twobitsmp.getCount(); i++) {
                 assertTrue(twobitsmp.getSpaceBits(i) == 0);
@@ -147,13 +145,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
             boolean okay = false;
             try {
-                db.spacemgr.createContainer(
-                    trx,
-                    "testctr.dat",
-                    1,
-                    1,
-                    8,
-                    db.pageFactory.getRawPageType());
+                db.spacemgr.createContainer(trx, "testctr.dat", 1, 1, 8,
+                        db.pageFactory.getRawPageType());
                 assertTrue(db.storageManager.getInstance(1) != null);
                 okay = true;
             } finally {
@@ -276,11 +269,11 @@ public class TestFreeSpaceManager extends BaseTestCase {
             SpaceCursorImpl spaceCursor = new SpaceCursorImpl(db.spacemgr, 1);
             for (int i = 0; i < (expectedPages.length + 5); i++) {
                 int pageNumber = spaceCursor
-                    .findAndFixSpaceMapPageExclusively(new FreeSpaceChecker() {
-                        public boolean hasSpace(int value) {
-                            return value == 0;
-                        }
-                    });
+                        .findAndFixSpaceMapPageExclusively(new FreeSpaceChecker() {
+                            public boolean hasSpace(int value) {
+                                return value == 0;
+                            }
+                        });
                 assertTrue(i < expectedPages.length);
                 assertEquals(expectedPages[i], pageNumber);
                 if (pageNumber == -1) {
@@ -335,7 +328,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
     class MyDB {
         /* Create the write ahead log */
         final Platform platform;
-    	final LogFactoryImpl logFactory;
+        final LogFactoryImpl logFactory;
         final ObjectRegistry objectFactory;
         final StorageContainerFactory storageFactory;
         final StorageManager storageManager;
@@ -362,17 +355,18 @@ public class TestFreeSpaceManager extends BaseTestCase {
             properties.setProperty("log.buffer.size", "16384");
             properties.setProperty("log.buffer.limit", "4");
             properties.setProperty("log.flush.interval", "5");
-            properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+            properties.setProperty("logging.properties.file",
+                    "classpath:simpledbm.logging.properties");
             properties.setProperty("logging.properties.type", "log4j");
-            properties.setProperty(
-                "storage.basePath",
-                "testdata/TestFreeSpaceManager");
+            properties.setProperty("storage.basePath",
+                    "testdata/TestFreeSpaceManager");
 
             platform = new PlatformImpl(properties);
-            
+
             /* Create the write ahead log */
             logFactory = new LogFactoryImpl(platform, properties);
-            storageFactory = new FileStorageContainerFactory(platform, properties);
+            storageFactory = new FileStorageContainerFactory(platform,
+                    properties);
             if (create) {
                 logFactory.createLog(storageFactory, properties);
             }
@@ -380,42 +374,24 @@ public class TestFreeSpaceManager extends BaseTestCase {
             objectFactory = new ObjectRegistryImpl(platform, properties);
             storageManager = new StorageManagerImpl(platform, properties);
             latchFactory = new LatchFactoryImpl(platform, properties);
-            pageFactory = new PageManagerImpl(
-            	platform,
-                objectFactory,
-                storageManager,
-                latchFactory,
-                properties);
+            pageFactory = new PageManagerImpl(platform, objectFactory,
+                    storageManager, latchFactory, properties);
             lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
             lockmgr = lockmgrFactory.create(latchFactory, properties);
             logmgr = logFactory.getLog(storageFactory, properties);
             bufmgr = new BufferManagerImpl(platform, logmgr, pageFactory, 3, 11);
-            loggableFactory = new LoggableFactoryImpl(platform, objectFactory, properties);
-            moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
-            trxmgr = new TransactionManagerImpl(
-            	platform,
-                logmgr,
-                storageFactory,
-                storageManager,
-                bufmgr,
-                lockmgr,
-                loggableFactory,
-                latchFactory,
-                objectFactory,
-                moduleRegistry,
-                properties);
-            spacemgr = new FreeSpaceManagerImpl(
-            	platform,
-                objectFactory,
-                pageFactory,
-                logmgr,
-                bufmgr,
-                storageManager,
-                storageFactory,
-                loggableFactory,
-                trxmgr,
-                moduleRegistry,
-                properties);
+            loggableFactory = new LoggableFactoryImpl(platform, objectFactory,
+                    properties);
+            moduleRegistry = new TransactionalModuleRegistryImpl(platform,
+                    properties);
+            trxmgr = new TransactionManagerImpl(platform, logmgr,
+                    storageFactory, storageManager, bufmgr, lockmgr,
+                    loggableFactory, latchFactory, objectFactory,
+                    moduleRegistry, properties);
+            spacemgr = new FreeSpaceManagerImpl(platform, objectFactory,
+                    pageFactory, logmgr, bufmgr, storageManager,
+                    storageFactory, loggableFactory, trxmgr, moduleRegistry,
+                    properties);
 
             bufmgr.setStorageManager(storageManager);
 
@@ -426,7 +402,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 StorageContainer sc = storageFactory.create("dual");
                 storageManager.register(0, sc);
                 Page page = pageFactory.getInstance(pageFactory
-                    .getRawPageType(), new PageId(0, 0));
+                        .getRawPageType(), new PageId(0, 0));
                 pageFactory.store(page);
             }
 

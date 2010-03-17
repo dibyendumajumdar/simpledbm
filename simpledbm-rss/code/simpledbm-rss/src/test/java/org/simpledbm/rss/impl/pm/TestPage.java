@@ -66,7 +66,7 @@ import org.simpledbm.rss.impl.st.StorageManagerImpl;
 public class TestPage extends BaseTestCase {
 
     static final short TYPE_MYPAGE = 25000;
-    
+
     Platform platform;
     StorageContainerFactory storageFactory;
     ObjectRegistry objectRegistry;
@@ -77,44 +77,40 @@ public class TestPage extends BaseTestCase {
     public TestPage(String arg0) {
         super(arg0);
     }
-    
+
     @Override
-	protected void setUp() throws Exception {
-		super.setUp();
+    protected void setUp() throws Exception {
+        super.setUp();
         Properties properties = new Properties();
         properties.setProperty("storage.basePath", "testdata/TestPage");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         platform = new PlatformImpl(properties);
-        storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
+        storageFactory = new FileStorageContainerFactory(platform, properties);
         objectRegistry = new ObjectRegistryImpl(platform, properties);
         storageManager = new StorageManagerImpl(platform, properties);
         latchFactory = new LatchFactoryImpl(platform, properties);
-        pageManager = new PageManagerImpl(
-        	platform,
-            objectRegistry,
-            storageManager,
-            latchFactory,
-            properties);
-        objectRegistry.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(pageManager));
+        pageManager = new PageManagerImpl(platform, objectRegistry,
+                storageManager, latchFactory, properties);
+        objectRegistry.registerSingleton(TYPE_MYPAGE, new MyPage.MyPageFactory(
+                pageManager));
     }
 
-	@Override
-	protected void tearDown() throws Exception {
-		super.tearDown();
+    @Override
+    protected void tearDown() throws Exception {
+        super.tearDown();
         storageManager.shutdown();
         storageFactory.delete("testfile.dat");
-	}
+    }
 
-	public void testCase1() throws Exception {
+    public void testCase1() throws Exception {
         String name = "testfile.dat";
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
 
-        Page page = pageManager.getInstance(
-            pageManager.getRawPageType(),
-            new PageId(1, 0));
+        Page page = pageManager.getInstance(pageManager.getRawPageType(),
+                new PageId(1, 0));
         page.setPageLsn(new Lsn(91, 33));
         pageManager.store(page);
         page = pageManager.retrieve(new PageId(1, 0));
@@ -125,15 +121,15 @@ public class TestPage extends BaseTestCase {
 
     static public class MyPage extends Page {
         int i = 0;
-        
-        MyPage(PageManager pageFactory, int type, PageId pageId) {
-			super(pageFactory, type, pageId);
-		}
 
-		MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-			super(pageFactory, pageId, bb);
+        MyPage(PageManager pageFactory, int type, PageId pageId) {
+            super(pageFactory, type, pageId);
+        }
+
+        MyPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+            super(pageFactory, pageId, bb);
             i = bb.getInt();
-		}
+        }
 
         /**
          * @see org.simpledbm.rss.api.pm.Page#store(java.nio.ByteBuffer)
@@ -143,24 +139,25 @@ public class TestPage extends BaseTestCase {
             super.store(bb);
             bb.putInt(i);
         }
-        
+
         static class MyPageFactory implements PageFactory {
-        	final PageManager pageManager;
-        	
-        	public MyPageFactory(PageManager pageManager) {
-        		this.pageManager = pageManager;
-        	}
-			public Page getInstance(int type, PageId pageId) {
-				return new MyPage(pageManager, type, pageId);
-			}
+            final PageManager pageManager;
 
-			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new MyPage(pageManager, pageId, bb);
-			}
+            public MyPageFactory(PageManager pageManager) {
+                this.pageManager = pageManager;
+            }
 
-			public int getPageType() {
-				return TYPE_MYPAGE;
-			}
+            public Page getInstance(int type, PageId pageId) {
+                return new MyPage(pageManager, type, pageId);
+            }
+
+            public Page getInstance(PageId pageId, ByteBuffer bb) {
+                return new MyPage(pageManager, pageId, bb);
+            }
+
+            public int getPageType() {
+                return TYPE_MYPAGE;
+            }
         }
     }
 
@@ -169,8 +166,7 @@ public class TestPage extends BaseTestCase {
         StorageContainer sc = storageFactory.create(name);
         storageManager.register(1, sc);
         MyPage page = (MyPage) pageManager.getInstance(TYPE_MYPAGE, new PageId(
-            1,
-            0));
+                1, 0));
         page.i = 9745;
         page.setPageLsn(new Lsn(97, 45));
         pageManager.store(page);
@@ -184,10 +180,10 @@ public class TestPage extends BaseTestCase {
 
     public void testCase3() {
         MyPage page = (MyPage) pageManager.getInstance(TYPE_MYPAGE, new PageId(
-            1,
-            0));
-        assertEquals(pageManager.getUsablePageSize() - Page.SIZE, page.getAvailableLength());
+                1, 0));
+        assertEquals(pageManager.getUsablePageSize() - Page.SIZE, page
+                .getAvailableLength());
         assertEquals(pageManager.getPageSize(), page.getStoredLength());
     }
-    
+
 }

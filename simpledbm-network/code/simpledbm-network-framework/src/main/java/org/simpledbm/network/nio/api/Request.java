@@ -44,16 +44,15 @@ import java.nio.ByteBuffer;
 public interface Request {
 
     /**
-     * Gets the session Id associated with the client.
-     * If the session Id is not allocated yet, this method should return
-     * 0. All valid session Ids should be > 0.
-     * New session Ids should be set in the Response object.
+     * Gets the session Id associated with the client. If the session Id is not
+     * allocated yet, this method should return 0. All valid session Ids should
+     * be > 0. New session Ids should be set in the Response object.
      */
     int getSessionId();
 
     /**
-     * Gets the correlation Id set by the network client.
-     * The correlation Id should be copied to the Response object.
+     * Gets the correlation Id set by the network client. The correlation Id
+     * should be copied to the Response object.
      */
     int getCorrelationId();
 
@@ -63,31 +62,30 @@ public interface Request {
     int getRequestCode();
 
     /**
-     * Sets the request code. To be used by a client generating the
-     * request.
+     * Sets the request code. To be used by a client generating the request.
      */
-    void setRequestCode(int requestCode);    
+    void setRequestCode(int requestCode);
 
     /**
      * Sets the session ID that is generating this request.
      */
     void setSessionId(int sessionId);
-    
+
     /**
      * Gets the version of the request message.
      */
     int getVersion();
 
     /**
-     *  Gets the size of the data associated with the request.
+     * Gets the size of the data associated with the request.
      */
     int getDataSize();
 
     /**
-     * Gets the data sent by the client. The buffer should be independent
-     * of the underlying framework, so that the request handler can manipulate this
-     * if necessary. The buffer should be positioned such as position() is 0,
-     * and limit() is set to the length of the buffer.
+     * Gets the data sent by the client. The buffer should be independent of the
+     * underlying framework, so that the request handler can manipulate this if
+     * necessary. The buffer should be positioned such as position() is 0, and
+     * limit() is set to the length of the buffer.
      */
     ByteBuffer getData();
 

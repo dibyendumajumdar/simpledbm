@@ -50,98 +50,101 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TableDefinition;
 
 public class TableScanImpl implements TableScan {
-	
-	private final SessionImpl session;
-	final TableDefinition tableDefinition;
-	
-	/**
-	 * Index to use for the scan.
-	 */
-	final int indexNo;
-	
-	/**
-	 * Initial search row, may be null.
-	 */
-	final Row startRow;
-	
-	/**
-	 * Was the scan opened for update?
-	 */
-	final boolean forUpdate;
-	
-	/**
-	 * Handle for the scan.
-	 */
-	int scanId;
 
-	/**
-	 * The current row as returned by fetchNext()
-	 */
-	Row currentRow;
+    private final SessionImpl session;
+    final TableDefinition tableDefinition;
 
-	/**
-	 * Have we reached eof?
-	 */
-	boolean eof;
-	
-	public TableScanImpl(SessionImpl session, TableDefinition tableDefinition,
-			int indexNo, Row startRow, boolean forUpdate) {
-		super();
-		this.session = session;
-		this.tableDefinition = tableDefinition;
-		this.indexNo = indexNo;
-		this.startRow = startRow;
-		this.forUpdate = forUpdate;
-		eof = false;
-		this.scanId = open();
-	}
-	
+    /**
+     * Index to use for the scan.
+     */
+    final int indexNo;
+
+    /**
+     * Initial search row, may be null.
+     */
+    final Row startRow;
+
+    /**
+     * Was the scan opened for update?
+     */
+    final boolean forUpdate;
+
+    /**
+     * Handle for the scan.
+     */
+    int scanId;
+
+    /**
+     * The current row as returned by fetchNext()
+     */
+    Row currentRow;
+
+    /**
+     * Have we reached eof?
+     */
+    boolean eof;
+
+    public TableScanImpl(SessionImpl session, TableDefinition tableDefinition,
+            int indexNo, Row startRow, boolean forUpdate) {
+        super();
+        this.session = session;
+        this.tableDefinition = tableDefinition;
+        this.indexNo = indexNo;
+        this.startRow = startRow;
+        this.forUpdate = forUpdate;
+        eof = false;
+        this.scanId = open();
+    }
+
     public int open() {
-    	OpenScanMessage message = new OpenScanMessage(tableDefinition.getContainerId(),
-    			indexNo, startRow, forUpdate);
-    	Response response = session.sendMessage(RequestCode.OPEN_TABLESCAN, message);
+        OpenScanMessage message = new OpenScanMessage(tableDefinition
+                .getContainerId(), indexNo, startRow, forUpdate);
+        Response response = session.sendMessage(RequestCode.OPEN_TABLESCAN,
+                message);
         int scanNo = response.getData().getInt();
-//        System.err.println("Scan id = " + scanNo);
+        //        System.err.println("Scan id = " + scanNo);
         return scanNo;
     }
-    
+
     public Row fetchNext() {
-    	if (eof) {
-    		return null;
-    	}
-    	FetchNextRowMessage message = new FetchNextRowMessage(scanId);
-    	Response response = session.sendMessage(RequestCode.FETCH_NEXT_ROW, message);
-        FetchNextRowReply reply = new FetchNextRowReply(getSession().getSessionManager().getRowFactory(), response.getData());
-        if (reply.isEof()) {
-        	eof = true;
-        	return null;
+        if (eof) {
+            return null;
         }
-//        System.err.println("Scan row = " + reply.getRow());
+        FetchNextRowMessage message = new FetchNextRowMessage(scanId);
+        Response response = session.sendMessage(RequestCode.FETCH_NEXT_ROW,
+                message);
+        FetchNextRowReply reply = new FetchNextRowReply(getSession()
+                .getSessionManager().getRowFactory(), response.getData());
+        if (reply.isEof()) {
+            eof = true;
+            return null;
+        }
+        //        System.err.println("Scan row = " + reply.getRow());
         return reply.getRow();
     }
 
     public void updateCurrentRow(Row tableRow) {
-    	if (eof) {
-    		throw new RuntimeException("Scan has reached EOF");
-    	}
-    	UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
-    	session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
+        if (eof) {
+            throw new RuntimeException("Scan has reached EOF");
+        }
+        UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
+        session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
     }
 
     public void deleteRow() {
-    	if (eof) {
-    		throw new RuntimeException("Scan has reached EOF");
-    	}
-    	DeleteRowMessage message = new DeleteRowMessage(scanId);
-    	session.sendMessage(RequestCode.DELETE_CURRENT_ROW, message);           	
-    }    
-    
-	public void close() {
-    	CloseScanMessage message = new CloseScanMessage(scanId);
-    	session.sendMessage(RequestCode.CLOSE_TABLESCAN, message);
-	}
+        if (eof) {
+            throw new RuntimeException("Scan has reached EOF");
+        }
+        DeleteRowMessage message = new DeleteRowMessage(scanId);
+        session.sendMessage(RequestCode.DELETE_CURRENT_ROW, message);
+    }
 
-	public Session getSession() {
-		return session;
-	}
+    public void close() {
+        CloseScanMessage message = new CloseScanMessage(scanId);
+        session.sendMessage(RequestCode.CLOSE_TABLESCAN, message);
+    }
+
+    public Session getSession() {
+        return session;
+    }
 }

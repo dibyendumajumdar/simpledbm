@@ -86,16 +86,16 @@ public class ResponseHeader {
     public void setDataSize(int dataSize) {
         this.dataSize = dataSize;
     }
-    
+
     public boolean hasException() {
-		return hasException;
-	}
+        return hasException;
+    }
 
-	public void setHasException(boolean hasException) {
-		this.hasException = hasException;
-	}
+    public void setHasException(boolean hasException) {
+        this.hasException = hasException;
+    }
 
-	static ByteBuffer allocate() {
+    static ByteBuffer allocate() {
         return ByteBuffer.allocate(25);
     }
 
@@ -109,7 +109,7 @@ public class ResponseHeader {
         bb.putInt(correlationId);
         bb.putInt(statusCode);
         bb.putInt(dataSize);
-        bb.put((byte) (hasException? 1 : 0));
+        bb.put((byte) (hasException ? 1 : 0));
     }
 
     void retrieve(ByteBuffer bb) throws IOException {

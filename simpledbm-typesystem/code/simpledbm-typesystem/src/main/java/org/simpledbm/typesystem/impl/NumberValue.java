@@ -46,156 +46,156 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class NumberValue extends BaseDataValue {
 
-	BigDecimal d;
-	
-	public NumberValue(TypeDescriptor typeDesc) {
-		super(typeDesc);
-	}
+    BigDecimal d;
 
-	public NumberValue(NumberValue other) {
-		super(other);
-		this.d = new BigDecimal(other.d.unscaledValue(), other.d.scale());
-	}
-	
-	public NumberValue(TypeDescriptor typeDesc, ByteBuffer bb) {
-		super(typeDesc, bb);
-		if (isValue()) {
-			int scale = bb.get();
-			int len = bb.get();
-			byte[] data = new byte[len];
-			bb.get(data);
-			d = new BigDecimal(new BigInteger(data), scale);
-		}
-	}
-	
-	public DataValue cloneMe() {
-		return new NumberValue(this);
-	}
+    public NumberValue(TypeDescriptor typeDesc) {
+        super(typeDesc);
+    }
 
-	protected int compare(NumberValue o) {
-		int comp = super.compareTo(o);
-		if (comp != 0 || !isValue()) {
-			return comp;
-		}
-		return d.compareTo(o.d);	
-	}	
-	
-	@Override
-	public int compareTo(DataValue o) {
-		if (o == this) {
-			return 0;
-		}
+    public NumberValue(NumberValue other) {
+        super(other);
+        this.d = new BigDecimal(other.d.unscaledValue(), other.d.scale());
+    }
+
+    public NumberValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+        super(typeDesc, bb);
+        if (isValue()) {
+            int scale = bb.get();
+            int len = bb.get();
+            byte[] data = new byte[len];
+            bb.get(data);
+            d = new BigDecimal(new BigInteger(data), scale);
+        }
+    }
+
+    public DataValue cloneMe() {
+        return new NumberValue(this);
+    }
+
+    protected int compare(NumberValue o) {
+        int comp = super.compareTo(o);
+        if (comp != 0 || !isValue()) {
+            return comp;
+        }
+        return d.compareTo(o.d);
+    }
+
+    @Override
+    public int compareTo(DataValue o) {
+        if (o == this) {
+            return 0;
+        }
         if (o == null) {
-        	throw new IllegalArgumentException();
+            throw new IllegalArgumentException();
         }
         if (!(o instanceof NumberValue)) {
             throw new ClassCastException();
-        }		
-		return compare((NumberValue)o);	
-	}
+        }
+        return compare((NumberValue) o);
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (o == this) {
-			return true;
-		}
+    @Override
+    public boolean equals(Object o) {
+        if (o == this) {
+            return true;
+        }
         if (o == null) {
-        	throw new IllegalArgumentException();
+            throw new IllegalArgumentException();
         }
         if (!(o instanceof NumberValue)) {
             throw new ClassCastException();
-        }		
-		return compare((NumberValue)o) == 0;	
-	}
+        }
+        return compare((NumberValue) o) == 0;
+    }
 
-	@Override
-	public int getInt() {
-		if (isValue()) {
-			return d.intValue();
-		}
-		return 0;
-	}
+    @Override
+    public int getInt() {
+        if (isValue()) {
+            return d.intValue();
+        }
+        return 0;
+    }
 
-	@Override
-	public int getStoredLength() {
-		int n = super.getStoredLength();
-		if (isValue()) {
-			BigInteger i = d.unscaledValue();
-			/* 
-			 * Following length calculation is based
-			 * upon logic in BigInteger class (openjdk).
-			 */
-	        int byteLen = i.bitLength()/8 + 1;
-			//byte[] data = i.toByteArray();
-	        //int byteLen = data.length;
-			n += TypeSize.BYTE * 2 + byteLen;
-		}
-		return n;
-	}
+    @Override
+    public int getStoredLength() {
+        int n = super.getStoredLength();
+        if (isValue()) {
+            BigInteger i = d.unscaledValue();
+            /* 
+             * Following length calculation is based
+             * upon logic in BigInteger class (openjdk).
+             */
+            int byteLen = i.bitLength() / 8 + 1;
+            //byte[] data = i.toByteArray();
+            //int byteLen = data.length;
+            n += TypeSize.BYTE * 2 + byteLen;
+        }
+        return n;
+    }
 
-	@Override
-	public String getString() {
-		if (!isValue()) {
-			return super.toString();
-		}
-		return d.toString();
-	}
+    @Override
+    public String getString() {
+        if (!isValue()) {
+            return super.toString();
+        }
+        return d.toString();
+    }
 
-//	@Override
-//	public void retrieve(ByteBuffer bb) {
-//		super.retrieve(bb);
-//		if (isValue()) {
-//			int scale = bb.get();
-//			int len = bb.get();
-//			byte[] data = new byte[len];
-//			bb.get(data);
-//			d = new BigDecimal(new BigInteger(data), scale);
-//		}
-//	}
+    //	@Override
+    //	public void retrieve(ByteBuffer bb) {
+    //		super.retrieve(bb);
+    //		if (isValue()) {
+    //			int scale = bb.get();
+    //			int len = bb.get();
+    //			byte[] data = new byte[len];
+    //			bb.get(data);
+    //			d = new BigDecimal(new BigInteger(data), scale);
+    //		}
+    //	}
 
-	@Override
-	public void setInt(Integer integer) {
-		d = new BigDecimal(integer);
-		d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
-		setValue();
-	}
+    @Override
+    public void setInt(Integer integer) {
+        d = new BigDecimal(integer);
+        d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
+        setValue();
+    }
 
-	@Override
-	public void setString(String string) {
-		d = new BigDecimal(string);
-		d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
-		setValue();
-	}
+    @Override
+    public void setString(String string) {
+        d = new BigDecimal(string);
+        d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
+        setValue();
+    }
 
-	@Override
-	public void store(ByteBuffer bb) {
-		super.store(bb);
-		if (isValue()) {
-			byte[] data = d.unscaledValue().toByteArray();
-			bb.put((byte) getType().getScale());
-			bb.put((byte) data.length);
-			bb.put(data);
-		}
-	}
+    @Override
+    public void store(ByteBuffer bb) {
+        super.store(bb);
+        if (isValue()) {
+            byte[] data = d.unscaledValue().toByteArray();
+            bb.put((byte) getType().getScale());
+            bb.put((byte) data.length);
+            bb.put(data);
+        }
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = super.hashCode();
-		result = prime * result + ((!isValue()) ? 0 : d.hashCode());
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = super.hashCode();
+        result = prime * result + ((!isValue()) ? 0 : d.hashCode());
+        return result;
+    }
 
-	@Override
-	public String toString() {
-		return getString();
-	}
+    @Override
+    public String toString() {
+        return getString();
+    }
 
-	@Override
-	public StringBuilder appendTo(StringBuilder sb) {
-		if (isValue()) {
-			return sb.append(getString());
-		}
-		return super.appendTo(sb);
-	}
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        if (isValue()) {
+            return sb.append(getString());
+        }
+        return super.appendTo(sb);
+    }
 }

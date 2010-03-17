@@ -39,33 +39,35 @@ package org.simpledbm.network.client.api;
 import org.simpledbm.typesystem.api.Row;
 
 /**
- * A TableScan is used to traverse the rows in a table, ordered
- * by an Index. The initial position of the scan is determined by
- * the keys supplied when the scan is opened. The table scan 
- * respects the lock isolation mode of the transaction.
+ * A TableScan is used to traverse the rows in a table, ordered by an Index. The
+ * initial position of the scan is determined by the keys supplied when the scan
+ * is opened. The table scan respects the lock isolation mode of the
+ * transaction.
  * <p>
- * As rows are fetched, the scan maintains its position. The current
- * row may be updated or deleted. 
+ * As rows are fetched, the scan maintains its position. The current row may be
+ * updated or deleted.
  * 
  * @author Dibyendu Majumdar
  */
 public interface TableScan {
-	
-	/**
-	 * Opens the scan, preparing for data to be fetched.
-	 * @return
-	 */
-    public int open();
-    
+
     /**
-     * Fetches the next row. If EOF is reached, null will 
-     * be returned.
+     * Opens the scan, preparing for data to be fetched.
+     * 
+     * @return
+     */
+    public int open();
+
+    /**
+     * Fetches the next row. If EOF is reached, null will be returned.
+     * 
      * @return
      */
     public Row fetchNext();
 
     /**
      * Updates the current row.
+     * 
      * @param tableRow
      */
     public void updateCurrentRow(Row tableRow);
@@ -73,16 +75,17 @@ public interface TableScan {
     /**
      * Deletes the current row.
      */
-    public void deleteRow();  
-    
+    public void deleteRow();
+
     /**
      * Closes the scan, releasing any locks that are not required.
      */
-	public void close();
+    public void close();
 
-	/**
-	 * Obtains the session that is associated with this scan.
-	 * @return
-	 */
-	Session getSession();
+    /**
+     * Obtains the session that is associated with this scan.
+     * 
+     * @return
+     */
+    Session getSession();
 }

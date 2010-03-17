@@ -41,21 +41,20 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.MessageInstance;
 
-
 public class TypeException extends SimpleDBMException {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public TypeException(ByteBuffer bb) {
-		super(bb);
-	}
+    public TypeException(ByteBuffer bb) {
+        super(bb);
+    }
 
-	public TypeException(MessageInstance m, Throwable arg1) {
-		super(m, arg1);
-	}
+    public TypeException(MessageInstance m, Throwable arg1) {
+        super(m, arg1);
+    }
 
-	public TypeException(MessageInstance m) {
-		super(m);
-	}
+    public TypeException(MessageInstance m) {
+        super(m);
+    }
 
 }

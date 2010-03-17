@@ -46,127 +46,130 @@ import org.simpledbm.typesystem.api.TypeException;
 
 public class LongValue extends BaseDataValue {
 
-	long i;
-	
-	LongValue(LongValue other) {
-		super(other);
-		this.i = other.i;
-	}
-	
-	public LongValue(TypeDescriptor typeDesc) {
-		super(typeDesc);
-	}
+    long i;
 
-	public LongValue(TypeDescriptor typeDesc, ByteBuffer bb) {
-		super(typeDesc, bb);
-    	if (isValue()) {
-    		i = bb.getLong();
-    	}
-	}
-	
-    @Override
-	public String toString() {
-    	return getString();
+    LongValue(LongValue other) {
+        super(other);
+        this.i = other.i;
     }
-    
+
+    public LongValue(TypeDescriptor typeDesc) {
+        super(typeDesc);
+    }
+
+    public LongValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+        super(typeDesc, bb);
+        if (isValue()) {
+            i = bb.getLong();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return getString();
+    }
+
     @Override
     public int getStoredLength() {
-    	int n = super.getStoredLength();
-    	if (isValue()) {
-    		n += TypeSize.LONG;
-    	}
-    	return n;
+        int n = super.getStoredLength();
+        if (isValue()) {
+            n += TypeSize.LONG;
+        }
+        return n;
     }
-    
+
     @Override
     public void store(ByteBuffer bb) {
-    	super.store(bb);
-    	if (isValue()) {
-    		bb.putLong(i);
-    	}
+        super.store(bb);
+        if (isValue()) {
+            bb.putLong(i);
+        }
     }
 
-	@Override
-	public int getInt() {
-		if (!isValue()) {
-			return 0;
-		}
-		if (i > Integer.MAX_VALUE || i < Integer.MIN_VALUE) {
-			throw new TypeException(new MessageInstance(TypeSystemFactoryImpl.outOfRange, i, Integer.MIN_VALUE, Integer.MAX_VALUE));
-		}
-		return (int)i;
-	}
+    @Override
+    public int getInt() {
+        if (!isValue()) {
+            return 0;
+        }
+        if (i > Integer.MAX_VALUE || i < Integer.MIN_VALUE) {
+            throw new TypeException(new MessageInstance(
+                    TypeSystemFactoryImpl.outOfRange, i, Integer.MIN_VALUE,
+                    Integer.MAX_VALUE));
+        }
+        return (int) i;
+    }
 
-	@Override
-	public String getString() {
-    	if (isValue()) {
-    		return Long.toString(i);
-    	}
-    	return super.toString();
-	}
+    @Override
+    public String getString() {
+        if (isValue()) {
+            return Long.toString(i);
+        }
+        return super.toString();
+    }
 
-	@Override
-	public void setInt(Integer integer) {
-		i = integer;
-		setValue();
-	}
+    @Override
+    public void setInt(Integer integer) {
+        i = integer;
+        setValue();
+    }
 
-	@Override
-	public void setString(String string) {
-		setInt(Integer.parseInt(string));
-	}
+    @Override
+    public void setString(String string) {
+        setInt(Integer.parseInt(string));
+    }
 
-	protected int compare(LongValue o) {
-		int comp = super.compare(o);
-		if (comp != 0 || !isValue()) {
-			return comp;
-		}
-		if (i > o.i) 
-			return 1;
-		else if (i == o.i)
-			return 0;
-		return -1;
-	}
-	
-	@Override
+    protected int compare(LongValue o) {
+        int comp = super.compare(o);
+        if (comp != 0 || !isValue()) {
+            return comp;
+        }
+        if (i > o.i)
+            return 1;
+        else if (i == o.i)
+            return 0;
+        return -1;
+    }
+
+    @Override
     public int compareTo(DataValue o) {
-    	if (this == o) {
-    		return 0;
-    	}
-    	if (o == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(o instanceof LongValue)) {
-    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
-    	}
-		return compare((LongValue)o);
-	}
-	
+        if (this == o) {
+            return 0;
+        }
+        if (o == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(o instanceof LongValue)) {
+            throw new ClassCastException("Cannot cast " + o.getClass() + " to "
+                    + this.getClass());
+        }
+        return compare((LongValue) o);
+    }
+
     @Override
     public boolean equals(Object o) {
-    	if (this == o) {
-    		return true;
-    	}
-    	if (o == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(o instanceof LongValue)) {
-    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
-    	}
-		return compare((LongValue)o) == 0;
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(o instanceof LongValue)) {
+            throw new ClassCastException("Cannot cast " + o.getClass() + " to "
+                    + this.getClass());
+        }
+        return compare((LongValue) o) == 0;
     }
 
-	public DataValue cloneMe() {
-		return new LongValue(this);
-	}
+    public DataValue cloneMe() {
+        return new LongValue(this);
+    }
 
-	@Override
-	public StringBuilder appendTo(StringBuilder sb) {
-		if (isValue()) {
-			return sb.append(i);
-		}
-		return super.appendTo(sb);
-	}
-	
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        if (isValue()) {
+            return sb.append(i);
+        }
+        return super.appendTo(sb);
+    }
+
 }
-

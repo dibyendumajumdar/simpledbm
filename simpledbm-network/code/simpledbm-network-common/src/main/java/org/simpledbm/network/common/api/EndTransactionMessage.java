@@ -42,28 +42,28 @@ import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.util.TypeSize;
 
 public class EndTransactionMessage implements Storable {
-	
-	private final boolean commit;
-	
-    public boolean isCommit() {
-		return commit;
-	}
 
-	public EndTransactionMessage(boolean commit) {
-    	this.commit = commit;
+    private final boolean commit;
+
+    public boolean isCommit() {
+        return commit;
     }
-    
+
+    public EndTransactionMessage(boolean commit) {
+        this.commit = commit;
+    }
+
     public EndTransactionMessage(ByteBuffer bb) {
-    	byte b = bb.get();
-    	commit = (b == 1? true: false);
+        byte b = bb.get();
+        commit = (b == 1 ? true : false);
     }
-    
+
     public int getStoredLength() {
         return TypeSize.BYTE;
     }
 
     public void store(ByteBuffer bb) {
-    	bb.put((byte) (commit ? 1 : 0));
+        bb.put((byte) (commit ? 1 : 0));
     }
 
 }

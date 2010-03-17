@@ -49,13 +49,13 @@ import java.io.InputStream;
 import java.util.Properties;
 
 public class SimpleDBMServer {
-	
+
     NetworkServer networkServer = null;
 
     private void usage() {
         System.out.println("SimpleDBMServer create|open <properties-file>");
     }
-    
+
     public void run(String[] args) {
         if (args.length != 2) {
             usage();
@@ -68,11 +68,9 @@ public class SimpleDBMServer {
         String command = args[0];
         if ("create".equalsIgnoreCase(command)) {
             create(properties);
-        }
-        else if ("open".equalsIgnoreCase(command)) {
+        } else if ("open".equalsIgnoreCase(command)) {
             open(properties);
-        }
-        else {
+        } else {
             usage();
             System.exit(1);
         }
@@ -85,15 +83,17 @@ public class SimpleDBMServer {
     private void open(Properties properties) {
         Platform platform = new PlatformImpl(properties);
         SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
-        networkServer = NetworkUtil.createNetworkServer(platform, simpleDBMRequestHandler, properties);
-        Runtime.getRuntime().addShutdownHook(new MyShutdownThread(networkServer));
+        networkServer = NetworkUtil.createNetworkServer(platform,
+                simpleDBMRequestHandler, properties);
+        Runtime.getRuntime().addShutdownHook(
+                new MyShutdownThread(networkServer));
         networkServer.start();
     }
 
     public void select() {
         networkServer.select();
     }
-    
+
     public void shutdown() {
         if (networkServer != null) {
             networkServer.shutdown();
@@ -102,12 +102,13 @@ public class SimpleDBMServer {
     }
 
     private Properties parseProperties(String arg) {
-        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(arg);
+        InputStream in = Thread.currentThread().getContextClassLoader()
+                .getResourceAsStream(arg);
         if (null == in) {
-        	try {
-				in = new FileInputStream(arg);
-			} catch (FileNotFoundException e) {
-			}
+            try {
+                in = new FileInputStream(arg);
+            } catch (FileNotFoundException e) {
+            }
         }
         if (null == in) {
             System.err.println("Unable to access resource [" + arg + "]");
@@ -116,12 +117,11 @@ public class SimpleDBMServer {
         Properties properties = new Properties();
         try {
             properties.load(in);
-        }
-        catch (IOException e) {
-            System.err.println("Error loading from resource [" + arg + "] :" + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Error loading from resource [" + arg + "] :"
+                    + e.getMessage());
             return null;
-        }
-        finally {
+        } finally {
             try {
                 in.close();
             } catch (IOException ignored) {
@@ -132,20 +132,20 @@ public class SimpleDBMServer {
     }
 
     public static class MyShutdownThread extends Thread {
-    	final NetworkServer server;
-    	
-    	MyShutdownThread(NetworkServer server) {
-    		super();
-    		this.server = server;
-    	}
-    	
-    	public void run() {
-    		if (server != null) {
-    			server.shutdown();
-    		}
-    	}
-    }    
-    
+        final NetworkServer server;
+
+        MyShutdownThread(NetworkServer server) {
+            super();
+            this.server = server;
+        }
+
+        public void run() {
+            if (server != null) {
+                server.shutdown();
+            }
+        }
+    }
+
     public static void main(String[] args) {
         SimpleDBMServer server = new SimpleDBMServer();
         server.run(args);

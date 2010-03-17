@@ -44,6 +44,7 @@ import org.simpledbm.common.util.Dumpable;
 
 /**
  * Provides type information.
+ * 
  * @author Dibyendu Majumdar
  */
 public interface TypeDescriptor extends Storable, Dumpable {
@@ -56,32 +57,32 @@ public interface TypeDescriptor extends Storable, Dumpable {
     static final int TYPE_BINARY = 6;
 
     /**
-     * Returns a unique integer code for the type. This is useful for 
+     * Returns a unique integer code for the type. This is useful for
      * serializing the type.
      */
     int getTypeCode();
-    
+
     /**
      * Returns the maximum length of any value of this type.
      */
     int getMaxLength();
 
     /**
-     * Returns the scale for certain numeric types. Scale defines the 
-     * number of digits to the right of the decimal point.
+     * Returns the scale for certain numeric types. Scale defines the number of
+     * digits to the right of the decimal point.
      */
     int getScale();
-    
+
     /**
-     * Returns the timezone associated with the type - only applicable for
-     * date and time types.
+     * Returns the timezone associated with the type - only applicable for date
+     * and time types.
      */
     TimeZone getTimeZone();
 
     /**
      * Returns the date formatter object associated with the type - only
-     * applicable for date and time types. 
+     * applicable for date and time types.
      */
-	DateFormat getDateFormat();
-	
+    DateFormat getDateFormat();
+
 }

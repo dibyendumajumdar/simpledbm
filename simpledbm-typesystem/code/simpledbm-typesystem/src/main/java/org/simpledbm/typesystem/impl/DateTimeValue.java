@@ -46,151 +46,156 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class DateTimeValue extends BaseDataValue {
 
-	long time;
-	
-	DateTimeValue(DateTimeValue other) {
-		super(other);
-		this.time = other.time;
-	}
-	
-	DateTimeValue(TypeDescriptor typeDesc) {
-		super(typeDesc);
-	}
+    long time;
 
-	DateTimeValue(TypeDescriptor typeDesc, ByteBuffer bb) {
-		super(typeDesc, bb);
-		if (isValue()) {
-			time = bb.getLong();
-		}
-	}
-	
-	public DataValue cloneMe() {
-		DateTimeValue clone = new DateTimeValue(this);
-		return clone;
-	}
+    DateTimeValue(DateTimeValue other) {
+        super(other);
+        this.time = other.time;
+    }
 
-	protected int compare(DateTimeValue o) {
-		int comp = super.compare(o);
-		if (comp != 0 || !isValue()) {
-			return comp;
-		}
-		if (time == o.time) return 0;
-		else if (time > o.time) return 1;
-		else return -1;
-	}
+    DateTimeValue(TypeDescriptor typeDesc) {
+        super(typeDesc);
+    }
 
-	@Override
-	public int compareTo(DataValue o) {
-    	if (this == o) {
-    		return 0;
-    	}
-    	if (o == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(o instanceof DateTimeValue)) {
-    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
-    	}
-    	return compare((DateTimeValue)o);
-	}
+    DateTimeValue(TypeDescriptor typeDesc, ByteBuffer bb) {
+        super(typeDesc, bb);
+        if (isValue()) {
+            time = bb.getLong();
+        }
+    }
 
-	@Override
-	public boolean equals(Object o) {
-    	if (this == o) {
-    		return true;
-    	}
-    	if (o == null) {
-    		throw new IllegalArgumentException();
-    	}
-    	if (!(o instanceof DateTimeValue)) {
-    		throw new ClassCastException("Cannot cast " + o.getClass() + " to " + this.getClass());
-    	}        
-    	return compare((DateTimeValue)o) == 0;
-	}
+    public DataValue cloneMe() {
+        DateTimeValue clone = new DateTimeValue(this);
+        return clone;
+    }
 
-	@Override
-	public int getStoredLength() {
-		int n = super.getStoredLength();
-		if (isValue()) {
-			n += TypeSize.LONG;
-		}
-		return n;
-	}
+    protected int compare(DateTimeValue o) {
+        int comp = super.compare(o);
+        if (comp != 0 || !isValue()) {
+            return comp;
+        }
+        if (time == o.time)
+            return 0;
+        else if (time > o.time)
+            return 1;
+        else
+            return -1;
+    }
 
-	@Override
-	public String getString() {
-		if (isValue()) {
-			return getMyType().getDateFormat().format(new Date(time));
-		}
-		return super.toString();
-	}
+    @Override
+    public int compareTo(DataValue o) {
+        if (this == o) {
+            return 0;
+        }
+        if (o == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(o instanceof DateTimeValue)) {
+            throw new ClassCastException("Cannot cast " + o.getClass() + " to "
+                    + this.getClass());
+        }
+        return compare((DateTimeValue) o);
+    }
 
-//	@Override
-//	public void retrieve(ByteBuffer bb) {
-//		super.retrieve(bb);
-//		if (isValue()) {
-//			time = bb.getLong();
-//		}
-//	}
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null) {
+            throw new IllegalArgumentException();
+        }
+        if (!(o instanceof DateTimeValue)) {
+            throw new ClassCastException("Cannot cast " + o.getClass() + " to "
+                    + this.getClass());
+        }
+        return compare((DateTimeValue) o) == 0;
+    }
 
-	@Override
-	public void setString(String string) {
-		try {
-			Date d = getMyType().getDateFormat().parse(string);
-			time = d.getTime();
-			setValue();
-		} catch (ParseException e) {
-			setNull();
-			throw new IllegalArgumentException("Failed to parse : " + string, e);
-		}
-	}
-	
-	public void setDate(Date d) {
-		this.time = d.getTime();
-		setValue();
-	}
-	
-	public Date getDate() {
-		if (!isValue()) {
-			return null;
-		}
-		return new Date(time);
-	}
+    @Override
+    public int getStoredLength() {
+        int n = super.getStoredLength();
+        if (isValue()) {
+            n += TypeSize.LONG;
+        }
+        return n;
+    }
 
-	public void setLong(long t) {
-		Date d = new Date(t);
-		setDate(d);
-	}
-	
-	public long getLong() {
-		if (!isValue()) {
-			return 0;
-		}
-		return time;
-	}
-	
-	@Override
-	public void store(ByteBuffer bb) {
-		super.store(bb);
-		if (isValue()) {
-			bb.putLong(time);
-		}
-	}
+    @Override
+    public String getString() {
+        if (isValue()) {
+            return getMyType().getDateFormat().format(new Date(time));
+        }
+        return super.toString();
+    }
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
-	
-	private DateTimeType getMyType() {
-		return (DateTimeType) getType();
-	}
+    //	@Override
+    //	public void retrieve(ByteBuffer bb) {
+    //		super.retrieve(bb);
+    //		if (isValue()) {
+    //			time = bb.getLong();
+    //		}
+    //	}
 
-	@Override
-	public StringBuilder appendTo(StringBuilder sb) {
-		if (isValue()) {
-			return sb.append(getString());
-		}
-		return super.appendTo(sb);
-	}
+    @Override
+    public void setString(String string) {
+        try {
+            Date d = getMyType().getDateFormat().parse(string);
+            time = d.getTime();
+            setValue();
+        } catch (ParseException e) {
+            setNull();
+            throw new IllegalArgumentException("Failed to parse : " + string, e);
+        }
+    }
+
+    public void setDate(Date d) {
+        this.time = d.getTime();
+        setValue();
+    }
+
+    public Date getDate() {
+        if (!isValue()) {
+            return null;
+        }
+        return new Date(time);
+    }
+
+    public void setLong(long t) {
+        Date d = new Date(t);
+        setDate(d);
+    }
+
+    public long getLong() {
+        if (!isValue()) {
+            return 0;
+        }
+        return time;
+    }
+
+    @Override
+    public void store(ByteBuffer bb) {
+        super.store(bb);
+        if (isValue()) {
+            bb.putLong(time);
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
+
+    private DateTimeType getMyType() {
+        return (DateTimeType) getType();
+    }
+
+    @Override
+    public StringBuilder appendTo(StringBuilder sb) {
+        if (isValue()) {
+            return sb.append(getString());
+        }
+        return super.appendTo(sb);
+    }
 }

@@ -61,14 +61,16 @@ public class TypeSystemTest extends BaseTestCase {
     }
 
     public void testRowFactory() throws Exception {
-    	DictionaryCache dictionaryCache = new SimpleDictionaryCache();
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        DictionaryCache dictionaryCache = new SimpleDictionaryCache();
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
         TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
-        RowFactory rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory, dictionaryCache);
+        RowFactory rowFactory = typeSystemFactory.getDefaultRowFactory(
+                fieldFactory, dictionaryCache);
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
-            fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10)
-        };
-        for (TypeDescriptor td: rowtype1) {
+                fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10) };
+        for (TypeDescriptor td : rowtype1) {
             System.err.println(td);
         }
         System.err.println(fieldFactory.getDateTimeType());
@@ -76,7 +78,8 @@ public class TypeSystemTest extends BaseTestCase {
         dictionaryCache.registerRowType(1, rowtype1);
         Row row = rowFactory.newRow(1);
         assertEquals(row.getNumberOfColumns(), 2);
-        System.err.println("Number of fields in row = " + row.getNumberOfColumns());
+        System.err.println("Number of fields in row = "
+                + row.getNumberOfColumns());
         row.setInt(0, 5432);
         row.setInt(1, 2345);
         assertEquals(row.getInt(0), 5432);
@@ -88,7 +91,7 @@ public class TypeSystemTest extends BaseTestCase {
         row.store(bb);
         bb.flip();
         Row row1 = rowFactory.newRow(1, bb);
-//        row1.retrieve(bb);
+        //        row1.retrieve(bb);
         System.err.println("Row1 contents = " + row1);
         assertTrue(row.compareTo(row1) == 0);
         Row row3 = row.cloneMe();
@@ -101,7 +104,7 @@ public class TypeSystemTest extends BaseTestCase {
         System.err.println("Comparing row and row3 = " + row.compareTo(row3));
         System.err.println("Comparing row3 and row = " + row3.compareTo(row));
         System.err.println("Comparing row3 and row1 = " + row3.compareTo(row1));
-        ((GenericRow)row).parseString("300,hello world");
+        ((GenericRow) row).parseString("300,hello world");
         assertTrue(row.getInt(0) == 300);
         assertTrue(row.getString(1).equals("hello worl"));
         System.err.println("Row contents after parse string = " + row);
@@ -120,10 +123,12 @@ public class TypeSystemTest extends BaseTestCase {
         assertTrue(row.compareTo(row3, 0) < 0);
         assertTrue(!row.isNull(0));
     }
-    
+
     public void testBigDecimal() {
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
-    	TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getNumberType(2);
         NumberValue f1 = (NumberValue) fieldFactory.getInstance(type);
         f1.setString("780.919");
@@ -135,9 +140,11 @@ public class TypeSystemTest extends BaseTestCase {
         NumberValue f3 = (NumberValue) f1.cloneMe();
         assertEquals(f1, f3);
     }
-    
+
     public void testDateTime() {
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
         TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor type = fieldFactory.getDateTimeType();
         DateTimeValue f1 = (DateTimeValue) fieldFactory.getInstance(type);
@@ -151,105 +158,110 @@ public class TypeSystemTest extends BaseTestCase {
         f1.store(bb);
         bb.flip();
         DateTimeValue f2 = (DateTimeValue) fieldFactory.getInstance(type, bb);
-//        f2.retrieve(bb);
+        //        f2.retrieve(bb);
         assertEquals(f1, f2);
         assertEquals(f2.getLong(), d.getTime());
     }
-    
+
     public void testVarchar() {
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
         TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarcharType(10);
-    	VarcharValue f1 = (VarcharValue) fieldFactory.getInstance(type);
-    	assertTrue(f1.isNull());
-    	assertFalse(f1.isNegativeInfinity());
-    	assertFalse(f1.isPositiveInfinity());
-    	assertFalse(f1.isValue());
-    	VarcharValue f2 = (VarcharValue) f1.cloneMe();
-    	assertEquals(f1, f2);
-    	assertTrue(f2.isNull());
-    	assertFalse(f2.isNegativeInfinity());
-    	assertFalse(f2.isPositiveInfinity());
-    	assertFalse(f2.isValue());
-    	f1.setString("");
-    	assertFalse(f1.isNull());
-    	assertFalse(f1.isNegativeInfinity());
-    	assertFalse(f1.isPositiveInfinity());
-    	assertTrue(f1.isValue());
-    	assertTrue(!f1.equals(f2));
-    	int n = f1.getStoredLength();
-    	assertEquals(3, n);
-    	ByteBuffer bb = ByteBuffer.allocate(n);
-    	f1.store(bb);
-    	bb.flip();
-    	f2 = (VarcharValue) fieldFactory.getInstance(type, bb);
-    	assertEquals(f1, f2);
-    	assertTrue("".equals(f1.toString()));
-    	assertTrue("".equals(f2.toString()));
-    	f1.setString("abcdefghijkl");
-    	assertFalse(f1.isNull());
-    	assertFalse(f1.isNegativeInfinity());
-    	assertFalse(f1.isPositiveInfinity());
-    	assertTrue(f1.isValue());
-    	assertTrue(!f1.equals(f2));
-    	assertTrue("abcdefghij".equals(f1.toString()));
-    	assertFalse("abcdefghijkl".equals(f1.toString()));
-    	f2.setString("abcdefghik");
-    	assertTrue(f1.compareTo(f2) < 0);
-    	assertTrue(f2.compareTo(f1) > 0);
-    	VarcharValue f3 = (VarcharValue) f1.cloneMe();
-    	f3.setPositiveInfinity();
-    	assertTrue(f1.compareTo(f3) < 0);
-    	assertTrue(f2.compareTo(f3) < 0);
-    	assertFalse(f3.isNegativeInfinity());
-    	assertFalse(f3.isNull());
-    	assertFalse(f3.isValue());
-    	assertEquals("+infinity", f3.toString());
-    	VarcharValue f4 = (VarcharValue) fieldFactory.getInstance(type);
-    	f4.setPositiveInfinity();
-    	assertTrue(f3.equals(f4));
-    	assertFalse(f4.isNegativeInfinity());
-    	assertFalse(f4.isNull());
-    	assertFalse(f4.isValue());
-    	assertEquals("+infinity", f4.toString());
-    	assertEquals(f3, f4);
+        VarcharValue f1 = (VarcharValue) fieldFactory.getInstance(type);
+        assertTrue(f1.isNull());
+        assertFalse(f1.isNegativeInfinity());
+        assertFalse(f1.isPositiveInfinity());
+        assertFalse(f1.isValue());
+        VarcharValue f2 = (VarcharValue) f1.cloneMe();
+        assertEquals(f1, f2);
+        assertTrue(f2.isNull());
+        assertFalse(f2.isNegativeInfinity());
+        assertFalse(f2.isPositiveInfinity());
+        assertFalse(f2.isValue());
+        f1.setString("");
+        assertFalse(f1.isNull());
+        assertFalse(f1.isNegativeInfinity());
+        assertFalse(f1.isPositiveInfinity());
+        assertTrue(f1.isValue());
+        assertTrue(!f1.equals(f2));
+        int n = f1.getStoredLength();
+        assertEquals(3, n);
+        ByteBuffer bb = ByteBuffer.allocate(n);
+        f1.store(bb);
+        bb.flip();
+        f2 = (VarcharValue) fieldFactory.getInstance(type, bb);
+        assertEquals(f1, f2);
+        assertTrue("".equals(f1.toString()));
+        assertTrue("".equals(f2.toString()));
+        f1.setString("abcdefghijkl");
+        assertFalse(f1.isNull());
+        assertFalse(f1.isNegativeInfinity());
+        assertFalse(f1.isPositiveInfinity());
+        assertTrue(f1.isValue());
+        assertTrue(!f1.equals(f2));
+        assertTrue("abcdefghij".equals(f1.toString()));
+        assertFalse("abcdefghijkl".equals(f1.toString()));
+        f2.setString("abcdefghik");
+        assertTrue(f1.compareTo(f2) < 0);
+        assertTrue(f2.compareTo(f1) > 0);
+        VarcharValue f3 = (VarcharValue) f1.cloneMe();
+        f3.setPositiveInfinity();
+        assertTrue(f1.compareTo(f3) < 0);
+        assertTrue(f2.compareTo(f3) < 0);
+        assertFalse(f3.isNegativeInfinity());
+        assertFalse(f3.isNull());
+        assertFalse(f3.isValue());
+        assertEquals("+infinity", f3.toString());
+        VarcharValue f4 = (VarcharValue) fieldFactory.getInstance(type);
+        f4.setPositiveInfinity();
+        assertTrue(f3.equals(f4));
+        assertFalse(f4.isNegativeInfinity());
+        assertFalse(f4.isNull());
+        assertFalse(f4.isValue());
+        assertEquals("+infinity", f4.toString());
+        assertEquals(f3, f4);
     }
-    
+
     public void testVarbinary() {
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
         TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         final TypeDescriptor type = fieldFactory.getVarbinaryType(10);
-    	VarbinaryValue f1 = (VarbinaryValue) fieldFactory.getInstance(type);
-    	f1.setString("68656c6c");
-    	assertTrue(f1.getString().equals("68656C6C"));
-    	f1.setString("00010203040506070809");
-    	assertTrue(f1.getString().equals("00010203040506070809"));
-    	ByteBuffer bb = ByteBuffer.allocate(7);
-    	f1.setString("68656c6c");
-    	f1.store(bb);
-    	bb.flip();
-    	f1 = (VarbinaryValue) fieldFactory.getInstance(type, bb);
-    	assertTrue(f1.getString().equals("68656C6C"));
+        VarbinaryValue f1 = (VarbinaryValue) fieldFactory.getInstance(type);
+        f1.setString("68656c6c");
+        assertTrue(f1.getString().equals("68656C6C"));
+        f1.setString("00010203040506070809");
+        assertTrue(f1.getString().equals("00010203040506070809"));
+        ByteBuffer bb = ByteBuffer.allocate(7);
+        f1.setString("68656c6c");
+        f1.store(bb);
+        bb.flip();
+        f1 = (VarbinaryValue) fieldFactory.getInstance(type, bb);
+        assertTrue(f1.getString().equals("68656C6C"));
     }
-    
+
     public void testStorage() {
-    	TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(properties, platform.getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
-    	TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
+        TypeSystemFactory typeSystemFactory = new TypeSystemFactoryImpl(
+                properties, platform
+                        .getPlatformObjects(TypeSystemFactory.LOGGER_NAME));
+        TypeFactory fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         TypeDescriptor[] rowtype1 = new TypeDescriptor[] {
-            fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
-            fieldFactory.getDateTimeType(), fieldFactory.getNumberType(),
-            fieldFactory.getLongType(), fieldFactory.getVarbinaryType(10)
-        };
-    	int n = fieldFactory.getStoredLength(rowtype1);
-    	ByteBuffer bb = ByteBuffer.allocate(n);
-    	fieldFactory.store(rowtype1, bb);
-    	bb.flip();
-    	TypeDescriptor[] rowtype2 = fieldFactory.retrieve(bb);
-    	assertEquals(rowtype1.length, rowtype2.length);
-    	for (int i = 0; i < rowtype1.length; i++) {
-    		assertTrue(rowtype1[i] != rowtype2[i]);
-    		assertEquals(rowtype1[i], rowtype2[i]);
-    		assertEquals(rowtype1[i].hashCode(), rowtype2[i].hashCode());
-    	}
+                fieldFactory.getIntegerType(), fieldFactory.getVarcharType(10),
+                fieldFactory.getDateTimeType(), fieldFactory.getNumberType(),
+                fieldFactory.getLongType(), fieldFactory.getVarbinaryType(10) };
+        int n = fieldFactory.getStoredLength(rowtype1);
+        ByteBuffer bb = ByteBuffer.allocate(n);
+        fieldFactory.store(rowtype1, bb);
+        bb.flip();
+        TypeDescriptor[] rowtype2 = fieldFactory.retrieve(bb);
+        assertEquals(rowtype1.length, rowtype2.length);
+        for (int i = 0; i < rowtype1.length; i++) {
+            assertTrue(rowtype1[i] != rowtype2[i]);
+            assertEquals(rowtype1[i], rowtype2[i]);
+            assertEquals(rowtype1[i].hashCode(), rowtype2[i].hashCode());
+        }
     }
 }

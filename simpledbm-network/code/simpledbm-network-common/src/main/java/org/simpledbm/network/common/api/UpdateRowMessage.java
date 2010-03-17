@@ -45,43 +45,42 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class UpdateRowMessage implements Storable {
 
-	int scanId;
-	Row row;
+    int scanId;
+    Row row;
 
-	public UpdateRowMessage(int scanId, Row row) {
-		this.scanId = scanId;
-		this.row = row;
-	}
+    public UpdateRowMessage(int scanId, Row row) {
+        this.scanId = scanId;
+        this.row = row;
+    }
 
-	public UpdateRowMessage(RowFactory rowFactory, ByteBuffer bb) {
-		scanId = bb.getInt();
-		row = rowFactory.newRow(scanId, bb);
-	}
+    public UpdateRowMessage(RowFactory rowFactory, ByteBuffer bb) {
+        scanId = bb.getInt();
+        row = rowFactory.newRow(scanId, bb);
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER 
-				+ row.getStoredLength();
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER + row.getStoredLength();
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(scanId);
-		row.store(bb);
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(scanId);
+        row.store(bb);
+    }
 
-	public int getScanId() {
-		return scanId;
-	}
+    public int getScanId() {
+        return scanId;
+    }
 
-	public void setScanId(int scanId) {
-		this.scanId = scanId;
-	}
+    public void setScanId(int scanId) {
+        this.scanId = scanId;
+    }
 
-	public Row getRow() {
-		return row;
-	}
+    public Row getRow() {
+        return row;
+    }
 
-	public void setRow(Row row) {
-		this.row = row;
-	}
+    public void setRow(Row row) {
+        this.row = row;
+    }
 
 }

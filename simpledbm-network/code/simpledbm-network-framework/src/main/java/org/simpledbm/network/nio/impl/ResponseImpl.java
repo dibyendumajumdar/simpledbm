@@ -49,7 +49,7 @@ public class ResponseImpl implements Response {
         super();
         this.header = header;
         if (data == null) {
-        	data = ByteBuffer.allocate(0);
+            data = ByteBuffer.allocate(0);
         }
         this.data = data;
         this.header.setDataSize(data.limit());

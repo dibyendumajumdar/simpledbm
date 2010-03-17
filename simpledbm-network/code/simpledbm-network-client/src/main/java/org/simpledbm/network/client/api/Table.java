@@ -39,37 +39,39 @@ package org.simpledbm.network.client.api;
 import org.simpledbm.typesystem.api.Row;
 
 /**
- * A Table represents a collection of related containers, one of which is
- * a Data Container, and the others, Index Containers. The Data Container 
- * hold rows of table data, and the Index Containers provide access paths to
- * the table rows. At least one index must be created because the database
- * uses the index to manage the primary key and lock isolation modes.
+ * A Table represents a collection of related containers, one of which is a Data
+ * Container, and the others, Index Containers. The Data Container hold rows of
+ * table data, and the Index Containers provide access paths to the table rows.
+ * At least one index must be created because the database uses the index to
+ * manage the primary key and lock isolation modes.
  * 
  * @author Dibyendu Majumdar
  */
 public interface Table {
-	
-	/**
-	 * Returns a new scan object.
-	 * @param indexno
-	 * @param startRow
-	 * @param forUpdate
-	 * @return
-	 */
-	public TableScan openScan(int indexno, Row startRow,
-            boolean forUpdate);
-	
-	/**
-	 * Obtains an empty row, in which all columns are set to NULL.
-	 * @return
-	 */
-	public Row getRow();
-	
-	/**
-	 * Adds the given row to the table. The add operation may fail
-	 * if another row with the same primary key already exists.
-	 * @param row
-	 */
-	public void addRow(Row row);
-	
+
+    /**
+     * Returns a new scan object.
+     * 
+     * @param indexno
+     * @param startRow
+     * @param forUpdate
+     * @return
+     */
+    public TableScan openScan(int indexno, Row startRow, boolean forUpdate);
+
+    /**
+     * Obtains an empty row, in which all columns are set to NULL.
+     * 
+     * @return
+     */
+    public Row getRow();
+
+    /**
+     * Adds the given row to the table. The add operation may fail if another
+     * row with the same primary key already exists.
+     * 
+     * @param row
+     */
+    public void addRow(Row row);
+
 }

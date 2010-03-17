@@ -50,23 +50,24 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 /**
  * The BinaryType represents a variable length byte array, that has a specified
  * maximum length.
+ * 
  * @author Dibyendu Majumdar
  */
 public class VarbinaryType implements TypeDescriptor {
 
     int maxLength;
-    
+
     public VarbinaryType() {
-	}
-    
-    public VarbinaryType(ByteBuffer bb) {
-		maxLength = bb.getInt();
     }
-    
+
+    public VarbinaryType(ByteBuffer bb) {
+        maxLength = bb.getInt();
+    }
+
     public VarbinaryType(int maxLength) {
         this.maxLength = maxLength;
     }
-    
+
     public final int getTypeCode() {
         return TYPE_BINARY;
     }
@@ -75,59 +76,59 @@ public class VarbinaryType implements TypeDescriptor {
         return maxLength;
     }
 
-	public int getScale() {
-		return -1;
-	}
+    public int getScale() {
+        return -1;
+    }
 
-	public DateFormat getDateFormat() {
-		return null;
-	}
+    public DateFormat getDateFormat() {
+        return null;
+    }
 
-	public TimeZone getTimeZone() {
-		return null;
-	}
+    public TimeZone getTimeZone() {
+        return null;
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER;
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER;
+    }
 
-//	public void retrieve(ByteBuffer bb) {
-//		maxLength = bb.getInt();
-//	}
+    //	public void retrieve(ByteBuffer bb) {
+    //		maxLength = bb.getInt();
+    //	}
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(maxLength);
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(maxLength);
+    }
 
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + maxLength;
-		return result;
-	}
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + maxLength;
+        return result;
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		final VarbinaryType other = (VarbinaryType) obj;
-		if (maxLength != other.maxLength)
-			return false;
-		return true;
-	}
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final VarbinaryType other = (VarbinaryType) obj;
+        if (maxLength != other.maxLength)
+            return false;
+        return true;
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		return sb.append("BinaryType(maxLength=").append(maxLength).append(")");
-	}
-	
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
+    public StringBuilder appendTo(StringBuilder sb) {
+        return sb.append("BinaryType(maxLength=").append(maxLength).append(")");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
 }

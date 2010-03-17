@@ -40,92 +40,92 @@ import java.nio.ByteBuffer;
 
 /**
  * A TypeFactory is responsible for creating TypeDescriptors of various types.
- * It also provides a mechanism for generating DataValue objects based on 
- * the type information.
+ * It also provides a mechanism for generating DataValue objects based on the
+ * type information.
  * 
  * @author Dibyendu Majumdar
  */
 public interface TypeFactory {
-	
-	/**
-	 * Creates a DataValue instance of the specified type.
-	 */
-	DataValue getInstance(TypeDescriptor typeDesc);
 
-	/**
-	 * Creates a DataValue instance of the specified type.
-	 */
-	DataValue getInstance(TypeDescriptor typeDesc, ByteBuffer bb);	
-	
-	/**
-	 * Returns a TypeDescriptor for the Varchar type.
-	 */
- 	TypeDescriptor getVarcharType(int maxLength);
- 	
-	/**
-	 * Returns a TypeDescriptor for the Varbinary type.
-	 */
- 	TypeDescriptor getVarbinaryType(int maxLength);
-	
- 	/**
- 	 * Returns a TypeDescriptor for the Integer type.
- 	 */
-	TypeDescriptor getIntegerType();
+    /**
+     * Creates a DataValue instance of the specified type.
+     */
+    DataValue getInstance(TypeDescriptor typeDesc);
 
- 	/**
- 	 * Returns a TypeDescriptor for the Long type.
- 	 */
-	TypeDescriptor getLongType();	
-	
-	/**
-	 * Returns a TypeDescriptor for the DateTime type.<br/>
-	 * Timezone is defaulted to UTC.<br/>
-	 * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
-	 */
-	TypeDescriptor getDateTimeType();
-	
-	/**
-	 * Returns a TypeDescriptor for the DateTime type.<br/>
-	 * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
-	 */
-	TypeDescriptor getDateTimeType(String timezone);
-	
-	/**
-	 * Returns a TypeDescriptor for the DateTime type.<br/>
-	 */
-	TypeDescriptor getDateTimeType(String timezone, String format);
-	
-	/**
-	 * Returns a TypeDescriptor for the Numeric data type.<br />
-	 * Scale defaults to 0.
-	 * Number types have following restrictions compared to BigDecimals:
-	 * <ol>
-	 * <li>The maximum scale is limited to 127.</li>
-	 * <li>The maximum length of the number as a byte array is limited to 127.</li>
-	 * </ol>
-	 * Above limitations are simply to save storage space when persisting
-	 * Number objects. 
-	 */
-	TypeDescriptor getNumberType();
-	
-	/**
-	 * Returns a TypeDescriptor for the Numeric data type.
-	 */
-	TypeDescriptor getNumberType(int scale);
+    /**
+     * Creates a DataValue instance of the specified type.
+     */
+    DataValue getInstance(TypeDescriptor typeDesc, ByteBuffer bb);
 
-	/**
-	 * Retrieves an array of data TypeDescriptors from a buffer stream.
-	 */
-	TypeDescriptor[] retrieve(ByteBuffer bb);
-	
-	/**
-	 * Persists an array of data TypeDescriptors to a buffer stream. 
-	 */
-	void store(TypeDescriptor[] rowType, ByteBuffer bb);
-	
-	/**
-	 * Calculates the persisted length of an array of TypeDescriptor objects.
-	 */
-	int getStoredLength(TypeDescriptor[] rowType);
-	
+    /**
+     * Returns a TypeDescriptor for the Varchar type.
+     */
+    TypeDescriptor getVarcharType(int maxLength);
+
+    /**
+     * Returns a TypeDescriptor for the Varbinary type.
+     */
+    TypeDescriptor getVarbinaryType(int maxLength);
+
+    /**
+     * Returns a TypeDescriptor for the Integer type.
+     */
+    TypeDescriptor getIntegerType();
+
+    /**
+     * Returns a TypeDescriptor for the Long type.
+     */
+    TypeDescriptor getLongType();
+
+    /**
+     * Returns a TypeDescriptor for the DateTime type.<br/>
+     * Timezone is defaulted to UTC.<br/>
+     * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
+     */
+    TypeDescriptor getDateTimeType();
+
+    /**
+     * Returns a TypeDescriptor for the DateTime type.<br/>
+     * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
+     */
+    TypeDescriptor getDateTimeType(String timezone);
+
+    /**
+     * Returns a TypeDescriptor for the DateTime type.<br/>
+     */
+    TypeDescriptor getDateTimeType(String timezone, String format);
+
+    /**
+     * Returns a TypeDescriptor for the Numeric data type.<br />
+     * Scale defaults to 0. Number types have following restrictions compared to
+     * BigDecimals:
+     * <ol>
+     * <li>The maximum scale is limited to 127.</li>
+     * <li>The maximum length of the number as a byte array is limited to 127.</li>
+     * </ol>
+     * Above limitations are simply to save storage space when persisting Number
+     * objects.
+     */
+    TypeDescriptor getNumberType();
+
+    /**
+     * Returns a TypeDescriptor for the Numeric data type.
+     */
+    TypeDescriptor getNumberType(int scale);
+
+    /**
+     * Retrieves an array of data TypeDescriptors from a buffer stream.
+     */
+    TypeDescriptor[] retrieve(ByteBuffer bb);
+
+    /**
+     * Persists an array of data TypeDescriptors to a buffer stream.
+     */
+    void store(TypeDescriptor[] rowType, ByteBuffer bb);
+
+    /**
+     * Calculates the persisted length of an array of TypeDescriptor objects.
+     */
+    int getStoredLength(TypeDescriptor[] rowType);
+
 }

@@ -48,16 +48,17 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 /**
  * The IntegerType provides storage for a 32-bit integer.
+ * 
  * @author Dibyendu Majumdar
  */
 public class IntegerType implements TypeDescriptor {
 
-	public IntegerType() {
-	}
+    public IntegerType() {
+    }
 
-	public IntegerType(ByteBuffer bb) {
-	}
-	
+    public IntegerType(ByteBuffer bb) {
+    }
+
     public final int getTypeCode() {
         return TYPE_INTEGER;
     }
@@ -66,50 +67,50 @@ public class IntegerType implements TypeDescriptor {
         return -1;
     }
 
-	public int getScale() {
-		return -1;
-	}
+    public int getScale() {
+        return -1;
+    }
 
-	public DateFormat getDateFormat() {
-		return null;
-	}
+    public DateFormat getDateFormat() {
+        return null;
+    }
 
-	public TimeZone getTimeZone() {
-		return null;
-	}
+    public TimeZone getTimeZone() {
+        return null;
+    }
 
-	public int getStoredLength() {
-		return 0;
-	}
+    public int getStoredLength() {
+        return 0;
+    }
 
-//	public void retrieve(ByteBuffer bb) {
-//	}
+    //	public void retrieve(ByteBuffer bb) {
+    //	}
 
-	public void store(ByteBuffer bb) {
-	}
-	
-	public int hashCode() {
-		return TYPE_INTEGER;
-	}
-	
-	public boolean equals(Object other) {
-		if (other == this) 
-			return true;
-		if (other == null) 
-			return false;
-		if (other.getClass() == getClass()) 
-			return true;
-		return false;
-	}
+    public void store(ByteBuffer bb) {
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		return sb.append("IntegerType()");
-	}
+    public int hashCode() {
+        return TYPE_INTEGER;
+    }
 
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
-	
+    public boolean equals(Object other) {
+        if (other == this)
+            return true;
+        if (other == null)
+            return false;
+        if (other.getClass() == getClass())
+            return true;
+        return false;
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        return sb.append("IntegerType()");
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
+
 }

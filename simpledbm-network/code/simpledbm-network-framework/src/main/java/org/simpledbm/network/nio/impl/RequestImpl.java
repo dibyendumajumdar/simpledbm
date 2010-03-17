@@ -107,9 +107,9 @@ public class RequestImpl implements Request {
     public void setRequestCode(int requestCode) {
         header.setRequestCode(requestCode);
     }
-    
+
     public void setSessionId(int sessionId) {
-    	header.setSessionId(sessionId);
+        header.setSessionId(sessionId);
     }
-    
+
 }

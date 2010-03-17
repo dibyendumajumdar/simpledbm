@@ -44,32 +44,33 @@ import org.simpledbm.typesystem.api.Row;
 import org.simpledbm.typesystem.api.TableDefinition;
 
 public class TableImpl implements Table {
-	
-	final SessionImpl session;
-	final TableDefinition tableDefinition;
-	
-	public TableImpl(SessionImpl session, TableDefinition tableDefinition) {
-		super();
-		this.session = session;
-		this.tableDefinition = tableDefinition;
-	}
 
-	public TableScan openScan(int indexno, Row startRow,
-            boolean forUpdate) {
-		return new TableScanImpl(session, tableDefinition, indexno, startRow, forUpdate);
-	}
-	
-	public Row getRow() {
-		return tableDefinition.getRow();
-	}
-	
-	public void addRow(Row row) {
-    	AddRowMessage message = new AddRowMessage(tableDefinition.getContainerId(), row);
-    	session.sendMessage(RequestCode.ADD_ROW, message);
-	}
-	
-	public String toString() {
-		return "Table(" + tableDefinition.toString() + ")";
-	}
-	
+    final SessionImpl session;
+    final TableDefinition tableDefinition;
+
+    public TableImpl(SessionImpl session, TableDefinition tableDefinition) {
+        super();
+        this.session = session;
+        this.tableDefinition = tableDefinition;
+    }
+
+    public TableScan openScan(int indexno, Row startRow, boolean forUpdate) {
+        return new TableScanImpl(session, tableDefinition, indexno, startRow,
+                forUpdate);
+    }
+
+    public Row getRow() {
+        return tableDefinition.getRow();
+    }
+
+    public void addRow(Row row) {
+        AddRowMessage message = new AddRowMessage(tableDefinition
+                .getContainerId(), row);
+        session.sendMessage(RequestCode.ADD_ROW, message);
+    }
+
+    public String toString() {
+        return "Table(" + tableDefinition.toString() + ")";
+    }
+
 }

@@ -45,10 +45,10 @@ public class SessionRequestMessage implements Storable {
 
     public SessionRequestMessage() {
     }
-    
+
     SessionRequestMessage(ByteBuffer bb) {
     }
-    
+
     public int getStoredLength() {
         return 0;
     }
@@ -61,5 +61,5 @@ public class SessionRequestMessage implements Storable {
             return new SessionRequestMessage(bb);
         }
     }
-    
+
 }

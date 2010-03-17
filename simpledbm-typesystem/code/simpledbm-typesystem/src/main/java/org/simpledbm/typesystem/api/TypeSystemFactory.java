@@ -41,23 +41,26 @@ import java.nio.ByteBuffer;
 import org.simpledbm.common.api.platform.PlatformObjects;
 
 /**
- * TypeSystemFactory is the entry point for external clients to obtain access
- * to the type system interfaces.
+ * TypeSystemFactory is the entry point for external clients to obtain access to
+ * the type system interfaces.
  * 
  * @author dibyendumajumdar
  */
 public interface TypeSystemFactory {
-	
-	public static String LOGGER_NAME = "org.simpledbm.typesystem";
-	
-	public TypeFactory getDefaultTypeFactory();
-	
-	public RowFactory getDefaultRowFactory(TypeFactory typeFactory);
-	
-	public RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache);
-	
-	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb);
-	
-	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
-            TypeDescriptor[] rowType);
+
+    public static String LOGGER_NAME = "org.simpledbm.typesystem";
+
+    public TypeFactory getDefaultTypeFactory();
+
+    public RowFactory getDefaultRowFactory(TypeFactory typeFactory);
+
+    public RowFactory getDefaultRowFactory(TypeFactory typeFactory,
+            DictionaryCache dictionaryCache);
+
+    public TableDefinition getTableDefinition(PlatformObjects po,
+            TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb);
+
+    public TableDefinition getTableDefinition(PlatformObjects po,
+            TypeFactory typeFactory, RowFactory rowFactory, int containerId,
+            String name, TypeDescriptor[] rowType);
 }

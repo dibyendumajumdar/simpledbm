@@ -62,8 +62,8 @@ import org.simpledbm.typesystem.api.TypeSystemFactory;
 import org.simpledbm.typesystem.impl.TypeSystemFactoryImpl;
 
 public class SessionManagerImpl extends SessionManager {
-	
-	public static final String LOGGER_NAME = "org.simpledbm.network";
+
+    public static final String LOGGER_NAME = "org.simpledbm.network";
 
     String host;
     int port;
@@ -72,56 +72,60 @@ public class SessionManagerImpl extends SessionManager {
     final TypeFactory typeFactory;
     final DictionaryCache dictionaryCache;
     final RowFactory rowFactory;
-	final Platform platform;
-	final PlatformObjects po;
-	final Logger log;
-	final ExceptionHandler exceptionHandler;
-	int timeout;
+    final Platform platform;
+    final PlatformObjects po;
+    final Logger log;
+    final ExceptionHandler exceptionHandler;
+    int timeout;
 
-    public SessionManagerImpl(Properties properties, String host, int port, int timeout) {
-    	super();
-		this.platform = new PlatformImpl(properties);
-		this.po = platform.getPlatformObjects(SessionManagerImpl.LOGGER_NAME);
-		this.log = po.getLogger();
-		this.exceptionHandler = po.getExceptionHandler();
-	    this.typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
-	    this.typeFactory = typeSystemFactory.getDefaultTypeFactory();
+    public SessionManagerImpl(Properties properties, String host, int port,
+            int timeout) {
+        super();
+        this.platform = new PlatformImpl(properties);
+        this.po = platform.getPlatformObjects(SessionManagerImpl.LOGGER_NAME);
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.typeSystemFactory = new TypeSystemFactoryImpl(properties, po);
+        this.typeFactory = typeSystemFactory.getDefaultTypeFactory();
         this.host = host;
         this.port = port;
         this.timeout = timeout;
         this.connection = NetworkUtil.createConnection(host, port, timeout);
-        this.dictionaryCache = new DictionaryCacheProxy(this, connection, typeFactory);
-        this.rowFactory = typeSystemFactory.getDefaultRowFactory(typeFactory, dictionaryCache);
+        this.dictionaryCache = new DictionaryCacheProxy(this, connection,
+                typeFactory);
+        this.rowFactory = typeSystemFactory.getDefaultRowFactory(typeFactory,
+                dictionaryCache);
     }
 
     public TypeFactory getTypeFactory() {
         return typeFactory;
     }
 
-	public TableDefinition newTableDefinition(String name, int containerId,
-			TypeDescriptor[] rowType) {
-		return typeSystemFactory.getTableDefinition(po, typeFactory, rowFactory, containerId, name, rowType);
-	}    
-    
+    public TableDefinition newTableDefinition(String name, int containerId,
+            TypeDescriptor[] rowType) {
+        return typeSystemFactory.getTableDefinition(po, typeFactory,
+                rowFactory, containerId, name, rowType);
+    }
+
     public Session openSession() {
         SessionRequestMessage message = new SessionRequestMessage();
-    	Response response = sendMessage(0, RequestCode.OPEN_SESSION, message);
+        Response response = sendMessage(0, RequestCode.OPEN_SESSION, message);
         Session session = new SessionImpl(this, response.getSessionId());
         return session;
     }
-    
+
     public Connection getConnection() {
-    	return connection;
+        return connection;
     }
 
     public TypeDescriptor[] getRowType(int containerId) {
-    	return dictionaryCache.getTypeDescriptor(containerId);
+        return dictionaryCache.getTypeDescriptor(containerId);
     }
-    
+
     public RowFactory getRowFactory() {
-    	return rowFactory;
+        return rowFactory;
     }
-    
+
     Response sendMessage(int sessionId, int requestCode, Storable message) {
         ByteBuffer data = ByteBuffer.allocate(message.getStoredLength());
         message.store(data);
@@ -130,6 +134,6 @@ public class SessionManagerImpl extends SessionManager {
         request.setSessionId(sessionId);
         Response response = connection.submit(request);
         return response;
-    }    
-    
+    }
+
 }

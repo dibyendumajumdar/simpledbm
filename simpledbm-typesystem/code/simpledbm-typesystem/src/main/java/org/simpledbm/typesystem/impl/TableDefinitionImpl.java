@@ -65,130 +65,132 @@ import org.simpledbm.typesystem.api.TypeFactory;
  */
 public class TableDefinitionImpl implements Storable, TableDefinition {
 
-	final Logger log;
-	final ExceptionHandler exceptionHandler;
-	final PlatformObjects po;
+    final Logger log;
+    final ExceptionHandler exceptionHandler;
+    final PlatformObjects po;
 
-	static final Message m_EY0012 = new Message('T', 'Y', MessageType.ERROR,
-			12, "The first index for the table must be the primary index");
-	static final Message m_EY0014 = new Message('T', 'Y', MessageType.ERROR,
-			14, "Index {0} is not defined");
-	
-	/**
-	 * Database to which this table definition belongs to.
-	 */
-//    final Database database;
-	
-	/**
-	 * Row Factory responsible for generating and manipulating rows.
-	 */
-	final RowFactory rowFactory;
-	
-	/**
-	 * Type Factory responsible for defining types.
-	 */
-	final TypeFactory typeFactory;
-    
+    static final Message m_EY0012 = new Message('T', 'Y', MessageType.ERROR,
+            12, "The first index for the table must be the primary index");
+    static final Message m_EY0014 = new Message('T', 'Y', MessageType.ERROR,
+            14, "Index {0} is not defined");
+
+    /**
+     * Database to which this table definition belongs to.
+     */
+    //    final Database database;
+
+    /**
+     * Row Factory responsible for generating and manipulating rows.
+     */
+    final RowFactory rowFactory;
+
+    /**
+     * Type Factory responsible for defining types.
+     */
+    final TypeFactory typeFactory;
+
     /**
      * Container ID for the table.
      */
     int containerId;
-    
+
     /**
      * The name of the Table Container.
      */
     String name;
-    
+
     /**
-     * The row type for the table. The row type is used to create row
-     * instances.
+     * The row type for the table. The row type is used to create row instances.
      */
     TypeDescriptor[] rowType;
-    
+
     /**
      * List of indexes associated with the table.
      */
     ArrayList<IndexDefinition> indexes = new ArrayList<IndexDefinition>();
 
-    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
-    	this.po = po;
-    	this.log = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
-//		this.database = database;
-    	this.typeFactory = typeFactory;
-    	this.rowFactory = rowFactory;
-		containerId = bb.getInt();
-		ByteString s = new ByteString(bb);
-		name = s.toString();
-		rowType = typeFactory.retrieve(bb);
-		int n = bb.getShort();
-		indexes = new ArrayList<IndexDefinition>();
-		for (int i = 0; i < n; i++) {
-			IndexDefinitionImpl idx = new IndexDefinitionImpl(po, this, bb);
-			indexes.add(idx);
-		}
-	}
+    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory,
+            RowFactory rowFactory, ByteBuffer bb) {
+        this.po = po;
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        //		this.database = database;
+        this.typeFactory = typeFactory;
+        this.rowFactory = rowFactory;
+        containerId = bb.getInt();
+        ByteString s = new ByteString(bb);
+        name = s.toString();
+        rowType = typeFactory.retrieve(bb);
+        int n = bb.getShort();
+        indexes = new ArrayList<IndexDefinition>();
+        for (int i = 0; i < n; i++) {
+            IndexDefinitionImpl idx = new IndexDefinitionImpl(po, this, bb);
+            indexes.add(idx);
+        }
+    }
 
-    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
+    public TableDefinitionImpl(PlatformObjects po, TypeFactory typeFactory,
+            RowFactory rowFactory, int containerId, String name,
             TypeDescriptor[] rowType) {
-    	this.po = po;
-    	this.log = po.getLogger();
-    	this.exceptionHandler = po.getExceptionHandler();
-    	this.typeFactory = typeFactory;
-    	this.rowFactory = rowFactory;
-//        this.database = database;
+        this.po = po;
+        this.log = po.getLogger();
+        this.exceptionHandler = po.getExceptionHandler();
+        this.typeFactory = typeFactory;
+        this.rowFactory = rowFactory;
+        //        this.database = database;
         this.containerId = containerId;
         this.name = name;
         this.rowType = rowType;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#addIndex(int, java.lang.String, int[], boolean, boolean)
-	 */
+     * @see org.simpledbm.database.TableDefinition#addIndex(int, java.lang.String, int[], boolean, boolean)
+     */
     public void addIndex(int containerId, String name, int[] columns,
             boolean primary, boolean unique) {
         if (!primary && indexes.size() == 0) {
-        	exceptionHandler.errorThrow(getClass().getName(), "addIndex", 
-        			new TypeException(new MessageInstance(m_EY0012)));
+            exceptionHandler.errorThrow(getClass().getName(), "addIndex",
+                    new TypeException(new MessageInstance(m_EY0012)));
         }
-        indexes.add(new IndexDefinitionImpl(po, this, containerId, name, columns, primary, unique));
+        indexes.add(new IndexDefinitionImpl(po, this, containerId, name,
+                columns, primary, unique));
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getDatabase()
-	 */
-//    public Database getDatabase() {
-//        return database;
-//    }
-    
+     * @see org.simpledbm.database.TableDefinition#getDatabase()
+     */
+    //    public Database getDatabase() {
+    //        return database;
+    //    }
+
     public RowFactory getRowFactory() {
-    	return rowFactory;
+        return rowFactory;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getContainerId()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getContainerId()
+     */
     public int getContainerId() {
         return containerId;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getName()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getName()
+     */
     public String getName() {
         return name;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getRowType()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getRowType()
+     */
     public TypeDescriptor[] getRowType() {
         return rowType;
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getIndexes()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getIndexes()
+     */
     public ArrayList<IndexDefinition> getIndexes() {
         return indexes;
     }
@@ -259,24 +261,24 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getRow()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getRow()
+     */
     public Row getRow() {
-//        RowFactory rowFactory = database.getRowFactory();
+        //        RowFactory rowFactory = database.getRowFactory();
         return rowFactory.newRow(containerId);
     }
-    
+
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getRow()
-	 */
+     * @see org.simpledbm.database.TableDefinition#getRow()
+     */
     public Row getRow(ByteBuffer bb) {
-//        RowFactory rowFactory = database.getRowFactory();
+        //        RowFactory rowFactory = database.getRowFactory();
         return rowFactory.newRow(containerId, bb);
     }
 
     /* (non-Javadoc)
-	 * @see org.simpledbm.database.TableDefinition#getIndexRow(org.simpledbm.database.IndexDefinition, org.simpledbm.typesystem.api.Row)
-	 */
+     * @see org.simpledbm.database.TableDefinition#getIndexRow(org.simpledbm.database.IndexDefinition, org.simpledbm.typesystem.api.Row)
+     */
     public Row getIndexRow(IndexDefinition index, Row tableRow) {
         Row indexRow = index.getRow();
         for (int i = 0; i < index.getColumns().length; i++) {
@@ -289,59 +291,56 @@ public class TableDefinitionImpl implements Storable, TableDefinition {
      * @see org.simpledbm.database.api.TableDefinition#getNumberOfIndexes()
      */
     public int getNumberOfIndexes() {
-    	return indexes.size();
+        return indexes.size();
     }
-    
-	/* (non-Javadoc)
-	 * @see org.simpledbm.database.api.TableDefinition#getIndex(int)
-	 */
-	public IndexDefinition getIndex(int indexNo) {
-		if (indexNo < 0 || indexNo  >= indexes.size()) {
-			exceptionHandler.errorThrow(getClass().getName(), "getIndex", 
-					new TypeException(new MessageInstance(m_EY0014, indexNo)));
-		}
-		return indexes.get(indexNo);
-	}
 
-	/* (non-Javadoc)
-	 * @see org.simpledbm.database.api.TableDefinition#getIndexRow(int, org.simpledbm.typesystem.api.Row)
-	 */
-	public Row getIndexRow(int indexNo, Row tableRow) {
-		return getIndexRow(getIndex(indexNo), tableRow);
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.database.api.TableDefinition#getIndex(int)
+     */
+    public IndexDefinition getIndex(int indexNo) {
+        if (indexNo < 0 || indexNo >= indexes.size()) {
+            exceptionHandler.errorThrow(getClass().getName(), "getIndex",
+                    new TypeException(new MessageInstance(m_EY0014, indexNo)));
+        }
+        return indexes.get(indexNo);
+    }
 
-	public StringBuilder appendTo(StringBuilder sb) {
-		sb.append(newline).
-			append("TableDefinition(containerId=").append(containerId).
-			append(", name='").append(name).
-			append("', column definitions = {").append(newline);
-		for (int i = 0; i < rowType.length; i++) {
-			sb.append(TAB).append("column[").append(i).append("] type=");
-			if (i == rowType.length - 1) {
-				sb.append(rowType[i]);
-			}
-			else {
-				sb.append(rowType[i]).append(", ").append(newline);
-			}
-		}
-		sb.append("}").append(newline);
-		sb.append("index definitions = {").append(newline);
-		for (int i = 0; i < indexes.size(); i++) {
-			sb.append(TAB).append("index[").append(i).append("] = ");
-			if (i == indexes.size() - 1) {
-				sb.append(indexes.get(i));
-			}
-			else {
-				sb.append(indexes.get(i)).append(", ").append(newline);
-			}
-		}
-		sb.append("})").append(newline);
-		return sb;
-	}
-	
-	@Override
-	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		return appendTo(sb).toString();
-	}
+    /* (non-Javadoc)
+     * @see org.simpledbm.database.api.TableDefinition#getIndexRow(int, org.simpledbm.typesystem.api.Row)
+     */
+    public Row getIndexRow(int indexNo, Row tableRow) {
+        return getIndexRow(getIndex(indexNo), tableRow);
+    }
+
+    public StringBuilder appendTo(StringBuilder sb) {
+        sb.append(newline).append("TableDefinition(containerId=").append(
+                containerId).append(", name='").append(name).append(
+                "', column definitions = {").append(newline);
+        for (int i = 0; i < rowType.length; i++) {
+            sb.append(TAB).append("column[").append(i).append("] type=");
+            if (i == rowType.length - 1) {
+                sb.append(rowType[i]);
+            } else {
+                sb.append(rowType[i]).append(", ").append(newline);
+            }
+        }
+        sb.append("}").append(newline);
+        sb.append("index definitions = {").append(newline);
+        for (int i = 0; i < indexes.size(); i++) {
+            sb.append(TAB).append("index[").append(i).append("] = ");
+            if (i == indexes.size() - 1) {
+                sb.append(indexes.get(i));
+            } else {
+                sb.append(indexes.get(i)).append(", ").append(newline);
+            }
+        }
+        sb.append("})").append(newline);
+        return sb;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        return appendTo(sb).toString();
+    }
 }

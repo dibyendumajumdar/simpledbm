@@ -102,86 +102,68 @@ public class TestTransactionManager2 extends BaseTestCase {
         super(arg0);
     }
 
-    void setupObjectFactory(ObjectRegistry objectFactory, PageManager pageFactory) {
-        objectFactory.registerSingleton(
-        	TYPE_BITMGRPAGE, new BitMgrPage.BitMgrPageFactory(pageFactory));
-        objectFactory.registerObjectFactory(
-            TYPE_BITMGRLOGCREATECONTAINER,
-            new BitMgrLogCreateContainer.BitMgrLogCreateContainerFactory());
-        objectFactory.registerObjectFactory(
-            TYPE_BITMGRLOGFORMATPAGE,
-            new BitMgrLogFormatPage.BitMgrLogFormatPageFactory());
-        objectFactory.registerObjectFactory(
-            TYPE_BITMGRLOGREDOUNDO,
-            new BitMgrLogRedoUndo.BitMgrLogRedoUndoFactory());
-        objectFactory.registerObjectFactory(
-        	TYPE_BITMGRLOGCLR, 
-        	new BitMgrLogCLR.BitMgrLogCLRFactory());
-        objectFactory.registerObjectFactory(
-            TYPE_BITMGRLOGOPENCONTAINER,
-            new BitMgrLogOpenContainer.BitMgrLogOpenContainerFactory());
+    void setupObjectFactory(ObjectRegistry objectFactory,
+            PageManager pageFactory) {
+        objectFactory.registerSingleton(TYPE_BITMGRPAGE,
+                new BitMgrPage.BitMgrPageFactory(pageFactory));
+        objectFactory.registerObjectFactory(TYPE_BITMGRLOGCREATECONTAINER,
+                new BitMgrLogCreateContainer.BitMgrLogCreateContainerFactory());
+        objectFactory.registerObjectFactory(TYPE_BITMGRLOGFORMATPAGE,
+                new BitMgrLogFormatPage.BitMgrLogFormatPageFactory());
+        objectFactory.registerObjectFactory(TYPE_BITMGRLOGREDOUNDO,
+                new BitMgrLogRedoUndo.BitMgrLogRedoUndoFactory());
+        objectFactory.registerObjectFactory(TYPE_BITMGRLOGCLR,
+                new BitMgrLogCLR.BitMgrLogCLRFactory());
+        objectFactory.registerObjectFactory(TYPE_BITMGRLOGOPENCONTAINER,
+                new BitMgrLogOpenContainer.BitMgrLogOpenContainerFactory());
     }
 
     public void testTrxMgrStart() throws Exception {
 
         /* Create the write ahead log */
         Properties properties = new Properties();
-        properties.setProperty(
-            "storage.basePath",
-            "testdata/TestTransactionManager2");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("storage.basePath",
+                "testdata/TestTransactionManager2");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
-        
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+
         logFactory.createLog(storageFactory, properties);
 
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
 
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
-        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(
+                platform, properties);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory,
+                properties);
         final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            logmgr,
-            pageFactory,
-            3,
-            11);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, logmgr,
+                pageFactory, 3, 11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform, 
-            objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+                platform, objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(
+                platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
-        	platform,
-            logmgr,
-            storageFactory,
-            storageManager,
-            bufmgr,
-            lockmgr,
-            loggableFactory,
-            latchFactory,
-            objectFactory,
-            moduleRegistry,
-            properties);
-        OneBitMgr bitmgr = new OneBitMgr(
-            storageFactory,
-            storageManager,
-            pageFactory,
-            bufmgr,
-            loggableFactory,
-            trxmgr,
-            objectFactory);
+                platform, logmgr, storageFactory, storageManager, bufmgr,
+                lockmgr, loggableFactory, latchFactory, objectFactory,
+                moduleRegistry, properties);
+        OneBitMgr bitmgr = new OneBitMgr(storageFactory, storageManager,
+                pageFactory, bufmgr, loggableFactory, trxmgr, objectFactory);
         moduleRegistry.registerModule(OneBitMgr.moduleId, bitmgr);
 
         /* Now we are ready to start */
@@ -198,67 +180,52 @@ public class TestTransactionManager2 extends BaseTestCase {
     public void testBitMgrCreateContainer() throws Exception {
 
         Properties properties = new Properties();
-        properties.setProperty(
-            "storage.basePath",
-            "testdata/TestTransactionManager2");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("storage.basePath",
+                "testdata/TestTransactionManager2");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
+                properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
-        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(
+                platform, properties);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory,
+                properties);
         final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            logmgr,
-            pageFactory,
-            3,
-            11);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, logmgr,
+                pageFactory, 3, 11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
-            objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+                platform, objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(
+                platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
-        	platform,
-            logmgr,
-            storageFactory,
-            storageManager,
-            bufmgr,
-            lockmgr,
-            loggableFactory,
-            latchFactory,
-            objectFactory,
-            moduleRegistry,
-            properties);
-        OneBitMgr bitmgr = new OneBitMgr(
-            storageFactory,
-            storageManager,
-            pageFactory,
-            bufmgr,
-            loggableFactory,
-            trxmgr,
-            objectFactory);
+                platform, logmgr, storageFactory, storageManager, bufmgr,
+                lockmgr, loggableFactory, latchFactory, objectFactory,
+                moduleRegistry, properties);
+        OneBitMgr bitmgr = new OneBitMgr(storageFactory, storageManager,
+                pageFactory, bufmgr, loggableFactory, trxmgr, objectFactory);
         moduleRegistry.registerModule(OneBitMgr.moduleId, bitmgr);
 
         /* Now we are ready to start */
         try {
             StorageContainer sc = storageFactory.create("dual");
             storageManager.register(999, sc);
-            Page page = pageFactory.getInstance(
-                pageFactory.getRawPageType(),
-                new PageId(999, 0));
+            Page page = pageFactory.getInstance(pageFactory.getRawPageType(),
+                    new PageId(999, 0));
             pageFactory.store(page);
             trxmgr.start();
             bitmgr.create("bit.dat", 1, 0);
@@ -291,58 +258,44 @@ public class TestTransactionManager2 extends BaseTestCase {
     public void testBitMgrSingleThread() throws Exception {
 
         Properties properties = new Properties();
-        properties.setProperty(
-            "storage.basePath",
-            "testdata/TestTransactionManager2");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("storage.basePath",
+                "testdata/TestTransactionManager2");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
+                properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
-        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(
+                platform, properties);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory,
+                properties);
         final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            logmgr,
-            pageFactory,
-            3,
-            11);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, logmgr,
+                pageFactory, 3, 11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
-            objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+                platform, objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(
+                platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
-        	platform,
-            logmgr,
-            storageFactory,
-            storageManager,
-            bufmgr,
-            lockmgr,
-            loggableFactory,
-            latchFactory,
-            objectFactory,
-            moduleRegistry,
-            properties);
-        OneBitMgr bitmgr = new OneBitMgr(
-            storageFactory,
-            storageManager,
-            pageFactory,
-            bufmgr,
-            loggableFactory,
-            trxmgr,
-            objectFactory);
+                platform, logmgr, storageFactory, storageManager, bufmgr,
+                lockmgr, loggableFactory, latchFactory, objectFactory,
+                moduleRegistry, properties);
+        OneBitMgr bitmgr = new OneBitMgr(storageFactory, storageManager,
+                pageFactory, bufmgr, loggableFactory, trxmgr, objectFactory);
         moduleRegistry.registerModule(OneBitMgr.moduleId, bitmgr);
         StorageContainer sc = storageFactory.open("dual");
         storageManager.register(999, sc);
@@ -421,7 +374,7 @@ public class TestTransactionManager2 extends BaseTestCase {
                 bitmgr.changeBit(trx, 5, 36);
                 bitmgr.changeBit(trx, 6, 41);
                 System.out
-                    .println("After commit 0-2, rollback sp(3-4), change 5-6");
+                        .println("After commit 0-2, rollback sp(3-4), change 5-6");
                 printBits(trx, bitmgr, 0, 7, new int[] { 11, 16, 21, 90, 99,
                         36, 41 });
                 success = true;
@@ -441,58 +394,44 @@ public class TestTransactionManager2 extends BaseTestCase {
     public void testBitMgrSingleThreadRestart() throws Exception {
 
         Properties properties = new Properties();
-        properties.setProperty(
-            "storage.basePath",
-            "testdata/TestTransactionManager2");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("storage.basePath",
+                "testdata/TestTransactionManager2");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform, 
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
+                properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
-        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(
+                platform, properties);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory,
+                properties);
         final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            logmgr,
-            pageFactory,
-            3,
-            11);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, logmgr,
+                pageFactory, 3, 11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
-            objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+                platform, objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(
+                platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
-        	platform,
-            logmgr,
-            storageFactory,
-            storageManager,
-            bufmgr,
-            lockmgr,
-            loggableFactory,
-            latchFactory,
-            objectFactory,
-            moduleRegistry,
-            properties);
-        OneBitMgr bitmgr = new OneBitMgr(
-            storageFactory,
-            storageManager,
-            pageFactory,
-            bufmgr,
-            loggableFactory,
-            trxmgr,
-            objectFactory);
+                platform, logmgr, storageFactory, storageManager, bufmgr,
+                lockmgr, loggableFactory, latchFactory, objectFactory,
+                moduleRegistry, properties);
+        OneBitMgr bitmgr = new OneBitMgr(storageFactory, storageManager,
+                pageFactory, bufmgr, loggableFactory, trxmgr, objectFactory);
         moduleRegistry.registerModule(OneBitMgr.moduleId, bitmgr);
         StorageContainer sc = storageFactory.open("dual");
         storageManager.register(999, sc);
@@ -530,58 +469,44 @@ public class TestTransactionManager2 extends BaseTestCase {
     public void testTrxLocking() throws Exception {
 
         Properties properties = new Properties();
-        properties.setProperty(
-            "storage.basePath",
-            "testdata/TestTransactionManager2");
-        properties.setProperty("logging.properties.file", "classpath:simpledbm.logging.properties");
+        properties.setProperty("storage.basePath",
+                "testdata/TestTransactionManager2");
+        properties.setProperty("logging.properties.file",
+                "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         final Platform platform = new PlatformImpl(properties);
-        final LogFactoryImpl logFactory = new LogFactoryImpl(platform, properties);
-        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, properties);
-        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(platform, 
-            properties);
-        final StorageManager storageManager = new StorageManagerImpl(platform, properties);
-        final LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
-        final PageManager pageFactory = new PageManagerImpl(
-        	platform,
-            objectFactory,
-            storageManager,
-            latchFactory,
-            properties);
+        final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
+                properties);
+        final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
+                properties);
+        final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
+                platform, properties);
+        final StorageManager storageManager = new StorageManagerImpl(platform,
+                properties);
+        final LatchFactory latchFactory = new LatchFactoryImpl(platform,
+                properties);
+        final PageManager pageFactory = new PageManagerImpl(platform,
+                objectFactory, storageManager, latchFactory, properties);
         setupObjectFactory(objectFactory, pageFactory);
-        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(platform, properties);
-        final LockManager lockmgr = lockmgrFactory.create(latchFactory, properties);
+        final LockMgrFactory lockmgrFactory = new LockManagerFactoryImpl(
+                platform, properties);
+        final LockManager lockmgr = lockmgrFactory.create(latchFactory,
+                properties);
         final LogManager logmgr = logFactory.getLog(storageFactory, properties);
         logmgr.start();
-        final BufferManager bufmgr = new BufferManagerImpl(platform, 
-            logmgr,
-            pageFactory,
-            3,
-            11);
+        final BufferManager bufmgr = new BufferManagerImpl(platform, logmgr,
+                pageFactory, 3, 11);
         bufmgr.start();
-        final LoggableFactory loggableFactory = new LoggableFactoryImpl(platform,
-            objectFactory, properties);
-        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(platform, properties);
+        final LoggableFactory loggableFactory = new LoggableFactoryImpl(
+                platform, objectFactory, properties);
+        final TransactionalModuleRegistry moduleRegistry = new TransactionalModuleRegistryImpl(
+                platform, properties);
         final TransactionManagerImpl trxmgr = new TransactionManagerImpl(
-        	platform,
-            logmgr,
-            storageFactory,
-            storageManager,
-            bufmgr,
-            lockmgr,
-            loggableFactory,
-            latchFactory,
-            objectFactory,
-            moduleRegistry,
-            properties);
-        OneBitMgr bitmgr = new OneBitMgr(
-            storageFactory,
-            storageManager,
-            pageFactory,
-            bufmgr,
-            loggableFactory,
-            trxmgr,
-            objectFactory);
+                platform, logmgr, storageFactory, storageManager, bufmgr,
+                lockmgr, loggableFactory, latchFactory, objectFactory,
+                moduleRegistry, properties);
+        OneBitMgr bitmgr = new OneBitMgr(storageFactory, storageManager,
+                pageFactory, bufmgr, loggableFactory, trxmgr, objectFactory);
         moduleRegistry.registerModule(OneBitMgr.moduleId, bitmgr);
         StorageContainer sc = storageFactory.open("dual");
         storageManager.register(999, sc);
@@ -594,10 +519,8 @@ public class TestTransactionManager2 extends BaseTestCase {
                 Transaction trx = trxmgr.begin(IsolationMode.SERIALIZABLE);
                 try {
                     ObjectLock ol = new ObjectLock(1, 15);
-                    trx.acquireLock(
-                        ol,
-                        LockMode.SHARED,
-                        LockDuration.MANUAL_DURATION);
+                    trx.acquireLock(ol, LockMode.SHARED,
+                            LockDuration.MANUAL_DURATION);
                     System.err.println("T2: Acquired lock");
                     assertTrue(trx.hasLock(ol) == LockMode.SHARED);
                     assertTrue(trx.releaseLock(ol));
@@ -617,16 +540,12 @@ public class TestTransactionManager2 extends BaseTestCase {
             try {
                 testfailed = false;
                 ObjectLock ol = new ObjectLock(1, 15);
-                trx.acquireLock(
-                    ol,
-                    LockMode.SHARED,
-                    LockDuration.MANUAL_DURATION);
+                trx.acquireLock(ol, LockMode.SHARED,
+                        LockDuration.MANUAL_DURATION);
                 assertTrue(trx.hasLock(ol) == LockMode.SHARED);
                 System.err.println("T1: Upgrading lock");
-                trx.acquireLock(
-                    ol,
-                    LockMode.UPDATE,
-                    LockDuration.MANUAL_DURATION);
+                trx.acquireLock(ol, LockMode.UPDATE,
+                        LockDuration.MANUAL_DURATION);
                 assertTrue(trx.hasLock(ol) == LockMode.UPDATE);
                 t1.start();
                 Thread.sleep(1000);
@@ -647,21 +566,15 @@ public class TestTransactionManager2 extends BaseTestCase {
             ObjectLock lock1 = new ObjectLock(1, 15);
             ObjectLock lock2 = new ObjectLock(2, 16);
             try {
-                trx.acquireLock(
-                    lock1,
-                    LockMode.SHARED,
-                    LockDuration.COMMIT_DURATION);
+                trx.acquireLock(lock1, LockMode.SHARED,
+                        LockDuration.COMMIT_DURATION);
                 Savepoint savepoint = trx.createSavepoint(false);
-                trx.acquireLock(
-                    lock2,
-                    LockMode.EXCLUSIVE,
-                    LockDuration.COMMIT_DURATION);
+                trx.acquireLock(lock2, LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
                 assertEquals(trx.hasLock(lock1), LockMode.SHARED);
                 assertEquals(trx.hasLock(lock2), LockMode.EXCLUSIVE);
-                trx.acquireLock(
-                    lock1,
-                    LockMode.UPDATE,
-                    LockDuration.COMMIT_DURATION);
+                trx.acquireLock(lock1, LockMode.UPDATE,
+                        LockDuration.COMMIT_DURATION);
                 assertEquals(trx.hasLock(lock1), LockMode.UPDATE);
                 trx.rollback(savepoint);
                 // System.err.println("Rolled back to savepoint");
@@ -669,14 +582,10 @@ public class TestTransactionManager2 extends BaseTestCase {
                 assertEquals(LockMode.NONE, trx.hasLock(lock2));
 
                 savepoint = trx.createSavepoint(false);
-                trx.acquireLock(
-                    lock1,
-                    LockMode.EXCLUSIVE,
-                    LockDuration.COMMIT_DURATION);
-                trx.acquireLock(
-                    lock2,
-                    LockMode.EXCLUSIVE,
-                    LockDuration.COMMIT_DURATION);
+                trx.acquireLock(lock1, LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
+                trx.acquireLock(lock2, LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
                 assertEquals(trx.hasLock(lock1), LockMode.EXCLUSIVE);
                 assertEquals(trx.hasLock(lock2), LockMode.EXCLUSIVE);
                 trx.rollback(savepoint);
@@ -754,16 +663,16 @@ public class TestTransactionManager2 extends BaseTestCase {
         ByteString name;
 
         public BitMgrContainerOperation(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
+            super(moduleId, typeCode);
             containerId = -1;
             name = new ByteString("");
-		}
+        }
 
-		public BitMgrContainerOperation(ByteBuffer bb) {
-			super(bb);
+        public BitMgrContainerOperation(ByteBuffer bb) {
+            super(bb);
             containerId = bb.getInt();
             name = new ByteString(bb);
-		}
+        }
 
         public final int getContainerId() {
             return containerId;
@@ -798,73 +707,77 @@ public class TestTransactionManager2 extends BaseTestCase {
     public static class BitMgrLogCreateContainer extends
             BitMgrContainerOperation implements Redoable {
 
-		public BitMgrLogCreateContainer(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
-		}
+        public BitMgrLogCreateContainer(int moduleId, int typeCode) {
+            super(moduleId, typeCode);
+        }
 
-		public BitMgrLogCreateContainer(ByteBuffer bb) {
-			super(bb);
-		}
-		
-		static final class BitMgrLogCreateContainerFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return BitMgrLogCreateContainer.class;
-			}
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrLogCreateContainer(buf);
-			}
-			
-		}
-    	
+        public BitMgrLogCreateContainer(ByteBuffer bb) {
+            super(bb);
+        }
+
+        static final class BitMgrLogCreateContainerFactory implements
+                ObjectFactory {
+            public Class<?> getType() {
+                return BitMgrLogCreateContainer.class;
+            }
+
+            public Object newInstance(ByteBuffer buf) {
+                return new BitMgrLogCreateContainer(buf);
+            }
+
+        }
+
     }
 
     public static class BitMgrLogOpenContainer extends BitMgrContainerOperation
-			implements NonTransactionRelatedOperation {
+            implements NonTransactionRelatedOperation {
 
-		public BitMgrLogOpenContainer(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
-		}
+        public BitMgrLogOpenContainer(int moduleId, int typeCode) {
+            super(moduleId, typeCode);
+        }
 
-		public BitMgrLogOpenContainer(ByteBuffer bb) {
-			super(bb);
-		}
+        public BitMgrLogOpenContainer(ByteBuffer bb) {
+            super(bb);
+        }
 
-		static final class BitMgrLogOpenContainerFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return BitMgrLogOpenContainer.class;
-			}
+        static final class BitMgrLogOpenContainerFactory implements
+                ObjectFactory {
+            public Class<?> getType() {
+                return BitMgrLogOpenContainer.class;
+            }
 
-//			public Object newInstance() {
-//				return new BitMgrLogOpenContainer();
-//			}
+            //			public Object newInstance() {
+            //				return new BitMgrLogOpenContainer();
+            //			}
 
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrLogOpenContainer(buf);
-			}
-		}
-	}
+            public Object newInstance(ByteBuffer buf) {
+                return new BitMgrLogOpenContainer(buf);
+            }
+        }
+    }
 
     public static class BitMgrLogFormatPage extends BaseLoggable implements
             Redoable, PageFormatOperation {
 
-		public BitMgrLogFormatPage(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
-		}
+        public BitMgrLogFormatPage(int moduleId, int typeCode) {
+            super(moduleId, typeCode);
+        }
 
-		public BitMgrLogFormatPage(ByteBuffer bb) {
-			super(bb);
-		}
+        public BitMgrLogFormatPage(ByteBuffer bb) {
+            super(bb);
+        }
 
-		static final class BitMgrLogFormatPageFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return BitMgrLogFormatPage.class;
-			}
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrLogFormatPage(buf);
-			}
-			
-		}		
-		
+        static final class BitMgrLogFormatPageFactory implements ObjectFactory {
+            public Class<?> getType() {
+                return BitMgrLogFormatPage.class;
+            }
+
+            public Object newInstance(ByteBuffer buf) {
+                return new BitMgrLogFormatPage(buf);
+            }
+
+        }
+
     }
 
     public static class BitMgrLogRedoUndo extends BaseLoggable implements
@@ -878,19 +791,19 @@ public class TestTransactionManager2 extends BaseTestCase {
                 * 3;
 
         public BitMgrLogRedoUndo(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
-		}
+            super(moduleId, typeCode);
+        }
 
-		public BitMgrLogRedoUndo(ByteBuffer bb) {
-			super(bb);
+        public BitMgrLogRedoUndo(ByteBuffer bb) {
+            super(bb);
             index = bb.getInt();
             newValue = bb.getInt();
             oldValue = bb.getInt();
-		}
+        }
 
-//		@Override
-//        public void init() {
-//        }
+        //		@Override
+        //        public void init() {
+        //        }
 
         public final int getIndex() {
             return index;
@@ -930,14 +843,14 @@ public class TestTransactionManager2 extends BaseTestCase {
         }
 
         static final class BitMgrLogRedoUndoFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return BitMgrLogRedoUndo.class;
-			}
+            public Class<?> getType() {
+                return BitMgrLogRedoUndo.class;
+            }
 
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrLogRedoUndo(buf);
-			}
-		}		
+            public Object newInstance(ByteBuffer buf) {
+                return new BitMgrLogRedoUndo(buf);
+            }
+        }
     }
 
     public static class BitMgrLogCLR extends BaseLoggable implements
@@ -950,16 +863,16 @@ public class TestTransactionManager2 extends BaseTestCase {
                 * 2;
 
         public BitMgrLogCLR(int moduleId, int typeCode) {
-			super(moduleId, typeCode);
-		}
+            super(moduleId, typeCode);
+        }
 
-		public BitMgrLogCLR(ByteBuffer bb) {
-			super(bb);
+        public BitMgrLogCLR(ByteBuffer bb) {
+            super(bb);
             index = bb.getInt();
             newValue = bb.getInt();
-		}
+        }
 
-		public final int getIndex() {
+        public final int getIndex() {
             return index;
         }
 
@@ -986,42 +899,42 @@ public class TestTransactionManager2 extends BaseTestCase {
             bb.putInt(index);
             bb.putInt(newValue);
         }
+
         static final class BitMgrLogCLRFactory implements ObjectFactory {
-			public Class<?> getType() {
-				return BitMgrLogCLR.class;
-			}
+            public Class<?> getType() {
+                return BitMgrLogCLR.class;
+            }
 
-//			public Object newInstance() {
-//				return new BitMgrLogCLR();
-//			}
+            //			public Object newInstance() {
+            //				return new BitMgrLogCLR();
+            //			}
 
-			public Object newInstance(ByteBuffer buf) {
-				return new BitMgrLogCLR(buf);
-			}
-		}		
+            public Object newInstance(ByteBuffer buf) {
+                return new BitMgrLogCLR(buf);
+            }
+        }
     }
 
     public static class BitMgrPage extends Page {
 
         byte[] bits;
 
-        
         BitMgrPage(PageManager pageFactory, int type, PageId pageId) {
-			super(pageFactory, type, pageId);
-//            int n_bits = super.getStoredLength() - Page.SIZE;
+            super(pageFactory, type, pageId);
+            //            int n_bits = super.getStoredLength() - Page.SIZE;
             int n_bits = getAvailableLength();
             bits = new byte[n_bits];
-		}
+        }
 
-		BitMgrPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
-			super(pageFactory, pageId, bb);
-//            int n_bits = super.getStoredLength() - Page.SIZE;
+        BitMgrPage(PageManager pageFactory, PageId pageId, ByteBuffer bb) {
+            super(pageFactory, pageId, bb);
+            //            int n_bits = super.getStoredLength() - Page.SIZE;
             int n_bits = getAvailableLength();
             bits = new byte[n_bits];
             bb.get(bits);
-		}
+        }
 
-		@Override
+        @Override
         public void store(ByteBuffer bb) {
             super.store(bb);
             bb.put(bits);
@@ -1036,19 +949,23 @@ public class TestTransactionManager2 extends BaseTestCase {
         }
 
         static final class BitMgrPageFactory implements PageFactory {
-        	private final PageManager pageManager;
-        	BitMgrPageFactory(PageManager pageManager) {
-        		this.pageManager = pageManager;
-        	}
-			public Page getInstance(int type, PageId pageId) {
-				return new BitMgrPage(pageManager, type, pageId);
-			}
-			public Page getInstance(PageId pageId, ByteBuffer bb) {
-				return new BitMgrPage(pageManager, pageId, bb);
-			}
-			public int getPageType() {
-				return TYPE_BITMGRPAGE;
-			}
+            private final PageManager pageManager;
+
+            BitMgrPageFactory(PageManager pageManager) {
+                this.pageManager = pageManager;
+            }
+
+            public Page getInstance(int type, PageId pageId) {
+                return new BitMgrPage(pageManager, type, pageId);
+            }
+
+            public Page getInstance(PageId pageId, ByteBuffer bb) {
+                return new BitMgrPage(pageManager, pageId, bb);
+            }
+
+            public int getPageType() {
+                return TYPE_BITMGRPAGE;
+            }
         }
     }
 
@@ -1092,8 +1009,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             if (undoable instanceof BitMgrLogRedoUndo) {
                 BitMgrLogRedoUndo logrec = (BitMgrLogRedoUndo) undoable;
 
-                BitMgrLogCLR clr = new BitMgrLogCLR(
-                        OneBitMgr.moduleId,
+                BitMgrLogCLR clr = new BitMgrLogCLR(OneBitMgr.moduleId,
                         TestTransactionManager2.TYPE_BITMGRLOGCLR);
                 clr.index = logrec.index;
                 clr.newValue = logrec.oldValue;
@@ -1109,7 +1025,7 @@ public class TestTransactionManager2 extends BaseTestCase {
             if (loggable instanceof BitMgrLogOpenContainer) {
                 BitMgrLogOpenContainer logrec = (BitMgrLogOpenContainer) loggable;
                 StorageContainer sc = storageManager.getInstance(logrec
-                    .getContainerId());
+                        .getContainerId());
                 if (sc == null) {
                     sc = storageFactory.open(logrec.getName());
                     storageManager.register(logrec.getContainerId(), sc);
@@ -1144,22 +1060,16 @@ public class TestTransactionManager2 extends BaseTestCase {
 
         public void changeBit(Transaction trx, int index, int newValue)
                 throws BufferManagerException, TransactionException {
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.CONTAINER, pageId.getContainerId()),
-                LockMode.SHARED,
-                LockDuration.MANUAL_DURATION);
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.BIT, index),
-                LockMode.EXCLUSIVE,
-                LockDuration.COMMIT_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, pageId
+                    .getContainerId()), LockMode.SHARED,
+                    LockDuration.MANUAL_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.BIT, index),
+                    LockMode.EXCLUSIVE, LockDuration.COMMIT_DURATION);
             BitMgrLogRedoUndo logrec = new BitMgrLogRedoUndo(
-                OneBitMgr.moduleId,
-                TestTransactionManager2.TYPE_BITMGRLOGREDOUNDO);
-            BufferAccessBlock bab = bufmgr.fixExclusive(
-                pageId,
-                false,
-                TestTransactionManager2.TYPE_BITMGRPAGE,
-                0);
+                    OneBitMgr.moduleId,
+                    TestTransactionManager2.TYPE_BITMGRLOGREDOUNDO);
+            BufferAccessBlock bab = bufmgr.fixExclusive(pageId, false,
+                    TestTransactionManager2.TYPE_BITMGRPAGE, 0);
             try {
                 BitMgrPage page = (BitMgrPage) bab.getPage();
 
@@ -1180,14 +1090,11 @@ public class TestTransactionManager2 extends BaseTestCase {
 
         public int getBit(Transaction trx, int index)
                 throws BufferManagerException, TransactionException {
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.CONTAINER, pageId.getContainerId()),
-                LockMode.SHARED,
-                LockDuration.MANUAL_DURATION);
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.BIT, index),
-                LockMode.SHARED,
-                LockDuration.MANUAL_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, pageId
+                    .getContainerId()), LockMode.SHARED,
+                    LockDuration.MANUAL_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.BIT, index),
+                    LockMode.SHARED, LockDuration.MANUAL_DURATION);
             BufferAccessBlock bab = bufmgr.fixShared(pageId, 0);
             int value = -1;
             try {
@@ -1201,14 +1108,11 @@ public class TestTransactionManager2 extends BaseTestCase {
 
         public int getBitForUpdate(Transaction trx, int index)
                 throws BufferManagerException, TransactionException {
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.CONTAINER, pageId.getContainerId()),
-                LockMode.SHARED,
-                LockDuration.MANUAL_DURATION);
-            trx.acquireLock(
-                new ObjectLock(ObjectLock.BIT, index),
-                LockMode.UPDATE,
-                LockDuration.MANUAL_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER, pageId
+                    .getContainerId()), LockMode.SHARED,
+                    LockDuration.MANUAL_DURATION);
+            trx.acquireLock(new ObjectLock(ObjectLock.BIT, index),
+                    LockMode.UPDATE, LockDuration.MANUAL_DURATION);
             BufferAccessBlock bab = bufmgr.fixShared(pageId, 0);
             int value = -1;
             try {
@@ -1228,19 +1132,18 @@ public class TestTransactionManager2 extends BaseTestCase {
             boolean success = false;
             try {
                 BitMgrLogCreateContainer logcreate = new BitMgrLogCreateContainer(
-                    OneBitMgr.moduleId,
-                    TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
+                        OneBitMgr.moduleId,
+                        TestTransactionManager2.TYPE_BITMGRLOGCREATECONTAINER);
                 BitMgrLogOpenContainer logopen = new BitMgrLogOpenContainer(
-                    OneBitMgr.moduleId,
-                    TestTransactionManager2.TYPE_BITMGRLOGOPENCONTAINER);
+                        OneBitMgr.moduleId,
+                        TestTransactionManager2.TYPE_BITMGRLOGOPENCONTAINER);
                 BitMgrLogFormatPage formatpage = new BitMgrLogFormatPage(
-                    OneBitMgr.moduleId,
-                    TestTransactionManager2.TYPE_BITMGRLOGFORMATPAGE);            	
-            	
-                trx.acquireLock(
-                    new ObjectLock(ObjectLock.CONTAINER, containerId),
-                    LockMode.EXCLUSIVE,
-                    LockDuration.COMMIT_DURATION);
+                        OneBitMgr.moduleId,
+                        TestTransactionManager2.TYPE_BITMGRLOGFORMATPAGE);
+
+                trx.acquireLock(new ObjectLock(ObjectLock.CONTAINER,
+                        containerId), LockMode.EXCLUSIVE,
+                        LockDuration.COMMIT_DURATION);
                 /* check if the container already exists */
                 StorageContainer sc = storageManager.getInstance(containerId);
                 if (sc != null) {
@@ -1248,10 +1151,8 @@ public class TestTransactionManager2 extends BaseTestCase {
                 }
 
                 BufferAccessBlock bab1 = bufmgr.fixExclusive(
-                    new PageId(999, 0),
-                    true,
-                    pageFactory.getRawPageType(),
-                    0);
+                        new PageId(999, 0), true, pageFactory.getRawPageType(),
+                        0);
                 try {
                     Page page1 = bab1.getPage();
                     logcreate.setContainerId(containerId);
@@ -1266,11 +1167,8 @@ public class TestTransactionManager2 extends BaseTestCase {
 
                     PageId pageId = new PageId(containerId, pageNumber);
                     formatpage.setPageId(TYPE_BITMGRPAGE, pageId);
-                    BufferAccessBlock bab = bufmgr.fixExclusive(
-                        pageId,
-                        true,
-                        TestTransactionManager2.TYPE_BITMGRPAGE,
-                        0);
+                    BufferAccessBlock bab = bufmgr.fixExclusive(pageId, true,
+                            TestTransactionManager2.TYPE_BITMGRPAGE, 0);
                     try {
                         Page page = bab.getPage();
                         mylsn = trx.logInsert(page, formatpage);

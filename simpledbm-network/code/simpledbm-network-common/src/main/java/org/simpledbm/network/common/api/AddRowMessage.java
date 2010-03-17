@@ -45,43 +45,42 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class AddRowMessage implements Storable {
 
-	int containerId;
-	Row row;
+    int containerId;
+    Row row;
 
-	public AddRowMessage(int containerId, Row row) {
-		this.containerId = containerId;
-		this.row = row;
-	}
+    public AddRowMessage(int containerId, Row row) {
+        this.containerId = containerId;
+        this.row = row;
+    }
 
-	public AddRowMessage(RowFactory rowFactory, ByteBuffer bb) {
-		containerId = bb.getInt();
-		row = rowFactory.newRow(containerId, bb);
-	}
+    public AddRowMessage(RowFactory rowFactory, ByteBuffer bb) {
+        containerId = bb.getInt();
+        row = rowFactory.newRow(containerId, bb);
+    }
 
-	public int getStoredLength() {
-		return TypeSize.INTEGER 
-				+ row.getStoredLength();
-	}
+    public int getStoredLength() {
+        return TypeSize.INTEGER + row.getStoredLength();
+    }
 
-	public void store(ByteBuffer bb) {
-		bb.putInt(containerId);
-		row.store(bb);
-	}
+    public void store(ByteBuffer bb) {
+        bb.putInt(containerId);
+        row.store(bb);
+    }
 
-	public int getContainerId() {
-		return containerId;
-	}
+    public int getContainerId() {
+        return containerId;
+    }
 
-	public void setContainerId(int containerId) {
-		this.containerId = containerId;
-	}
+    public void setContainerId(int containerId) {
+        this.containerId = containerId;
+    }
 
-	public Row getRow() {
-		return row;
-	}
+    public Row getRow() {
+        return row;
+    }
 
-	public void setRow(Row row) {
-		this.row = row;
-	}
+    public void setRow(Row row) {
+        this.row = row;
+    }
 
 }

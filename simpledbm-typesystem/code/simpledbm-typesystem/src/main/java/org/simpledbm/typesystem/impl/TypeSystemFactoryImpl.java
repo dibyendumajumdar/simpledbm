@@ -50,40 +50,43 @@ import org.simpledbm.typesystem.api.TypeFactory;
 import org.simpledbm.typesystem.api.TypeSystemFactory;
 
 /**
- * TypeSystemFactory is the entry point for external clients to obtain access
- * to the type system interfaces.
+ * TypeSystemFactory is the entry point for external clients to obtain access to
+ * the type system interfaces.
  * 
  * @author dibyendumajumdar
  */
 public class TypeSystemFactoryImpl implements TypeSystemFactory {
-	
-	PlatformObjects po;
-	static final Message outOfRange = new Message('T', 'Y', MessageType.ERROR, 13,
-			"Value {0} is outside the range ({1}, {2})");
-	
-	public TypeSystemFactoryImpl(Properties properties, PlatformObjects po) {
-		this.po = po;
-	}
 
-	public TypeFactory getDefaultTypeFactory() {
-		return new DefaultTypeFactory();
-	}
-	
-	public RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
-		return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
-	}
-	
-	public RowFactory getDefaultRowFactory(TypeFactory typeFactory, DictionaryCache dictionaryCache) {
-		return new GenericRowFactory(typeFactory, dictionaryCache);
-	}
-	
-	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, bb);
-	}
-	
-	public TableDefinition getTableDefinition(PlatformObjects po, TypeFactory typeFactory, RowFactory rowFactory, int containerId, String name,
-            TypeDescriptor[] rowType) {
-		return new TableDefinitionImpl(po, typeFactory, rowFactory, containerId, name,
-            rowType);
-	}	
+    PlatformObjects po;
+    static final Message outOfRange = new Message('T', 'Y', MessageType.ERROR,
+            13, "Value {0} is outside the range ({1}, {2})");
+
+    public TypeSystemFactoryImpl(Properties properties, PlatformObjects po) {
+        this.po = po;
+    }
+
+    public TypeFactory getDefaultTypeFactory() {
+        return new DefaultTypeFactory();
+    }
+
+    public RowFactory getDefaultRowFactory(TypeFactory typeFactory) {
+        return new GenericRowFactory(typeFactory, new SimpleDictionaryCache());
+    }
+
+    public RowFactory getDefaultRowFactory(TypeFactory typeFactory,
+            DictionaryCache dictionaryCache) {
+        return new GenericRowFactory(typeFactory, dictionaryCache);
+    }
+
+    public TableDefinition getTableDefinition(PlatformObjects po,
+            TypeFactory typeFactory, RowFactory rowFactory, ByteBuffer bb) {
+        return new TableDefinitionImpl(po, typeFactory, rowFactory, bb);
+    }
+
+    public TableDefinition getTableDefinition(PlatformObjects po,
+            TypeFactory typeFactory, RowFactory rowFactory, int containerId,
+            String name, TypeDescriptor[] rowType) {
+        return new TableDefinitionImpl(po, typeFactory, rowFactory,
+                containerId, name, rowType);
+    }
 }
