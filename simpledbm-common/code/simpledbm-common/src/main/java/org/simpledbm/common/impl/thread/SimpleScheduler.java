@@ -40,13 +40,13 @@ public class SimpleScheduler implements Scheduler {
 
     public SimpleScheduler(Properties properties) {
         int priorityThreadPoolSize = Integer.valueOf(properties.getProperty(
-                "scheduler.priorityThreadPoolSize", "10"));
+                "scheduler.priorityThreadPoolSize", "2"));
         int priorityCoreThreads = Integer.valueOf(properties.getProperty(
                 "scheduler.priorityCoreThreads", "1"));
         int priorityKeepAlive = Integer.valueOf(properties.getProperty(
-                "scheduler.priorityKeepAliveTime", "180"));
+                "scheduler.priorityKeepAliveTime", "60"));
         int normalThreadPoolSize = Integer.valueOf(properties.getProperty(
-                "scheduler.normalThreadPoolSize", "25"));
+                "scheduler.normalThreadPoolSize", "1"));
         int normalCoreThreads = Integer.valueOf(properties.getProperty(
                 "scheduler.normalCoreThreads", "1"));
         int normalKeepAlive = Integer.valueOf(properties.getProperty(
@@ -84,17 +84,17 @@ public class SimpleScheduler implements Scheduler {
     }
 
     public void shutdown() {
-        scheduledThreadPoolExecutor.shutdown();
+        scheduledThreadPoolExecutor.shutdownNow();
         try {
             scheduledThreadPoolExecutor.awaitTermination(60L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
-        normalThreadPool.shutdown();
+        normalThreadPool.shutdownNow();
         try {
             normalThreadPool.awaitTermination(60L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
-        priorityThreadPool.shutdown();
+        priorityThreadPool.shutdownNow();
         try {
             priorityThreadPool.awaitTermination(60L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
