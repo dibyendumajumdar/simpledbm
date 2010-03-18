@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
@@ -198,8 +199,8 @@ public final class LogManagerImpl implements LogManager {
     static final int LOG_GROUP_INVALID = 2;
 
     /**
-     * Initially a Log File is marked as unused, and its status is set to *
-     * {@value} . A Log File also goes into this status once it has been
+     * Initially a Log File is marked as unused, and its status is set to * * *
+     * * {@value} . A Log File also goes into this status once it has been
      * archived.
      */
     private static final int LOG_FILE_UNUSED = 0;
@@ -505,6 +506,12 @@ public final class LogManagerImpl implements LogManager {
      */
     private final int logFlushInterval;
 
+    /**
+     * As the ArchiverRequestHandler executes in a thread pool, we need a way of
+     * telling it to stop.
+     */
+    volatile boolean stopArchiver = false;
+
     // Write Ahead Log Manager messages
     static Message m_EW0001 = new Message('R', 'W', MessageType.ERROR, 1,
             "Log record is {0} bytes whereas maximum allowed log record size is {0}");
@@ -712,12 +719,6 @@ public final class LogManagerImpl implements LogManager {
              * to avoid unnecessary conflicts.
              */
             flushService.cancel(false);
-            //            flushService.shutdown();
-            //            try {
-            //                flushService.awaitTermination(60, TimeUnit.SECONDS);
-            //            } catch (InterruptedException e1) {
-            //                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-            //            }
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0030).toString());
             if (!errored) {
@@ -729,14 +730,9 @@ public final class LogManagerImpl implements LogManager {
                 }
             }
             archiveCleaner.cancel(false);
-            //            archiveService.shutdown();
-            //            try {
-            //                archiveService.awaitTermination(60, TimeUnit.SECONDS);
-            //            } catch (InterruptedException e1) {
-            //                logger.error(getClass().getName(), "shutdown", new MessageInstance(m_EW0004).toString(), e1);
-            //            }
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0031).toString());
+            stopArchiver = true;
             closeLogFiles();
             closeCtlFiles();
             logger.info(this.getClass().getName(), "shutdown",
@@ -833,24 +829,13 @@ public final class LogManagerImpl implements LogManager {
                 }
             }
         }
-        //        flushService = Executors.newSingleThreadScheduledExecutor();
-        //        archiveService = Executors.newSingleThreadExecutor();
 
-        //        flushService.scheduleWithFixedDelay(
-        //            new LogWriter(this),
-        //            logFlushInterval,
-        //            logFlushInterval,
-        //            TimeUnit.SECONDS);
         flushService = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.SERVER_TASK, new LogWriter(this), logFlushInterval,
                 logFlushInterval, TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0028).toString());
-        //      flushService.scheduleWithFixedDelay(
-        //      new ArchiveCleaner(this),
-        //      logFlushInterval,
-        //      logFlushInterval,
-        //      TimeUnit.SECONDS);		
+
         archiveCleaner = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.SERVER_TASK, new ArchiveCleaner(this),
                 logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
@@ -1170,7 +1155,6 @@ public final class LogManagerImpl implements LogManager {
         for (i = 0; i < anchor.n_CtlFiles; i++) {
             updateLogAnchor(ctlFiles[i], bb);
         }
-        //System.err.println("UPDATED LOG ANCHOR");
         anchorDirty = false;
     }
 
@@ -3089,7 +3073,6 @@ public final class LogManagerImpl implements LogManager {
      * @author Dibyendu Majumdar
      * @since Jul 5, 2005
      */
-    //    static final class ArchiveRequestHandler implements Callable<Boolean> {
     static final class ArchiveRequestHandler implements Runnable {
 
         final private LogManagerImpl logManager;
@@ -3107,24 +3090,29 @@ public final class LogManagerImpl implements LogManager {
          * @see java.util.concurrent.Callable#call()
          */
         public void run() {
-            //          public Boolean call() {
-
             /*
              * We do not perform a check on error/stopped state
              * because the request to archive may have come during shutdown
              * sequence.
              * TODO Need to validate that this is the right thing to do.
              */
-            //        	if (logManager.isErrored() || logManager.isStopped()) {
-            //        		return;
-            //        	}
+            if (logManager.isErrored() || logManager.stopArchiver) {
+                return;
+            }
             try {
                 logManager.handleNextArchiveRequest(request);
             } catch (Exception e) {
+                Map<Thread, StackTraceElement[]> m = Thread.getAllStackTraces();
+                for (Thread t: m.keySet()) {
+                    StackTraceElement[] se = m.get(t);
+                    System.err.println(t);
+                    for (StackTraceElement el: se) {
+                        System.err.println(el);
+                    }
+                }
                 logManager.logException(ArchiveRequestHandler.class.getName(),
                         "call", m_EW0027, e);
             }
-            //            return Boolean.TRUE;
         }
     }
 

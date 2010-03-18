@@ -70,8 +70,11 @@ public class InformationManagerImpl implements InformationManager {
         synchronized (map) {
             Statistic s = map.get(name);
             if (s != null) {
-                throw new SimpleDBMException(new MessageInstance(alreadyExists,
-                        name, s.getClass().getName()));
+                if (s.getClass() != statistic.getClass()) {
+                    throw new SimpleDBMException(new MessageInstance(alreadyExists,
+                            name, s.getClass().getName()));
+                }
+                return (T) s;
             }
             map.put(name, statistic);
             return statistic;

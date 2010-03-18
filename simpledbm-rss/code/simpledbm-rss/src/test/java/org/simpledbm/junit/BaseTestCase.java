@@ -36,6 +36,7 @@
  */
 package org.simpledbm.junit;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -77,6 +78,14 @@ public abstract class BaseTestCase extends TestCase {
     protected void tearDown() throws Exception {
         threadFailureExceptions = null;
         platform.shutdown();
+        Map<Thread, StackTraceElement[]> m = Thread.getAllStackTraces();
+        for (Thread t: m.keySet()) {
+            StackTraceElement[] se = m.get(t);
+            System.err.println(t);
+            for (StackTraceElement el: se) {
+                System.err.println(el);
+            }
+        }
         super.tearDown();
     }
 
