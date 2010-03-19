@@ -151,6 +151,7 @@ class TupleDemoDb {
             serverStarted = false;
             server = null;
         }
+        platform.shutdown();
     }
 
     /**

@@ -36,7 +36,6 @@
  */
 package org.simpledbm.junit;
 
-import java.util.Map;
 import java.util.Properties;
 import java.util.Vector;
 
@@ -71,7 +70,6 @@ public abstract class BaseTestCase extends TestCase {
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
         platform = new PlatformImpl(properties);
-        //        Logger.configure(properties);
     }
 
     @Override

@@ -128,6 +128,7 @@ public class Server {
     final private FreeSpaceManager spaceManager;
     final private IndexManager indexManager;
     final private TupleManager tupleManager;
+    final private boolean platformAllocated;
 
     private StorageContainer lock;
 
@@ -258,6 +259,13 @@ public class Server {
 
     public Server(Platform platform, Properties props) {
 
+        if (platform == null) {
+            platform = new PlatformImpl(props);
+            platformAllocated = true;
+        }
+        else {
+            platformAllocated = false;
+        }
         this.platform = platform;
         PlatformObjects po = platform.getPlatformObjects(Server.LOGGER_NAME);
         log = po.getLogger();
@@ -308,7 +316,7 @@ public class Server {
      * @param props Properties that define various parameters for the system
      */
     public Server(Properties props) {
-        this(new PlatformImpl(props), props);
+        this(null, props);
     }
 
     /**
@@ -370,87 +378,71 @@ public class Server {
         logManager.shutdown();
         storageManager.shutdown();
         lockManager.shutdown();
+        if (platformAllocated) {
+            platform.shutdown();
+        }
         unlockServerInstance();
         log.info(getClass().getName(), "shutdown",
                 new MessageInstance(m_IV0002).toString());
     }
 
     public synchronized final IndexManager getIndexManager() {
-        //assertStarted();
         return indexManager;
     }
 
     public synchronized final BufferManager getBufferManager() {
-        //assertStarted();
         return bufferManager;
     }
 
     public synchronized final LatchFactory getLatchFactory() {
-        //assertStarted();
         return latchFactory;
     }
 
     public synchronized final LockManager getLockManager() {
-        //assertStarted();
         return lockManager;
     }
 
     public synchronized final LoggableFactory getLoggableFactory() {
-        //assertStarted();
         return loggableFactory;
     }
 
     public synchronized final LogManager getLogManager() {
-        //assertStarted();
         return logManager;
     }
 
     public synchronized final TransactionalModuleRegistry getModuleRegistry() {
-        // assertStarted();
-        // Because there are valid reasons for accessing the registry prior
-        // starting the server
         return moduleRegistry;
     }
 
     public synchronized final ObjectRegistry getObjectRegistry() {
-        // assertStarted();
-        // Because there are valid reasons for accessing the registry prior
-        // starting the server
         return objectRegistry;
     }
 
     public synchronized final PageManager getPageFactory() {
-        //assertStarted();
         return pageFactory;
     }
 
     public synchronized final FreeSpaceManager getSpaceManager() {
-        //assertStarted();
         return spaceManager;
     }
 
     public synchronized final SlottedPageManager getSlottedPageManager() {
-        //assertStarted();
         return slottedPageManager;
     }
 
     public synchronized final StorageContainerFactory getStorageFactory() {
-        //assertStarted();
         return storageFactory;
     }
 
     public synchronized final StorageManager getStorageManager() {
-        //assertStarted();
         return storageManager;
     }
 
     public synchronized final TransactionManager getTransactionManager() {
-        //assertStarted();
         return transactionManager;
     }
 
     public synchronized final TupleManager getTupleManager() {
-        //assertStarted();
         return tupleManager;
     }
 

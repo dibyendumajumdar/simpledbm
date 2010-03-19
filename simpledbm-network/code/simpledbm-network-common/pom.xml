@@ -1,10 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simpledbm.network</groupId>
 	<artifactId>simpledbm-network-common</artifactId>
 	<packaging>jar</packaging>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>SimpleDBM Network Client</name>
+	<name>SimpleDBM Network Common</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
 		<connection>
@@ -34,17 +35,22 @@
 			<url>http://www.gnu.org/licenses/gpl.txt</url>
 		</license>
 	</licenses>
+	<parent>
+		<groupId>org.simpledbm.multi</groupId>
+		<artifactId>simpledbm-parent</artifactId>
+		<version>1.0.0</version>
+	</parent>
 	<dependencies>
-        <dependency>
-            <groupId>org.simpledbm.network</groupId>
-            <artifactId>simpledbm-network-framework</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>org.simpledbm.typesystem</groupId>
-            <artifactId>simpledbm-typesystem</artifactId>
-            <version>1.0.14-SNAPSHOT</version>
-        </dependency>
+		<dependency>
+			<groupId>org.simpledbm.network</groupId>
+			<artifactId>simpledbm-network-framework</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
+		<dependency>
+			<groupId>org.simpledbm.typesystem</groupId>
+			<artifactId>simpledbm-typesystem</artifactId>
+			<version>1.0.14-SNAPSHOT</version>
+		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>

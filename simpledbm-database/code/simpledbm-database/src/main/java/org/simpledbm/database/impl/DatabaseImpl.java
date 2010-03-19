@@ -132,6 +132,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     final PlatformObjects po;
     final Logger log;
     final ExceptionHandler exceptionHandler;
+    
+    final boolean platformAllocated;
 
     /**
      * The table cache holds definitions of all tables and associated indexes.
@@ -312,6 +314,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
         fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory,
                 dictionaryCache);
+        platformAllocated = true;
     }
 
     /**
@@ -332,6 +335,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
         fieldFactory = typeSystemFactory.getDefaultTypeFactory();
         rowFactory = typeSystemFactory.getDefaultRowFactory(fieldFactory,
                 dictionaryCache);
+        platformAllocated = false;
     }
 
     private void validateProperties(Properties properties2) {
@@ -414,6 +418,9 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             server.shutdown();
             serverStarted = false;
             server = null;
+        }
+        if (platformAllocated) {
+            platform.shutdown();
         }
     }
 
