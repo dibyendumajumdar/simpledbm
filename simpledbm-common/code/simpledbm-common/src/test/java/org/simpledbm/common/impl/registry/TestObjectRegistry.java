@@ -39,13 +39,10 @@ package org.simpledbm.common.impl.registry;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectCreationException;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.registry.Storable;
-import org.simpledbm.common.impl.platform.PlatformImpl;
-import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
 
 /**
@@ -136,7 +133,7 @@ public class TestObjectRegistry extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         ObjectRegistry factory = new ObjectRegistryImpl(platform, properties);
         Integer i = new Integer(55);
         factory.registerObjectFactory(1, new StringFactory());

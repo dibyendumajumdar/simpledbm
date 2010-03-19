@@ -36,6 +36,7 @@
  */
 package org.simpledbm.common.impl.platform;
 
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -80,20 +81,31 @@ public class TestPlatform extends BaseTestCase {
 
     public void testScheduler() throws InterruptedException {
         Scheduler scheduler = platform.getScheduler();
-        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(5), 5, 5,
+        ScheduledFuture<?> t1 = scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(5), 5, 5,
                 TimeUnit.SECONDS);
-        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(3), 3, 3,
+        ScheduledFuture<?> t2 = scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(3), 3, 3,
                 TimeUnit.SECONDS);
-        scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(10), 10,
+        ScheduledFuture<?> t3 = scheduler.scheduleWithFixedDelay(Priority.NORMAL, new MyTask(10), 10,
                 10, TimeUnit.SECONDS);
-        scheduler.scheduleWithFixedDelay(Priority.SERVER_TASK, new MyTask(1),
+        ScheduledFuture<?> t4 = scheduler.scheduleWithFixedDelay(Priority.SERVER_TASK, new MyTask(1),
                 1, 1, TimeUnit.SECONDS);
 
         try {
             Thread.sleep(30 * 1000);
         } catch (InterruptedException e) {
         }
-
+//        Map<Thread, StackTraceElement[]> m = Thread.getAllStackTraces();
+//        for (Thread t: m.keySet()) {
+//            StackTraceElement[] se = m.get(t);
+//            System.err.println(t);
+//            for (StackTraceElement el: se) {
+//                System.err.println(el);
+//            }
+//        }       
+        t1.cancel(false);
+        t2.cancel(false);
+        t3.cancel(false);
+        t4.cancel(false);
         scheduler.shutdown();
     }
 

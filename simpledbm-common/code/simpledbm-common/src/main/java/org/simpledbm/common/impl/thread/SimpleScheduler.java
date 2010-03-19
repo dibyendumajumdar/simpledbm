@@ -40,13 +40,13 @@ public class SimpleScheduler implements Scheduler {
 
     public SimpleScheduler(Properties properties) {
         int priorityThreadPoolSize = Integer.valueOf(properties.getProperty(
-                "scheduler.priorityThreadPoolSize", "2"));
+                "scheduler.priorityThreadPoolSize", "5"));
         int priorityCoreThreads = Integer.valueOf(properties.getProperty(
-                "scheduler.priorityCoreThreads", "1"));
+                "scheduler.priorityCoreThreads", "2"));
         int priorityKeepAlive = Integer.valueOf(properties.getProperty(
                 "scheduler.priorityKeepAliveTime", "60"));
         int normalThreadPoolSize = Integer.valueOf(properties.getProperty(
-                "scheduler.normalThreadPoolSize", "1"));
+                "scheduler.normalThreadPoolSize", "5"));
         int normalCoreThreads = Integer.valueOf(properties.getProperty(
                 "scheduler.normalCoreThreads", "1"));
         int normalKeepAlive = Integer.valueOf(properties.getProperty(
@@ -99,6 +99,14 @@ public class SimpleScheduler implements Scheduler {
             priorityThreadPool.awaitTermination(60L, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
         }
+//        Map<Thread, StackTraceElement[]> m = Thread.getAllStackTraces();
+//        for (Thread t: m.keySet()) {
+//            StackTraceElement[] se = m.get(t);
+//            System.err.println(t);
+//            for (StackTraceElement el: se) {
+//                System.err.println(el);
+//            }
+//        }
     }
 
     static final class ScheduleRunnable implements Runnable {

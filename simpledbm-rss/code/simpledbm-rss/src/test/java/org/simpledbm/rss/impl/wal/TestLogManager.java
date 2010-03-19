@@ -42,9 +42,7 @@ import java.util.Properties;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.Storable;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
 import org.simpledbm.rss.api.wal.LogFactory;
@@ -72,7 +70,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -94,7 +92,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -107,7 +105,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -122,7 +120,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -145,7 +143,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -171,7 +169,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -200,7 +198,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
@@ -312,7 +310,7 @@ public class TestLogManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LogFactory factory = new LogFactoryImpl(platform, properties);
         StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);

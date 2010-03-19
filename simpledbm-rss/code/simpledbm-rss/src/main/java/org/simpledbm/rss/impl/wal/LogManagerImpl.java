@@ -732,7 +732,9 @@ public final class LogManagerImpl implements LogManager {
             archiveCleaner.cancel(false);
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0031).toString());
+            archiveLock.lock();
             stopArchiver = true;
+            archiveLock.unlock();
             closeLogFiles();
             closeCtlFiles();
             logger.info(this.getClass().getName(), "shutdown",
@@ -1410,6 +1412,7 @@ public final class LogManagerImpl implements LogManager {
      */
     private void submitArchiveRequest(ArchiveRequest req) {
         //        archiveService.submit(new ArchiveRequestHandler(this, req));
+    	logger.info(getClass().getName(), "submitArchiveRequest", "arch request = " + req.logIndex);
         platform.getScheduler().execute(Priority.SERVER_TASK,
                 new ArchiveRequestHandler(this, req));
     }

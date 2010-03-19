@@ -38,8 +38,6 @@ package org.simpledbm.rss.impl.latch;
 
 import java.util.Properties;
 
-import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.Latch;
 
@@ -50,21 +48,21 @@ import org.simpledbm.rss.api.latch.Latch;
  */
 public class TestLatch extends BaseTestCase {
 
-    static Properties properties;
-    static Platform platform;
-    static LatchFactoryImpl latchFactory;
+//    static Properties properties;
+//    static Platform platform;
+    LatchFactoryImpl latchFactory;
 
-    static {
-        properties = new Properties();
-        properties.setProperty("logging.properties.file",
-                "classpath:simpledbm.logging.properties");
-        properties.setProperty("logging.properties.type", "log4j");
-        platform = new PlatformImpl(properties);
-        latchFactory = new LatchFactoryImpl(platform, properties);
-    }
+//    static {
+//        properties = new Properties();
+//        properties.setProperty("logging.properties.file",
+//                "classpath:simpledbm.logging.properties");
+//        properties.setProperty("logging.properties.type", "log4j");
+//        platform = new PlatformImpl(properties);
+//    }
 
     public TestLatch(String arg0) {
         super(arg0);
+        latchFactory = new LatchFactoryImpl(platform, new Properties());
     }
 
     public void testCase1() throws Exception {

@@ -50,7 +50,6 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.tx.IsolationMode;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
@@ -127,7 +126,7 @@ public class TestTupleManager extends BaseTestCase {
      */
     public void testCase1() throws Exception {
 
-        final TupleDB db = new TupleDB(getLogProperties(), true);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), true);
 
         try {
             StorageContainer sc = db.storageFactory.create("dual");
@@ -156,7 +155,7 @@ public class TestTupleManager extends BaseTestCase {
 
     public void testCase2() throws Exception {
 
-        final TupleDB db = new TupleDB(getLogProperties(), false);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), false);
 
         try {
             db.trxmgr.start();
@@ -198,7 +197,7 @@ public class TestTupleManager extends BaseTestCase {
 
     public void testCase3() throws Exception {
 
-        final TupleDB db = new TupleDB(getLogProperties(), false);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), false);
 
         try {
             db.trxmgr.start();
@@ -252,7 +251,7 @@ public class TestTupleManager extends BaseTestCase {
      */
     void doTestCase4(final boolean commit) throws Exception {
 
-        final TupleDB db = new TupleDB(getLogProperties(), false);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), false);
 
         try {
             db.trxmgr.start();
@@ -346,7 +345,7 @@ public class TestTupleManager extends BaseTestCase {
     }
 
     public void doTestUndoUpdate() throws Exception {
-        final TupleDB db = new TupleDB(getLogProperties(), false);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), false);
 
         try {
             db.trxmgr.start();
@@ -415,7 +414,7 @@ public class TestTupleManager extends BaseTestCase {
      * verify the data.
      */
     public void doTestDeleteInsertScan() throws Exception {
-        final TupleDB db = new TupleDB(getLogProperties(), false);
+        final TupleDB db = new TupleDB(platform, getLogProperties(), false);
 
         try {
             db.trxmgr.start();
@@ -605,9 +604,10 @@ public class TestTupleManager extends BaseTestCase {
         final BTreeIndexManagerImpl btreeMgr;
         final TupleManager tuplemgr;
 
-        public TupleDB(Properties props, boolean create) throws Exception {
+        public TupleDB(Platform platform, Properties props, boolean create) throws Exception {
 
-            platform = new PlatformImpl(props);
+//            platform = new PlatformImpl(props);
+        	this.platform = platform;
             storageFactory = new FileStorageContainerFactory(platform, props);
             logFactory = new LogFactoryImpl(platform, props);
             if (create) {

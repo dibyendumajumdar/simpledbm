@@ -39,9 +39,7 @@ package org.simpledbm.rss.impl.pm;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
@@ -67,7 +65,7 @@ public class TestPage extends BaseTestCase {
 
     static final short TYPE_MYPAGE = 25000;
 
-    Platform platform;
+//    Platform platform;
     StorageContainerFactory storageFactory;
     ObjectRegistry objectRegistry;
     StorageManager storageManager;
@@ -86,7 +84,7 @@ public class TestPage extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        platform = new PlatformImpl(properties);
+//        platform = new PlatformImpl(properties);
         storageFactory = new FileStorageContainerFactory(platform, properties);
         objectRegistry = new ObjectRegistryImpl(platform, properties);
         storageManager = new StorageManagerImpl(platform, properties);

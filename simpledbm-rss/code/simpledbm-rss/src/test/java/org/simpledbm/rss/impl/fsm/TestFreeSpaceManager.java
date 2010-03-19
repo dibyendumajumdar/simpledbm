@@ -41,7 +41,6 @@ import java.util.Properties;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.tx.IsolationMode;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.fsm.FreeSpaceChecker;
@@ -82,7 +81,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
     public void testOneBitSpaceMapPage() throws Exception {
 
-        MyDB db = new MyDB(true);
+        MyDB db = new MyDB(platform, true);
 
         try {
             FreeSpaceManagerImpl.OneBitSpaceMapPage onebitsmp = (FreeSpaceManagerImpl.OneBitSpaceMapPage) db.pageFactory
@@ -136,7 +135,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         if (!commit) {
             db.spacemgr.setTesting(1);
@@ -178,7 +177,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         try {
             assertTrue(db.storageManager.getInstance(0) != null);
@@ -202,7 +201,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         try {
             assertTrue(db.storageManager.getInstance(0) != null);
@@ -239,7 +238,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         try {
             assertTrue(db.storageManager.getInstance(0) != null);
@@ -257,7 +256,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         try {
             assertTrue(db.storageManager.getInstance(0) != null);
@@ -315,7 +314,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
 
         FreeSpaceManagerImpl.SpaceMapPageImpl.TESTING = true;
 
-        MyDB db = new MyDB(false);
+        MyDB db = new MyDB(platform, false);
 
         try {
             assertTrue(db.storageManager.getInstance(0) != null);
@@ -343,7 +342,7 @@ public class TestFreeSpaceManager extends BaseTestCase {
         final TransactionManager trxmgr;
         final FreeSpaceManagerImpl spacemgr;
 
-        MyDB(boolean create) throws Exception {
+        MyDB(Platform platform, boolean create) throws Exception {
 
             Properties properties = new Properties();
             properties.setProperty("log.ctl.1", "ctl.a");
@@ -361,7 +360,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
             properties.setProperty("storage.basePath",
                     "testdata/TestFreeSpaceManager");
 
-            platform = new PlatformImpl(properties);
+//            platform = new PlatformImpl(properties);
+            this.platform = platform;
 
             /* Create the write ahead log */
             logFactory = new LogFactoryImpl(platform, properties);
