@@ -41,9 +41,7 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.bm.BufferAccessBlock;
@@ -139,7 +137,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -205,7 +203,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -316,7 +314,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -450,7 +448,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -541,7 +539,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -627,7 +625,7 @@ public class TestBufferManager extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
                 platform, properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,

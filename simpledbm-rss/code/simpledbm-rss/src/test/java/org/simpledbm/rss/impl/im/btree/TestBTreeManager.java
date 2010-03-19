@@ -59,7 +59,6 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.tx.IsolationMode;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.common.tools.diagnostics.TraceBuffer;
 import org.simpledbm.common.util.ByteString;
@@ -377,7 +376,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doInitContainer() throws Exception {
 
-        final BTreeDB db = new BTreeDB(true);
+        final BTreeDB db = new BTreeDB(platform, true);
 
         try {
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -390,7 +389,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doInitContainer2() throws Exception {
-        final BTreeDB db = new BTreeDB(true);
+        final BTreeDB db = new BTreeDB(platform, true);
 
         try {
             Transaction trx = db.trxmgr.begin(IsolationMode.SERIALIZABLE);
@@ -405,7 +404,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doLoadData(ScanResult[] results) throws Exception {
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -433,7 +432,7 @@ public class TestBTreeManager extends BaseTestCase {
         BufferedReader reader = new BufferedReader(new InputStreamReader(Thread
                 .currentThread().getContextClassLoader().getResourceAsStream(
                         filename)));
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -468,7 +467,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     public void doLoadXml(boolean testUnique, String dataFile) throws Exception {
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
 
         try {
             BTreeIndexManagerImpl.XMLLoader loader = new BTreeIndexManagerImpl.XMLLoader(
@@ -515,7 +514,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     public void doValidateTree(String dataFile) throws Exception {
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             doValidateTree(db, dataFile);
         } finally {
@@ -577,7 +576,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doPageSplit(boolean testLeaf, boolean testUnique) throws Exception {
         /* Create the write ahead log */
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
 
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
@@ -616,7 +615,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doRestartAndMerge(boolean testLeaf, boolean testUnique, int l, int r)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
 
@@ -670,7 +669,7 @@ public class TestBTreeManager extends BaseTestCase {
      * Merges previously split pages 2 and 3.
      */
     void doRestart() throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             System.out.println("RESTART PROCESSING COMPLETED");
         } finally {
@@ -680,7 +679,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doRestartAndLink(boolean testLeaf, boolean testUnique)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -758,7 +757,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doRestartLink(boolean testLeaf, boolean testUnique) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -814,7 +813,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doRestartDelink(boolean testLeaf, boolean testUnique) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -848,7 +847,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doRestartAndUnlink(boolean testLeaf, boolean testUnique, int p, int q,
             int r) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -881,7 +880,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doRestartAndRedistribute(boolean testLeaf, boolean testUnique)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -936,7 +935,7 @@ public class TestBTreeManager extends BaseTestCase {
         boolean testUnique = false;
         boolean testLeaf = true;
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -986,7 +985,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doRestartAndIncreaseTreeHeight(boolean testLeaf, boolean testUnique)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -1039,7 +1038,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doRestartAndDecreaseTreeHeight(boolean testLeaf, boolean testUnique,
             int p, int q) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -1093,7 +1092,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doNewRedistribute(boolean testLeaf) throws Exception {
         boolean testUnique = false;
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final PlatformObjects po = db.platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         try {
@@ -1147,7 +1146,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doSearchIssue64() throws Exception {
         final boolean testUnique = false;
 
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1183,7 +1182,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doSingleInsert(boolean testUnique, boolean commit, String k,
             String loc, String commitresult, String abortresult)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1226,7 +1225,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doDoubleInsert(boolean testUnique, boolean commit1, String k1,
             String loc1, boolean commit2, String k2, String loc2,
             String result1, String result2, String result3) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1282,7 +1281,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doSingleDelete(boolean testUnique, boolean commit, String k, String loc)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1325,7 +1324,7 @@ public class TestBTreeManager extends BaseTestCase {
             final boolean commitDelete, final String k, final String loc,
             final String deleteResult, final String insertResult)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final boolean testingUniqueIndex = testUnique;
         try {
             final Thread t1 = new Thread(new Runnable() {
@@ -1424,7 +1423,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doScanAndDelete(boolean testUnique, boolean commit, String k,
             String loc) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1503,7 +1502,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doScanTree(boolean testUnique, boolean commit, String k, String loc,
             ScanResult[] result) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1552,7 +1551,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doTestCursorStateAfterRollbackToSavepoint(boolean testUnique,
             boolean commit, String k, String loc) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1622,7 +1621,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doTestCursorStateAfterRollbackToSavepoint2(boolean testUnique,
             boolean commit, String k, String loc) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -1701,7 +1700,7 @@ public class TestBTreeManager extends BaseTestCase {
         BufferedReader reader = new BufferedReader(new InputStreamReader(Thread
                 .currentThread().getContextClassLoader().getResourceAsStream(
                         filename)));
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -1759,7 +1758,7 @@ public class TestBTreeManager extends BaseTestCase {
         BufferedReader reader = new BufferedReader(new InputStreamReader(Thread
                 .currentThread().getContextClassLoader().getResourceAsStream(
                         filename)));
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -1813,7 +1812,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doDeleteAndScanThreads(final boolean testUnique, final boolean commit,
             final String k, final String loc, final ScanResult[] result)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final boolean testingUniqueIndex = testUnique;
         final Lock lock = new ReentrantLock();
         final Condition deleted = lock.newCondition();
@@ -1961,7 +1960,7 @@ public class TestBTreeManager extends BaseTestCase {
     void doScanAndDeleteThreads(final boolean testUnique, final boolean commit,
             final String k, final String loc, final ScanResult[] result)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final boolean testingUniqueIndex = testUnique;
         final Lock lock = new ReentrantLock();
         final Condition lockWaitStarted = lock.newCondition();
@@ -2108,7 +2107,7 @@ public class TestBTreeManager extends BaseTestCase {
                 lock.unlock();
             }
         };
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
@@ -2223,7 +2222,7 @@ public class TestBTreeManager extends BaseTestCase {
                 lock.unlock();
             }
         };
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         final Thread t1 = new Thread(new Runnable() {
             public void run() {
                 try {
@@ -2623,7 +2622,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     void doFindSingleValue(String k, String l, String expectedKey,
             String expectedLoc) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -3101,7 +3100,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     int doConcurrentInserts(String file1, String file2) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             DataLoaderThread d1 = new DataLoaderThread(db, file1);
             DataLoaderThread d2 = new DataLoaderThread(db, file2);
@@ -3122,7 +3121,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     int doConcurrentDeletes(String file1, String file2) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             DataDeleterThread d1 = new DataDeleterThread(db, file1, true);
             DataDeleterThread d2 = new DataDeleterThread(db, file2, false);
@@ -3149,7 +3148,7 @@ public class TestBTreeManager extends BaseTestCase {
         BufferedReader reader = new BufferedReader(new InputStreamReader(Thread
                 .currentThread().getContextClassLoader().getResourceAsStream(
                         filename)));
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
 
@@ -3209,7 +3208,7 @@ public class TestBTreeManager extends BaseTestCase {
     int doDumpTree(String filename) throws Exception {
         // BufferedWriter writer = new BufferedWriter(new FileWriter(
         // filename));
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         int count = 0;
         try {
             IndexContainer index = db.btreeMgr.getIndex(1);
@@ -3259,7 +3258,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doIsolationTest_ReadCommitted() throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             int containerId = 1;
             IndexContainer index = db.btreeMgr.getIndex(containerId);
@@ -3315,7 +3314,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doIsolationTest_CursorStability() throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             int containerId = 1;
             IndexContainer index = db.btreeMgr.getIndex(containerId);
@@ -3371,7 +3370,7 @@ public class TestBTreeManager extends BaseTestCase {
     }
 
     void doIsolationTest_RepeatableRead(boolean updateMode) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             int containerId = 1;
             IndexContainer index = db.btreeMgr.getIndex(containerId);
@@ -3435,7 +3434,7 @@ public class TestBTreeManager extends BaseTestCase {
      */
     boolean doFindKeyLockTest(IsolationMode isolationMode, String k, int loc,
             boolean forUpdate) throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             BTreeImpl btree = (BTreeImpl) db.btreeMgr.getIndex(1);
 
@@ -3589,7 +3588,7 @@ public class TestBTreeManager extends BaseTestCase {
         p.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         p.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(p);
+//        final Platform platform = new PlatformImpl(p);
         final PlatformObjects po = platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, p);
@@ -3637,7 +3636,7 @@ public class TestBTreeManager extends BaseTestCase {
         p.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         p.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(p);
+//        final Platform platform = new PlatformImpl(p);
         final PlatformObjects po = platform
                 .getPlatformObjects(IndexManager.LOGGER_NAME);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform, p);
@@ -3679,7 +3678,7 @@ public class TestBTreeManager extends BaseTestCase {
 
     void doKeyInsert(boolean testUnique, boolean commit, String k, String loc)
             throws Exception {
-        final BTreeDB db = new BTreeDB(false);
+        final BTreeDB db = new BTreeDB(platform, false);
         try {
             final BTreeImpl btree = db.btreeMgr.getBTreeImpl(1,
                     TYPE_STRINGKEYFACTORY, TYPE_ROWLOCATIONFACTORY, testUnique);
@@ -3865,7 +3864,7 @@ public class TestBTreeManager extends BaseTestCase {
         final BTreeIndexManagerImpl btreeMgr;
         final TraceBuffer tracer;
 
-        public BTreeDB(boolean create) throws Exception {
+        public BTreeDB(Platform platform, boolean create) throws Exception {
 
             Properties properties = new Properties();
             properties.setProperty("log.ctl.1", "ctl.a");
@@ -3897,7 +3896,8 @@ public class TestBTreeManager extends BaseTestCase {
             properties.setProperty("storage.basePath",
                     "testdata/TestBTreeManager");
 
-            platform = new PlatformImpl(properties);
+//            platform = new PlatformImpl(properties);
+            this.platform = platform;
             tracer = platform.getTraceBuffer();
 
             LockAdaptor lockAdaptor = new DefaultLockAdaptor(platform,

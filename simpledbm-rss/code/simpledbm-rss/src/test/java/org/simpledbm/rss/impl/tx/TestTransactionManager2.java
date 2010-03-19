@@ -40,11 +40,9 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 
 import org.simpledbm.common.api.locking.LockMode;
-import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.tx.IsolationMode;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.junit.BaseTestCase;
@@ -127,7 +125,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
         final StorageContainerFactory storageFactory = new FileStorageContainerFactory(
@@ -185,7 +183,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -263,7 +261,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -399,7 +397,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,
@@ -474,7 +472,7 @@ public class TestTransactionManager2 extends BaseTestCase {
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        final Platform platform = new PlatformImpl(properties);
+//        final Platform platform = new PlatformImpl(properties);
         final LogFactoryImpl logFactory = new LogFactoryImpl(platform,
                 properties);
         final ObjectRegistry objectFactory = new ObjectRegistryImpl(platform,

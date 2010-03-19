@@ -42,8 +42,6 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.simpledbm.common.api.locking.LockMode;
-import org.simpledbm.common.api.platform.Platform;
-import org.simpledbm.common.impl.platform.PlatformImpl;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.latch.LatchFactory;
 import org.simpledbm.rss.api.locking.LockDeadlockException;
@@ -1146,12 +1144,12 @@ public class TestLockManager extends BaseTestCase {
         }
     }
 
-    private static LockManager createLockManager() {
+    private LockManager createLockManager() {
         Properties properties = new Properties();
         properties.setProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
         properties.setProperty("logging.properties.type", "log4j");
-        Platform platform = new PlatformImpl(properties);
+//        Platform platform = new PlatformImpl(properties);
         LatchFactory latchFactory = new LatchFactoryImpl(platform, properties);
         LockManager lockmgr = new LockManagerImpl(platform
                 .getPlatformObjects(LockManager.LOGGER_NAME), latchFactory,
