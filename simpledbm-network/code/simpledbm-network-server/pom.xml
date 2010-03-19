@@ -35,6 +35,11 @@
 			<url>http://www.gnu.org/licenses/gpl.txt</url>
 		</license>
 	</licenses>
+	<parent>
+		<groupId>org.simpledbm.multi</groupId>
+		<artifactId>simpledbm-parent</artifactId>
+		<version>1.0.0</version>
+	</parent>
 	<dependencies>
 		<dependency>
 			<groupId>org.simpledbm.network</groupId>
@@ -128,9 +133,9 @@
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
 					<archive>
-					  <manifest>
-					    <mainClass>org.simpledbm.network.server.SimpleDBMServer</mainClass>
-					  </manifest>
+						<manifest>
+							<mainClass>org.simpledbm.network.server.SimpleDBMServer</mainClass>
+						</manifest>
 					</archive>
 				</configuration>
 			</plugin>

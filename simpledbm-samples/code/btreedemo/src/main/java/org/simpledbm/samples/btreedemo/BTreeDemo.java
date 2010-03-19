@@ -204,6 +204,8 @@ public class BTreeDemo {
 
     public static class BTreeDatabase {
 
+        final Platform platform;
+
         Server server;
 
         final DictionaryCache dictionaryCache = new SimpleDictionaryCache();
@@ -245,7 +247,7 @@ public class BTreeDemo {
             properties.setProperty("log.flush.interval", "5");
             properties.setProperty("storage.basePath", "demodata/BTreeDemo");
 
-            Platform platform = new PlatformImpl(properties);
+            platform = new PlatformImpl(properties);
             PlatformObjects po = platform
                     .getPlatformObjects("org.simpledbm.samples.btreedemo");
 
@@ -430,6 +432,7 @@ public class BTreeDemo {
         public void shutdown() {
             System.err.println("Shutting down");
             server.shutdown();
+            platform.shutdown();
         }
     }
 

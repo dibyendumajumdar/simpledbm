@@ -50,6 +50,8 @@ import java.util.Properties;
 
 public class SimpleDBMServer {
 
+    Platform platform;
+    
     NetworkServer networkServer = null;
 
     private void usage() {
@@ -81,7 +83,7 @@ public class SimpleDBMServer {
     }
 
     private void open(Properties properties) {
-        Platform platform = new PlatformImpl(properties);
+        platform = new PlatformImpl(properties);
         SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
         networkServer = NetworkUtil.createNetworkServer(platform,
                 simpleDBMRequestHandler, properties);
@@ -99,6 +101,7 @@ public class SimpleDBMServer {
             networkServer.shutdown();
             networkServer = null;
         }
+        platform.shutdown();
     }
 
     private Properties parseProperties(String arg) {

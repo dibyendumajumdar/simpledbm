@@ -41,8 +41,8 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeMap;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -383,7 +383,12 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      * @see #setupBackgroundThreads()
      */
-    //    private ExecutorService archiveService;
+    ScheduledFuture<?> archiveService;
+
+    /**
+     * A queue of ArchiveRequest objects; read by the ArchiveRequestHandler
+     */
+    final LinkedBlockingQueue<ArchiveRequest> archiveQ = new LinkedBlockingQueue<ArchiveRequest>();
 
     /**
      * The ArchiveCleaner task is responsible for deleting redundant archived
@@ -581,6 +586,10 @@ public final class LogManagerImpl implements LogManager {
             "Archive Cleaner STOPPED");
     static Message m_IW0032 = new Message('R', 'W', MessageType.INFO, 32,
             "Write Ahead Log Manager STOPPED");
+    static Message m_IW0033 = new Message('R', 'W', MessageType.INFO, 33,
+            "Log Archiver STARTED");
+    static Message m_IW0034 = new Message('R', 'W', MessageType.INFO, 34,
+            "Log Archiver STOPPED");
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.wal.LogManager#insert(byte[], int)
@@ -732,11 +741,28 @@ public final class LogManagerImpl implements LogManager {
             archiveCleaner.cancel(false);
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0031).toString());
+            archiveService.cancel(false);
+            logger.info(this.getClass().getName(), "shutdown",
+                    new MessageInstance(m_IW0034).toString());
             archiveLock.lock();
-            stopArchiver = true;
-            archiveLock.unlock();
-            closeLogFiles();
-            closeCtlFiles();
+            try {
+                /*
+                 * Hold the archive lock while closing logs because
+                 * archiving can take a while to finish, and if we start
+                 * closing the log files while archiving is active, it will
+                 * cause null pointer exceptions, and potentially corrupt the
+                 * log archives.
+                 * <p>
+                 * Holding the archiveLock ensures that:
+                 * a) we start after any archive action is over.
+                 * b) while we are closing logs new archives cannot start.
+                 */
+                stopArchiver = true;
+                closeLogFiles();
+                closeCtlFiles();
+            } finally {
+                archiveLock.unlock();
+            }
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0032).toString());
             /*
@@ -843,6 +869,13 @@ public final class LogManagerImpl implements LogManager {
                 logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
         logger.info(this.getClass().getName(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0029).toString());
+        
+        archiveService = platform.getScheduler().scheduleWithFixedDelay(
+                Priority.SERVER_TASK, new ArchiveRequestHandler(this),
+                10, 10, TimeUnit.SECONDS);
+        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+                new MessageInstance(m_IW0033).toString());
+        
     }
 
     /**
@@ -1411,10 +1444,9 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      */
     private void submitArchiveRequest(ArchiveRequest req) {
-        //        archiveService.submit(new ArchiveRequestHandler(this, req));
-    	logger.info(getClass().getName(), "submitArchiveRequest", "arch request = " + req.logIndex);
+        archiveQ.offer(req);
         platform.getScheduler().execute(Priority.SERVER_TASK,
-                new ArchiveRequestHandler(this, req));
+                new ArchiveRequestHandler(this));
     }
 
     /**
@@ -3071,7 +3103,19 @@ public final class LogManagerImpl implements LogManager {
     }
 
     /**
-     * Handles requests to create archive log files.
+     * Handles requests to create archive log files. Archive requests must be
+     * handled sequentially in FIFO order to ensure that the logs are archived
+     * properly.
+     * <p>
+     * As this handler may be executed from a ThreadPoolExecutor, we need to
+     * take special measures to ensure that all requests are processed in FIFO
+     * order. Requests are sent to a BlockingQueue. The Handler receives the
+     * requests from the queue and processes them one by one. At each run of the
+     * handler all outstanding archive requests are completed.
+     * <p>
+     * The handler acquires the archiveLock in a tryLock() mode so as not to
+     * block. This ensures that if multiple handlers are executed concurrently,
+     * only one will process the queue. The other handlers will simply return.
      * 
      * @author Dibyendu Majumdar
      * @since Jul 5, 2005
@@ -3080,11 +3124,8 @@ public final class LogManagerImpl implements LogManager {
 
         final private LogManagerImpl logManager;
 
-        final private ArchiveRequest request;
-
-        public ArchiveRequestHandler(LogManagerImpl log, ArchiveRequest request) {
+        public ArchiveRequestHandler(LogManagerImpl log) {
             this.logManager = log;
-            this.request = request;
         }
 
         /*
@@ -3102,19 +3143,29 @@ public final class LogManagerImpl implements LogManager {
             if (logManager.isErrored() || logManager.stopArchiver) {
                 return;
             }
-            try {
-                logManager.handleNextArchiveRequest(request);
-            } catch (Exception e) {
-                Map<Thread, StackTraceElement[]> m = Thread.getAllStackTraces();
-                for (Thread t: m.keySet()) {
-                    StackTraceElement[] se = m.get(t);
-                    System.err.println(t);
-                    for (StackTraceElement el: se) {
-                        System.err.println(el);
+            if (logManager.archiveLock.tryLock()) {
+                try {
+                    ArchiveRequest request = logManager.archiveQ.poll();
+                    while (null != request && !logManager.isErrored()
+                            && !logManager.stopArchiver) {
+                        logManager.handleNextArchiveRequest(request);
+                        request = logManager.archiveQ.poll();
                     }
+                } catch (Exception e) {
+                    //                    Map<Thread, StackTraceElement[]> m = Thread
+                    //                            .getAllStackTraces();
+                    //                    for (Thread t : m.keySet()) {
+                    //                        StackTraceElement[] se = m.get(t);
+                    //                        System.err.println(t);
+                    //                        for (StackTraceElement el : se) {
+                    //                            System.err.println(el);
+                    //                        }
+                    //                    }
+                    logManager.logException(ArchiveRequestHandler.class
+                            .getName(), "call", m_EW0027, e);
+                } finally {
+                    logManager.archiveLock.unlock();
                 }
-                logManager.logException(ArchiveRequestHandler.class.getName(),
-                        "call", m_EW0027, e);
             }
         }
     }
