@@ -109,8 +109,16 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     boolean waiting = false;
 
+    /**
+     * Cached value from logging to improve performance. Downside is that we
+     * cannot change logging dynamically.
+     */
     final boolean debugEnabled;
 
+    /**
+     * Cached value from logging to improve performance. Downside is that we
+     * cannot change logging dynamically.
+     */
     final boolean traceEnabled;
 
     /**
@@ -174,14 +182,12 @@ public final class NewReadWriteUpdateLatch implements Latch {
         this.exceptionHandler = po.getExceptionHandler();
         if (log.isDebugEnabled()) {
             debugEnabled = true;
-        }
-        else {
+        } else {
             debugEnabled = false;
         }
         if (log.isTraceEnabled()) {
             traceEnabled = true;
-        }
-        else {
+        } else {
             traceEnabled = false;
         }
     }
@@ -213,41 +219,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     /**
-     * Acquires a lock in the specified mode. Handles most of the cases except
-     * the case where an INSTANT_DURATION lock needs to be waited for. This case
-     * requires the lock to be released after it has been granted; the lock
-     * release is handled by {@link #acquire acquire}.
-     * 
-     * <p>
-     * Algorithm:
-     * 
-     * <ol>
-     * <li>Search for the lock.</li>
-     * <li>If not found, this is a new lock and therefore grant the lock, and
-     * return success.</li>
-     * <li>Else check if requesting transaction already has a lock request.</li>
-     * <li>If not, this is the first request by the transaction. If yes, goto
-     * 11.</li>
-     * <li>Check if lock can be granted. This is true if there are no waiting
-     * requests and the new request is compatible with existing grant mode.</li>
-     * <li>If yes, grant the lock and return success.</li>
-     * <li>Otherwise, if nowait was specified, return failure.</li>
-     * <li>Otherwise, wait for the lock to be available/compatible.</li>
-     * <li>If after the wait, the lock has been granted, then return success.</li>
-     * <li>Else return failure.
-     * 
-     * </li>
-     * <li>If calling transaction already has a granted lock request then this
-     * must be a conversion request.</li>
-     * <li>Check whether the new request lock is same mode as previously held
-     * lock.</li>
-     * <li>If so, grant lock and return.</li>
-     * <li>Otherwise, check if requested lock is compatible with granted group.</li>
-     * <li>If so, grant lock and return.</li>
-     * <li>If not, and nowait specified, return failure.</li>
-     * <li>Goto 8.</li>
-     * </ol>
-     * </p>
+     * Acquires a lock in the specified mode.
      */
     private void doAcquire(LockState lockState) {
 
@@ -318,7 +290,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      *         that the requester must wait
      */
     private boolean handleNewRequest(LockState lockState) {
-        /* 4. If not, this is the first request by the transaction. */
+        /* 4. If not, this is the first request */
         if (debugEnabled) {
             log.debug(getClass().getName(), "handleNewRequest",
                     "SIMPLEDBM-DEBUG: New request by thread "
@@ -344,9 +316,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         if (!can_grant && lockState.parms.timeout == 0) {
             /* 7. Otherwise, if nowait was specified, return failure. */
-            //            exceptionHandler.warnAndThrow(getClass().getName(), "handleNewRequest", 
-            //            		new LatchException(mcat.getMessage("WH0002",
-            //                this, lockState.parms.mode)));
             throw new LatchException(new MessageInstance(
                     LatchFactoryImpl.m_WH0002, this, lockState.parms.mode));
         }
@@ -378,7 +347,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     private boolean handleConversionRequest(LockState lockState) {
         /*
-         * 11. If calling transaction already has a granted lock request
+         * 11. If caller already has a granted lock request
          * then this must be a conversion request.
          */
         if (traceEnabled) {
@@ -388,7 +357,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         }
 
         /*
-         * Limitation: a transaction cannot attempt to lock an object
+         * Limitation: caller cannot attempt to lock an object
          * for which it is already waiting.
          */
         if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
@@ -447,13 +416,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
                 else if (!can_grant && lockState.parms.timeout == 0) {
                     /* 15. If not, and nowait specified, return failure. */
-                    //                    exceptionHandler.warnAndThrow(
-                    //                        this.getClass().getName(),
-                    //                        "handleConversionRequest",
-                    //                        new LatchException(mcat.getMessage(
-                    //                        "WH0004",
-                    //                        lockState.parms,
-                    //                        this)));
                     throw new LatchException(new MessageInstance(
                             LatchFactoryImpl.m_WH0004, lockState.parms, this));
                 }
@@ -666,43 +628,10 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
     /**
      * Release or downgrade a specified lock.
-     * 
-     * <p>
-     * Algorithm:
-     * <ol>
-     * <li>1. Search for the lock.</li>
-     * <li>2. If not found, return Ok.</li>
-     * <li>3. If found, look for the transaction's lock request.</li>
-     * <li>4. If not found, return Ok.</li>
-     * <li>5. If lock request is in invalid state, return error.</li>
-     * <li>6. If noforce and not downgrading, and reference count greater than
-     * 0, then do not release the lock request. Decrement reference count and
-     * return Ok.</li>
-     * <li>7. If sole lock request and not downgrading, then release the lock
-     * and return Ok.</li>
-     * <li>8. If not downgrading, delete the lock request from the queue.
-     * Otherwise, downgrade the mode assigned to the lock request.
-     * 
-     * </li>
-     * <li>9. Recalculate granted mode by calculating max mode amongst all
-     * granted (including conversion) requests. If a conversion request is
-     * compatible with all other granted requests, then grant the conversion,
-     * recalculating granted mode. If a waiting request is compatible with
-     * granted mode, and there are no pending conversion requests, then grant
-     * the request, and recalculate granted mode. Otherwise, we are done.</li>
-     * </ol>
-     * </p>
-     * <p>
-     * Note that this means that FIFO is respected for waiting requests, but
-     * conversion requests are granted as soon as they become compatible. Also,
-     * note that if a conversion request is pending, waiting requests cannot be
-     * granted.
-     * </p>
-     * </p>
      */
     private boolean releaseLock(LockState lockState) {
         boolean released;
-        /* 3. If lock found, look for the transaction's lock request. */
+        /* 3. If lock found, look for the owner's lock request. */
         lockState.lockRequest = find(lockState.parms.owner);
 
         if (lockState.lockRequest == null) {
@@ -805,16 +734,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         }
         /*
          * 9. Recalculate granted mode by calculating max mode amongst all
-         * granted (including conversion) requests. If a conversion request
-         * is compatible with all other granted requests, then grant the
-         * conversion, recalculating granted mode. If a waiting request is
-         * compatible with granted mode, and there are no pending conversion
-         * requests, then grant the request, and recalculate granted mode.
-         * Otherwise, we are done. Note that this means that FIFO is
-         * respected for waiting requests, but conversion requests are
-         * granted as soon as they become compatible. Also, note that if a
-         * conversion request is pending, waiting requests cannot be
-         * granted.
+         * granted (including conversion) requests. 
          */
         grantWaiters(lockState.parms.action);
         return released;
@@ -822,39 +742,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
     /**
      * Release or downgrade a specified lock.
-     * 
-     * <p>
-     * Algorithm:
-     * <ol>
-     * <li>1. Search for the lock.</li>
-     * <li>2. If not found, return Ok.</li>
-     * <li>3. If found, look for the transaction's lock request.</li>
-     * <li>4. If not found, return Ok.</li>
-     * <li>5. If lock request is in invalid state, return error.</li>
-     * <li>6. If noforce and not downgrading, and reference count greater than
-     * 0, then do not release the lock request. Decrement reference count and
-     * return Ok.</li>
-     * <li>7. If sole lock request and not downgrading, then release the lock
-     * and return Ok.</li>
-     * <li>8. If not downgrading, delete the lock request from the queue.
-     * Otherwise, downgrade the mode assigned to the lock request.
-     * 
-     * </li>
-     * <li>9. Recalculate granted mode by calculating max mode amongst all
-     * granted (including conversion) requests. If a conversion request is
-     * compatible with all other granted requests, then grant the conversion,
-     * recalculating granted mode. If a waiting request is compatible with
-     * granted mode, and there are no pending conversion requests, then grant
-     * the request, and recalculate granted mode. Otherwise, we are done.</li>
-     * </ol>
-     * </p>
-     * <p>
-     * Note that this means that FIFO is respected for waiting requests, but
-     * conversion requests are granted as soon as they become compatible. Also,
-     * note that if a conversion request is pending, waiting requests cannot be
-     * granted.
-     * </p>
-     * </p>
      */
     public synchronized boolean release(ReleaseAction action,
             LockMode downgradeMode) {

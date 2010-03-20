@@ -77,11 +77,194 @@ import org.simpledbm.rss.api.locking.LockTimeoutException;
  * For each lock in the system, a queue of lock requests is maintained. The
  * queue has granted requests followed by waiting requests. To allow locks to be
  * quickly found, a hash table of all locks is maintained.
- * </p>
  * 
  * @author Dibyendu Majumdar
  */
 public final class LockManagerImpl implements LockManager {
+
+    /*
+     * 
+    Algorithm
+    ---------
+
+    The main algorithm for the lock manager is shown in the form of use cases.
+
+    a001 - lock acquire
+    *******************
+
+    Main Success Scenario
+    .....................
+
+    1) Search for the lock header
+    2) Lock header not found
+    3) Allocate new lock header
+    4) Allocate new lock request
+    5) Append lock request to queue with status = GRANTED and reference count of 1.
+    6) Set lock granted mode to GRANTED
+
+    Extensions
+    ..........
+
+    2. a) Lock header found but client has no prior request for the lock.
+      
+      1. Do `a003 - handle new request`_.
+
+    b) Lock header found and client has a prior GRANTED lock request.
+      
+      1. Do `a002 - handle lock conversion`_.
+
+    a003 - handle new request
+    *************************
+
+    Main Success Scenario
+    .....................
+
+    1) Allocate new request.
+    2) Append lock request to queue with reference count of 1.
+    3) Check for waiting requests.
+    4) Check whether request is compatible with granted mode.
+    5) There are no waiting requests and lock request is compatible with
+    granted mode.
+    6) Set lock's granted mode to maximum of this request and existing granted mode.
+    7) Success.
+
+    Extensions
+    ..........
+
+    5. a) There are waiting requests or lock request is not compatible with
+      granted mode.
+      
+      1. Do `a004 - lock wait`_.
+
+    a002 - handle lock conversion
+    *****************************
+
+    Main Success Scenario
+    .....................
+
+    1) Check lock compatibility with granted group.
+    2) Lock request is compatible with granted group.
+    3) Grant lock request, and update granted mode for the request.
+
+    Extensions
+    ..........
+
+    2. a) Lock request is incompatible with granted group.
+      
+      1. Do `a004 - lock wait`_.
+
+
+    a004 - lock wait
+    ****************
+
+    Main Success Scenario
+    .....................
+
+    1) Wait for lock.
+    2) Lock granted.
+    3) Success.
+
+    Extensions
+    ..........
+
+    2. a) Lock was not granted.
+      
+      1. Failure!
+
+    b001 - release lock
+    *******************
+
+    Main Success Scenario
+    .....................
+
+    1) Decrease reference count.
+    2) Sole lock request and reference count is zero.
+    3) Remove lock header from hash table.
+    4) Success.
+
+    Extensions
+    ..........
+
+    2. a) Reference count greater than zero.
+      
+      1. Success.
+
+    2. b) Reference count is zero and there are other requests on the lock.
+      
+      1. Remove request from the queue.
+      2. Do `b002 - grant waiters`_.
+
+    b002 - grant waiters
+    ********************
+
+    Main Success Scenario
+    .....................
+
+    1) Get next granted lock.
+    2) Recalculate granted mode.
+    3) Repeat from 1) until no more granted requests.
+    4) Get next waiting request.
+    5) Request is compatible with granted mode.
+    6) Grant request and wake up thread waiting for the lock. Increment reference count of
+    the granted request and set granted mode to maximum of current mode and granted request.
+    7) Repeat from 4) until no more waiting requests.
+
+    Extensions
+    ..........
+
+    1. a) Conversion request.
+      
+      1. Do `b003 - grant conversion request`_.
+      2. Resume from 2).
+
+    4. a) "conversion pending" is set (via b003).
+      
+      1. Done.
+
+    5. a) Request is incompatible with granted mode.
+      
+      1. Done.
+
+
+    b003 - grant conversion request
+    *******************************
+
+    Main Success Scenario
+    .....................
+
+    1) Do `c001 - check request compatible with granted group`_.
+    2) Request is compatible.
+    3) Grant conversion request.
+
+    Extensions
+    ..........
+
+    2. a) Conversion request incompatible with granted group.
+      
+      1. Set "conversion pending" flag.
+
+    c001 - check request compatible with granted group
+    **************************************************
+
+    Main Success Scenario
+    .....................
+
+    1) Get next granted request.
+    2) Request is compatible with this request.
+    3) Repeat from 1) until no more granted requests.
+
+    Extensions
+    ..........
+
+    1. a) Request belongs to the caller.
+      
+      1. Resume from step 3).
+
+    2. a) Request is incompatible with this request.
+      
+      1. Failure!
+
+     */
 
     static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
             12289, 24593, 49157, 98317, 196613, 393241, 786433 };
@@ -112,7 +295,7 @@ public final class LockManagerImpl implements LockManager {
      * Used to calculate the hash table size threshold. Expressed as a
      * percentage of hash table size.
      */
-    private float loadFactor = 0.75f;
+    private final float loadFactor = 0.75f;
 
     /**
      * Hash table of locks. The hash table is dynamically resized if necessary.
@@ -120,7 +303,8 @@ public final class LockManagerImpl implements LockManager {
     private LockBucket[] LockHashTable;
 
     /**
-     * Size of the hash table. This is always equal to hashPrimes[htsz].
+     * Size of the hash table. This is always equal to hashPrimes[htsz]. Can
+     * change when hash table is resized.
      */
     private int hashTableSize;
 
@@ -144,9 +328,16 @@ public final class LockManagerImpl implements LockManager {
      */
     private final Latch globalLock;
 
+    /**
+     * If set, this instructs the LockManager to stop. No further requests
+     * should be accepted.
+     */
     volatile boolean stop = false;
 
-    //    Thread deadlockDetectorThread;
+    /**
+     * Handle to the deadlock detector task, which is run via the SimpleDBM
+     * scheduler.
+     */
     ScheduledFuture<?> deadlockDetectorThread;
 
     /**
@@ -155,10 +346,18 @@ public final class LockManagerImpl implements LockManager {
      */
     int deadlockDetectorInterval = 10;
 
-    final boolean debugEnabled ;
-    
+    /**
+     * Cached value from logging to improve performance. Downside is that we
+     * cannot change logging dynamically.
+     */
+    final boolean debugEnabled;
+
+    /**
+     * Cached value from logging to improve performance. Downside is that we
+     * cannot change logging dynamically.
+     */
     final boolean traceEnabled;
-    
+
     /**
      * Defines the various lock release methods.
      * 
@@ -209,7 +408,7 @@ public final class LockManagerImpl implements LockManager {
             "LockItem = {0}");
 
     /**
-     * Holds parameters supplied to aquire, release or find APIs.
+     * Holds parameters supplied to acquire, release or find APIs.
      */
     static final class LockParameters {
         Object owner;
@@ -230,6 +429,11 @@ public final class LockManagerImpl implements LockManager {
         }
     }
 
+    /**
+     * Used as a container for various lock management data.
+     * 
+     * @author dibyendumajumdar
+     */
     static final class LockContext {
         final LockParameters parms;
         LockHandleImpl handle;
@@ -272,23 +476,17 @@ public final class LockManagerImpl implements LockManager {
         threshold = (int) (hashTableSize * loadFactor);
         if (log.isDebugEnabled()) {
             debugEnabled = true;
-        }
-        else {
+        } else {
             debugEnabled = false;
         }
         if (log.isTraceEnabled()) {
             traceEnabled = true;
-        }
-        else {
+        } else {
             traceEnabled = false;
         }
     }
 
     public void start() {
-        //	    deadlockDetectorThread = new Thread(
-        //	        new DeadlockDetector(this),
-        //	        "DeadlockDetector");
-        //	    deadlockDetectorThread.start();
         deadlockDetectorThread = platform.getScheduler()
                 .scheduleWithFixedDelay(Priority.SERVER_TASK,
                         new DeadlockDetector(this), deadlockDetectorInterval,
@@ -300,15 +498,6 @@ public final class LockManagerImpl implements LockManager {
     public void shutdown() {
         stop = true;
         deadlockDetectorThread.cancel(false);
-        //	    if (deadlockDetectorThread.isAlive()) {
-        //	        LockSupport.unpark(deadlockDetectorThread);
-        //	        try {
-        //	            deadlockDetectorThread
-        //	                .join(deadlockDetectorInterval * 2 * 1000);
-        //	        } catch (InterruptedException e) {
-        //	            // ignored
-        //	        }
-        //	    }
         log.info(this.getClass().getName(), "shutdown", new MessageInstance(
                 m_IC0013).toString());
     }
@@ -326,6 +515,9 @@ public final class LockManagerImpl implements LockManager {
         }
         try {
             if (htsz == hashPrimes.length - 1) {
+                /*
+                 * Already at maximum size.
+                 */
                 return;
             }
             int newHashTableSize = hashPrimes[++htsz];
@@ -523,37 +715,6 @@ public final class LockManagerImpl implements LockManager {
      * the case where an INSTANT_DURATION lock needs to be waited for. This case
      * requires the lock to be released after it has been granted; the lock
      * release is handled by {@link #acquire acquire}.
-     * 
-     * <p>
-     * Algorithm:
-     * 
-     * <ol>
-     * <li>Search for the lock.</li>
-     * <li>If not found, this is a new lock and therefore grant the lock, and
-     * return success.</li>
-     * <li>Else check if requesting transaction already has a lock request.</li>
-     * <li>If not, this is the first request by the transaction. If yes, goto
-     * 11.</li>
-     * <li>Check if lock can be granted. This is true if there are no waiting
-     * requests and the new request is compatible with existing grant mode.</li>
-     * <li>If yes, grant the lock and return success.</li>
-     * <li>Otherwise, if nowait was specified, return failure.</li>
-     * <li>Otherwise, wait for the lock to be available/compatible.</li>
-     * <li>If after the wait, the lock has been granted, then return success.</li>
-     * <li>Else return failure.
-     * 
-     * </li>
-     * <li>If calling transaction already has a granted lock request then this
-     * must be a conversion request.</li>
-     * <li>Check whether the new request lock is same mode as previously held
-     * lock.</li>
-     * <li>If so, grant lock and return.</li>
-     * <li>Otherwise, check if requested lock is compatible with granted group.</li>
-     * <li>If so, grant lock and return.</li>
-     * <li>If not, and nowait specified, return failure.</li>
-     * <li>Goto 8.</li>
-     * </ol>
-     * </p>
      */
     private LockHandleImpl doAcquire(LockContext context) {
 
@@ -715,11 +876,6 @@ public final class LockManagerImpl implements LockManager {
 
         else if (!can_grant && context.parms.timeout == 0) {
             /* 7. Otherwise, if nowait was specified, return failure. */
-            //	        exceptionHandler.warnAndThrow(this.getClass().getName(), "handleNewRequest", 
-            //	        		new LockTimeoutException(mcat.getMessage(
-            //	        				"WC0004",
-            //	        				context.parms,
-            //	        				context.lockitem)));
             throw new LockTimeoutException(new MessageInstance(m_WC0004,
                     context.parms, context.lockitem));
         }
@@ -849,13 +1005,6 @@ public final class LockManagerImpl implements LockManager {
 
                 else if (!can_grant && context.parms.timeout == 0) {
                     /* 15. If not, and nowait specified, return failure. */
-                    //	                exceptionHandler.warnAndThrow(
-                    //	                    this.getClass().getName(),
-                    //	                    "handleConversionRequest",
-                    //	                    new LockTimeoutException(mcat.getMessage(
-                    //	                    		"WC0004",
-                    //	                    		context.parms,
-                    //	                    		context.lockitem)));
                     throw new LockTimeoutException(new MessageInstance(
                             m_WC0004, context.parms, context.lockitem));
                 }
@@ -959,10 +1108,6 @@ public final class LockManagerImpl implements LockManager {
                     "handleWaitResult", new LockTimeoutException(
                             new MessageInstance(m_EC0001, context.parms)));
         } else if (context.getStatus() == LockStatus.DEADLOCK) {
-            //            exceptionHandler.warnAndThrow(this.getClass().getName(), "handleWaitResult", 
-            //            		new LockDeadlockException(mcat.getMessage(
-            //            				"WC0002",
-            //            				context.parms)));
             throw new LockDeadlockException(new MessageInstance(m_WC0002,
                     context.parms));
         } else {
@@ -1010,39 +1155,6 @@ public final class LockManagerImpl implements LockManager {
 
     /**
      * Release or downgrade a specified lock.
-     * 
-     * <p>
-     * Algorithm:
-     * <ol>
-     * <li>1. Search for the lock.</li>
-     * <li>2. If not found, return Ok.</li>
-     * <li>3. If found, look for the transaction's lock request.</li>
-     * <li>4. If not found, return Ok.</li>
-     * <li>5. If lock request is in invalid state, return error.</li>
-     * <li>6. If noforce and not downgrading, and reference count greater than
-     * 0, then do not release the lock request. Decrement reference count and
-     * return Ok.</li>
-     * <li>7. If sole lock request and not downgrading, then release the lock
-     * and return Ok.</li>
-     * <li>8. If not downgrading, delete the lock request from the queue.
-     * Otherwise, downgrade the mode assigned to the lock request.
-     * 
-     * </li>
-     * <li>9. Recalculate granted mode by calculating max mode amongst all
-     * granted (including conversion) requests. If a conversion request is
-     * compatible with all other granted requests, then grant the conversion,
-     * recalculating granted mode. If a waiting request is compatible with
-     * granted mode, and there are no pending conversion requests, then grant
-     * the request, and recalculate granted mode. Otherwise, we are done.</li>
-     * </ol>
-     * </p>
-     * <p>
-     * Note that this means that FIFO is respected for waiting requests, but
-     * conversion requests are granted as soon as they become compatible. Also,
-     * note that if a conversion request is pending, waiting requests cannot be
-     * granted.
-     * </p>
-     * </p>
      */
     private boolean doRelease(LockHandle handle, ReleaseAction action,
             LockMode downgradeMode) {
@@ -1266,16 +1378,7 @@ public final class LockManagerImpl implements LockManager {
         }
         /*
          * 9. Recalculate granted mode by calculating max mode amongst all
-         * granted (including conversion) requests. If a conversion request
-         * is compatible with all other granted requests, then grant the
-         * conversion, recalculating granted mode. If a waiting request is
-         * compatible with granted mode, and there are no pending conversion
-         * requests, then grant the request, and recalculate granted mode.
-         * Otherwise, we are done. Note that this means that FIFO is
-         * respected for waiting requests, but conversion requests are
-         * granted as soon as they become compatible. Also, note that if a
-         * conversion request is pending, waiting requests cannot be
-         * granted.
+         * granted (including conversion) requests. 
          */
         grantWaiters(context.parms.action, context.lockRequest, context.handle,
                 context.lockitem, context.parms.lockInfo);
@@ -1584,7 +1687,6 @@ public final class LockManagerImpl implements LockManager {
             Thread.yield();
         }
         if (retry == 5) {
-            // log.warn(getClass().getName(), "detectDeadlocks", "DeadLock Detector failed to acquire global lock");
             return;
         }
         try {
@@ -1894,19 +1996,6 @@ public final class LockManagerImpl implements LockManager {
             lockManager.detectDeadlocks();
         }
 
-        //        public void run() {
-        //            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0012).toString());
-        //            while (!lockManager.stop) {
-        //                lockManager.detectDeadlocks();
-        //                LockSupport.parkNanos(TimeUnit.NANOSECONDS.convert(
-        //                    lockManager.deadlockDetectorInterval,
-        //                    TimeUnit.SECONDS));
-        //                if (lockManager.stop) {
-        //                    break;
-        //                }
-        //            }
-        //            lockManager.log.info(this.getClass().getName(), "run", new MessageInstance(m_IC0013).toString());
-        //        }
     }
 
     public void setDeadlockDetectorInterval(int seconds) {
