@@ -545,4 +545,44 @@ public class TestLatch extends BaseTestCase {
         assertFalse(testfailed);
     }
 
+    static final class Incrementor implements Runnable {
+
+        final Latch latch;
+        static int number = 0;
+
+        Incrementor(Latch latch) {
+            this.latch = latch;
+        }
+
+        public void run() {
+            for (int i = 0; i < 100000; i++) {
+                latch.exclusiveLock();
+                number++;
+                latch.unlockExclusive();
+            }
+        }
+    }
+
+    public void testPerformance() throws Exception {
+        final Latch latch = latchFactory.newReadWriteUpdateLatch();
+        Thread threads[] = new Thread[8];
+        for (int i = 0; i < threads.length; i++) {
+            threads[i] = new Thread(new Incrementor(latch));
+        }
+        latch.sharedLock();
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].start();
+        }
+        long t1 = System.currentTimeMillis();
+        latch.unlockShared();
+        for (int i = 0; i < threads.length; i++) {
+            threads[i].join();
+        }
+        long t2 = System.currentTimeMillis();
+        System.err
+                .println("Time taken by 8 threads to update number 100000 times each = "
+                        + (t2 - t1) + " millisecs");
+        assertEquals(Incrementor.number, 800000);
+    }
+
 }
