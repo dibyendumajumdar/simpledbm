@@ -42,7 +42,7 @@ public class SimpleScheduler implements Scheduler {
         int priorityThreadPoolSize = Integer.valueOf(properties.getProperty(
                 "scheduler.priorityThreadPoolSize", "5"));
         int priorityCoreThreads = Integer.valueOf(properties.getProperty(
-                "scheduler.priorityCoreThreads", "3"));
+                "scheduler.priorityCoreThreads", "2"));
         int priorityKeepAlive = Integer.valueOf(properties.getProperty(
                 "scheduler.priorityKeepAliveTime", "60"));
         int normalThreadPoolSize = Integer.valueOf(properties.getProperty(

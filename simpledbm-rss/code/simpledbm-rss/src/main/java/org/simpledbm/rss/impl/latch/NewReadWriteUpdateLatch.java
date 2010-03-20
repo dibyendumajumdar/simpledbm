@@ -109,6 +109,10 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     boolean waiting = false;
 
+    final boolean debugEnabled;
+
+    final boolean traceEnabled;
+
     /**
      * Defines the various lock release methods.
      * 
@@ -168,6 +172,18 @@ public final class NewReadWriteUpdateLatch implements Latch {
     public NewReadWriteUpdateLatch(PlatformObjects po) {
         this.log = po.getLogger();
         this.exceptionHandler = po.getExceptionHandler();
+        if (log.isDebugEnabled()) {
+            debugEnabled = true;
+        }
+        else {
+            debugEnabled = false;
+        }
+        if (log.isTraceEnabled()) {
+            traceEnabled = true;
+        }
+        else {
+            traceEnabled = false;
+        }
     }
 
     /*
@@ -235,7 +251,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     private void doAcquire(LockState lockState) {
 
-        if (log.isDebugEnabled()) {
+        if (debugEnabled) {
             log.debug(getClass().getName(), "doAcquire",
                     "SIMPLEDBM-DEBUG: Lock requested by "
                             + lockState.parms.owner + " for " + this
@@ -303,7 +319,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      */
     private boolean handleNewRequest(LockState lockState) {
         /* 4. If not, this is the first request by the transaction. */
-        if (log.isDebugEnabled()) {
+        if (debugEnabled) {
             log.debug(getClass().getName(), "handleNewRequest",
                     "SIMPLEDBM-DEBUG: New request by thread "
                             + lockState.parms.owner);
@@ -341,7 +357,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         queueAppend(lockState.lockRequest);
         if (can_grant) {
             /* 6. If yes, grant the lock and return success. */
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug(getClass().getName(), "handleNewRequest",
                         "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
                                 + this + ", therefore granting lock");
@@ -365,7 +381,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          * 11. If calling transaction already has a granted lock request
          * then this must be a conversion request.
          */
-        if (log.isTraceEnabled()) {
+        if (traceEnabled) {
             log.trace(getClass().getName(), "handleConversionRequest",
                     "SIMPLEDBM-DEBUG: Lock conversion request by thread "
                             + lockState.parms.owner);
@@ -390,7 +406,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              */
             if (lockState.parms.mode == lockState.lockRequest.mode) {
                 /* 13. If so, grant lock and return. */
-                if (log.isDebugEnabled()) {
+                if (debugEnabled) {
                     log
                             .debug(
                                     getClass().getName(),
@@ -413,7 +429,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
                 if (can_grant) {
                     /* 13. If so, grant lock and return. */
-                    if (log.isDebugEnabled()) {
+                    if (debugEnabled) {
                         log.debug(getClass().getName(),
                                 "handleConversionRequest",
                                 "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
@@ -487,13 +503,13 @@ public final class NewReadWriteUpdateLatch implements Latch {
     private void prepareToWait(LockState lockState) {
         waiting = true;
         if (!lockState.converting) {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug(getClass().getName(), "prepareToWait",
                         "SIMPLEDBM-DEBUG: Waiting for lock to be free");
             }
             lockState.lockRequest.status = LockRequestStatus.WAITING;
         } else {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log
                         .debug(
                                 getClass().getName(),
@@ -518,7 +534,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              * 9. If after the wait, the lock has been granted, then return
              * success.
              */
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug(getClass().getName(), "handleWaitResult",
                         "SIMPLEDBM-DEBUG: Woken up, and lock granted");
             }
@@ -526,7 +542,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         }
 
         /* 10. Else return failure. */
-        if (log.isDebugEnabled()) {
+        if (debugEnabled) {
             log.debug(getClass().getName(), "handleWaitResult",
                     "SIMPLEDBM-DEBUG: Woken up, and lock failed");
         }
@@ -579,7 +595,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
                 can_grant = checkCompatible(r, r.convertMode);
                 if (can_grant) {
-                    if (log.isDebugEnabled()) {
+                    if (debugEnabled) {
                         log
                                 .debug(
                                         getClass().getName(),
@@ -609,7 +625,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
             else if (r.status == LockRequestStatus.WAITING) {
                 if (!converting && r.mode.isCompatible(grantedMode)) {
-                    if (log.isDebugEnabled()) {
+                    if (debugEnabled) {
                         log
                                 .debug(
                                         getClass().getName(),
@@ -623,7 +639,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                     grantedMode = r.mode.maximumOf(grantedMode);
                     LockSupport.unpark(r.waitingThread);
                 } else {
-                    if (log.isDebugEnabled() && converting) {
+                    if (debugEnabled && converting) {
                         log
                                 .debug(
                                         getClass().getName(),
@@ -720,7 +736,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              * not release the lock request. Decrement reference count if
              * greater than 0, and, return Ok.
              */
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log
                         .debug(getClass().getName(), "release",
                                 "SIMPLEDBM-DEBUG: Count decremented but lock not released");
@@ -738,7 +754,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 && lockState.lockRequest == queueTail()
                 && lockState.parms.action != ReleaseAction.DOWNGRADE) {
             /* 7. If sole lock request, then release the lock and return Ok. */
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log
                         .debug(getClass().getName(), "release",
                                 "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
@@ -753,7 +769,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          * Otherwise, downgrade the mode assigned to the lock request.
          */
         if (lockState.parms.action != ReleaseAction.DOWNGRADE) {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug(getClass().getName(), "release",
                         "SIMPLEDBM-DEBUG: Removing lock request "
                                 + lockState.lockRequest
@@ -770,7 +786,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             LockMode mode = lockState.parms.downgradeMode
                     .maximumOf(lockState.lockRequest.mode);
             if (mode == lockState.lockRequest.mode) {
-                if (log.isDebugEnabled()) {
+                if (debugEnabled) {
                     log.debug(getClass().getName(), "release",
                             "SIMPLEDBM-DEBUG: Downgrading "
                                     + lockState.lockRequest + " to "
