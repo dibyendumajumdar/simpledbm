@@ -42,7 +42,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -383,12 +384,7 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      * @see #setupBackgroundThreads()
      */
-    ScheduledFuture<?> archiveService;
-
-    /**
-     * A queue of ArchiveRequest objects; read by the ArchiveRequestHandler
-     */
-    final LinkedBlockingQueue<ArchiveRequest> archiveQ = new LinkedBlockingQueue<ArchiveRequest>();
+    private ExecutorService archiveService;
 
     /**
      * The ArchiveCleaner task is responsible for deleting redundant archived
@@ -741,7 +737,13 @@ public final class LogManagerImpl implements LogManager {
             archiveCleaner.cancel(false);
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0031).toString());
-            archiveService.cancel(false);
+            archiveService.shutdown();
+            try {
+                archiveService.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException e1) {
+                logger.error(getClass().getName(), "shutdown",
+                        new MessageInstance(m_EW0004).toString(), e1);
+            }
             logger.info(this.getClass().getName(), "shutdown",
                     new MessageInstance(m_IW0034).toString());
             archiveLock.lock();
@@ -870,9 +872,7 @@ public final class LogManagerImpl implements LogManager {
         logger.info(this.getClass().getName(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0029).toString());
         
-        archiveService = platform.getScheduler().scheduleWithFixedDelay(
-                Priority.SERVER_TASK, new ArchiveRequestHandler(this),
-                10, 10, TimeUnit.SECONDS);
+        archiveService = Executors.newSingleThreadExecutor();
         logger.info(this.getClass().getName(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0033).toString());
         
@@ -1444,9 +1444,7 @@ public final class LogManagerImpl implements LogManager {
      * @see ArchiveRequestHandler
      */
     private void submitArchiveRequest(ArchiveRequest req) {
-        archiveQ.offer(req);
-        platform.getScheduler().execute(Priority.SERVER_TASK,
-                new ArchiveRequestHandler(this));
+        archiveService.submit(new ArchiveRequestHandler(this, req));
     }
 
     /**
@@ -3124,48 +3122,25 @@ public final class LogManagerImpl implements LogManager {
 
         final private LogManagerImpl logManager;
 
-        public ArchiveRequestHandler(LogManagerImpl log) {
+        final private ArchiveRequest request;
+
+        public ArchiveRequestHandler(LogManagerImpl log, ArchiveRequest req) {
             this.logManager = log;
+            this.request = req;
         }
 
-        /*
-         * (non-Javadoc)
-         * 
-         * @see java.util.concurrent.Callable#call()
-         */
         public void run() {
             /*
-             * We do not perform a check on error/stopped state
-             * because the request to archive may have come during shutdown
-             * sequence.
              * TODO Need to validate that this is the right thing to do.
              */
             if (logManager.isErrored() || logManager.stopArchiver) {
                 return;
             }
-            if (logManager.archiveLock.tryLock()) {
-                try {
-                    ArchiveRequest request = logManager.archiveQ.poll();
-                    while (null != request && !logManager.isErrored()
-                            && !logManager.stopArchiver) {
-                        logManager.handleNextArchiveRequest(request);
-                        request = logManager.archiveQ.poll();
-                    }
-                } catch (Exception e) {
-                    //                    Map<Thread, StackTraceElement[]> m = Thread
-                    //                            .getAllStackTraces();
-                    //                    for (Thread t : m.keySet()) {
-                    //                        StackTraceElement[] se = m.get(t);
-                    //                        System.err.println(t);
-                    //                        for (StackTraceElement el : se) {
-                    //                            System.err.println(el);
-                    //                        }
-                    //                    }
-                    logManager.logException(ArchiveRequestHandler.class
-                            .getName(), "call", m_EW0027, e);
-                } finally {
-                    logManager.archiveLock.unlock();
-                }
+            try {
+                logManager.handleNextArchiveRequest(request);
+            } catch (Exception e) {
+                logManager.logException(ArchiveRequestHandler.class.getName(),
+                        "run", m_EW0027, e);
             }
         }
     }
