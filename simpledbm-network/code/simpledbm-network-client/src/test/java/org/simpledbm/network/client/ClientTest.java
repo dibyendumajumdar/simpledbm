@@ -64,8 +64,8 @@ public class ClientTest extends BaseTestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        SimpleDBMServer server = new SimpleDBMServer();
-        server.run(new String[] { "create", "test.properties" });
+        Properties properties = parseProperties("test.properties");
+        SimpleDBMServer.create(properties);
     }
 
     protected void tearDown() throws Exception {
@@ -75,22 +75,24 @@ public class ClientTest extends BaseTestCase {
     static class MyServer implements Runnable {
 
         volatile boolean stop = false;
-        SimpleDBMServer server = new SimpleDBMServer();
+        final SimpleDBMServer server;
 
         MyServer() {
+            server = new SimpleDBMServer("test.properties");
         }
 
         public void run() {
             System.err.println("starting server");
             try {
-                server.run(new String[] { "open", "test.properties" });
+                server.open();
                 while (!stop) {
                     server.select();
                 }
-                server.shutdown();
             } catch (Exception e) {
                 System.err.println("failed to start server");
                 e.printStackTrace();
+            } finally {
+                server.shutdown();
             }
         }
 

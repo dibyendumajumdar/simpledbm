@@ -53,10 +53,8 @@ public class ServerTest extends BaseTestCase {
     }
 
     public void testBasics() {
-        SimpleDBMServer server = new SimpleDBMServer();
-        server.run(new String[] {"create", "test.properties"});
-        server.run(new String[] {"open", "test.properties"});
-        server.shutdown();
+        SimpleDBMServer.main(new String[] {"create", "test.properties"});
+//        SimpleDBMServer.main(new String[] {"open", "test.properties"});
     }
 
 }

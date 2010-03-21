@@ -50,61 +50,88 @@ import java.util.Properties;
 
 public class SimpleDBMServer {
 
+    final Properties properties;
+
     Platform platform;
-    
+
     NetworkServer networkServer = null;
 
-    private void usage() {
+    volatile boolean stop = false;
+
+    volatile boolean started = false;
+
+    private static void usage() {
         System.out.println("SimpleDBMServer create|open <properties-file>");
     }
 
-    public void run(String[] args) {
-        if (args.length != 2) {
-            usage();
-            System.exit(1);
-        }
-        Properties properties = parseProperties(args[1]);
-        if (properties == null) {
-            System.exit(1);
-        }
+    private static void run(String[] args) {
         String command = args[0];
         if ("create".equalsIgnoreCase(command)) {
-            create(properties);
+            create(parseProperties(args[1]));
         } else if ("open".equalsIgnoreCase(command)) {
-            open(properties);
+            SimpleDBMServer server = new SimpleDBMServer(args[1]);
+            try {
+                server.open();
+                while (!server.stop) {
+                    server.select();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                server.shutdown();
+            }
         } else {
             usage();
             System.exit(1);
         }
     }
 
-    private void create(Properties properties) {
+    public static void create(Properties properties) {
         DatabaseFactory.create(properties);
     }
 
-    private void open(Properties properties) {
+    public SimpleDBMServer(String propertiesFile) {
+        properties = parseProperties(propertiesFile);
+        started = false;
+        stop = false;
+    }
+
+    public synchronized void open() {
+        if (started) {
+            return;
+        }
         platform = new PlatformImpl(properties);
         SimpleDBMRequestHandler simpleDBMRequestHandler = new SimpleDBMRequestHandler();
         networkServer = NetworkUtil.createNetworkServer(platform,
                 simpleDBMRequestHandler, properties);
-        Runtime.getRuntime().addShutdownHook(
-                new MyShutdownThread(networkServer));
+        Runtime.getRuntime().addShutdownHook(new MyShutdownThread(this));
         networkServer.start();
+        started = true;
     }
 
-    public void select() {
+    public synchronized void select() {
+        if (!started) {
+            return;
+        }
         networkServer.select();
     }
 
     public void shutdown() {
-        if (networkServer != null) {
-            networkServer.shutdown();
-            networkServer = null;
+        if (!started) {
+            return;
         }
-        platform.shutdown();
+        stop = true;
+        synchronized (this) {
+            if (networkServer != null) {
+                networkServer.shutdown();
+                networkServer = null;
+            }
+            platform.shutdown();
+            started = false;
+        }
     }
 
-    private Properties parseProperties(String arg) {
+    private static Properties parseProperties(String arg) {
         InputStream in = Thread.currentThread().getContextClassLoader()
                 .getResourceAsStream(arg);
         if (null == in) {
@@ -135,9 +162,9 @@ public class SimpleDBMServer {
     }
 
     public static class MyShutdownThread extends Thread {
-        final NetworkServer server;
+        final SimpleDBMServer server;
 
-        MyShutdownThread(NetworkServer server) {
+        MyShutdownThread(SimpleDBMServer server) {
             super();
             this.server = server;
         }
@@ -150,7 +177,10 @@ public class SimpleDBMServer {
     }
 
     public static void main(String[] args) {
-        SimpleDBMServer server = new SimpleDBMServer();
-        server.run(args);
+        if (args.length != 2) {
+            usage();
+            System.exit(1);
+        }
+        run(args);
     }
 }

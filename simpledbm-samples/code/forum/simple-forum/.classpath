@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="src" path="test"/>
+	<classpathentry kind="lib" path="/Users/dibyendumajumdar/gwt-2.0.3/gwt-user.jar"/>
+	<classpathentry kind="lib" path="/Users/dibyendumajumdar/gwt-2.0.3/gwt-dev.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="lib" path="war/WEB-INF/lib/simpledbm-network-client-0.0.1-SNAPSHOT-jar-with-dependencies.jar"/>
+	<classpathentry kind="output" path="war/WEB-INF/classes"/>
+</classpath>
