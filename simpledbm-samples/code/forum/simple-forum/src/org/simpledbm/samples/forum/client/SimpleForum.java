@@ -1,6 +1,7 @@
 package org.simpledbm.samples.forum.client;
 
 import org.simpledbm.samples.forum.shared.FieldVerifier;
+
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,7 +33,7 @@ public class SimpleForum implements EntryPoint {
   /**
    * Create a remote service proxy to talk to the server-side Greeting service.
    */
-  private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
+  private final SimpleForumServiceAsync greetingService = GWT.create(SimpleForumService.class);
 
   /**
    * This is the entry point method.
