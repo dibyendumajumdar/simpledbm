@@ -1,6 +1,6 @@
-package org.simpledbm.samples.client;
+package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.shared.FieldVerifier;
+import org.simpledbm.samples.forum.shared.FieldVerifier;
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 /**
  * Entry point classes define <code>onModuleLoad()</code>.
  */
-public class forum implements EntryPoint {
+public class SimpleForum implements EntryPoint {
   /**
    * The message displayed to the user when the server cannot be reached or
    * returns an error.
@@ -32,7 +32,7 @@ public class forum implements EntryPoint {
   /**
    * Create a remote service proxy to talk to the server-side Greeting service.
    */
-  private final SimpleForumServiceAsync greetingService = GWT.create(SimpleForumService.class);
+  private final GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
 
   /**
    * This is the entry point method.

@@ -7,18 +7,18 @@
   
   <!-- Servlets -->
   <servlet>
-    <servlet-name>simpleForumServlet</servlet-name>
-    <servlet-class>org.simpledbm.samples.server.SimpleForumServiceImpl</servlet-class>
+    <servlet-name>greetServlet</servlet-name>
+    <servlet-class>org.simpledbm.samples.forum.server.GreetingServiceImpl</servlet-class>
   </servlet>
   
   <servlet-mapping>
-    <servlet-name>simpleForumServlet</servlet-name>
-    <url-pattern>/forum/greet</url-pattern>
+    <servlet-name>greetServlet</servlet-name>
+    <url-pattern>/simpleforum/greet</url-pattern>
   </servlet-mapping>
   
   <!-- Default page to serve -->
   <welcome-file-list>
-    <welcome-file>forum.html</welcome-file>
+    <welcome-file>SimpleForum.html</welcome-file>
   </welcome-file-list>
 
 </web-app>
