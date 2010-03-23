@@ -1,6 +1,7 @@
 package org.simpledbm.samples.forum.client;
 
 import org.simpledbm.samples.forum.shared.FieldVerifier;
+
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.junit.client.GWTTestCase;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -36,7 +37,7 @@ public class SimpleForumTest extends GWTTestCase {
    */
   public void testGreetingService() {
     // Create the service that we will test.
-    GreetingServiceAsync greetingService = GWT.create(GreetingService.class);
+    SimpleForumServiceAsync greetingService = GWT.create(SimpleForumService.class);
     ServiceDefTarget target = (ServiceDefTarget) greetingService;
     target.setServiceEntryPoint(GWT.getModuleBaseURL() + "/simpleforum/greet");
 

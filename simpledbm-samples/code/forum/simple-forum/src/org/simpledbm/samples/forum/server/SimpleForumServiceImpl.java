@@ -1,13 +1,10 @@
 package org.simpledbm.samples.forum.server;
 
-import java.util.Properties;
-
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
-import org.simpledbm.network.client.api.SessionManager;
-import org.simpledbm.samples.client.SimpleForumService;
-import org.simpledbm.samples.shared.FieldVerifier;
+import org.simpledbm.samples.forum.client.SimpleForumService;
+import org.simpledbm.samples.forum.shared.FieldVerifier;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 
@@ -48,26 +45,26 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
                 + ".<br><br>It looks like you are using:<br>" + userAgent;
     }
 
-    static final class SimpleDBMContext {
-
-        final SessionManager sm;
-
-        SimpleDBMContext() {
-            Properties properties = new Properties();
-            properties
-                    .setProperty(
-                            "logging.properties",
-                            "/Users/dibyendumajumdar/simpledbm-samples-workspace/simple-forum-db/config/simpledbm.logging.properties");
-            sm = SessionManager.getSessionManager(properties, "localhost",
-                    8000, 30);
-        }
-
-        void destroy() {
-        // Session session = sm.openSession();
-        // session.close();
-            if (sm != null) {
-                sm.getConnection().close();
-            }
-        }
-    }
+//    static final class SimpleDBMContext {
+//
+//        final SessionManager sm;
+//
+//        SimpleDBMContext() {
+//            Properties properties = new Properties();
+//            properties
+//                    .setProperty(
+//                            "logging.properties",
+//                            "/Users/dibyendumajumdar/simpledbm-samples-workspace/simple-forum-db/config/simpledbm.logging.properties");
+//            sm = SessionManager.getSessionManager(properties, "localhost",
+//                    8000, 30);
+//        }
+//
+//        void destroy() {
+//        // Session session = sm.openSession();
+//        // session.close();
+//            if (sm != null) {
+//                sm.getConnection().close();
+//            }
+//        }
+//    }
 }
