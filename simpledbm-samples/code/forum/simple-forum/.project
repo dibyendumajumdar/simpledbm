@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <projectDescription>
-   <name>forum</name>
-   <comment>forum project</comment>
+   <name>SimpleForum</name>
+   <comment>SimpleForum project</comment>
    <projects/>
    <buildSpec>
        <buildCommand>

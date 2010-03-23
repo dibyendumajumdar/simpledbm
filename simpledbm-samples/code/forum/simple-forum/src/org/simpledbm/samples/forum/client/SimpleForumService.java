@@ -1,4 +1,4 @@
-package org.simpledbm.samples.client;
+package org.simpledbm.samples.forum.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;

@@ -1,4 +1,4 @@
-package org.simpledbm.samples.server;
+package org.simpledbm.samples.forum.server;
 
 import java.util.Properties;
 

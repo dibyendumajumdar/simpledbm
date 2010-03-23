@@ -1,4 +1,4 @@
-package org.simpledbm.samples.shared;
+package org.simpledbm.samples.forum.shared;
 
 /**
  * <p>

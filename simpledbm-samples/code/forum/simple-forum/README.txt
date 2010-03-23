@@ -16,7 +16,7 @@ In Eclipse, go to the File menu and choose:
   File -> Import... -> Existing Projects into Workspace
 
   Browse to the directory containing this file,
-  select "forum".
+  select "SimpleForum".
   
   Be sure to uncheck "Copy projects into workspace" if it is checked.
   
@@ -29,7 +29,7 @@ To launch your web app in GWT development mode, go to the Run menu and choose:
   Run -> Open Debug Dialog...
 
   Under Java Application, you should find a launch configuration
-  named "forum".  Select and click "Debug".
+  named "SimpleForum".  Select and click "Debug".
 
   You can now use the built-in debugger to debug your web app in development mode.
 
