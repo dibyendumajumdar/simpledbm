@@ -33,7 +33,7 @@ public class SimpleForum implements EntryPoint {
   /**
    * Create a remote service proxy to talk to the server-side Greeting service.
    */
-  private final SimpleForumServiceAsync greetingService = GWT.create(SimpleForumService.class);
+  private final SimpleForumServiceAsync simpleForumService = GWT.create(SimpleForumService.class);
 
   /**
    * This is the entry point method.
@@ -119,7 +119,7 @@ public class SimpleForum implements EntryPoint {
         sendButton.setEnabled(false);
         textToServerLabel.setText(textToServer);
         serverResponseLabel.setText("");
-        greetingService.greetServer(textToServer, new AsyncCallback<String>() {
+        simpleForumService.greetServer(textToServer, new AsyncCallback<String>() {
           public void onFailure(Throwable caught) {
             // Show the RPC error message to the user
             dialogBox.setText("Remote Procedure Call - Failure");
