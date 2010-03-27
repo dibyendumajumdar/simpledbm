@@ -52,9 +52,10 @@ public class SimpleForum implements EntryPoint {
     public void onModuleLoad() {
         DockLayoutPanel outer = new DockLayoutPanel(Unit.EM);
         outer.addNorth(topPanel, 5);
-        outer.addWest(forums, 100);
         SplitLayoutPanel p = new SplitLayoutPanel();
-        p.add(forumTopics);
+        p.addWest(forums, 192);
+        p.addNorth(forumTopics, 200);
+        //p.add(topicThreads);
         outer.add(p);
         RootLayoutPanel root = RootLayoutPanel.get();
         root.add(outer);

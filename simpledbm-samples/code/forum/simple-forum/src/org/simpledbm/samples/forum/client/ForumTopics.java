@@ -1,89 +1,102 @@
 package org.simpledbm.samples.forum.client;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.HasHorizontalAlignment;
+import com.google.gwt.user.client.ui.ResizeComposite;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
-public class ForumTopics extends Composite implements ClickHandler {
+public class ForumTopics extends ResizeComposite implements ClickHandler {
 
-    private static final int VISIBLE_TOPICS_COUNT = 10;
-
-    private HTML countLabel = new HTML();
-    private HTML newerButton = new HTML("<a href='javascript:;'>&lt; newer</a>",
-        true);
-    private HTML olderButton = new HTML("<a href='javascript:;'>older &gt;</a>",
-        true);
-    private int startIndex, selectedRow = -1;
-    private FlexTable table = new FlexTable();
-    private HorizontalPanel navBar = new HorizontalPanel();
-    
-    private TopicList topicList = new TopicList();
-
-    public ForumTopics() {
-      // Setup the table.
-      table.setCellSpacing(0);
-      table.setCellPadding(0);
-      table.setWidth("100%");
-
-      // Hook up events.
-      table.addClickHandler(this);
-      newerButton.addClickHandler(this);
-      olderButton.addClickHandler(this);
-
-      // Create the 'navigation' bar at the upper-right.
-      HorizontalPanel innerNavBar = new HorizontalPanel();
-      navBar.setStyleName("mail-ListNavBar");
-      innerNavBar.add(newerButton);
-      innerNavBar.add(countLabel);
-      innerNavBar.add(olderButton);
-
-      navBar.setHorizontalAlignment(HorizontalPanel.ALIGN_RIGHT);
-      navBar.add(innerNavBar);
-      navBar.setWidth("100%");
-
-      initWidget(table);
-      setStyleName("mail-List");
-
-      initTable();
-      update();
+    /**
+     * Callback when mail items are selected.
+     */
+    public interface Listener {
+        void onItemSelected(Topic item);
     }
 
-    public void onClick(ClickEvent event) {
-      Object sender = event.getSource();
-      if (sender == olderButton) {
-        // Move forward a page.
-        startIndex += VISIBLE_TOPICS_COUNT;
-        if (startIndex >= topicList.getTopicCount()) {
-          startIndex -= VISIBLE_TOPICS_COUNT;
-        } else {
-          styleRow(selectedRow, false);
-          selectedRow = -1;
-          update();
+    static final int VISIBLE_TOPICS_COUNT = 10;
+
+    private HTML newerButton = new HTML(
+            "<a href='javascript:;'>&lt; newer</a>", true);
+    private HTML olderButton = new HTML(
+            "<a href='javascript:;'>older &gt;</a>", true);
+    private int startIndex, selectedRow = -1;
+    private FlexTable table = new FlexTable();
+
+    private TopicList topicList = new TopicList();
+
+    private DockLayoutPanel panel = new DockLayoutPanel(Unit.EM);
+    private FlexTable header = new FlexTable();
+
+    private Listener listener;
+    private NavBar navBar;
+
+    public ForumTopics() {
+        // Setup the table.
+        ScrollPanel sp = new ScrollPanel();
+        sp.add(table);
+
+        panel.addNorth(header, 2);
+        panel.add(sp);
+        initWidget(panel);
+        navBar = new NavBar(this);
+        
+        initTable();
+        update();
+    }
+
+    /**
+     * Sets the listener that will be notified when an item is selected.
+     */
+    public void setListener(Listener listener) {
+        this.listener = listener;
+    }
+
+    @Override
+    protected void onLoad() {
+        // Select the first row if none is selected.
+        if (selectedRow == -1) {
+            selectRow(0);
         }
-      } else if (sender == newerButton) {
+    }
+
+    void newer() {
         // Move back a page.
         startIndex -= VISIBLE_TOPICS_COUNT;
         if (startIndex < 0) {
-          startIndex = 0;
+            startIndex = 0;
         } else {
-          styleRow(selectedRow, false);
-          selectedRow = -1;
-          update();
+            styleRow(selectedRow, false);
+            selectedRow = -1;
+            update();
         }
-      } else if (sender == table) {
+    }
+
+    void older() {
+        // Move forward a page.
+        startIndex += VISIBLE_TOPICS_COUNT;
+        if (startIndex >= topicList.getTopicCount()) {
+            startIndex -= VISIBLE_TOPICS_COUNT;
+        } else {
+            styleRow(selectedRow, false);
+            selectedRow = -1;
+            update();
+        }
+    }
+
+    void onTableClicked(ClickEvent event) {
         // Select the row that was clicked (-1 to account for header row).
         Cell cell = table.getCellForEvent(event);
         if (cell != null) {
-          int row = cell.getRowIndex();
-          if (row > 0) {
-            selectRow(row - 1);
-          }
+            int row = cell.getRowIndex();
+            selectRow(row);
         }
-      }
     }
 
     /**
@@ -91,26 +104,21 @@ public class ForumTopics extends Composite implements ClickHandler {
      * emails. Also creates the images that will be used as 'read' flags.
      */
     private void initTable() {
-      // Create the header row.
-      table.setText(0, 0, "Topic");
-      table.setText(0, 1, "Author");
-      table.setText(0, 2, "Updated");
-      table.setText(0, 3, "Posts");
-      table.setWidget(0, 3, navBar);
-      table.getRowFormatter().setStyleName(0, "mail-ListHeader");
+        // Initialize the header.
+        header.getColumnFormatter().setWidth(0, "128px");
+        header.getColumnFormatter().setWidth(1, "192px");
+        header.getColumnFormatter().setWidth(3, "256px");
 
-      // Initialize the rest of the rows.
-      for (int i = 0; i < VISIBLE_TOPICS_COUNT; ++i) {
-        table.setText(i + 1, 0, "");
-        table.setText(i + 1, 1, "");
-        table.setText(i + 1, 2, "");
-        table.setText(i + 1, 3, "");
-        table.getCellFormatter().setWordWrap(i + 1, 0, false);
-        table.getCellFormatter().setWordWrap(i + 1, 1, false);
-        table.getCellFormatter().setWordWrap(i + 1, 2, false);
-        table.getCellFormatter().setWordWrap(i + 1, 3, false);
-        table.getFlexCellFormatter().setColSpan(i + 1, 2, 2);
-      }
+        header.setText(0, 0, "Author");
+        header.setText(0, 1, "Last Updated");
+        header.setText(0, 2, "Title");
+        header.setWidget(0, 3, navBar);
+        header.getCellFormatter().setHorizontalAlignment(0, 3,
+                HasHorizontalAlignment.ALIGN_RIGHT);
+
+        // Initialize the table.
+        table.getColumnFormatter().setWidth(0, "128px");
+        table.getColumnFormatter().setWidth(1, "192px");
     }
 
     /**
@@ -119,75 +127,82 @@ public class ForumTopics extends Composite implements ClickHandler {
      * @param row the row to be selected
      */
     private void selectRow(int row) {
-      // When a row (other than the first one, which is used as a header) is
-      // selected, display its associated MailItem.
-//      MailItem item = MailItems.getMailItem(startIndex + row);
-//      if (item == null) {
-//        return;
-//      }
-//
-//      styleRow(selectedRow, false);
-//      styleRow(row, true);
-//
-//      item.read = true;
-//      selectedRow = row;
-//      Mail.get().displayItem(item);
+        // When a row (other than the first one, which is used as a header) is
+        // selected, display its associated MailItem.
+        Topic item = topicList.getTopic(startIndex + row);
+        if (item == null) {
+            return;
+        }
+
+        styleRow(selectedRow, false);
+        styleRow(row, true);
+
+        item.read = true;
+        selectedRow = row;
+
+        if (listener != null) {
+            listener.onItemSelected(item);
+        }
     }
 
     private void styleRow(int row, boolean selected) {
-      if (row != -1) {
-        if (selected) {
-          table.getRowFormatter().addStyleName(row + 1, "mail-SelectedRow");
-        } else {
-          table.getRowFormatter().removeStyleName(row + 1, "mail-SelectedRow");
+        if (row != -1) {
+            if (selected) {
+                table.getRowFormatter().addStyleName(row, "mail-SelectedRow");
+            } else {
+                table.getRowFormatter()
+                        .removeStyleName(row, "mail-SelectedRow");
+            }
         }
-      }
+
     }
 
     private void update() {
-      // Update the older/newer buttons & label.
-      int count = topicList.getTopicCount();
-      int max = startIndex + VISIBLE_TOPICS_COUNT;
-      if (max > count) {
-        max = count;
-      }
-
-      newerButton.setVisible(startIndex != 0);
-      olderButton.setVisible(startIndex + VISIBLE_TOPICS_COUNT < count);
-      countLabel.setText("" + (startIndex + 1) + " - " + max + " of " + count);
-
-      // Show the selected emails.
-      int i = 0;
-      for (; i < VISIBLE_TOPICS_COUNT; ++i) {
-        // Don't read past the end.
-        if (startIndex + i >= topicList.getTopicCount()) {
-          break;
+        // Update the older/newer buttons & label.
+        int count = topicList.getTopicCount();
+        int max = startIndex + VISIBLE_TOPICS_COUNT;
+        if (max > count) {
+            max = count;
         }
 
-        Topic item = topicList.getTopic(startIndex + i);
+        // Update the nav bar.
+        navBar.update(startIndex, count, max);
 
-        // Add a new row to the table, then set each of its columns to the
-        // email's sender and subject values.
-        table.setText(i + 1, 0, item.getTitle());
-        table.setText(i + 1, 1, item.getStartedBy());
-        table.setText(i + 1, 2, item.getLastPost());
-        table.setText(i + 1, 3, item.getNumPosts());
-      }
+        // Show the selected emails.
+        int i = 0;
+        for (; i < VISIBLE_TOPICS_COUNT; ++i) {
+            // Don't read past the end.
+            if (startIndex + i >= topicList.getTopicCount()) {
+                break;
+            }
 
-      // Clear any remaining slots.
-      for (; i < VISIBLE_TOPICS_COUNT; ++i) {
-        table.setHTML(i + 1, 0, "&nbsp;");
-        table.setHTML(i + 1, 1, "&nbsp;");
-        table.setHTML(i + 1, 2, "&nbsp;");
-        table.setHTML(i + 1, 3, "&nbsp;");
-        
-      }
+            Topic item = topicList.getTopic(startIndex + i);
 
-      // Select the first row if none is selected.
-      if (selectedRow == -1) {
-        selectRow(0);
-      }
+            // Add a new row to the table, then set each of its columns to the
+            // email's sender and subject values.
+            table.setText(i, 0, item.getLastPoster());
+            table.setText(i, 1, item.getLastPost());
+            table.setText(i, 2, item.getTitle());
+        }
+
+        // Clear any remaining slots.
+        for (; i < VISIBLE_TOPICS_COUNT; ++i) {
+            table.removeRow(table.getRowCount() - 1);
+        }
     }
-    
-    
+
+    public void onClick(ClickEvent event) {
+        Object sender = event.getSource();
+        if (sender == olderButton) {
+            older();
+        } else if (sender == newerButton) {
+            // Move back a page.
+            newer();
+        } else if (sender == table) {
+            // Select the row that was clicked (-1 to account for header row).
+            onTableClicked(event);
+        }
+    }
+
+
 }

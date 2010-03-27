@@ -7,6 +7,7 @@ public class Topic {
     String numPosts = "10";
     String startedBy = "dibyendu";
     String lastPoster = "nfoto";
+    public boolean read;
     
     public String getTitle() {
         return title;

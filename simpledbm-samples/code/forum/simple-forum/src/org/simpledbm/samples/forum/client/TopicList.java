@@ -7,7 +7,6 @@ public class TopicList {
     }
 
     public Topic getTopic(int i) {
-        // TODO Auto-generated method stub
         return new Topic();
     }
 
