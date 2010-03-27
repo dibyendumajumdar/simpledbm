@@ -29,9 +29,9 @@ public class Forums extends Composite {
     
     public Forums() {
         
-        panel.setBorderWidth(1);
+        // panel.setBorderWidth(1);
         panel.setSpacing(5);
-        panel.setWidth("10%");
+        panel.setWidth("100%");
         addForum(new Forum("Nikon", "Discuss Nikon cameras"));
         addForum(new Forum("Leica", "Discuss Leica cameras"));
         
