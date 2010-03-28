@@ -44,7 +44,7 @@ public class SimpleForum implements EntryPoint {
     TopPanel topPanel = new TopPanel();
     Forums forums = new Forums();
     ForumTopics forumTopics = new ForumTopics();
-    TopicPosts topicThreads = new TopicPosts();   
+    TopicPosts topicThreads = new TopicPosts();
 
     /**
      * This is the entry point method.
@@ -55,7 +55,7 @@ public class SimpleForum implements EntryPoint {
         SplitLayoutPanel p = new SplitLayoutPanel();
         p.addWest(forums, 192);
         p.addNorth(forumTopics, 200);
-        //p.add(topicThreads);
+        p.add(topicThreads);
         outer.add(p);
         RootLayoutPanel root = RootLayoutPanel.get();
         root.add(outer);

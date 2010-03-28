@@ -1,34 +1,162 @@
 /** Add css rules here for your application. */
-
-
-/** Example rules used by the template application (remove for your app) */
-h1 {
-  font-size: 2em;
-  font-weight: bold;
-  color: #777777;
-  margin: 40px 0px 70px;
-  text-align: center;
+body,table {
+	font-size: small;
 }
 
-.sendButton {
-  display: block;
-  font-size: 16pt;
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	color: #000;
+	background: #fff;
 }
 
-/** Most GWT widgets already have a style name defined */
+a:link,a:visited,a:hover,a:active {
+	color: #000;
+}
+
+/* Dialog boxes */
+.dialogTopLeftInner,.dialogMiddleLeftInner,.dialogBottomLeftInner,.dialogTopRightInner,.dialogMiddleRightInner,.dialogBottomRightInner
+	{
+	display: none;
+}
+
 .gwt-DialogBox {
-  width: 400px;
+	background-color: white;
+	border: 1px solid #666;
+	z-index: 2;
 }
 
-.dialogVPanel {
-  margin: 5px;
+.gwt-DialogBox .Caption {
+	background: #d3d6dd url(gradient_bg_th.png) repeat-x bottom left;
+	font-weight: bold;
+	text-shadow: #fff 0 2px 2px;
+	cursor: default;
+	padding: 5px 10px;
+	border-bottom: 1px solid #999;
+	text-align: left;
 }
 
-.serverResponseLabelError {
-  color: red;
+.gwt-DialogBox .dialogContent {
+	
 }
 
-/** Set ids using widget.getElement().setId("idOfElement") */
-#closeButton {
-  margin: 15px 6px 6px;
+.gwt-DialogBox .gwt-Button {
+	margin: 10px;
+}
+
+.gwt-PopupPanelGlass {
+	background-color: #000;
+	opacity: 0.3;
+	filter: literal("alpha(opacity=30)");
+	z-index: 2;
+}
+
+/* GWT Tree */
+.gwt-Tree {
+	
+}
+
+.gwt-Tree .gwt-TreeItem {
+	padding: 0;
+	cursor: hand;
+	cursor: pointer;
+	display: block !important;
+}
+
+.gwt-Tree .gwt-TreeItem-selected {
+	background: #ccc;
+}
+
+/* Splitters */
+.gwt-SplitLayoutPanel-HDragger,.gwt-SplitLayoutPanel-VDragger {
+	background-color: white;
+}
+
+.gwt-SplitLayoutPanel-HDragger {
+	cursor: col-resize;
+}
+
+.gwt-SplitLayoutPanel-VDragger {
+	cursor: row-resize;
+}
+
+.forums {
+	border-top: 1px solid #999;
+	border-right: 1px solid #999;
+}
+
+.forumTopics {
+	border-left: 1px solid #999;
+	border-bottom: 1px solid #999;
+	cursor: pointer;
+	cursor: hand;
+}
+
+h2 {
+	background-color: #d3d6dd;
+	margin-top: 0;
+}
+
+.header {
+	background-color: #d3d6dd;
+	table-layout: fixed;
+	width: 100%;
+	height: 100%;
+}
+
+.header td {
+	font-weight: bold;
+	text-shadow: #fff 0 2px 2px;
+	padding: 2px 0 1px 10px;
+	border-top: 1px solid #999;
+	border-bottom: 1px solid #999;
+}
+
+.table {
+	table-layout: fixed;
+	width: 100%;
+}
+
+.table td {
+	border-top: 1px solid #fff;
+	border-bottom: 1px solid #fff;
+	padding: 2px 0 2px 10px;
+}
+
+.selectedRow {
+	background: #adcce7;
+}
+
+.selectedRow td {
+	border-top: 1px solid #88a4d6;
+	border-bottom: 1px solid #7b97d0;
+}
+
+.pager {
+	margin: 0 8px;
+	float: right;
+}
+
+.post { /*	table-layout: fixed; */
+	width: 100%;
+	margin-top: 5px;
+	margin-bottom: 5px;
+	padding: 2px 10px 1px 10px;
+}
+
+.posts {
+	border-top: 1px solid #999;
+	border-left: 1px solid #999;
+}
+
+.postheader { /* background-color: #d3d6dd; */
+	/* 	table-layout: fixed; */
+	width: 100%;
+}
+
+.postheader td {
+	font-weight: bold;
+	text-shadow: #fff 0 2px 2px;
+	padding: 2px 0 1px 10px;
+	/* border-top: 1px solid #999; */
+	border-bottom: 1px solid #999;
 }
