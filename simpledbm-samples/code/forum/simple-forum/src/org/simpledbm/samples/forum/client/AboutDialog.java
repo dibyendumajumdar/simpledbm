@@ -11,7 +11,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class AboutDialog extends DialogBox {
     public AboutDialog() {
         // Use this opportunity to set the dialog's caption.
-        setText("About the Mail Sample");
+        setText("About the SimpleForum Sample");
 
         // Create a VerticalPanel to contain the 'about' label and the 'OK' button.
         VerticalPanel outer = new VerticalPanel();
@@ -20,9 +20,9 @@ public class AboutDialog extends DialogBox {
 
         HTML text = new HTML(
                 "This sample application demonstrates the "
-                        + "construction of a complex user interface using GWT's built-in "
-                        + "widgets.  Have a look at the code to see how easy it is to build "
-                        + "your own apps!");
+                        + "SimpleDBM's network client server API in a simple "
+                        + "web application. The user interface of this application is "
+                        + "built using GWT.");
         text.setStyleName("mail-AboutText");
         outer.add(text);
 

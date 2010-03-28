@@ -43,8 +43,8 @@ public class SimpleForum implements EntryPoint {
 
     TopPanel topPanel = new TopPanel();
     Forums forums = new Forums();
-    ForumTopics forumTopics = new ForumTopics();
-    TopicPosts topicThreads = new TopicPosts();
+    Topics forumTopics = new Topics();
+    Posts topicThreads = new Posts();
 
     /**
      * This is the entry point method.
