@@ -10,26 +10,6 @@ public class Forums extends Composite {
 
     FlowPanel panel = new FlowPanel();
 
-    private class Forum {
-        String name;
-        String description;
-
-        public Forum(String name, String description) {
-            super();
-            this.name = name;
-            this.description = description;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-    }
-
     public Forums() {
 
         panel.setStyleName("forums");

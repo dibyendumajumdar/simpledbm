@@ -1,8 +1,5 @@
 package org.simpledbm.samples.forum.client;
 
-import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.Widget;
-
 public class Post {
 
     String author;
@@ -31,17 +28,5 @@ public class Post {
 
     public void setContent(String content) {
         this.content = content;
-    }
-
-    Widget toWidget() {
-        FlexTable table = new FlexTable();
-        table.setCellPadding(0);
-        table.setCellSpacing(0);
-        table.setStyleName("post");
-        table.setText(0, 0, "author: " + author);
-        table.getRowFormatter().setStyleName(0, "postheader");
-        table.setText(1, 0, "this is the body of the post");
-        System.err.println(table);
-        return table;
     }
 }
