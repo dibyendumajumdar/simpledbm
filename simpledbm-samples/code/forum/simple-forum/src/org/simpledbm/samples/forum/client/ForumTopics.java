@@ -5,7 +5,6 @@ import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -22,10 +21,6 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
 
     static final int VISIBLE_TOPICS_COUNT = 10;
 
-    private HTML newerButton = new HTML(
-            "<a href='javascript:;'>&lt; newer</a>", true);
-    private HTML olderButton = new HTML(
-            "<a href='javascript:;'>older &gt;</a>", true);
     private int startIndex, selectedRow = -1;
     private FlexTable table = new FlexTable();
 
@@ -42,11 +37,12 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
         ScrollPanel sp = new ScrollPanel();
         sp.add(table);
 
+        panel.setStyleName("forumTopics");
         panel.addNorth(header, 2);
         panel.add(sp);
         initWidget(panel);
+
         navBar = new NavBar(this);
-        
         initTable();
         update();
     }
@@ -105,6 +101,9 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
      */
     private void initTable() {
         // Initialize the header.
+        header.setCellPadding(0);
+        header.setCellSpacing(0);
+        header.setStyleName("header");
         header.getColumnFormatter().setWidth(0, "128px");
         header.getColumnFormatter().setWidth(1, "192px");
         header.getColumnFormatter().setWidth(3, "256px");
@@ -117,8 +116,13 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
                 HasHorizontalAlignment.ALIGN_RIGHT);
 
         // Initialize the table.
+        table.setCellPadding(0);
+        table.setCellSpacing(0);
+        table.setStyleName("table");
         table.getColumnFormatter().setWidth(0, "128px");
         table.getColumnFormatter().setWidth(1, "192px");
+        
+        table.addClickHandler(this);
     }
 
     /**
@@ -148,10 +152,10 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
     private void styleRow(int row, boolean selected) {
         if (row != -1) {
             if (selected) {
-                table.getRowFormatter().addStyleName(row, "mail-SelectedRow");
+                table.getRowFormatter().addStyleName(row, "selectedRow");
             } else {
                 table.getRowFormatter()
-                        .removeStyleName(row, "mail-SelectedRow");
+                        .removeStyleName(row, "selectedRow");
             }
         }
 
@@ -177,6 +181,7 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
             }
 
             Topic item = topicList.getTopic(startIndex + i);
+            System.err.println("Adding " + item.getStartedBy());
 
             // Add a new row to the table, then set each of its columns to the
             // email's sender and subject values.
@@ -186,19 +191,15 @@ public class ForumTopics extends ResizeComposite implements ClickHandler {
         }
 
         // Clear any remaining slots.
-        for (; i < VISIBLE_TOPICS_COUNT; ++i) {
-            table.removeRow(table.getRowCount() - 1);
-        }
+//        for (; i < VISIBLE_TOPICS_COUNT; ++i) {
+//            table.removeRow(table.getRowCount() - 1);
+//        }
+        System.err.println(table.getRowCount());
     }
 
     public void onClick(ClickEvent event) {
         Object sender = event.getSource();
-        if (sender == olderButton) {
-            older();
-        } else if (sender == newerButton) {
-            // Move back a page.
-            newer();
-        } else if (sender == table) {
+        if (sender == table) {
             // Select the row that was clicked (-1 to account for header row).
             onTableClicked(event);
         }
