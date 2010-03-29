@@ -1,7 +1,9 @@
 package org.simpledbm.samples.forum.client;
 
-public class Post {
+import java.io.Serializable;
 
+public class Post implements Serializable {
+    private static final long serialVersionUID = 1L;
     String author;
     String dateTime;
     String content;

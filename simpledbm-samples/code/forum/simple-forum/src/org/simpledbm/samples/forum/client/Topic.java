@@ -1,12 +1,14 @@
 package org.simpledbm.samples.forum.client;
 
-public class Topic {
+import java.io.Serializable;
 
+public class Topic implements Serializable {
+    private static final long serialVersionUID = 1L;
     String title = "test";
     String lastPost = "10:00";
     String numPosts = "10";
-    String startedBy = "dibyendu";
-    String lastPoster = "nfoto";
+    String startedBy = "anonymous";
+    String lastPoster = "anonymous";
     public boolean read;
 
     public String getTitle() {
