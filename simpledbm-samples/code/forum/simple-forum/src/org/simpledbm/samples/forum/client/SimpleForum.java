@@ -42,9 +42,9 @@ public class SimpleForum implements EntryPoint {
             .create(SimpleForumService.class);
 
     TopPanel topPanel = new TopPanel();
-    Forums forums = new Forums();
-    Topics forumTopics = new Topics();
-    Posts topicThreads = new Posts();
+    Topics topics = new Topics();
+    Forums forums = new Forums(topics);
+    Posts posts = new Posts();
 
     /**
      * This is the entry point method.
@@ -54,8 +54,8 @@ public class SimpleForum implements EntryPoint {
         outer.addNorth(topPanel, 5);
         SplitLayoutPanel p = new SplitLayoutPanel();
         p.addWest(forums, 192);
-        p.addNorth(forumTopics, 200);
-        p.add(topicThreads);
+        p.addNorth(topics, 200);
+        p.add(posts);
         outer.add(p);
         RootLayoutPanel root = RootLayoutPanel.get();
         root.add(outer);

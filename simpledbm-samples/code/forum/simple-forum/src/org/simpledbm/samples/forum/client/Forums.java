@@ -9,9 +9,10 @@ import com.google.gwt.user.client.ui.HTML;
 public class Forums extends Composite {
 
     FlowPanel panel = new FlowPanel();
+    final Topics topics;
 
-    public Forums() {
-
+    public Forums(Topics topics) {
+        this.topics = topics;
         panel.setStyleName("forums");
         panel.add(new HTML("<h2>Forums</h2>"));
         addForum(new Forum("Nikon", "Discuss Nikon cameras"));
@@ -30,7 +31,7 @@ public class Forums extends Composite {
         // Add a click handler that displays a ContactPopup when it is clicked.
         link.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                System.err.println("Clicked " + link.getText());
+                topics.getTopics(link.getText());
             }
         });
     }

@@ -1,6 +1,14 @@
 package org.simpledbm.samples.forum.client;
 
-public class Forum {
+import java.io.Serializable;
+
+/**
+ * A Forum contains topics. Forums must have a unique name.
+ * 
+ * @author dibyendumajumdar
+ */
+public class Forum implements Serializable {
+    private static final long serialVersionUID = 1L;
     String name;
     String description;
 
