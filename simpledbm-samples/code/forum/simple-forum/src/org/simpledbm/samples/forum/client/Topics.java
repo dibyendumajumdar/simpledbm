@@ -1,6 +1,6 @@
 package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.forum.client.RequestProcessor.TopicListHandler;
+import org.simpledbm.samples.forum.client.RequestProcessor.TopicsViewHandler;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -13,14 +13,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 public class Topics extends ResizeComposite implements ClickHandler,
-        TopicListHandler {
-
-    /**
-     * Callback when mail items are selected.
-     */
-    public interface Listener {
-        void onItemSelected(Topic item);
-    }
+        TopicsViewHandler {
 
     static final int VISIBLE_TOPICS_COUNT = 10;
 
@@ -32,8 +25,9 @@ public class Topics extends ResizeComposite implements ClickHandler,
     private DockLayoutPanel panel = new DockLayoutPanel(Unit.EM);
     private FlexTable header = new FlexTable();
 
-    private Listener listener;
     private TopicsMenu navBar;
+
+    private TopicsHandler topicsHandler;
 
     public Topics() {
         // Setup the table.
@@ -48,13 +42,6 @@ public class Topics extends ResizeComposite implements ClickHandler,
         navBar = new TopicsMenu(this);
         initTable();
         //        update();
-    }
-
-    /**
-     * Sets the listener that will be notified when an item is selected.
-     */
-    public void setListener(Listener listener) {
-        this.listener = listener;
     }
 
     @Override
@@ -147,9 +134,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
         item.read = true;
         selectedRow = row;
 
-        if (listener != null) {
-            listener.onItemSelected(item);
-        }
+        topicsHandler.onTopicSelection(item.getTitle());
     }
 
     private void styleRow(int row, boolean selected) {
@@ -213,6 +198,13 @@ public class Topics extends ResizeComposite implements ClickHandler,
     public void update(TopicList topicList) {
         this.topicList = topicList;
         update();
+        if (selectedRow == -1) {
+            selectRow(0);
+        }
+    }
+
+    public void setTopicsHandler(TopicsHandler topicsHandler) {
+        this.topicsHandler = topicsHandler;
     }
 
 }
