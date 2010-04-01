@@ -3,6 +3,7 @@ package org.simpledbm.samples.forum.server;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
+import org.simpledbm.samples.forum.client.Forum;
 import org.simpledbm.samples.forum.client.SimpleForumService;
 import org.simpledbm.samples.forum.client.Topic;
 import org.simpledbm.samples.forum.client.TopicList;
@@ -48,26 +49,29 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     }
 
     public TopicList getTopics(String forumName) {
-
-        if (forumName.equals("Nikon")) {
-            Topic[] topics = new Topic[5];
-            for (int i = 0; i < topics.length; i++) {
-                topics[i] = new Topic();
-                topics[i].setTitle("Nikon topic " + i);
-            }
-            TopicList topicList = new TopicList();
-            topicList.setTopics(topics);
-            return topicList;
-        } else {
-            Topic[] topics = new Topic[5];
-            for (int i = 0; i < topics.length; i++) {
-                topics[i] = new Topic();
-                topics[i].setTitle("Zeiss topic " + i);
-            }
-            TopicList topicList = new TopicList();
-            topicList.setTopics(topics);
-            return topicList;
+        Topic[] topics = new Topic[5];
+        for (int i = 0; i < topics.length; i++) {
+            topics[i] = new Topic();
+            topics[i].setTitle(forumName + " topic " + i);
         }
+        TopicList topicList = new TopicList();
+        topicList.setTopics(topics);
+        return topicList;
+    }
+
+    public Forum[] getForums() {
+        Forum[] forums = new Forum[10];
+        forums[0] = new Forum("Nikon", "Nikon Discussions");
+        forums[1] = new Forum("Canon", "Canon Discussions");
+        forums[2] = new Forum("Leica", "Leica Discussions");
+        forums[3] = new Forum("Zeiss", "Zeiss Discussions");
+        forums[4] = new Forum("Ricoh", "Ricoh Discussions");
+        forums[5] = new Forum("Sony", "Sony Discussions");
+        forums[6] = new Forum("Olympus", "Olympus Discussions");
+        forums[7] = new Forum("Panasonic", "Panasonic Discussions");
+        forums[8] = new Forum("Pentax", "Pentax Discussions");
+        forums[9] = new Forum("Kodak", "Kodak Discussions");
+        return forums;
     }
 
     //    static final class SimpleDBMContext {

@@ -10,4 +10,6 @@ public interface SimpleForumServiceAsync {
             throws IllegalArgumentException;
 
     void getTopics(String forumName, AsyncCallback<TopicList> callback);
+
+    void getForums(AsyncCallback<Forum[]> callback);
 }

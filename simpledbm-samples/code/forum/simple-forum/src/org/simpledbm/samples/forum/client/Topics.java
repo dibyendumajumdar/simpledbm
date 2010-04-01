@@ -1,11 +1,10 @@
 package org.simpledbm.samples.forum.client;
 
-import com.google.gwt.core.client.GWT;
+import org.simpledbm.samples.forum.client.RequestProcessor.TopicListHandler;
+
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -13,7 +12,8 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
-public class Topics extends ResizeComposite implements ClickHandler {
+public class Topics extends ResizeComposite implements ClickHandler,
+        TopicListHandler {
 
     /**
      * Callback when mail items are selected.
@@ -35,13 +35,6 @@ public class Topics extends ResizeComposite implements ClickHandler {
     private Listener listener;
     private TopicsMenu navBar;
 
-    /**
-     * Create a remote service proxy to talk to the server-side Greeting
-     * service.
-     */
-    private final SimpleForumServiceAsync simpleForumService = GWT
-            .create(SimpleForumService.class);
-
     public Topics() {
         // Setup the table.
         ScrollPanel sp = new ScrollPanel();
@@ -54,28 +47,7 @@ public class Topics extends ResizeComposite implements ClickHandler {
 
         navBar = new TopicsMenu(this);
         initTable();
-        getTopics("Nikon");
-//        update();
-    }
-
-    void getTopics(String forumName) {
-        simpleForumService.getTopics(forumName,
-                new AsyncCallback<TopicList>() {
-                    public void onFailure(Throwable caught) {
-                        // Show the RPC error message to the user
-                        Window.alert("Failed to get topis: " + caught.getMessage());
-                        Topic[] topics = new Topic[1];
-                        topics[0] = new Topic();
-                        topicList = new TopicList();
-                        topicList.setTopics(topics);
-                    }
-
-                    public void onSuccess(TopicList result) {
-                        topicList = result;
-                        update();
-                        selectRow(0);
-                    }
-                });
+        //        update();
     }
 
     /**
@@ -88,9 +60,9 @@ public class Topics extends ResizeComposite implements ClickHandler {
     @Override
     protected void onLoad() {
         // Select the first row if none is selected.
-//        if (selectedRow == -1) {
-//            selectRow(0);
-//        }
+        //        if (selectedRow == -1) {
+        //            selectRow(0);
+        //        }
     }
 
     void newer() {
@@ -233,6 +205,14 @@ public class Topics extends ResizeComposite implements ClickHandler {
             // Select the row that was clicked (-1 to account for header row).
             onTableClicked(event);
         }
+    }
+
+    public void showBusy() {
+    }
+
+    public void update(TopicList topicList) {
+        this.topicList = topicList;
+        update();
     }
 
 }

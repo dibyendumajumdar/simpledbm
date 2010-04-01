@@ -8,11 +8,11 @@ public class TopicList implements Serializable {
 
     public TopicList() {
     }
-    
+
     public void setTopics(Topic[] topics) {
         this.topics = topics;
     }
-    
+
     public int getTopicCount() {
         return topics.length;
     }
@@ -23,5 +23,4 @@ public class TopicList implements Serializable {
         }
         return topics[i];
     }
-
 }
