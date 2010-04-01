@@ -1,6 +1,6 @@
 package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.forum.client.RequestProcessor.ForumsHandler;
+import org.simpledbm.samples.forum.client.RequestProcessor.ForumsViewHandler;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -8,13 +8,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 
-public class Forums extends Composite implements ForumsHandler {
+public class Forums extends Composite implements ForumsViewHandler {
 
     FlowPanel panel = new FlowPanel();
-    final Topics topics;
+    private ForumsHandler forumSelectionHandler;
 
     public Forums(Topics topics) {
-        this.topics = topics;
         initWidget(panel);
     }
 
@@ -27,7 +26,7 @@ public class Forums extends Composite implements ForumsHandler {
         // Add a click handler that displays a ContactPopup when it is clicked.
         link.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
-                //                topics.getTopics(link.getText());
+                forumSelectionHandler.onForumSelect(link.getText());
             }
         });
     }
@@ -42,5 +41,9 @@ public class Forums extends Composite implements ForumsHandler {
         for (int i = 0; i < forums.length; i++) {
             addForum(forums[i]);
         }
+    }
+
+    public void setForumsHandler(ForumsHandler forumSelectHandler) {
+        this.forumSelectionHandler = forumSelectHandler;
     }
 }
