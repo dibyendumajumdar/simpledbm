@@ -1,33 +1,36 @@
 package org.simpledbm.samples.forum.client;
 
+import org.simpledbm.samples.forum.client.RequestProcessor.PostsViewHandler;
+
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class Posts extends Composite {
+public class Posts extends Composite implements PostsViewHandler {
 
     ScrollPanel sp = new ScrollPanel();
     FlowPanel panel = new FlowPanel();
     private FlexTable header = new FlexTable();
+    private PostsHandler postsHandler;
+    
+    public PostsHandler getPostsHandler() {
+        return postsHandler;
+    }
 
     public Posts() {
         panel.setStyleName("posts");
-        update();
+        initHeader();
         sp.add(panel);
         initWidget(sp);
     }
 
-    public void update() {
+    public void initHeader() {
         header.setCellPadding(0);
         header.setCellSpacing(0);
         header.setStyleName("header");
         header.setWidget(0, 0, new PostsMenu());
         panel.add(header);
-        for (int i = 0; i < 10; i++) {
-            addPost(new Post());
-        }
-        System.err.println(panel);
     }
     
     void addPost(Post post) {
@@ -37,9 +40,24 @@ public class Posts extends Composite {
         table.setStyleName("post");
         table.setText(0, 0, "author: " + post.getAuthor());
         table.getRowFormatter().setStyleName(0, "postheader");
-        table.setText(1, 0, "this is the body of the post");
+        table.setText(1, 0, post.getContent());
         System.err.println(table);
         panel.add(table);
+    }
+
+    public void setPostsHandler(PostsHandler postsHandler) {
+        this.postsHandler = postsHandler;
+    }
+
+    public void showBusy() {
+    }
+
+    public void update(Post[] posts) {
+        panel.clear();
+        initHeader();
+        for (int i = 1; i < posts.length; i++) {
+            addPost(posts[i]);
+        }
     }
 
 }

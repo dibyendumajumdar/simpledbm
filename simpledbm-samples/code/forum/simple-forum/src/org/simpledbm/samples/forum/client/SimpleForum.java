@@ -13,11 +13,11 @@ public class SimpleForum implements EntryPoint {
     
     TopPanel topPanel = new TopPanel();
     Topics topics = new Topics();
-    Forums forums = new Forums(topics);
+    Forums forums = new Forums();
     Posts posts = new Posts();
 
     
-    RequestProcessor requestProcessor = new RequestProcessor(topics, forums);
+    RequestProcessor requestProcessor = new RequestProcessor(topics, forums, posts);
     
     /**
      * This is the entry point method.

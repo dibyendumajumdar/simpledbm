@@ -4,13 +4,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
-public class RequestProcessor implements ForumsHandler, TopicsHandler {
+public class RequestProcessor implements ForumsHandler, TopicsHandler,
+        PostsHandler {
 
     interface TopicsViewHandler {
         void update(TopicList topicList);
 
         void showBusy();
-        
+
         void setTopicsHandler(TopicsHandler topicsHandler);
     }
 
@@ -25,6 +26,15 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler {
         void setForumsHandler(ForumsHandler forumSelectHandler);
     }
 
+    interface PostsViewHandler {
+
+        void update(Post[] posts);
+
+        void showBusy();
+
+        void setPostsHandler(PostsHandler postsHandler);
+    }
+
     /**
      * Create a remote service proxy to talk to the server-side Greeting
      * service.
@@ -34,12 +44,16 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler {
 
     TopicsViewHandler topicsViewHandler;
     ForumsViewHandler forumsViewHandler;
+    PostsViewHandler postsViewHandler;
 
     public RequestProcessor(TopicsViewHandler topicListHandler,
-            ForumsViewHandler forumsHandler) {
+            ForumsViewHandler forumsHandler, PostsViewHandler postsViewHandler) {
         this.topicsViewHandler = topicListHandler;
+        topicListHandler.setTopicsHandler(this);
         this.forumsViewHandler = forumsHandler;
         forumsHandler.setForumsHandler(this);
+        this.postsViewHandler = postsViewHandler;
+        postsViewHandler.setPostsHandler(this);
     }
 
     void getTopics(String forumName) {
@@ -52,13 +66,15 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler {
 
             public void onSuccess(TopicList topicList) {
                 topicsViewHandler.update(topicList);
+                if (topicList.getTopicCount() > 0) {
+                    getPosts(topicList.getTopic(0).getTitle());
+                }
             }
         });
     }
 
     void getForums() {
         forumsViewHandler.showBusy();
-        topicsViewHandler.showBusy();
         simpleForumService.getForums(new AsyncCallback<Forum[]>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
@@ -79,5 +95,20 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler {
     }
 
     public void onTopicSelection(String topicId) {
+        getPosts(topicId);
+    }
+
+    private void getPosts(String topicId) {
+        postsViewHandler.showBusy();
+        simpleForumService.getPosts(topicId, new AsyncCallback<Post[]>() {
+            public void onFailure(Throwable caught) {
+                // Show the RPC error message to the user
+                Window.alert("Failed to get topics: " + caught.getMessage());
+            }
+
+            public void onSuccess(Post[] posts) {
+                postsViewHandler.update(posts);
+            }
+        });
     }
 }

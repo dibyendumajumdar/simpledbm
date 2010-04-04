@@ -12,4 +12,6 @@ public interface SimpleForumServiceAsync {
     void getTopics(String forumName, AsyncCallback<TopicList> callback);
 
     void getForums(AsyncCallback<Forum[]> callback);
+
+    void getPosts(String topicId, AsyncCallback<Post[]> callback);
 }

@@ -11,4 +11,5 @@ public interface SimpleForumService extends RemoteService {
   String greetServer(String name) throws IllegalArgumentException;
   TopicList getTopics(String forumName);
   Forum[] getForums();
+  Post[] getPosts(String topicId);
 }
