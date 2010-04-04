@@ -4,6 +4,7 @@ import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 
 import org.simpledbm.samples.forum.client.Forum;
+import org.simpledbm.samples.forum.client.Post;
 import org.simpledbm.samples.forum.client.SimpleForumService;
 import org.simpledbm.samples.forum.client.Topic;
 import org.simpledbm.samples.forum.client.TopicList;
@@ -72,6 +73,15 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         forums[8] = new Forum("Pentax", "Pentax Discussions");
         forums[9] = new Forum("Kodak", "Kodak Discussions");
         return forums;
+    }
+
+    public Post[] getPosts(String topicId) {
+        Post[] posts = new Post[10];
+        for (int i = 0; i < 10; i++) {
+            posts[i] = new Post();
+            posts[i].setContent(topicId + " content post # " + i);
+        }
+        return posts;
     }
 
     //    static final class SimpleDBMContext {

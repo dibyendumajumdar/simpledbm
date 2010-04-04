@@ -13,7 +13,7 @@ public class Forums extends Composite implements ForumsViewHandler {
     FlowPanel panel = new FlowPanel();
     private ForumsHandler forumSelectionHandler;
 
-    public Forums(Topics topics) {
+    public Forums() {
         initWidget(panel);
     }
 

@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 public class Post implements Serializable {
     private static final long serialVersionUID = 1L;
-    String author;
-    String dateTime;
-    String content;
+    String author = "anonymous";
+    String dateTime = "10:50";
+    String content = "content not set";
 
     public String getAuthor() {
         return author;
