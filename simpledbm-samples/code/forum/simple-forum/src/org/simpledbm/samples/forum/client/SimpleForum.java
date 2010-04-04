@@ -12,9 +12,9 @@ import com.google.gwt.user.client.ui.SplitLayoutPanel;
 public class SimpleForum implements EntryPoint {
     
     TopPanel topPanel = new TopPanel();
-    Topics topics = new Topics();
-    Forums forums = new Forums();
-    Posts posts = new Posts();
+    TopicsViewImpl topics = new TopicsViewImpl();
+    ForumsViewImpl forums = new ForumsViewImpl();
+    PostsViewImpl posts = new PostsViewImpl();
 
     
     RequestProcessor requestProcessor = new RequestProcessor(topics, forums, posts);

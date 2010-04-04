@@ -16,9 +16,9 @@ public class TopicsMenu extends Composite implements ClickHandler {
     private Anchor newerButton = new Anchor("< newer");
     private Anchor olderButton = new Anchor("older >");
 
-    private final Topics outer;
+    private final TopicsViewImpl outer;
 
-    public TopicsMenu(Topics outer) {
+    public TopicsMenu(TopicsViewImpl outer) {
         newerButton.setStyleName("pager");
         olderButton.setStyleName("pager");
         countLabel.setStyleName("pager");
@@ -32,7 +32,7 @@ public class TopicsMenu extends Composite implements ClickHandler {
     public void update(int startIndex, int count, int max) {
         setVisibility(newerButton, startIndex != 0);
         setVisibility(olderButton, startIndex
-                + Topics.VISIBLE_TOPICS_COUNT < count);
+                + TopicsViewImpl.VISIBLE_TOPICS_COUNT < count);
         countLabel
                 .setText("" + (startIndex + 1) + " - " + max + " of " + count);
         System.err.println(panel);

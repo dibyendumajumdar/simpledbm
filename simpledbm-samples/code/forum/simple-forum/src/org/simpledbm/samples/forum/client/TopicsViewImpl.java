@@ -12,7 +12,7 @@ import com.google.gwt.user.client.ui.ResizeComposite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
-public class Topics extends ResizeComposite implements ClickHandler,
+public class TopicsViewImpl extends ResizeComposite implements ClickHandler,
         TopicsViewHandler {
 
     static final int VISIBLE_TOPICS_COUNT = 10;
@@ -20,7 +20,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
     private int startIndex, selectedRow = -1;
     private FlexTable table = new FlexTable();
 
-    private TopicList topicList;
+    private Topic[] topicList;
 
     private DockLayoutPanel panel = new DockLayoutPanel(Unit.EM);
     private FlexTable header = new FlexTable();
@@ -29,7 +29,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
 
     private TopicsHandler topicsHandler;
 
-    public Topics() {
+    public TopicsViewImpl() {
         // Setup the table.
         ScrollPanel sp = new ScrollPanel();
         sp.add(table);
@@ -67,7 +67,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
     void older() {
         // Move forward a page.
         startIndex += VISIBLE_TOPICS_COUNT;
-        if (startIndex >= topicList.getTopicCount()) {
+        if (startIndex >= topicList.length) {
             startIndex -= VISIBLE_TOPICS_COUNT;
         } else {
             styleRow(selectedRow, false);
@@ -123,7 +123,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
     private void selectRow(int row) {
         // When a row (other than the first one, which is used as a header) is
         // selected, display its associated MailItem.
-        Topic item = topicList.getTopic(startIndex + row);
+        Topic item = topicList[startIndex + row];
         if (item == null) {
             return;
         }
@@ -150,7 +150,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
 
     private void update() {
         // Update the older/newer buttons & label.
-        int count = topicList.getTopicCount();
+        int count = topicList.length;
         int max = startIndex + VISIBLE_TOPICS_COUNT;
         if (max > count) {
             max = count;
@@ -163,11 +163,11 @@ public class Topics extends ResizeComposite implements ClickHandler,
         int i = 0;
         for (; i < VISIBLE_TOPICS_COUNT; ++i) {
             // Don't read past the end.
-            if (startIndex + i >= topicList.getTopicCount()) {
+            if (startIndex + i >= topicList.length) {
                 break;
             }
 
-            Topic item = topicList.getTopic(startIndex + i);
+            Topic item = topicList[startIndex + i];
             System.err.println("Adding " + item.getStartedBy());
 
             // Add a new row to the table, then set each of its columns to the
@@ -195,7 +195,7 @@ public class Topics extends ResizeComposite implements ClickHandler,
     public void showBusy() {
     }
 
-    public void update(TopicList topicList) {
+    public void update(Topic[] topicList) {
         this.topicList = topicList;
         update();
         if (selectedRow == -1) {
