@@ -8,7 +8,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         PostsHandler {
 
     interface TopicsViewHandler {
-        void update(TopicList topicList);
+        void update(Topic[] topicList);
 
         void showBusy();
 
@@ -58,16 +58,16 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
 
     void getTopics(String forumName) {
         topicsViewHandler.showBusy();
-        simpleForumService.getTopics(forumName, new AsyncCallback<TopicList>() {
+        simpleForumService.getTopics(forumName, new AsyncCallback<Topic[]>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
                 Window.alert("Failed to get topics: " + caught.getMessage());
             }
 
-            public void onSuccess(TopicList topicList) {
+            public void onSuccess(Topic[] topicList) {
                 topicsViewHandler.update(topicList);
-                if (topicList.getTopicCount() > 0) {
-                    getPosts(topicList.getTopic(0).getTitle());
+                if (topicList.length > 0) {
+                    getPosts(topicList[0].getTitle());
                 }
             }
         });

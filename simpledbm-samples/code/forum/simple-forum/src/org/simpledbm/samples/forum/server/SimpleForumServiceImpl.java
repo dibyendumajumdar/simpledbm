@@ -7,7 +7,6 @@ import org.simpledbm.samples.forum.client.Forum;
 import org.simpledbm.samples.forum.client.Post;
 import org.simpledbm.samples.forum.client.SimpleForumService;
 import org.simpledbm.samples.forum.client.Topic;
-import org.simpledbm.samples.forum.client.TopicList;
 import org.simpledbm.samples.forum.shared.FieldVerifier;
 
 import com.google.gwt.user.server.rpc.RemoteServiceServlet;
@@ -22,7 +21,6 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     @Override
     public void destroy() {
         super.destroy();
-
         this.log("destroy called");
     }
 
@@ -49,15 +47,13 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
                 + ".<br><br>It looks like you are using:<br>" + userAgent;
     }
 
-    public TopicList getTopics(String forumName) {
+    public Topic[] getTopics(String forumName) {
         Topic[] topics = new Topic[5];
         for (int i = 0; i < topics.length; i++) {
             topics[i] = new Topic();
             topics[i].setTitle(forumName + " topic " + i);
         }
-        TopicList topicList = new TopicList();
-        topicList.setTopics(topics);
-        return topicList;
+        return topics;
     }
 
     public Forum[] getForums() {

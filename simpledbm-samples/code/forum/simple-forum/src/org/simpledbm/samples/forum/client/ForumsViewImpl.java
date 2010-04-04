@@ -8,12 +8,17 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 
-public class Forums extends Composite implements ForumsViewHandler {
+/**
+ * Handles the forums view
+ * 
+ * @author dibyendumajumdar
+ */
+public class ForumsViewImpl extends Composite implements ForumsViewHandler {
 
     FlowPanel panel = new FlowPanel();
     private ForumsHandler forumSelectionHandler;
 
-    public Forums() {
+    public ForumsViewImpl() {
         initWidget(panel);
     }
 

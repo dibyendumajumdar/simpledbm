@@ -9,7 +9,7 @@ import com.google.gwt.user.client.rpc.RemoteServiceRelativePath;
 @RemoteServiceRelativePath("greet")
 public interface SimpleForumService extends RemoteService {
   String greetServer(String name) throws IllegalArgumentException;
-  TopicList getTopics(String forumName);
+  Topic[] getTopics(String forumName);
   Forum[] getForums();
   Post[] getPosts(String topicId);
 }

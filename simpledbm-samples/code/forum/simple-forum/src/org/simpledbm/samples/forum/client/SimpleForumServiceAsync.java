@@ -9,7 +9,7 @@ public interface SimpleForumServiceAsync {
     void greetServer(String input, AsyncCallback<String> callback)
             throws IllegalArgumentException;
 
-    void getTopics(String forumName, AsyncCallback<TopicList> callback);
+    void getTopics(String forumName, AsyncCallback<Topic[]> callback);
 
     void getForums(AsyncCallback<Forum[]> callback);
 

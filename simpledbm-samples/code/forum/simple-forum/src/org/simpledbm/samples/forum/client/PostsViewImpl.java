@@ -7,7 +7,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class Posts extends Composite implements PostsViewHandler {
+public class PostsViewImpl extends Composite implements PostsViewHandler {
 
     ScrollPanel sp = new ScrollPanel();
     FlowPanel panel = new FlowPanel();
@@ -18,7 +18,7 @@ public class Posts extends Composite implements PostsViewHandler {
         return postsHandler;
     }
 
-    public Posts() {
+    public PostsViewImpl() {
         panel.setStyleName("posts");
         initHeader();
         sp.add(panel);
