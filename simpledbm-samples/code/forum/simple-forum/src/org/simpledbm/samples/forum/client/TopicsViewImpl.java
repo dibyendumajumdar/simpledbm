@@ -1,6 +1,6 @@
 package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.forum.client.RequestProcessor.TopicsViewHandler;
+import org.simpledbm.samples.forum.client.RequestProcessor.TopicsView;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -13,7 +13,7 @@ import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.HTMLTable.Cell;
 
 public class TopicsViewImpl extends ResizeComposite implements ClickHandler,
-        TopicsViewHandler {
+        TopicsView {
 
     static final int VISIBLE_TOPICS_COUNT = 10;
 
@@ -205,6 +205,7 @@ public class TopicsViewImpl extends ResizeComposite implements ClickHandler,
 
     public void setTopicsHandler(TopicsHandler topicsHandler) {
         this.topicsHandler = topicsHandler;
+        this.navBar.setTopicsHandler(topicsHandler);
     }
 
 }

@@ -2,8 +2,13 @@ package org.simpledbm.samples.forum.client;
 
 import java.io.Serializable;
 
+/**
+ * A Post represents a single posting by a user.
+ * Posts have to be against a topic.
+ * @author dibyendumajumdar
+ */
+@SuppressWarnings("serial")
 public class Post implements Serializable {
-    private static final long serialVersionUID = 1L;
     String author = "anonymous";
     String dateTime = "10:50";
     String content = "content not set";
