@@ -12,4 +12,6 @@ public interface SimpleForumService extends RemoteService {
   Topic[] getTopics(String forumName);
   Forum[] getForums();
   Post[] getPosts(String topicId);
+  void savePost(Post post);
+  void saveTopic(Topic topic, Post post);
 }

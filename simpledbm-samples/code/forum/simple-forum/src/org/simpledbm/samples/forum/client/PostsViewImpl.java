@@ -1,13 +1,13 @@
 package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.forum.client.RequestProcessor.PostsViewHandler;
+import org.simpledbm.samples.forum.client.RequestProcessor.PostsView;
 
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 
-public class PostsViewImpl extends Composite implements PostsViewHandler {
+public class PostsViewImpl extends Composite implements PostsView {
 
     ScrollPanel sp = new ScrollPanel();
     FlowPanel panel = new FlowPanel();
@@ -29,7 +29,7 @@ public class PostsViewImpl extends Composite implements PostsViewHandler {
         header.setCellPadding(0);
         header.setCellSpacing(0);
         header.setStyleName("header");
-        header.setWidget(0, 0, new PostsMenu());
+        header.setWidget(0, 0, new PostsMenu(postsHandler));
         panel.add(header);
     }
     

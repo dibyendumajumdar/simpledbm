@@ -79,6 +79,14 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         }
         return posts;
     }
+    
+    public void savePost(Post post) {
+        throw new RuntimeException("Unable to save post");
+    }
+
+    public void saveTopic(Topic topic, Post post) {
+        throw new RuntimeException("Unable to save topic");
+    }
 
     //    static final class SimpleDBMContext {
     //

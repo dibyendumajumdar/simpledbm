@@ -7,8 +7,8 @@ import java.io.Serializable;
  * 
  * @author dibyendumajumdar
  */
+@SuppressWarnings("serial")
 public class Forum implements Serializable {
-    private static final long serialVersionUID = 1L;
     String name;
     String description;
 

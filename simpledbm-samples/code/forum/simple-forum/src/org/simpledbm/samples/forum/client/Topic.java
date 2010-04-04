@@ -2,8 +2,13 @@ package org.simpledbm.samples.forum.client;
 
 import java.io.Serializable;
 
+/**
+ * A Topic represents the title of a thread of conversation. 
+ * A forum can have many topics.
+ * Each topic can have multiple posts.
+ */
+@SuppressWarnings("serial")
 public class Topic implements Serializable {
-    private static final long serialVersionUID = 1L;
     String title = "test";
     String lastPost = "10:00";
     String numPosts = "10";

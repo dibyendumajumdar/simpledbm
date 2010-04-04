@@ -1,6 +1,6 @@
 package org.simpledbm.samples.forum.client;
 
-import org.simpledbm.samples.forum.client.RequestProcessor.ForumsViewHandler;
+import org.simpledbm.samples.forum.client.RequestProcessor.ForumsView;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -13,7 +13,7 @@ import com.google.gwt.user.client.ui.HTML;
  * 
  * @author dibyendumajumdar
  */
-public class ForumsViewImpl extends Composite implements ForumsViewHandler {
+public class ForumsViewImpl extends Composite implements ForumsView {
 
     FlowPanel panel = new FlowPanel();
     private ForumsHandler forumSelectionHandler;

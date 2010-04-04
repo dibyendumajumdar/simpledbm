@@ -10,9 +10,12 @@ public class PostsMenu extends Composite implements ClickHandler {
 
     FlowPanel panel = new FlowPanel();
     private Anchor addButton = new Anchor("New post");
+    private PostsHandler postsHandler;
 
-    public PostsMenu() {
+    public PostsMenu(PostsHandler postsHandler) {
+        this.postsHandler = postsHandler;
         addButton.setStyleName("pager");
+        addButton.addClickHandler(this);
         panel.add(addButton);
         initWidget(panel);
     }
@@ -20,8 +23,7 @@ public class PostsMenu extends Composite implements ClickHandler {
     public void onClick(ClickEvent event) {
         Object sender = event.getSource();
         if (sender == addButton) {
-            // TODO Add a post
-            // Open a dialog
+            postsHandler.onNewPost();
         }
     }
 }

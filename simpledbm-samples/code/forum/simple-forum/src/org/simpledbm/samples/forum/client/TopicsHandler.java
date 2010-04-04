@@ -4,4 +4,6 @@ public interface TopicsHandler {
 
     void onTopicSelection(String topicId);
 
+    void saveTopic(Topic topic, Post post);
+    void onNewTopic();
 }
