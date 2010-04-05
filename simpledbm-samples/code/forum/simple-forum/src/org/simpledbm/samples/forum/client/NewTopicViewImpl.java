@@ -1,5 +1,7 @@
 package org.simpledbm.samples.forum.client;
 
+import java.util.Date;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -16,6 +18,7 @@ public class NewTopicViewImpl extends DialogBox implements ClickHandler {
     private final TopicsHandler topicsHandler;
     VerticalPanel outer = new VerticalPanel();
     TextBox topicText = new TextBox();
+    TextBox author = new TextBox();
     RichTextArea textArea = new RichTextArea();
     Button saveButton = new Button("Save");
     Button cancelButton = new Button("Cancel");
@@ -25,6 +28,8 @@ public class NewTopicViewImpl extends DialogBox implements ClickHandler {
         setText("Add a new Topic");
         outer.add(new Label("Topic:"));
         outer.add(topicText);
+        outer.add(new Label("Your name:"));
+        outer.add(author);
         outer.add(new Label("Initial Post:"));
         outer.add(textArea);
         FlowPanel buttons = new FlowPanel();
@@ -52,8 +57,14 @@ public class NewTopicViewImpl extends DialogBox implements ClickHandler {
         if (source == saveButton) {
             Post post = new Post();
             post.setContent(textArea.getText());
+            post.setAuthor(author.getText());
+            post.setDateTime(new Date());
             Topic topic = new Topic();
             topic.setTitle(topicText.getText());
+            topic.setNumPosts(1);
+            topic.setUpdatedOn(post.getDateTime());
+            topic.setStartedBy(post.getAuthor());
+            topic.setLastPoster(post.getAuthor());
             topicsHandler.saveTopic(topic, post);
         }
         else {

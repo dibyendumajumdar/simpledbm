@@ -28,4 +28,9 @@ public class Forum implements Serializable {
         return description;
     }
 
+    @Override
+    public String toString() {
+        return "Forum [description=" + description + ", name=" + name + "]";
+    }
+
 }

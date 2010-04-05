@@ -114,19 +114,19 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         getTopics(forumName);
     }
 
-    public void onTopicSelection(String topicId) {
-        getPosts(topicId);
+    public void onTopicSelection(Topic topic) {
+        getPosts(topic.getTopicId());
     }
 
     public void onNewPost() {
         new NewPostViewImpl(this).show();
     }
 
-    public void savePost(Post post) {
+    public void savePost(final Post post) {
         simpleForumService.savePost(post, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
-                Window.alert("Failed to add post: " + caught.getMessage());
+                Window.alert("Failed to add post: " + post + caught.getMessage());
             }
 
             public void onSuccess(Void discard) {
@@ -134,11 +134,12 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         });
     }
 
-    public void saveTopic(Topic topic, Post post) {
+    public void saveTopic(final Topic topic, final Post post) {
+        topic.setTopicId(getNewTopicId(topic));
         simpleForumService.saveTopic(topic, post, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
-                Window.alert("Failed to add topic: " + caught.getMessage());
+                Window.alert("Failed to add topic: " + topic + caught.getMessage());
             }
 
             public void onSuccess(Void discard) {
@@ -150,4 +151,10 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         new NewTopicViewImpl(this).show();
     }
 
+    public String getNewTopicId(Topic topic) {
+        long time = System.currentTimeMillis();
+        String id = topic.getForumName() + "-" + time + "-" + topic.getStartedBy();
+        return id;
+    }
+    
 }

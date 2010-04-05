@@ -37,6 +37,8 @@ public class TopicsMenu extends Composite implements ClickHandler {
         panel.add(olderButton);
         panel.add(newerButton);
         newTopicButton.addClickHandler(this);
+        newerButton.addClickHandler(this);
+        olderButton.addClickHandler(this);
 //        panel.add(countLabel);
         initWidget(panel);
     }
@@ -47,7 +49,6 @@ public class TopicsMenu extends Composite implements ClickHandler {
                 + TopicsViewImpl.VISIBLE_TOPICS_COUNT < count);
 //        countLabel
 //                .setText("" + (startIndex + 1) + " - " + max + " of " + count);
-        System.err.println(panel);
     }
 
     void onNewerClicked(ClickEvent event) {

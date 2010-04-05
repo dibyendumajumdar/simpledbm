@@ -41,7 +41,6 @@ public class PostsViewImpl extends Composite implements PostsView {
         table.setText(0, 0, "author: " + post.getAuthor());
         table.getRowFormatter().setStyleName(0, "postheader");
         table.setText(1, 0, post.getContent());
-        System.err.println(table);
         panel.add(table);
     }
 
