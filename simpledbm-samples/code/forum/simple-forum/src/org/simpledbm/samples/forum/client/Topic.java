@@ -3,18 +3,26 @@ package org.simpledbm.samples.forum.client;
 import java.io.Serializable;
 
 /**
- * A Topic represents the title of a thread of conversation. 
- * A forum can have many topics.
- * Each topic can have multiple posts.
+ * A Topic represents the title of a thread of conversation. A forum can have
+ * many topics. Each topic can have multiple posts.
  */
 @SuppressWarnings("serial")
 public class Topic implements Serializable {
+    String forumName;
+    String topicId;
     String title = "test";
-    String lastPost = "10:00";
-    String numPosts = "10";
+    int numPosts = 0;
     String startedBy = "anonymous";
     String lastPoster = "anonymous";
-    public boolean read;
+    String updatedOn;
+
+    public String getUpdatedOn() {
+        return updatedOn;
+    }
+
+    public void setUpdatedOn(String updatedOn) {
+        this.updatedOn = updatedOn;
+    }
 
     public String getTitle() {
         return title;
@@ -24,19 +32,11 @@ public class Topic implements Serializable {
         this.title = title;
     }
 
-    public String getLastPost() {
-        return lastPost;
-    }
-
-    public void setLastPost(String lastPost) {
-        this.lastPost = lastPost;
-    }
-
-    public String getNumPosts() {
+    public int getNumPosts() {
         return numPosts;
     }
 
-    public void setNumPosts(String numPosts) {
+    public void setNumPosts(int numPosts) {
         this.numPosts = numPosts;
     }
 
@@ -54,6 +54,30 @@ public class Topic implements Serializable {
 
     public void setLastPoster(String lastPoster) {
         this.lastPoster = lastPoster;
+    }
+
+    public String getTopicId() {
+        return topicId;
+    }
+
+    public void setTopicId(String topicId) {
+        this.topicId = topicId;
+    }
+
+    public String getForumName() {
+        return forumName;
+    }
+
+    public void setForumName(String forumName) {
+        this.forumName = forumName;
+    }
+
+    @Override
+    public String toString() {
+        return "Topic [forumName=" + forumName + ", lastPoster=" + lastPoster
+                + ", numPosts=" + numPosts + ", startedBy=" + startedBy
+                + ", title=" + title + ", topicId=" + topicId + ", updatedOn="
+                + updatedOn + "]";
     }
 
 }

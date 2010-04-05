@@ -1,5 +1,7 @@
 package org.simpledbm.samples.forum.client;
 
+import java.util.Date;
+
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -8,19 +10,23 @@ import com.google.gwt.user.client.ui.DialogBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RichTextArea;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewPostViewImpl extends DialogBox implements ClickHandler {
-    
+
     private final PostsHandler postsHandler;
     VerticalPanel outer = new VerticalPanel();
     RichTextArea textArea = new RichTextArea();
+    TextBox author = new TextBox();
     Button saveButton = new Button("Save");
     Button cancelButton = new Button("Cancel");
-    
+
     public NewPostViewImpl(PostsHandler postsHandler) {
         this.postsHandler = postsHandler;
         setText("Add a new post");
+        outer.add(new Label("Your name:"));
+        outer.add(author);
         outer.add(new Label("Enter post:"));
         outer.add(textArea);
         saveButton.addClickHandler(this);
@@ -47,10 +53,11 @@ public class NewPostViewImpl extends DialogBox implements ClickHandler {
         Object source = event.getSource();
         if (source == saveButton) {
             Post post = new Post();
+            post.setAuthor(author.getText());
             post.setContent(textArea.getText());
+            post.setDateTime(new Date());
             postsHandler.savePost(post);
-        }
-        else {
+        } else {
         }
         hide();
     }

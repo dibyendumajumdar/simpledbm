@@ -21,14 +21,12 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     @Override
     public void destroy() {
         super.destroy();
-        this.log("destroy called");
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
         System.err.println("init called");
-        this.log("init called");
     }
 
     public String greetServer(String input) throws IllegalArgumentException {
@@ -48,9 +46,10 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     }
 
     public Topic[] getTopics(String forumName) {
-        Topic[] topics = new Topic[5];
+        Topic[] topics = new Topic[15];
         for (int i = 0; i < topics.length; i++) {
             topics[i] = new Topic();
+            topics[i].setTopicId(forumName + "-" + i);
             topics[i].setTitle(forumName + " topic " + i);
         }
         return topics;
@@ -81,7 +80,7 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     }
     
     public void savePost(Post post) {
-        throw new RuntimeException("Unable to save post");
+        throw new RuntimeException("Unable to save post " + post);
     }
 
     public void saveTopic(Topic topic, Post post) {
