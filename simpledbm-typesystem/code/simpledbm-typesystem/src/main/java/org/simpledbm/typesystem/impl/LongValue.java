@@ -114,6 +114,20 @@ public class LongValue extends BaseDataValue {
     }
 
     @Override
+    public long getLong() {
+        if (!isValue()) {
+            return 0;
+        }
+        return i;
+    }
+
+    @Override
+    public void setLong(long l) {
+        i = l;
+        setValue();
+    }
+
+    @Override
     public void setString(String string) {
         setInt(Integer.parseInt(string));
     }
