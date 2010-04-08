@@ -166,8 +166,9 @@ public class SimpleLinkedList<E extends Linkable> implements Iterable<E> {
     }
 
     public final void clear() {
-        while (count > 0)
-            removeInternal(head);
+        count = 0;
+        head = null;
+        tail = null;
     }
 
     @SuppressWarnings("unchecked")

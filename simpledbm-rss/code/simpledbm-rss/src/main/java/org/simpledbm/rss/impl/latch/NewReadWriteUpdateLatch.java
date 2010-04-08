@@ -36,13 +36,14 @@
  */
 package org.simpledbm.rss.impl.latch;
 
-import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.util.Linkable;
+import org.simpledbm.common.util.SimpleLinkedList;
 import org.simpledbm.common.util.SimpleTimer;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.MessageInstance;
@@ -97,7 +98,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * Queue of latch requests, contains granted or conversion requests followed
      * by waiting requests.
      */
-    final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
+//    final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
+    final SimpleLinkedList<LockRequest> queue = new SimpleLinkedList<LockRequest>();
 
     /**
      * Current mode of the latch.
@@ -773,7 +775,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     void queueAppend(LockRequest request) {
-        queue.add(request);
+//        queue.add(request);
+        queue.addLast(request);
     }
 
     void queueRemove(LockRequest request) {
@@ -792,7 +795,8 @@ public final class NewReadWriteUpdateLatch implements Latch {
         return queue.isEmpty();
     }
 
-    LinkedList<LockRequest> getQueue() {
+//    LinkedList<LockRequest> getQueue() {
+    SimpleLinkedList<LockRequest> getQueue() {
         return queue;
     }
 
@@ -802,7 +806,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * @author Dibyendu Majumdar
      * 
      */
-    static final class LockRequest {
+    static final class LockRequest extends Linkable {
 
         volatile LockRequestStatus status = LockRequestStatus.GRANTED;
 
