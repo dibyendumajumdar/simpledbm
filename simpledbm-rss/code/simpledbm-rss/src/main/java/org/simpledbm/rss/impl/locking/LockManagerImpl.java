@@ -53,6 +53,8 @@ import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.Dumpable;
+import org.simpledbm.common.util.Linkable;
+import org.simpledbm.common.util.SimpleLinkedList;
 import org.simpledbm.common.util.SimpleTimer;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.Message;
@@ -1706,7 +1708,8 @@ public final class LockManagerImpl implements LockManager {
 
     static class LockBucket {
 
-        final LinkedList<LockItem> chain = new LinkedList<LockItem>();
+//        final LinkedList<LockItem> chain = new LinkedList<LockItem>();
+        final SimpleLinkedList<LockItem> chain = new SimpleLinkedList<LockItem>();
 
         LockItem chainHead() {
             return chain.getFirst();
@@ -1717,7 +1720,8 @@ public final class LockManagerImpl implements LockManager {
         }
 
         void chainAppend(LockItem item) {
-            chain.add(item);
+//            chain.add(item);
+            chain.addLast(item);
         }
 
         void chainRemove(LockItem item) {
@@ -1733,12 +1737,15 @@ public final class LockManagerImpl implements LockManager {
      * 
      * @author Dibyendu
      */
-    static class LockItem implements Dumpable {
+    static class LockItem extends Linkable implements Dumpable {
 
         Object target;
 
-        final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
+//        final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
 
+        final SimpleLinkedList<LockRequest> queue = new SimpleLinkedList<LockRequest>();
+        
+        
         LockMode grantedMode;
 
         boolean waiting;
@@ -1769,7 +1776,8 @@ public final class LockManagerImpl implements LockManager {
         }
 
         void queueAppend(LockRequest request) {
-            queue.add(request);
+//            queue.add(request);
+            queue.addLast(request);
         }
 
         void queueRemove(LockRequest request) {
@@ -1788,7 +1796,8 @@ public final class LockManagerImpl implements LockManager {
             return queue.isEmpty();
         }
 
-        LinkedList<LockRequest> getQueue() {
+//        LinkedList<LockRequest> getQueue() {
+        SimpleLinkedList<LockRequest> getQueue() {
             return queue;
         }
 
@@ -1858,7 +1867,7 @@ public final class LockManagerImpl implements LockManager {
      * @author Dibyendu Majumdar
      * 
      */
-    static final class LockRequest {
+    static final class LockRequest extends Linkable {
 
         volatile LockRequestStatus status = LockRequestStatus.GRANTED;
 
