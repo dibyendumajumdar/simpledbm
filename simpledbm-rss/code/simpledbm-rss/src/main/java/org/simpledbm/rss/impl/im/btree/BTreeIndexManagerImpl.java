@@ -865,10 +865,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             node.header.keyCount = ithOperation.items.size();
             node.updateHeader();
         }
-        if (Validating) {
-            node.validate();
+        if (node != null) {
+            if (Validating) {
+                node.validate();
+            }
+            node.dump();
         }
-        node.dump();
     }
 
     /**

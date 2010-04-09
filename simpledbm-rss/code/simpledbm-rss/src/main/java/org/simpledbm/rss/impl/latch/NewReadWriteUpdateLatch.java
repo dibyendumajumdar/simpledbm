@@ -758,22 +758,6 @@ public final class NewReadWriteUpdateLatch implements Latch {
         return releaseLock(lockState);
     }
 
-    void setLockMode(LockMode mode) {
-        this.grantedMode = mode;
-    }
-
-    LockMode getLockMode() {
-        return grantedMode;
-    }
-
-    boolean isWaiting() {
-        return waiting;
-    }
-
-    void setWaiting(boolean waiting) {
-        this.waiting = waiting;
-    }
-
     void queueAppend(LockRequest request) {
 //        queue.add(request);
         queue.addLast(request);
@@ -820,13 +804,13 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         volatile Thread waitingThread;
 
-        final NewReadWriteUpdateLatch lockItem;
+//        final NewReadWriteUpdateLatch lockItem;
 
         volatile boolean upgrading;
 
         LockRequest(NewReadWriteUpdateLatch lockItem, Object owner,
                 LockMode mode) {
-            this.lockItem = lockItem;
+//            this.lockItem = lockItem;
             this.mode = mode;
             this.convertMode = mode;
             this.waitingThread = Thread.currentThread();

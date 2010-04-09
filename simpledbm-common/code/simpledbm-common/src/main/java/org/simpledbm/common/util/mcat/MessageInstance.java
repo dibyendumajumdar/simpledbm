@@ -73,11 +73,7 @@ public class MessageInstance implements Storable {
         super();
         this.m = m;
         this.args = null;
-        if (args != null) {
-            this.formattedText = MessageFormat.format(m.toString(), args);
-        } else {
-            this.formattedText = m.toString();
-        }
+        this.formattedText = m.toString();
     }
 
     public MessageInstance(ByteBuffer bb) {
