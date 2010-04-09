@@ -190,9 +190,11 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
          */
         for (TableDefinition td : tables) {
             if (td.getContainerId() == tableDefinition.getContainerId()) {
-                log.warn(DatabaseImpl.class.getName(),
+                if (log.isDebugEnabled()) {
+                    log.warn(DatabaseImpl.class.getName(),
                         "registerTableDefinition", new MessageInstance(
                                 m_WD0001, tableDefinition).toString());
+                }
                 return;
             }
         }

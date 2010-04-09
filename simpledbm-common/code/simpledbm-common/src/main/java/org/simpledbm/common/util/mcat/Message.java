@@ -106,7 +106,7 @@ public class Message implements Storable {
     /**
      * Creates the formatted/storable version
      */
-    void deflate() {
+    void inflate() {
         if (cached)
             return;
         synchronized (this) {
@@ -130,13 +130,13 @@ public class Message implements Storable {
     }
 
     public int getStoredLength() {
-        deflate();
+        inflate();
         return TypeSize.INTEGER + TypeSize.CHARACTER * 3
                 + storableText.getStoredLength();
     }
 
     public void store(ByteBuffer bb) {
-        deflate();
+        inflate();
         bb.putInt(code);
         bb.putChar(type.toText());
         bb.putChar(subsystem);

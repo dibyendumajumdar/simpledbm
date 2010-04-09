@@ -88,7 +88,7 @@ public class PlatformImpl implements Platform {
     public PlatformObjects getPlatformObjects(String loggerName) {
         PlatformObjects po = null;
         synchronized (pomap) {
-            pomap.get(loggerName);
+            po = pomap.get(loggerName);
             if (po != null) {
                 return po;
             }
