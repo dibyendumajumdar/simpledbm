@@ -13,7 +13,9 @@ import com.google.gwt.i18n.client.DateTimeFormat;
  */
 @SuppressWarnings("serial")
 public class Post implements Serializable {
-    String topicId;
+    String forumName;
+    long topicId;
+    long postId;
     String author = "anonymous";
     String dateTime;
     String content = "content not set";
@@ -42,11 +44,11 @@ public class Post implements Serializable {
         this.content = content;
     }
 
-    public String getTopicId() {
+    public long getTopicId() {
         return topicId;
     }
 
-    public void setTopicId(String topicId) {
+    public void setTopicId(long topicId) {
         this.topicId = topicId;
     }
 

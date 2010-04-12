@@ -17,16 +17,22 @@ import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 @SuppressWarnings("serial")
 public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         SimpleForumService {
+    
+    private SimpleDBMContext sdbmContext;
 
     @Override
     public void destroy() {
+        sdbmContext = null;
         super.destroy();
     }
 
     @Override
     public void init(ServletConfig config) throws ServletException {
         super.init(config);
-        System.err.println("init called");
+        sdbmContext = (SimpleDBMContext) config.getServletContext().getAttribute("org.simpledbm.samples.forum.sdbmContext");
+        if (sdbmContext == null) {
+            throw new ServletException("Unexpected error: SimpleDBMContext does not exist");
+        }
     }
 
     public String greetServer(String input) throws IllegalArgumentException {
@@ -49,7 +55,7 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         Topic[] topics = new Topic[15];
         for (int i = 0; i < topics.length; i++) {
             topics[i] = new Topic();
-            topics[i].setTopicId(forumName + "-" + i);
+            topics[i].setTopicId( i);
             topics[i].setTitle(forumName + " topic " + i);
         }
         return topics;
@@ -70,7 +76,7 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         return forums;
     }
 
-    public Post[] getPosts(String topicId) {
+    public Post[] getPosts(long topicId) {
         Post[] posts = new Post[10];
         for (int i = 0; i < 10; i++) {
             posts[i] = new Post();
@@ -84,29 +90,11 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
     }
 
     public void saveTopic(Topic topic, Post post) {
+        SequenceGenerator seq = new SequenceGenerator(sdbmContext, "topic_sequence");
+        long value = seq.getNextSequence();
+        System.err.println("Long value returned from sequence: " + value);
         throw new RuntimeException("Unable to save topic");
     }
 
-    //    static final class SimpleDBMContext {
-    //
-    //        final SessionManager sm;
-    //
-    //        SimpleDBMContext() {
-    //            Properties properties = new Properties();
-    //            properties
-    //                    .setProperty(
-    //                            "logging.properties",
-    //                            "/Users/dibyendumajumdar/simpledbm-samples-workspace/simple-forum-db/config/simpledbm.logging.properties");
-    //            sm = SessionManager.getSessionManager(properties, "localhost",
-    //                    8000, 30);
-    //        }
-    //
-    //        void destroy() {
-    //        // Session session = sm.openSession();
-    //        // session.close();
-    //            if (sm != null) {
-    //                sm.getConnection().close();
-    //            }
-    //        }
-    //    }
+
 }

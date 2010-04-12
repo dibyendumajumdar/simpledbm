@@ -73,7 +73,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             public void onSuccess(Topic[] topicList) {
                 topicsView.update(topicList);
                 if (topicList.length > 0) {
-                    getPosts(topicList[0].getTitle());
+                    getPosts(topicList[0].getTopicId());
                 }
             }
         });
@@ -96,7 +96,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         });
     }
 
-    private void getPosts(String topicId) {
+    private void getPosts(long topicId) {
         postsView.showBusy();
         simpleForumService.getPosts(topicId, new AsyncCallback<Post[]>() {
             public void onFailure(Throwable caught) {
@@ -151,10 +151,9 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         new NewTopicViewImpl(this).show();
     }
 
-    public String getNewTopicId(Topic topic) {
+    public long getNewTopicId(Topic topic) {
         long time = System.currentTimeMillis();
-        String id = topic.getForumName() + "-" + time + "-" + topic.getStartedBy();
-        return id;
+        return time;
     }
     
 }
