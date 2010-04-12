@@ -110,4 +110,6 @@ public abstract class SessionManager {
      * @return
      */
     public abstract Connection getConnection();
+
+    public abstract void close();
 }

@@ -127,7 +127,7 @@ public class TableScanImpl implements TableScan {
         if (eof) {
             throw new RuntimeException("Scan has reached EOF");
         }
-        UpdateRowMessage message = new UpdateRowMessage(scanId, tableRow);
+        UpdateRowMessage message = new UpdateRowMessage(scanId, tableDefinition.getContainerId(), tableRow);
         session.sendMessage(RequestCode.UPDATE_CURRENT_ROW, message);
     }
 

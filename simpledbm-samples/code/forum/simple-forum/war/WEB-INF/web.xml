@@ -4,6 +4,10 @@
     "http://java.sun.com/dtd/web-app_2_3.dtd">
 
 <web-app>
+
+  <listener>
+    <listener-class>org.simpledbm.samples.forum.server.SimpleForumContextListener</listener-class>
+  </listener>
   
   <!-- Servlets -->
   <servlet>
@@ -15,6 +19,7 @@
     <servlet-name>greetServlet</servlet-name>
     <url-pattern>/simpleforum/greet</url-pattern>
   </servlet-mapping>
+  
   
   <!-- Default page to serve -->
   <welcome-file-list>

@@ -45,25 +45,29 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class UpdateRowMessage implements Storable {
 
-    int scanId;
-    Row row;
+    final int scanId;
+    final int tableId;
+    final Row row;
 
-    public UpdateRowMessage(int scanId, Row row) {
+    public UpdateRowMessage(int scanId, int tableId, Row row) {
         this.scanId = scanId;
+        this.tableId = tableId;
         this.row = row;
     }
 
     public UpdateRowMessage(RowFactory rowFactory, ByteBuffer bb) {
         scanId = bb.getInt();
-        row = rowFactory.newRow(scanId, bb);
+        tableId = bb.getInt();
+        row = rowFactory.newRow(tableId, bb);
     }
 
     public int getStoredLength() {
-        return TypeSize.INTEGER + row.getStoredLength();
+        return TypeSize.INTEGER * 2 + row.getStoredLength();
     }
 
     public void store(ByteBuffer bb) {
         bb.putInt(scanId);
+        bb.putInt(tableId);
         row.store(bb);
     }
 
@@ -71,16 +75,8 @@ public class UpdateRowMessage implements Storable {
         return scanId;
     }
 
-    public void setScanId(int scanId) {
-        this.scanId = scanId;
-    }
-
     public Row getRow() {
         return row;
-    }
-
-    public void setRow(Row row) {
-        this.row = row;
     }
 
 }

@@ -9,7 +9,7 @@ import java.io.Serializable;
 @SuppressWarnings("serial")
 public class Topic implements Serializable {
     String forumName;
-    String topicId;
+    long topicId;
     String title = "test";
     int numPosts = 0;
     String startedBy = "anonymous";
@@ -56,11 +56,11 @@ public class Topic implements Serializable {
         this.lastPoster = lastPoster;
     }
 
-    public String getTopicId() {
+    public long getTopicId() {
         return topicId;
     }
 
-    public void setTopicId(String topicId) {
+    public void setTopicId(long topicId) {
         this.topicId = topicId;
     }
 

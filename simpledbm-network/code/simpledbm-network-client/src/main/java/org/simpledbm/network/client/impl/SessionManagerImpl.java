@@ -136,4 +136,14 @@ public class SessionManagerImpl extends SessionManager {
         return response;
     }
 
+    @Override
+    public void close() {
+        if (connection != null) {
+            connection.close();
+        }
+        // FIXME we need to avoid starting the scheduler - until then
+        // as a workaround we shutdown the platform.
+        platform.shutdown();
+    }
+
 }
