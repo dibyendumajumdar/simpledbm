@@ -8,7 +8,28 @@ import org.simpledbm.network.client.api.SessionManager;
 public class SimpleDBMContext {
 
     final static int TABLE_SEQUENCE = 7;
+    final static int TABLE_TOPIC = 3;
+    final static int TABLE_FORUM = 1;
+    final static int TABLE_POST = 5;
 
+    final static int TOPIC_FORUM_NAME = 0;
+    final static int TOPIC_TOPIC_ID = 1;
+    final static int TOPIC_TITLE = 2;
+    final static int TOPIC_NUM_POSTS = 3;
+    final static int TOPIC_STARTED_BY = 4;
+    final static int TOPIC_LAST_UPDATED_BY = 5;
+    final static int TOPIC_LAST_UPDATED_ON = 6;
+    
+    final static int FORUM_NAME = 0;
+    final static int FORUM_DESCRIPTION = 1;
+    
+    final static int POST_FORUM_NAME = 0;
+    final static int POST_TOPIC_ID = 1;
+    final static int POST_POST_ID = 2;
+    final static int POST_AUTHOR = 3;
+    final static int POST_DATE_TIME = 4;
+    final static int POST_CONTENT = 5;
+    
     final SessionManager sm;
 
     SimpleDBMContext(Properties properties) {
