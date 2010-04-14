@@ -93,8 +93,8 @@ public class TopicsViewImpl extends ResizeComposite implements ClickHandler,
         header.getColumnFormatter().setWidth(1, "192px");
         header.getColumnFormatter().setWidth(3, "256px");
 
-        header.setText(0, 0, "Author");
-        header.setText(0, 1, "Num Posts");
+        header.setText(0, 0, "Started By");
+        header.setText(0, 1, "Num posts");
         header.setText(0, 2, "Title");
         header.setWidget(0, 3, navBar);
         header.getCellFormatter().setHorizontalAlignment(0, 3,
@@ -162,8 +162,8 @@ public class TopicsViewImpl extends ResizeComposite implements ClickHandler,
             }
 
             Topic item = topics[startIndex + i];
-            table.setText(i, 0, item.getLastPoster());
-            table.setText(i, 1, Integer.toString(item.getNumPosts()));
+            table.setText(i, 0, item.getStartedBy());
+            table.setText(i, 1, Integer.toString(0));
             table.setText(i, 2, item.getTitle());
         }
     }

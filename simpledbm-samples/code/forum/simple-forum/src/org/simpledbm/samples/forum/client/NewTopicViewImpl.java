@@ -61,10 +61,7 @@ public class NewTopicViewImpl extends DialogBox implements ClickHandler {
             post.setDateTime(new Date());
             Topic topic = new Topic();
             topic.setTitle(topicText.getText());
-            topic.setNumPosts(1);
-            topic.setUpdatedOn(post.getDateTime());
             topic.setStartedBy(post.getAuthor());
-            topic.setLastPoster(post.getAuthor());
             topicsHandler.saveTopic(topic, post);
         }
         else {

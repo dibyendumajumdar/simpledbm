@@ -11,18 +11,7 @@ public class Topic implements Serializable {
     String forumName;
     long topicId;
     String title = "test";
-    int numPosts = 0;
     String startedBy = "anonymous";
-    String lastPoster = "anonymous";
-    String updatedOn;
-
-    public String getUpdatedOn() {
-        return updatedOn;
-    }
-
-    public void setUpdatedOn(String updatedOn) {
-        this.updatedOn = updatedOn;
-    }
 
     public String getTitle() {
         return title;
@@ -32,28 +21,12 @@ public class Topic implements Serializable {
         this.title = title;
     }
 
-    public int getNumPosts() {
-        return numPosts;
-    }
-
-    public void setNumPosts(int numPosts) {
-        this.numPosts = numPosts;
-    }
-
     public String getStartedBy() {
         return startedBy;
     }
 
     public void setStartedBy(String startedBy) {
         this.startedBy = startedBy;
-    }
-
-    public String getLastPoster() {
-        return lastPoster;
-    }
-
-    public void setLastPoster(String lastPoster) {
-        this.lastPoster = lastPoster;
     }
 
     public long getTopicId() {
@@ -74,10 +47,7 @@ public class Topic implements Serializable {
 
     @Override
     public String toString() {
-        return "Topic [forumName=" + forumName + ", lastPoster=" + lastPoster
-                + ", numPosts=" + numPosts + ", startedBy=" + startedBy
-                + ", title=" + title + ", topicId=" + topicId + ", updatedOn="
-                + updatedOn + "]";
+        return "Topic [forumName=" + forumName + ", startedBy=" + startedBy
+                + ", title=" + title + ", topicId=" + topicId + "]";
     }
-
 }
