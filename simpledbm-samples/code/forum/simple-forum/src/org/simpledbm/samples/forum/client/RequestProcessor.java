@@ -73,7 +73,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             public void onSuccess(Topic[] topicList) {
                 topicsView.update(topicList);
                 if (topicList.length > 0) {
-                    getPosts(topicList[0].getTopicId());
+                    getPosts(topicList[0].getForumName(), topicList[0].getTopicId());
                 }
             }
         });
@@ -96,9 +96,9 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
         });
     }
 
-    private void getPosts(long topicId) {
+    private void getPosts(String forumName, long topicId) {
         postsView.showBusy();
-        simpleForumService.getPosts(topicId, new AsyncCallback<Post[]>() {
+        simpleForumService.getPosts(forumName, topicId, new AsyncCallback<Post[]>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
                 Window.alert("Failed to get posts: " + caught.getMessage());
@@ -115,7 +115,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
     }
 
     public void onTopicSelection(Topic topic) {
-        getPosts(topic.getTopicId());
+        getPosts(topic.getForumName(), topic.getTopicId());
     }
 
     public void onNewPost() {

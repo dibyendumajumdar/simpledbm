@@ -13,9 +13,9 @@ public interface SimpleForumServiceAsync {
 
     void getForums(AsyncCallback<Forum[]> callback);
 
-    void getPosts(long topicId, AsyncCallback<Post[]> callback);
-
     void savePost(Post post, AsyncCallback<Void> callback);
 
     void saveTopic(Topic topic, Post post, AsyncCallback<Void> callback);
+
+    void getPosts(String forumName, long topicId, AsyncCallback<Post[]> callback);
 }
