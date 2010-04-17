@@ -62,6 +62,6 @@ public class TupleIdFactory implements LocationFactory {
     }
 
     public Location newLocation(String s) {
-        return new TupleId(s);
+        throw new UnsupportedOperationException();
     }
 }

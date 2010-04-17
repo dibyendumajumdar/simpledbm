@@ -1,5 +1,8 @@
 package org.simpledbm.samples.forum.shared;
 
+import org.simpledbm.samples.forum.client.Post;
+import org.simpledbm.samples.forum.client.Topic;
+
 /**
  * <p>
  * FieldVerifier validates that the name the user enters is valid.
@@ -38,5 +41,24 @@ public class FieldVerifier {
       return false;
     }
     return name.length() > 3;
+  }
+  
+  public static boolean isValidTopic(Topic topic) {
+      if (topic.getTitle().trim().length() == 0 || 
+              topic.getForumName().trim().length() == 0 ||
+              topic.getStartedBy().trim().length() == 0) {
+          return false;
+      }
+      return true;
+  }
+  
+  public static boolean isValidPost(Post post) {
+      if (post.getAuthor().trim().length() == 0 ||
+              post.getContent().trim().length() == 0 ||
+              post.getForumName().trim().length() == 0 ||
+              post.getTopicId() <= 0L) {
+          return false;
+      }
+      return true;
   }
 }

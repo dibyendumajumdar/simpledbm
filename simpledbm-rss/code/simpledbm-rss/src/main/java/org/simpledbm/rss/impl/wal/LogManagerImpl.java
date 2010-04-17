@@ -3030,6 +3030,24 @@ public final class LogManagerImpl implements LogManager {
         public int compareTo(LogRecordBuffer o) {
             return lsn.compareTo(o.lsn);
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj) {
+                return true;
+            }
+            if (obj.getClass() != getClass()) {
+                return false;
+            }
+            LogRecordBuffer other = (LogRecordBuffer) obj;
+            return compareTo(other) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return lsn.hashCode();
+        }
+
     }
 
     static final class ArchiveCleaner implements Runnable {

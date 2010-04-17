@@ -115,7 +115,7 @@ public class ClientSession {
         }
     }
 
-    final Transaction getTransaction() {
+    final synchronized Transaction getTransaction() {
         return transaction;
     }
 

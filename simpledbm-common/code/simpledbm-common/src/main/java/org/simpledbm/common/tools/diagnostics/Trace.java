@@ -98,7 +98,6 @@ public class Trace implements TraceBuffer.TraceVisitor {
         InputStream is = null;
         is = cl.getResourceAsStream(name);
         if (is == null) {
-            // FIXME
             throw new SimpleDBMException(new MessageInstance(new Message('C',
                     'U', MessageType.ERROR, 2, "Unable to load resource {0}"),
                     name));
@@ -108,9 +107,10 @@ public class Trace implements TraceBuffer.TraceVisitor {
 
     private String[] loadMessages(String resourceName) {
         InputStream is = getResourceAsStream(resourceName);
+        BufferedReader reader = null;
         ArrayList<String> messageList = new ArrayList<String>();
         try {
-            BufferedReader reader = new BufferedReader(
+            reader = new BufferedReader(
                     new InputStreamReader(is));
             String line = reader.readLine();
             while (line != null) {
@@ -119,6 +119,12 @@ public class Trace implements TraceBuffer.TraceVisitor {
             }
         } catch (IOException e) {
         } finally {
+            if (reader != null) {
+                try {
+                    reader.close();
+                } catch (IOException e) {
+                }
+            }
             try {
                 is.close();
             } catch (IOException e) {
