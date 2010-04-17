@@ -86,15 +86,6 @@ public final class TupleId extends BaseLockable implements Location, Dumpable {
         slotNumber = bb.getShort();
     }
 
-    public TupleId(String string) {
-        super((byte) 'T');
-        pageId = new PageId();
-        slotNumber = -1;
-        throw new UnsupportedOperationException();
-        //        exceptionHandler.errorThrow(this.getClass().getName(), "TupleId", 
-        //        		new TupleException(mcat.getMessage("ET0001")));
-    }
-
     public Location cloneLocation() {
         return new TupleId(this);
     }
