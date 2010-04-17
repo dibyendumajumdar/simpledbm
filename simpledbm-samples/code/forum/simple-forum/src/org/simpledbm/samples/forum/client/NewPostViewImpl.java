@@ -16,14 +16,16 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 public class NewPostViewImpl extends DialogBox implements ClickHandler {
 
     private final PostsHandler postsHandler;
+    private final Topic topic;
     VerticalPanel outer = new VerticalPanel();
     RichTextArea textArea = new RichTextArea();
     TextBox author = new TextBox();
     Button saveButton = new Button("Save");
     Button cancelButton = new Button("Cancel");
 
-    public NewPostViewImpl(PostsHandler postsHandler) {
+    public NewPostViewImpl(Topic topic, PostsHandler postsHandler) {
         this.postsHandler = postsHandler;
+        this.topic = topic;
         setText("Add a new post");
         outer.add(new Label("Your name:"));
         outer.add(author);
@@ -53,6 +55,8 @@ public class NewPostViewImpl extends DialogBox implements ClickHandler {
         Object source = event.getSource();
         if (source == saveButton) {
             Post post = new Post();
+            post.setForumName(topic.getForumName());
+            post.setTopicId(topic.getTopicId());
             post.setAuthor(author.getText());
             post.setContent(textArea.getText());
             post.setDateTime(new Date());

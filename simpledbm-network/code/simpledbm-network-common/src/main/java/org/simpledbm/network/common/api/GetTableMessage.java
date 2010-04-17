@@ -43,7 +43,7 @@ import org.simpledbm.common.util.TypeSize;
 
 public class GetTableMessage implements Storable {
 
-    public int containerId;
+    private final int containerId;
 
     public GetTableMessage(int containerId) {
         this.containerId = containerId;
@@ -59,6 +59,15 @@ public class GetTableMessage implements Storable {
 
     public void store(ByteBuffer bb) {
         bb.putInt(containerId);
+    }
+
+    @Override
+    public String toString() {
+        return "GetTableMessage [containerId=" + containerId + "]";
+    }
+
+    public int getContainerId() {
+        return containerId;
     }
 
 }

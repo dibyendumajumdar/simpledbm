@@ -45,9 +45,9 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class FetchNextRowReply implements Storable {
 
-    int containerId;
-    boolean eof;
-    Row row;
+    final int containerId;
+    final boolean eof;
+    final Row row;
 
     public FetchNextRowReply(int containerId, boolean eof, Row row) {
         this.containerId = containerId;
@@ -61,6 +61,7 @@ public class FetchNextRowReply implements Storable {
             containerId = bb.getInt();
             row = rowFactory.newRow(containerId, bb);
         } else {
+            containerId = -1;
             row = null;
         }
     }
@@ -82,12 +83,13 @@ public class FetchNextRowReply implements Storable {
         return row;
     }
 
-    public void setRow(Row row) {
-        this.row = row;
-    }
-
     public boolean isEof() {
         return eof;
     }
 
+    @Override
+    public String toString() {
+        return "FetchNextRowReply [containerId=" + containerId + ", eof=" + eof
+                + ", row=" + row + ", storedLength=" + getStoredLength() + "]";
+    }
 }

@@ -66,4 +66,9 @@ public class EndTransactionMessage implements Storable {
         bb.put((byte) (commit ? 1 : 0));
     }
 
+    @Override
+    public String toString() {
+        return "EndTransactionMessage [commit=" + commit + "]";
+    }
+
 }

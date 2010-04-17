@@ -81,7 +81,7 @@ public class ConnectionImpl implements Connection {
     static final Message m_serverError = new Message('N', 'C',
             MessageType.ERROR, 5, "Server returned error message: {0}");
 
-    String getError(Response response) {
+    private String getError(Response response) {
         byte[] data = response.getData().array();
         String msg;
         try {
@@ -111,7 +111,7 @@ public class ConnectionImpl implements Connection {
         }
     }
 
-    public Response submit(Request request) {
+    public final synchronized Response submit(Request request) {
         if (status != OKAY) {
             throw new NetworkException(new MessageInstance(m_erroredException,
                     "submit"));
@@ -157,7 +157,7 @@ public class ConnectionImpl implements Connection {
         try {
             len = is.read(data, 0, len);
         } catch (IOException e) {
-            System.err.println("Expected length = " + len);
+//            System.err.println("Expected length = " + len);
             handleException(e, "submit");
         }
 
@@ -181,7 +181,7 @@ public class ConnectionImpl implements Connection {
         return response;
     }
 
-    public void close() {
+    public final synchronized void close() {
         try {
             os.flush();
         } catch (IOException e) {
@@ -198,13 +198,10 @@ public class ConnectionImpl implements Connection {
         status = CLOSED;
     }
 
-    void handleException(Exception e, String op) {
+    private void handleException(Exception e, String op) {
         status = ERRORED;
         NetworkException ne = new NetworkException(new MessageInstance(
                 m_IOException, op), e);
-        //		logger.error(getClass().getName(), "handleException", e.getMessage(),
-        //				e);
-//        e.printStackTrace();
         throw ne;
     }
 

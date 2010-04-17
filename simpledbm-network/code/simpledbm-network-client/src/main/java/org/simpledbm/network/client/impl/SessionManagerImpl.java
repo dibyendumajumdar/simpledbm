@@ -65,9 +65,9 @@ public class SessionManagerImpl extends SessionManager {
 
     public static final String LOGGER_NAME = "org.simpledbm.network";
 
-    String host;
-    int port;
-    Connection connection;
+    final String host;
+    final int port;
+    final Connection connection;
     final TypeSystemFactory typeSystemFactory;
     final TypeFactory typeFactory;
     final DictionaryCache dictionaryCache;
@@ -76,7 +76,7 @@ public class SessionManagerImpl extends SessionManager {
     final PlatformObjects po;
     final Logger log;
     final ExceptionHandler exceptionHandler;
-    int timeout;
+    final int timeout;
 
     public SessionManagerImpl(Properties properties, String host, int port,
             int timeout) {

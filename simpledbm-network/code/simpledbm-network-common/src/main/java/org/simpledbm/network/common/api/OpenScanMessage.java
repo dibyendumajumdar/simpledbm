@@ -45,10 +45,10 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class OpenScanMessage implements Storable {
 
-    int containerId;
-    int indexNo;
-    Row startRow;
-    boolean forUpdate;
+    final int containerId;
+    final int indexNo;
+    final Row startRow;
+    final boolean forUpdate;
 
     public OpenScanMessage(int containerId, int indexNo, Row startRow,
             boolean forUpdate) {
@@ -90,32 +90,22 @@ public class OpenScanMessage implements Storable {
         return containerId;
     }
 
-    public void setContainerId(int containerId) {
-        this.containerId = containerId;
-    }
-
     public int getIndexNo() {
         return indexNo;
-    }
-
-    public void setIndexNo(int indexNo) {
-        this.indexNo = indexNo;
     }
 
     public Row getStartRow() {
         return startRow;
     }
 
-    public void setStartRow(Row startRow) {
-        this.startRow = startRow;
-    }
-
     public boolean isForUpdate() {
         return forUpdate;
     }
 
-    public void setForUpdate(boolean forUpdate) {
-        this.forUpdate = forUpdate;
+    @Override
+    public String toString() {
+        return "OpenScanMessage [containerId=" + containerId + ", forUpdate="
+                + forUpdate + ", indexNo=" + indexNo + ", startRow=" + startRow
+                + "]";
     }
-
 }

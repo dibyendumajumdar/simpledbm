@@ -79,4 +79,10 @@ public class UpdateRowMessage implements Storable {
         return row;
     }
 
+    @Override
+    public String toString() {
+        return "UpdateRowMessage [row=" + row + ", scanId=" + scanId
+                + ", tableId=" + tableId + "]";
+    }
+
 }

@@ -1,6 +1,7 @@
 package org.simpledbm.samples.forum.server;
 
 import java.util.ArrayList;
+import java.util.Date;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -67,6 +68,7 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         ArrayList<Topic> topics = new ArrayList<Topic>();
         try {
             session.startTransaction(IsolationMode.READ_COMMITTED);
+            boolean success = true;
             try {
                 Table table = session.getTable(SimpleDBMContext.TABLE_TOPIC);
                 Row row = table.getRow();
@@ -75,27 +77,30 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
                 try {
                     row = scan.fetchNext();
                     while (row != null) {
+                        System.err.println("Read row " + row);
                         Topic t = new Topic();
                         t.setForumName(row
                                 .getString(SimpleDBMContext.TOPIC_FORUM_NAME));
                         t.setTopicId(row
                                 .getLong(SimpleDBMContext.TOPIC_TOPIC_ID));
-                        //                        t.setNumPosts(row
-                        //                                .getInt(SimpleDBMContext.TOPIC_NUM_POSTS));
                         t.setStartedBy(row
                                 .getString(SimpleDBMContext.TOPIC_STARTED_BY));
-                        //                        t
-                        //                                .setLastPoster(row
-                        //                                        .getString(SimpleDBMContext.TOPIC_LAST_UPDATED_BY));
-                        //            t.setUpdatedOn(row.getDate(SimpleDBMContext.TOPIC_LAST_UPDATED_ON));
-                        topics.add(t);
+                        if (t.getForumName().equals(forumName)) {
+                            topics.add(t);
+                        } else {
+                            break;
+                        }
                         row = scan.fetchNext();
                     }
                 } finally {
                     scan.close();
                 }
+                success = true;
             } finally {
-                session.commit();
+                if (success)
+                    session.commit();
+                else
+                    session.rollback();
             }
         } finally {
             session.close();
@@ -109,6 +114,7 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         ArrayList<Forum> topics = new ArrayList<Forum>();
         try {
             session.startTransaction(IsolationMode.READ_COMMITTED);
+            boolean success = true;
             try {
                 Table table = session.getTable(SimpleDBMContext.TABLE_FORUM);
                 TableScan scan = table.openScan(0, null, false);
@@ -124,8 +130,12 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
                 } finally {
                     scan.close();
                 }
+                success = true;
             } finally {
-                session.commit();
+                if (success)
+                    session.commit();
+                else
+                    session.rollback();
             }
         } finally {
             session.close();
@@ -139,31 +149,49 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         ArrayList<Post> posts = new ArrayList<Post>();
         try {
             session.startTransaction(IsolationMode.READ_COMMITTED);
+            boolean success = false;
             try {
                 Table table = session.getTable(SimpleDBMContext.TABLE_POST);
                 Row searchRow = table.getRow();
                 searchRow
                         .setString(SimpleDBMContext.POST_FORUM_NAME, forumName);
                 searchRow.setLong(SimpleDBMContext.POST_TOPIC_ID, topicId);
+                System.err.println("Searching for topic " + searchRow);
                 TableScan scan = table.openScan(0, searchRow, false);
                 try {
                     Row row = scan.fetchNext();
                     while (row != null) {
                         Post post = new Post();
-                        post.setForumName(row.getString(SimpleDBMContext.POST_FORUM_NAME));
-                        post.setTopicId(row.getLong(SimpleDBMContext.POST_TOPIC_ID));
-                        post.setPostId(row.getLong(SimpleDBMContext.POST_POST_ID));
-                        post.setAuthor(row.getString(SimpleDBMContext.POST_AUTHOR));
-                        post.setContent(row.getString(SimpleDBMContext.POST_CONTENT));
-                        //                        post.setDateTime(row.getDate(SimpleDBMContext.POST_DATE_TIME));
-                        posts.add(post);
+                        post.setForumName(row
+                                .getString(SimpleDBMContext.POST_FORUM_NAME));
+                        post.setTopicId(row
+                                .getLong(SimpleDBMContext.POST_TOPIC_ID));
+                        post.setPostId(row
+                                .getLong(SimpleDBMContext.POST_POST_ID));
+                        post.setAuthor(row
+                                .getString(SimpleDBMContext.POST_AUTHOR));
+                        post.setContent(row
+                                .getString(SimpleDBMContext.POST_CONTENT));
+                        post.setDateTime(row
+                                .getString(SimpleDBMContext.POST_DATE_TIME));
+                        if (post.getForumName().equals(forumName)
+                                && post.getTopicId() == topicId) {
+                            System.err.println(row);
+                            posts.add(post);
+                        } else {
+                            break;
+                        }
                         row = scan.fetchNext();
                     }
                 } finally {
                     scan.close();
                 }
+                success = true;
             } finally {
-                session.commit();
+                if (success)
+                    session.commit();
+                else
+                    session.rollback();
             }
         } finally {
             session.close();
@@ -183,13 +211,16 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
             try {
                 Table table = session.getTable(SimpleDBMContext.TABLE_POST);
                 Row row = table.getRow();
-                row.setString(SimpleDBMContext.POST_FORUM_NAME, "");
+                row.setString(SimpleDBMContext.POST_FORUM_NAME, post
+                        .getForumName());
                 row.setLong(SimpleDBMContext.POST_TOPIC_ID, post.getTopicId());
                 row.setLong(SimpleDBMContext.POST_POST_ID, postId);
                 row.setString(SimpleDBMContext.POST_AUTHOR, post.getAuthor());
-                //                row.setDate(SimpleDBMContext.POST_DATE_TIME, post.getDateTime());
+                row.setDate(SimpleDBMContext.POST_DATE_TIME, new Date());
                 row.setString(SimpleDBMContext.POST_CONTENT, post.getContent());
+                System.err.println("Saving post " + row);
                 table.addRow(row);
+                success = true;
             } finally {
                 if (success)
                     session.commit();
@@ -205,6 +236,8 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         SequenceGenerator seq = new SequenceGenerator(sdbmContext,
                 "topic_sequence");
         long topicId = seq.getNextSequence();
+        post.setForumName(topic.getForumName());
+        post.setTopicId(topicId);
         SessionManager sm = sdbmContext.getSessionManager();
         Session session = sm.openSession();
         try {
@@ -219,10 +252,9 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
                 row.setLong(SimpleDBMContext.TOPIC_TOPIC_ID, topicId);
                 row.setString(SimpleDBMContext.TOPIC_STARTED_BY, post
                         .getAuthor());
-                //                row.setString(SimpleDBMContext.TOPIC_LAST_UPDATED_BY, post.getAuthor());
-                //                row.setDate(SimpleDBMContext.TOPIC_LAST_UPDATED_ON, post.getDateTime());
-                //                row.setString(SimpleDBMContext.TO, post.getContent());
+                System.err.println("Saving topic " + row);
                 table.addRow(row);
+                success = true;
             } finally {
                 if (success)
                     session.commit();
@@ -234,5 +266,4 @@ public class SimpleForumServiceImpl extends RemoteServiceServlet implements
         }
         savePost(post);
     }
-
 }

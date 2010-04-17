@@ -19,9 +19,9 @@ public class PostsViewImpl extends Composite implements PostsView {
     }
 
     public PostsViewImpl() {
-        panel.setStyleName("posts");
         initHeader();
         sp.add(panel);
+        sp.setStyleName("posts");
         initWidget(sp);
     }
 
@@ -54,7 +54,7 @@ public class PostsViewImpl extends Composite implements PostsView {
     public void update(Post[] posts) {
         panel.clear();
         initHeader();
-        for (int i = 1; i < posts.length; i++) {
+        for (int i = 0; i < posts.length; i++) {
             addPost(posts[i]);
         }
     }
