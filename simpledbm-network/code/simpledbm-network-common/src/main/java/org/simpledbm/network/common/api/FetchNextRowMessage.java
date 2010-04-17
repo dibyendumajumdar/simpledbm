@@ -44,7 +44,7 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class FetchNextRowMessage implements Storable {
 
-    int scanId;
+    private final int scanId;
 
     public FetchNextRowMessage(int scanId) {
         this.scanId = scanId;
@@ -66,8 +66,9 @@ public class FetchNextRowMessage implements Storable {
         return scanId;
     }
 
-    public void setScanId(int scanId) {
-        this.scanId = scanId;
+    @Override
+    public String toString() {
+        return "FetchNextRowMessage [scanId=" + scanId + "]";
     }
 
 }

@@ -12,6 +12,9 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
  */
 public class RequestProcessor implements ForumsHandler, TopicsHandler,
         PostsHandler {
+    
+    Forum currentForum;
+    Topic currentTopic;
 
     interface TopicsView {
         void update(Topic[] topicList);
@@ -73,6 +76,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             public void onSuccess(Topic[] topicList) {
                 topicsView.update(topicList);
                 if (topicList.length > 0) {
+                    currentTopic = topicList[0];
                     getPosts(topicList[0].getForumName(), topicList[0].getTopicId());
                 }
             }
@@ -90,6 +94,7 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             public void onSuccess(Forum[] forums) {
                 forumsView.update(forums);
                 if (forums != null && forums.length > 0) {
+                    currentForum = forums[0];
                     getTopics(forums[0].getName());
                 }
             }
@@ -111,15 +116,19 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
     }
 
     public void onForumSelect(String forumName) {
+        currentForum = new Forum();
+        currentForum.name = forumName;
+        currentForum.description = "";
         getTopics(forumName);
     }
 
     public void onTopicSelection(Topic topic) {
+        currentTopic = topic;
         getPosts(topic.getForumName(), topic.getTopicId());
     }
 
     public void onNewPost() {
-        new NewPostViewImpl(this).show();
+        new NewPostViewImpl(currentTopic, this).show();
     }
 
     public void savePost(final Post post) {
@@ -130,12 +139,12 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             }
 
             public void onSuccess(Void discard) {
+                getPosts(post.getForumName(), post.getTopicId());
             }
         });
     }
 
     public void saveTopic(final Topic topic, final Post post) {
-        topic.setTopicId(getNewTopicId(topic));
         simpleForumService.saveTopic(topic, post, new AsyncCallback<Void>() {
             public void onFailure(Throwable caught) {
                 // Show the RPC error message to the user
@@ -143,17 +152,13 @@ public class RequestProcessor implements ForumsHandler, TopicsHandler,
             }
 
             public void onSuccess(Void discard) {
+                getPosts(topic.getForumName(), topic.getTopicId());
             }
         });
     }
 
     public void onNewTopic() {
-        new NewTopicViewImpl(this).show();
+        new NewTopicViewImpl(currentForum, this).show();
     }
 
-    public long getNewTopicId(Topic topic) {
-        long time = System.currentTimeMillis();
-        return time;
-    }
-    
 }

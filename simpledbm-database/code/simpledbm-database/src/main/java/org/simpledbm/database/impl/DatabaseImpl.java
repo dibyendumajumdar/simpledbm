@@ -160,6 +160,8 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
             "Table {0} already exists");
     static final Message m_ED0009 = new Message('D', 'D', MessageType.ERROR, 9,
             "Unexpected error occurred while reading a log record");
+    static final Message m_ED0010 = new Message('D', 'D', MessageType.ERROR,
+            10, "There is no table defined with container id {0}");
     static final Message m_ED0013 = new Message('D', 'D', MessageType.ERROR,
             13,
             "Unexpected error occurred while reading the data dictionary for container {0}");
@@ -487,7 +489,13 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
          */
         getServer().getTupleManager().lockTupleContainer(trx, containerId,
                 LockMode.SHARED);
-        return getTable(getTableDefinition(containerId));
+        TableDefinition tableDefinition = getTableDefinition(containerId);
+        if (tableDefinition == null) {
+            exceptionHandler.errorThrow(getClass().getName(),
+                    "unregisterTableDefinition", new DatabaseException(
+                            new MessageInstance(m_ED0010, containerId)));
+        }
+        return getTable(tableDefinition);
     }
 
     /*

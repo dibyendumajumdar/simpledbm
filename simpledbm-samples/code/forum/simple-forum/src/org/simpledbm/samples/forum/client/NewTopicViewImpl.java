@@ -14,16 +14,18 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class NewTopicViewImpl extends DialogBox implements ClickHandler {
-    
+
     private final TopicsHandler topicsHandler;
+    private final Forum forum;
     VerticalPanel outer = new VerticalPanel();
     TextBox topicText = new TextBox();
     TextBox author = new TextBox();
     RichTextArea textArea = new RichTextArea();
     Button saveButton = new Button("Save");
     Button cancelButton = new Button("Cancel");
-    
-    public NewTopicViewImpl(TopicsHandler postsHandler) {
+
+    public NewTopicViewImpl(Forum forum, TopicsHandler postsHandler) {
+        this.forum = forum;
         this.topicsHandler = postsHandler;
         setText("Add a new Topic");
         outer.add(new Label("Topic:"));
@@ -60,11 +62,11 @@ public class NewTopicViewImpl extends DialogBox implements ClickHandler {
             post.setAuthor(author.getText());
             post.setDateTime(new Date());
             Topic topic = new Topic();
+            topic.setForumName(forum.getName());
             topic.setTitle(topicText.getText());
             topic.setStartedBy(post.getAuthor());
             topicsHandler.saveTopic(topic, post);
-        }
-        else {
+        } else {
         }
         hide();
     }

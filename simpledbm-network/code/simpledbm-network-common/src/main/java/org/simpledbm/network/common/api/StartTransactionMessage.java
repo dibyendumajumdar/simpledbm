@@ -85,4 +85,9 @@ public class StartTransactionMessage implements Storable {
         return isolationMode;
     }
 
+    @Override
+    public String toString() {
+        return "StartTransactionMessage [isolationMode=" + isolationMode + "]";
+    }
+
 }

@@ -49,9 +49,6 @@ public class DateTimeType implements TypeDescriptor {
     TimeZone timeZone;
     SimpleDateFormat dateFormat;
 
-    DateTimeType() {
-    }
-
     public DateTimeType(String timeZone, String format) {
         this.timeZone = TimeZone.getTimeZone(timeZone);
         this.dateFormat = new SimpleDateFormat(format);
@@ -91,15 +88,6 @@ public class DateTimeType implements TypeDescriptor {
         ByteString bs2 = new ByteString(dateFormat.toPattern());
         return bs1.getStoredLength() + bs2.getStoredLength();
     }
-
-    //	public void retrieve(ByteBuffer bb) {
-    //		ByteString bs = new ByteString();
-    //		bs.retrieve(bb);
-    //		timeZone = TimeZone.getTimeZone(bs.toString());
-    //		bs.retrieve(bb);
-    //		dateFormat = new SimpleDateFormat(bs.toString());
-    //		dateFormat.setTimeZone(timeZone);
-    //	}
 
     public void store(ByteBuffer bb) {
         String s = timeZone.getID();

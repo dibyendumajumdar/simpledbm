@@ -60,7 +60,7 @@ import org.simpledbm.rss.api.tx.Transaction;
 public class ClientSession {
 
     /**
-     * The requestHandler that is managing this sessoion.
+     * The requestHandler that is managing this session.
      */
     final SimpleDBMRequestHandler requestHandler;
 
@@ -115,15 +115,15 @@ public class ClientSession {
         }
     }
 
-    Transaction getTransaction() {
+    final Transaction getTransaction() {
         return transaction;
     }
 
-    synchronized void setLastUpdated() {
+    final synchronized void setLastUpdated() {
         lastUpdated = System.currentTimeMillis();
     }
 
-    synchronized void setTransaction(Transaction transaction) {
+    final synchronized void setTransaction(Transaction transaction) {
         this.transaction = transaction;
     }
 
@@ -137,11 +137,11 @@ public class ClientSession {
         this.log = requestHandler.po.getLogger();
     }
 
-    int getSessionId() {
+    final int getSessionId() {
         return sessionId;
     }
 
-    synchronized Table getTable(int containerId) {
+    final synchronized Table getTable(int containerId) {
         if (transaction == null) {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
@@ -158,7 +158,7 @@ public class ClientSession {
         return table;
     }
 
-    synchronized int registerTableScan(TableScan scan) {
+    final synchronized int registerTableScan(TableScan scan) {
         if (transaction == null) {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
@@ -167,7 +167,7 @@ public class ClientSession {
         return s;
     }
 
-    synchronized TableScan getTableScan(int scanId) {
+    final synchronized TableScan getTableScan(int scanId) {
         if (transaction == null) {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
@@ -179,7 +179,7 @@ public class ClientSession {
         return scan;
     }
 
-    synchronized void closeTableScan(int scanId) {
+    final synchronized void closeTableScan(int scanId) {
         if (transaction == null) {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
@@ -191,7 +191,7 @@ public class ClientSession {
         scan.close();
     }
 
-    synchronized void closeScans() {
+    final synchronized void closeScans() {
         for (TableScan scan : tableScans.values()) {
             try {
                 scan.close();
@@ -203,7 +203,7 @@ public class ClientSession {
         tableScans.clear();
     }
 
-    synchronized void abortTransaction() {
+    final synchronized void abortTransaction() {
         if (transaction != null) {
             closeScans();
             tables.clear();
@@ -212,7 +212,7 @@ public class ClientSession {
         }
     }
 
-    synchronized void commitTransaction() {
+    final synchronized void commitTransaction() {
         if (transaction != null) {
             closeScans();
             tables.clear();
@@ -221,7 +221,7 @@ public class ClientSession {
         }
     }
 
-    synchronized boolean checkTimeout(int timeout) {
+    final synchronized boolean checkTimeout(int timeout) {
         if (timedOut) {
             return true;
         }
@@ -230,6 +230,12 @@ public class ClientSession {
             timedOut = true;
         }
         return timedOut;
+    }
+
+    @Override
+    public String toString() {
+        return "ClientSession [lastUpdated=" + lastUpdated + ", sessionId="
+                + sessionId + ", timedOut=" + timedOut + "]";
     }
 
 }

@@ -109,6 +109,8 @@ public class SimpleDBMRequestHandler implements RequestHandler {
      */
     HashMap<Integer, ClientSession> sessions = new HashMap<Integer, ClientSession>();
 
+    Object sync = new Object();
+
     /**
      * A sequence number generator used to allocate new session ids.
      */
@@ -122,7 +124,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
      */
     private ClientSession validateSession(Request request, Response response) {
         ClientSession session = null;
-        synchronized (sessions) {
+        synchronized (sync) {
             session = sessions.get(request.getSessionId());
         }
         if (session == null) {
@@ -170,9 +172,13 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         this.platform = platform;
         this.po = platform.getPlatformObjects(LOGGER_NAME);
         this.log = po.getLogger();
-        this.timeout = Integer.parseInt(properties.getProperty("network.server.sessionTimeout", "300"));
-        this.sessionMonitorInterval = Integer.parseInt(properties.getProperty("network.server.sessionMonitorInterval", "60"));
-        
+        // default timeout is 300 seconds
+        this.timeout = Integer.parseInt(properties.getProperty(
+                "network.server.sessionTimeout", "300000"));
+        // default interval is 120 seconds
+        this.sessionMonitorInterval = Integer.parseInt(properties.getProperty(
+                "network.server.sessionMonitorInterval", "120"));
+
         database = DatabaseFactory.getDatabase(platform, properties);
         sessionMonitorFuture = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.NORMAL, new SessionMonitor(this),
@@ -247,23 +253,29 @@ public class SimpleDBMRequestHandler implements RequestHandler {
     void handleOpenSessionRequest(Request request, Response response) {
         int sessionId = sessionIdGenerator.incrementAndGet();
         ClientSession session = new ClientSession(this, sessionId, database);
-        synchronized (session) {
+        synchronized (sync) {
             sessions.put(sessionId, session);
         }
         response.setSessionId(sessionId);
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleOpenSessionRequest",
+                    "SIMPLEDBM-DEBUG: Opened session " + session);
+        }
     }
 
     void handleCloseSessionRequest(Request request, Response response) {
         int sessionId = request.getSessionId();
-        //		System.err.println("Request to close session " + sessionId);
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleCloseSessionRequest",
+                    "SIMPLEDBM-DEBUG: Closing session " + sessionId);
+        }
         ClientSession session = null;
-        synchronized (sessions) {
+        synchronized (sync) {
             session = sessions.get(sessionId);
             if (session == null) {
                 throw new NetworkException(new MessageInstance(noSuchSession,
                         sessionId));
             } else {
-                //				System.err.println("session removed");		
                 sessions.remove(sessionId);
             }
         }
@@ -275,7 +287,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         QueryDictionaryMessage message = new QueryDictionaryMessage(request
                 .getData());
         TypeDescriptor[] td = database.getDictionaryCache().getTypeDescriptor(
-                message.containerId);
+                message.getContainerId());
         ByteBuffer bb = ByteBuffer.allocate(database.getTypeFactory()
                 .getStoredLength(td));
         database.getTypeFactory().store(td, bb);
@@ -340,6 +352,11 @@ public class SimpleDBMRequestHandler implements RequestHandler {
                 .getData());
         transaction = database.startTransaction(message.getIsolationMode());
         session.setTransaction(transaction);
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleStartTransaction",
+                    "SIMPLEDBM-DEBUG: Starting transaction for session "
+                            + session);
+        }
     }
 
     void handleEndTransaction(Request request, Response response) {
@@ -351,8 +368,18 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         EndTransactionMessage message = new EndTransactionMessage(request
                 .getData());
         if (message.isCommit()) {
+            if (log.isDebugEnabled()) {
+                log.debug(getClass().getName(), "handleEndTransaction",
+                        "SIMPLEDBM-DEBUG: Committing transaction for session "
+                                + session);
+            }
             session.commitTransaction();
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug(getClass().getName(), "handleEndTransaction",
+                        "SIMPLEDBM-DEBUG: Aborting transaction for session "
+                                + session);
+            }
             session.abortTransaction();
         }
     }
@@ -364,12 +391,18 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
         GetTableMessage message = new GetTableMessage(request.getData());
-        Table table = session.getTable(message.containerId);
+        Table table = session.getTable(message.getContainerId());
         TableDefinition tableDefinition = table.getDefinition();
         ByteBuffer bb = ByteBuffer.allocate(tableDefinition.getStoredLength());
         tableDefinition.store(bb);
         bb.flip();
         response.setData(bb);
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleGetTable",
+                    "SIMPLEDBM-DEBUG: Opening table "
+                            + message.getContainerId() + " for session "
+                            + session);
+        }
     }
 
     void handleOpenTableScan(Request request, Response response) {
@@ -385,9 +418,21 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(noSuchTable, message
                     .getContainerId()));
         }
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleOpenTableScan",
+                    "SIMPLEDBM-DEBUG: Open scan for table "
+                            + message.getContainerId() + " for session "
+                            + session);
+        }
         TableScan tableScan = table.openScan(transaction, message.getIndexNo(),
                 message.getStartRow(), message.isForUpdate());
         int scanId = session.registerTableScan(tableScan);
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleOpenTableScan",
+                    "SIMPLEDBM-DEBUG: Scan id " + scanId + " opened for table "
+                            + message.getContainerId() + " for session "
+                            + session);
+        }
         ByteBuffer bb = ByteBuffer.allocate(TypeSize.INTEGER);
         bb.putInt(scanId);
         bb.flip();
@@ -401,12 +446,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(noActiveTransaction));
         }
         CloseScanMessage message = new CloseScanMessage(request.getData());
-        TableScan tableScan = session.getTableScan(message.getScanId());
-        if (tableScan == null) {
-            throw new NetworkException(new MessageInstance(
-                    noSuchTableScanMessage, message.getScanId()));
+        session.closeTableScan(message.getScanId());
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleCloseTableScan",
+                    "SIMPLEDBM-DEBUG: Closed scan " + message.getScanId()
+                            + " for session " + session);
         }
-        tableScan.close();
     }
 
     void handleAddRow(Request request, Response response) {
@@ -422,7 +467,12 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(noSuchTable, message
                     .getContainerId()));
         }
-        // System.err.println("Adding row " + message.getRow());
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleAddRow",
+                    "SIMPLEDBM-DEBUG: Added row " + message.getRow()
+                            + " to table " + message.getContainerId()
+                            + " for session " + session);
+        }
         table.addRow(transaction, message.getRow());
     }
 
@@ -442,11 +492,32 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         FetchNextRowReply reply = null;
         boolean hasNext = tableScan.fetchNext();
         if (hasNext) {
+            if (log.isDebugEnabled()) {
+                log.debug(getClass().getName(), "handleFetchNextRow",
+                        "SIMPLEDBM-DEBUG: Fetched row "
+                                + tableScan.getCurrentRow()
+                                + " from table "
+                                + tableScan.getTable().getDefinition()
+                                        .getContainerId() + " for session "
+                                + session);
+            }
             reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
                     .getContainerId(), false, tableScan.getCurrentRow());
         } else {
+            if (log.isDebugEnabled()) {
+                log.debug(getClass().getName(), "handleFetchNextRow",
+                        "SIMPLEDBM-DEBUG: Fetch request reached EOF from table "
+                                + tableScan.getTable().getDefinition()
+                                        .getContainerId() + " for session "
+                                + session);
+            }
             reply = new FetchNextRowReply(tableScan.getTable().getDefinition()
                     .getContainerId(), true, null);
+        }
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleFetchNextRow",
+                    "SIMPLEDBM-DEBUG: Fetch result " + reply + " for session "
+                            + session);
         }
         ByteBuffer bb = ByteBuffer.allocate(reply.getStoredLength());
         reply.store(bb);
@@ -467,6 +538,15 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(
                     noSuchTableScanMessage, message.getScanId()));
         }
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleUpdateCurrentRow",
+                    "SIMPLEDBM-DEBUG: Updating row "
+                            + message.getRow()
+                            + " in table "
+                            + tableScan.getTable().getDefinition()
+                                    .getContainerId() + " for session "
+                            + session);
+        }
         tableScan.updateCurrentRow(message.getRow());
     }
 
@@ -485,6 +565,15 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             throw new NetworkException(new MessageInstance(
                     noSuchTableScanMessage, message.getScanId()));
         }
+        if (log.isDebugEnabled()) {
+            log.debug(getClass().getName(), "handleDeleteCurrentRow",
+                    "SIMPLEDBM-DEBUG: Deleting row "
+                            + tableScan.getCurrentRow()
+                            + " from table "
+                            + tableScan.getTable().getDefinition()
+                                    .getContainerId() + " for session "
+                            + session);
+        }
         tableScan.deleteRow();
     }
 
@@ -496,16 +585,21 @@ public class SimpleDBMRequestHandler implements RequestHandler {
 
     void abortSessions() {
         HashMap<Integer, ClientSession> oldsessions = null;
-        synchronized (sessions) {
+        synchronized (sync) {
             oldsessions = sessions;
             sessions = new HashMap<Integer, ClientSession>();
         }
         for (ClientSession session : oldsessions.values()) {
             try {
+                if (log.isDebugEnabled()) {
+                    log.debug(getClass().getName(), "abortSessions",
+                            "SIMPLEDBM-DEBUG: Aborting transaction for session "
+                                    + session);
+                }
                 session.abortTransaction();
             } catch (Throwable e) {
-                // FIXME log error
-                e.printStackTrace();
+                log.error(getClass().getName(), "abortSessions",
+                        "Unexpected error occurred when aborting session: ", e);
             }
         }
     }
@@ -516,18 +610,27 @@ public class SimpleDBMRequestHandler implements RequestHandler {
      * 
      */
     void timeoutSessions() {
-        synchronized (sessions) {
+        synchronized (sync) {
             Iterator<ClientSession> iter = sessions.values().iterator();
             while (iter.hasNext()) {
                 ClientSession session = iter.next();
                 try {
                     if (session.checkTimeout(timeout)) {
+                        if (log.isDebugEnabled()) {
+                            log.debug(getClass().getName(), "timeoutSessions",
+                                    "SIMPLEDBM-DEBUG: Timing out session "
+                                            + session);
+                        }
                         session.abortTransaction();
                         iter.remove();
                     }
                 } catch (Throwable e) {
-                    // FIXME log error
-                    e.printStackTrace();
+                    log
+                            .error(
+                                    getClass().getName(),
+                                    "timeoutSessions",
+                                    "Unexpected error occurred when timing out session: ",
+                                    e);
                 }
             }
         }
@@ -548,8 +651,6 @@ public class SimpleDBMRequestHandler implements RequestHandler {
         }
 
         public void run() {
-            // FIXME log message
-            //			System.err.println("Timing out sessions");
             myHandler.timeoutSessions();
         }
     }

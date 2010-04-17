@@ -43,14 +43,14 @@ import org.simpledbm.common.util.TypeSize;
 
 public class DeleteRowMessage implements Storable {
 
-    private int scanId;
+    private final int scanId;
 
     public DeleteRowMessage(int scanId) {
-        this.setScanId(scanId);
+        this.scanId = scanId;
     }
 
     public DeleteRowMessage(ByteBuffer bb) {
-        setScanId(bb.getInt());
+        this.scanId = bb.getInt();
     }
 
     public int getStoredLength() {
@@ -61,11 +61,13 @@ public class DeleteRowMessage implements Storable {
         bb.putInt(getScanId());
     }
 
-    public void setScanId(int scanId) {
-        this.scanId = scanId;
-    }
-
     public int getScanId() {
         return scanId;
     }
+
+    @Override
+    public String toString() {
+        return "DeleteRowMessage [scanId=" + scanId + "]";
+    }
+
 }

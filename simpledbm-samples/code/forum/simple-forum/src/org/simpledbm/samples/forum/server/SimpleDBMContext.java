@@ -15,10 +15,7 @@ public class SimpleDBMContext {
     final static int TOPIC_FORUM_NAME = 0;
     final static int TOPIC_TOPIC_ID = 1;
     final static int TOPIC_TITLE = 2;
-    final static int TOPIC_NUM_POSTS = 3;
-    final static int TOPIC_STARTED_BY = 4;
-    final static int TOPIC_LAST_UPDATED_BY = 5;
-    final static int TOPIC_LAST_UPDATED_ON = 6;
+    final static int TOPIC_STARTED_BY = 3;
     
     final static int FORUM_NAME = 0;
     final static int FORUM_DESCRIPTION = 1;

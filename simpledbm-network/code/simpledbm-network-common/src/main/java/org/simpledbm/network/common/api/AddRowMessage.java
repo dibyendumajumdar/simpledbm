@@ -45,8 +45,8 @@ import org.simpledbm.typesystem.api.RowFactory;
 
 public class AddRowMessage implements Storable {
 
-    int containerId;
-    Row row;
+    final int containerId;
+    final Row row;
 
     public AddRowMessage(int containerId, Row row) {
         this.containerId = containerId;
@@ -71,16 +71,13 @@ public class AddRowMessage implements Storable {
         return containerId;
     }
 
-    public void setContainerId(int containerId) {
-        this.containerId = containerId;
-    }
-
     public Row getRow() {
         return row;
     }
 
-    public void setRow(Row row) {
-        this.row = row;
+    @Override
+    public String toString() {
+        return "AddRowMessage [containerId=" + containerId + ", row=" + row
+                + "]";
     }
-
 }

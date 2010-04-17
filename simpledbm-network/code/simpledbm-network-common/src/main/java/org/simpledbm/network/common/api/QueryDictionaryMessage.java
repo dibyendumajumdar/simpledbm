@@ -43,7 +43,7 @@ import org.simpledbm.common.util.TypeSize;
 
 public class QueryDictionaryMessage implements Storable {
 
-    public int containerId;
+    final int containerId;
 
     public QueryDictionaryMessage(int containerId) {
         this.containerId = containerId;
@@ -59,6 +59,15 @@ public class QueryDictionaryMessage implements Storable {
 
     public void store(ByteBuffer bb) {
         bb.putInt(containerId);
+    }
+
+    @Override
+    public String toString() {
+        return "QueryDictionaryMessage [containerId=" + containerId + "]";
+    }
+
+    public int getContainerId() {
+        return containerId;
     }
 
 }
