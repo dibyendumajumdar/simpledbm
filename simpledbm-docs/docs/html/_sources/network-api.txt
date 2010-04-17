@@ -58,11 +58,11 @@ Summary of Steps Required
 Writing your Application
 ========================
 At present only Java language bindings are available, therefore you must write your application
-in Java. All you need is the SimpleDBM Network Client jar, which includes all other required 
-SimpleDBM modules.
+in Java. All you need is the SimpleDBM Network Client jar, which includes required 
+SimpleDBM modules for interacting with the server.
 
 This document will in future contain a tutorial on how to use the Client API. For now,
-the Java Interface for the API is available in the Appendix. An example client interaction
+the Java Interface for the API is described in the Appendix. An example client interaction
 is given below::
 
   Properties properties = parseProperties("test.properties");
@@ -70,12 +70,24 @@ is given below::
 An example test.properties file is given in the next section.
 Start a session::
 
-  SessionManager sessionManager = new SessionManager(properties,
-    "localhost", 8000);
+  SessionManager sessionManager = sm = SessionManager.getSessionManager(properties, 
+    "localhost", 8000,
+    (int) TimeUnit.MILLISECONDS.convert(5 * 60, TimeUnit.SECONDS));
 
-Create the table definition::
+The last parameter is the socket timeout in milliseconds. The socket will timeout
+when reading/writing when the specified timeout period is exceeded and there is no
+response from the server. 
 
+Each SessionManager instance maintains a single network connection to
+SimpleDBM Server. In order to interact with the server, you need to open sessions.
+Each session is simply a transaction context, allowing you to have one active
+transaction per session.
+
+Here we open a session, obtain the type factoy and create a table definition::
+
+  // Get the type factory
   TypeFactory ff = sessionManager.getTypeFactory();
+  // Open a session
   Session session = sessionManager.openSession();
   try {
    // create a table definition
@@ -87,8 +99,12 @@ Create the table definition::
    ff.getDateTimeType(), /* date of birth */
    ff.getNumberType(2) /* salary */
    };
+   // the table will be assigned container ID 1.
+   // Containers identify the files that will store the
+   // data and therefore must be unique.
    TableDefinition tableDefinition = sessionManager
      .newTableDefinition("employee", 1, employee_rowtype);
+   // define a few indexes
    tableDefinition.addIndex(2, "employee1.idx", new int[] { 0 }, true,
      true);
    tableDefinition.addIndex(3, "employee2.idx", new int[] { 2, 1 },
@@ -98,33 +114,52 @@ Create the table definition::
    tableDefinition.addIndex(5, "employee4.idx", new int[] { 6 },
      false, false);
 
-Create the table in the database::
+Now we can create the table in the database. This is
+done in an internal transaction that you cannot control.::
 
    session.createTable(tableDefinition);
 
-Insert a row::
+Now that the table has been created, we can initiate a transaction
+and insert a row::
 
+   // Start transaction
    session.startTransaction(IsolationMode.READ_COMMITTED);
    boolean success = false;
    try {
+    /*
+     * Each table is identified the container ID that was
+     * assigned when defining the table. So in this
+     * case the container ID is 1.
+     */
     Table table = session.getTable(1);
+    // Get a blank row
     Row tableRow = table.getRow();
+    // Initialize the row
     tableRow.setInt(0, 1);
     tableRow.setString(1, "Joe");
     tableRow.setString(2, "Blogg");
     tableRow.setDate(5, getDOB(1930, 12, 31));
     tableRow.setString(6, "500.00");
+    // Insert the row
     table.addRow(tableRow);
 
-In the same transaction, scan the table::
+In the same transaction, let us scan through the rows in the table::
 
+    // The first parameter of the scan is the index
+    // The second parameter is the search row. In this case
+    // we want to scan all rows. The last argument is whether
+    // we intend to update rows.
     TableScan scan = table.openScan(0, null, false);
     try {
+     // Get the next row
      Row row = scan.fetchNext();
      while (row != null) {
       System.out.println("Fetched row " + row);
+      // Lets change one of the fields
       row.setString(6, "501.00");
+      // Update the current row
       scan.updateCurrentRow(row);
+      // Get the next row
       row = scan.fetchNext();
      }
     } finally {
@@ -132,7 +167,7 @@ In the same transaction, scan the table::
     }
     success = true;
 
-Commit the transaction::
+Finally we commit the transaction::
 
    } finally {
     if (success) {
@@ -183,6 +218,19 @@ Finally, close the session::
    session.close();
   }
 
+Note that you can only have one transaction active in the context of
+a session. If you need to have more than one transaction active, each 
+should be given its own session context.
+
+When you close a session, any pending transaction will be aborted
+unless you have already committed the transaction. It is always 
+preferable to explicitly commit or abort transactions.
+
+The server also has a session timeout feature which enables it to
+clean up sessions that are idle for a while. It is not a good idea to
+leave a session idle for long; you can close the session once you are done
+and open a new one when necessary.
+
 Creating a SimpleDBM database
 =============================
 
@@ -193,8 +241,8 @@ properties file::
   logging.properties.type = log4j
   network.server.host = localhost
   network.server.port = 8000
-  network.server.sessionTimeout = 120
-  network.server.sessionMonitorInterval = 60
+  network.server.sessionTimeout = 300000
+  network.server.sessionMonitorInterval = 120
   network.server.selectTimeout = 10000
   log.ctl.1 = ctl.a
   log.ctl.2 = ctl.b
@@ -221,6 +269,28 @@ instructed to search for simpledbm.logging.properties file in the classpath.
 An example of the logging properties file can be found in the SimpleDBM
 distribution.
 
+The additional properties that are specific to the network server are
+described below:
+
+network.server.host
+  DNS name or ip address of the server
+
+network.server.port
+  Port on which the server is listening for connections
+
+network.server.sessionTimeout
+  The session timeout in milliseconds. If a session is idle for longer than
+  this duration, it will be closed. Any pending transaction will be aborted.
+
+network.server.sessionMonitorInterval
+  The frequency (in seconds) at which the server checks for idle sessions.
+
+network.server.selectTimeout 
+  The network server uses the select() facility to poll for network
+  requests. Rather than blocking indefinitely, it uses the specified timeout
+  value. This allows the server to wake up every so often; the default value
+  of 10000 milliseconds is fine and need not be changed.
+
 To create your new database, invoke SimpleDBM Network Server as follows:
 
   java -jar simpledbm-network-server-0.0.1-ALPHA.jar create <properties file>
@@ -232,11 +302,13 @@ Starting a database
 ===================
 
 Once a database has been created, it can be started using the following
-commad:
+command (the command is wrapped into two lines but is a single command):
 
-  java -jar simpledbm-network-server-0.0.1-ALPHA.jar open <properties file>
+  java -Xms128m -Xmx1024m -jar simpledbm-network-server-0.0.1-ALPHA.jar 
+     open <properties file>
 
-To stop the database server, simply press Control-C.
+To stop the database server, simply press Control-C. It may take a few 
+seconds for the server to acknowledge the shutdown request.
 
 Problems starting a database
 ============================
@@ -261,7 +333,7 @@ Managing log messages
 SimpleDBM has support for JDK 1.4 style logging as well as
 Log4J logging. By default, if Log4J library is available on the
 classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
-package is used.
+package is used. The network server includes a Log4J library.
 
 You can specify the type of logging to be used using the
 Server Property ``logging.properties.type``. If this is set to
@@ -310,6 +382,8 @@ sample contains both JDK style and Log4J style configuration.::
  org.simpledbm.server.level = INFO
  org.simpledbm.trace.level = INFO
  org.simpledbm.database.level = INFO
+ org.simpledbm.network.level = INFO
+ org.simpledbm.network.server.level = INFO
 
  # Default Log4J configuration
 
@@ -347,6 +421,8 @@ sample contains both JDK style and Log4J style configuration.::
  log4j.logger.org.simpledbm.server=INFO
  log4j.logger.org.simpledbm.trace=INFO
  log4j.logger.org.simpledbm.database=INFO
+ log4j.logger.org.simpledbm.network=INFO
+ log4j.logger.org.simpledbm.network.server=INFO
 
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
@@ -361,21 +437,25 @@ SessionManager
 ::
 
   /**
-   * The SessionManager manages the connection to the SimpleDBM
-   * Network Server, and initiates sessions used by the clients.
-   * 
-   * @author dibyendu majumdar
+   * The SessionManager manages the connection to the SimpleDBM Network Server,
+   * and initiates sessions used by the clients. Each SessionManager maintains
+   * a single connection to the server. Requests sent over a single connection
+   * are serialized.
    */
   public abstract class SessionManager {
-
+    
     /**
-     * Obtains an instance of the SessionManager for the specified
-     * connection parameters. The client should allow for the fact 
-     * that the returned instance may be a shared one.
+     * Obtains an instance of the SessionManager for the specified connection
+     * parameters. The client should allow for the fact that the returned
+     * instance may be a shared one.
      * 
-     * @param properties
-     * @param host
-     * @param port
+     * @param properties A set of properties - at present only logging parameters
+     *                   are used
+     * @param host       The DNS name or IP address of the server
+     * @param port       The port the server is listening on
+     * @param timeout    The socket timeout in milliseconds. This is the
+     *                   timeout for read/write operations.
+     * @return A Session Manager object
      */
     public static SessionManager getSessionManager(
                   Properties properties, 
@@ -395,9 +475,11 @@ SessionManager
     
     /**
      * Creates a new TableDefinition.
-     * @param name
-     * @param containerId
-     * @param rowType
+     * 
+     * @param name Name of the table's container
+     * @param containerId ID of the container; must be unique
+     * @param rowType The row definition as an arry of TypeDescriptors
+     * @return A TableDefinition object
      */
     public abstract TableDefinition newTableDefinition(
                     String name, int containerId,
@@ -417,6 +499,12 @@ SessionManager
      * communication.
      */
     public abstract Connection getConnection();    
+    
+    /**
+     * Closes the SessionManager and its connection with the database,
+     * releasing any acquired resources.
+     */
+    public abstract void close();
   }
 
 Session
@@ -425,13 +513,15 @@ Session
 ::
 
   /**
-   * A Session encapsulates an interactive session with the server.
-   * Each session can only have one active transaction at any
-   * point in time. Clients can open multiple simultaneous
-   * sessions.
+   * A Session encapsulates an interactive session with the server. Each session
+   * can only have one active transaction at any point in time. Clients can open
+   * multiple simultaneous sessions.
+   *
+   * All sessions created by a SessionManager share a single network connection
+   * to the server.
    */
   public interface Session {
-
+    
     /**
      * Closes the session. If there is any outstanding transaction, it will
      * be aborted. Sessions should be closed by client applications when no 
@@ -440,10 +530,11 @@ Session
     public void close();
     
     /**
-     * Starts a new transaction. In the context of a session, 
-     * only one transaction can be active at a point in time, hence if 
-     * this method will fail if there is already an active transaction.
-     * @param isolationMode
+     * Starts a new transaction. In the context of a session, only one
+     * transaction can be active at a point in time, hence if this method will
+     * fail if there is already an active transaction.
+     * 
+     * @param isolationMode Lock isolation mode for the transaction
      */
     public void startTransaction(IsolationMode isolationMode);
     
@@ -461,28 +552,28 @@ Session
     
     /**
      * Creates a table as specified. The table will be created using its own
-     * transaction.
-     * @param tableDefinition
+     * transaction independent of the transaction managed by the session.
+     * 
+     * @param tableDefinition The TableDefinition
      */
     public void createTable(TableDefinition tableDefinition);
     
     /**
      * Obtains a reference to the table. The Table container will be
      * locked in SHARED mode.
-     * @param containerId
-     * @return
+     * 
+     * @param containerId The ID of the table's container
+     * @return A Table object
      */
     public Table getTable(int containerId);
     
     /**
      * Gets the SessionManager that is managing this session.
-     * @return
      */
     public SessionManager getSessionManager();
     
     /**
      * Gets the unique id associated with this session.
-     * @return
      */
     public int getSessionId();
   }
@@ -503,29 +594,37 @@ Table
    * @author Dibyendu Majumdar
    */
   public interface Table {
-
-      /**
-       * Returns a new scan object.
-       * @param indexno
-       * @param startRow
-       * @param forUpdate
-       * @return
-       */
-      public TableScan openScan(int indexno, Row startRow,
-           boolean forUpdate);
-	
-      /**
-       * Obtains an empty row, in which all columns are set to NULL.
-       * @return
-       */
-      public Row getRow();
-	
-      /**
-       * Adds the given row to the table. The add operation may fail
-       * if another row with the same primary key already exists.
-       * @param row
-       */
-      public void addRow(Row row);
+    
+   /**
+    * Starts a new Table Scan which allows the client to iterate through
+    * the table's rows.
+    * 
+    * @param indexno The index to be used; first index is 0, second 1, etc.
+    * @param startRow The search key - a suitable initialized table row.
+    *                 Only columns used in the index are relevant.
+    *                 This parameter can be set to null if the scan 
+    *                 should start from the first available row
+    * @param forUpdate A boolean flag to indicate whether the client
+    *                  intends to update rows, in which case this parameter
+    *                  should be set to true. If set, rows will be 
+    *                  locked in UPDATE mode to allow subsequent updates.
+    * @return A TableScan object
+    */
+    public TableScan openScan(int indexno, Row startRow,
+         boolean forUpdate);
+    	
+    /**
+     * Obtains an empty row, in which all columns are set to NULL.
+     * @return
+     */
+    public Row getRow();
+    	
+    /**
+     * Adds the given row to the table. The add operation may fail
+     * if another row with the same primary key already exists.
+     * @param row Row to be added
+     */
+    public void addRow(Row row);
   }
 
   
@@ -534,36 +633,27 @@ TableScan
 
 ::
 
-
   /**
    * A TableScan is used to traverse the rows in a table, ordered
    * by an Index. The initial position of the scan is determined by
    * the keys supplied when the scan is opened. The table scan 
    * respects the lock isolation mode of the transaction.
-   * <p>
+   * 
    * As rows are fetched, the scan maintains its position. The current
    * row may be updated or deleted. 
-   * 
-   * @author Dibyendu Majumdar
    */
   public interface TableScan {
     
     /**
-     * Opens the scan, preparing for data to be fetched.
-     * @return
-     */
-    public int open();
-    
-    /**
      * Fetches the next row. If EOF is reached, null will 
      * be returned.
-     * @return
      */
     public Row fetchNext();
     
     /**
      * Updates the current row.
-     * @param tableRow
+     * 
+     * @param tableRow New value for the row
      */
     public void updateCurrentRow(Row tableRow);
     
@@ -579,7 +669,6 @@ TableScan
     
     /**
      * Obtains the session that is associated with this scan.
-     * @return
      */
     Session getSession();
   }

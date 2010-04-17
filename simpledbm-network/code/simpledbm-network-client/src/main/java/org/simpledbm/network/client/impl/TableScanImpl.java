@@ -96,7 +96,12 @@ public class TableScanImpl implements TableScan {
         this.scanId = open();
     }
 
-    public int open() {
+    /**
+     * Opens the scan, preparing for data to be fetched.
+     * 
+     * @return
+     */
+    int open() {
         OpenScanMessage message = new OpenScanMessage(tableDefinition
                 .getContainerId(), indexNo, startRow, forUpdate);
         Response response = session.sendMessage(RequestCode.OPEN_TABLESCAN,
