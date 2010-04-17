@@ -47,7 +47,9 @@ import org.simpledbm.typesystem.api.TypeFactory;
 
 /**
  * The SessionManager manages the connection to the SimpleDBM Network Server,
- * and initiates sessions used by the clients.
+ * and initiates sessions used by the clients. Each SessionManager maintains
+ * a single connection to the server. Requests sent over a single connection
+ * are serialized.
  * 
  * @author dibyendu majumdar
  */
@@ -58,10 +60,13 @@ public abstract class SessionManager {
      * parameters. The client should allow for the fact that the returned
      * instance may be a shared one.
      * 
-     * @param properties
-     * @param host
-     * @param port
-     * @return
+     * @param properties A set of properties - at present only logging parameters
+     *                   are used
+     * @param host       The DNS name or IP address of the server
+     * @param port       The port the server is listening on
+     * @param timeout    The socket timeout in milliseconds. This is the
+     *                   timeout for read/write operations.
+     * @return A Session Manager object
      */
     public static SessionManager getSessionManager(Properties properties,
             String host, int port, int timeout) {
@@ -85,10 +90,10 @@ public abstract class SessionManager {
     /**
      * Creates a new TableDefinition.
      * 
-     * @param name
-     * @param containerId
-     * @param rowType
-     * @return
+     * @param name Name of the table's container
+     * @param containerId ID of the container; must be unique
+     * @param rowType The row definition as an arry of TypeDescriptors
+     * @return A TableDefinition object
      */
     public abstract TableDefinition newTableDefinition(String name,
             int containerId, TypeDescriptor[] rowType);
@@ -111,5 +116,9 @@ public abstract class SessionManager {
      */
     public abstract Connection getConnection();
 
+    /**
+     * Closes the SessionManager and its connection with the database,
+     * releasing any acquired resources.
+     */
     public abstract void close();
 }

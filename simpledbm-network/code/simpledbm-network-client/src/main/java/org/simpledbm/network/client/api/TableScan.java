@@ -52,23 +52,14 @@ import org.simpledbm.typesystem.api.Row;
 public interface TableScan {
 
     /**
-     * Opens the scan, preparing for data to be fetched.
-     * 
-     * @return
-     */
-    public int open();
-
-    /**
      * Fetches the next row. If EOF is reached, null will be returned.
-     * 
-     * @return
      */
     public Row fetchNext();
 
     /**
      * Updates the current row.
      * 
-     * @param tableRow
+     * @param tableRow New value for the row
      */
     public void updateCurrentRow(Row tableRow);
 

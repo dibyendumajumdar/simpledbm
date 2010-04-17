@@ -50,19 +50,24 @@ import org.simpledbm.typesystem.api.Row;
 public interface Table {
 
     /**
-     * Returns a new scan object.
+     * Starts a new Table Scan which allows the client to iterate through
+     * the table's rows.
      * 
-     * @param indexno
-     * @param startRow
-     * @param forUpdate
-     * @return
+     * @param indexno The index to be used; first index is 0, second 1, etc.
+     * @param startRow The search key - a suitable initialized table row.
+     *                 Only columns used in the index are relevant.
+     *                 This parameter can be set to null if the scan 
+     *                 should start from the first available row
+     * @param forUpdate A boolean flag to indicate whether the client
+     *                  intends to update rows, in which case this parameter
+     *                  should be set to true. If set, rows will be 
+     *                  locked in UPDATE mode to allow subsequent updates.
+     * @return A TableScan object
      */
     public TableScan openScan(int indexno, Row startRow, boolean forUpdate);
 
     /**
      * Obtains an empty row, in which all columns are set to NULL.
-     * 
-     * @return
      */
     public Row getRow();
 
@@ -70,7 +75,7 @@ public interface Table {
      * Adds the given row to the table. The add operation may fail if another
      * row with the same primary key already exists.
      * 
-     * @param row
+     * @param row Row to be added
      */
     public void addRow(Row row);
 

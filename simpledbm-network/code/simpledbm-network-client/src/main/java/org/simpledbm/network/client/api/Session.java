@@ -43,6 +43,9 @@ import org.simpledbm.typesystem.api.TableDefinition;
  * A Session encapsulates an interactive session with the server. Each session
  * can only have one active transaction at any point in time. Clients can open
  * multiple simultaneous sessions.
+ * <p>
+ * All sessions created by a SessionManager share a single network connection
+ * to the server.
  */
 public interface Session {
 
@@ -58,7 +61,7 @@ public interface Session {
      * transaction can be active at a point in time, hence if this method will
      * fail if there is already an active transaction.
      * 
-     * @param isolationMode
+     * @param isolationMode Lock isolation mode for the transaction
      */
     public void startTransaction(IsolationMode isolationMode);
 
@@ -76,9 +79,9 @@ public interface Session {
 
     /**
      * Creates a table as specified. The table will be created using its own
-     * transaction.
+     * transaction independent of the transaction managed by the session.
      * 
-     * @param tableDefinition
+     * @param tableDefinition The TableDefinition
      */
     public void createTable(TableDefinition tableDefinition);
 
@@ -86,22 +89,18 @@ public interface Session {
      * Obtains a reference to the table. The Table container will be locked in
      * SHARED mode.
      * 
-     * @param containerId
-     * @return
+     * @param containerId The ID of the table's container
+     * @return A Table object
      */
     public Table getTable(int containerId);
 
     /**
      * Gets the SessionManager that is managing this session.
-     * 
-     * @return
      */
     public SessionManager getSessionManager();
 
     /**
      * Gets the unique id associated with this session.
-     * 
-     * @return
      */
     public int getSessionId();
 
