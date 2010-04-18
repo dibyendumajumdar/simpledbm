@@ -1,10 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.simpledbm.network</groupId>
 	<artifactId>simpledbm-network-server</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.18-SNAPSHOT</version>
+	<version>1.0.18</version>
 	<name>SimpleDBM Network Server</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -44,32 +43,32 @@
 		<dependency>
 			<groupId>org.simpledbm.network</groupId>
 			<artifactId>simpledbm-network-framework</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.network</groupId>
 			<artifactId>simpledbm-network-common</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.database</groupId>
 			<artifactId>simpledbm-database</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm.typesystem</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.18-SNAPSHOT</version>
+			<version>1.0.18</version>
 		</dependency>
 		<!--  
 		<dependency>
