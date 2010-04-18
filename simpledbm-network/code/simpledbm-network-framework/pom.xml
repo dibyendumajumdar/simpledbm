@@ -46,12 +46,14 @@
 			<artifactId>simpledbm-common</artifactId>
 			<version>1.0.18-SNAPSHOT</version>
 		</dependency>
+		<!--  
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
 			<version>1.2.12</version>
 			<scope>provided</scope>
 		</dependency>
+		-->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>

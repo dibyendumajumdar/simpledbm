@@ -39,7 +39,6 @@ package org.simpledbm.common.util.logging;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.util.Properties;
 
 /**
@@ -64,14 +63,14 @@ public abstract class Logger {
         return loggerFactory.getLogger(name);
     }
 
-    private static boolean log4JAvailable() {
-        try {
-            Class.forName("org.apache.log4j.PropertyConfigurator");
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
-        return true;
-    }
+//    private static boolean log4JAvailable() {
+//        try {
+//            Class.forName("org.apache.log4j.PropertyConfigurator");
+//        } catch (ClassNotFoundException e) {
+//            return false;
+//        }
+//        return true;
+//    }
 
     /**
      * Configures the logging system using properties in the supplied
@@ -89,15 +88,16 @@ public abstract class Logger {
     public static void configure(Properties properties) {
         String logFile = properties.getProperty("logging.properties.file",
                 "classpath:simpledbm.logging.properties");
-        String logType = properties.getProperty("logging.properties.type",
-                "log4j");
-        if ("log4j".equalsIgnoreCase(logType) && log4JAvailable()) {
-            Logger.configureLog4JLogging(logFile);
-        } else {
+//        String logType = properties.getProperty("logging.properties.type",
+//                "log4j");
+//        if ("log4j".equalsIgnoreCase(logType) && log4JAvailable()) {
+//            Logger.configureLog4JLogging(logFile);
+//        } else {
             Logger.configureJDKLogging(logFile);
-        }
+//        }
     }
 
+    /*
     static void configureLog4JLogging(String name) {
         loggerFactory = new Log4JLoggerFactory();
         final String classpathPrefix = "classpath:";
@@ -131,6 +131,7 @@ public abstract class Logger {
             }
         }
     }
+    */
 
     static void configureJDKLogging(String name) {
         loggerFactory = new Jdk4LoggerFactory();
@@ -207,12 +208,14 @@ public abstract class Logger {
         Logger getLogger(String name);
     }
 
+    /*
     static class Log4JLoggerFactory implements LoggerFactory {
 
         public Logger getLogger(String name) {
             return new Log4JLogger(name);
         }
     }
+    */
 
     static class Jdk4LoggerFactory implements LoggerFactory {
 
@@ -305,6 +308,7 @@ public abstract class Logger {
         }
     }
 
+    /*
     static final class Log4JLogger extends Logger {
 
         private org.apache.log4j.Logger realLogger;
@@ -377,4 +381,5 @@ public abstract class Logger {
             realLogger.setLevel(org.apache.log4j.Level.INFO);
         }
     }
+    */
 }
