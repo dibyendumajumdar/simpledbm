@@ -3,14 +3,14 @@
 	<groupId>org.simpledbm.rss</groupId>
 	<artifactId>simpledbm-common</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.18</version>
+	<version>1.0.19-SNAPSHOT</version>
 	<name>SimpleDBM Common</name>
 	<description>SimpleDBM Common</description>
 	<url>http://www.simpledbm.org</url>
 	<parent>
 		<groupId>org.simpledbm.multi</groupId>
 		<artifactId>simpledbm-parent</artifactId>
-		<version>1.0.18</version>
+		<version>1.0.19-SNAPSHOT</version>
 	</parent>
 	<scm>
 		<connection>scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-common/code/simpledbm-common</connection>
