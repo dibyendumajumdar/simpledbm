@@ -4,7 +4,7 @@
 	<groupId>org.simpledbm.network</groupId>
 	<artifactId>simpledbm-network-framework</artifactId>
 	<packaging>jar</packaging>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.18-SNAPSHOT</version>
 	<name>SimpleDBM Network Framework</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -38,13 +38,13 @@
 	<parent>
 		<groupId>org.simpledbm.multi</groupId>
 		<artifactId>simpledbm-parent</artifactId>
-		<version>1.0.0</version>
+		<version>1.0.18</version>
 	</parent>
 	<dependencies>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.4-SNAPSHOT</version>
+			<version>1.0.18-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>

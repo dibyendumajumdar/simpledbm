@@ -4,7 +4,7 @@
 	<groupId>org.simpledbm.rss</groupId>
 	<artifactId>simpledbm-common</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.4-SNAPSHOT</version>
+	<version>1.0.18-SNAPSHOT</version>
 	<name>SimpleDBM Common</name>
 	<description>SimpleDBM Common</description>
 	<url>http://www.simpledbm.org</url>

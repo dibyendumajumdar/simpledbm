@@ -1,3 +1,8 @@
+1.0.18-BETA:
+ * dm: Issue-47: Create a network client server
+ * dm: Issue-90: Implement a shared thread pool
+ * dm: Issue-91: Create a sample application to demonstrate/test the network server
+
 1.0.17-BETA:
  * dm: Issue-89: Unique index allows duplicate key insert
  * dm: Issue-88: Enhance exceptions to use numeric error codes
