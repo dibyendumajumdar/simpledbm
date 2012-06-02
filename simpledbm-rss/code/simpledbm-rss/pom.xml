@@ -41,6 +41,7 @@
 		<groupId>org.simpledbm.multi</groupId>
 		<artifactId>simpledbm-parent</artifactId>
 		<version>1.0.19-SNAPSHOT</version>
+		<relativePath>../../../build/pom.xml</relativePath>
 	</parent>
 	<dependencies>
 		<dependency>
@@ -76,8 +77,11 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.12</version>
 				<configuration>
 					<argLine>-ea -Xmx1024m -Xms128m -Dcom.sun.management.jmxremote</argLine>
+					<useSystemClassLoader>false</useSystemClassLoader>
+					<forkMode>always</forkMode>
 				</configuration>
 			</plugin>
 			<plugin>

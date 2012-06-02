@@ -40,6 +40,7 @@
 		<groupId>org.simpledbm.multi</groupId>
 		<artifactId>simpledbm-parent</artifactId>
 		<version>1.0.19-SNAPSHOT</version>
+		<relativePath>../../../build/pom.xml</relativePath>
 	</parent>
 	<dependencies>
 		<dependency>
