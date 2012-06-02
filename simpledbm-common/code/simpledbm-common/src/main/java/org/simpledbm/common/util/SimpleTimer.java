@@ -97,8 +97,12 @@ public class SimpleTimer {
      * exceeds time to wait.
      */
     public boolean isExpired() {
-        if (expired)
+        if (expired) {
             return true;
+        }
+        if (timeToWait == -1) {
+            return false;
+        }
         long now = System.nanoTime();
         long timeWaited = now - startTime;
         if (timeWaited >= timeToWait) {
@@ -123,7 +127,6 @@ public class SimpleTimer {
         }
         if (timeToWait == -1) {
             LockSupport.park();
-            expired = true;
             return;
         }
         long now = System.nanoTime();
