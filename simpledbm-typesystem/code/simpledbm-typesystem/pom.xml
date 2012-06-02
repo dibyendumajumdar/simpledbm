@@ -3,7 +3,7 @@
 	<groupId>org.simpledbm.typesystem</groupId>
 	<artifactId>simpledbm-typesystem</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.19</version>
+	<version>1.0.20-SNAPSHOT</version>
 	<name>SimpleDBM TypeSystem</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -39,14 +39,14 @@
 	<parent>
 		<groupId>org.simpledbm.multi</groupId>
 		<artifactId>simpledbm-parent</artifactId>
-		<version>1.0.19</version>
+		<version>1.0.20-SNAPSHOT</version>
 		<relativePath>../../../build/pom.xml</relativePath>
 	</parent>
 	<dependencies>
 		<dependency>
 			<groupId>org.simpledbm.rss</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.19</version>
+			<version>1.0.20-SNAPSHOT</version>
 		</dependency>
 		<!--  
 		<dependency>
