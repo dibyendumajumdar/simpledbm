@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.simpledbm.samples</groupId>
+	<groupId>org.simpledbm</groupId>
 	<artifactId>simpledbm-samples-usermanual</artifactId>
 	<packaging>jar</packaging>
-	<version>0.01</version>
+	<version>1.0.22-SNAPSHOT</version>
 	<name>SimpleDBM UserManual</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -19,18 +19,13 @@
 	</scm>
 	<developers>
 		<developer>
-			<id>dmajumdar</id>
+			<id>d.majumdar</id>
 			<name>Dibyendu Majumdar</name>
-			<email>dibyendu at mazumdar dot demon dot co dot uk</email>
-			<url></url>
+			<email>admin@simpledbm.org</email>
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
-			<roles />
-			<timezone></timezone>
-			<properties />
 		</developer>
 	</developers>
-
 	<licenses>
 		<license>
 			<name>
@@ -41,9 +36,9 @@
 	</licenses>
 	<dependencies>
 		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
@@ -79,6 +74,27 @@
 					</execution>
 				</executions>
 			</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-source-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-sources</id>
+      <goals>
+        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>  <artifactId>maven-javadoc-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-javadocs</id>
+      <goals>        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+
 		</plugins>
 	</build>
 </project>
