@@ -3,7 +3,7 @@
 	<groupId>org.simpledbm</groupId>
 	<artifactId>simpledbm-rss</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.22</version>
+	<version>1.0.23-SNAPSHOT</version>
 	<name>SimpleDBM Relational Storage System</name>
 	<description>SimpleDBM Relational Storage System</description>
 	<url>http://www.simpledbm.org</url>
@@ -37,7 +37,7 @@
 	<parent>
 		<groupId>org.simpledbm</groupId>
 		<artifactId>simpledbm-parent</artifactId>
-		<version>1.0.22</version>
+		<version>1.0.23-SNAPSHOT</version>
 		<relativePath>../../../build/pom.xml</relativePath>
 	</parent>
 	<dependencies>
@@ -50,7 +50,7 @@
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.22</version>
+			<version>1.0.23-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
 	<build>
