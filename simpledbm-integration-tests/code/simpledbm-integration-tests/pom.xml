@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.simpledbm.integration-tests</groupId>
+	<groupId>org.simpledbm</groupId>
 	<artifactId>simpledbm-integration-tests</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.1</version>
+	<version>1.0.22-SNAPSHOT</version>
 	<name>SimpleDBM Integration Tests</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -21,16 +21,11 @@
 		<developer>
 			<id>dmajumdar</id>
 			<name>Dibyendu Majumdar</name>
-			<email>d dot majumdar at gmail dot com</email>
-			<url></url>
+			<email>admin@simpledbm.org</email>
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
-			<roles />
-			<timezone></timezone>
-			<properties />
 		</developer>
 	</developers>
-
 	<licenses>
 		<license>
 			<name>
@@ -41,19 +36,19 @@
 	</licenses>
 	<dependencies>
 		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.16-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.typesystem</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.12</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.swing-layout</groupId>
@@ -76,6 +71,27 @@
 					<target>1.5</target>
 				</configuration>
 			</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-source-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-sources</id>
+      <goals>
+        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>  <artifactId>maven-javadoc-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-javadocs</id>
+      <goals>        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clover-plugin</artifactId>

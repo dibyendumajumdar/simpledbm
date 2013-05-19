@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.simpledbm.network</groupId>
+	<groupId>org.simpledbm</groupId>
 	<artifactId>simpledbm-network-server</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.20-SNAPSHOT</version>
+	<version>1.0.22-SNAPSHOT</version>
 	<name>SimpleDBM Network Server</name>
 	<url>http://www.simpledbm.org</url>
 	<scm>
@@ -17,15 +17,11 @@
 	</scm>
 	<developers>
 		<developer>
-			<id>dmajumdar</id>
+			<id>d.majumdar</id>
 			<name>Dibyendu Majumdar</name>
-			<email>d dot majumdar at gmail dot com</email>
-			<url />
+			<email>admin@simpledbm.org</email>
 			<organization>SimpleDBM</organization>
 			<organizationUrl>www.simpledbm.org</organizationUrl>
-			<roles />
-			<timezone />
-			<properties />
 		</developer>
 	</developers>
 	<licenses>
@@ -35,49 +31,42 @@
 		</license>
 	</licenses>
 	<parent>
-		<groupId>org.simpledbm.multi</groupId>
+		<groupId>org.simpledbm</groupId>
 		<artifactId>simpledbm-parent</artifactId>
-		<version>1.0.20-SNAPSHOT</version>
+		<version>1.0.22-SNAPSHOT</version>
 		<relativePath>../../../build/pom.xml</relativePath>
 	</parent>
 	<dependencies>
 		<dependency>
-			<groupId>org.simpledbm.network</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-network-framework</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.network</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-network-common</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.database</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-database</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.rss</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>org.simpledbm.typesystem</groupId>
+			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.20-SNAPSHOT</version>
+			<version>1.0.22-SNAPSHOT</version>
 		</dependency>
-		<!--  
-		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
-			<version>1.2.12</version>
-		</dependency>
-		-->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
@@ -128,8 +117,36 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-shade-plugin</artifactId>
+				<version>1.6</version>
+				<executions>
+					<execution>
+						<phase>package</phase>
+						<goals>
+							<goal>shade</goal>
+						</goals>
+						<configuration>
+							<transformers>
+								<transformer
+									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+									<manifestEntries>
+										<Main-Class>org.simpledbm.network.server.SimpleDBMServer</Main-Class>
+										<Implementation-Version>${project.version}</Implementation-Version>
+									</manifestEntries>
+								</transformer>
+							</transformers>	
+						</configuration>
+					</execution>
+				</executions>
+				<configuration>
+					<promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+				</configuration>
+			</plugin>
+			<!--
+			<plugin>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>2.2-beta-5</version>
+				<version>2.4</version>
 				<configuration>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -140,20 +157,56 @@
 						</manifest>
 					</archive>
 				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+			-->
 			<plugin>
 				<artifactId>maven-release-plugin</artifactId>
 			</plugin>
+<plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>
+  <artifactId>maven-source-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-sources</id>
+      <goals>
+        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+<plugin>
+  <groupId>org.apache.maven.plugins</groupId>  <artifactId>maven-javadoc-plugin</artifactId>
+  <executions>
+    <execution>      <id>attach-javadocs</id>
+      <goals>        <goal>jar</goal>
+      </goals>
+    </execution>
+  </executions>
+</plugin>
+
 		</plugins>
 	</build>
-	<pluginRepositories>
-		<pluginRepository>
-			<id>apache.stage</id>
-			<name>Apache Stage Repository</name>
-			<url>http://people.apache.org/repo/m2-incubating-repository</url>
-			<layout>default</layout>
-		</pluginRepository>
-	</pluginRepositories>
 	<reporting>
 		<plugins>
 			<plugin>
@@ -171,11 +224,4 @@
 			</plugin>
 		</plugins>
 	</reporting>
-	<distributionManagement>
-		<repository>
-			<id>local</id>
-			<name>LocalRepository</name>
-			<url>file:///tmp</url>
-		</repository>
-	</distributionManagement>
 </project>
