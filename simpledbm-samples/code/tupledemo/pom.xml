@@ -38,17 +38,17 @@
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.22</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.22</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
