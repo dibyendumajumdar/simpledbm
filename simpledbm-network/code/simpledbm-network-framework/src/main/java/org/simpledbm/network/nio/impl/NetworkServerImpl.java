@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
  *
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.network.nio.impl;
 
@@ -152,22 +147,22 @@ public class NetworkServerImpl implements NetworkServer {
         try {
             requestHandler.onStart();
             if (log.isDebugEnabled()) {
-                log.debug(getClass().getName(), "start", "Opening selector");
+                log.debug(getClass(), "start", "Opening selector");
             }
             selector = Selector.open();
             if (log.isDebugEnabled()) {
-                log.debug(getClass().getName(), "start",
+                log.debug(getClass(), "start",
                         "Opening server socket");
             }
             serverSocketChannel = ServerSocketChannel.open();
             serverSocketChannel.configureBlocking(false);
             if (log.isDebugEnabled()) {
-                log.debug(getClass().getName(), "start", "Binding to "
+                log.debug(getClass(), "start", "Binding to "
                         + serverSocketAddress);
             }
             serverSocketChannel.socket().bind(serverSocketAddress);
             if (log.isDebugEnabled()) {
-                log.debug(getClass().getName(), "start", "Registering "
+                log.debug(getClass(), "start", "Registering "
                         + serverSocketChannel + " for accepting connections");
             }
             serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT);
@@ -190,7 +185,7 @@ public class NetworkServerImpl implements NetworkServer {
             return;
         }
         if (log.isDebugEnabled()) {
-            log.debug(getClass().getName(), "shutdown", "Closing server "
+            log.debug(getClass(), "shutdown", "Closing server "
                     + serverSocketAddress);
         }
         stop = true;
@@ -247,7 +242,7 @@ public class NetworkServerImpl implements NetworkServer {
             }
         }
         if (log.isTraceEnabled()) {
-            log.trace(getClass().getName(), "select", "Selecting events");
+            log.trace(getClass(), "select", "Selecting events");
         }
         try {
             int n = selector.select(selectTimeout);
@@ -280,7 +275,7 @@ public class NetworkServerImpl implements NetworkServer {
     private void handleWrite(SelectionKey key) {
         ProtocolHandler protocolHandler = (ProtocolHandler) key.attachment();
         if (log.isTraceEnabled()) {
-            log.trace(getClass().getName(), "handleWrite",
+            log.trace(getClass(), "handleWrite",
                     "Writing to channel " + protocolHandler.socketChannel);
         }
         protocolHandler.doWrite(key);
@@ -289,7 +284,7 @@ public class NetworkServerImpl implements NetworkServer {
     private void handleRead(SelectionKey key) {
         ProtocolHandler protocolHandler = (ProtocolHandler) key.attachment();
         if (log.isTraceEnabled()) {
-            log.trace(getClass().getName(), "handleWrite",
+            log.trace(getClass(), "handleWrite",
                     "Reading from channel " + protocolHandler.socketChannel);
         }
         protocolHandler.doRead(key);
@@ -303,7 +298,7 @@ public class NetworkServerImpl implements NetworkServer {
         SelectionKey channelKey = null;
         try {
             if (log.isDebugEnabled()) {
-                log.debug(getClass().getName(), "handleWrite",
+                log.debug(getClass(), "handleWrite",
                         "Accepting new channel");
             }
             socketChannel = serverSocketChannel.accept();
@@ -318,7 +313,7 @@ public class NetworkServerImpl implements NetworkServer {
              * If we failed to accept a new channel, we can still continue serving
              * existing channels, so do not treat this as a fatal error
              */
-            log.error(getClass().getName(), "handleAccept",
+            log.error(getClass(), "handleAccept",
                     new MessageInstance(m_acceptIOException).toString());
             if (channelKey != null) {
                 channelKey.cancel();
@@ -334,7 +329,7 @@ public class NetworkServerImpl implements NetworkServer {
         RequestDispatcher requestDispatcher = new RequestDispatcher(this,
                 protocolHandler, requestHandler, requestHeader, request);
         if (log.isTraceEnabled()) {
-            log.trace(getClass().getName(), "queueRequest",
+            log.trace(getClass(), "queueRequest",
                     "Scheduling request handler for channel "
                             + protocolHandler.socketChannel);
         }
@@ -498,7 +493,7 @@ public class NetworkServerImpl implements NetworkServer {
                     }
                 }
             } catch (IOException e) {
-                networkServer.log.error(getClass().getName(), "doRead",
+                networkServer.log.error(getClass(), "doRead",
                         new MessageInstance(m_readIOException, e).toString());
                 failed();
             }
@@ -585,7 +580,7 @@ public class NetworkServerImpl implements NetworkServer {
                     }
                 }
             } catch (IOException e) {
-                networkServer.log.error(getClass().getName(), "doWrite",
+                networkServer.log.error(getClass(), "doWrite",
                         new MessageInstance(m_writeIOException, e).toString());
                 failed();
             }
@@ -599,7 +594,7 @@ public class NetworkServerImpl implements NetworkServer {
          */
         synchronized void queueWrite(WriteRequest wr) {
             if (networkServer.log.isTraceEnabled()) {
-                networkServer.log.trace(getClass().getName(), "queueWrite",
+                networkServer.log.trace(getClass(), "queueWrite",
                         "queuing write " + wr.response.limit());
             }
             wr.responseHeader.setDataSize(wr.response.limit());
@@ -654,7 +649,7 @@ public class NetworkServerImpl implements NetworkServer {
             try {
                 requestHandler.handleRequest(request, response);
             } catch (SimpleDBMException e) {
-                server.log.error(getClass().getName(), "run",
+                server.log.error(getClass(), "run",
                         new MessageInstance(m_handlerError).toString(), e);
                 responseHeader.setStatusCode(-1);
                 responseHeader.setHasException(true);
@@ -665,7 +660,7 @@ public class NetworkServerImpl implements NetworkServer {
                 response.setData(bb);
                 responseHeader.setDataSize(len);
             } catch (Throwable e) {
-                server.log.error(getClass().getName(), "run",
+                server.log.error(getClass(), "run",
                         new MessageInstance(m_handlerError).toString(), e);
                 e.printStackTrace();
                 responseHeader.setStatusCode(-1);

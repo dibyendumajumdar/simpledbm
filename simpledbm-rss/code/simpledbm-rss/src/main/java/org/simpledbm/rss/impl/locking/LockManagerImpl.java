@@ -780,7 +780,7 @@ public final class LockManagerImpl implements LockManager {
             r.status = LockRequestStatus.GRANTED;
             r.convertMode = r.mode;
         }
-        if (status == LockStatus.DEADLOCK) {
+        if (status == LockStatus.DEADLOCK && l != null) {
             /*
             * If we have been chosen as a deadlock victim, then we need to grant the
             * lock to the waiter who has won the deadlock.
