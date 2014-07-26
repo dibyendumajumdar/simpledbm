@@ -1,43 +1,39 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 
 package org.simpledbm.rss.impl.wal;
 
 import java.nio.ByteBuffer;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,12 +48,14 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.simpledbm.common.api.exception.ExceptionHandler;
+import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.ByteString;
 import org.simpledbm.common.util.ChecksumCalculator;
+import org.simpledbm.common.util.StringUtils;
 import org.simpledbm.common.util.TypeSize;
 import org.simpledbm.common.util.logging.Logger;
 import org.simpledbm.common.util.mcat.Message;
@@ -182,6 +180,22 @@ public final class LogManagerImpl implements LogManager {
     static final int DEFAULT_LOG_GROUPS = 1;
 
     static final int DEFAULT_CTL_FILES = 2;
+
+    final static byte[] LOG_ANCHOR_MAGIC = StringUtils.getUTF8Bytes("SDBMWAF");
+    
+    final static byte[] LOG_FILE_MAGIC = StringUtils.getUTF8Bytes("SDBMWLF");
+    
+    /**
+     * Version number of the log file format - must be incremented
+     * every time the file format changes.
+     */
+    final static int LOG_FILE_VERSION = 0x0001;
+    
+    /**
+     * Version number of the log anchor format - must be incremented
+     * every time the anchor format changes.
+     */
+    final static int LOG_ANCHOR_VERSION = 0x0001;
 
     final Logger logger;
 
@@ -586,6 +600,10 @@ public final class LogManagerImpl implements LogManager {
             "Log Archiver STARTED");
     static Message m_IW0034 = new Message('R', 'W', MessageType.INFO, 34,
             "Log Archiver STOPPED");
+    static Message m_EW0035 = new Message('R', 'W', MessageType.ERROR, 35,
+    		"Invalid log file (signature did not match)");
+    static Message m_EW0036 = new Message('R', 'W', MessageType.ERROR, 36,
+    		"Invalid log anchor (signature did not match)");
 
     /* (non-Javadoc)
      * @see org.simpledbm.rss.api.wal.LogManager#insert(byte[], int)
@@ -594,7 +612,7 @@ public final class LogManagerImpl implements LogManager {
         assertIsOpen();
         int reclen = calculateLogRecordSize(length);
         if (reclen > getMaxLogRecSize()) {
-            exceptionHandler.errorThrow(getClass().getName(), "insert",
+            exceptionHandler.errorThrow(getClass(), "insert",
                     new LogException(new MessageInstance(m_EW0001, reclen,
                             getMaxLogRecSize())));
         }
@@ -611,7 +629,7 @@ public final class LogManagerImpl implements LogManager {
             try {
                 buffersAvailable.await();
             } catch (InterruptedException e) {
-                logger.error(getClass().getName(), "insert", mcat
+                logger.error(getClass(), "insert", mcat
                     .getMessage("EW0002"), e);
                 throw new LogException(mcat.getMessage("EW0002"), e);
             }
@@ -701,7 +719,7 @@ public final class LogManagerImpl implements LogManager {
          * for details of why this is necessary.
          */
         if (started || errored) {
-            exceptionHandler.errorThrow(getClass().getName(), "start",
+            exceptionHandler.errorThrow(getClass(), "start",
                     new LogException(new MessageInstance(m_EW0003)));
         }
         openCtlFiles();
@@ -724,27 +742,27 @@ public final class LogManagerImpl implements LogManager {
              * to avoid unnecessary conflicts.
              */
             flushService.cancel(false);
-            logger.info(this.getClass().getName(), "shutdown",
+            logger.info(this.getClass(), "shutdown",
                     new MessageInstance(m_IW0030).toString());
             if (!errored) {
                 try {
                     flush();
                 } catch (Exception e) {
-                    logger.error(getClass().getName(), "shutdown",
+                    logger.error(getClass(), "shutdown",
                             new MessageInstance(m_EW0004).toString(), e);
                 }
             }
             archiveCleaner.cancel(false);
-            logger.info(this.getClass().getName(), "shutdown",
+            logger.info(this.getClass(), "shutdown",
                     new MessageInstance(m_IW0031).toString());
             archiveService.shutdown();
             try {
                 archiveService.awaitTermination(60, TimeUnit.SECONDS);
             } catch (InterruptedException e1) {
-                logger.error(getClass().getName(), "shutdown",
+                logger.error(getClass(), "shutdown",
                         new MessageInstance(m_EW0004).toString(), e1);
             }
-            logger.info(this.getClass().getName(), "shutdown",
+            logger.info(this.getClass(), "shutdown",
                     new MessageInstance(m_IW0034).toString());
             archiveLock.lock();
             try {
@@ -765,7 +783,7 @@ public final class LogManagerImpl implements LogManager {
             } finally {
                 archiveLock.unlock();
             }
-            logger.info(this.getClass().getName(), "shutdown",
+            logger.info(this.getClass(), "shutdown",
                     new MessageInstance(m_IW0032).toString());
             /*
              * TODO // move this to the beginning Let us first set the flag so
@@ -853,7 +871,7 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     logFilesSemaphore.acquire();
                 } catch (InterruptedException e) {
-                    exceptionHandler.errorThrow(getClass().getName(),
+                    exceptionHandler.errorThrow(getClass(),
                             "setupBackgroundThreads", new LogException(
                                     new MessageInstance(m_EW0005), e));
                 }
@@ -863,17 +881,17 @@ public final class LogManagerImpl implements LogManager {
         flushService = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.SERVER_TASK, new LogWriter(this), logFlushInterval,
                 logFlushInterval, TimeUnit.SECONDS);
-        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+        logger.info(this.getClass(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0028).toString());
 
         archiveCleaner = platform.getScheduler().scheduleWithFixedDelay(
                 Priority.SERVER_TASK, new ArchiveCleaner(this),
                 logFlushInterval, logFlushInterval, TimeUnit.SECONDS);
-        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+        logger.info(this.getClass(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0029).toString());
         
         archiveService = Executors.newSingleThreadExecutor();
-        logger.info(this.getClass().getName(), "setupBackgroundThreads",
+        logger.info(this.getClass(), "setupBackgroundThreads",
                 new MessageInstance(m_IW0033).toString());
         
     }
@@ -928,7 +946,7 @@ public final class LogManagerImpl implements LogManager {
     }
 
     /**
-     * Determines the size of the largest log record that can be accomodated. It
+     * Determines the size of the largest log record that can be accommodated. It
      * must fit into the log buffer as well as a single log file.
      */
     private int getMaxLogRecSize() {
@@ -946,7 +964,7 @@ public final class LogManagerImpl implements LogManager {
      */
     final void setCtlFiles(String files[]) {
         if (files.length > MAX_CTL_FILES) {
-            exceptionHandler.errorThrow(getClass().getName(), "setCtlFiles",
+            exceptionHandler.errorThrow(getClass(), "setCtlFiles",
                     new LogException(new MessageInstance(m_EW0006,
                             files.length, MAX_CTL_FILES)));
         }
@@ -966,12 +984,12 @@ public final class LogManagerImpl implements LogManager {
     final void setLogFiles(String groupPaths[], short n_LogFiles) {
         int n_LogGroups = groupPaths.length;
         if (n_LogGroups > MAX_LOG_GROUPS) {
-            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles",
+            exceptionHandler.errorThrow(getClass(), "setLogFiles",
                     new LogException(new MessageInstance(m_EW0007, n_LogGroups,
                             MAX_LOG_GROUPS)));
         }
         if (n_LogFiles > MAX_LOG_FILES) {
-            exceptionHandler.errorThrow(getClass().getName(), "setLogFiles",
+            exceptionHandler.errorThrow(getClass(), "setLogFiles",
                     new LogException(new MessageInstance(m_EW0008, n_LogFiles,
                             MAX_LOG_FILES)));
         }
@@ -1102,7 +1120,7 @@ public final class LogManagerImpl implements LogManager {
         byte bufh[] = new byte[TypeSize.INTEGER + TypeSize.LONG];
         long position = 0;
         if (container.read(position, bufh, 0, bufh.length) != bufh.length) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+            exceptionHandler.errorThrow(getClass(), "readLogAnchor",
                     new LogException(new MessageInstance(m_EW0009)));
         }
         position += bufh.length;
@@ -1111,12 +1129,12 @@ public final class LogManagerImpl implements LogManager {
         checksum = bh.getLong();
         byte bufb[] = new byte[n];
         if (container.read(position, bufb, 0, n) != n) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+            exceptionHandler.errorThrow(getClass(), "readLogAnchor",
                     new LogException(new MessageInstance(m_EW0010)));
         }
         long newChecksum = ChecksumCalculator.compute(bufb, 0, n);
         if (newChecksum != checksum) {
-            exceptionHandler.errorThrow(getClass().getName(), "readLogAnchor",
+            exceptionHandler.errorThrow(getClass(), "readLogAnchor",
                     new LogException(new MessageInstance(m_EW0011)));
         }
         ByteBuffer bb = ByteBuffer.wrap(bufb);
@@ -1131,7 +1149,7 @@ public final class LogManagerImpl implements LogManager {
      */
     private void createLogAnchor(String filename) {
         if (logger.isDebugEnabled()) {
-            logger.debug(getClass().getName(), "createLogAnchor",
+            logger.debug(getClass(), "createLogAnchor",
                     "SIMPLEDBM-DEBUG: Creating log control file " + filename);
         }
         StorageContainer file = null;
@@ -1203,7 +1221,7 @@ public final class LogManagerImpl implements LogManager {
     private void createLogFile(String filename, LogFileHeader header) {
 
         if (logger.isDebugEnabled()) {
-            logger.debug(getClass().getName(), "createLogFile",
+            logger.debug(getClass(), "createLogFile",
                     "SIMPLEDBM-DEBUG: Creating log file " + filename);
         }
 
@@ -1303,7 +1321,7 @@ public final class LogManagerImpl implements LogManager {
                 .open(anchor.groups[groupno].files[fileno].toString());
         if (anchor.fileStatus[fileno] != LOG_FILE_UNUSED) {
             if (files[groupno][fileno].read(0, bufh, 0, bufh.length) != bufh.length) {
-                exceptionHandler.errorThrow(getClass().getName(),
+                exceptionHandler.errorThrow(getClass(),
                         "openLogFile", new LogException(new MessageInstance(
                                 m_EW0012, anchor.groups[groupno].files[fileno]
                                         .toString())));
@@ -1312,7 +1330,7 @@ public final class LogManagerImpl implements LogManager {
             LogFileHeader fh = new LogFileHeader(bh);
             if (fh.id != LOG_GROUP_IDS[groupno]
                     || fh.index != anchor.logIndexes[fileno]) {
-                exceptionHandler.errorThrow(getClass().getName(),
+                exceptionHandler.errorThrow(getClass(),
                         "openLogFile", new LogException(new MessageInstance(
                                 m_EW0013, anchor.groups[groupno].files[fileno]
                                         .toString())));
@@ -1343,7 +1361,7 @@ public final class LogManagerImpl implements LogManager {
                     try {
                         files[i][j].close();
                     } catch (Exception e) {
-                        logger.error(getClass().getName(), "closeLogFiles",
+                        logger.error(getClass(), "closeLogFiles",
                                 new MessageInstance(m_EW0014).toString(), e);
                     }
                     files[i][j] = null;
@@ -1375,7 +1393,7 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     ctlFiles[i].close();
                 } catch (Exception e) {
-                    logger.error(getClass().getName(), "closeCtlFiles",
+                    logger.error(getClass(), "closeCtlFiles",
                             new MessageInstance(m_EW0015).toString(), e);
                 }
                 ctlFiles[i] = null;
@@ -1412,7 +1430,7 @@ public final class LogManagerImpl implements LogManager {
 
     private void assertIsOpen() {
         if (!started || errored) {
-            exceptionHandler.errorThrow(getClass().getName(), "assertIsOpen",
+            exceptionHandler.errorThrow(getClass(), "assertIsOpen",
                     new LogException(new MessageInstance(m_EW0016)));
         }
     }
@@ -1468,7 +1486,7 @@ public final class LogManagerImpl implements LogManager {
         anchorLock.lock();
         try {
             if (anchor.fileStatus[anchor.currentLogFile] != LOG_FILE_CURRENT) {
-                exceptionHandler.errorThrow(getClass().getName(), "logSwitch",
+                exceptionHandler.errorThrow(getClass(), "logSwitch",
                         new LogException(new MessageInstance(m_EW0017,
                                 anchor.currentLogFile,
                                 anchor.fileStatus[anchor.currentLogFile])));
@@ -1490,7 +1508,7 @@ public final class LogManagerImpl implements LogManager {
         try {
             logFilesSemaphore.acquire();
         } catch (InterruptedException e) {
-            exceptionHandler.errorThrow(getClass().getName(), "logSwitch",
+            exceptionHandler.errorThrow(getClass(), "logSwitch",
                     new LogException(new MessageInstance(m_EW0018), e));
         }
 
@@ -1522,7 +1540,7 @@ public final class LogManagerImpl implements LogManager {
                     //for (int j = 0; j < anchor.n_LogFiles; j++) {
                     //	System.err.println("FileStatus[" + j + "]=" + anchor.fileStatus[j]);
                     //}
-                    exceptionHandler.errorThrow(getClass().getName(),
+                    exceptionHandler.errorThrow(getClass(),
                             "logSwitch", new LogException(new MessageInstance(
                                     m_EW0018)));
                 } else {
@@ -1645,7 +1663,7 @@ public final class LogManagerImpl implements LogManager {
                     // Get the oldest log buffer
                     buf = logBuffers.getFirst();
                     if (logger.isDebugEnabled()) {
-                        logger.debug(getClass().getName(),
+                        logger.debug(getClass(),
                                 "handleFlushRequest_",
                                 "SIMPLEDBM-DEBUG: Flushing Log Buffer " + buf);
                     }
@@ -1823,7 +1841,7 @@ public final class LogManagerImpl implements LogManager {
                 n = files[0][f].read(position, buf, 0, buf.length);
             }
             if (position != anchor.logFileSize) {
-                exceptionHandler.errorThrow(getClass().getName(),
+                exceptionHandler.errorThrow(getClass(),
                         "archiveLogFile", new LogException(new MessageInstance(
                                 m_EW0019)));
             }
@@ -1851,7 +1869,7 @@ public final class LogManagerImpl implements LogManager {
             } else {
                 if (request.logIndex != lastArchivedFile + 1) {
                     this.errored = true;
-                    exceptionHandler.errorThrow(getClass().getName(),
+                    exceptionHandler.errorThrow(getClass(),
                             "handleNextArchiveRequest", new LogException(
                                     new MessageInstance(m_EW0020,
                                             lastArchivedFile + 1,
@@ -1957,7 +1975,7 @@ public final class LogManagerImpl implements LogManager {
                 - offset);
         long checksum = bb.getLong();
         if (!lsn.equals(readLsn) || checksum != ck) {
-            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            exceptionHandler.errorThrow(getClass(), "doRead",
             //            	new LogException(mcat.getMessage("EW0021", readLsn)));
             throw new LogException(new MessageInstance(m_EW0021, readLsn));
         }
@@ -1973,7 +1991,7 @@ public final class LogManagerImpl implements LogManager {
         byte[] lbytes = new byte[Integer.SIZE / Byte.SIZE];
         int n = container.read(position, lbytes, 0, lbytes.length);
         if (n != lbytes.length) {
-            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            exceptionHandler.errorThrow(getClass(), "doRead",
             //            	new LogException(mcat.getMessage("EW0023", lsn)));
             throw new LogException(new MessageInstance(m_EW0023, lsn));
         }
@@ -1981,7 +1999,7 @@ public final class LogManagerImpl implements LogManager {
         ByteBuffer bb = ByteBuffer.wrap(lbytes);
         int length = bb.getInt();
         if (length < LOGREC_HEADER_SIZE || length > this.getMaxLogRecSize()) {
-            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            exceptionHandler.errorThrow(getClass(), "doRead",
             //            	new LogException(mcat.getMessage("EW0024", lsn, length)));
             throw new LogException(new MessageInstance(m_EW0024, lsn, length));
         }
@@ -1990,7 +2008,7 @@ public final class LogManagerImpl implements LogManager {
         n = container.read(position, bytes, lbytes.length, bytes.length
                 - lbytes.length);
         if (n != (bytes.length - lbytes.length)) {
-            //            exceptionHandler.errorThrow(getClass().getName(), "doRead", 
+            //            exceptionHandler.errorThrow(getClass(), "doRead",
             //            	new LogException(mcat.getMessage("EW0025", lsn)));
             throw new LogException(new MessageInstance(m_EW0025, lsn));
         }
@@ -2061,7 +2079,7 @@ public final class LogManagerImpl implements LogManager {
                         }
                         if (fileno == -1) {
                             exceptionHandler
-                                    .errorThrow(getClass().getName(), "doRead",
+                                    .errorThrow(getClass(), "doRead",
                                             new LogException(
                                                     new MessageInstance(
                                                             m_EW0022, lsn)));
@@ -2189,9 +2207,9 @@ public final class LogManagerImpl implements LogManager {
         writeLogAnchor();
     }
 
-    void logException(String className, String methodName, Message key,
+    void logException(Class<?> klass, String methodName, Message key,
             Exception e) {
-        logger.error(className, methodName,
+        logger.error(klass, methodName,
                 new MessageInstance(key).toString(), e);
         exceptions.add(e);
         errored = true;
@@ -2445,8 +2463,11 @@ public final class LogManagerImpl implements LogManager {
         /**
          * The LogFileHeader occupies {@value} bytes on disk.
          */
-        static final int SIZE = (Character.SIZE / Byte.SIZE)
-                + (Integer.SIZE / Byte.SIZE);
+        static final int SIZE = TypeSize.CHARACTER
+                + TypeSize.INTEGER // index
+                + TypeSize.INTEGER // version
+                + LOG_FILE_MAGIC.length // magic number
+                ;
 
         LogFileHeader(char id, int index) {
             this.id = id;
@@ -2454,6 +2475,13 @@ public final class LogManagerImpl implements LogManager {
         }
 
         LogFileHeader(ByteBuffer bb) {
+        	byte[] b = new byte[LOG_FILE_MAGIC.length];
+        	bb.get(b);
+        	int v = bb.getInt();
+        	if (!Arrays.equals(LOG_FILE_MAGIC, b) ||
+        		!(LOG_FILE_VERSION == v)) {
+        		throw new SimpleDBMException(new MessageInstance(LogManagerImpl.m_EW0035));
+        	}
             id = bb.getChar();
             index = bb.getInt();
         }
@@ -2463,6 +2491,8 @@ public final class LogManagerImpl implements LogManager {
         }
 
         public void store(ByteBuffer bb) {
+        	bb.put(LOG_FILE_MAGIC);
+        	bb.putInt(LOG_FILE_VERSION);
             bb.putChar(id);
             bb.putInt(index);
         }
@@ -2510,7 +2540,7 @@ public final class LogManagerImpl implements LogManager {
          * name of the log file is formed by combining path,group id, and a
          * sequence number.
          * 
-         * @see #LogGroup()
+         * @see #LogGroup(char, String, int, int)
          */
         final ByteString files[];
 
@@ -2742,6 +2772,13 @@ public final class LogManagerImpl implements LogManager {
 
         LogAnchor(ByteBuffer bb) {
             int i;
+        	byte[] magic = new byte[LOG_ANCHOR_MAGIC.length];
+        	bb.get(magic);
+        	int v = bb.getInt();
+        	if (!Arrays.equals(LOG_ANCHOR_MAGIC, magic) ||
+        		!(LOG_ANCHOR_VERSION == v)) {
+        		throw new SimpleDBMException(new MessageInstance(LogManagerImpl.m_EW0036));
+        	}
             n_CtlFiles = bb.getShort();
             ctlFiles = new ByteString[n_CtlFiles];
             for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
@@ -2782,37 +2819,41 @@ public final class LogManagerImpl implements LogManager {
         public int getStoredLength() {
             int n = 0;
             int i;
-            n += (Short.SIZE / Byte.SIZE); // n_CtlFiles
+            n += LOG_ANCHOR_MAGIC.length;
+            n += TypeSize.INTEGER; // version
+            n += TypeSize.SHORT; // n_CtlFiles
             for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
                 n += ctlFiles[i].getStoredLength();
             }
-            n += (Short.SIZE / Byte.SIZE); // n_LogGroups
+            n += TypeSize.SHORT; // n_LogGroups
             for (i = 0; i < n_LogGroups; i++) {
                 n += groups[i].getStoredLength();
             }
-            n += (Short.SIZE / Byte.SIZE); // n_LogFiles
-            n += n_LogFiles * (Short.SIZE / Byte.SIZE); // fileStatus
-            n += n_LogFiles * (Integer.SIZE / Byte.SIZE); // logIndexes
-            n += 1; // archiveMode
+            n += TypeSize.SHORT; // n_LogFiles
+            n += n_LogFiles * TypeSize.SHORT; // fileStatus
+            n += n_LogFiles * TypeSize.INTEGER; // logIndexes
+            n += TypeSize.BYTE; // archiveMode
             n += archivePath.getStoredLength(); // archivePath
-            n += (Integer.SIZE / Byte.SIZE); // logBufferSize
-            n += (Integer.SIZE / Byte.SIZE); // logFileSize
-            n += (Short.SIZE / Byte.SIZE); // currentLogFile
-            n += (Integer.SIZE / Byte.SIZE); // currentLogIndex
-            n += (Integer.SIZE / Byte.SIZE); // archivedLogIndex
+            n += TypeSize.INTEGER; // logBufferSize
+            n += TypeSize.INTEGER; // logFileSize
+            n += TypeSize.SHORT; // currentLogFile
+            n += TypeSize.INTEGER; // currentLogIndex
+            n += TypeSize.INTEGER; // archivedLogIndex
             n += currentLsn.getStoredLength();
             n += maxLsn.getStoredLength();
             n += durableLsn.getStoredLength();
             n += durableCurrentLsn.getStoredLength();
             n += checkpointLsn.getStoredLength();
             n += oldestInterestingLsn.getStoredLength();
-            n += (Integer.SIZE / Byte.SIZE); // maxBuffers
-            n += (Integer.SIZE / Byte.SIZE); // logFlushInterval
+            n += TypeSize.INTEGER; // maxBuffers
+            n += TypeSize.INTEGER; // logFlushInterval
             return n;
         }
 
         public void store(ByteBuffer bb) {
             int i;
+        	bb.put(LOG_ANCHOR_MAGIC);
+        	bb.putInt(LOG_ANCHOR_VERSION);
             bb.putShort(n_CtlFiles);
             for (i = 0; i < n_CtlFiles; i++) { // ctlFiles
                 ctlFiles[i].store(bb);
@@ -3070,7 +3111,7 @@ public final class LogManagerImpl implements LogManager {
                 try {
                     logManager.storageFactory.delete(name);
                     if (logManager.logger.isDebugEnabled()) {
-                        logManager.logger.debug(ArchiveCleaner.class.getName(),
+                        logManager.logger.debug(ArchiveCleaner.class,
                                 "run",
                                 "SIMPLEDBM-DEBUG: Removed archived log file "
                                         + name);
@@ -3112,7 +3153,7 @@ public final class LogManagerImpl implements LogManager {
             try {
                 logManager.flush();
             } catch (Exception e) {
-                logManager.logException(LogWriter.class.getName(), "run",
+                logManager.logException(LogWriter.class, "run",
                         m_EW0026, e);
             }
         }
@@ -3157,7 +3198,7 @@ public final class LogManagerImpl implements LogManager {
             try {
                 logManager.handleNextArchiveRequest(request);
             } catch (Exception e) {
-                logManager.logException(ArchiveRequestHandler.class.getName(),
+                logManager.logException(ArchiveRequestHandler.class,
                         "run", m_EW0027, e);
             }
         }

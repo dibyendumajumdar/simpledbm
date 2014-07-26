@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 /*
  * Created on: 08-Dec-2005
@@ -385,7 +380,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         .getPageNumber(), spaceMapPage, spacebitsAfter,
                         spacebitsBefore);
                 if (log.isDebugEnabled()) {
-                    log.debug(this.getClass().getName(), "undoInsertSegment",
+                    log.debug(this.getClass(), "undoInsertSegment",
                             "SIMPLEDBM-DEBUG: Updated space map information from "
                                     + spacebitsBefore + " to " + spacebitsAfter
                                     + " for page " + pageId
@@ -436,7 +431,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         .getSpaceMapPageNumber(), spacebitsAfter,
                         spacebitsBefore);
                 if (log.isDebugEnabled()) {
-                    log.debug(this.getClass().getName(), "undoDeleteSegment",
+                    log.debug(this.getClass(), "undoDeleteSegment",
                             "SIMPLEDBM-DEBUG: Updated space map information from "
                                     + spacebitsBefore + " to " + spacebitsAfter
                                     + " for page " + pageId
@@ -554,7 +549,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                      * Therefore the tuple segment cannot be reclaimed
                      */
                     if (log.isDebugEnabled()) {
-                        log.debug(this.getClass().getName(),
+                        log.debug(this.getClass(),
                                 "reclaimDeletedTuples",
                                 "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
                                         + page.getPageId() + ", slot="
@@ -580,7 +575,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     if (log.isDebugEnabled()) {
                         log
                                 .debug(
-                                        this.getClass().getName(),
+                                        this.getClass(),
                                         "reclaimDeletedTuples",
                                         "SIMPLEDBM-DEBUG: Reclaim of tuple segment at (page="
                                                 + page.getPageId()
@@ -597,7 +592,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                      * cleaned up.
                      */
                     if (log.isDebugEnabled()) {
-                        log.debug(this.getClass().getName(),
+                        log.debug(this.getClass(),
                                 "reclaimDeletedTuples",
                                 "SIMPLEDBM-DEBUG: Reclaiming tuple segment at (page="
                                         + page.getPageId() + ", slot="
@@ -682,7 +677,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                             .findAndFixSpaceMapPageShared(new TwoBitSpaceCheckerImpl(
                                     maxPageSpace, requiredSpace));
                     if (pageNumber == -1) {
-                        exceptionHandler.errorThrow(this.getClass().getName(),
+                        exceptionHandler.errorThrow(this.getClass(),
                                 "doCompleteInsert", new TupleException(
                                         new MessageInstance(m_ET0004,
                                                 containerId)));
@@ -728,7 +723,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         /*
          * Should never reach here.
          */
-        exceptionHandler.errorThrow(this.getClass().getName(),
+        exceptionHandler.errorThrow(this.getClass(),
                 "locateEmptyPage", new TupleException(new MessageInstance(
                         m_ET0009)));
         return null;
@@ -778,7 +773,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     spcursor.updateAndLogRedoOnly(trx, pageNumber,
                             spacebitsAfter);
                     if (log.isDebugEnabled()) {
-                        log.debug(this.getClass().getName(), "doStartInsert",
+                        log.debug(this.getClass(), "doStartInsert",
                                 "SIMPLEDBM-DEBUG: Updated space map information from "
                                         + spacebitsBefore + " to "
                                         + spacebitsAfter + " for page "
@@ -969,7 +964,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                  */
                 location = new TupleId(page.getPageId(), slotNumber);
                 if (tuplemgr.log.isDebugEnabled()) {
-                    tuplemgr.log.debug(this.getClass().getName(),
+                    tuplemgr.log.debug(this.getClass(),
                             "startInsert",
                             "SIMPLEDBM-DEBUG: Tentative location for new tuple will be "
                                     + location);
@@ -985,7 +980,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     locked = true;
                 } catch (LockException e) {
                     if (tuplemgr.log.isDebugEnabled()) {
-                        tuplemgr.log.debug(this.getClass().getName(),
+                        tuplemgr.log.debug(this.getClass(),
                                 "startInsert",
                                 "SIMPLEDBM-DEBUG: Failed to obtain conditional lock on location "
                                         + location);
@@ -1033,7 +1028,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 if (tuplemgr.log.isDebugEnabled()) {
                                     tuplemgr.log
                                             .debug(
-                                                    this.getClass().getName(),
+                                                    this.getClass(),
                                                     "startInsert",
                                                     "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
                                                             + location
@@ -1066,7 +1061,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                 if (tuplemgr.log.isDebugEnabled()) {
                     tuplemgr.log
                             .debug(
-                                    this.getClass().getName(),
+                                    this.getClass(),
                                     "startInsert",
                                     "SIMPLEDBM-DEBUG: Unable to continue insert of new tuple at "
                                             + location
@@ -1116,7 +1111,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             if (tuplemgr.log.isDebugEnabled()) {
                 tuplemgr.log
                         .debug(
-                                this.getClass().getName(),
+                                this.getClass(),
                                 "startInsert",
                                 "SIMPLEDBM-DEBUG: Page number "
                                         + pageNumber
@@ -1364,10 +1359,6 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
             }
         }
 
-        /**
-         * @see org.simpledbm.rss.api.tuple.TupleInserter#startInsert(org.simpledbm.rss.api.tx.Transaction,
-         *      org.simpledbm.rss.api.tuple.Tuple)
-         */
         Location startInsert() {
             savepoint = trx.createSavepoint(false);
             proceedWithInsert = false;
@@ -1390,7 +1381,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
          */
         public void completeInsert() {
             if (!proceedWithInsert) {
-                tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                tuplemgr.exceptionHandler.errorThrow(this.getClass(),
                         "completInsert", new TupleException(
                                 new MessageInstance(m_ET0007)));
             }
@@ -1448,7 +1439,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doDelete(Transaction trx, Location location) {
 
             if (location.getContainerId() != containerId) {
-                tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                tuplemgr.exceptionHandler.errorThrow(this.getClass(),
                         "doDelete", new TupleException(new MessageInstance(
                                 m_ET0005, location)));
             }
@@ -1479,7 +1470,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                         .isFirstSegment(page, slotNumber))) {
                             tuplemgr.exceptionHandler.errorThrow(this
-                                    .getClass().getName(), "doDelete",
+                                    .getClass(), "doDelete",
                                     new TupleException(new MessageInstance(
                                             m_ET0005, location)));
                         }
@@ -1551,7 +1542,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         public byte[] read(Location location) {
 
             if (location.getContainerId() != containerId) {
-                tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                tuplemgr.exceptionHandler.errorThrow(this.getClass(),
                         "doRead", new TupleException(new MessageInstance(
                                 m_ET0005, location)));
             }
@@ -1580,7 +1571,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 || (TupleHelper.isSegmented(page, slotNumber) && !TupleHelper
                                         .isFirstSegment(page, slotNumber))) {
                             tuplemgr.exceptionHandler.errorThrow(this
-                                    .getClass().getName(), "doRead",
+                                    .getClass(), "doRead",
                                     new TupleException(new MessageInstance(
                                             m_ET0005, location)));
                         }
@@ -1593,7 +1584,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         os.write(ts.data);
                     } catch (IOException e) {
                         tuplemgr.exceptionHandler.errorThrow(this.getClass()
-                                .getName(), "doRead", new TupleException(
+                                , "doRead", new TupleException(
                                 new MessageInstance(m_ET0006), e));
                     }
 
@@ -1636,7 +1627,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
         void doUpdate(Transaction trx, Location location, Storable newTuple) {
 
             if (location.getContainerId() != containerId) {
-                tuplemgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                tuplemgr.exceptionHandler.errorThrow(this.getClass(),
                         "doRead", new TupleException(new MessageInstance(
                                 m_ET0005, location)));
             }
@@ -1822,7 +1813,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     if (lockMode == LockMode.SHARED
                             || lockMode == LockMode.UPDATE) {
                         if (tuplemgr.log.isDebugEnabled()) {
-                            tuplemgr.log.debug(this.getClass().getName(),
+                            tuplemgr.log.debug(this.getClass(),
                                     "fetchNext",
                                     "SIMPLEDBM-DEBUG: Releasing lock on previous row "
                                             + previousLocation);
@@ -1840,7 +1831,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                     LockMode lockMode = trx.hasLock(previousLocation);
                     if (lockMode == LockMode.UPDATE) {
                         if (tuplemgr.log.isDebugEnabled()) {
-                            tuplemgr.log.debug(this.getClass().getName(),
+                            tuplemgr.log.debug(this.getClass(),
                                     "fetchNext",
                                     "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
                                             + previousLocation + " to "
@@ -2013,7 +2004,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                                 if (tuplemgr.log.isDebugEnabled()) {
                                     tuplemgr.log
                                             .debug(
-                                                    this.getClass().getName(),
+                                                    this.getClass(),
                                                     "doFetchNext",
                                                     "SIMPLEDBM-DEBUG: The tuple at location "
                                                             + nextLocation
@@ -2061,7 +2052,7 @@ public class TupleManagerImpl extends BaseTransactionalModule implements
                         if (tuplemgr.log.isDebugEnabled()) {
                             tuplemgr.log
                                     .debug(
-                                            this.getClass().getName(),
+                                            this.getClass(),
                                             "close",
                                             "SIMPLEDBM-DEBUG: Releasing lock on current row "
                                                     + currentLocation

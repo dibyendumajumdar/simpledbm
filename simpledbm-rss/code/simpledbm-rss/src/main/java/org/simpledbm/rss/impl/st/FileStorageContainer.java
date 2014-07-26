@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.rss.impl.st;
 
@@ -117,35 +112,31 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
      */
     private void isValid() throws StorageException {
         if (file == null || !file.getChannel().isOpen()) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "isValid",
+            exceptionHandler.errorThrow(getClass(), "isValid",
                     new StorageException(new MessageInstance(m_ES0001, name)));
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.simpledbm.io.StorageContainer#write(long, byte[], int, int)
-     */
-    public final synchronized void write(long position, byte[] data,
-            int offset, int length) throws StorageException {
+    public final synchronized void write(long position,
+                                         byte[] data,
+                                         int offset,
+                                         int length) {
         isValid();
         try {
             file.seek(position);
             file.write(data, offset, length);
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "write",
+                    .errorThrow(getClass(), "write",
                             new StorageException(new MessageInstance(m_ES0003,
                                     name), e));
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.simpledbm.io.StorageContainer#read(long, byte[], int, int)
-     */
-    public final synchronized int read(long position, byte[] data, int offset,
-            int length) throws StorageException {
+    public final synchronized int read(long position,
+                                       byte[] data,
+                                       int offset,
+                                       int length) {
         isValid();
         int n = 0;
         try {
@@ -153,18 +144,14 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             n = file.read(data, offset, length);
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "read",
+                    .errorThrow(getClass(), "read",
                             new StorageException(new MessageInstance(m_ES0004,
                                     name), e));
         }
         return n;
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.simpledbm.io.StorageContainer#flush()
-     */
-    public final synchronized void flush() throws StorageException {
+    public final synchronized void flush() {
         isValid();
         try {
             // FIXME hard coded values
@@ -175,23 +162,19 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             }
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "flush",
+                    .errorThrow(getClass(), "flush",
                             new StorageException(new MessageInstance(m_ES0005,
                                     name), e));
         }
     }
 
-    /*
-     * (non-Javadoc)
-     * @see org.simpledbm.io.StorageContainer#close()
-     */
-    public final synchronized void close() throws StorageException {
+    public final synchronized void close() {
         isValid();
         try {
             file.close();
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "close",
+                    .errorThrow(getClass(), "close",
                             new StorageException(new MessageInstance(m_ES0006,
                                     name), e));
         }
@@ -200,7 +183,7 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     public final synchronized void lock() {
         isValid();
         if (lock != null) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+            exceptionHandler.errorThrow(this.getClass(), "lock",
                     new StorageException(new MessageInstance(m_ES0007, name)));
         }
         try {
@@ -211,13 +194,13 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
                 // ignore this error
             }
             if (lock == null) {
-                exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+                exceptionHandler.errorThrow(this.getClass(), "lock",
                         new StorageException(
                                 new MessageInstance(m_ES0008, name)));
             }
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "lock",
+                    .errorThrow(this.getClass(), "lock",
                             new StorageException(new MessageInstance(m_ES0008,
                                     name), e));
         }
@@ -226,7 +209,7 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
     public final synchronized void unlock() {
         isValid();
         if (lock == null) {
-            exceptionHandler.errorThrow(this.getClass().getName(), "lock",
+            exceptionHandler.errorThrow(this.getClass(), "lock",
                     new StorageException(new MessageInstance(m_ES0009, name)));
         }
         try {
@@ -234,7 +217,7 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
             lock = null;
         } catch (IOException e) {
             exceptionHandler
-                    .errorThrow(this.getClass().getName(), "lock",
+                    .errorThrow(this.getClass(), "lock",
                             new StorageException(new MessageInstance(m_ES0010,
                                     name), e));
         }
@@ -250,9 +233,6 @@ public final class FileStorageContainer implements StorageContainer, Dumpable {
         return sb;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     @Override
     public final String toString() {
         return appendTo(new StringBuilder()).toString();

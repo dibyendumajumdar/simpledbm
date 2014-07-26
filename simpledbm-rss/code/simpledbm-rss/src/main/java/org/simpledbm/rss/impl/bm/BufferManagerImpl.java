@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.rss.impl.bm;
 
@@ -347,7 +342,7 @@ public final class BufferManagerImpl implements BufferManager {
                 Priority.SERVER_TASK, new BufferWriter(this),
                 bufferWriterSleepInterval, bufferWriterSleepInterval,
                 TimeUnit.MILLISECONDS);
-        log.info(this.getClass().getName(), "run",
+        log.info(this.getClass(), "run",
                 new MessageInstance(m_IM0011).toString());
     }
 
@@ -389,7 +384,7 @@ public final class BufferManagerImpl implements BufferManager {
         bufferWriter.cancel(false);
         writeBuffers();
         dumpStatistics();
-        log.info(this.getClass().getName(), "run",
+        log.info(this.getClass(), "run",
                 new MessageInstance(m_IM0012).toString());
     }
 
@@ -455,7 +450,7 @@ public final class BufferManagerImpl implements BufferManager {
                             if (log.isDebugEnabled()) {
                                 log
                                         .debug(
-                                                this.getClass().getName(),
+                                                this.getClass(),
                                                 "getFrame",
                                                 "SIMPLEDBM-DEBUG: Skipping bcb "
                                                         + nextBcb
@@ -650,7 +645,7 @@ public final class BufferManagerImpl implements BufferManager {
                             if (bcb.isBeingRead()
                                     || (bcb.isBeingWritten() && latchMode != LATCH_SHARED)) {
                                 if (log.isDebugEnabled()) {
-                                    log.debug(this.getClass().getName(),
+                                    log.debug(this.getClass(),
                                             "locatePage",
                                             "SIMPLEDBM-DEBUG: Another thread is attempting to read/write page "
                                                     + pageId
@@ -662,7 +657,7 @@ public final class BufferManagerImpl implements BufferManager {
                                 if (log.isDebugEnabled()) {
                                     log
                                             .debug(
-                                                    this.getClass().getName(),
+                                                    this.getClass(),
                                                     "locatePage",
                                                     "SIMPLEDBM-DEBUG: Page "
                                                             + pageId
@@ -732,7 +727,7 @@ public final class BufferManagerImpl implements BufferManager {
              * pages (i.e., failing to unfix() pages are use).
              */
             setStop();
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "locatePage", new BufferManagerException(
                             new MessageInstance(m_EM0004, pageId)));
         }
@@ -760,7 +755,7 @@ public final class BufferManagerImpl implements BufferManager {
                      * state. We want to remove the invalid BCB from the hash chain,
                      * and return the buffer pool frame to the freelist. 
                      */
-                    log.error(this.getClass().getName(), "locatePage",
+                    log.error(this.getClass(), "locatePage",
                             new MessageInstance(m_EM0002, pageId).toString());
                     bucket.lockExclusive();
                     try {
@@ -798,7 +793,7 @@ public final class BufferManagerImpl implements BufferManager {
      */
     private void checkStatus() {
         if (stop) {
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "checkStatus", new BufferManagerException(
                             new MessageInstance(m_EM0005)));
         }
@@ -953,7 +948,7 @@ public final class BufferManagerImpl implements BufferManager {
      * <p>
      * Algorithm:
      * <ol>
-     * <li>Call {@link getBCB} to search for the page in the buffer pool and
+     * <li>Call {@link #getBCB(org.simpledbm.rss.api.pm.PageId, boolean, int, int)} to search for the page in the buffer pool and
      * read it in if necessary.</li>
      * <li>Make the BCB the MRU page in the LRU chain</li>
      * <li>Acquire page latch as requested.</li>
@@ -1172,7 +1167,7 @@ public final class BufferManagerImpl implements BufferManager {
                                 && bcb.getPageId().getContainerId() == containerId) {
                             bcb.setInvalid(true);
                             if (log.isDebugEnabled()) {
-                                log.debug(this.getClass().getName(),
+                                log.debug(this.getClass(),
                                         "invalidateContainer",
                                         "SIMPLEDBM-DEBUG: Invalidating page "
                                                 + bcb.getPageId()
@@ -1265,7 +1260,7 @@ public final class BufferManagerImpl implements BufferManager {
                 bcb.setBeingWritten(true);
                 doWrite = true;
                 if (log.isTraceEnabled()) {
-                    log.trace(this.getClass().getName(), "writeBuffers",
+                    log.trace(this.getClass(), "writeBuffers",
                             "SIMPLEDBM-DEBUG: WRITING Page " + bcb.getPageId());
                 }
             }
@@ -1278,7 +1273,7 @@ public final class BufferManagerImpl implements BufferManager {
             bcb.lock();
             try {
                 if (log.isTraceEnabled()) {
-                    log.trace(this.getClass().getName(), "writeBuffers",
+                    log.trace(this.getClass(), "writeBuffers",
                             "SIMPLEDBM-DEBUG: COMPLETED WRITING Page "
                                     + bcb.getPageId());
                 }
@@ -1674,7 +1669,7 @@ public final class BufferManagerImpl implements BufferManager {
             } else if (latchMode == BufferManagerImpl.LATCH_SHARED) {
                 page.unlatchShared();
             } else {
-                bufMgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                bufMgr.exceptionHandler.errorThrow(this.getClass(),
                         "unlatch", new SimpleDBMException(new MessageInstance(
                                 m_EM0007)));
             }
@@ -1701,7 +1696,7 @@ public final class BufferManagerImpl implements BufferManager {
                 dirty = true;
                 page.setPageLsn(lsn);
             } else {
-                bufMgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                bufMgr.exceptionHandler.errorThrow(this.getClass(),
                         "setDirty", new SimpleDBMException(new MessageInstance(
                                 m_EM0008)));
             }
@@ -1726,7 +1721,7 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void upgradeUpdateLatch() {
             if (latchMode != BufferManagerImpl.LATCH_UPDATE) {
-                bufMgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                bufMgr.exceptionHandler.errorThrow(this.getClass(),
                         "upgradeUpdateLatch", new SimpleDBMException(
                                 new MessageInstance(m_EM0009)));
             }
@@ -1739,7 +1734,7 @@ public final class BufferManagerImpl implements BufferManager {
          */
         public void downgradeExclusiveLatch() {
             if (latchMode != BufferManagerImpl.LATCH_EXCLUSIVE) {
-                bufMgr.exceptionHandler.errorThrow(this.getClass().getName(),
+                bufMgr.exceptionHandler.errorThrow(this.getClass(),
                         "downgradeExclusiveLatch", new SimpleDBMException(
                                 new MessageInstance(m_EM0010)));
             }
@@ -1778,14 +1773,14 @@ public final class BufferManagerImpl implements BufferManager {
                 if (bufmgr.log.isTraceEnabled()) {
                     bufmgr.log
                             .trace(
-                                    this.getClass().getName(),
+                                    this.getClass(),
                                     "run",
                                     "SIMPLEDBM-DEBUG: BUFFER WRITER took "
                                             + (end - start)
                                             + " millisecs to complete writing pages to disk");
                 }
             } catch (Exception e) {
-                bufmgr.log.error(this.getClass().getName(), "run",
+                bufmgr.log.error(this.getClass(), "run",
                         new MessageInstance(m_EM0003).toString(), e);
                 bufmgr.setStop();
             }
