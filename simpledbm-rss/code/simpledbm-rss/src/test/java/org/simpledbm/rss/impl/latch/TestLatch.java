@@ -490,55 +490,55 @@ public class TestLatch extends BaseTestCase {
         assertTrue(!t2.isAlive());
     }
 
-    /**
-     * write lockInterruptibly succeeds if lock free else is interruptible
-     */
-    public void testWriteLockInterruptibly() throws Exception {
-        final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory
-                .newReadWriteUpdateLatch();
-        lock.exclusiveLock();
-        testfailed = false;
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    lock.exclusiveLockInterruptibly();
-                    testfailed = true;
-                } catch (InterruptedException success) {
-                }
-            }
-        });
-        t.start();
-        t.interrupt();
-        t.join();
-        lock.unlock();
-
-        assertFalse(testfailed);
-    }
-
-    /**
-     * read lockInterruptibly succeeds if lock free else is interruptible
-     */
-    public void testReadLockInterruptibly() throws Exception {
-        final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory
-                .newReadWriteUpdateLatch();
-        lock.exclusiveLock();
-        testfailed = false;
-        Thread t = new Thread(new Runnable() {
-            public void run() {
-                try {
-                    lock.sharedLockInterruptibly();
-                    testfailed = true;
-                } catch (InterruptedException success) {
-                }
-            }
-        });
-        t.start();
-        t.interrupt();
-        t.join();
-        lock.unlock();
-
-        assertFalse(testfailed);
-    }
+//    /**
+//     * write lockInterruptibly succeeds if lock free else is interruptible
+//     */
+//    public void testWriteLockInterruptibly() throws Exception {
+//        final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory
+//                .newReadWriteUpdateLatch();
+//        lock.exclusiveLock();
+//        testfailed = false;
+//        Thread t = new Thread(new Runnable() {
+//            public void run() {
+//                try {
+//                    lock.exclusiveLockInterruptibly();
+//                    testfailed = true;
+//                } catch (InterruptedException success) {
+//                }
+//            }
+//        });
+//        t.start();
+//        t.interrupt();
+//        t.join();
+//        lock.unlock();
+//
+//        assertFalse(testfailed);
+//    }
+//
+//    /**
+//     * read lockInterruptibly succeeds if lock free else is interruptible
+//     */
+//    public void testReadLockInterruptibly() throws Exception {
+//        final ReadWriteUpdateLatch lock = (ReadWriteUpdateLatch) latchFactory
+//                .newReadWriteUpdateLatch();
+//        lock.exclusiveLock();
+//        testfailed = false;
+//        Thread t = new Thread(new Runnable() {
+//            public void run() {
+//                try {
+//                    lock.sharedLockInterruptibly();
+//                    testfailed = true;
+//                } catch (InterruptedException success) {
+//                }
+//            }
+//        });
+//        t.start();
+//        t.interrupt();
+//        t.join();
+//        lock.unlock();
+//
+//        assertFalse(testfailed);
+//    }
 
     static final class Incrementor implements Runnable {
 
