@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.rss.impl.locking;
 
@@ -42,6 +37,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
@@ -50,6 +46,7 @@ import org.simpledbm.common.api.exception.ExceptionHandler;
 import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.platform.PlatformObjects;
+import org.simpledbm.common.api.thread.Scheduler;
 import org.simpledbm.common.api.thread.Scheduler.Priority;
 import org.simpledbm.common.util.Dumpable;
 import org.simpledbm.common.util.Linkable;
@@ -82,6 +79,15 @@ import org.simpledbm.rss.api.locking.LockTimeoutException;
  * @author Dibyendu Majumdar
  */
 public final class LockManagerImpl implements LockManager {
+
+    /*
+     * This version uses a global queue of threads to be woken
+     * up. It relies on garbage collection rather
+     * than maintaining pools of lockBuckets and lockRequests
+     * A ConcurrentLinkedQueue is used to maintain the global
+     * queue.
+     */
+
 
     /*
      * 
@@ -267,8 +273,11 @@ public final class LockManagerImpl implements LockManager {
 
      */
 
-    static final int hashPrimes[] = { 53, 97, 193, 389, 769, 1543, 3079, 6151,
-            12289, 24593, 49157, 98317, 196613, 393241, 786433 };
+	/**
+	 * Prime numbers used to size the hash bucket array
+	 */
+    static final int primes[] = {53, 97, 193, 389, 769, 1543, 3079, 6151,
+            12289, 24593, 49157, 98317, 196613, 393241, 786433};
 
     final Platform platform;
 
@@ -277,7 +286,7 @@ public final class LockManagerImpl implements LockManager {
     final ExceptionHandler exceptionHandler;
 
     /**
-     * Offset into {@link #hashPrimes}
+     * Offset into {@link #primes}
      */
     private volatile int htsz = 0;
 
@@ -301,13 +310,13 @@ public final class LockManagerImpl implements LockManager {
     /**
      * Hash table of locks. The hash table is dynamically resized if necessary.
      */
-    private LockBucket[] LockHashTable;
+    private LockBucket[] locktable;
 
     /**
-     * Size of the hash table. This is always equal to hashPrimes[htsz]. Can
+     * Size of the hash table. This is always equal to primes[htsz]. Can
      * change when hash table is resized.
      */
-    private int hashTableSize;
+    private int N;
 
     /**
      * List of lock event listeners.
@@ -321,6 +330,12 @@ public final class LockManagerImpl implements LockManager {
     private final Map<Object, LockWaiter> waiters = Collections
             .synchronizedMap(new HashMap<Object, LockWaiter>());
 
+    /**
+     * A queue of threads to be woken up is maintained in the
+     * wakeupQ.
+     */
+    final ConcurrentLinkedQueue<Thread> wakeupQ = new ConcurrentLinkedQueue<Thread>();
+    
     /**
      * To keep the algorithm simple, the deadlock detector uses a global
      * exclusive lock on the lock manager. The lock manager itself acquires
@@ -351,21 +366,21 @@ public final class LockManagerImpl implements LockManager {
      * Cached value from logging to improve performance. Downside is that we
      * cannot change logging dynamically.
      */
-    final boolean debugEnabled;
+    static boolean debugEnabled;
 
     /**
      * Cached value from logging to improve performance. Downside is that we
      * cannot change logging dynamically.
      */
-    final boolean traceEnabled;
+    static boolean traceEnabled;
 
     /**
      * Defines the various lock release methods.
-     * 
+     *
      * @author Dibyendu Majumdar
      */
     enum ReleaseAction {
-        RELEASE, FORCE_RELEASE, DOWNGRADE;
+        RELEASE, DOWNGRADE
     }
 
     // Lock Manager messages
@@ -408,55 +423,6 @@ public final class LockManagerImpl implements LockManager {
     static Message m_IC0015 = new Message('R', 'C', MessageType.INFO, 15,
             "LockItem = {0}");
 
-    /**
-     * Holds parameters supplied to acquire, release or find APIs.
-     */
-    static final class LockParameters {
-        Object owner;
-        Object lockable;
-        LockMode mode;
-        LockDuration duration;
-        int timeout;
-        LockInfo lockInfo;
-
-        LockMode downgradeMode;
-        ReleaseAction action;
-
-        public String toString() {
-            return "LockParameters(Lockable=" + lockable.toString()
-                    + ", owner=" + owner + ", mode=" + mode + ", duration="
-                    + duration + ", timeout=" + timeout + ", downgradeMode="
-                    + downgradeMode + ", releaseAction=" + action + ")";
-        }
-    }
-
-    /**
-     * Used as a container for various lock management data.
-     * 
-     * @author dibyendumajumdar
-     */
-    static final class LockContext {
-        final LockParameters parms;
-        LockHandleImpl handle;
-        LockRequest lockRequest;
-        LockBucket bucket;
-        boolean converting;
-        Thread prevThread;
-        LockItem lockitem;
-        private LockStatus status;
-
-        public LockContext(LockParameters parms) {
-            this.parms = parms;
-        }
-
-        void setStatus(LockStatus status) {
-            this.status = status;
-        }
-
-        LockStatus getStatus() {
-            return status;
-        }
-    }
 
     /**
      * Creates a new LockMgrImpl, ready for use.
@@ -469,12 +435,12 @@ public final class LockManagerImpl implements LockManager {
         globalLock = latchFactory.newReadWriteLatch();
         htsz = 0;
         count = 0;
-        hashTableSize = hashPrimes[htsz];
-        LockHashTable = new LockBucket[hashTableSize];
-        for (int i = 0; i < hashTableSize; i++) {
-            LockHashTable[i] = getNewLockBucket();
+        N = primes[htsz];
+        locktable = new LockBucket[N];
+        for (int i = 0; i < N; i++) {
+            locktable[i] = new LockBucket();
         }
-        threshold = (int) (hashTableSize * loadFactor);
+        threshold = (int) (N * loadFactor);
         if (log.isDebugEnabled()) {
             debugEnabled = true;
         } else {
@@ -489,17 +455,17 @@ public final class LockManagerImpl implements LockManager {
 
     public void start() {
         deadlockDetectorThread = platform.getScheduler()
-                .scheduleWithFixedDelay(Priority.SERVER_TASK,
+                .scheduleWithFixedDelay(Scheduler.Priority.SERVER_TASK,
                         new DeadlockDetector(this), deadlockDetectorInterval,
                         deadlockDetectorInterval, TimeUnit.SECONDS);
-        log.info(this.getClass().getName(), "start", new MessageInstance(
+        log.info(getClass(), "start", new MessageInstance(
                 m_IC0012).toString());
     }
 
     public void shutdown() {
         stop = true;
         deadlockDetectorThread.cancel(false);
-        log.info(this.getClass().getName(), "shutdown", new MessageInstance(
+        log.info(getClass(), "shutdown", new MessageInstance(
                 m_IC0013).toString());
     }
 
@@ -508,51 +474,47 @@ public final class LockManagerImpl implements LockManager {
      */
     private void rehash() {
 
-        if (htsz == hashPrimes.length - 1) {
+        if (htsz == primes.length - 1) {
             return;
         }
         if (!globalLock.tryExclusiveLock()) {
             return;
         }
         try {
-            if (htsz == hashPrimes.length - 1) {
+            if (htsz == primes.length - 1) {
                 /*
                  * Already at maximum size.
                  */
                 return;
             }
-            int newHashTableSize = hashPrimes[++htsz];
+            int newHashTableSize = primes[++htsz];
             if (debugEnabled) {
-                log.debug(this.getClass().getName(), "rehash",
+                log.debug(getClass(), "rehash",
                         "SIMPLEDBM-DEBUG: Growing hash table size from "
-                                + hashTableSize + " to " + newHashTableSize);
+                                + N + " to " + newHashTableSize);
             }
             LockBucket[] newLockHashTable = new LockBucket[newHashTableSize];
             for (int i = 0; i < newHashTableSize; i++) {
-                newLockHashTable[i] = getNewLockBucket();
+                newLockHashTable[i] = new LockBucket();
             }
-            for (int i = 0; i < hashTableSize; i++) {
-                LockBucket bucket = LockHashTable[i];
-                for (Iterator<LockItem> iter = bucket.chain.iterator(); iter
-                        .hasNext();) {
-                    LockItem item = iter.next();
-                    if (item.target == null) {
-                        continue;
-                    }
+            for (int i = 0; i < N; i++) {
+                LockBucket bucket = locktable[i];
+                for (LockItem item = bucket.head; item != null; item = item.next) {
                     int h = (item.target.hashCode() & 0x7FFFFFFF)
                             % newHashTableSize;
                     LockBucket newBucket = newLockHashTable[h];
-                    newBucket.chainAppend(item);
+                    newBucket.addLast(item);
                 }
             }
-            LockBucket[] oldLockHashTable = LockHashTable;
-            int oldHashTableSize = hashTableSize;
-            LockHashTable = newLockHashTable;
-            hashTableSize = newHashTableSize;
-            threshold = (int) (hashTableSize * loadFactor);
+            LockBucket[] oldLockHashTable = locktable;
+            int oldHashTableSize = N;
+            locktable = newLockHashTable;
+            N = newHashTableSize;
+            threshold = (int) (N * loadFactor);
             for (int i = 0; i < oldHashTableSize; i++) {
                 LockBucket bucket = oldLockHashTable[i];
-                bucket.chain.clear();
+                bucket.head = null;
+                bucket.tail = null;
                 oldLockHashTable[i] = null;
             }
         } finally {
@@ -562,19 +524,14 @@ public final class LockManagerImpl implements LockManager {
 
     public void dumpLockTable() {
         globalLock.sharedLock();
-        log.info(getClass().getName(), "dumpLockTable", new MessageInstance(
+        log.info(getClass(), "dumpLockTable", new MessageInstance(
                 m_IC0014).toString());
         try {
-            for (int i = 0; i < hashTableSize; i++) {
-                LockBucket bucket = LockHashTable[i];
+            for (int i = 0; i < N; i++) {
+                LockBucket bucket = locktable[i];
                 synchronized (bucket) {
-                    for (Iterator<LockItem> iter = bucket.chain.iterator(); iter
-                            .hasNext();) {
-                        LockItem item = iter.next();
-                        if (item.target == null) {
-                            continue;
-                        }
-                        log.info(getClass().getName(), "dumpLockTable",
+                    for (LockItem item = bucket.head; item != null; item = item.next) {
+                        log.info(getClass(), "dumpLockTable",
                                 new MessageInstance(m_IC0015, item).toString());
                     }
                 }
@@ -584,57 +541,30 @@ public final class LockManagerImpl implements LockManager {
         }
     }
 
-    public final LockMode findLock(Object owner, Object target) {
+    final LockBucket h(Object lockable) {
+        int h = (lockable.hashCode() & 0x7FFFFFFF) % N;
+        return locktable[h];
+    }
 
-        LockParameters parms = new LockParameters();
-        parms.owner = owner;
-        parms.lockable = target;
+    public final LockMode findLock(Object owner, Object lockable) {
 
-        LockContext context = new LockContext(parms);
-
+        LockMode m = LockMode.NONE;
         globalLock.sharedLock();
         try {
-            /* 1. Search for the lock. */
-            int h = (context.parms.lockable.hashCode() & 0x7FFFFFFF)
-                    % hashTableSize;
-            context.lockitem = null;
-            context.bucket = LockHashTable[h];
-            context.lockRequest = null;
-            synchronized (context.bucket) {
-                context.lockitem = findLock(context);
-                if (context.lockitem == null) {
-                    return LockMode.NONE;
-                }
-                context.lockRequest = context.lockitem
-                        .find(context.parms.owner);
-                if (context.lockRequest != null) {
-                    return context.lockRequest.mode;
+            LockBucket b = h(lockable);
+            synchronized (b) {
+                LockItem lockItem = b.findLock(lockable);
+                if (lockItem != null) {
+                    LockRequest r = lockItem.find(owner);
+                    if (r != null) {
+                        m = r.mode;
+                    }
                 }
             }
         } finally {
             globalLock.unlockShared();
         }
-        return LockMode.NONE;
-    }
-
-    /**
-     * Search for the specified lockable object. Garbage collect any items that
-     * are no longer needed.
-     */
-    private LockItem findLock(LockContext lockState) {
-        for (Iterator<LockItem> iter = lockState.bucket.chain.iterator(); iter
-                .hasNext();) {
-            LockItem item = iter.next();
-            if (item.target == null) {
-                iter.remove();
-                continue;
-            }
-            if (lockState.parms.lockable == item.target
-                    || lockState.parms.lockable.equals(item.target)) {
-                return item;
-            }
-        }
-        return null;
+        return m;
     }
 
     /*
@@ -644,72 +574,31 @@ public final class LockManagerImpl implements LockManager {
      *      java.lang.Object, org.simpledbm.locking.LockMode,
      *      org.simpledbm.locking.LockDuration, int)
      */
-    public final LockHandle acquire(Object owner, Object target, LockMode mode,
-            LockDuration duration, int timeout, LockInfo lockInfo) {
 
-        LockParameters parms = new LockParameters();
-        parms.owner = owner;
-        parms.lockable = target;
-        parms.mode = mode;
-        parms.duration = duration;
-        parms.timeout = timeout;
-        parms.lockInfo = lockInfo;
-
-        LockContext context = new LockContext(parms);
+    public final boolean acquire(Object owner, Object lockable, LockMode mode,
+                                 LockDuration duration, int timeout) {
 
         if (count > threshold) {
             rehash();
         }
 
         globalLock.sharedLock();
-        LockHandleImpl handle = null;
+        LockStatus status = LockStatus.TIMEOUT;
         try {
-            handle = doAcquire(context);
+            status = doAcquire(owner, lockable, mode, duration, timeout);
             if (duration == LockDuration.INSTANT_DURATION
-                    && context.getStatus() == LockStatus.GRANTED) {
+                    && status == LockStatus.GRANTED) {
                 /*
                  * Handle the case where the lock was granted after a wait.
                  */
-                handle.release(false);
+                doReleaseInternal(ReleaseAction.RELEASE, owner, lockable, LockMode.NONE, false);
             }
         } finally {
             globalLock.unlockShared();
         }
-        return handle;
+        return status == LockStatus.GRANTED || status == LockStatus.GRANTABLE;
     }
 
-    /**
-     * Checks whether the specified lock request is compatible with the granted
-     * group. Also sets the otherHolders flag if the granted group contains
-     * other requests.
-     */
-    private boolean checkCompatible(LockItem lock, LockRequest request,
-            LockMode mode, LockInfo lockInfo) {
-
-        if (lockInfo != null) {
-            lockInfo.setHeldByOthers(false);
-        }
-        boolean iscompatible = true;
-
-        /* Check if there are other holders */
-        for (LockRequest other : lock.getQueue()) {
-
-            if (other == request)
-                continue;
-            else if (other.status == LockRequestStatus.WAITING)
-                break;
-            else {
-                if (lockInfo != null) {
-                    lockInfo.setHeldByOthers(true);
-                }
-                if (!mode.isCompatible(other.mode)) {
-                    iscompatible = false;
-                    break;
-                }
-            }
-        }
-        return iscompatible;
-    }
 
     /**
      * Acquires a lock in the specified mode. Handles most of the cases except
@@ -717,72 +606,65 @@ public final class LockManagerImpl implements LockManager {
      * requires the lock to be released after it has been granted; the lock
      * release is handled by {@link #acquire acquire}.
      */
-    private LockHandleImpl doAcquire(LockContext context) {
+    private LockStatus doAcquire(Object o, Object lockable, LockMode m, LockDuration d, int timeout) {
 
         if (debugEnabled) {
-            log.debug(getClass().getName(), "acquire",
-                    "SIMPLEDBM-DEBUG: Lock requested by " + context.parms.owner
-                            + " for " + context.parms.lockable + ", mode="
-                            + context.parms.mode + ", duration="
-                            + context.parms.duration);
+            log.debug(getClass(), "acquire",
+                    "SIMPLEDBM-DEBUG: Lock requested by " + o
+                            + " for " + lockable + ", mode="
+                            + m + ", duration="
+                            + d);
         }
 
-        context.handle = new LockHandleImpl(this, context.parms);
-        context.converting = false;
-        context.prevThread = Thread.currentThread();
+        LockItem l;
+        LockRequest r;
+        boolean converting;
+        LockStatus status;
 
-        /* 1. Search for the lock. */
-        int h = (context.parms.lockable.hashCode() & 0x7FFFFFFF)
-                % hashTableSize;
-        context.lockitem = null;
-        context.bucket = LockHashTable[h];
-        context.lockRequest = null;
-        synchronized (context.bucket) {
-
-            context.lockitem = findLock(context);
-            if (context.lockitem == null) {
+        LockBucket b = h(lockable);
+        synchronized (b) {
+            /* 1. Search for the lock. */
+            l = b.findLock(lockable);
+            if (l == null) {
                 /*
-                 * 2. If not found, this is a new lock and therefore grant the
-                 * lock, and return success.
-                 */
-                handleNewLock(context);
-                return context.handle;
-            }
-
-            /*
-             * 3. Else check if requesting transaction already has a lock
-             * request.
+             * 2. If not found, this is a new lock and therefore grant the
+             * lock, and return success.
              */
-            context.lockRequest = context.lockitem.find(context.parms.owner);
-
-            if (context.lockRequest == null) {
-                if (handleNewRequest(context)) {
-                    return context.handle;
-                }
-            } else {
-                context.handle.lockRequest = context.lockRequest;
-                if (handleConversionRequest(context)) {
-                    return context.handle;
-                }
+                return handleNewLock(b, o, lockable, m, d);
             }
-
+            /*
+            * 3. Else check if requesting transaction already has a lock
+            * request.
+            */
+            r = l.find(o);
+            if (r == null) {
+                r = l.handleNewRequest(b, o, lockable, m, d, timeout);
+                status = checkStatus(d, r);
+            } else {
+                status = l.handleConversionRequest(r, m, d, timeout);
+            }
+            if (status == LockStatus.GRANTED || status == LockStatus.GRANTABLE) {
+                return status;
+            }
+            converting = status == LockStatus.DOWAITCONVERT;
             /* 8. Wait for the lock to be available/compatible. */
-            prepareToWait(context);
+            l.prepareToWait(r, m, d, converting);
+            notifyLockEventListeners(o, lockable, m);
+            /*
+            * Add request to list of waiters to allow deadlock detection.
+            */
+            LockWaiter waiter = new LockWaiter(r, Thread
+                    .currentThread());
+            waiters.put(o, waiter);
         }
-        notifyLockEventListeners(context);
+
         /*
-         * Add request to list of waiters to allow deadlock detection.
-         */
-        LockWaiter waiter = new LockWaiter(context.lockRequest, Thread
-                .currentThread());
-        waiters.put(context.lockRequest.owner, waiter);
-        /*
-         * Global lock is released only after the waiter list has been updated.
-         */
-        SimpleTimer timer = new SimpleTimer((context.parms.timeout < 0) ? -1
-                : TimeUnit.NANOSECONDS.convert(context.parms.timeout,
-                        TimeUnit.SECONDS));
-        for (;;) {
+        * Global lock is released only after the waiter list has been updated.
+        */
+        SimpleTimer timer = new SimpleTimer((timeout < 0) ? -1
+                : TimeUnit.NANOSECONDS.convert(timeout,
+                TimeUnit.SECONDS));
+        for (; ;) {
             globalLock.unlockShared();
             try {
                 timer.await();
@@ -790,428 +672,179 @@ public final class LockManagerImpl implements LockManager {
                 globalLock.sharedLock();
             }
             /*
-             * As the hash table may have been resized while we were waiting, we
-             * need to recalculate the bucket.
-             */
-            h = (context.parms.lockable.hashCode() & 0x7FFFFFFF)
-                    % hashTableSize;
-            context.bucket = LockHashTable[h];
-            synchronized (context.bucket) {
-                if (context.lockRequest.status == LockRequestStatus.WAITING
-                        || context.lockRequest.status == LockRequestStatus.CONVERTING) {
+            * As the hash table may have been resized while we were waiting, we
+            * need to recalculate the bucket.
+            */
+
+            b = h(lockable);
+            synchronized (b) {
+                if (r.status == LockRequestStatus.WAITING || r.status == LockRequestStatus.CONVERTING) {
                     if (!timer.isExpired()) {
                         continue;
                     }
                 }
-                waiters.remove(context.lockRequest.owner);
-                handleWaitResult(context);
-                return context.handle;
+                waiters.remove(o);
+                status = handleWaitResult(b, l, r, converting, wakeupQ);
+            }
+            wakeupThreads();
+            break;
+        }
+        return status;
+    }
+
+    private final void wakeupThreads() {
+        Thread t;
+        while ( (t = wakeupQ.poll()) != null ) {
+            LockSupport.unpark(t);
+        }
+    }
+
+    private final LockStatus checkStatus(LockDuration d, LockRequest r) {
+        LockStatus status;
+        if (r == null) {
+            assert (d == LockDuration.INSTANT_DURATION);
+            status = LockStatus.GRANTABLE;
+        } else {
+            if (r.status == LockRequestStatus.WAITING) {
+                status = LockStatus.DOWAIT;
+            } else {
+                status = LockStatus.GRANTED;
             }
         }
+        return status;
     }
 
     /**
      * Handles the case where there aren't any locks on the target.
      */
-    private void handleNewLock(LockContext context) {
+    private final LockStatus handleNewLock(LockBucket b, Object o, Object lockable, LockMode m, LockDuration d) {
         if (debugEnabled) {
             log
-                    .debug(getClass().getName(), "acquire",
+                    .debug(getClass(), "acquire",
                             "SIMPLEDBM-DEBUG: Lock not found, therefore granting immediately");
         }
-        if (context.parms.duration != LockDuration.INSTANT_DURATION) {
-            LockItem lockitem = getNewLockItem(context.parms.lockable,
-                    context.parms.mode);
-            LockRequest r = new LockRequest(lockitem, context.parms.owner,
-                    context.parms.mode, context.parms.duration);
-            lockitem.queueAppend(r);
-            context.bucket.chainAppend(lockitem);
+
+        if (d != LockDuration.INSTANT_DURATION) {
+            LockItem l = new LockItem(lockable, m);
+            LockRequest r = new LockRequest(l, o, m, d, LockRequestStatus.GRANTED, (short) 1);
+            l.addLast(r);
+            b.addLast(l);
             count++;
-            context.handle.lockRequest = r;
-            context.setStatus(LockStatus.GRANTED);
-        } else {
-            context.setStatus(LockStatus.GRANTABLE);
+            return LockStatus.GRANTED;
         }
-    }
-
-    private LockBucket getNewLockBucket() {
-        return new LockBucket();
-    }
-
-    private LockItem getNewLockItem(Object target, LockMode mode) {
-        return new LockItem(target, mode);
-    }
-
-    /**
-     * Handles a new lock request when the lock is already held by some other.
-     * 
-     * @return true if the lock request was processed, else false to indicate
-     *         that the requester must wait
-     */
-    private boolean handleNewRequest(LockContext context) {
-        /* 4. If not, this is the first request by the transaction. */
-        if (debugEnabled) {
-            log.debug(getClass().getName(), "handleNewRequest",
-                    "SIMPLEDBM-DEBUG: New request by transaction "
-                            + context.parms.owner + " for target "
-                            + context.parms.lockable);
-        }
-
-        if (context.parms.lockInfo != null) {
-            context.parms.lockInfo.setHeldByOthers(true);
-        }
-        /*
-         * 5. Check if lock can be granted. This is true if there are no
-         * waiting requests and the new request is compatible with
-         * existing grant mode.
-         */
-        boolean can_grant = (!context.lockitem.waiting && context.parms.mode
-                .isCompatible(context.lockitem.grantedMode));
-
-        if (context.parms.duration == LockDuration.INSTANT_DURATION
-                && can_grant) {
-            /* 6. If yes, grant the lock and return success. */
-            context.setStatus(LockStatus.GRANTABLE);
-            return true;
-        }
-
-        else if (!can_grant && context.parms.timeout == 0) {
-            /* 7. Otherwise, if nowait was specified, return failure. */
-            throw new LockTimeoutException(new MessageInstance(m_WC0004,
-                    context.parms, context.lockitem));
-        }
-
-        /* Allocate new lock request */
-        context.lockRequest = new LockRequest(context.lockitem,
-                context.parms.owner, context.parms.mode, context.parms.duration);
-        context.lockitem.queueAppend(context.lockRequest);
-        context.handle.lockRequest = context.lockRequest;
-        if (can_grant) {
-            /* 6. If yes, grant the lock and return success. */
-            if (debugEnabled) {
-                log.debug(getClass().getName(), "handleNewRequest",
-                        "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
-                                + context.lockitem
-                                + ", therefore granting lock");
-            }
-            context.lockitem.grantedMode = context.parms.mode
-                    .maximumOf(context.lockitem.grantedMode);
-            context.setStatus(LockStatus.GRANTED);
-            return true;
-        } else {
-            context.converting = false;
-            return false;
-        }
-    }
-
-    /**
-     * Handles a conversion request in the nowait situation.
-     * 
-     * @return true if conversion request was handled else false to indicate
-     *         that requester must enter wait.
-     */
-    private boolean handleConversionRequest(LockContext context) {
-        /*
-         * 11. If calling transaction already has a granted lock request
-         * then this must be a conversion request.
-         */
-        if (traceEnabled) {
-            log.trace(getClass().getName(), "handleConversionRequest",
-                    "SIMPLEDBM-DEBUG: Lock conversion request by transaction "
-                            + context.parms.owner + " for target "
-                            + context.parms.lockable);
-        }
-
-        /*
-         * Limitation: a transaction cannot attempt to lock an object
-         * for which it is already waiting.
-         */
-        if (context.lockRequest.status == LockRequestStatus.CONVERTING
-                || context.lockRequest.status == LockRequestStatus.WAITING) {
-            exceptionHandler.errorThrow(this.getClass().getName(),
-                    "handleConversionRequest",
-                    new LockException(new MessageInstance(m_EC0003,
-                            context.parms.lockable, context.parms.owner)));
-        }
-
-        else if (context.lockRequest.status == LockRequestStatus.GRANTED) {
-            /*
-             * 12. Check whether the new request lock is same mode as
-             * previously held lock.
-             */
-            if (context.parms.lockInfo != null) {
-                context.parms.lockInfo
-                        .setPreviousMode(context.lockRequest.mode);
-            }
-            if (context.parms.mode == context.lockRequest.mode) {
-                /* 13. If so, grant lock and return. */
-                if (debugEnabled) {
-                    log
-                            .debug(
-                                    getClass().getName(),
-                                    "handleConversionRequest",
-                                    "SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
-                }
-                if (context.parms.duration != LockDuration.INSTANT_DURATION) {
-                    context.lockRequest.count++;
-                }
-                checkCompatible(context.lockitem, context.lockRequest,
-                        context.parms.mode, context.parms.lockInfo);
-                if (context.parms.duration == LockDuration.INSTANT_DURATION) {
-                    context.setStatus(LockStatus.GRANTABLE);
-                } else {
-                    if (context.lockRequest.duration == LockDuration.MANUAL_DURATION
-                            && context.parms.duration == LockDuration.COMMIT_DURATION) {
-                        context.lockRequest.duration = LockDuration.COMMIT_DURATION;
-                    }
-                    context.setStatus(LockStatus.GRANTED);
-                }
-                return true;
-            }
-
-            else {
-                /*
-                 * 14. Otherwise, check if requested lock is compatible
-                 * with granted group
-                 */
-                boolean can_grant = checkCompatible(context.lockitem,
-                        context.lockRequest, context.parms.mode,
-                        context.parms.lockInfo);
-
-                if (can_grant) {
-                    /* 13. If so, grant lock and return. */
-                    if (debugEnabled) {
-                        log.debug(getClass().getName(),
-                                "handleConversionRequest",
-                                "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
-                                        + context.lockitem
-                                        + ", therefore granting");
-                    }
-                    if (context.parms.duration != LockDuration.INSTANT_DURATION) {
-                        context.lockRequest.mode = context.parms.mode
-                                .maximumOf(context.lockRequest.mode);
-                        context.lockRequest.count++;
-                        if (context.lockRequest.duration == LockDuration.MANUAL_DURATION
-                                && context.parms.duration == LockDuration.COMMIT_DURATION) {
-                            context.lockRequest.duration = LockDuration.COMMIT_DURATION;
-                        }
-                        context.lockitem.grantedMode = context.lockRequest.mode
-                                .maximumOf(context.lockitem.grantedMode);
-                        context.setStatus(LockStatus.GRANTED);
-                    } else {
-                        context.setStatus(LockStatus.GRANTABLE);
-                    }
-                    return true;
-                }
-
-                else if (!can_grant && context.parms.timeout == 0) {
-                    /* 15. If not, and nowait specified, return failure. */
-                    throw new LockTimeoutException(new MessageInstance(
-                            m_WC0004, context.parms, context.lockitem));
-                }
-
-                else {
-                    context.converting = true;
-                    return false;
-                }
-            }
-        } else {
-            exceptionHandler.errorThrow(this.getClass().getName(),
-                    "handleConversionRequest", new LockException(
-                            new MessageInstance(m_EC0005)));
-        }
-        return false;
-    }
-
-    /**
-     * Prepare the lock request for waiting.
-     */
-    private void prepareToWait(LockContext context) {
-        context.lockitem.waiting = true;
-        if (!context.converting) {
-            if (debugEnabled) {
-                log.debug(getClass().getName(), "prepareToWait",
-                        "SIMPLEDBM-DEBUG: Waiting for lock to be free");
-            }
-            context.lockRequest.status = LockRequestStatus.WAITING;
-        } else {
-            if (debugEnabled) {
-                log
-                        .debug(
-                                getClass().getName(),
-                                "prepareToWait",
-                                "SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
-            }
-            context.lockRequest.convertMode = context.parms.mode;
-            context.lockRequest.convertDuration = context.parms.duration;
-            context.lockRequest.status = LockRequestStatus.CONVERTING;
-            context.prevThread = context.lockRequest.thread;
-            context.lockRequest.thread = Thread.currentThread();
-        }
+        return LockStatus.GRANTABLE;
     }
 
     /**
      * Handles the result of a lock wait.
      */
-    private void handleWaitResult(LockContext context) {
-        LockRequestStatus lockRequestStatus = context.lockRequest.status;
-        if (lockRequestStatus == LockRequestStatus.GRANTED) {
-            context.setStatus(LockStatus.GRANTED);
-        } else if (lockRequestStatus == LockRequestStatus.DENIED) {
-            context.setStatus(LockStatus.DEADLOCK);
+    private LockStatus handleWaitResult(LockBucket b, LockItem l, LockRequest r, boolean converting, final ConcurrentLinkedQueue<Thread> wakeupQ) {
+        LockStatus status;
+        if (r.status == LockRequestStatus.GRANTED) {
+            status = LockStatus.GRANTED;
+        } else if (r.status == LockRequestStatus.DENIED) {
+            status = LockStatus.DEADLOCK;
         } else {
-            context.setStatus(LockStatus.TIMEOUT);
+            status = LockStatus.TIMEOUT;
         }
 
-        if (context.getStatus() == LockStatus.GRANTED) {
+        if (status == LockStatus.GRANTED) {
             /*
              * 9. If after the wait, the lock has been granted, then return
              * success.
              */
             if (debugEnabled) {
-                log.debug(getClass().getName(), "handleWaitResult",
+                log.debug(getClass(), "handleWaitResult",
                         "SIMPLEDBM-DEBUG: Woken up, and lock granted");
             }
-            checkCompatible(context.lockitem, context.lockRequest,
-                    context.parms.mode, context.parms.lockInfo);
-            return;
+            return status;
         }
 
         /* 10. Else return failure. */
         if (debugEnabled) {
-            log.debug(getClass().getName(), "handleWaitResult",
+            log.debug(getClass(), "handleWaitResult",
                     "SIMPLEDBM-DEBUG: Woken up, and lock failed");
         }
 
-        if (!context.converting) {
+        /* 10. Else return failure. */
+        if (!converting) {
             /* If not converting the delete the newly created request. */
-            context.lockitem.queueRemove(context.lockRequest);
-            if (context.lockitem.queueIsEmpty()) {
-                context.lockitem.reset(); // Setup lock for garbage collection
+            l.remove(r, b);
+            if (l.head == null) {
+                b.remove(l);
                 count--;
+                l = null;
             }
         } else {
             /* If converting, then restore old status */
-            context.lockRequest.status = LockRequestStatus.GRANTED;
-            context.lockRequest.convertMode = context.lockRequest.mode;
-            context.lockRequest.thread = context.prevThread;
+            r.status = LockRequestStatus.GRANTED;
+            r.convertMode = r.mode;
         }
-        if (context.getStatus() == LockStatus.DEADLOCK) {
-            /* 
-             * If we have been chosen as a deadlock victim, then we need to grant the
-             * lock to the waiter who has won the deadlock.
-             */
-            grantWaiters(ReleaseAction.RELEASE, context.lockRequest,
-                    context.handle, context.lockitem, context.parms.lockInfo);
+        if (status == LockStatus.DEADLOCK) {
+            /*
+            * If we have been chosen as a deadlock victim, then we need to grant the
+            * lock to the waiter who has won the deadlock.
+            */
+            l.grantWaiters(wakeupQ);
         }
-        if (context.getStatus() == LockStatus.TIMEOUT) {
-            exceptionHandler.warnAndThrow(this.getClass().getName(),
+        if (status == LockStatus.TIMEOUT) {
+            exceptionHandler.warnAndThrow(getClass(),
                     "handleWaitResult", new LockTimeoutException(
-                            new MessageInstance(m_EC0001, context.parms)));
-        } else if (context.getStatus() == LockStatus.DEADLOCK) {
+                            new MessageInstance(m_EC0001, r)));
+        } else if (status == LockStatus.DEADLOCK) {
             throw new LockDeadlockException(new MessageInstance(m_WC0002,
-                    context.parms));
+                    r));
         } else {
-            exceptionHandler.warnAndThrow(this.getClass().getName(),
+            exceptionHandler.warnAndThrow(getClass(),
                     "handleWaitResult", new LockException(new MessageInstance(
-                            m_EC0099, context.parms)));
+                            m_EC0099, r)));
         }
+        return LockStatus.ERROR;
     }
 
-    public boolean release(Object owner, Object lockable, boolean force) {
-        LockParameters parms = new LockParameters();
-        parms.lockable = lockable;
-        parms.owner = owner;
-        parms.action = force ? ReleaseAction.FORCE_RELEASE
-                : ReleaseAction.RELEASE;
 
-        LockContext context = new LockContext(parms);
-        context.handle = new LockHandleImpl(this, context.parms);
-
+    public final boolean release(Object o, Object lockable, boolean force) {
+        boolean ok;
         globalLock.sharedLock();
         try {
-            return doReleaseInternal(context);
-        } finally {
+            ok = doReleaseInternal(ReleaseAction.RELEASE, o, lockable, LockMode.NONE, force);
+        }
+        finally {
             globalLock.unlockShared();
         }
+        return ok;
     }
 
-    public boolean downgrade(Object owner, Object lockable, LockMode downgradeTo) {
-        LockParameters parms = new LockParameters();
-        parms.lockable = lockable;
-        parms.owner = owner;
-        parms.action = ReleaseAction.DOWNGRADE;
-        parms.downgradeMode = downgradeTo;
-
-        LockContext context = new LockContext(parms);
-        context.handle = new LockHandleImpl(this, context.parms);
-
+    public final boolean downgrade(Object o, Object lockable, LockMode downgradeTo) {
+        boolean ok;
         globalLock.sharedLock();
         try {
-            return doReleaseInternal(context);
-        } finally {
+            ok = doReleaseInternal(ReleaseAction.DOWNGRADE, o, lockable, downgradeTo, false);
+        }
+        finally {
             globalLock.unlockShared();
         }
+        return ok;
     }
 
-    /**
-     * Release or downgrade a specified lock.
-     */
-    private boolean doRelease(LockHandle handle, ReleaseAction action,
-            LockMode downgradeMode) {
-
-        LockParameters parms = new LockParameters();
-        LockHandleImpl handleImpl = (LockHandleImpl) handle;
-        parms.lockable = handleImpl.getLockable();
-        parms.owner = handleImpl.getOwner();
-        parms.action = action;
-        parms.downgradeMode = downgradeMode;
-
-        LockContext context = new LockContext(parms);
-        context.handle = handleImpl;
-
-        globalLock.sharedLock();
-        try {
-            return doReleaseInternal(context);
-        } finally {
-            globalLock.unlockShared();
-        }
-    }
-
-    private boolean doReleaseInternal(LockContext context) {
-        context.lockRequest = null;
-        boolean released = false;
-
-        if (debugEnabled) {
-            log.debug(getClass().getName(), "doReleaseInternal",
-                    "SIMPLEDBM-DEBUG: Request by " + context.parms.owner
-                            + " to release lock for " + context.parms.lockable);
-        }
-        int h = (context.parms.lockable.hashCode() & 0x7FFFFFFF)
-                % hashTableSize;
-        context.bucket = LockHashTable[h];
-        synchronized (context.bucket) {
+    final boolean doReleaseInternal(ReleaseAction a, Object o, Object lockable, LockMode downgradeMode, boolean force) {
+        LockBucket b = h(lockable);
+        boolean ok = false;
+        synchronized (b) {
             /* 1. Search for the lock. */
-            context.lockitem = findLock(context);
-
-            if (context.lockitem == null) {
-                /* 2. If not found, return success. */
-                /*
-                 * Rather than throwing an exception, we return success. This allows
-                 * us to use this method in situations where for reasons of efficiency,
-                 * the client cannot track the status of lock objects, and therefore
-                 * may end up trying to release the same lock multiple times.
-                 */
+            LockItem l = b.findLock(lockable);
+            if (l == null) {
                 return true;
             }
-            released = releaseLock(context);
+            ok = releaseLock(a, o, downgradeMode, force, b, l);
         }
-        return released;
+        wakeupThreads();
+        return ok;
     }
 
     /**
      * Release or downgrade a specified lock.
-     * 
+     * <p/>
      * <p>
      * Algorithm:
      * <ol>
@@ -1227,7 +860,7 @@ public final class LockManagerImpl implements LockManager {
      * and return Ok.</li>
      * <li>8. If not downgrading, delete the lock request from the queue.
      * Otherwise, downgrade the mode assigned to the lock request.
-     * 
+     * <p/>
      * </li>
      * <li>9. Recalculate granted mode by calculating max mode amongst all
      * granted (including conversion) requests. If a conversion request is
@@ -1245,273 +878,137 @@ public final class LockManagerImpl implements LockManager {
      * </p>
      * </p>
      */
-    private boolean releaseLock(LockContext context) {
-        boolean released;
-        /* 3. If lock found, look for the transaction's lock request. */
-        context.lockRequest = context.lockitem.find(context.parms.owner);
+    boolean releaseLock(ReleaseAction a, Object o, LockMode downgradeMode, boolean force, LockBucket b, LockItem l) {
 
-        if (context.lockRequest == null) {
+        /* look for the transaction's lock request. */
+        LockRequest r = l.find(o);
+        if (r == null) {
             /* 4. If not found, return success. */
             /*
-             * Rather than throwing an exception, we return success. This allows
-             * us to use this method in situations where for reasons of efficiency,
-             * the client cannot track the status of lock objects, and therefore
-             * may end up trying to release the same lock multiple times.
-             */
+            * Rather than throwing an exception, we return success. This allows
+            * us to use this method in situations where for reasons of efficiency,
+            * the client cannot track the status of lock objects, and therefore
+            * may end up trying to release the same lock multiple times.
+            */
             if (debugEnabled) {
                 log
-                        .debug(getClass().getName(), "release",
+                        .debug(getClass(), "release",
                                 "SIMPLEDBM-DEBUG: request not found, returning success");
             }
             return true;
         }
-
-        if (context.lockRequest.status == LockRequestStatus.CONVERTING
-                || context.lockRequest.status == LockRequestStatus.WAITING) {
+        if (r.status == LockRequestStatus.CONVERTING
+                || r.status == LockRequestStatus.WAITING) {
             /* 5. If lock in invalid state, return error. */
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(getClass(),
                     "releaseLock", new LockException(new MessageInstance(
-                            m_EC0008, context.lockRequest)));
+                            m_EC0008, r)));
         }
 
-        if (context.parms.action == ReleaseAction.DOWNGRADE
-                && context.lockRequest.mode == context.parms.downgradeMode) {
-            /*
-             * If downgrade request and lock is already in target mode,
-             * return success.
-             */
-            return true;
-        }
 
-        if (context.parms.action == ReleaseAction.RELEASE
-                && context.lockRequest.duration == LockDuration.COMMIT_DURATION) {
-            /*
-             * 6(1). If noforce, and lock is held for commit duration, then do
-             * not release the lock request. 
-             */
-            if (debugEnabled) {
-                log
-                        .debug(getClass().getName(), "release",
-                                "SIMPLEDBM-DEBUG: Lock not released as it is held for commit duration");
+        if (a == ReleaseAction.RELEASE) {
+            if (!force) {
+                if (r.duration == LockDuration.COMMIT_DURATION) {
+                    /*
+                      * If noforce, and lock is held for commit duration, then do
+                      * not release the lock request.
+                      */
+                    if (debugEnabled) {
+                        log
+                                .debug(getClass(), "release",
+                                        "SIMPLEDBM-DEBUG: Lock not released as it is held for commit duration");
+                    }
+
+                    return false;
+                }
+                r.count--;
+                if (r.count > 0) {
+                    /*
+                      * If noforce, and reference count greater than 0, then do
+                      * not release the lock request.
+                      */
+                    if (debugEnabled) {
+                        log
+                                .debug(getClass(), "release",
+                                        "SIMPLEDBM-DEBUG: Count decremented but lock not released");
+                    }
+
+                    return false;
+                }
             }
-            return false;
-        }
-
-        if (context.parms.action == ReleaseAction.RELEASE
-                && context.lockRequest.count > 1) {
-            /*
-             * 6. If noforce, and reference count greater than 0, then do
-             * not release the lock request. Decrement reference count if
-             * greater than 0, and, return Ok.
-             */
             if (debugEnabled) {
-                log
-                        .debug(getClass().getName(), "release",
-                                "SIMPLEDBM-DEBUG: Count decremented but lock not released");
-            }
-            context.lockRequest.count--;
-            return false;
-        }
-
-        /*
-         * Either the lock is being downgraded or it is being released and
-         * its reference count == 0 or it is being forcibly released.
-         */
-
-        if (context.lockRequest == context.lockitem.queueHead()
-                && context.lockRequest == context.lockitem.queueTail()
-                && context.parms.action != ReleaseAction.DOWNGRADE) {
-            /* 7. If sole lock request, then release the lock and return Ok. */
-            if (debugEnabled) {
-                log
-                        .debug(getClass().getName(), "release",
-                                "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
-            }
-            context.lockitem.queueRemove(context.lockRequest);
-            context.lockitem.reset();
-            count--;
-            return true;
-        }
-
-        /*
-         * 8. If not downgrading, delete the lock request from the queue.
-         * Otherwise, downgrade the mode assigned to the lock request.
-         */
-        if (context.parms.action != ReleaseAction.DOWNGRADE) {
-            if (debugEnabled) {
-                log.debug(getClass().getName(), "release",
+                log.debug(getClass(), "release",
                         "SIMPLEDBM-DEBUG: Removing lock request "
-                                + context.lockRequest
+                                + r
                                 + " and re-adjusting granted mode");
             }
-            context.lockitem.queueRemove(context.lockRequest);
-            released = true;
-        } else {
-            /*
-             * We need to determine whether is a valid downgrade request. To
-             * do so, we do a reverse check - ie, if the new mode could have
-             * been upgraded to current mode, then it is okay to downgrade.
-             */
-            LockMode mode = context.parms.downgradeMode
-                    .maximumOf(context.lockRequest.mode);
-            if (mode == context.lockRequest.mode) {
+
+            l.remove(r, b);
+            if (l.head == null) {
                 if (debugEnabled) {
-                    log.debug(getClass().getName(), "release",
+                    log
+                            .debug(getClass(), "release",
+                                    "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
+                }
+
+                b.remove(l);
+                count--;
+                return true;
+            }
+        } else /* if a == DOWNGRADE */ {
+            /*
+            * We need to determine whether is a valid downgrade request. To
+            * do so, we do a reverse check - ie, if the new mode could have
+            * been upgraded to current mode, then it is okay to downgrade.
+            */
+            if (r.mode == downgradeMode) {
+                /*
+                 * If downgrade request and lock is already in target mode,
+                 * return success.
+                 */
+                return true;
+            }
+            LockMode mode = downgradeMode.maximumOf(r.mode);
+            if (mode == r.mode) {
+                if (debugEnabled) {
+                    log.debug(getClass(), "release",
                             "SIMPLEDBM-DEBUG: Downgrading "
-                                    + context.lockRequest + " to "
-                                    + context.parms.downgradeMode
+                                    + r + " to "
+                                    + downgradeMode
                                     + " and re-adjusting granted mode");
                 }
-                // FIXME: We do not need to set LockInfo here anymore 
-                if (context.parms.lockInfo != null) {
-                    context.parms.lockInfo
-                            .setPreviousMode(context.lockRequest.mode);
-                    context.parms.lockInfo.setHeldByOthers(false);
-                }
-                context.lockRequest.convertMode = context.lockRequest.mode = context.parms.downgradeMode;
+
+                r.mode = downgradeMode;
+                r.convertMode = downgradeMode;
             } else {
-                exceptionHandler.errorThrow(this.getClass().getName(),
+                exceptionHandler.errorThrow(getClass(),
                         "releaseLock", new LockException(new MessageInstance(
-                                m_EC0009, context.lockRequest.mode,
-                                context.parms.downgradeMode)));
-            }
-            released = false;
-        }
-        /*
-         * 9. Recalculate granted mode by calculating max mode amongst all
-         * granted (including conversion) requests. 
-         */
-        grantWaiters(context.parms.action, context.lockRequest, context.handle,
-                context.lockitem, context.parms.lockInfo);
-        return released;
-    }
-
-    private void grantWaiters(ReleaseAction action, LockRequest myReq,
-            LockHandleImpl handleImpl, LockItem lockitem, LockInfo lockInfo) {
-        /*
-         * 9. Recalculate granted mode by calculating max mode amongst all
-         * granted (including conversion) requests. If a conversion request
-         * is compatible with all other granted requests, then grant the
-         * conversion, recalculating granted mode. If a waiting request is
-         * compatible with granted mode, and there are no pending conversion
-         * requests, then grant the request, and recalculate granted mode.
-         * Otherwise, we are done. Note that this means that FIFO is
-         * respected for waiting requests, but conversion requests are
-         * granted as soon as they become compatible. Also, note that if a
-         * conversion request is pending, waiting requests cannot be
-         * granted.
-         */
-        boolean converting;
-        lockitem.grantedMode = LockMode.NONE;
-        lockitem.waiting = false;
-        converting = false;
-        for (LockRequest r : lockitem.getQueue()) {
-
-            if (r.status == LockRequestStatus.GRANTED) {
-                lockitem.grantedMode = r.mode.maximumOf(lockitem.grantedMode);
-                if (r != myReq && action == ReleaseAction.DOWNGRADE) {
-                    if (lockInfo != null) {
-                        lockInfo.setHeldByOthers(true);
-                    }
-                }
-            }
-
-            else if (r.status == LockRequestStatus.CONVERTING) {
-                boolean can_grant;
-
-                assert (!converting || lockitem.waiting);
-
-                can_grant = checkCompatible(lockitem, r, r.convertMode, null);
-                if (can_grant) {
-                    if (debugEnabled) {
-                        log
-                                .debug(
-                                        getClass().getName(),
-                                        "release",
-                                        "SIMPLEDBM-DEBUG: Granting conversion request "
-                                                + r
-                                                + " because request is compatible with "
-                                                + lockitem);
-                    }
-                    if (r.convertDuration == LockDuration.INSTANT_DURATION) {
-                        /*
-                         * If the request is for an instant duration lock then
-                         * don't perform the conversion.
-                         */
-                        r.convertMode = r.mode;
-                    } else {
-                        r.mode = r.convertMode.maximumOf(r.mode);
-                        r.convertMode = r.mode;
-                        if (r.convertDuration == LockDuration.COMMIT_DURATION
-                                && r.duration == LockDuration.MANUAL_DURATION) {
-                            r.duration = LockDuration.COMMIT_DURATION;
-                        }
-                        lockitem.grantedMode = r.mode
-                                .maximumOf(lockitem.grantedMode);
-                    }
-                    /*
-                     * Treat conversions as lock recursion.
-                     */
-                    r.count++;
-                    r.status = LockRequestStatus.GRANTED;
-                    LockSupport.unpark(r.thread);
-                } else {
-                    lockitem.grantedMode = r.mode
-                            .maximumOf(lockitem.grantedMode);
-                    converting = true;
-                    lockitem.waiting = true;
-                }
-            }
-
-            else if (r.status == LockRequestStatus.WAITING) {
-                if (!converting && r.mode.isCompatible(lockitem.grantedMode)) {
-                    if (debugEnabled) {
-                        log
-                                .debug(
-                                        getClass().getName(),
-                                        "release",
-                                        "SIMPLEDBM-DEBUG: Granting waiting request "
-                                                + r
-                                                + " because not converting and request is compatible with "
-                                                + lockitem);
-                    }
-                    r.status = LockRequestStatus.GRANTED;
-                    lockitem.grantedMode = r.mode
-                            .maximumOf(lockitem.grantedMode);
-                    LockSupport.unpark(r.thread);
-                } else {
-                    if (debugEnabled && converting) {
-                        log
-                                .debug(
-                                        getClass().getName(),
-                                        "release",
-                                        "SIMPLEDBM-DEBUG: Cannot grant waiting request "
-                                                + r
-                                                + " because conversion request pending");
-                    }
-                    lockitem.waiting = true;
-                    break;
-                }
+                                m_EC0009, r.mode,
+                                downgradeMode)));
+                return false;
             }
         }
+        /*
+       * 9. Recalculate granted mode by calculating max mode amongst all
+       * granted (including conversion) requests.
+       */
+        l.grantWaiters(wakeupQ);
+        return true;
     }
+
 
     /* (non-Javadoc)
-     * @see org.simpledbm.rss.api.locking.LockManager#getLocks(java.lang.Object, org.simpledbm.rss.api.locking.LockMode)
-     */
+    * @see org.simpledbm.rss.api.locking.LockManager#getLocks(java.lang.Object, org.simpledbm.rss.api.locking.LockMode)
+    */
+
     public Object[] getLocks(Object owner, LockMode mode) {
         ArrayList<Object> locks = new ArrayList<Object>();
         globalLock.sharedLock();
         try {
-            for (int i = 0; i < LockHashTable.length; i++) {
-                LockBucket bucket = LockHashTable[i];
+            for (int i = 0; i < locktable.length; i++) {
+                LockBucket bucket = locktable[i];
                 synchronized (bucket) {
-                    for (Iterator<LockItem> iter = bucket.chain.iterator(); iter
-                            .hasNext();) {
-                        LockItem item = iter.next();
-                        if (item.target == null) {
-                            continue;
-                        }
+                    for (LockItem item = bucket.head; item != null; item = item.next) {
                         LockRequest lockRequest = item.find(owner);
                         if (lockRequest != null
                                 && lockRequest.status == LockRequestStatus.GRANTED) {
@@ -1536,15 +1033,14 @@ public final class LockManagerImpl implements LockManager {
         lockEventListeners.clear();
     }
 
-    private void notifyLockEventListeners(LockContext context) {
+    private void notifyLockEventListeners(Object o, Object lockable, LockMode m) {
         for (LockEventListener listener : lockEventListeners) {
             try {
-                listener.beforeLockWait(context.parms.owner,
-                        context.parms.lockable, context.parms.mode);
+                listener.beforeLockWait(o, lockable, m);
             } catch (Exception e) {
-                log.error(this.getClass().getName(),
+                log.error(getClass(),
                         "notifyLockEventListeners", new MessageInstance(
-                                m_EC0010, listener, context.parms).toString(),
+                                m_EC0010, listener, o, lockable, m).toString(),
                         e);
             }
         }
@@ -1568,7 +1064,7 @@ public final class LockManagerImpl implements LockManager {
             /*
              * Look at everyone that holds the lock
              */
-            for (LockRequest them : me.myLockRequest.lockItem.queue) {
+            for (LockRequest them = me.myLockRequest.lockItem.head; them != null; them = them.next) {
                 if (them.owner == me.myLockRequest.owner) {
                     continue;
                 }
@@ -1599,7 +1095,7 @@ public final class LockManagerImpl implements LockManager {
                             me = him;
                             him = temp;
                         }
-                        log.warn(log.getClass().getName(), "findDeadlockCycle",
+                        log.warn(log.getClass(), "findDeadlockCycle",
                                 new MessageInstance(m_WC0011, me.myLockRequest,
                                         him.myLockRequest,
                                         me.myLockRequest.lockItem,
@@ -1622,7 +1118,7 @@ public final class LockManagerImpl implements LockManager {
             /*
              * Look at everyone ahead of me in the queue
              */
-            for (LockRequest them : me.myLockRequest.lockItem.queue) {
+            for (LockRequest them = me.myLockRequest.lockItem.head; them != null; them = them.next) {
                 if (them.owner == me.myLockRequest.owner) {
                     break;
                 }
@@ -1651,7 +1147,7 @@ public final class LockManagerImpl implements LockManager {
                             me = him;
                             him = temp;
                         }
-                        log.warn(log.getClass().getName(), "findDeadlockCycle",
+                        log.warn(log.getClass(), "findDeadlockCycle",
                                 new MessageInstance(m_WC0011, me.myLockRequest,
                                         him.myLockRequest,
                                         me.myLockRequest.lockItem,
@@ -1705,170 +1201,18 @@ public final class LockManagerImpl implements LockManager {
         }
     }
 
-    static class LockBucket {
-
-//        final LinkedList<LockItem> chain = new LinkedList<LockItem>();
-        final SimpleLinkedList<LockItem> chain = new SimpleLinkedList<LockItem>();
-
-        LockItem chainHead() {
-            return chain.getFirst();
-        }
-
-        LockItem chainTail() {
-            return chain.getLast();
-        }
-
-        void chainAppend(LockItem item) {
-//            chain.add(item);
-            chain.addLast(item);
-        }
-
-        void chainRemove(LockItem item) {
-            chain.remove(item);
-        }
-
-    }
-
-    /**
-     * LockItem is the lock header for each lockable target. Against each
-     * lockable object, there is a queue of lock requests, a granted mode, and
-     * waiting status.
-     * 
-     * @author Dibyendu
-     */
-    static class LockItem extends Linkable implements Dumpable {
-
-        Object target;
-
-//        final LinkedList<LockRequest> queue = new LinkedList<LockRequest>();
-
-        final SimpleLinkedList<LockRequest> queue = new SimpleLinkedList<LockRequest>();
-        
-        
-        LockMode grantedMode;
-
-        boolean waiting;
-
-        LockItem(Object target, LockMode mode) {
-            this.target = target;
-            this.grantedMode = mode;
-        }
-
-        void setLockMode(LockMode mode) {
-            this.grantedMode = mode;
-        }
-
-        LockMode getLockMode() {
-            return grantedMode;
-        }
-
-        Object getTarget() {
-            return target;
-        }
-
-        boolean isWaiting() {
-            return waiting;
-        }
-
-        void setWaiting(boolean waiting) {
-            this.waiting = waiting;
-        }
-
-        void queueAppend(LockRequest request) {
-//            queue.add(request);
-            queue.addLast(request);
-        }
-
-        void queueRemove(LockRequest request) {
-            queue.remove(request);
-        }
-
-        LockRequest queueHead() {
-            return queue.getFirst();
-        }
-
-        LockRequest queueTail() {
-            return queue.getLast();
-        }
-
-        boolean queueIsEmpty() {
-            return queue.isEmpty();
-        }
-
-//        LinkedList<LockRequest> getQueue() {
-        SimpleLinkedList<LockRequest> getQueue() {
-            return queue;
-        }
-
-        LockRequest find(Object owner) {
-            for (LockRequest req : queue) {
-                if (req.owner == owner || req.owner.equals(owner)) {
-                    return req;
-                }
-            }
-            return null;
-        }
-
-        void reset() {
-            target = null;
-            grantedMode = LockMode.NONE;
-        }
-
-        @Override
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            return appendTo(sb).toString();
-        }
-
-        public StringBuilder appendTo(StringBuilder sb) {
-            sb.append(newline).append("LockItem(").append(newline).append(TAB)
-                    .append("target=");
-            if (target instanceof Dumpable) {
-                ((Dumpable) target).appendTo(sb);
-            } else {
-                sb.append(target);
-            }
-            sb.append(newline).append(TAB).append("granted mode=").append(
-                    grantedMode).append(newline);
-            sb.append(TAB).append("queue={").append(newline);
-            for (LockRequest req : queue) {
-                sb.append(TAB).append(TAB).append("LockRequest(").append(
-                        newline);
-                sb.append(TAB).append(TAB).append(TAB).append("status=")
-                        .append(req.status).append(" mode=").append(req.mode)
-                        .append(newline);
-                sb.append(TAB).append(TAB).append(TAB).append("convertMode=")
-                        .append(req.convertMode).append(" convertDuration=")
-                        .append(req.convertDuration).append(newline);
-                sb.append(TAB).append(TAB).append(TAB).append("owner=");
-                if (req.owner instanceof Dumpable) {
-                    ((Dumpable) req.owner).appendTo(sb);
-                } else {
-                    sb.append(req.owner);
-                }
-                sb.append(newline);
-                sb.append(TAB).append(TAB).append(TAB).append("thread=")
-                        .append(req.thread).append(newline);
-                sb.append(TAB).append(TAB).append(")").append(newline);
-            }
-            sb.append(TAB).append("}").append(newline);
-            return sb;
-        }
-    }
-
     static enum LockRequestStatus {
-        GRANTED, CONVERTING, WAITING, DENIED;
+        GRANTED, CONVERTING, WAITING, DENIED
     }
 
     /**
      * A LockRequest represents the request by a transaction for a lock.
-     * 
+     *
      * @author Dibyendu Majumdar
-     * 
      */
-    static final class LockRequest extends Linkable {
+    static final class LockRequest {
 
-        volatile LockRequestStatus status = LockRequestStatus.GRANTED;
+        LockRequestStatus status = LockRequestStatus.WAITING;
 
         LockMode mode;
 
@@ -1876,7 +1220,7 @@ public final class LockManagerImpl implements LockManager {
 
         LockDuration convertDuration;
 
-        volatile short count = 1;
+        int count = 0;
 
         LockDuration duration;
 
@@ -1886,18 +1230,19 @@ public final class LockManagerImpl implements LockManager {
 
         volatile Thread thread;
 
-        LockRequest(LockItem lockItem, Object owner, LockMode mode,
-                LockDuration duration) {
-            this.lockItem = lockItem;
-            this.mode = mode;
-            this.convertMode = mode;
-            this.duration = duration;
-            this.thread = Thread.currentThread();
-            this.owner = owner;
-        }
+        LockRequest next;
+        LockRequest prev;
 
-        Object getOwner() {
-            return owner;
+        LockRequest(LockItem l, Object o, LockMode m, LockDuration d, LockRequestStatus status, int ref_count) {
+            lockItem = l;
+            duration = convertDuration = d;
+            mode = convertMode = m;
+            this.status = status;
+            count = ref_count;
+            owner = o;
+            thread = null;
+            next = null;
+            prev = null;
         }
 
         @Override
@@ -1910,71 +1255,431 @@ public final class LockManagerImpl implements LockManager {
     }
 
     /**
-     * LockHandleImpl is an implementation of LockHandle interface. Since
-     * LockHandles are stored in Transactions, these handles need to be as
-     * compactly represented as possible.
-     * 
+     * Describe the status of a lock acquisition request.
+     *
      * @author Dibyendu Majumdar
-     * @since Nov 11, 2005
      */
-    static final class LockHandleImpl implements LockHandle {
+    public enum LockStatus {
+        GRANTED, GRANTABLE, TIMEOUT, DEADLOCK, ERROR, DOWAIT, DOWAITCONVERT
+    }
 
-        private final LockManagerImpl lockMgr;
+    static class LockBucket {
 
-        LockRequest lockRequest;
+        LockItem head;
+        LockItem tail;
 
-        LockHandleImpl(LockManagerImpl lockMgr, LockParameters parms) {
-            this.lockMgr = lockMgr;
-        }
-
-        public final boolean release(boolean force) {
-            return lockMgr.doRelease(this,
-                    force ? LockManagerImpl.ReleaseAction.FORCE_RELEASE
-                            : LockManagerImpl.ReleaseAction.RELEASE, null);
-        }
-
-        public final void downgrade(LockMode mode) {
-            lockMgr.doRelease(this, LockManagerImpl.ReleaseAction.DOWNGRADE,
-                    mode);
-        }
-
-        public final LockMode getCurrentMode() {
-            if (lockRequest == null) {
-                lockMgr.exceptionHandler.errorThrow(this.getClass().getName(),
-                        "getCurrentMode", new LockException(
-                                new MessageInstance(m_EC0006)));
+        final void addLast(LockItem l) {
+            l.prev = tail;
+            l.next = null;
+            if (head == null) {
+                head = l;
             }
-            return lockRequest.mode;
+            if (tail != null) {
+                tail.next = l;
+            }
+            tail = l;
+        }
+
+        final void remove(LockItem l) {
+            LockItem next = l.next;
+            LockItem prev = l.prev;
+            if (next != null) {
+                next.prev = prev;
+            } else {
+                tail = prev;
+            }
+            if (prev != null) {
+                prev.next = next;
+            } else {
+                head = next;
+            }
+            l.prev = null;
+        }
+
+        final LockItem findLock(Object lockable) {
+            for (LockItem l = head; l != null; l = l.next) {
+                if (l.target == lockable || l.target.equals(lockable)) {
+                    return l;
+                }
+            }
+            return null;
+        }
+
+    }
+
+    /**
+     * LockItem is the lock header for each lockable target. Against each
+     * lockable object, there is a queue of lock requests, a granted mode, and
+     * waiting status.
+     *
+     * @author Dibyendu
+     */
+    static class LockItem implements Dumpable {
+
+        final Object target;
+
+        LockMode grantedMode;
+
+        boolean waiting;
+
+        LockItem next;
+        LockItem prev;
+
+        LockRequest head;
+        LockRequest tail;
+
+        LockItem(Object t, LockMode m) {
+            target = t;
+            grantedMode = m;
+        }
+
+        final void addLast(LockRequest r) {
+            r.prev = tail;
+            r.next = null;
+            if (head == null) {
+                head = r;
+            }
+            if (tail != null) {
+                tail.next = r;
+            }
+            tail = r;
+        }
+
+        final void remove(LockRequest r, LockBucket b) {
+            LockRequest next = r.next;
+            LockRequest prev = r.prev;
+            if (next != null) {
+                next.prev = prev;
+            } else {
+                tail = prev;
+            }
+            if (prev != null) {
+                prev.next = next;
+            } else {
+                head = next;
+            }
+        }
+
+        final LockRequest find(Object owner) {
+            for (LockRequest r = head; r != null; r = r.next) {
+                if (r.owner == owner || r.owner.equals(owner)) {
+                    return r;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Checks whether the specified lock request is compatible with the granted
+         * group. Also sets the otherHolders flag if the granted group contains
+         * other requests.
+         */
+        final boolean checkCompatible(LockRequest request,
+                                      LockMode mode) {
+
+            boolean iscompatible = true;
+
+            /* Check if there are other holders */
+            for (LockRequest other = head; other != null; other = other.next) {
+                if (other == request)
+                    continue;
+                else if (other.status == LockRequestStatus.WAITING)
+                    break;
+                else {
+                    if (!mode.isCompatible(other.mode)) {
+                        iscompatible = false;
+                        break;
+                    }
+                }
+            }
+            return iscompatible;
+        }
+
+
+        /**
+         * Handles a new lock request when the lock is already held by some other.
+         *
+         * @return null if lock was granted and the request was instantduration, else return new request
+         *         with status granted or waiting.
+         */
+        final LockRequest handleNewRequest(LockBucket b, Object o, Object lockable, LockMode m, LockDuration d, int timeout) {
+            /* 4. If not, this is the first request by the transaction. */
+//                if (debugEnabled) {
+//                    log.debug(getClass(), "handleNewRequest",
+//                            "SIMPLEDBM-DEBUG: New request by transaction "
+//                                    + o + " for target "
+//                                    + lockable);
+//                }
+
+            /*
+            * 5. Check if lock can be granted. This is true if there are no
+            * waiting requests and the new request is compatible with
+            * existing grant mode.
+            */
+            boolean can_grant = (!waiting && m.isCompatible(grantedMode));
+            if (d == LockDuration.INSTANT_DURATION && can_grant) {
+                return null;
+            } else if (!can_grant && timeout == 0) {
+                // FIXME
+                throw new LockTimeoutException(new MessageInstance(m_WC0004,
+                        lockable, this));
+            }
+            LockRequest r = new LockRequest(this, o, m, d, LockRequestStatus.WAITING, (short) 0);
+            addLast(r);
+            if (can_grant) {
+                /* 6. If yes, grant the lock and return success. */
+//        if (debugEnabled) {
+//            log.debug(getClass(), "handleNewRequest",
+//                    "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
+//                            + context.lockitem
+//                            + ", therefore granting lock");
+//        }
+                r.status = LockRequestStatus.GRANTED;
+                r.count = 1;
+                grantedMode = m.maximumOf(grantedMode);
+            }
+            return r;
+        }
+
+        /**
+         * Handles a conversion request in the nowait situation.
+         *
+         * @return true if conversion request was handled else false to indicate
+         *         that requester must enter wait.
+         */
+        final LockStatus handleConversionRequest(LockRequest r, LockMode m, LockDuration d, int timeout) {
+
+//            if (traceEnabled) {
+//                log.trace(getClass(), "handleConversionRequest",
+//                        "SIMPLEDBM-DEBUG: Lock conversion request by transaction "
+//                                + context.parms.owner + " for target "
+//                                + context.parms.lockable);
+//            }
+
+            /*
+             * Limitation: a transaction cannot attempt to lock an object
+             * for which it is already waiting.
+             */
+
+
+            /*
+            * 11. If calling transaction already has a granted lock request
+            * then this must be a conversion request.
+            */
+
+            if (r.status == LockRequestStatus.CONVERTING || r.status == LockRequestStatus.WAITING) {
+//                exceptionHandler.errorThrow(getClass(),
+//                        "handleConversionRequest",
+//                        new LockException(new MessageInstance(m_EC0003,
+//                                context.parms.lockable, context.parms.owner)));
+                throw new LockException(new MessageInstance(m_EC0003,
+                        target, r.owner));
+            }
+            LockStatus status = LockStatus.ERROR;
+            if (r.status == LockRequestStatus.GRANTED) {
+                /*
+                 * 12. Check whether the new request lock is same mode as
+                 * previously held lock.
+                 */
+                if (m == r.mode) {
+                    /* 13. If so, grant lock and return. */
+//                    if (debugEnabled) {
+//                        log
+//                                .debug(
+//                                        getClass(),
+//                                        "handleConversionRequest",
+//                                        "SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
+//                    }
+                    if (d == LockDuration.INSTANT_DURATION) {
+                        status = LockStatus.GRANTABLE;
+                    } else {
+                        r.count++;
+                        if (r.duration == LockDuration.MANUAL_DURATION &&
+                                d == LockDuration.COMMIT_DURATION) {
+                            r.duration = LockDuration.COMMIT_DURATION;
+                        }
+                        status = LockStatus.GRANTED;
+                    }
+                } else {
+                    /*
+                     * 14. Otherwise, check if requested lock is compatible
+                     * with granted group
+                     */
+                    boolean can_grant = checkCompatible(r, m);
+                    if (can_grant) {
+                        /* 13. If so, grant lock and return. */
+//                        if (debugEnabled) {
+//                            log.debug(getClass(),
+//                                    "handleConversionRequest",
+//                                    "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
+//                                            + context.lockitem
+//                                            + ", therefore granting");
+//                        }
+                        if (d != LockDuration.INSTANT_DURATION) {
+                            r.mode = m.maximumOf(r.mode);
+                            r.count++;
+                            if (r.duration == LockDuration.MANUAL_DURATION &&
+                                    d == LockDuration.COMMIT_DURATION) {
+                                r.duration = LockDuration.COMMIT_DURATION;
+                            }
+                            grantedMode = r.mode.maximumOf(grantedMode);
+                            status = LockStatus.GRANTED;
+                        } else {
+                            status = LockStatus.GRANTABLE;
+                        }
+                    } else if (!can_grant && timeout == 0) {
+                        /* 15. If not, and nowait specified, return failure. */
+                        throw new LockTimeoutException(new MessageInstance(
+                                m_WC0004, r, this));
+                    } else {
+                        status = LockStatus.DOWAITCONVERT;
+                    }
+                }
+            } else {
+//                exceptionHandler.errorThrow(this.getClass(),
+//                        "handleConversionRequest", new LockException(
+//                                new MessageInstance(m_EC0005)));
+                throw new LockException(
+                        new MessageInstance(m_EC0005));
+            }
+            return status;
+        }
+
+        final void prepareToWait(LockRequest r, LockMode m, LockDuration d, boolean converting) {
+            waiting = true;
+            if (!converting) {
+                r.status = LockRequestStatus.WAITING;
+            } else {
+                r.convertMode = m;
+                r.convertDuration = d;
+                r.status = LockRequestStatus.CONVERTING;
+            }
+            r.thread = Thread.currentThread();
+
+        }
+
+        final void grantWaiters(final ConcurrentLinkedQueue<Thread> wakeupQ) {
+            /*
+        * Recalculate granted mode by calculating max mode amongst all
+        * granted (including conversion) requests. If a conversion request
+        * is compatible with all other granted requests, then grant the
+        * conversion, recalculating granted mode. If a waiting request is
+        * compatible with granted mode, and there are no pending conversion
+        * requests, then grant the request, and recalculate granted mode.
+        * Otherwise, we are done. Note that this means that FIFO is
+        * respected for waiting requests, but conversion requests are
+        * granted as soon as they become compatible. Also, note that if a
+        * conversion request is pending, waiting requests cannot be
+        * granted.
+        */
+            grantedMode = LockMode.NONE;
+            waiting = false;
+            boolean converting = false;
+            for (LockRequest r = head; r != null; r = r.next) {
+                if (r.status == LockRequestStatus.GRANTED) {
+                    grantedMode = r.mode.maximumOf(grantedMode);
+                } else if (r.status == LockRequestStatus.CONVERTING) {
+                    boolean can_grant = checkCompatible(r, r.convertMode);
+                    if (can_grant) {
+//                if (debugEnabled) {
+//                    log
+//                            .debug(
+//                                    getClass(),
+//                                    "release",
+//                                    "SIMPLEDBM-DEBUG: Granting conversion request "
+//                                            + r
+//                                            + " because request is compatible with "
+//                                            + lockitem);
+//                }
+                        if (r.convertDuration == LockDuration.INSTANT_DURATION) {
+                            /*
+                            * If the request is for an instant duration lock then
+                            * don't perform the conversion.
+                            */
+                            r.convertMode = r.mode;
+                        } else {
+                            r.mode = r.convertMode.maximumOf(r.mode);
+                            r.convertMode = r.mode;
+                            if (r.convertDuration == LockDuration.COMMIT_DURATION && r.duration == LockDuration.MANUAL_DURATION) {
+                                r.duration = LockDuration.COMMIT_DURATION;
+                            }
+                            grantedMode = r.mode.maximumOf(grantedMode);
+                        }
+                        /*
+                       * Treat conversions as lock recursion.
+                       */
+                        r.count++;
+                        r.status = LockRequestStatus.GRANTED;
+                        wakeupQ.add(r.thread);
+                        // r.signal();
+                    } else {
+                        grantedMode = r.mode.maximumOf(grantedMode);
+                        converting = true;
+                        waiting = true;
+                    }
+                } else if (r.status == LockRequestStatus.WAITING) {
+                    if (!converting && r.mode.isCompatible(grantedMode)) {
+                        r.status = LockRequestStatus.GRANTED;
+                        r.count = 1;
+                        grantedMode = r.mode.maximumOf(grantedMode);
+//                        r.signal();
+                        wakeupQ.add(r.thread);
+                    } else {
+                        waiting = true;
+                        break;
+                    }
+                }
+            }
         }
 
         @Override
         public String toString() {
-            return "LockHandleImpl(owner=" + getOwner() + ", target="
-                    + getLockable() + ", currentMode=" + getCurrentMode() + ")";
+            StringBuilder sb = new StringBuilder();
+            return appendTo(sb).toString();
         }
 
-        Object getLockable() {
-            return lockRequest.lockItem.target;
-        }
-
-        Object getOwner() {
-            return lockRequest.owner;
+        public StringBuilder appendTo(StringBuilder sb) {
+            sb.append(NEW_LINE).append("LockItem(").append(NEW_LINE).append(TAB)
+                    .append("target=");
+            if (target instanceof Dumpable) {
+                ((Dumpable) target).appendTo(sb);
+            } else {
+                sb.append(target);
+            }
+            sb.append(NEW_LINE).append(TAB).append("granted mode=").append(
+                    grantedMode).append(NEW_LINE);
+            sb.append(TAB).append("queue={").append(NEW_LINE);
+            for (LockRequest req = head; req != null; req = req.next) {
+                sb.append(TAB).append(TAB).append("LockRequest(").append(
+                        NEW_LINE);
+                sb.append(TAB).append(TAB).append(TAB).append("status=")
+                        .append(req.status).append(" mode=").append(req.mode)
+                        .append(NEW_LINE);
+                sb.append(TAB).append(TAB).append(TAB).append("convertMode=")
+                        .append(req.convertMode).append(" convertDuration=")
+                        .append(req.convertDuration).append(NEW_LINE);
+                sb.append(TAB).append(TAB).append(TAB).append("owner=");
+                if (req.owner instanceof Dumpable) {
+                    ((Dumpable) req.owner).appendTo(sb);
+                } else {
+                    sb.append(req.owner);
+                }
+                sb.append(NEW_LINE);
+                sb.append(TAB).append(TAB).append(TAB).append("thread=")
+                        .append(req.thread).append(NEW_LINE);
+                sb.append(TAB).append(TAB).append(")").append(NEW_LINE);
+            }
+            sb.append(TAB).append("}").append(NEW_LINE);
+            return sb;
         }
     }
 
-    /**
-     * Describe the status of a lock acquisition request.
-     * 
-     * @author Dibyendu Majumdar
-     */
-    public enum LockStatus {
-        GRANTED, GRANTABLE, TIMEOUT, DEADLOCK
-    }
+
 
     /**
      * Holds information regarding a lock wait. Purpose is to enable deadlock
      * detection.
-     * 
+     *
      * @since 15 Nov 2006
      */
     static final class LockWaiter {
@@ -2009,5 +1714,4 @@ public final class LockManagerImpl implements LockManager {
     public void setDeadlockDetectorInterval(int seconds) {
         this.deadlockDetectorInterval = seconds;
     }
-
 }

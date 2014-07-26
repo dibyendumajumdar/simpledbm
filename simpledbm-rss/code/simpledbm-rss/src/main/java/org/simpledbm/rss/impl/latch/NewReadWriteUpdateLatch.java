@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.rss.impl.latch;
 
@@ -226,7 +221,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
     private void doAcquire(LockState lockState) {
 
         if (debugEnabled) {
-            log.debug(getClass().getName(), "doAcquire",
+            log.debug(getClass(), "doAcquire",
                     "SIMPLEDBM-DEBUG: Lock requested by "
                             + lockState.parms.owner + " for " + this
                             + ", mode=" + lockState.parms.mode);
@@ -294,7 +289,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
     private boolean handleNewRequest(LockState lockState) {
         /* 4. If not, this is the first request */
         if (debugEnabled) {
-            log.debug(getClass().getName(), "handleNewRequest",
+            log.debug(getClass(), "handleNewRequest",
                     "SIMPLEDBM-DEBUG: New request by thread "
                             + lockState.parms.owner);
         }
@@ -303,7 +298,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             /*
              * An upgrade request without a prior lock request is an error.
              */
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "handleNewRequest", new LatchException(new MessageInstance(
                             LatchFactoryImpl.m_EH0001, lockState.parms)));
         }
@@ -329,7 +324,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         if (can_grant) {
             /* 6. If yes, grant the lock and return success. */
             if (debugEnabled) {
-                log.debug(getClass().getName(), "handleNewRequest",
+                log.debug(getClass(), "handleNewRequest",
                         "SIMPLEDBM-DEBUG: There are no waiting locks and request is compatible with  "
                                 + this + ", therefore granting lock");
             }
@@ -353,7 +348,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          * then this must be a conversion request.
          */
         if (traceEnabled) {
-            log.trace(getClass().getName(), "handleConversionRequest",
+            log.trace(getClass(), "handleConversionRequest",
                     "SIMPLEDBM-DEBUG: Lock conversion request by thread "
                             + lockState.parms.owner);
         }
@@ -364,7 +359,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          */
         if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
                 || lockState.lockRequest.status == LockRequestStatus.WAITING) {
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "handleConversionRequest", new LatchException(
                             new MessageInstance(LatchFactoryImpl.m_EH0003,
                                     this, lockState.parms.owner)));
@@ -380,7 +375,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 if (debugEnabled) {
                     log
                             .debug(
-                                    getClass().getName(),
+                                    getClass(),
                                     "handleConversionRequest",
                                     "SIMPLEDBM-DEBUG: Requested mode is the same as currently held mode, therefore granting");
                 }
@@ -401,7 +396,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 if (can_grant) {
                     /* 13. If so, grant lock and return. */
                     if (debugEnabled) {
-                        log.debug(getClass().getName(),
+                        log.debug(getClass(),
                                 "handleConversionRequest",
                                 "SIMPLEDBM-DEBUG: Conversion request is compatible with granted group "
                                         + this + ", therefore granting");
@@ -428,7 +423,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 }
             }
         } else {
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "handleConversionRequest", new LatchException(
                             new MessageInstance(LatchFactoryImpl.m_EH0005)));
         }
@@ -468,7 +463,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         waiting = true;
         if (!lockState.converting) {
             if (debugEnabled) {
-                log.debug(getClass().getName(), "prepareToWait",
+                log.debug(getClass(), "prepareToWait",
                         "SIMPLEDBM-DEBUG: Waiting for lock to be free");
             }
             lockState.lockRequest.status = LockRequestStatus.WAITING;
@@ -476,7 +471,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             if (debugEnabled) {
                 log
                         .debug(
-                                getClass().getName(),
+                                getClass(),
                                 "prepareToWait",
                                 "SIMPLEDBM-DEBUG: Conversion NOT compatible with granted group, therefore waiting ...");
             }
@@ -499,7 +494,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              * success.
              */
             if (debugEnabled) {
-                log.debug(getClass().getName(), "handleWaitResult",
+                log.debug(getClass(), "handleWaitResult",
                         "SIMPLEDBM-DEBUG: Woken up, and lock granted");
             }
             return;
@@ -507,7 +502,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         /* 10. Else return failure. */
         if (debugEnabled) {
-            log.debug(getClass().getName(), "handleWaitResult",
+            log.debug(getClass(), "handleWaitResult",
                     "SIMPLEDBM-DEBUG: Woken up, and lock failed");
         }
 
@@ -523,7 +518,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             lockState.lockRequest.convertMode = lockState.lockRequest.mode;
             lockState.lockRequest.waitingThread = lockState.prevThread;
         }
-        exceptionHandler.warnAndThrow(this.getClass().getName(),
+        exceptionHandler.warnAndThrow(this.getClass(),
                 "handleWaitResult", new LatchException(new MessageInstance(
                         LatchFactoryImpl.m_EH0006, lockState.parms)));
     }
@@ -562,7 +557,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                     if (debugEnabled) {
                         log
                                 .debug(
-                                        getClass().getName(),
+                                        getClass(),
                                         "release",
                                         "SIMPLEDBM-DEBUG: Granting conversion request "
                                                 + r
@@ -592,7 +587,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                     if (debugEnabled) {
                         log
                                 .debug(
-                                        getClass().getName(),
+                                        getClass(),
                                         "release",
                                         "SIMPLEDBM-DEBUG: Granting waiting request "
                                                 + r
@@ -606,7 +601,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                     if (debugEnabled && converting) {
                         log
                                 .debug(
-                                        getClass().getName(),
+                                        getClass(),
                                         "release",
                                         "SIMPLEDBM-DEBUG: Cannot grant waiting request "
                                                 + r
@@ -638,7 +633,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
 
         if (lockState.lockRequest == null) {
             /* 4. If not found, throw exception. */
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "releaseLock", new LatchException(new MessageInstance(
                             LatchFactoryImpl.m_EH0007, this)));
         }
@@ -646,7 +641,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
         if (lockState.lockRequest.status == LockRequestStatus.CONVERTING
                 || lockState.lockRequest.status == LockRequestStatus.WAITING) {
             /* 5. If lock in invalid state, return error. */
-            exceptionHandler.errorThrow(this.getClass().getName(),
+            exceptionHandler.errorThrow(this.getClass(),
                     "releaseLock", new LatchException(new MessageInstance(
                             LatchFactoryImpl.m_EH0008, this)));
         }
@@ -669,7 +664,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
              */
             if (debugEnabled) {
                 log
-                        .debug(getClass().getName(), "release",
+                        .debug(getClass(), "release",
                                 "SIMPLEDBM-DEBUG: Count decremented but lock not released");
             }
             lockState.lockRequest.count--;
@@ -687,7 +682,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
             /* 7. If sole lock request, then release the lock and return Ok. */
             if (debugEnabled) {
                 log
-                        .debug(getClass().getName(), "release",
+                        .debug(getClass(), "release",
                                 "SIMPLEDBM-DEBUG: Removing sole lock, releasing lock object");
             }
             queueRemove(lockState.lockRequest);
@@ -701,7 +696,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
          */
         if (lockState.parms.action != ReleaseAction.DOWNGRADE) {
             if (debugEnabled) {
-                log.debug(getClass().getName(), "release",
+                log.debug(getClass(), "release",
                         "SIMPLEDBM-DEBUG: Removing lock request "
                                 + lockState.lockRequest
                                 + " and re-adjusting granted mode");
@@ -718,7 +713,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                     .maximumOf(lockState.lockRequest.mode);
             if (mode == lockState.lockRequest.mode) {
                 if (debugEnabled) {
-                    log.debug(getClass().getName(), "release",
+                    log.debug(getClass(), "release",
                             "SIMPLEDBM-DEBUG: Downgrading "
                                     + lockState.lockRequest + " to "
                                     + lockState.parms.downgradeMode
@@ -726,7 +721,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
                 }
                 lockState.lockRequest.convertMode = lockState.lockRequest.mode = lockState.parms.downgradeMode;
             } else {
-                exceptionHandler.errorThrow(this.getClass().getName(),
+                exceptionHandler.errorThrow(this.getClass(),
                         "releaseLock", new LatchException(new MessageInstance(
                                 LatchFactoryImpl.m_EH0009,
                                 lockState.lockRequest.mode,

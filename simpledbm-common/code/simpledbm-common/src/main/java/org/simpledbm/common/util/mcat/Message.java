@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.common.util.mcat;
 
@@ -47,7 +42,7 @@ import org.simpledbm.common.util.TypeSize;
  * 
  * @author dibyendumajumdar
  */
-public class Message implements Storable {
+public final class Message implements Storable {
     final int code;
     final MessageType type;
     final char subsystem;
@@ -55,12 +50,11 @@ public class Message implements Storable {
     final String text;
     final String formattedText;
 
-    volatile boolean cached = false;
-    StorableString storableText;
+    final StorableString storableText;
 
     static final String prefix = "00000";
 
-    private String pad(int i) {
+    private final String pad(int i) {
         String s = prefix + Integer.toString(i);
         return s.substring(s.length() - prefix.length(), s.length());
     }
@@ -85,6 +79,7 @@ public class Message implements Storable {
         this.text = text;
         formattedText = "SIMPLEDBM-" + type.toText() + subsystem + module
                 + pad(code) + ": " + text;
+        storableText = new StorableString(text);
     }
 
     public Message(ByteBuffer bb) {
@@ -96,47 +91,30 @@ public class Message implements Storable {
         text = storableText.toString();
         formattedText = "SIMPLEDBM-" + type.toText() + subsystem + module
                 + pad(code) + ": " + text;
-        cached = true;
     }
 
-    public String getKey() {
+    public final String getKey() {
         return "" + type.toText() + subsystem + module + pad(code);
     }
 
-    /**
-     * Creates the formatted/storable version
-     */
-    void inflate() {
-        if (cached)
-            return;
-        synchronized (this) {
-            if (storableText == null) {
-                storableText = new StorableString(text);
-            }
-            cached = true;
-        }
-    }
-
-    public String toString() {
+    public final String toString() {
         return formattedText;
     }
 
-    public int getCode() {
+    public final int getCode() {
         return code;
     }
 
-    public MessageType getType() {
+    public final MessageType getType() {
         return type;
     }
 
-    public int getStoredLength() {
-        inflate();
+    public final int getStoredLength() {
         return TypeSize.INTEGER + TypeSize.CHARACTER * 3
                 + storableText.getStoredLength();
     }
 
-    public void store(ByteBuffer bb) {
-        inflate();
+    public final void store(ByteBuffer bb) {
         bb.putInt(code);
         bb.putChar(type.toText());
         bb.putChar(subsystem);

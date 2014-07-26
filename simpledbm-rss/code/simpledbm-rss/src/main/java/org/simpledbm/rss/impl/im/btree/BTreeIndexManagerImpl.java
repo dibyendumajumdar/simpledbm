@@ -1,38 +1,33 @@
-/***
- *    This program is free software; you can redistribute it and/or modify
- *    it under the terms of the GNU General Public License as published by
- *    the Free Software Foundation; either version 2 of the License, or
- *    (at your option) any later version.
+/**
+ * DO NOT REMOVE COPYRIGHT NOTICES OR THIS HEADER.
  *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU General Public License for more details.
+ * Contributor(s):
  *
- *    You should have received a copy of the GNU General Public License
- *    along with this program; if not, write to the Free Software
- *    Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
- *    
- *    Linking this library statically or dynamically with other modules 
- *    is making a combined work based on this library. Thus, the terms and
- *    conditions of the GNU General Public License cover the whole
- *    combination.
- *    
- *    As a special exception, the copyright holders of this library give 
- *    you permission to link this library with independent modules to 
- *    produce an executable, regardless of the license terms of these 
- *    independent modules, and to copy and distribute the resulting 
- *    executable under terms of your choice, provided that you also meet, 
- *    for each linked independent module, the terms and conditions of the 
- *    license of that module.  An independent module is a module which 
- *    is not derived from or based on this library.  If you modify this 
- *    library, you may extend this exception to your version of the 
- *    library, but you are not obligated to do so.  If you do not wish 
- *    to do so, delete this exception statement from your version.
+ * The Original Software is SimpleDBM (www.simpledbm.org).
+ * The Initial Developer of the Original Software is Dibyendu Majumdar.
  *
- *    Project: www.simpledbm.org
- *    Author : Dibyendu Majumdar
- *    Email  : d dot majumdar at gmail dot com ignore
+ * Portions Copyright 2005-2014 Dibyendu Majumdar. All Rights Reserved.
+ *
+ * The contents of this file are subject to the terms of the
+ * Apache License Version 2 (the "APL"). You may not use this
+ * file except in compliance with the License. A copy of the
+ * APL may be obtained from:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * either the GNU General Public License Version 2 or later (the "GPL"), or
+ * the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+ * in which case the provisions of the GPL or the LGPL are applicable instead
+ * of those above. If you wish to allow use of your version of this file only
+ * under the terms of either the GPL or the LGPL, and not to allow others to
+ * use your version of this file under the terms of the APL, indicate your
+ * decision by deleting the provisions above and replace them with the notice
+ * and other provisions required by the GPL or the LGPL. If you do not delete
+ * the provisions above, a recipient may use your version of this file under
+ * the terms of any one of the APL, the GPL or the LGPL.
+ *
+ * Copies of GPL and LGPL may be obtained from:
+ * http://www.gnu.org/licenses/license-list.html
  */
 package org.simpledbm.rss.impl.im.btree;
 
@@ -589,7 +584,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         k = parent.findPosition(linkOperation.leftSibling);
         if (k == -1 || k > parent.header.keyCount) {
             // child pointer not found - corrupt b-tree?
-            exceptionHandler.unexpectedErrorThrow(getClass().getName(),
+            exceptionHandler.unexpectedErrorThrow(getClass(),
                     "redoLinkOperation", new IndexException(
                             new MessageInstance(m_EB0001)));
         }
@@ -629,7 +624,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         int k = 0;
         k = parent.findPosition(unlinkOperation.leftSibling);
         if (k == -1 || k > parent.header.keyCount) {
-            exceptionHandler.unexpectedErrorThrow(getClass().getName(),
+            exceptionHandler.unexpectedErrorThrow(getClass(),
                     "redoUnlinkOperation", new IndexException(
                             new MessageInstance(m_EB0001)));
         }
@@ -642,7 +637,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             item.setChildPageNumber(unlinkOperation.leftSibling);
             p.insertAt(k, item, true);
         } else {
-            exceptionHandler.unexpectedErrorThrow(getClass().getName(),
+            exceptionHandler.unexpectedErrorThrow(getClass(),
                     "redoUnlinkOperation", new IndexException(
                             new MessageInstance(m_EB0001)));
         }
@@ -1458,7 +1453,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
                     if (newSiblingPageNumber == -1) {
                         po.getExceptionHandler().unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "doSplit",
                                 new IndexException(
                                         new MessageInstance(m_EB0002)));
@@ -2081,7 +2076,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             .findAndFixSpaceMapPageExclusively(new SpaceCheckerImpl());
                     if (newSiblingPageNumber == -1) {
                         po.getExceptionHandler().unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "doIncreaseTreeHeight",
                                 new IndexException(
                                         new MessageInstance(m_EB0002)));
@@ -2879,7 +2874,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void readModeTraverse(BTreeContext bcursor) {
 
             if (btreeMgr.log.isDebugEnabled()) {
-                btreeMgr.log.debug(getClass().getName(), "readModeTraverse",
+                btreeMgr.log.debug(getClass(), "readModeTraverse",
                         "SIMPLEDBM-DEBUG: Read mode traverse for search key = "
                                 + bcursor.getSearchKey());
             }
@@ -3023,7 +3018,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             } catch (LockException e) {
 
                 if (btreeMgr.log.isDebugEnabled()) {
-                    btreeMgr.log.debug(getClass().getName(), "doNextKeyLock",
+                    btreeMgr.log.debug(getClass(), "doNextKeyLock",
                             "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT " + mode
                                     + " lock on " + nextItem.getLocation());
                 }
@@ -3165,7 +3160,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             } catch (LockException e) {
                                 // FIXME Test case
                                 if (btreeMgr.log.isDebugEnabled()) {
-                                    btreeMgr.log.debug(getClass().getName(),
+                                    btreeMgr.log.debug(getClass(),
                                             "doInsert",
                                             "SIMPLEDBM-DEBUG: Failed to acquire NOWAIT "
                                                     + LockMode.SHARED
@@ -3294,7 +3289,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void insert(Transaction trx, IndexKey key,
                 Location location) {
             if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
-                po.getExceptionHandler().errorThrow(getClass().getName(),
+                po.getExceptionHandler().errorThrow(getClass(),
                         "insert",
                         new IndexException(new MessageInstance(m_EB0013)));
             }
@@ -3345,7 +3340,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 if (!sr.exactMatch) {
                     // key not found?? something is wrong
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            getClass().getName(),
+                            getClass(),
                             "doDelete",
                             new IndexException(new MessageInstance(m_EB0004,
                                     bcursor.searchKey.toString())));
@@ -3404,7 +3399,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         public final void delete(Transaction trx, IndexKey key,
                 Location location) {
             if (key.equals(indexItemFactory.getMaxIndexKey(containerId))) {
-                po.getExceptionHandler().errorThrow(getClass().getName(),
+                po.getExceptionHandler().errorThrow(getClass(),
                         "delete",
                         new IndexException(new MessageInstance(m_EB0013)));
             }
@@ -3449,7 +3444,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 sr.exactMatch = true;
                 if (!node.getItem(sr.k).equals(icursor.currentKey)) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            getClass().getName(),
+                            getClass(),
                             "doSearchAtLeafLevel",
                             new IndexException(new MessageInstance(m_EB0005,
                                     node.getItem(sr.k), icursor.currentKey)));
@@ -3680,7 +3675,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         tracer.event(139, icursor.btree.containerId);
                         po.getExceptionHandler()
                                 .unexpectedErrorThrow(
-                                        getClass().getName(),
+                                        getClass(),
                                         "doFetch",
                                         new IndexException(new MessageInstance(
                                                 m_EB0006, icursor.currentKey
@@ -3699,7 +3694,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 } catch (LockException e) {
 
                     if (btreeMgr.log.isDebugEnabled()) {
-                        btreeMgr.log.debug(getClass().getName(), "doFetch",
+                        btreeMgr.log.debug(getClass(), "doFetch",
                                 "SIMPLEDBM-DEBUG: Failed to acquire conditional "
                                         + icursor.lockMode + " lock on "
                                         + sr.item.getLocation());
@@ -3901,7 +3896,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         if (lockMode == LockMode.SHARED
                                 || lockMode == LockMode.UPDATE) {
                             if (btree.btreeMgr.log.isDebugEnabled()) {
-                                btree.btreeMgr.log.debug(getClass().getName(),
+                                btree.btreeMgr.log.debug(getClass(),
                                         IndexCursorImpl.class.getName()
                                                 + ".fetchNext",
                                         "SIMPLEDBM-DEBUG: Releasing lock on previous row "
@@ -3921,7 +3916,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                 .getLocation());
                         if (lockMode == LockMode.UPDATE) {
                             if (btree.btreeMgr.log.isDebugEnabled()) {
-                                btree.btreeMgr.log.debug(getClass().getName(),
+                                btree.btreeMgr.log.debug(getClass(),
                                         IndexCursorImpl.class.getName()
                                                 + ".fetchNext",
                                         "SIMPLEDBM-DEBUG: Downgrading lock on previous row "
@@ -3998,7 +3993,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                             if (btree.btreeMgr.log.isDebugEnabled()) {
                                 btree.btreeMgr.log
                                         .debug(
-                                                getClass().getName(),
+                                                getClass(),
                                                 this.getClass().getName()
                                                         + ".close",
                                                 "SIMPLEDBM-DEBUG: Releasing lock on current row "
@@ -4047,12 +4042,12 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             CursorState cs = (CursorState) sp.getValue(this);
 
             if (btree.btreeMgr.log.isDebugEnabled()) {
-                btree.btreeMgr.log.debug(getClass().getName(), this.getClass()
+                btree.btreeMgr.log.debug(getClass(), this.getClass()
                         .getName()
                         + ".restoreState",
                         "SIMPLEDBM-DEBUG: Current position is set to "
                                 + currentKey);
-                btree.btreeMgr.log.debug(getClass().getName(), this.getClass()
+                btree.btreeMgr.log.debug(getClass(), this.getClass()
                         .getName()
                         + ".restoreState",
                         "SIMPLEDBM-DEBUG: Rollback to savepoint is restoring state to "
@@ -4435,7 +4430,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 return true;
             }
             po.getExceptionHandler().unexpectedErrorThrow(
-                    this.getClass().getName(), "sanityCheck",
+                    this.getClass(), "sanityCheck",
                     new IndexException(new MessageInstance(m_EB0014)));
             return false;
         }
@@ -4592,7 +4587,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     IndexItem prevItem = getItem(slot - 1);
                     if (prevItem.compareTo(thisItem) >= 0) {
                         po.getExceptionHandler().unexpectedErrorThrow(
-                                this.getClass().getName(),
+                                this.getClass(),
                                 "validateItemAt",
                                 new IndexException(new MessageInstance(
                                         m_EB0015, slot)));
@@ -4604,7 +4599,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         IndexItem nextItem = getItem(slot + 1);
                         if (thisItem.compareTo(nextItem) > 0) {
                             po.getExceptionHandler().unexpectedErrorThrow(
-                                    this.getClass().getName(),
+                                    this.getClass(),
                                     "validateItemAt",
                                     new IndexException(new MessageInstance(
                                             m_EB0015, slot)));
@@ -4613,7 +4608,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         IndexItem nextItem = getItem(slot + 1);
                         if (thisItem.compareTo(nextItem) >= 0) {
                             po.getExceptionHandler().unexpectedErrorThrow(
-                                    this.getClass().getName(),
+                                    this.getClass(),
                                     "validateItemAt",
                                     new IndexException(new MessageInstance(
                                             m_EB0015, slot)));
@@ -4624,7 +4619,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         IndexItem nextItem = getItem(slot + 1);
                         if (thisItem.compareTo(nextItem) >= 0) {
                             po.getExceptionHandler().unexpectedErrorThrow(
-                                    this.getClass().getName(),
+                                    this.getClass(),
                                     "validateItemAt",
                                     new IndexException(new MessageInstance(
                                             m_EB0015, slot)));
@@ -4644,21 +4639,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
                 if (isDeallocated()) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validateItemAt",
                             new IndexException(new MessageInstance(m_EB0016,
                                     page.getPageId())));
                 }
                 if (page.getSpaceMapPageNumber() == -1) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validateItemAt",
                             new IndexException(new MessageInstance(m_EB0017,
                                     page.getPageId())));
                 }
                 if (page.getNumberOfSlots() != header.keyCount + 1) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validateItemAt",
                             new IndexException(new MessageInstance(m_EB0018,
                                     page.getPageId())));
@@ -4681,21 +4676,21 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             try {
                 if (isDeallocated()) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validate",
                             new IndexException(new MessageInstance(m_EB0016,
                                     page.getPageId())));
                 }
                 if (page.getSpaceMapPageNumber() == -1) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validate",
                             new IndexException(new MessageInstance(m_EB0017,
                                     page.getPageId())));
                 }
                 if (page.getNumberOfSlots() != header.keyCount + 1) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validate",
                             new IndexException(new MessageInstance(m_EB0018,
                                     page.getPageId())));
@@ -4721,7 +4716,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                     po
                                             .getExceptionHandler()
                                             .unexpectedErrorThrow(
-                                                    this.getClass().getName(),
+                                                    this.getClass(),
                                                     "validate",
                                                     new IndexException(
                                                             new MessageInstance(
@@ -4732,7 +4727,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                                     po
                                             .getExceptionHandler()
                                             .unexpectedErrorThrow(
-                                                    this.getClass().getName(),
+                                                    this.getClass(),
                                                     "validate",
                                                     new IndexException(
                                                             new MessageInstance(
@@ -4742,7 +4737,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                         } else {
                             if (item.compareTo(prevItem) <= 0) {
                                 po.getExceptionHandler().unexpectedErrorThrow(
-                                        this.getClass().getName(),
+                                        this.getClass(),
                                         "validate",
                                         new IndexException(new MessageInstance(
                                                 m_EB0015, k)));
@@ -4753,14 +4748,14 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 }
                 if (deletedCount > 0) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validate",
                             new IndexException(new MessageInstance(m_EB0015,
                                     page.getPageId())));
                 }
                 if (keyCount != header.keyCount) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            this.getClass().getName(),
+                            this.getClass(),
                             "validate",
                             new IndexException(new MessageInstance(m_EB0018,
                                     page.getPageId())));
@@ -4807,7 +4802,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
         private void validateItem(IndexItem item) {
             if (item.isLeaf != isLeaf() || item.isUnique != isUnique()) {
                 po.getExceptionHandler().unexpectedErrorThrow(
-                        this.getClass().getName(), "validateItem",
+                        this.getClass(), "validateItem",
                         new IndexException(new MessageInstance(m_EB0020)));
             }
         }
@@ -4971,7 +4966,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                     return k;
                 }
             }
-            po.getExceptionHandler().unexpectedErrorThrow(getClass().getName(),
+            po.getExceptionHandler().unexpectedErrorThrow(getClass(),
                     "getSplitKey",
                     new IndexException(new MessageInstance(m_EB0007, page)));
             return -1;
@@ -5021,7 +5016,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
                 int mid = (low + high) >>> 1;
                 if (mid < FIRST_KEY_POS || mid > getKeyCount()) {
                     po.getExceptionHandler().unexpectedErrorThrow(
-                            getClass().getName(),
+                            getClass(),
                             "search",
                             new IndexException(new MessageInstance(m_EB0008,
                                     key.toString())));
@@ -5058,7 +5053,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (isLeaf()) {
                 po.getExceptionHandler()
                         .unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "findChildPage",
                                 new IndexException(new MessageInstance(
                                         m_EB0009, page)));
@@ -5075,7 +5070,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (isLeaf()) {
                 po.getExceptionHandler()
                         .unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "findIndexItem",
                                 new IndexException(new MessageInstance(
                                         m_EB0009, page)));
@@ -5099,7 +5094,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (isLeaf()) {
                 po.getExceptionHandler()
                         .unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "findPosition",
                                 new IndexException(new MessageInstance(
                                         m_EB0009, page)));
@@ -5120,7 +5115,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
             if (isLeaf()) {
                 po.getExceptionHandler()
                         .unexpectedErrorThrow(
-                                getClass().getName(),
+                                getClass(),
                                 "findPrevIndexItem",
                                 new IndexException(new MessageInstance(
                                         m_EB0009, page)));
