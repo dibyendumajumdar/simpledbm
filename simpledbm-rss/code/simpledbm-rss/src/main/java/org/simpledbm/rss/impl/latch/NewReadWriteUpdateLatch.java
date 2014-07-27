@@ -73,7 +73,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * which is a simple way of detecting latch deadlocks.
      * 
      * The reason for creating this new implementation was the realization that
-     * neither ReentrantReadWriteLock or ReadWriteUpdateLatch support recursion 
+     * ReentrantReadWriteLock does not support recursion
      * properly. This is because in both implementation details of shared requests
      * are not kept. This implementation naturally is less efficient compared to the
      * other two, but does support recursion of shared lock requests.
