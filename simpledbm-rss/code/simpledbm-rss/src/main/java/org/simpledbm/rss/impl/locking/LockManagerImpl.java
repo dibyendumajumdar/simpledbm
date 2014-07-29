@@ -1611,7 +1611,6 @@ public final class LockManagerImpl implements LockManager {
                         r.count++;
                         r.status = LockRequestStatus.GRANTED;
                         wakeupQ.add(r.thread);
-                        // r.signal();
                     } else {
                         grantedMode = r.mode.maximumOf(grantedMode);
                         converting = true;
@@ -1622,7 +1621,6 @@ public final class LockManagerImpl implements LockManager {
                         r.status = LockRequestStatus.GRANTED;
                         r.count = 1;
                         grantedMode = r.mode.maximumOf(grantedMode);
-//                        r.signal();
                         wakeupQ.add(r.thread);
                     } else {
                         waiting = true;
