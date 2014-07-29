@@ -31,9 +31,6 @@
  */
 package org.simpledbm.common.util.logging;
 
-import org.simpledbm.common.util.logging.Logger;
-
-
 /**
  * A simple wrapper around Log4J/JDK logging facilities.
  * 

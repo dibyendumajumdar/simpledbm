@@ -41,6 +41,6 @@ public interface LifeCycle {
 
     void start();
 
-    void shudown();
+    void shutdown();
 
 }

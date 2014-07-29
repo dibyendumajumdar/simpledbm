@@ -6,9 +6,9 @@ SimpleDBM Overview
 
 :Author: Dibyendu Majumdar
 :Contact: d dot majumdar at gmail dot com
-:Date: 18 October 2009
-:Version: 1.0.13 BETA
-:Copyright: Copyright by Dibyendu Majumdar, 2005-2009
+:Date: 27 July 2014
+:Version: 1.0.23
+:Copyright: Copyright by Dibyendu Majumdar, 2005-2014
 
 .. contents::
 
@@ -55,9 +55,7 @@ SimpleDBM is currently in early BETA and not suitable for Production use.
 Note that the SimpleDBM API is under flux, and is likely to change until 
 the production 1.0 release is available. 
 
-The latest builds can be downloaded from:
-
-http://code.google.com/p/simpledbm/downloads/list.
+The latest builds can be downloaded Maven Central.
 
 Architecture
 ============
@@ -164,7 +162,7 @@ The SimpleDBM SCM repository is organized as follows:
           +--- simpledbm-samples      This contains some sample programs
           |                           that demonstrate how to use SimpleDBM.
           |
-          +--- docs                   Contains the documentation sources.                           
+          +--- simpledbm-docs         Contains the documentation sources.                           
 
 Under each of the top-level folders, there is the following structure.
 

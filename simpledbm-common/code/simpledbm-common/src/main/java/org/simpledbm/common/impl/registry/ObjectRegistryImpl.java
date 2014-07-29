@@ -84,6 +84,9 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
             "Unknown typecode {0}");
     static Message m_ER0007 = new Message('C', 'R', MessageType.ERROR, 7,
             "Error occurred when attempting to create new instance of type {0} class {1}");
+    static Message m_ER0008 = new Message('C', 'R', MessageType.ERROR, 8,
+            "Cannot determine the type to be constructed");
+
 
     static final class TypeRegistry {
         final ObjectDefinition[] typeRegistry = new ObjectDefinition[Short.MAX_VALUE];
@@ -100,8 +103,6 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
     /**
      * Maps typecode to ObjectDefinition
      */
-    // private final HashMap<Short, ObjectDefinition> typeRegistry = new
-    // HashMap<Short, ObjectDefinition>();
     TypeRegistry typeRegistry = new TypeRegistry();
 
     public ObjectRegistryImpl(Platform platform, Properties properties) {
@@ -202,7 +203,10 @@ public final class ObjectRegistryImpl implements ObjectRegistry {
 
     public Object getInstance(ByteBuffer buf) {
         if (buf.remaining() < TypeSize.SHORT) {
-            throw new IllegalArgumentException();
+            exceptionHandler.errorThrow(getClass(),
+                    "getInstance",
+                    new ObjectCreationException.UnknownTypeException(
+                            new MessageInstance(m_ER0008)));
         }
         buf.mark();
         short type = buf.getShort();
