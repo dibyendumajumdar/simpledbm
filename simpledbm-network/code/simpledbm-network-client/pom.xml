@@ -3,7 +3,7 @@
     <groupId>org.simpledbm</groupId>
     <artifactId>simpledbm-network-client</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.23</version>
+    <version>1.0.24-SNAPSHOT</version>
     <name>SimpleDBM Network Client</name>
     <url>http://www.simpledbm.org</url>
     <scm>
@@ -33,24 +33,24 @@
     <parent>
         <groupId>org.simpledbm</groupId>
         <artifactId>simpledbm-parent</artifactId>
-        <version>1.0.23</version>
+        <version>1.0.24-SNAPSHOT</version>
         <relativePath>../../../build/pom.xml</relativePath>
     </parent>
     <dependencies>
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-network-framework</artifactId>
-            <version>1.0.23</version>
+            <version>1.0.24-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-network-common</artifactId>
-            <version>1.0.23</version>
+            <version>1.0.24-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-typesystem</artifactId>
-            <version>1.0.23</version>
+            <version>1.0.24-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -61,7 +61,7 @@
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-network-server</artifactId>
-            <version>1.0.23</version>
+            <version>1.0.24-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
