@@ -1,100 +1,86 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>org.simpledbm</groupId>
-	<artifactId>simpledbm-samples-usermanual</artifactId>
-	<packaging>jar</packaging>
-	<version>1.0.22-SNAPSHOT</version>
-	<name>SimpleDBM UserManual</name>
-	<url>http://www.simpledbm.org</url>
-	<scm>
-		<connection>
-			scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/usermanual
-		</connection>
-		<developerConnection>
-			scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/usermanual
-		</developerConnection>
-		<url>http://simpledbm.googlecode.com/svn/</url>
-	</scm>
-	<developers>
-		<developer>
-			<id>d.majumdar</id>
-			<name>Dibyendu Majumdar</name>
-			<email>admin@simpledbm.org</email>
-			<organization>SimpleDBM</organization>
-			<organizationUrl>www.simpledbm.org</organizationUrl>
-		</developer>
-	</developers>
-	<licenses>
-		<license>
-			<name>
-				The GNU General Public License version 2.0 or later
-			</name>
-			<url>http://www.gnu.org/licenses/gpl.txt</url>
-		</license>
-	</licenses>
-	<dependencies>
-		<dependency>
-			<groupId>org.simpledbm</groupId>
-			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.22</version>
-		</dependency>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>3.8.1</version>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
-				</configuration>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-clover-plugin</artifactId>
-				<configuration>
-					<licenseLocation>${basedir}/src/test/clover/clover.license</licenseLocation>
-					<jdk>1.5</jdk>
-					<excludes>
-				        <exclude>**/test/java</exclude>
-					</excludes>
-				</configuration>
-				<executions>
-					<execution>
-						<goals>
-							<goal>instrument</goal>
-						</goals>
-					</execution>
-				</executions>
-			</plugin>
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>
-  <artifactId>maven-source-plugin</artifactId>
-  <executions>
-    <execution>      <id>attach-sources</id>
-      <goals>
-        <goal>jar</goal>
-      </goals>
-    </execution>
-  </executions>
-</plugin>
-<plugin>
-  <groupId>org.apache.maven.plugins</groupId>  <artifactId>maven-javadoc-plugin</artifactId>
-  <executions>
-    <execution>      <id>attach-javadocs</id>
-      <goals>        <goal>jar</goal>
-      </goals>
-    </execution>
-  </executions>
-</plugin>
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-samples-usermanual</artifactId>
+    <packaging>jar</packaging>
+    <version>1.0.22-SNAPSHOT</version>
+    <name>SimpleDBM UserManual</name>
+    <url>http://www.simpledbm.org</url>
+    <scm>
+        <connection>
+            scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/usermanual
+        </connection>
+        <developerConnection>
+            scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/usermanual
+        </developerConnection>
+        <url>http://simpledbm.googlecode.com/svn/</url>
+    </scm>
+    <developers>
+        <developer>
+            <id>d.majumdar</id>
+            <name>Dibyendu Majumdar</name>
+            <email>admin@simpledbm.org</email>
+            <organization>SimpleDBM</organization>
+            <organizationUrl>www.simpledbm.org</organizationUrl>
+        </developer>
+    </developers>
+    <licenses>
+        <license>
+            <name>
+                The GNU General Public License version 2.0 or later
+            </name>
+            <url>http://www.gnu.org/licenses/gpl.txt</url>
+        </license>
+    </licenses>
+    <dependencies>
+        <dependency>
+            <groupId>org.simpledbm</groupId>
+            <artifactId>simpledbm-rss</artifactId>
+            <version>1.0.22</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.6</source>
+                    <target>1.6</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
 
-		</plugins>
-	</build>
+        </plugins>
+    </build>
 </project>

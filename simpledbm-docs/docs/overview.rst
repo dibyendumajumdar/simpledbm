@@ -40,22 +40,21 @@ SimpleDBM implements the following features:
 - *Tables* - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.
 - *Latches and Locks* - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
 - *Deadlock detection* - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
+- *Network API* - From release 1.0.18 a network client server implementation is included that allows SimpleDBM servers to run standalone and remote clients to connect via TCP/IP. Only Java bindings available right now.
 
 Non-Features
 ------------
 
 - SimpleDBM is not an SQL engine. 
 - There is no support for distributed transactions (XA).
-- At present there is no network API.
 
-Current Status
---------------
+Status
+------
 
-SimpleDBM is currently in early BETA and not suitable for Production use. 
-Note that the SimpleDBM API is under flux, and is likely to change until 
-the production 1.0 release is available. 
-
-The latest builds can be downloaded Maven Central.
+SimpleDBM is fully usable, and is available via Maven Central.
+If you discover a bug, please report it - I will do my best to
+fix any bugs. Enhancements are currently not being done as I have no
+time available.
 
 Architecture
 ============
@@ -83,7 +82,7 @@ The RSS API is however, somewhat low level for ordinary users.
 It is meant to be used by people interested in building their own 
 Database Engines on top of RSS. 
 
-To provides users with a simplified API, two additional modules are
+To provides users with a simplified API, three additional modules are
 available. 
 
 The first one is the SimpleDBM TypeSystem module, which adds support
@@ -91,6 +90,8 @@ for typed data values and multi-attribute row objects.
 
 The second module, the Database API. This module implements a high level 
 Database API and uses the TypeSystem module on top of the RSS.
+
+Finally there is the Network API that provides a Client / Server model.
 
 Technology
 ----------
@@ -101,18 +102,18 @@ of this language.
 Third party libraries
 ---------------------
 
-To avoid license compatibility issues, and to reduce dependency on
-third-party libraries, SimpleDBM makes little or no use of any
-external libraries. A custom wrapper is used for logging, which uses
-the Java logging API by default, but can use Log4J_ if available.
-
-.. _Log4J: http://logging.apache.org/log4j/1.2/index.html
+SimpleDBM has no run-time dependency on external libraries as it uses
+only out of the box Java 1.6 functionality. For test cases there is a
+dependency on JUnit.
 
 ===============
 Using SimpleDBM
 ===============
 
-SimpleDBM is available in two levels of abstraction.
+SimpleDBM is available in three levels of abstraction.
+
+The Network API modules allow SimpleDBM to be deployed in a simple
+Client / server configuration.
 
 The add-on modules SimpleDBM-Database and SimpleDBM Type-System provide
 a high level API wth support for data dictionary, and the ability to create tables
@@ -135,6 +136,7 @@ If you want to use it rather than extend, then read the document named SimpleDBM
 Database API.
 
 Obtaining SimpleDBM
+
 ===================
 SimpleDBM source code can be obtained from the `SimpleDBM Google project
 site`_. Source code is maintained in a Subversion repository, so you will 
