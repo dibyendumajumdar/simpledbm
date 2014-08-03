@@ -319,6 +319,8 @@ network.server.selectTimeout
 
 To create your new database, invoke SimpleDBM Network Server as follows:
 
+::
+
   java -jar simpledbm-network-server-1.0.23.jar create <properties file>
 
 This will create an empty database in the location specified by the property
@@ -332,6 +334,8 @@ Starting a database
 
 Once a database has been created, it can be started using the following
 command (the command is wrapped into two lines but is a single command):
+
+::
 
   java -Xms128m -Xmx1024m -jar simpledbm-network-server-1.0.23.jar 
      open <properties file>
