@@ -6,9 +6,9 @@ SimpleDBM Database API
 
 :Author: Dibyendu Majumdar
 :Contact: d dot majumdar at gmail dot com
-:Version: 1.0.13
+:Version: 1.0.23
 :Date: 18 October 2009
-:Copyright: Copyright by Dibyendu Majumdar, 2008-2009
+:Copyright: Copyright by Dibyendu Majumdar, 2008-2014
 
 .. contents::
 
@@ -21,13 +21,13 @@ This document describes the SimpleDBM Database API.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
+This documented is targetted at users of `SimpleDBM <https://code.google.com/p/simpledbm/>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.org/en/latest/overview.html>`_ document.
 
 ---------------
 Getting Started
@@ -65,18 +65,32 @@ SimpleDBM.
 
 SimpleDBM binaries
 ==================
-SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.5
+SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.6
 or above if you want to work with SimpleDBM.
 
-You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
-project download area. The following jar files are required:
+Following Maven dependencies are required to access the Database API. ::
 
-* `simpledbm-common-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - this provides common utilities.
-* `simpledbm-rss-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - this is the core database engine.
-* `simpledbm-typesystem-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - provides a simple type system.
-* `simpledbm-database-1.0.x.jar <http://simpledbm.googlecode.com/files/>`_ - provides a higher level database API with support for tables and indexes. 
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-common</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-rss</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-typesystem</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-database</artifactId>
+    <version>1.0.23</version>
+  </dependency>
 
-You should make sure that required jars are in your class path.
 
 Creating a SimpleDBM database
 =============================
@@ -103,7 +117,7 @@ as shown below: ::
   properties.setProperty("bufferpool.numbuffers", "1500");
   properties.setProperty("bufferpool.writerSleepInterval", "60000");
   properties.setProperty("transaction.ckpt.interval", "60000");
-  properties.setProperty("logging.properties.type", "log4j");
+  properties.setProperty("logging.properties.type", "jdk");
   properties.setProperty("logging.properties.file",
     "classpath:simpledbm.logging.properties");
   properties.setProperty("lock.deadlock.detection.interval", "3");
@@ -233,7 +247,7 @@ Here is a code snippet that shows how this is done: ::
   properties.setProperty("bufferpool.numbuffers", "1500");
   properties.setProperty("bufferpool.writerSleepInterval", "60000");
   properties.setProperty("transaction.ckpt.interval", "60000");
-  properties.setProperty("logging.properties.type", "log4j");
+  properties.setProperty("logging.properties.type", "jdk");
   properties.setProperty("logging.properties.file",
     "classpath:simpledbm.logging.properties");
   properties.setProperty("lock.deadlock.detection.interval", "3");
@@ -343,9 +357,7 @@ classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
 package is used.
 
 You can specify the type of logging to be used using the
-Server Property ``logging.properties.type``. If this is set to
-"log4j", SimpleDBM will use Log4J logging. Any other value causes
-SimpleDBM to use default JDK logging.
+Server Property ``logging.properties.type``. 
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
@@ -354,8 +366,7 @@ If the filename is prefixed with the string "classpath:", then
 SimpleDBM will search for the properties file in the classpath. 
 Otherwise, the filename is searched for in the current filesystem.
 
-A sample logging properties file is shown below. Note that this
-sample contains both JDK style and Log4J style configuration.::
+A sample logging properties file is shown below. ::
 
  ############################################################
  #  	JDK 1.4 Logging
@@ -390,42 +401,6 @@ sample contains both JDK style and Log4J style configuration.::
  org.simpledbm.trace.level = INFO
  org.simpledbm.database.level = INFO
 
- # Default Log4J configuration
-
- # Console appender
- log4j.appender.A1=org.apache.log4j.ConsoleAppender
- log4j.appender.A1.layout=org.apache.log4j.PatternLayout
- log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
-
- # File Appender
- log4j.appender.A2=org.apache.log4j.RollingFileAppender
- log4j.appender.A2.MaxFileSize=10MB
- log4j.appender.A2.MaxBackupIndex=1
- log4j.appender.A2.File=simpledbm.log
- log4j.appender.A2.layout=org.apache.log4j.PatternLayout
- log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
-
- # Root logger set to DEBUG using the A1 and A2 appenders defined above.
- log4j.rootLogger=DEBUG, A1, A2
-
- # Various loggers
- log4j.logger.org.simpledbm.registry=INFO
- log4j.logger.org.simpledbm.bufmgr=INFO
- log4j.logger.org.simpledbm.indexmgr=INFO
- log4j.logger.org.simpledbm.storagemgr=INFO
- log4j.logger.org.simpledbm.walogmgr=INFO
- log4j.logger.org.simpledbm.lockmgr=INFO
- log4j.logger.org.simpledbm.freespacemgr=INFO
- log4j.logger.org.simpledbm.slotpagemgr=INFO
- log4j.logger.org.simpledbm.transactionmgr=INFO
- log4j.logger.org.simpledbm.tuplemgr=INFO
- log4j.logger.org.simpledbm.latchmgr=INFO
- log4j.logger.org.simpledbm.pagemgr=INFO
- log4j.logger.org.simpledbm.rss.util=INFO
- log4j.logger.org.simpledbm.util=INFO
- log4j.logger.org.simpledbm.server=INFO
- log4j.logger.org.simpledbm.trace=INFO
- log4j.logger.org.simpledbm.database=INFO
 
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
