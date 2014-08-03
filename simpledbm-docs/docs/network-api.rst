@@ -41,6 +41,8 @@ or above if you want to work with SimpleDBM.
 
 The following maven dependencies give you access to the server jars.
 
+::
+
   <dependency>
     <groupId>org.simpledbm</groupId>
     <artifactId>simpledbm-network-server</artifactId>
@@ -48,6 +50,8 @@ The following maven dependencies give you access to the server jars.
   </dependency>
 
 The following maven dependencies are needed for the client application.
+
+::
 
   <dependency>
     <groupId>org.simpledbm</groupId>
