@@ -59,7 +59,7 @@ time available.
 Getting Started
 ---------------
 
-See `Getting Started <https://code.google.com/p/simpledbm/wiki/GettingStarted>` for instructions on how to start using SimpleDBM in your application.
+See `Getting Started <https://code.google.com/p/simpledbm/wiki/GettingStarted>`_ for instructions on how to start using SimpleDBM in your application.
 
 Architecture
 ============
