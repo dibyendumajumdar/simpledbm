@@ -24,7 +24,7 @@ very small footprint and can be embedded in the address space of an
 application. It provides a simple Java application programming interface (API), 
 which can be learned very quickly.
 
-.. _SimpleDBM: http://www.simpledbm.org
+.. _SimpleDBM: https://code.google.com/p/simpledbm/
 
 Features
 ========
@@ -55,6 +55,11 @@ SimpleDBM is fully usable, and is available via Maven Central.
 If you discover a bug, please report it - I will do my best to
 fix any bugs. Enhancements are currently not being done as I have no
 time available.
+
+Getting Started
+---------------
+
+See `Getting Started <https://code.google.com/p/simpledbm/wiki/GettingStarted>` for instructions on how to start using SimpleDBM in your application.
 
 Architecture
 ============
@@ -112,18 +117,16 @@ Using SimpleDBM
 
 SimpleDBM is available in three levels of abstraction.
 
-The Network API modules allow SimpleDBM to be deployed in a simple
-Client / server configuration.
+The `Network API`_ modules allow SimpleDBM to be deployed in a simple
+Client / server configuration. 
 
 The add-on modules SimpleDBM-Database and SimpleDBM Type-System provide
 a high level API wth support for data dictionary, and the ability to create tables
 with traditional row/column structure. Indexes can be associated with tables.
-Details of how to use this API can be found in the document SimpleDBM Database API.
-Instructions for getting started with the SimpleDBM Database API can be
-found at the `SimpleDBM Google project site`_.
+Details of how to use this API can be found in the document SimpleDBM `Database API`_.
 
 The lower level RSS module works at the level of containers and arbitrary
-types. The document named RSS User Manual provides instructions on how to develop
+types. The document named `RSS User Manual`_ provides instructions on how to develop
 using the RSS. Note that this is for advanced users who want to implement their
 own type system and data dictionary.
 
@@ -132,17 +135,16 @@ Developing SimpleDBM
 ====================
 
 The instructions in this section are for those who wish to develop SimpleDBM.
-If you want to use it rather than extend, then read the document named SimpleDBM 
-Database API.
 
 Obtaining SimpleDBM
-
 ===================
-SimpleDBM source code can be obtained from the `SimpleDBM Google project
-site`_. Source code is maintained in a Subversion repository, so you will 
-need a subversion client on your PC.
+SimpleDBM source code can be obtained from the `SimpleDBM Project site`_. Source code is maintained in a Mercurial repository, so you will 
+need a Mercurial client on your computer.
 
-.. _SimpleDBM Google project site: http://simpledbm.googlecode.com/
+.. _Network API: https://simpledbm.readthedocs.org/en/latest/network-api.html
+.. _Database API: https://simpledbm.readthedocs.org/en/latest/database-api.html
+.. _RSS User Manual: https://simpledbm.readthedocs.org/en/latest/usermanual.html
+.. _SimpleDBM project site: http://simpledbm.googlecode.com/
 
 The SimpleDBM SCM repository is organized as follows:
 
@@ -215,7 +217,7 @@ Pre-requisites
 --------------
 
 SimpleDBM uses Maven_ for build management. You will need to obtain a
-copy of Maven 2. Install Maven and set up your PATH so that Maven can be
+copy of Maven 3. Install Maven and set up your PATH so that Maven can be
 executed by typing the following command.
 
 :: 
@@ -224,53 +226,28 @@ executed by typing the following command.
 
 .. _Maven: http://maven.apache.org.
 
-SimpleDBM development is being done using Eclipse 3.x. You can use any IDE
+SimpleDBM development is being done using Eclipse. You can use any IDE
 of your choice, but you may need to find ways of converting the maven
 projects to the format recognized by your IDE.
 
-You will need a Subversion client in order to checkout the code for
+You will need a Mercurial client in order to checkout the code for
 SimpleDBM. 
 
-SimpleDBM requires Java SE 5.0 or above. Java SE 6.0 is recommended.
-On the Mac, Java SE 5.0 is available for Mac OS X Tiger.
-
-Make sure that Eclipse is setup to use J2SE 5.0 JRE, otherwise,
-SimpleDBM code will not compile.
+SimpleDBM requires Java SE 1.6 or above. 
 
 Instructions for Eclipse
 ------------------------
 The following instructions are for the simpledbm-rss project.
-However, the same instructions apply for the other projects, simply
-change the Mercurial URL as appropriate.
+However, the same instructions apply for the other projects.
 
 1. Use the Mercurial command line tools to create a local clone of the
    SimpleDBM Repository::
     
     hg clone http://simpledbm.googlecode.com/hg simpledbm
 
-2. Create a new ``classpath`` variable named ``M2_REPO`` inside
-   Eclipse. From the menu bar, select Window > Preferences. Select the Java
-   > Build Path > Classpath Variables page. The ``M2_REPO`` variable should
-   contain the path to your local Maven 2 repository. Usually this is::
-    
-    <Your Home Directory>/.m2/repository
-
-3. Import the SimpleDBM projects into Eclipse. The project files are stored in
-   the version control repository, so Eclipse should automatically create the
-   correct project type.
-
-If you need to change the dependencies in the project, such as using a different
-version of a module, you can edit the Maven ``pom.xml`` file. Once you have the
-correct dependencies, do following:
-
-1. Start a command shell. Cd to the project directory.
-
-2. Run ``mvn eclipse:clean``, followed by ``mvn eclipse:eclipse``.
-
-3. Switch back to Eclipse and refresh the project. It should now
-   display a small J against the project showing that it is a Java project. Eclipse
-   is now setup to automatically rebuild SimpleDBM whenever you change any
-   code.
+2. Import the SimpleDBM Maven projects into Eclipse. The parent pom file
+   is in the ``build`` folder. This is a multi-module pom file and will generate
+   sub projects below it.
 
 Maven commands 
 --------------
@@ -281,6 +258,7 @@ To run the test cases.
 
 ::
 
+  cd build
   mvn test
 
 To create the package and install it in the local repository.
@@ -295,46 +273,9 @@ specific instructions.
 Building releases
 =================
 
-SimpleDBM releases are built using Maven release plugin. 
-
-1. Setup the maven user settings file with userid/password for 
-   the Mercurial repository::
-     
-     <servers>
-       <server>
-         <id>simpledbm.googlecode.com</id>
-         <username>d.majumdar</username>
-         <password>xxxxxxx</password>
-       </server>
-     </servers>
-
-2. Make a new clone of the SimpleDBM Mercurial repository. Do not use your 
-   existing Eclipse project as the release-plugin does not like local files. 
-
-3. cd into the newly created project sub-directory directory.
-
-4. Run::
-     
-     mvn release:prepare -DdryRun=true
-   
-   If this completes successfully, execute::
-     
-     mvn release:clean
-   
-   Delete local files created by the release::
-     
-     mvn clean
-     rm -rf testdata
-     rm simpledbm.log*
-
-5. Now do the real build::
-     
-     mvn release:prepare
-
-6. Finally, run mvn release:perform to deploy the release. At present the release 
-   is deployed to a local filesystem directory file:///tmp. Note that this 
-   step is optional - if you are not deploying the release then 
-   you can skip this step.
+SimpleDBM releases are published to Maven Central. Please contribute your
+changes to SimpleDBM maintainer (admin@simpledbm.org) as releases can only 
+be performed by the maintainer.
 
 ============================
 Coding and Design Principles
@@ -437,17 +378,17 @@ source code. This acts as another source of information.
 
 Following documents are recommended as starting points:
 
-  * `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ - provides an overview of SimpleDBM
-  * `SimpleDBM Database API <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/database-api.html>`_ - describes the Database API
-  * `SimpleDBM TypeSystem <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/typesystem.html>`_ - useful if you want to know more about the type system
+  * `SimpleDBM Overview <https://simpledbm.readthedocs.org/en/latest/overview.html>`_ - provides an overview of SimpleDBM
+  * `Database API`_ - describes the Database API
+  * `SimpleDBM TypeSystem <https://simpledbm.readthedocs.org/en/latest/typesystem.html>`_ - useful if you want to know more about the type system
 
 For advanced stuff, read:
 
-  * `SimpleDBM RSS User's Manual <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/usermanual.html>`_ - describes the low level API of RSS
-  * `SimpleDBM RSS Developer's Guide <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
+  * `SimpleDBM RSS User Manual <https://simpledbm.readthedocs.org/en/latest/usermanual.html>`_ - describes the low level API of RSS
+  * `SimpleDBM RSS Developers Guide <https://simpledbm.readthedocs.org/en/latest/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
   * `BTree Space Management <http://simpledbm.googlecode.com/files/btree-space-management-1.0.pdf>`_ - describes some implementation issues with BTree space management
 
-JavaDoc for the main projects:
+JavaDoc (these are slightly older versions) for the main projects:
 
   * `Database API JavaDoc <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.11-javadoc.jar>`_ - contains the JavaDoc for the SimpleDBM Database API
   * `TypeSystem JavaDoc <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.10-javadoc.jar>`_ - contains JavaDoc for the TypeSystem.
