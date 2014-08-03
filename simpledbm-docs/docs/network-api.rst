@@ -7,9 +7,9 @@ SimpleDBM Network API
 
 :Author: Dibyendu Majumdar
 :Contact: d dot majumdar at gmail dot com
-:Version: 0.0.1
-:Date: 17 March 2010
-:Copyright: Copyright by Dibyendu Majumdar, 2010
+:Version: 1.0.23
+:Date: 17 March 2010 
+:Copyright: Copyright by Dibyendu Majumdar, 2010-2014
 
 .. contents::
 
@@ -22,13 +22,13 @@ This document describes the SimpleDBM Network API.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
+This documented is targetted at users of `SimpleDBM <http://https://code.google.com/p/simpledbm/>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.org/en/latest/overview.html>`_ document.
 
 ---------------
 Getting Started
@@ -36,16 +36,40 @@ Getting Started
 
 SimpleDBM binaries
 ==================
-SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.5
+SimpleDBM makes use of Java 5.0 features, hence you will need to use JDK1.6
 or above if you want to work with SimpleDBM.
 
-You can download the SimpleDBM binaries from the SimpleDBM GoogleCode
-project download area. The following jar files are required:
+The following maven dependencies give you access to the server jars.
 
-* `simpledbm-network-client-0.0.1-ALPHA.jar <http://simpledbm.googlecode.com/files/>`_ - client API.
-* `simpledbm-network-server-0.0.1-ALPHA.jar <http://simpledbm.googlecode.com/files/>`_ - server engine.
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-network-server</artifactId>
+    <version>1.0.23</version>
+  </dependency>
 
-You should make sure that required jars are in your class path.
+The following maven dependencies are needed for the client application.
+
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-network-server</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-network-framework</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-network-common</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+  <dependency>
+    <groupId>org.simpledbm</groupId>
+    <artifactId>simpledbm-typesystem</artifactId>
+    <version>1.0.23</version>
+  </dependency>
+
 
 Summary of Steps Required
 =========================
@@ -264,8 +288,6 @@ properties file::
   lock.deadlock.detection.interval = 3
 
 Notice that most of these properties are the standard options supported by SimpleDBM.
-You also need to create a log4j config file, in this example, the server is being 
-instructed to search for simpledbm.logging.properties file in the classpath.
 An example of the logging properties file can be found in the SimpleDBM
 distribution.
 
@@ -293,10 +315,13 @@ network.server.selectTimeout
 
 To create your new database, invoke SimpleDBM Network Server as follows:
 
-  java -jar simpledbm-network-server-0.0.1-ALPHA.jar create <properties file>
+  java -jar simpledbm-network-server-1.0.23.jar create <properties file>
 
 This will create an empty database in the location specified by the property
 `storage.basePath`.
+
+Note that you can obtain the jar above from Maven Central - the link is 
+`SimpleDBM NetWork Server 1.0.23 <http://search.maven.org/remotecontent?filepath=org/simpledbm/simpledbm-network-server/1.0.23/simpledbm-network-server-1.0.23.jar>`_.
 
 Starting a database
 ===================
@@ -304,7 +329,7 @@ Starting a database
 Once a database has been created, it can be started using the following
 command (the command is wrapped into two lines but is a single command):
 
-  java -Xms128m -Xmx1024m -jar simpledbm-network-server-0.0.1-ALPHA.jar 
+  java -Xms128m -Xmx1024m -jar simpledbm-network-server-1.0.23.jar 
      open <properties file>
 
 To stop the database server, simply press Control-C. It may take a few 
@@ -330,15 +355,7 @@ SimpleDBM to start.
 Managing log messages
 =====================
 
-SimpleDBM has support for JDK 1.4 style logging as well as
-Log4J logging. By default, if Log4J library is available on the
-classpath, SimpleDBM will use it. Otherwise, JDK 1.4 util.logging
-package is used. The network server includes a Log4J library.
-
-You can specify the type of logging to be used using the
-Server Property ``logging.properties.type``. If this is set to
-"log4j", SimpleDBM will use Log4J logging. Any other value causes
-SimpleDBM to use default JDK logging.
+SimpleDBM has support for JDK 1.4 style logging.
 
 The configuration of the logging can be specified using a 
 properties file. The name and location of the properties file
@@ -384,45 +401,6 @@ sample contains both JDK style and Log4J style configuration.::
  org.simpledbm.database.level = INFO
  org.simpledbm.network.level = INFO
  org.simpledbm.network.server.level = INFO
-
- # Default Log4J configuration
-
- # Console appender
- log4j.appender.A1=org.apache.log4j.ConsoleAppender
- log4j.appender.A1.layout=org.apache.log4j.PatternLayout
- log4j.appender.A1.layout.ConversionPattern=%d [%t] %p %c %m%n
-
- # File Appender
- log4j.appender.A2=org.apache.log4j.RollingFileAppender
- log4j.appender.A2.MaxFileSize=10MB
- log4j.appender.A2.MaxBackupIndex=1
- log4j.appender.A2.File=simpledbm.log
- log4j.appender.A2.layout=org.apache.log4j.PatternLayout
- log4j.appender.A2.layout.ConversionPattern=%d [%t] %p %c %m%n
-
- # Root logger set to DEBUG using the A1 and A2 appenders defined above.
- log4j.rootLogger=DEBUG, A1, A2
-
- # Various loggers
- log4j.logger.org.simpledbm.registry=INFO
- log4j.logger.org.simpledbm.bufmgr=INFO
- log4j.logger.org.simpledbm.indexmgr=INFO
- log4j.logger.org.simpledbm.storagemgr=INFO
- log4j.logger.org.simpledbm.walogmgr=INFO
- log4j.logger.org.simpledbm.lockmgr=INFO
- log4j.logger.org.simpledbm.freespacemgr=INFO
- log4j.logger.org.simpledbm.slotpagemgr=INFO
- log4j.logger.org.simpledbm.transactionmgr=INFO
- log4j.logger.org.simpledbm.tuplemgr=INFO
- log4j.logger.org.simpledbm.latchmgr=INFO
- log4j.logger.org.simpledbm.pagemgr=INFO
- log4j.logger.org.simpledbm.rss.util=INFO
- log4j.logger.org.simpledbm.util=INFO
- log4j.logger.org.simpledbm.server=INFO
- log4j.logger.org.simpledbm.trace=INFO
- log4j.logger.org.simpledbm.database=INFO
- log4j.logger.org.simpledbm.network=INFO
- log4j.logger.org.simpledbm.network.server=INFO
 
 By default, SimpleDBM looks for a logging properties file named
 "simpledbm.logging.properties".
