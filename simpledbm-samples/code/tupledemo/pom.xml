@@ -9,13 +9,9 @@
     <name>SimpleDBM Tuple Demonstration</name>
     <url>http://www.simpledbm.org</url>
     <scm>
-        <connection>
-            scm:svn:http://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/tupledemo
-        </connection>
-        <developerConnection>
-            scm:svn:https://simpledbm.googlecode.com/svn/trunk/simpledbm-samples/code/tupledemo
-        </developerConnection>
-        <url>http://simpledbm.googlecode.com/svn/</url>
+        <connection>scm:git:git@github.com:dibyendumajumdar/simpledbm.git</connection>
+        <developerConnection>scm:git:git@github.com:dibyendumajumdar/simpledbm.git</developerConnection>
+        <url>git@github.com:dibyendumajumdar/simpledbm</url>
     </scm>
     <developers>
         <developer>

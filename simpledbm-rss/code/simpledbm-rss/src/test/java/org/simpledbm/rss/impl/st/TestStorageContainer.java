@@ -34,6 +34,8 @@ package org.simpledbm.rss.impl.st;
 import java.io.File;
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.junit.BaseTestCase;
 import org.simpledbm.rss.api.st.StorageContainer;
 import org.simpledbm.rss.api.st.StorageContainerFactory;
@@ -173,5 +175,14 @@ public class TestStorageContainer extends BaseTestCase {
         }
         checkThreadFailures();
     }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestStorageContainer("testCreate"));
+        suite.addTest(new TestStorageContainer("testCase2"));
+        suite.addTest(new TestStorageContainer("testCase3"));
+        return suite;
+    }
+
 
 }

@@ -502,4 +502,18 @@ class MyRecord implements Storable {
         return "TestRecord(" + id + ")";
     }
 
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestLogManager("testCreate"));
+        suite.addTest(new TestLogManager("testCreate2"));
+        suite.addTest(new TestLogManager("testOpen"));
+        suite.addTest(new TestLogManager("testInsertOne"));
+        suite.addTest(new TestLogManager("testReadOne"));
+        suite.addTest(new TestLogManager("testLogSwitch"));
+        suite.addTest(new TestLogManager("testReadAfterLogSwitch"));
+        return suite;
+    }
+
+
 }

@@ -6,30 +6,6 @@
     <version>1.0.24-SNAPSHOT</version>
     <name>SimpleDBM Network Common</name>
     <url>http://www.simpledbm.org</url>
-    <scm>
-        <connection>
-            scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simpledbm-network-common
-        </connection>
-        <developerConnection>
-            scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-network/code/simpledbm-network-common
-        </developerConnection>
-        <url>http://code.google.com/p/simpledbm/source/browse/</url>
-    </scm>
-    <developers>
-        <developer>
-            <id>dmajumdar</id>
-            <name>Dibyendu Majumdar</name>
-            <email>admin@simpledbm.org</email>
-            <organization>SimpleDBM</organization>
-            <organizationUrl>www.simpledbm.org</organizationUrl>
-        </developer>
-    </developers>
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-        </license>
-    </licenses>
     <parent>
         <groupId>org.simpledbm</groupId>
         <artifactId>simpledbm-parent</artifactId>

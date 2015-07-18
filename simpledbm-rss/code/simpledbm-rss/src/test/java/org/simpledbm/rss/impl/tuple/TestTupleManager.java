@@ -41,6 +41,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.registry.Storable;
@@ -648,6 +650,18 @@ public class TestTupleManager extends BaseTestCase {
             logmgr.shutdown();
             storageManager.shutdown();
         }
+    }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestTupleManager("testCase1"));
+        suite.addTest(new TestTupleManager("testCase2"));
+        suite.addTest(new TestTupleManager("testCase3"));
+        suite.addTest(new TestTupleManager("testCase4"));
+        suite.addTest(new TestTupleManager("testCase5"));
+        suite.addTest(new TestTupleManager("testCase6"));
+        suite.addTest(new TestTupleManager("testCase7"));
+        return suite;
     }
 
 }

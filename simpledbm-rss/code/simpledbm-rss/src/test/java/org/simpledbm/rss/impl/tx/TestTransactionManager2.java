@@ -34,6 +34,8 @@ package org.simpledbm.rss.impl.tx;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.locking.LockMode;
 import org.simpledbm.common.api.registry.ObjectFactory;
 import org.simpledbm.common.api.registry.ObjectRegistry;
@@ -1188,5 +1190,17 @@ public class TestTransactionManager2 extends BaseTestCase {
         }
 
     }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestTransactionManager2("testTrxMgrStart"));
+        suite.addTest(new TestTransactionManager2("testBitMgrCreateContainer"));
+        suite.addTest(new TestTransactionManager2("testBitMgrSingleThread"));
+        suite.addTest(new TestTransactionManager2("testBitMgrSingleThreadRestart"));
+        suite.addTest(new TestTransactionManager2("testTrxLocking"));
+        return suite;
+    }
+
+
 
 }

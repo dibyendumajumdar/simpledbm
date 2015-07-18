@@ -37,6 +37,8 @@ import java.util.Date;
 import java.util.Properties;
 import java.util.Random;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.database.api.Database;
 import org.simpledbm.database.api.DatabaseFactory;
@@ -1003,5 +1005,15 @@ public class TestDatabase extends BaseTestCase {
             array[k] = temp;
         }
     }
-	
+
+	public static Test suite() {
+		TestSuite suite = new TestSuite();
+		suite.addTest(new TestDatabase("testBasicFunctions"));
+		suite.addTest(new TestDatabase("testRecovery"));
+		suite.addTest(new TestDatabase("testUpdates"));
+		suite.addTest(new TestDatabase("testStress"));
+		return suite;
+	}
+
+
 }

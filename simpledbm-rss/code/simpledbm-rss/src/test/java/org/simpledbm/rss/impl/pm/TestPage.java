@@ -34,6 +34,8 @@ package org.simpledbm.rss.impl.pm;
 import java.nio.ByteBuffer;
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
@@ -177,6 +179,15 @@ public class TestPage extends BaseTestCase {
         assertEquals(pageManager.getUsablePageSize() - Page.SIZE, page
                 .getAvailableLength());
         assertEquals(pageManager.getPageSize(), page.getStoredLength());
+    }
+
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestPage("testCase1"));
+        suite.addTest(new TestPage("testCase2"));
+        suite.addTest(new TestPage("testCase3"));
+        return suite;
     }
 
 }

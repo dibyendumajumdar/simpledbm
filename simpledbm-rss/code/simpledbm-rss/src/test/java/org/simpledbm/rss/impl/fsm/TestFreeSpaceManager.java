@@ -33,6 +33,8 @@ package org.simpledbm.rss.impl.fsm;
 
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.platform.Platform;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.api.tx.IsolationMode;
@@ -257,8 +259,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
             assertTrue(db.storageManager.getInstance(0) != null);
             assertTrue(db.storageManager.getInstance(1) != null);
 
-            int expectedPages[] = { 2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15,
-                    -1 };
+            int expectedPages[] = {2, 3, 4, 5, 6, 7, 8, 9, 11, 12, 13, 14, 15,
+                    -1};
 
             SpaceCursorImpl spaceCursor = new SpaceCursorImpl(db.spacemgr, 1);
             for (int i = 0; i < (expectedPages.length + 5); i++) {
@@ -279,8 +281,8 @@ public class TestFreeSpaceManager extends BaseTestCase {
                 trx.commit();
             }
 
-            expectedPages = new int[] { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-                    14, 15, -1 };
+            expectedPages = new int[]{2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+                    14, 15, -1};
 
             FreeSpaceScan spaceScan = db.spacemgr.openScan(1);
             try {
@@ -411,5 +413,21 @@ public class TestFreeSpaceManager extends BaseTestCase {
             storageManager.shutdown();
         }
 
+    }
+
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestFreeSpaceManager("testOneBitSpaceMapPage"));
+        suite.addTest(new TestFreeSpaceManager("testCreateContainerAbort"));
+        suite.addTest(new TestFreeSpaceManager("testCreateContainerCommit"));
+        suite.addTest(new TestFreeSpaceManager("testDropContainerCommit"));
+        suite.addTest(new TestFreeSpaceManager("testCreateContainerCommit2"));
+        suite.addTest(new TestFreeSpaceManager("testDropContainerAbort"));
+        suite.addTest(new TestFreeSpaceManager("testDropContainerRollback"));
+        suite.addTest(new TestFreeSpaceManager("testExtendContainer"));
+        suite.addTest(new TestFreeSpaceManager("testSpaceCursor"));
+        suite.addTest(new TestFreeSpaceManager("testReopenContainer"));
+        return suite;
     }
 }

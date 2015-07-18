@@ -36,6 +36,8 @@ import java.nio.ByteBuffer;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.registry.ObjectRegistry;
 import org.simpledbm.common.impl.registry.ObjectRegistryImpl;
 import org.simpledbm.junit.BaseTestCase;
@@ -698,4 +700,18 @@ public class TestBufferManager extends BaseTestCase {
             storageFactory.delete("testfile.dat");
         }
     }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestBufferManager("testCase1"));
+        suite.addTest(new TestBufferManager("testCase2"));
+        suite.addTest(new TestBufferManager("testCase3"));
+        suite.addTest(new TestBufferManager("testCase4"));
+        suite.addTest(new TestBufferManager("testCase5"));
+        suite.addTest(new TestBufferManager("testCase6"));
+        suite.addTest(new TestBufferManager("testCase7"));
+        return suite;
+    }
+
+
 }

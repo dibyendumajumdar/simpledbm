@@ -7,34 +7,7 @@
     <name>SimpleDBM Relational Storage System</name>
     <description>SimpleDBM Relational Storage System</description>
     <url>http://www.simpledbm.org</url>
-    <scm>
-        <connection>scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-rss/code/simpledbm-rss</connection>
-        <developerConnection>scm:hg:https://simpledbm.googlecode.com/hg/simpledbm-rss/code/simpledbm-rss
-        </developerConnection>
-        <url>http://code.google.com/p/simpledbm/source/browse/</url>
-    </scm>
     <inceptionYear>2005</inceptionYear>
-    <issueManagement>
-        <url>http://code.google.com/p/simpledbm/issues/list</url>
-    </issueManagement>
-    <developers>
-        <developer>
-            <id>d.majumdar</id>
-            <name>Dibyendu Majumdar</name>
-            <email>admin@simpledbm.org</email>
-            <organization>SimpleDBM</organization>
-            <organizationUrl>www.simpledbm.org</organizationUrl>
-            <roles>
-                <role>Project Owner</role>
-            </roles>
-        </developer>
-    </developers>
-    <licenses>
-        <license>
-            <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
-        </license>
-    </licenses>
     <parent>
         <groupId>org.simpledbm</groupId>
         <artifactId>simpledbm-parent</artifactId>

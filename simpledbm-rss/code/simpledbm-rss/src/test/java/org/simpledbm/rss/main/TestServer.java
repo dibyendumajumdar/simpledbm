@@ -33,6 +33,8 @@ package org.simpledbm.rss.main;
 
 import java.util.Properties;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.api.tx.IsolationMode;
 import org.simpledbm.common.util.ByteString;
@@ -172,5 +174,15 @@ public class TestServer extends BaseTestCase {
         }
         fail("Unexpected result - server startup should have failed");
     }
+
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new TestServer("testCase1"));
+        suite.addTest(new TestServer("testCase2"));
+        suite.addTest(new TestServer("testCase3"));
+        suite.addTest(new TestServer("testCase4"));
+        return suite;
+    }
+
 
 }
