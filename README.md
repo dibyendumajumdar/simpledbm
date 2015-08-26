@@ -82,6 +82,6 @@ For advanced stuff, read:
   * [SimpleDBM Developer's Guide](https://simpledbm.readthedocs.org/en/latest/developerguide.html) - covers internals of RSS, the SimpleDBM database engine
   * [BTree Space Management (pdf)](http://simpledbm.googlecode.com/files/btree-space-management-1.0.pdf) - describes some implementation issues with BTree space management
 
-You can read the [SimpleDBM Blog](http://simpledbm.blogspot.com/) and other papers available in the downloads section. If you are interested in development, you should also read the literature referred to in the Bibliography.
+You can read the [SimpleDBM Blog](http://simpledbm.blogspot.com/) and other papers available in the downloads section. If you are interested in development, you should also read the literature referred to in the [Bibliography](https://github.com/dibyendumajumdar/simpledbm/wiki/Bibliography).
 
 If you find bugs, please raise Issues. You can also post questions in the [discussion group](http://groups.google.com/group/simpledbm).
