@@ -3,7 +3,7 @@ Space Management in B-Link Trees
 ================================
 
 :Author: Dibyendu Majumdar
-:Contact: dibyendu@mazumdar.demon.co.uk	
+:Contact: d dot majumdar at gmail dot com	
 :Abstract:
 
   Space management operations can drastically reduce the concurrency of B-link 
