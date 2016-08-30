@@ -71,16 +71,16 @@ Instructions to follow...
 # Documentation #
 For documentation, I recommend you start with:
 
-  * [SimpleDBM Overview](https://simpledbm.readthedocs.org/en/latest/overview.html) - provides an overview of SimpleDBM
-  * [SimpleDBM Network API](https://simpledbm.readthedocs.org/en/latest/network-api.html) - describes the Network API for client/server implementation
-  * [SimpleDBM Database API](https://simpledbm.readthedocs.org/en/latest/database-api.html) - describes the Database API for embedded use
-  * [SimpleDBM TypeSystem](https://simpledbm.readthedocs.org/en/latest/typesystem.html) - useful if you want to know more about the type system
+  * [SimpleDBM Overview](http://simpledbm.readthedocs.io/en/latest/overview.html) - provides an overview of SimpleDBM
+  * [SimpleDBM Network API](http://simpledbm.readthedocs.io/en/latest/network-api.html) - describes the Network API for client/server implementation
+  * [SimpleDBM Database API](http://simpledbm.readthedocs.io/en/latest/database-api.html) - describes the Database API for embedded use
+  * [SimpleDBM TypeSystem](http://simpledbm.readthedocs.io/en/latest/typesystem.html) - useful if you want to know more about the type system
 
 For advanced stuff, read:
 
-  * [SimpleDBM RSS User's Manual](https://simpledbm.readthedocs.org/en/latest/usermanual.html) - describes the low level API of RSS
-  * [SimpleDBM Developer's Guide](https://simpledbm.readthedocs.org/en/latest/developerguide.html) - covers internals of RSS, the SimpleDBM database engine
-  * [BTree Space Management (pdf)](http://simpledbm.googlecode.com/files/btree-space-management-1.0.pdf) - describes some implementation issues with BTree space management
+  * [SimpleDBM RSS User's Manual](http://simpledbm.readthedocs.io/en/latest/usermanual.html) - describes the low level API of RSS
+  * [SimpleDBM Developer's Guide](http://simpledbm.readthedocs.io/en/latest/developerguide.html) - covers internals of RSS, the SimpleDBM database engine
+  * [BTree Space Management (pdf)](http://simpledbm.readthedocs.io/files/btree-space-management-1.0.pdf) - describes some implementation issues with BTree space management
 
 You can read the [SimpleDBM Blog](http://simpledbm.blogspot.com/) and other papers available in the downloads section. If you are interested in development, you should also read the literature referred to in the [Bibliography](https://github.com/dibyendumajumdar/simpledbm/wiki/Bibliography).
 
