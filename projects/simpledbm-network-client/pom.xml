@@ -1,21 +1,26 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.simpledbm</groupId>
-    <artifactId>simpledbm-network-common</artifactId>
+    <artifactId>simpledbm-network-client</artifactId>
     <packaging>jar</packaging>
     <version>1.0.24-SNAPSHOT</version>
-    <name>SimpleDBM Network Common</name>
+    <name>SimpleDBM Network Client</name>
     <url>http://www.simpledbm.org</url>
     <parent>
         <groupId>org.simpledbm</groupId>
         <artifactId>simpledbm-parent</artifactId>
         <version>1.0.24-SNAPSHOT</version>
-        <relativePath>../../../build/pom.xml</relativePath>
+        <relativePath>../../build/pom.xml</relativePath>
     </parent>
     <dependencies>
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-network-framework</artifactId>
+            <version>1.0.24-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>org.simpledbm</groupId>
+            <artifactId>simpledbm-network-common</artifactId>
             <version>1.0.24-SNAPSHOT</version>
         </dependency>
         <dependency>
@@ -27,6 +32,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>3.8.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.simpledbm</groupId>
+            <artifactId>simpledbm-network-server</artifactId>
+            <version>1.0.24-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -55,7 +66,20 @@
                 </configuration>
             </plugin>
             <plugin>
-                <artifactId>maven-release-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>1.6</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <promoteTransitiveDependencies>true</promoteTransitiveDependencies>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -95,6 +119,9 @@
                 </executions>
             </plugin>
 
+            <plugin>
+                <artifactId>maven-release-plugin</artifactId>
+            </plugin>
         </plugins>
     </build>
     <reporting>

@@ -40,13 +40,13 @@
         </license>
     </licenses>
     <modules>
-        <module>../simpledbm-common/code/simpledbm-common</module>
-        <module>../simpledbm-typesystem/code/simpledbm-typesystem</module>
-        <module>../simpledbm-rss/code/simpledbm-rss</module>
-        <module>../simpledbm-database/code/simpledbm-database</module>
-        <module>../simpledbm-network/code/simpledbm-network-framework</module>
-        <module>../simpledbm-network/code/simpledbm-network-common</module>
-        <module>../simpledbm-network/code/simpledbm-network-server</module>
-        <module>../simpledbm-network/code/simpledbm-network-client</module>
+        <module>../projects/simpledbm-common</module>
+        <module>../projects/simpledbm-typesystem</module>
+        <module>../projects/simpledbm-rss</module>
+        <module>../projects/simpledbm-database</module>
+        <module>../projects/simpledbm-network-framework</module>
+        <module>../projects/simpledbm-network-common</module>
+        <module>../projects/simpledbm-network-server</module>
+        <module>../projects/simpledbm-network-client</module>
     </modules>
 </project>
