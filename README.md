@@ -5,12 +5,12 @@ very quickly. A simple network API is available for remote access.
 
 ## Features ##
 SimpleDBM has the following features:
-  1. **Transactional** - SimpleDBM fully supports ACID transactions. SimpleDBM uses a STEAL/NO-FORCE buffer management strategy for transactions.
+  1. **Transactional** - SimpleDBM fully supports ACID transactions. SimpleDBM uses a STEAL/NO-FORCE buffer management strategy for transactions; SimpleDBM's Transaction Manager implements the [ARIES algorithm](https://en.wikipedia.org/wiki/Algorithms_for_Recovery_and_Isolation_Exploiting_Semantics).
   1. **Multi-threaded** - SimpleDBM is multi-threaded and supports concurrent reads and writes of data.
   1. **Write Ahead Log** - SimpleDBM uses a write ahead log to ensure transaction recovery in the event of system crashes.
   1. **Lock based concurrency** - SimpleDBM uses shared, update and exclusive row locks to manage concurrency.
   1. **Multiple Isolation Levels** - SimpleDBM supports read-committed, repeatable-read, and serializable isolation levels.
-  1. **B-Tree Indexes** - SimpleDBM implements B-plus Tree indexes, that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually re-balance themselves, and do not suffer from fragmentation.
+  1. **B-Tree Indexes** - SimpleDBM implements [B-Link/Plus Tree indexes](http://link.springer.com/article/10.1007/s00778-004-0140-6), that fully support concurrent reads, inserts and deletes. SimpleDBM B-Trees continually re-balance themselves, and do not suffer from fragmentation.
   1. **Tables** - SimpleDBM supports tables, but for maximum flexibility, treats table rows as blobs of data. Table rows can have any internal structure as you like, and can span multiple disk pages. Standard table rows with multiple columns are supported via add-on modules.
   1. **Latches and Locks** - SimpleDBM uses latches for internal consistency, and locks for concurrency. Latches are more efficient locking mechanisms that do not suffer from deadlocks.
   1. **Deadlock detection** - SimpleDBM has support for deadlock detection. A background thread periodically checks the lock table for deadlocks and aborts transactions to resolve deadlocks.
