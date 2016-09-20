@@ -1,6 +1,6 @@
 The main projects are:
 
-* simpledbm-rss - This is the core database engine - named RSS after IBM's research prototype. The RSS offers a low level API - most users will prefer to use the higher level API offered by simpledbm-database.
+* simpledbm-rss - This is the core database engine - named RSS after IBM's research prototype. The RSS offers a low level API - most users will prefer to use the higher level API offered by simpledbm-database. [Extensive documentation](http://simpledbm.readthedocs.io/en/latest/developerguide.html) is available.
 * simpledbm-common - Some base utilities
 * simpledbm-typesystem - This adds a typesystem on top of RSS
 * simpledbm-database - This provides a higher table level API that is implemented using the typesystem. 
