@@ -182,6 +182,7 @@ should be placed at the LRU (least recently used) end of the cache.
 
 The garbage collection process may be started anytime after system 
 recovery has been completed. It needs to scan each B-link tree 
+
 only once. It can run in parallel with other processes as a low 
 priority task. 
 
@@ -251,6 +252,16 @@ In this approach, page deallocations are handled in the same way as
 page allocations at the expense of additional locking. This approach 
 also avoids the problem of incorrect information in space map pages. 
 
+Related Papers
+--------------
+The paper [IBRA-06] presents the algorithms described in this document in
+more detail.
+
+.. [IBRA-06] I Jaluta, D Majumdar 
+   Efficient space management for B-tree structure-modification operations
+   IEEE International conference on Information & Communication Technologies: 
+   from Theory to Application (ICTTA’06), Volume 2
+   
 .. [IBRA-05] Ibrahim Jaluta, Seppo Sippu and Eljas Soisalon-Soininen. 
    Concurrency control and recovery for balanced B-link trees. 
    The VLDB Journal, Volume 14, Issue 2 (April 2005), 
