@@ -204,7 +204,7 @@ Advantages of proposed solution
 
 4. SMOs do not require space map pages to be latched exclusively at the same 
    time as other pages are latched exclusively. This allows multiple SMOs 
-   to proceed concurrently.
+.   to proceed concurrently.
 
 Disadvantages of proposed solution
 ----------------------------------
@@ -257,8 +257,8 @@ Related Papers
 The paper [IBRA-06] presents the algorithms described in this document in
 more detail.
 
-.. [IBRA-06] I Jaluta, D Majumdar 
-   Efficient space management for B-tree structure-modification operations
+.. [IBRA-06] I Jaluta, D Majumda 
+   Efficient space management for B-tree structure-modification operations.
    IEEE International conference on Information & Communication Technologies: 
    from Theory to Application (ICTTA’06), Volume 2
    
