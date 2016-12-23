@@ -351,15 +351,15 @@ source code. This acts as another source of information.
 
 Following documents are recommended as starting points:
 
-  * `SimpleDBM Overview <https://simpledbm.readthedocs.io/en/latest/overview.html>`_ - provides an overview of SimpleDBM
-  * `Database API`_ - describes the Database API
-  * `SimpleDBM TypeSystem <https://simpledbm.readthedocs.io/en/latest/typesystem.html>`_ - useful if you want to know more about the type system
+* `SimpleDBM Overview <https://simpledbm.readthedocs.io/en/latest/overview.html>`_ - provides an overview of SimpleDBM
+* `Database API`_ - describes the Database API
+* `SimpleDBM TypeSystem <https://simpledbm.readthedocs.io/en/latest/typesystem.html>`_ - useful if you want to know more about the type system
 
 For advanced stuff, read:
 
-  * `SimpleDBM RSS User Manual <https://simpledbm.readthedocs.io/en/latest/usermanual.html>`_ - describes the low level API of RSS
-  * `SimpleDBM RSS Developers Guide <https://simpledbm.readthedocs.io/en/latest/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
-  * `BTree Space Management <https://github.com/dibyendumajumdar/simpledbm/blob/master/docs/btree-space-management.rst>`_ - describes some implementation issues with BTree space management
+* `SimpleDBM RSS User Manual <https://simpledbm.readthedocs.io/en/latest/usermanual.html>`_ - describes the low level API of RSS
+* `SimpleDBM RSS Developers Guide <https://simpledbm.readthedocs.io/en/latest/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
+* `BTree Space Management <https://github.com/dibyendumajumdar/simpledbm/blob/master/docs/btree-space-management.rst>`_ - describes some implementation issues with BTree space management
 
 
 .. [ASTRA-76] M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,
