@@ -3052,6 +3052,9 @@ The third page (pagenumber = 2) is  allocated as the root page of the
 tree. The root page never changes.
 
 
+.. image:: images/blink-tree-structure.jpg
+   :scale: 60
+
 .. raw:: latex
  
    \begin{center}
