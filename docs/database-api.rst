@@ -8,7 +8,7 @@ SimpleDBM Database API
 :Contact: d dot majumdar at gmail dot com
 :Version: 1.0.23
 :Date: 18 October 2009
-:Copyright: Copyright by Dibyendu Majumdar, 2008-2014
+:Copyright: Copyright by Dibyendu Majumdar, 2008-2016
 
 .. contents::
 
@@ -21,13 +21,13 @@ This document describes the SimpleDBM Database API.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <https://code.google.com/p/simpledbm/>`_.
+This documented is targetted at users of `SimpleDBM <https://github.com/dibyendumajumdar/simpledbm>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.readthedocs.org/en/latest/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.io/en/latest/overview.html>`_ document.
 
 ---------------
 Getting Started

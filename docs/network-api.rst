@@ -9,7 +9,7 @@ SimpleDBM Network API
 :Contact: d dot majumdar at gmail dot com
 :Version: 1.0.23
 :Date: 17 March 2010 
-:Copyright: Copyright by Dibyendu Majumdar, 2010-2014
+:Copyright: Copyright by Dibyendu Majumdar, 2010-2016
 
 .. contents::
 
@@ -22,13 +22,13 @@ This document describes the SimpleDBM Network API.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <http://https://code.google.com/p/simpledbm/>`_.
+This documented is targetted at users of `SimpleDBM <https://github.com/dibyendumajumdar/simpledbm>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.readthedocs.org/en/latest/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.io/en/latest/overview.html>`_ document.
 
 ---------------
 Getting Started

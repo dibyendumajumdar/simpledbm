@@ -8,7 +8,7 @@ SimpleDBM RSS User's Manual
 :Contact: d dot majumdar at gmail dot com
 :Version: 1.0.12
 :Date: 7 April 2009
-:Copyright: Copyright by Dibyendu Majumdar, 2007-2009
+:Copyright: Copyright by Dibyendu Majumdar, 2007-2016
 
 .. contents::
 
@@ -21,13 +21,13 @@ This document describes the SimpleDBM RSS API.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
+This documented is targetted at users of `SimpleDBM <https://github.com/dibyendumajumdar/simpledbm>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.io/en/latest/overview.html>`_ document.
 
 -------------------------------
 SimpleDBM Servers and Databases

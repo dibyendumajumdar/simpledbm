@@ -21,13 +21,13 @@ This document describes the SimpleDBM TypeSystem module.
 Intended Audience
 =================
 
-This documented is targetted at users of `SimpleDBM <http://www.simpledbm.org>`_.
+This documented is targetted at users of `SimpleDBM <https://github.com/dibyendumajumdar/simpledbm>`_.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.io/en/latest/overview.html>`_ document.
 
 --------------------
 SimpleDBM TypeSystem
