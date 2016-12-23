@@ -3055,16 +3055,6 @@ tree. The root page never changes.
 .. image:: images/blink-tree-structure.jpg
    :scale: 60
 
-.. raw:: latex
- 
-   \begin{center}
-   \includegraphics[angle=90]{images/blink-tree-structure.jpg}
-   \end{center}
-
-.. raw:: html
-
-   <a class="reference external image-reference" href="images/blink-tree-structure.jpg"><img alt="images/blink-tree-structure.jpg" src="images/blink-tree-structure.jpg" /></a>
-
 
 Pages at all levels are linked to their right siblings. 
 In leaf pages, an extra item called the high key is present. In index 
