@@ -8,7 +8,7 @@ SimpleDBM Overview
 :Contact: d dot majumdar at gmail dot com
 :Date: 27 July 2014
 :Version: 1.0.23
-:Copyright: Copyright by Dibyendu Majumdar, 2005-2014
+:Copyright: Copyright by Dibyendu Majumdar, 2005-2016
 
 .. contents::
 
@@ -24,7 +24,7 @@ very small footprint and can be embedded in the address space of an
 application. It provides a simple Java application programming interface (API), 
 which can be learned very quickly.
 
-.. _SimpleDBM: https://code.google.com/p/simpledbm/
+.. _SimpleDBM: https://github.com/dibyendumajumdar/simpledbm
 
 Features
 ========
@@ -59,7 +59,7 @@ time available.
 Getting Started
 ---------------
 
-See `Getting Started <https://code.google.com/p/simpledbm/wiki/GettingStarted>`_ for instructions on how to start using SimpleDBM in your application.
+See `Getting Started <https://github.com/dibyendumajumdar/simpledbm#getting-started-with-simpledbm>`_ for instructions on how to start using SimpleDBM in your application.
 
 Architecture
 ============
@@ -141,16 +141,20 @@ Obtaining SimpleDBM
 SimpleDBM source code can be obtained from the `SimpleDBM Project site`_. Source code is maintained in a Mercurial repository, so you will 
 need a Mercurial client on your computer.
 
-.. _Network API: https://simpledbm.readthedocs.org/en/latest/network-api.html
-.. _Database API: https://simpledbm.readthedocs.org/en/latest/database-api.html
-.. _RSS User Manual: https://simpledbm.readthedocs.org/en/latest/usermanual.html
-.. _SimpleDBM project site: http://simpledbm.googlecode.com/
+.. _Network API: https://simpledbm.readthedocs.io/en/latest/network-api.html
+.. _Database API: https://simpledbm.readthedocs.io/en/latest/database-api.html
+.. _RSS User Manual: https://simpledbm.readthedocs.io/en/latest/usermanual.html
+.. _SimpleDBM project site: https://github.com/dibyendumajumdar/simpledbm
 
 The SimpleDBM SCM repository is organized as follows:
 
 ::
 
- trunk  --+--- simpledbm-rss   	      This contains the core DBMS engine
+ projects +--- simpledbm-rss   	      This is the core database engine - named RSS 
+          |                           after IBM's research prototype. The RSS offers 
+          |                           a low level API - most users will prefer to 
+          |                           use the higher level API offered by 
+          |                           simpledbm-database. 
           |
           +--- simpledbm-common       This contains basic utilities that are
           |                           shared by all projects.
@@ -163,52 +167,21 @@ The SimpleDBM SCM repository is organized as follows:
           |                           users. It uses the typesystem
           |                           component.
           |
+          +--- simpledbm-network-framework  implements an NIO server over TCP/IP.
+          |
+          +--- simpledbm-network-common     contains code that is common to client 
+          |                                 and server.
+          |
+          +--- simpledbm-network-server     contains the network server implementation.
+          |
+          +--- simpledbm-network-client     contains the network client implementation.
+          |
           +--- simpledbm-samples      This contains some sample programs
           |                           that demonstrate how to use SimpleDBM.
           |
           +--- simpledbm-docs         Contains the documentation sources.                           
 
-Under each of the top-level folders, there is the following structure.
 
-::
-
- --+--- code            This is where the source code is.
-   |
-   +--- docs            This folder contains documents.
-   |
-   +--- site            This folder contains web site contents.
-
-Some of these folders may be empty if no content has been created.
-
-In the code sub-directory, there is a top-level directory for each project.
-
-Mercurial URLs
---------------
-
-Here are the Mercurial URLs for the various SimpleDBM sub-systems.
-
-Base URL
-  http://simpledbm.googlecode.com/hg/
-
-SimpleDBM-Common
-  .../simpledbm-common/code/simpledbm-common
-
-SimpleDBM-RSS
-  .../simpledbm-rss/code/simpledbm-rss
-
-SimpleDBM-TypeSystem
-  .../simpledbm-typesystem/code/simpledbm-typesystem
-
-SimpleDBM-Database
-  .../simpledbm-database/code/simpledbm-database
-
-TupleDemo sample
-  .../simpledbm-samples/code/tupledemo
-
-B-TreeDemo sample
-  .../simpledbm-samples/code/btreedemo
-
-If you are a committer, you need to use ``https`` instead of ``http``.
 
 Build Instructions
 ==================
@@ -230,7 +203,7 @@ SimpleDBM development is being done using Eclipse. You can use any IDE
 of your choice, but you may need to find ways of converting the maven
 projects to the format recognized by your IDE.
 
-You will need a Mercurial client in order to checkout the code for
+You will need a Git client in order to checkout the code for
 SimpleDBM. 
 
 SimpleDBM requires Java SE 1.6 or above. 
@@ -243,7 +216,7 @@ However, the same instructions apply for the other projects.
 1. Use the Mercurial command line tools to create a local clone of the
    SimpleDBM Repository::
     
-    hg clone http://simpledbm.googlecode.com/hg simpledbm
+    git clone https://github.com/dibyendumajumdar/simpledbm.git
 
 2. Import the SimpleDBM Maven projects into Eclipse. The parent pom file
    is in the ``build`` folder. This is a multi-module pom file and will generate
@@ -378,21 +351,15 @@ source code. This acts as another source of information.
 
 Following documents are recommended as starting points:
 
-  * `SimpleDBM Overview <https://simpledbm.readthedocs.org/en/latest/overview.html>`_ - provides an overview of SimpleDBM
+  * `SimpleDBM Overview <https://simpledbm.readthedocs.io/en/latest/overview.html>`_ - provides an overview of SimpleDBM
   * `Database API`_ - describes the Database API
-  * `SimpleDBM TypeSystem <https://simpledbm.readthedocs.org/en/latest/typesystem.html>`_ - useful if you want to know more about the type system
+  * `SimpleDBM TypeSystem <https://simpledbm.readthedocs.io/en/latest/typesystem.html>`_ - useful if you want to know more about the type system
 
 For advanced stuff, read:
 
-  * `SimpleDBM RSS User Manual <https://simpledbm.readthedocs.org/en/latest/usermanual.html>`_ - describes the low level API of RSS
-  * `SimpleDBM RSS Developers Guide <https://simpledbm.readthedocs.org/en/latest/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
-  * `BTree Space Management <http://simpledbm.googlecode.com/files/btree-space-management-1.0.pdf>`_ - describes some implementation issues with BTree space management
-
-JavaDoc (these are slightly older versions) for the main projects:
-
-  * `Database API JavaDoc <http://simpledbm.googlecode.com/files/simpledbm-database-1.0.11-javadoc.jar>`_ - contains the JavaDoc for the SimpleDBM Database API
-  * `TypeSystem JavaDoc <http://simpledbm.googlecode.com/files/simpledbm-typesystem-1.0.10-javadoc.jar>`_ - contains JavaDoc for the TypeSystem.
-  * `SimpleDBM RSS JavaDoc <http://simpledbm.googlecode.com/files/simpledbm-rss-1.0.15-SNAPSHOT-javadoc.jar>`_ - provides JavaDoc for the RSS component.
+  * `SimpleDBM RSS User Manual <https://simpledbm.readthedocs.io/en/latest/usermanual.html>`_ - describes the low level API of RSS
+  * `SimpleDBM RSS Developers Guide <https://simpledbm.readthedocs.io/en/latest/developerguide.html>`_ - covers internals of RSS, the SimpleDBM database engine
+  * `BTree Space Management <https://github.com/dibyendumajumdar/simpledbm/blob/master/docs/btree-space-management.rst>`_ - describes some implementation issues with BTree space management
 
 
 .. [ASTRA-76] M.M.Astrahan, M.W.Blasgen, D.D.Chamberlin,

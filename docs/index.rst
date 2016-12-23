@@ -17,4 +17,5 @@ Contents:
    typesystem
    usermanual
    developerguide
+   btree-space-management
 
