@@ -8,7 +8,7 @@ SimpleDBM Developers's Guide
 :Contact: d dot majumdar at gmail dot com
 :Date: 7 April 2009
 :Version: 1.0.12
-:Copyright: Copyright by Dibyendu Majumdar, 2005-2009
+:Copyright: Copyright by Dibyendu Majumdar, 2005-2016
 
 .. contents::
 
@@ -21,13 +21,13 @@ This document describes the SimpleDBM Internals.
 Intended Audience
 =================
 
-This documented is targetted at `SimpleDBM <http://www.simpledbm.org>`_ developers.
+This documented is targetted at `SimpleDBM <https://github.com/dibyendumajumdar/simpledbm>`_ developers.
 
 Pre-requisite Reading
 =====================
 
 Before reading this document, the reader is advised to go through 
-the `SimpleDBM Overview <http://simpledbm.googlecode.com/hg/simpledbm-docs/docs/html/overview.html>`_ document.
+the `SimpleDBM Overview <http://simpledbm.readthedocs.io/en/latest/overview.html>`_ document.
 
 ===========================
 Data Manager/RSS Components
@@ -3060,7 +3060,7 @@ tree. The root page never changes.
 
 .. raw:: html
 
-   <a class="reference external image-reference" href="_images/blink-tree-structure.jpg"><img alt="_images/blink-tree-structure.jpg" src="_images/blink-tree-structure.jpg" /></a>
+   <a class="reference external image-reference" href="images/blink-tree-structure.jpg"><img alt="images/blink-tree-structure.jpg" src="images/blink-tree-structure.jpg" /></a>
 
 
 Pages at all levels are linked to their right siblings. 
