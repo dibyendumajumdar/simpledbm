@@ -18,4 +18,5 @@ Contents:
    usermanual
    developerguide
    btree-space-management
+   mvcc-survey
 
