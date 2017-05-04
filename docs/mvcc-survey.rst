@@ -84,7 +84,7 @@ are given below:
 
 Read Committed.
     In this mode, the SVDB places Commit duration [2]_ exclusive locks
-    on any data it writes. Shared locks are acquoired on records being
+    on any data it writes. Shared locks are acquired on records being
     read, but these locks are released as soon as the read is over. This
     mode prevents dirty reads, but allows problems of lost updates,
     non-repeatable reads, and phantom reads to occur.

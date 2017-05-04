@@ -81,6 +81,7 @@ For advanced stuff, read:
   * [SimpleDBM RSS User's Manual](http://simpledbm.readthedocs.io/en/latest/usermanual.html) - describes the low level API of RSS
   * [SimpleDBM Developer's Guide](http://simpledbm.readthedocs.io/en/latest/developerguide.html) - covers internals of RSS, the SimpleDBM database engine
   * [BTree Space Management](https://github.com/dibyendumajumdar/simpledbm/blob/master/docs/btree-space-management.rst) - describes some implementation issues with BTree space management
+  * [A Quick Survey of MultiVersion Concurrency Algorithms](https://github.com/dibyendumajumdar/simpledbm/blob/master/docs/mvcc-survey.rst) - this document looks at some of the problems with traditional methods of concurrency control via locking, and explains how Multi-version Concurrency algorithms help to resolve some of these problems. Note that SimpleDBM does not implement MVCC.
 
 You can read the [SimpleDBM Blog](http://simpledbm.blogspot.com/) and other papers available in the downloads section. If you are interested in development, you should also read the literature referred to in the [Bibliography](https://github.com/dibyendumajumdar/simpledbm/wiki/Bibliography).
 
