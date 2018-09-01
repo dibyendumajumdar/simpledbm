@@ -1,0 +1,8 @@
+
+description = 'SimpleDBM Database'
+dependencies {
+  compile project(':simpledbm-common')
+  compile project(':simpledbm-rss')
+  compile project(':simpledbm-typesystem')
+    testCompile group: 'junit', name: 'junit', version:'3.8.1'
+}

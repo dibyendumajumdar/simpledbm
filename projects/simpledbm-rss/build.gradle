@@ -1,0 +1,13 @@
+description = 'SimpleDBM Relational Storage System'
+dependencies {
+    compile project(':simpledbm-common')
+    testCompile group: 'junit', name: 'junit', version: '3.8.1'
+}
+
+test {
+    minHeapSize = "128m"
+    maxHeapSize = "1024m"
+    jvmArgs '-ea'
+    failFast = true
+    forkEvery = 1
+}

@@ -1,0 +1,5 @@
+
+description = 'SimpleDBM Common'
+dependencies {
+    testCompile group: 'junit', name: 'junit', version:'3.8.1'
+}

@@ -1,0 +1,7 @@
+
+description = 'SimpleDBM Network Common'
+dependencies {
+  compile project(':simpledbm-network-framework')
+  compile project(':simpledbm-typesystem')
+    testCompile group: 'junit', name: 'junit', version:'3.8.1'
+}

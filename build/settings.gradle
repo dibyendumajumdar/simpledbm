@@ -1,0 +1,18 @@
+rootProject.name = 'simpledbm-parent'
+include ':simpledbm-common'
+include ':simpledbm-typesystem'
+include ':simpledbm-rss'
+include ':simpledbm-database'
+include ':simpledbm-network-framework'
+include ':simpledbm-network-common'
+include ':simpledbm-network-server'
+include ':simpledbm-network-client'
+
+project(':simpledbm-common').projectDir = "$rootDir/../projects/simpledbm-common" as File
+project(':simpledbm-typesystem').projectDir = "$rootDir/../projects/simpledbm-typesystem" as File
+project(':simpledbm-rss').projectDir = "$rootDir/../projects/simpledbm-rss" as File
+project(':simpledbm-database').projectDir = "$rootDir/../projects/simpledbm-database" as File
+project(':simpledbm-network-framework').projectDir = "$rootDir/../projects/simpledbm-network-framework" as File
+project(':simpledbm-network-common').projectDir = "$rootDir/../projects/simpledbm-network-common" as File
+project(':simpledbm-network-server').projectDir = "$rootDir/../projects/simpledbm-network-server" as File
+project(':simpledbm-network-client').projectDir = "$rootDir/../projects/simpledbm-network-client" as File
