@@ -34,6 +34,7 @@ package org.simpledbm.typesystem.impl;
 import java.nio.ByteBuffer;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import org.simpledbm.common.util.ByteString;
@@ -41,20 +42,20 @@ import org.simpledbm.typesystem.api.TypeDescriptor;
 
 public class DateTimeType implements TypeDescriptor {
 
-    TimeZone timeZone;
-    SimpleDateFormat dateFormat;
+    final TimeZone timeZone;
+    final SimpleDateFormat dateFormat;
 
     public DateTimeType(String timeZone, String format) {
         this.timeZone = TimeZone.getTimeZone(timeZone);
-        this.dateFormat = new SimpleDateFormat(format);
-        dateFormat.setTimeZone(this.timeZone);
+        this.dateFormat = new SimpleDateFormat(format, Locale.ENGLISH);
+        this.dateFormat.setTimeZone(this.timeZone);
     }
 
     public DateTimeType(ByteBuffer bb) {
         ByteString bs = new ByteString(bb);
         timeZone = TimeZone.getTimeZone(bs.toString());
         bs = new ByteString(bb);
-        dateFormat = new SimpleDateFormat(bs.toString());
+        dateFormat = new SimpleDateFormat(bs.toString(), Locale.ENGLISH);
         dateFormat.setTimeZone(timeZone);
     }
 
