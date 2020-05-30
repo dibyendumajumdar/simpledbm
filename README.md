@@ -1,3 +1,5 @@
+![Java CI with Maven](https://github.com/dibyendumajumdar/simpledbm/workflows/Java%20CI%20with%20Maven/badge.svg)
+
 SimpleDBM is an Open Source Transactional Database Engine in Java. It has
 a very small footprint and can be embedded in the address space of an
 application. It provides a simple programming API, which can be learned
