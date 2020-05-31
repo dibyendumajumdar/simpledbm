@@ -46,6 +46,7 @@ import org.simpledbm.rss.api.wal.LogManager;
  * in the {@link #createLog} and {@link #getLog} methods.
  * <p>
  * <table border="1">
+ * <caption>LogMgr Parameters</caption>
  * <tr>
  * <th>Property Name</th>
  * <th>Description</th>

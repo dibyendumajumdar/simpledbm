@@ -52,7 +52,7 @@ public interface StorageContainer {
      * Writes length number of bytes from byte array, beginning at offset, to
      * the specified position within the container. Thread safe.
      * 
-     * @param position The position where the write must begin, >= 0.
+     * @param position The position where the write must begin, &gt;= 0.
      * @param buffer Data to be written out.
      * @param bufferOffset The offset with data.
      * @param length The number of bytes that need to be written.
@@ -65,14 +65,14 @@ public interface StorageContainer {
      * Reads upto length bytes from the container into the byte array beginning
      * at offset, from the specified position within the container. Thread safe.
      * 
-     * @param position The position where the read must begin, >= 0.
+     * @param position The position where the read must begin, &gt;= 0.
      * @param buffer Data will be read into this array.
      * @param bufferOffset The offset within the array where the read data will
      *            be placed.
      * @param length The number of bytes that is to be read.
      * @throws StorageException Thrown if there was an error when reading the
      *             data.
-     * @return Number of bytes read, or <=0 if no more data available.
+     * @return Number of bytes read, or &lt;=0 if no more data available.
      */
     int read(long position, byte[] buffer, int bufferOffset, int length);
 

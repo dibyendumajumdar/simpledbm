@@ -1661,7 +1661,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * 	upgrade-latch(P);
          * 	change the index record (v, Q.pageno) to (v, R.pageno);
          * 	insert the index record (u, Q.pageno) before (v, R.pageno);
-         * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
+         * 	lsn = log(&lt;unlink, P, Q.pageno, R.pageno&gt;);
          * 	P.pageLsn = lsn;
          * 	downgrade-latch(P);
          * }
@@ -1737,7 +1737,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
          * 	upgrade-latch(P);
          * 	delete the index record (u, Q.pageno);
          * 	change the index record (v, R.pageno) to (v, Q.pageno);
-         * 	lsn = log(<unlink, P, Q.pageno, R.pageno>);
+         * 	lsn = log(&lt;unlink, P, Q.pageno, R.pageno&gt;);
          * 	P.pageLsn = lsn;
          * 	unfix(P);
          * }
@@ -6825,7 +6825,7 @@ public final class BTreeIndexManagerImpl extends BaseTransactionalModule
     static class PartialIndexItem implements Storable {
 
         /**
-         * Pointer to child node that has keys <= this key. This is an optional
+         * Pointer to child node that has keys &lt;= this key. This is an optional
          * field; only present in index pages.
          */
         protected int childPageNumber;

@@ -41,7 +41,7 @@ public interface Request {
     /**
      * Gets the session Id associated with the client. If the session Id is not
      * allocated yet, this method should return 0. All valid session Ids should
-     * be > 0. New session Ids should be set in the Response object.
+     * be &gt; 0. New session Ids should be set in the Response object.
      */
     int getSessionId();
 

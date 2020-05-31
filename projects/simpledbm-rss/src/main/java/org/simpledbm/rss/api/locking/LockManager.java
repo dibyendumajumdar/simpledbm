@@ -102,7 +102,7 @@ public interface LockManager {
      * system will wait indefinitely for the lock. This is also known as an
      * unconditional request. If timeout is 0, the Locking system will not wait
      * at all, and return failure if the lock is not immediately grantable. If
-     * timeout is > 0, the Locking system will wait for the specified amount of
+     * timeout is &gt; 0, the Locking system will wait for the specified amount of
      * time (in seconds) before giving up the attempt to acquire the lock. In
      * all cases, if a lock cannot be acquired, an exception will be thrown.
      * Timeouts are indicated by throwing a {@link LockTimeoutException}.
@@ -113,7 +113,7 @@ public interface LockManager {
      *            and hashcode() methods.
      * @param mode The desired lock mode.
      * @param duration The duration for which the lock will be held.
-     * @param timeout Either -1, 0, or > 0 value indicating wait forever,
+     * @param timeout Either -1, 0, or &gt; 0 value indicating wait forever,
      *            nowait, wait specified number of seconds.
      * @return A LockHandle that can be used to further manipulate the lock.
      * @throws LockException Thrown if the lock could not be acquired.

@@ -73,25 +73,25 @@ public interface TypeFactory {
     TypeDescriptor getLongType();
 
     /**
-     * Returns a TypeDescriptor for the DateTime type.<br/>
-     * Timezone is defaulted to UTC.<br/>
+     * Returns a TypeDescriptor for the DateTime type.<br>
+     * Timezone is defaulted to UTC.<br>
      * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
      */
     TypeDescriptor getDateTimeType();
 
     /**
-     * Returns a TypeDescriptor for the DateTime type.<br/>
+     * Returns a TypeDescriptor for the DateTime type.<br>
      * Format is defaulted to &quot;d-MMM-yyyy HH:mm:ss Z&quot;
      */
     TypeDescriptor getDateTimeType(String timezone);
 
     /**
-     * Returns a TypeDescriptor for the DateTime type.<br/>
+     * Returns a TypeDescriptor for the DateTime type.<br>
      */
     TypeDescriptor getDateTimeType(String timezone, String format);
 
     /**
-     * Returns a TypeDescriptor for the Numeric data type.<br />
+     * Returns a TypeDescriptor for the Numeric data type.<br>
      * Scale defaults to 0. Number types have following restrictions compared to
      * BigDecimals:
      * <ol>

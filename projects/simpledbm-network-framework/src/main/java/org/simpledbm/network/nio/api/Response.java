@@ -39,12 +39,12 @@ import java.nio.ByteBuffer;
 public interface Response {
 
     /**
-     * Gets the status code, < 0 for errors.
+     * Gets the status code, &lt; 0 for errors.
      */
     int getStatusCode();
 
     /**
-     * Sets the status code, set < 0 for errors.
+     * Sets the status code, set &lt; 0 for errors.
      */
     void setStatusCode(int requestCode);
 

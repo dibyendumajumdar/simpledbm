@@ -76,7 +76,7 @@ public interface IndexContainer {
     public void delete(Transaction trx, IndexKey key, Location location);
 
     /**
-     * Opens a new index scan. The Scan will fetch keys >= the specified key and
+     * Opens a new index scan. The Scan will fetch keys &gt;= the specified key and
      * location. Before returning fetched keys, the associated Location objects
      * will be locked. The lock mode depends upon the forUpdate flag. The
      * {@link IsolationMode} of the transaction determines when lock are
