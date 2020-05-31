@@ -32,6 +32,7 @@
 package org.simpledbm.common.util;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
 import org.simpledbm.common.util.mcat.Message;
@@ -51,7 +52,7 @@ public class StringUtils {
 
 	public static byte[] getUTF8Bytes(String s) {
 		try {
-			return s.getBytes(Charset.forName("UTF-8"));
+			return s.getBytes(StandardCharsets.UTF_8);
 		}
 		catch (Exception e) {
 			throw new SimpleDBMException(new MessageInstance(m_EU0001));

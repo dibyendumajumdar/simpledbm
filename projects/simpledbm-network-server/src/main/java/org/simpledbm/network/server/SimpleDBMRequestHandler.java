@@ -41,6 +41,7 @@ import static org.simpledbm.network.server.Messages.transactionActive;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Properties;
@@ -196,11 +197,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
     private void setError(Response response, int statusCode, String message) {
         response.setStatusCode(statusCode);
         byte[] bytes;
-        try {
-            bytes = message.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new SimpleDBMException(new MessageInstance(encodingError), e);
-        }
+        bytes = message.getBytes(StandardCharsets.UTF_8);
         ByteBuffer data = ByteBuffer.wrap(bytes);
         data.limit(bytes.length);
         response.setData(data);
@@ -235,11 +232,7 @@ public class SimpleDBMRequestHandler implements RequestHandler {
             }
         } while (e != null);
         byte[] bytes;
-        try {
-            bytes = sb.toString().getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e1) {
-            throw new SimpleDBMException(new MessageInstance(encodingError), e1);
-        }
+        bytes = sb.toString().getBytes(StandardCharsets.UTF_8);
         ByteBuffer data = ByteBuffer.wrap(bytes);
         data.limit(bytes.length);
         response.setData(data);

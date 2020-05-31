@@ -33,6 +33,7 @@ package org.simpledbm.typesystem.impl;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.nio.ByteBuffer;
 
 import org.simpledbm.common.util.TypeSize;
@@ -151,14 +152,14 @@ public class NumberValue extends BaseDataValue {
     @Override
     public void setInt(Integer integer) {
         d = new BigDecimal(integer);
-        d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
+        d = d.setScale(getType().getScale(), RoundingMode.HALF_UP);
         setValue();
     }
 
     @Override
     public void setString(String string) {
         d = new BigDecimal(string);
-        d = d.setScale(getType().getScale(), BigDecimal.ROUND_HALF_UP);
+        d = d.setScale(getType().getScale(), RoundingMode.HALF_UP);
         setValue();
     }
 

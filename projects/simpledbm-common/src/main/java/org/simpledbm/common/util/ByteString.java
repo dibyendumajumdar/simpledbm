@@ -33,6 +33,7 @@ package org.simpledbm.common.util;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
 import org.simpledbm.common.api.exception.SimpleDBMException;
@@ -69,13 +70,8 @@ public final class ByteString implements Storable, Comparable<ByteString> {
     }
 
     public ByteString(String s) {
-        try {
-            this.s = s;
-            bytes = s.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new SimpleDBMException(new MessageInstance(
-                    illegalEncodingMessage), e);
-        }
+        this.s = s;
+        bytes = s.getBytes(StandardCharsets.UTF_8);
     }
 
     public ByteString(byte[] bytes) {
@@ -103,15 +99,10 @@ public final class ByteString implements Storable, Comparable<ByteString> {
         if (s != null) {
             return s;
         }
-        try {
-            synchronized (this) {
-                if (null == s) {
-                    s = new String(bytes, "UTF-8");
-                }
+        synchronized (this) {
+            if (null == s) {
+                s = new String(bytes, StandardCharsets.UTF_8);
             }
-        } catch (UnsupportedEncodingException e) {
-            throw new SimpleDBMException(new MessageInstance(
-                    illegalEncodingMessage), e);
         }
         return s;
     }

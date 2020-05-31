@@ -119,7 +119,7 @@ public final class ClassUtils {
      */
     public Object invokeMethod(Class<?> cl, Object instance, String methodName,
             Object param) throws Throwable {
-        Class<? extends Object> paramClass;
+        Class<?> paramClass;
         if (param instanceof Integer)
             paramClass = Integer.TYPE;
         else if (param instanceof Long)

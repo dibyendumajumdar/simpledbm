@@ -32,6 +32,7 @@
 package org.simpledbm.network.client.impl;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 
 import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.common.api.tx.IsolationMode;
@@ -62,11 +63,7 @@ public class SessionImpl implements Session {
     String getError(Response response) {
         byte[] data = response.getData().array();
         String msg;
-        try {
-            msg = new String(data, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            msg = "Error message could not be decoded";
-        }
+        msg = new String(data, StandardCharsets.UTF_8);
         return msg;
     }
 

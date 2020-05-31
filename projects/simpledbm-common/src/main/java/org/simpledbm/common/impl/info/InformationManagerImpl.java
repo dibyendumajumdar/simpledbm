@@ -34,6 +34,7 @@ package org.simpledbm.common.impl.info;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashMap;
 
@@ -93,9 +94,9 @@ public class InformationManagerImpl implements InformationManager {
         return sb.toString();
     }
 
-    public void printStatistics(OutputStream stream) {;
+    public void printStatistics(OutputStream stream) {
         try {
-            stream.write(toString().getBytes("UTF-8"));
+            stream.write(toString().getBytes(StandardCharsets.UTF_8));
         } catch (UnsupportedEncodingException e) {
         } catch (IOException e) {
         }

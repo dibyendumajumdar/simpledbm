@@ -124,7 +124,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
      * @author Dibyendu Majumdar
      */
     enum ReleaseAction {
-        RELEASE, DOWNGRADE;
+        RELEASE, DOWNGRADE
     }
 
     /**
@@ -137,7 +137,7 @@ public final class NewReadWriteUpdateLatch implements Latch {
     }
 
     static enum LockRequestStatus {
-        GRANTED, CONVERTING, WAITING, DENIED;
+        GRANTED, CONVERTING, WAITING, DENIED
     }
 
     /**
