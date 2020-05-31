@@ -5,7 +5,7 @@
     <groupId>org.simpledbm</groupId>
     <artifactId>simpledbm-samples-usermanual</artifactId>
     <packaging>jar</packaging>
-    <version>1.0.22-SNAPSHOT</version>
+    <version>1.0.24-SNAPSHOT</version>
     <name>SimpleDBM UserManual</name>
     <url>http://www.simpledbm.org</url>
     <scm>
@@ -34,7 +34,7 @@
         <dependency>
             <groupId>org.simpledbm</groupId>
             <artifactId>simpledbm-rss</artifactId>
-            <version>1.0.22</version>
+            <version>1.0.23</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -48,8 +48,8 @@
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.8</source>
+                    <target>1.8</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -76,7 +76,6 @@
                     </execution>
                 </executions>
             </plugin>
-
         </plugins>
     </build>
 </project>

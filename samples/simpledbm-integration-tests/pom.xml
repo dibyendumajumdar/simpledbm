@@ -5,7 +5,7 @@
 	<groupId>org.simpledbm</groupId>
 	<artifactId>simpledbm-integration-tests</artifactId>
 	<packaging>jar</packaging>
-	<version>1.0.22-SNAPSHOT</version>
+	<version>1.0.24-SNAPSHOT</version>
 	<name>SimpleDBM Integration Tests</name>
 	<url>http://www.simpledbm.org</url>
         <scm>
@@ -34,17 +34,17 @@
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-common</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.23</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-rss</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.23</version>
 		</dependency>
 		<dependency>
 			<groupId>org.simpledbm</groupId>
 			<artifactId>simpledbm-typesystem</artifactId>
-			<version>1.0.22-SNAPSHOT</version>
+			<version>1.0.23</version>
 		</dependency>
 		<dependency>
 			<groupId>net.java.dev.swing-layout</groupId>
@@ -63,8 +63,8 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.5</source>
-					<target>1.5</target>
+					<source>1.8</source>
+					<target>1.8</target>
 				</configuration>
 			</plugin>
 <plugin>
