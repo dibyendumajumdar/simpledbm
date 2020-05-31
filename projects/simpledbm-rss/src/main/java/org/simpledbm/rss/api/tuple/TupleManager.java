@@ -97,7 +97,7 @@ public interface TupleManager extends TransactionalModule {
      * Returns the type ID of the location factory used by the tuple manager. An
      * instance of the {@link org.simpledbm.rss.api.loc.LocationFactory
      * LocationFactory} may be obtained from the
-     * {@link org.simpledbm.rss.api.registry.ObjectRegistry ObjectRegistry}.
+     * {@link org.simpledbm.common.api.registry.ObjectRegistry ObjectRegistry}.
      * <p>
      * 
      * <pre>

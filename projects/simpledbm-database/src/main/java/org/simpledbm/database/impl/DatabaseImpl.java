@@ -210,7 +210,7 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
      * Removes a table definition to the in-memory dictionary cache. Caller must
      * protect {@link #tables}.
      * 
-     * @param tableDefinition
+     * @param containerId Container ID associated with the table
      */
     private void unregisterTableDefinition(int containerId) {
         Iterator<TableDefinition> iter = tables.iterator();

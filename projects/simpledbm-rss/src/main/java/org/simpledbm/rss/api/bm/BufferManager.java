@@ -100,7 +100,7 @@ public interface BufferManager {
      * @param pagetype Specifies the type of page to create; only used when
      *            isNew is set. The page type must be associated with a subclass
      *            of {@link Page} and must have a {@link PageFactory} registered
-     *            with the {@link ObjectRegistry}.
+     *            with the {@link org.simpledbm.common.api.registry.ObjectRegistry}.
      * @param hint A hint to indicate which end of the LRU chain the page should
      *            be inserted to. The meaning of the hint is implementation
      *            defined.

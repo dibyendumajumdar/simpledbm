@@ -74,8 +74,7 @@ public interface Transaction {
      * is used to detect possible deadlocks.
      * 
      * @see TransactionManager#setLockWaitTimeout(int)
-     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int,
-     *      org.simpledbm.rss.api.locking.LockInfo)
+     * @see LockManager#acquire(Object, Object, LockMode, LockDuration, int)
      */
     public void acquireLock(Lockable lockable, LockMode mode,
             LockDuration duration);

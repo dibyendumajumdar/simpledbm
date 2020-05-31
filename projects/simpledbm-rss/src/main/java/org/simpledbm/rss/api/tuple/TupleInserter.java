@@ -35,7 +35,9 @@
  */
 package org.simpledbm.rss.api.tuple;
 
+import org.simpledbm.common.api.registry.Storable;
 import org.simpledbm.rss.api.loc.Location;
+import org.simpledbm.rss.api.tx.Transaction;
 
 /**
  * When a new tuple is inserted into a container, the

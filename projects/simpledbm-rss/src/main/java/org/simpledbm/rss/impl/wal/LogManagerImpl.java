@@ -251,7 +251,7 @@ public final class LogManagerImpl implements LogManager {
     /**
      * The maximum number of log files in a group is {@value} .
      */
-    private static final int MAX_LOG_FILES = 8;
+    static final int MAX_LOG_FILES = 8;
 
     static final int MAX_LOG_BUFFERS = 2;
 

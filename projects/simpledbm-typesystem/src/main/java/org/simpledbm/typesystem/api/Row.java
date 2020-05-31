@@ -59,15 +59,15 @@ public interface Row extends IndexKey, Dumpable {
     /**
      * Returns an integer representation of the data value.
      * 
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     int getInt(int column);
 
     /**
      * Converts the supplied integer value to a suitable value for the data
      * value
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setInt(int column, Integer integer);
 
@@ -83,57 +83,57 @@ public interface Row extends IndexKey, Dumpable {
 
     /**
      * Sets the value of the field to the date.
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setDate(int column, Date date);
 
     /**
      * Gets the current value as a date.
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     Date getDate(int column);
 
     /**
      * Converts the supplied long value to the data value
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setLong(int column, long l);
 
     /**
      * Returns the data value as a long
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     long getLong(int column);
 
     /**
      * Converts the supplied BigInteger to the data value
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setBigInteger(int column, BigInteger i);
 
     /**
      * Returns the data value as a long
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     BigInteger getBigInteger(int column);
 
     /**
      * Converts the supplied BigDecimal to the data value
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setBigDecimal(int column, BigDecimal d);
 
     /**
      * Returns the Data Value as a BigDecimal
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     BigDecimal getBigDecimal(int column);
 

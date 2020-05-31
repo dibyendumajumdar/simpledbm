@@ -60,7 +60,7 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
     /**
      * Returns an integer representation of the data value.
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     int getInt();
 
@@ -68,7 +68,7 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
      * Converts the supplied integer value to a suitable value for the data
      * value
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setInt(Integer integer);
 
@@ -85,56 +85,56 @@ public interface DataValue extends Storable, Comparable<DataValue>, Dumpable {
     /**
      * Sets the value of the field to the date.
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setDate(Date date);
 
     /**
      * Gets the current value as a date.
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     Date getDate();
 
     /**
      * Converts the supplied long value to the data value
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setLong(long l);
 
     /**
      * Returns the data value as a long
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     long getLong();
 
     /**
      * Converts the supplied BigInteger to the data value
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setBigInteger(BigInteger i);
 
     /**
      * Returns the data value as a long
      *
-     * @throws UnsupportedOperationException.
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     BigInteger getBigInteger();
 
     /**
      * Converts the supplied BigDecimal to the data value
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     void setBigDecimal(BigDecimal d);
 
     /**
      * Returns the Data Value as a BigDecimal
-     * 
-     * @throws UnsupportedOperationException.
+     *
+     * @throws UnsupportedOperationException If conversion is not supported for the type
      */
     BigDecimal getBigDecimal();
 
