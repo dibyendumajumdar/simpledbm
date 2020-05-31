@@ -32,7 +32,7 @@
 
 /**
  * Provides an implementation of the Object Registry module as
- * specified by {@link org.simpledbm.rss.api.registry}.
+ * specified by {@link org.simpledbm.common.api.registry}.
  */
 package org.simpledbm.common.impl.registry;
 

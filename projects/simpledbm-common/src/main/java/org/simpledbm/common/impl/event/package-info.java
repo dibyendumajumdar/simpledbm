@@ -32,7 +32,7 @@
 
 /**
  * Implementation of the event management framework specified
- * in {@link org.simpledbm.rss.api.event}.
+ * in {@link org.simpledbm.common.api.event}.
  */
 package org.simpledbm.common.impl.event;
 
