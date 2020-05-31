@@ -93,8 +93,6 @@ public class TableScanImpl implements TableScan {
 
     /**
      * Opens the scan, preparing for data to be fetched.
-     * 
-     * @return
      */
     int open() {
         OpenScanMessage message = new OpenScanMessage(tableDefinition

@@ -70,15 +70,11 @@ public abstract class SessionManager {
 
     /**
      * Gets the TypeFactory associated with the database.
-     * 
-     * @return
      */
     public abstract TypeFactory getTypeFactory();
 
     /**
      * Gets the RowFactory for the database.
-     * 
-     * @return
      */
     public abstract RowFactory getRowFactory();
 
@@ -95,8 +91,6 @@ public abstract class SessionManager {
 
     /**
      * Starts a new session.
-     * 
-     * @return
      */
     public abstract Session openSession();
 
@@ -106,8 +100,6 @@ public abstract class SessionManager {
      * <p>
      * The connection object must be handled with care, as its correct operation
      * is vital to the client server communication.
-     * 
-     * @return
      */
     public abstract Connection getConnection();
 

@@ -64,7 +64,6 @@ public final class ClassUtils {
      * globally without changing the rest of the code.
      * 
      * @param name Name of the class to be loaded
-     * @throws ClassNotFoundException
      */
     public Class<?> forName(String name) throws ClassNotFoundException {
         ClassLoader cl = getClassLoader();
@@ -77,7 +76,6 @@ public final class ClassUtils {
      * Load a properties file from the classpath.
      * 
      * @param name Name of the properties file
-     * @throws IOException If the properties file could not be loaded
      */
     public InputStream getResourceAsStream(String name) throws IOException {
         ClassLoader cl = getClassLoader();
@@ -93,7 +91,6 @@ public final class ClassUtils {
      * Load a properties file from the classpath.
      * 
      * @param name Name of the properties file
-     * @throws IOException If the properties file could not be loaded
      */
     public Properties getResourceAsProperties(String name) throws IOException {
         ClassLoader cl = getClassLoader();
@@ -119,7 +116,6 @@ public final class ClassUtils {
      * @param instance The object on which we will invoke the method
      * @param methodName The method name
      * @param param The parameter
-     * @throws Throwable
      */
     public Object invokeMethod(Class<?> cl, Object instance, String methodName,
             Object param) throws Throwable {
@@ -157,7 +153,6 @@ public final class ClassUtils {
      * @param methodName The method name
      * @param param A parameter
      * @param paramClass Class of the parameter
-     * @throws Throwable
      */
     public Object invokeStaticMethod(Class<?> cl, String methodName,
             Object param, Class<?> paramClass) throws Throwable {
@@ -175,13 +170,6 @@ public final class ClassUtils {
      * @param className Class of which an instance is to be allocated
      * @param param Parameter
      * @param paramClass Type of the parameter
-     * @throws ClassNotFoundException
-     * @throws SecurityException
-     * @throws NoSuchMethodException
-     * @throws IllegalArgumentException
-     * @throws InstantiationException
-     * @throws IllegalAccessException
-     * @throws InvocationTargetException
      */
     public Object createObject(String className, Object param,
             Class<?> paramClass) throws ClassNotFoundException,

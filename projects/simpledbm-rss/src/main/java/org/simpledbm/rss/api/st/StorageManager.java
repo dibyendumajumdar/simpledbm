@@ -61,9 +61,6 @@ public interface StorageManager {
 
     /**
      * Closes and removes the specified StorageContainer.
-     * 
-     * @param id
-     * @throws StorageException
      */
     void remove(int id);
 

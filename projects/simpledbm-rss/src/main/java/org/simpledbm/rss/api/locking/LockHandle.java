@@ -67,8 +67,8 @@ public interface LockHandle {
      * {@link LockMode#UPDATE} lock is downgraded to {@link LockMode#SHARED}, it
      * may result in pending shared lock requests being granted.
      * 
-     * @param mode
-     * @throws LockException
+     * @param mode Lock mode to downgrade to
+     * @throws LockException If the downgrade is not possible an exception will be thrown
      */
     void downgrade(LockMode mode);
 

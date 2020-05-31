@@ -2396,8 +2396,6 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Test leaf right to left
-     * 
-     * @throws Exception
      */
     public void testNewRedistribute1() throws Exception {
         doInitContainer();
@@ -2408,8 +2406,6 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Test leaf left to right
-     * 
-     * @throws Exception
      */
     public void testNewRedistribute2() throws Exception {
         doInitContainer();
@@ -2420,8 +2416,6 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Test non-leaf right to left
-     * 
-     * @throws Exception
      */
     public void testNewRedistribute3() throws Exception {
         doInitContainer();
@@ -2432,8 +2426,6 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Test non-leaf left to right
-     * 
-     * @throws Exception
      */
     public void testNewRedistribute4() throws Exception {
         doInitContainer();
@@ -2900,8 +2892,6 @@ public class TestBTreeManager extends BaseTestCase {
      * original Y is missing and that Z is now immediately after X, until T
      * commits.
      * </p>
-     * 
-     * @throws Exception
      */
     public void testPhantomRecords1() throws Exception {
         doInitContainer2();
@@ -3714,8 +3704,6 @@ public class TestBTreeManager extends BaseTestCase {
 
     /**
      * Tests various concurrent activities.
-     * 
-     * @throws Exception
      */
     public void testMultiThreadedInserts() throws Exception {
         doTestMultiThreadedInserts("org/simpledbm/rss/impl/im/btree/english.0",

@@ -801,7 +801,6 @@ public final class BufferManagerImpl implements BufferManager {
      * @param pagetype The typecode for the page, so that the correct page can
      *            be instantiated
      * @param latchMode The desired latch mode
-     * @return
      */
     private BufferAccessBlockImpl getBCB(PageId pageid, boolean isNew,
             int pagetype, int latchMode) {
@@ -1105,8 +1104,6 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Allows the update of recoveryLsn after transaction manager has performed
      * recovery.
-     * 
-     * @param dirty_pages
      */
     public void updateRecoveryLsns(DirtyPageInfo[] dirty_pages) {
         for (BufferControlBlock bcb : lru) {
@@ -1188,8 +1185,6 @@ public final class BufferManagerImpl implements BufferManager {
 
     /**
      * Write a buffer page. No locks are held during IO.
-     * 
-     * @param bcb
      */
     private void flushUsingWriteAheadLogProtocol(BufferControlBlock bcb) {
         Page page = bufferpool[bcb.getFrameIndex()];
@@ -1209,8 +1204,6 @@ public final class BufferManagerImpl implements BufferManager {
     /**
      * Write a buffer page. No locks are held during IO. A flag is set to alert
      * other processes that the page is being written.
-     * 
-     * @param bcb
      */
     private void cleanBCB(BufferControlBlock bcb) {
 

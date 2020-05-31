@@ -131,7 +131,7 @@ public interface LogManager {
      * 
      * @param lsn Lsn of the LogRecord to be read
      * @return LogRecord read
-     * @throws LogException
+     * @throws LogException On error
      */
     LogRecord read(Lsn lsn);
 
@@ -142,7 +142,7 @@ public interface LogManager {
      * such as inserting new records, and reading log records.
      * 
      * @param upto Lsn of the Log Record
-     * @throws LogException
+     * @throws LogException On error
      */
     void flush(Lsn upto);
 
@@ -154,7 +154,7 @@ public interface LogManager {
      * {@link #getMaxLsn()} and {@link #getDurableLsn()} will return the same
      * Lsn.
      * 
-     * @throws LogException
+     * @throws LogException On error
      */
     void flush();
 
@@ -165,7 +165,7 @@ public interface LogManager {
      * removed after some time, so it may not be possible to access old log
      * records beyond a point.
      * 
-     * @param startLsn
+     * @param startLsn LSN to start reading from
      */
     LogReader getForwardScanningReader(Lsn startLsn);
 
@@ -176,7 +176,7 @@ public interface LogManager {
      * removed after some time, so it may not be possible to access old log
      * records beyond a point.
      * 
-     * @param startLsn
+     * @param startLsn The LSN to read from
      */
     LogReader getBackwardScanningReader(Lsn startLsn);
 

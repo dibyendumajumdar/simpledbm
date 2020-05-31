@@ -716,9 +716,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
     /**
      * Set flags for a particular slot.
-     * 
-     * @param slotNumber
-     * @param flags
      */
     @Override
     public final void setFlags(int slotNumber, short flags) {
@@ -731,8 +728,6 @@ public final class SlottedPageImpl extends SlottedPage implements Dumpable {
 
     /**
      * Get flags.
-     * 
-     * @param slotNumber
      */
     @Override
     public final int getFlags(int slotNumber) {

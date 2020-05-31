@@ -70,8 +70,6 @@ public interface TableScan {
 
     /**
      * Obtains the session that is associated with this scan.
-     * 
-     * @return
      */
     Session getSession();
 }

@@ -99,7 +99,6 @@ public final class StorageManagerImpl implements StorageManager {
     }
 
     /**
-     * @throws StorageException
      * @see org.simpledbm.rss.api.st.StorageManager#remove(int)
      */
     public final void remove(int id) throws StorageException {

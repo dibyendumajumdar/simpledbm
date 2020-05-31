@@ -60,8 +60,6 @@ public interface RequestHandler {
     /**
      * This method will be invoked by the framework when the server is
      * initialized.
-     * 
-     * @param properties
      */
     void onInitialize(Platform platform, Properties properties);
 

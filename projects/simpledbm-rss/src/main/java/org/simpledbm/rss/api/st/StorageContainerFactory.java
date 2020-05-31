@@ -87,8 +87,6 @@ public interface StorageContainerFactory {
 
     /**
      * Removes a container physically.
-     * 
-     * @throws StorageException
      */
     void delete(String name);
 

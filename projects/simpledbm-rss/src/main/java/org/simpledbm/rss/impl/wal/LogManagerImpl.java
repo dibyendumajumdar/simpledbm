@@ -959,8 +959,6 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Sets the names of the control files. The maximum number of Control Files
      * that can be used is defined in {@link #MAX_CTL_FILES}.
-     * 
-     * @param files
      */
     final void setCtlFiles(String files[]) {
         if (files.length > MAX_CTL_FILES) {
@@ -977,9 +975,6 @@ public final class LogManagerImpl implements LogManager {
      * Sets the paths for the Log Groups and the number of log files in each
      * group. A maximum of {@link #MAX_LOG_GROUPS} groups, and
      * {@link #MAX_LOG_FILES} files may be specified.
-     * 
-     * @param groupPaths
-     * @param n_LogFiles
      */
     final void setLogFiles(String groupPaths[], short n_LogFiles) {
         int n_LogGroups = groupPaths.length;
@@ -1110,9 +1105,6 @@ public final class LogManagerImpl implements LogManager {
      * <p>
      * The checksum is validated to ensure that the LogAnchor is valid and has
      * not been corrupted.
-     * 
-     * @param container
-     * @return
      */
     private LogAnchor readLogAnchor(StorageContainer container) {
         int n;
@@ -1144,8 +1136,6 @@ public final class LogManagerImpl implements LogManager {
 
     /**
      * Creates a new Log Control file.
-     * 
-     * @param filename
      */
     private void createLogAnchor(String filename) {
         if (logger.isDebugEnabled()) {
@@ -1181,10 +1171,6 @@ public final class LogManagerImpl implements LogManager {
      * Write a Log Control block to permanent storage. See
      * {@link #readLogAnchor} for information about file format of Log Control
      * file.
-     * 
-     * @param container
-     * @param bb
-     * @see #readLogAnchor(StorageContainer)
      */
     private void updateLogAnchor(StorageContainer container, ByteBuffer bb) {
         long checksum = ChecksumCalculator.compute(bb.array(), 0, bb.limit());
@@ -1200,8 +1186,6 @@ public final class LogManagerImpl implements LogManager {
 
     /**
      * Update all copies of the LogAnchor.
-     * 
-     * @param bb
      */
     private void updateLogAnchors(ByteBuffer bb) {
         int i;
@@ -1214,9 +1198,6 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a Log File, autoextending it to its maximum length. The file
      * header is initialized, and the rest of the file is set to Null bytes.
-     * 
-     * @param filename
-     * @param header
      */
     private void createLogFile(String filename, LogFileHeader header) {
 
@@ -1285,8 +1266,6 @@ public final class LogManagerImpl implements LogManager {
 
     /**
      * Resets a log file by initializing the header record.
-     * 
-     * @param logfile
      */
     private void resetLogFiles(int logfile) {
         ByteBuffer bb = ByteBuffer.allocate(LogFileHeader.SIZE);
@@ -1311,9 +1290,6 @@ public final class LogManagerImpl implements LogManager {
 
     /**
      * Opens an already existing Log File.
-     * 
-     * @param groupno
-     * @param fileno
      */
     private void openLogFile(int groupno, int fileno) {
         byte[] bufh = new byte[LogFileHeader.SIZE];
@@ -1438,11 +1414,6 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Inserts a log record into the log buffers. If there is not enough space
      * in the current log buffer, a new buffer is allocated.
-     * 
-     * @param lsn
-     * @param data
-     * @param length
-     * @param prevLsn
      */
     private void addToBuffer(Lsn lsn, byte[] data, int length, Lsn prevLsn) {
         int reclen = calculateLogRecordSize(length);
@@ -1457,9 +1428,6 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Enqueues a request for archiving a log file. The request is passed on to
      * the archive thread.
-     * 
-     * @param req
-     * @see ArchiveRequestHandler
      */
     private void submitArchiveRequest(ArchiveRequest req) {
         archiveService.submit(new ArchiveRequestHandler(this, req));
@@ -1582,8 +1550,6 @@ public final class LogManagerImpl implements LogManager {
      * Performs a log write. For efficiency, a single log write will write out
      * as many log records as possible. If the log file is not the current one,
      * then a log switch is performed.
-     * 
-     * @param req
      */
     private void doLogWrite(LogWriteRequest req) {
 
@@ -1604,9 +1570,6 @@ public final class LogManagerImpl implements LogManager {
      * Process a log flush request. Ensures that only one flush can be active at
      * any time. Most of the work is done in
      * {@link #handleFlushRequest_(FlushRequest)}.
-     * 
-     * @param req
-     * @see #handleFlushRequest_(FlushRequest)
      */
     private void handleFlushRequest(FlushRequest req) {
         flushLock.lock();
@@ -1636,8 +1599,7 @@ public final class LogManagerImpl implements LogManager {
      * restart the Log is scanned from the point recorded in the control file,
      * and the real end of the Log is located. This is a good compromise because
      * it removes the need to update the control files at every flush.
-     * 
-     * @param req
+     *
      * @see #doLogWrite(LogWriteRequest)
      * @see #handleFlushRequest(FlushRequest)
      * @see #scanToEof()
@@ -1794,9 +1756,6 @@ public final class LogManagerImpl implements LogManager {
     /**
      * Creates a new flush request, the start position of the request is set to
      * the start position of the log record.
-     * 
-     * @param buf
-     * @param rec
      */
     private LogWriteRequest createFlushIORequest(LogBuffer buf,
             LogRecordBuffer rec) {
@@ -1817,8 +1776,6 @@ public final class LogManagerImpl implements LogManager {
      * Archives a specified log file, by copying it to a new archive log file.
      * The archive log file is named in a way that allows it to be located by
      * the logIndex. The archive file is created in the archive path.
-     * 
-     * @param f
      */
     private void archiveLogFile(int f) {
         String name = null;
@@ -1890,8 +1847,6 @@ public final class LogManagerImpl implements LogManager {
      * in the log file status.
      * <p>
      * After archiving the log file, the control file is updated.
-     * 
-     * @param request
      */
     private void handleNextArchiveRequest_(ArchiveRequest request) {
 
@@ -1952,7 +1907,6 @@ public final class LogManagerImpl implements LogManager {
      * 
      * @param readLsn Lsn of the record being parsed
      * @param bb Data stream
-     * @return
      * @see #LOGREC_HEADER_SIZE
      */
     private LogRecordImpl doRead(Lsn readLsn, ByteBuffer bb) {
@@ -2027,7 +1981,6 @@ public final class LogManagerImpl implements LogManager {
      * called from scanToEof().
      * 
      * @param lsn Lsn of the LogRecord to be read
-     * @return
      */
     final LogRecordImpl doRead(Lsn lsn) {
 
@@ -2929,8 +2882,6 @@ public final class LogManagerImpl implements LogManager {
 
         /**
          * Create a LogBuffer of specified size.
-         * 
-         * @param size
          */
         public LogBuffer(int size) {
             buffer = new byte[size];
@@ -2987,8 +2938,6 @@ public final class LogManagerImpl implements LogManager {
         /**
          * Determine if the specified Lsn is contained within the LogRecords in
          * the buffer.
-         * 
-         * @param lsn
          */
         int contains(Lsn lsn) {
             Lsn lsn1 = records.firstKey();

@@ -176,8 +176,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /**
      * Register a table definition to the in-memory dictionary cache. Caller
      * must protect {@link #tables}.
-     * 
-     * @param tableDefinition
      */
     private void registerTableDefinition(TableDefinition tableDefinition) {
         /*
@@ -343,8 +341,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
 
     /**
      * Creates the Database server on persistent storage.
-     * 
-     * @param properties
      */
     public static void create(Properties properties) {
         Server.create(properties);
@@ -1056,9 +1052,6 @@ public class DatabaseImpl extends BaseTransactionalModule implements Database {
     /**
      * Obtains an instance of the Table associated with the supplied
      * TableDefinition.
-     * 
-     * @param tableDefinition
-     * @return Table object representing the table
      */
     Table getTable(TableDefinition tableDefinition) {
         return new TableImpl(po, this, tableDefinition);

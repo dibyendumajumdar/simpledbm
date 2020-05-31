@@ -44,15 +44,11 @@ public interface Statistic extends Dumpable {
 
     /**
      * Get the name of the statistic.
-     * 
-     * @return
      */
     String getName();
 
     /**
      * Get the time (in milliseconds) when the statistic was last updated.
-     * 
-     * @return
      */
     long getLastUpdated();
 }
